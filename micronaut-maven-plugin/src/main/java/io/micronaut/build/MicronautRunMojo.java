@@ -5,10 +5,17 @@ import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.*;
-import org.apache.maven.project.MavenProject;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.*;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.graph.DependencyFilter;
+import org.eclipse.aether.util.artifact.JavaScopes;
+import org.eclipse.aether.util.filter.DependencyFilterUtils;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -16,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.*;
@@ -52,17 +60,16 @@ public class MicronautRunMojo extends AbstractMojo {
             "install",
             "deploy");
 
-    private static final String MAVEN_DEPENDENCY_PLUGIN = "org.apache.maven.plugins:maven-dependency-plugin";
     private static final String MAVEN_COMPILER_PLUGIN = "org.apache.maven.plugins:maven-compiler-plugin";
     private static final String MAVEN_RESOURCES_PLUGIN = "org.apache.maven.plugins:maven-resources-plugin";
 
-    private static final String OUTPUT_FILE_PARAMETER = "outputFile";
-    private static final String CLASSPATH_FILE = "classpath.txt";
     private static final String PROJECT_BUILD_DIRECTORY = "${project.build.directory}";
     private static final String PROJECT_SOURCE_DIRECTORY = "${project.build.sourceDirectory}";
-
-    private final MavenProject mavenProject;
     private final MavenSession mavenSession;
+    private final BuildPluginManager pluginManager;
+    private final ProjectDependenciesResolver resolver;
+    private final ProjectBuilder projectBuilder;
+    private MavenProject mavenProject;
 
     @Parameter(defaultValue = PROJECT_SOURCE_DIRECTORY)
     private File sourceDirectory;
@@ -73,36 +80,45 @@ public class MicronautRunMojo extends AbstractMojo {
     @Parameter(defaultValue = "${exec.mainClass}")
     private String mainClass;
 
-    private ExecutionEnvironment env;
     private WatchService watchService;
     private Map<WatchKey, Path> keys;
     private Process process;
+    private Path projectRootDirectory;
+    private List<Dependency> projectDependencies;
+    private String classpath;
 
     @Inject
-    public MicronautRunMojo(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager) {
+    public MicronautRunMojo(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager,
+                            ProjectDependenciesResolver resolver, ProjectBuilder projectBuilder) {
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
-        this.env = executionEnvironment(mavenProject, mavenSession, pluginManager);
+        this.pluginManager = pluginManager;
+        this.resolver = resolver;
+        this.projectBuilder = projectBuilder;
+        this.projectRootDirectory = mavenProject.getBasedir().toPath();
+        resolveDependencies();
+
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public void execute() throws MojoExecutionException {
-        boolean isCompiled = mavenSession.getGoals().stream().anyMatch(PHASES_AFTER_COMPILE::contains);
-        if (!isCompiled) {
+        boolean needsCompilation = mavenSession.getGoals().stream().noneMatch(PHASES_AFTER_COMPILE::contains);
+        if (needsCompilation) {
             compileProject();
         }
 
         try {
             runApplication();
+            Thread shutdownHook = new Thread(this::killProcess);
+            Runtime.getRuntime().addShutdownHook(shutdownHook);
 
             this.watchService = FileSystems.getDefault().newWatchService();
             this.keys = new HashMap<>();
 
             Path sourcePath = sourceDirectory.toPath();
             registerAll(sourcePath);
-
-            getLog().info("Watching for changes in " + sourcePath.toString());
+            register(projectRootDirectory);
 
             for (;;) {
                 WatchKey key;
@@ -118,10 +134,7 @@ public class MicronautRunMojo extends AbstractMojo {
                     continue;
                 }
 
-                for (WatchEvent<?> event: key.pollEvents()) {
-                    compileProject();
-                    runApplication();
-
+                for (WatchEvent<?> event : key.pollEvents()) {
                     WatchEvent.Kind<?> kind = event.kind();
                     if (kind == OVERFLOW) {
                         continue;
@@ -131,8 +144,32 @@ public class MicronautRunMojo extends AbstractMojo {
                     Path name = ev.context();
                     Path child = dir.resolve(name);
 
-                    if (kind == ENTRY_CREATE && Files.isDirectory(child, NOFOLLOW_LINKS)) {
-                        registerAll(child);
+                    needsCompilation = true;
+
+                    if (dir.equals(projectRootDirectory)) {
+                        if (child.endsWith("pom.xml")) {
+                            getLog().info("Detected POM change. Resolving dependencies...");
+                            rebuildMavenProject();
+                            resolveDependencies();
+                            needsCompilation = false;
+                            getLog().info("Finished resolving dependencies. Recompilation is not necessary");
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
+                        if (kind == ENTRY_CREATE) {
+                            registerAll(child);
+                        } else {
+                            getLog().debug("Omitting changes in a directory");
+                        }
+                    } else {
+                        if (needsCompilation) {
+                            getLog().info("Detected change in " + child);
+                            compileProject();
+                            runApplication();
+                        }
                     }
                 }
 
@@ -146,7 +183,36 @@ public class MicronautRunMojo extends AbstractMojo {
             }
 
         } catch (Exception e) {
-            throw new MojoExecutionException("Exception while creating a watch service", e);
+            throw new MojoExecutionException("Exception while watching for changes", e);
+        } finally {
+            killProcess();
+        }
+    }
+
+    private void rebuildMavenProject() {
+        try {
+            ProjectBuildingRequest projectBuildingRequest = mavenSession.getProjectBuildingRequest();
+            projectBuildingRequest.setResolveDependencies(true);
+            ProjectBuildingResult build = projectBuilder.build(mavenProject.getArtifact(), projectBuildingRequest);
+            MavenProject project = build.getProject();
+            mavenProject = project;
+            mavenSession.setCurrentProject(project);
+        } catch (ProjectBuildingException e) {
+            getLog().warn("Error while trying to build the Maven project model", e);
+        }
+    }
+
+    private void resolveDependencies() {
+        try {
+            DependencyFilter filter = DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE, JavaScopes.RUNTIME);
+            RepositorySystemSession session = mavenSession.getRepositorySession();
+            DependencyResolutionRequest dependencyResolutionRequest = new DefaultDependencyResolutionRequest(mavenProject, session);
+            dependencyResolutionRequest.setResolutionFilter(filter);
+            DependencyResolutionResult result = resolver.resolve(dependencyResolutionRequest);
+            this.projectDependencies = result.getDependencies();
+            buildClasspath();
+        } catch (DependencyResolutionException e) {
+            getLog().warn("Error while trying to resolve dependencies for the current project", e);
         }
     }
 
@@ -154,54 +220,66 @@ public class MicronautRunMojo extends AbstractMojo {
         Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                keys.put(dir.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE), dir);
+                register(dir);
                 return FileVisitResult.CONTINUE;
             }
         });
+
     }
 
-    private void buildClasspath() throws MojoExecutionException {
-        final Plugin dependenciesPlugin = mavenProject.getPlugin(MAVEN_DEPENDENCY_PLUGIN);
-        final Xpp3Dom configuration = configuration(element(name(OUTPUT_FILE_PARAMETER), PROJECT_BUILD_DIRECTORY + "/" + CLASSPATH_FILE));
-        executeMojo(dependenciesPlugin, goal("build-classpath"), configuration, env);
+    private void register(final Path dir) throws IOException {
+        keys.put(dir.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE), dir);
     }
 
-    private void runApplication() throws MojoExecutionException, IOException, InterruptedException {
-        File classpathFile = new File(targetDirectory, CLASSPATH_FILE);
-        if (!classpathFile.exists()) {
-            buildClasspath();
-        }
-        String classpath = new File(targetDirectory, "classes:").getAbsolutePath();
-        classpath += new String(Files.readAllBytes(classpathFile.toPath()));
+    private void buildClasspath() {
+        classpath = this.projectDependencies.stream()
+                .map(dependency -> dependency.getArtifact().getFile().getAbsolutePath())
+                .collect(Collectors.joining(File.pathSeparator));
+    }
+
+    private void runApplication() throws IOException {
+        String classpathArgument = new File(targetDirectory, "classes:").getAbsolutePath() + this.classpath;
         List<String> args = new ArrayList<>();
         args.add("java");
         args.add("-classpath");
-        args.add(classpath);
+        args.add(classpathArgument);
         args.add("-noverify");
         args.add("-XX:TieredStopAtLevel=1");
         args.add("-Dcom.sun.management.jmxremote");
         args.add(mainClass);
 
         getLog().debug("Running " + String.join(" ", args));
-        if (process != null && process.isAlive()) {
-            process.destroy();
-            process.waitFor();
-        }
+        killProcess();
         process = new ProcessBuilder(args)
                 .inheritIO()
                 .directory(targetDirectory)
                 .start();
     }
 
-    private void compileProject() throws MojoExecutionException {
-        final Plugin compilerPlugin = mavenProject.getPlugin(MAVEN_COMPILER_PLUGIN);
-        final Xpp3Dom compilerPluginConfiguration = (Xpp3Dom) compilerPlugin.getConfiguration();
-        if (compilerPluginConfiguration != null) {
-            executeMojo(compilerPlugin, goal("compile"), compilerPluginConfiguration, env);
-            buildClasspath();
+    private void compileProject() {
+        try {
+            final Plugin compilerPlugin = mavenProject.getPlugin(MAVEN_COMPILER_PLUGIN);
+            final Xpp3Dom compilerPluginConfiguration = (Xpp3Dom) compilerPlugin.getConfiguration();
+            ExecutionEnvironment env = executionEnvironment(mavenProject, mavenSession, pluginManager);
+            if (compilerPluginConfiguration != null) {
+                executeMojo(compilerPlugin, goal("compile"), compilerPluginConfiguration, env);
+            }
+            final Plugin resourcesPlugin = mavenProject.getPlugin(MAVEN_RESOURCES_PLUGIN);
+            executeMojo(resourcesPlugin, goal("resources"), configuration(), env);
+        } catch (MojoExecutionException e) {
+            getLog().error("Error while compiling the project: ", e);
         }
-        final Plugin resourcesPlugin = mavenProject.getPlugin(MAVEN_RESOURCES_PLUGIN);
-        executeMojo(resourcesPlugin, goal("resources"), configuration(), env);
+    }
+
+    private void killProcess() {
+        if (process != null && process.isAlive()) {
+            process.destroy();
+            try {
+                process.waitFor();
+            } catch (InterruptedException e) {
+                process.destroyForcibly();
+            }
+        }
     }
 
 }
