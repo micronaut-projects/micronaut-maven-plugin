@@ -23,10 +23,11 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isReadable;
@@ -66,15 +67,13 @@ public class MicronautRunMojo extends AbstractMojo {
 
     private static final String MAVEN_COMPILER_PLUGIN = "org.apache.maven.plugins:maven-compiler-plugin";
     private static final String MAVEN_RESOURCES_PLUGIN = "org.apache.maven.plugins:maven-resources-plugin";
+    public static final String GMAVEN_PLUS_PLUGIN = "org.codehaus.gmavenplus:gmavenplus-plugin";
     private static final int LAST_COMPILATION_THRESHOLD = 500;
 
     private final MavenSession mavenSession;
     private final ProjectDependenciesResolver resolver;
     private final ProjectBuilder projectBuilder;
     private final ExecutionEnvironment executionEnvironment;
-
-    @Parameter(defaultValue = "${project.build.sourceDirectory}")
-    private File sourceDirectory;
 
     @Parameter(defaultValue = "${project.build.directory}")
     private File targetDirectory;
@@ -98,6 +97,7 @@ public class MicronautRunMojo extends AbstractMojo {
     private List<Dependency> projectDependencies;
     private String classpath;
     private long lastCompilation;
+    private Map<String, Path> sourceDirectories;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -110,12 +110,12 @@ public class MicronautRunMojo extends AbstractMojo {
         this.projectRootDirectory = mavenProject.getBasedir().toPath();
         this.executionEnvironment = executionEnvironment(mavenProject, mavenSession, pluginManager);
         resolveDependencies();
-
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public void execute() throws MojoExecutionException {
+        resolveSourceDirectories();
         boolean needsCompilation = mavenSession.getGoals().stream().noneMatch(PHASES_AFTER_COMPILE::contains);
         if (needsCompilation) {
             compileProject();
@@ -126,19 +126,33 @@ public class MicronautRunMojo extends AbstractMojo {
             Thread shutdownHook = new Thread(this::killProcess);
             Runtime.getRuntime().addShutdownHook(shutdownHook);
 
-            this.directoryWatcher = DirectoryWatcher.builder()
-                    .path(sourceDirectory.toPath())
-                    .path(projectRootDirectory)
+            List<Path> pathsToWatch = new ArrayList<>(sourceDirectories.values());
+            pathsToWatch.add(projectRootDirectory);
+            this.directoryWatcher = DirectoryWatcher
+                    .builder()
+                    .paths(pathsToWatch)
                     .listener(this::handleEvent)
                     .build();
 
             this.directoryWatcher.watch();
-
         } catch (Exception e) {
             throw new MojoExecutionException("Exception while watching for changes", e);
         } finally {
             killProcess();
             cleanup();
+        }
+    }
+
+    private void resolveSourceDirectories() {
+        AtomicReference<String> lang = new AtomicReference<>();
+        this.sourceDirectories = Stream.of("java", "groovy", "kotlin")
+                .peek(lang::set)
+                .map(l -> new File(mavenProject.getBasedir(), "src/main/" + l))
+                .filter(File::exists)
+                .map(File::toPath)
+                .collect(Collectors.toMap(path -> path.toString().substring(path.toString().lastIndexOf("/") + 1), Function.identity()));
+        if (sourceDirectories.isEmpty()) {
+            throw new IllegalStateException("Source folders not found for neither Java/Groovy/Kotlin");
         }
     }
 
@@ -153,7 +167,7 @@ public class MicronautRunMojo extends AbstractMojo {
                 resolveDependencies();
                 getLog().info("Finished resolving dependencies. Recompilation is not necessary");
             }
-        } else if (parent.startsWith(sourceDirectory.toPath()) && !isDirectory(path, NOFOLLOW_LINKS) && isReadable(path) && !justCompiled()) {
+        } else if (isChangeInSourceDirectory(parent, path)) {
             getLog().info("Detected change in " + path);
             boolean compiledOk = compileProject();
             if (compiledOk) {
@@ -162,8 +176,14 @@ public class MicronautRunMojo extends AbstractMojo {
         }
     }
 
-    private boolean justCompiled() {
-        return (System.currentTimeMillis() - lastCompilation) < LAST_COMPILATION_THRESHOLD;
+    private boolean isChangeInSourceDirectory(Path parent, Path path) {
+        return this.sourceDirectories
+                .values()
+                .stream()
+                .anyMatch(parent::startsWith)
+                    && !isDirectory(path, NOFOLLOW_LINKS)
+                    && isReadable(path)
+                    && !((System.currentTimeMillis() - lastCompilation) < LAST_COMPILATION_THRESHOLD);
     }
 
     private void cleanup() {
@@ -234,19 +254,29 @@ public class MicronautRunMojo extends AbstractMojo {
 
     private boolean compileProject() {
         try {
-            final Plugin compilerPlugin = mavenProject.getPlugin(MAVEN_COMPILER_PLUGIN);
-            final Xpp3Dom compilerPluginConfiguration = (Xpp3Dom) compilerPlugin.getConfiguration();
-            if (compilerPluginConfiguration != null) {
-                executeMojo(compilerPlugin, goal("compile"), compilerPluginConfiguration, executionEnvironment);
+            if(sourceDirectories.containsKey("groovy")) {
+                executeGoal(GMAVEN_PLUS_PLUGIN, "compile");
                 lastCompilation = System.currentTimeMillis();
             }
-            final Plugin resourcesPlugin = mavenProject.getPlugin(MAVEN_RESOURCES_PLUGIN);
-            executeMojo(resourcesPlugin, goal("resources"), configuration(), executionEnvironment);
+            if (sourceDirectories.containsKey("java")) {
+                executeGoal(MAVEN_COMPILER_PLUGIN, "compile");
+                lastCompilation = System.currentTimeMillis();
+            }
+
+            executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
         } catch (MojoExecutionException e) {
             getLog().error("Error while compiling the project: ");
             return false;
         }
         return true;
+    }
+
+    private void executeGoal(String pluginKey, String goal) throws MojoExecutionException {
+        final Plugin plugin = mavenProject.getPlugin(pluginKey);
+        if (plugin != null) {
+            Xpp3Dom configuration = plugin.getConfiguration() != null ? (Xpp3Dom) plugin.getConfiguration() : configuration();
+            executeMojo(plugin, goal(goal), configuration, executionEnvironment);
+        }
     }
 
     private void killProcess() {
