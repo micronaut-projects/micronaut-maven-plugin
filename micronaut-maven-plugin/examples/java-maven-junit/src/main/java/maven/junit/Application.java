@@ -1,12 +1,13 @@
 package maven.junit;
 
 import io.micronaut.runtime.Micronaut;
-import org.apache.commons.text.WordUtils;
+import maven.junit.greeter.Greeter;
 
 public class Application {
 
     public static void main(String[] args) {
-//        System.out.println(WordUtils.capitalize("asdasd"));
+        Greeter greeter = new Greeter();
+        System.out.println(greeter.greet("World!"));
         Micronaut.run(Application.class);
     }
 }
