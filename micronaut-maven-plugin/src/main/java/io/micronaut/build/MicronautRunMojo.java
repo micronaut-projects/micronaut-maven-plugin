@@ -66,8 +66,6 @@ public class MicronautRunMojo extends AbstractMojo {
 
     private static final String MAVEN_COMPILER_PLUGIN = "org.apache.maven.plugins:maven-compiler-plugin";
     private static final String MAVEN_RESOURCES_PLUGIN = "org.apache.maven.plugins:maven-resources-plugin";
-    private static final String PROJECT_BUILD_DIRECTORY = "${project.build.directory}";
-    private static final String PROJECT_SOURCE_DIRECTORY = "${project.build.sourceDirectory}";
     private static final int LAST_COMPILATION_THRESHOLD = 500;
 
     private final MavenSession mavenSession;
@@ -75,14 +73,23 @@ public class MicronautRunMojo extends AbstractMojo {
     private final ProjectBuilder projectBuilder;
     private final ExecutionEnvironment executionEnvironment;
 
-    @Parameter(defaultValue = PROJECT_SOURCE_DIRECTORY)
+    @Parameter(defaultValue = "${project.build.sourceDirectory}")
     private File sourceDirectory;
 
-    @Parameter(defaultValue = PROJECT_BUILD_DIRECTORY)
+    @Parameter(defaultValue = "${project.build.directory}")
     private File targetDirectory;
 
     @Parameter(defaultValue = "${exec.mainClass}")
     private String mainClass;
+
+    @Parameter(property = "mn.debug", defaultValue = "false")
+    private boolean debug;
+
+    @Parameter(property = "mn.debug.suspend", defaultValue = "false")
+    private boolean debugSuspend;
+
+    @Parameter(property = "mn.debug.port", defaultValue = "5005")
+    private int debugPort;
 
     private MavenProject mavenProject;
     private DirectoryWatcher directoryWatcher;
@@ -204,6 +211,12 @@ public class MicronautRunMojo extends AbstractMojo {
         String classpathArgument = new File(targetDirectory, "classes:").getAbsolutePath() + this.classpath;
         List<String> args = new ArrayList<>();
         args.add("java");
+
+        if (debug) {
+            String suspend = debugSuspend ? "y" : "n";
+            args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=" + suspend + ",address=" + debugPort);
+        }
+
         args.add("-classpath");
         args.add(classpathArgument);
         args.add("-noverify");
