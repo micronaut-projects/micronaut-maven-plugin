@@ -7,7 +7,7 @@ public class Application {
 
     public static void main(String[] args) {
         Greeter greeter = new Greeter();
-        System.out.println(greeter.greet("World!"));
+        System.out.println(greeter.greet("world!"));
         Micronaut.run(Application.class);
     }
 }
