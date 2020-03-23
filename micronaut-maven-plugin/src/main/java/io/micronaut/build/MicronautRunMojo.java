@@ -4,6 +4,7 @@ import io.methvin.watcher.DirectoryChangeEvent;
 import io.methvin.watcher.DirectoryWatcher;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Plugin;
+import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -67,7 +68,8 @@ public class MicronautRunMojo extends AbstractMojo {
 
     private static final String MAVEN_COMPILER_PLUGIN = "org.apache.maven.plugins:maven-compiler-plugin";
     private static final String MAVEN_RESOURCES_PLUGIN = "org.apache.maven.plugins:maven-resources-plugin";
-    public static final String GMAVEN_PLUS_PLUGIN = "org.codehaus.gmavenplus:gmavenplus-plugin";
+    private static final String GMAVEN_PLUS_PLUGIN = "org.codehaus.gmavenplus:gmavenplus-plugin";
+    private static final String KOTLIN_MAVEN_PLUGIN = "org.jetbrains.kotlin:kotlin-maven-plugin";
     private static final int LAST_COMPILATION_THRESHOLD = 500;
 
     private final MavenSession mavenSession;
@@ -253,30 +255,67 @@ public class MicronautRunMojo extends AbstractMojo {
     }
 
     private boolean compileProject() {
+        boolean compiled = false;
         try {
             if(sourceDirectories.containsKey("groovy")) {
                 executeGoal(GMAVEN_PLUS_PLUGIN, "compile");
                 lastCompilation = System.currentTimeMillis();
+                compiled = true;
+            }
+            if (sourceDirectories.containsKey("kotlin")) {
+                executeGoal(KOTLIN_MAVEN_PLUGIN, "kapt");
+                executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
+                executeGoal(KOTLIN_MAVEN_PLUGIN, "compile");
+                executeGoal(MAVEN_COMPILER_PLUGIN, "compile#java-compile");
+                lastCompilation = System.currentTimeMillis();
+                compiled = true;
             }
             if (sourceDirectories.containsKey("java")) {
                 executeGoal(MAVEN_COMPILER_PLUGIN, "compile");
                 lastCompilation = System.currentTimeMillis();
+                compiled = true;
             }
 
-            executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
+            if (compiled) {
+                executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
+            }
         } catch (MojoExecutionException e) {
-            getLog().error("Error while compiling the project: ");
-            return false;
+            getLog().error("Error while compiling the project: ", e);
+            compiled = false;
         }
-        return true;
+        return compiled;
     }
 
     private void executeGoal(String pluginKey, String goal) throws MojoExecutionException {
         final Plugin plugin = mavenProject.getPlugin(pluginKey);
         if (plugin != null) {
-            Xpp3Dom configuration = plugin.getConfiguration() != null ? (Xpp3Dom) plugin.getConfiguration() : configuration();
+            AtomicReference<String> executionId = new AtomicReference<>(goal);
+            if (goal != null && goal.length() > 0 && goal.indexOf('#') > -1) {
+                int pos = goal.indexOf('#');
+                executionId.set(goal.substring(pos + 1));
+                goal = goal.substring(0, pos);
+            }
+            Optional<PluginExecution> execution = plugin
+                    .getExecutions()
+                    .stream()
+                    .filter(e -> e.getId().equals(executionId.get()))
+                    .findFirst();
+            Xpp3Dom configuration;
+            if (execution.isPresent()) {
+                configuration = (Xpp3Dom) execution.get().getConfiguration();
+            } else if (plugin.getConfiguration() != null) {
+                configuration = (Xpp3Dom) plugin.getConfiguration();
+            } else {
+                configuration = configuration();
+            }
+//            executeGoal(pluginKey, goal, configuration);
             executeMojo(plugin, goal(goal), configuration, executionEnvironment);
         }
+    }
+
+    private void executeGoal(String pluginKey, String goal, Xpp3Dom configuration) throws MojoExecutionException {
+        final Plugin plugin = mavenProject.getPlugin(pluginKey);
+        executeMojo(plugin, goal(goal), configuration, executionEnvironment);
     }
 
     private void killProcess() {
