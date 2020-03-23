@@ -255,12 +255,15 @@ public class MicronautRunMojo extends AbstractMojo {
     }
 
     private boolean compileProject() {
-        boolean compiled = false;
         try {
             if(sourceDirectories.containsKey("groovy")) {
+                executeGoal(GMAVEN_PLUS_PLUGIN, "addSources");
+                executeGoal(GMAVEN_PLUS_PLUGIN, "generateStubs");
+                executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
+                executeGoal(MAVEN_COMPILER_PLUGIN, "compile");
                 executeGoal(GMAVEN_PLUS_PLUGIN, "compile");
+                executeGoal(GMAVEN_PLUS_PLUGIN, "removeStubs");
                 lastCompilation = System.currentTimeMillis();
-                compiled = true;
             }
             if (sourceDirectories.containsKey("kotlin")) {
                 executeGoal(KOTLIN_MAVEN_PLUGIN, "kapt");
@@ -268,22 +271,17 @@ public class MicronautRunMojo extends AbstractMojo {
                 executeGoal(KOTLIN_MAVEN_PLUGIN, "compile");
                 executeGoal(MAVEN_COMPILER_PLUGIN, "compile#java-compile");
                 lastCompilation = System.currentTimeMillis();
-                compiled = true;
             }
             if (sourceDirectories.containsKey("java")) {
+                executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
                 executeGoal(MAVEN_COMPILER_PLUGIN, "compile");
                 lastCompilation = System.currentTimeMillis();
-                compiled = true;
-            }
-
-            if (compiled) {
-                executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
             }
         } catch (MojoExecutionException e) {
             getLog().error("Error while compiling the project: ", e);
-            compiled = false;
+            return false;
         }
-        return compiled;
+        return true;
     }
 
     private void executeGoal(String pluginKey, String goal) throws MojoExecutionException {
