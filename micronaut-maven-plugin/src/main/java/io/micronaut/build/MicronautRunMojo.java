@@ -306,14 +306,8 @@ public class MicronautRunMojo extends AbstractMojo {
             } else {
                 configuration = configuration();
             }
-//            executeGoal(pluginKey, goal, configuration);
             executeMojo(plugin, goal(goal), configuration, executionEnvironment);
         }
-    }
-
-    private void executeGoal(String pluginKey, String goal, Xpp3Dom configuration) throws MojoExecutionException {
-        final Plugin plugin = mavenProject.getPlugin(pluginKey);
-        executeMojo(plugin, goal(goal), configuration, executionEnvironment);
     }
 
     private void killProcess() {
