@@ -1,7 +1,7 @@
 Thumbs.db
 .DS_Store
 .gradle
-build/
+./build/
 target/
 out/
 .idea
