@@ -1,5 +1,0 @@
-profile: service
-defaultPackage: java.maven.junit
----
-testFramework: junit
-sourceLanguage: java
