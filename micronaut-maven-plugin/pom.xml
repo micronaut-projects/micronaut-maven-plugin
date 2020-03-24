@@ -24,8 +24,22 @@
         <system>GitHub Actions</system>
         <url>https://github.com/micronaut-projects/micronaut-build/actions</url>
     </ciManagement>
+    <distributionManagement>
+        <repository>
+            <id>oss.releases.https</id>
+            <name>Sonatype Release Distribution Staging Repository</name>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+        </repository>
+        <snapshotRepository>
+            <id>oss.snapshots.https</id>
+            <name>Sonatype Snapshot Distribution Repository</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
     <scm>
         <url>https://github.com/micronaut-projects/micronaut-build</url>
+        <connection>scm:git:git@github.com:micronaut-projects/micronaut-build.git</connection>
+        <developerConnection>scm:git:git@github.com:micronaut-projects/micronaut-build.git</developerConnection>
     </scm>
     <licenses>
         <license>
@@ -215,6 +229,25 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
                 <version>3.0.0</version>
+            </plugin>
+            <plugin>
+                <groupId>com.github.github</groupId>
+                <artifactId>site-maven-plugin</artifactId>
+                <version>0.12</version>
+                <configuration>
+                    <message>Creating site for ${project.version}</message>
+                    <userName>${env.GITHUB_USERNAME}</userName>
+                    <oauth2Token>${env.GITHUB_TOKEN}</oauth2Token>
+                    <path>${project.artifactId}</path>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>site</goal>
+                        </goals>
+                        <phase>site</phase>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
