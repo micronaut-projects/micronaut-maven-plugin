@@ -36,7 +36,12 @@ import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.*;
 
 /**
- * Mojo that handles mn:run goal.
+ * <p>Executes a Micronaut application in development mode.</p>
+ *
+ * <p>It watches for changes in the project tree. If there are changes in the {@code pom.xml} file, dependencies will be reloaded. If
+ * the changes are anywhere underneath {@code src/main}, it will recompile the project and restart the application.</p>
+ *
+ * <p>The plugin can handle changes in all the languages supported by Micronaut: Java, Kotlin and Groovy.</p>
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 1.0.0
@@ -77,18 +82,34 @@ public class MicronautRunMojo extends AbstractMojo {
     private final ProjectBuilder projectBuilder;
     private final ExecutionEnvironment executionEnvironment;
 
+    /**
+     * The project's target directory.
+     */
     @Parameter(defaultValue = "${project.build.directory}")
     private File targetDirectory;
 
+    /**
+     * The main class of the application, as defined in the
+     * <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.
+     */
     @Parameter(defaultValue = "${exec.mainClass}")
     private String mainClass;
 
+    /**
+     * Whether to start the Micronaut application in debug mode.
+     */
     @Parameter(property = "mn.debug", defaultValue = "false")
     private boolean debug;
 
+    /**
+     * Whether to suspend the execution of the application when running in debug mode.
+     */
     @Parameter(property = "mn.debug.suspend", defaultValue = "false")
     private boolean debugSuspend;
 
+    /**
+     * The port where remote debuggers can be attached to.
+     */
     @Parameter(property = "mn.debug.port", defaultValue = "5005")
     private int debugPort;
 
