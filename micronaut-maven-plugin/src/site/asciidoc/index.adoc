@@ -7,7 +7,38 @@ The plugin can handle changes in all the languages supported by Micronaut: Java,
 
 === Usage
 
-Check the link:dependency-info.html[plugin dependency info] to see how to declare it in your project build.
+Add the plugin to your `build/plugins` section:
+
+[source,xml,subs="verbatim,attributes"]
+----
+<build>
+    <plugins>
+
+        <!-- ... -->
+
+        <plugin>
+            <groupId>io.micronaut.build</groupId>
+            <artifactId>micronaut-maven-plugin</artifactId>
+            <version>{site-version}</version>
+        </plugin>
+    </plugins>
+</build>
+----
+
+For snapshot versions, you need the Sonatype OSSRH Snapshot repository:
+
+[source,xml]
+----
+<pluginRepositories>
+    <pluginRepository>
+        <id>ossrh</id>
+        <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </pluginRepository>
+</pluginRepositories>
+----
 
 Then, you can use `mn:run` to run your application in development mode:
 
