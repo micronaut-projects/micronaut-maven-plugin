@@ -13,6 +13,9 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.*;
+import org.apache.maven.toolchain.Toolchain;
+import org.apache.maven.toolchain.ToolchainManager;
+import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
@@ -81,6 +84,7 @@ public class MicronautRunMojo extends AbstractMojo {
     private final ProjectDependenciesResolver resolver;
     private final ProjectBuilder projectBuilder;
     private final ExecutionEnvironment executionEnvironment;
+    private final ToolchainManager toolchainManager;
 
     /**
      * The project's target directory.
@@ -125,12 +129,13 @@ public class MicronautRunMojo extends AbstractMojo {
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     public MicronautRunMojo(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager,
-                            ProjectDependenciesResolver resolver, ProjectBuilder projectBuilder) {
+                            ProjectDependenciesResolver resolver, ProjectBuilder projectBuilder, ToolchainManager toolchainManager) {
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
         this.resolver = resolver;
         this.projectBuilder = projectBuilder;
         this.projectRootDirectory = mavenProject.getBasedir().toPath();
+        this.toolchainManager = toolchainManager;
         this.executionEnvironment = executionEnvironment(mavenProject, mavenSession, pluginManager);
         resolveDependencies();
     }
@@ -253,7 +258,7 @@ public class MicronautRunMojo extends AbstractMojo {
     private void runApplication() throws IOException {
         String classpathArgument = new File(targetDirectory, "classes:").getAbsolutePath() + this.classpath;
         List<String> args = new ArrayList<>();
-        args.add("java");
+        args.add(getJava());
 
         if (debug) {
             String suspend = debugSuspend ? "y" : "n";
@@ -273,6 +278,22 @@ public class MicronautRunMojo extends AbstractMojo {
                 .inheritIO()
                 .directory(targetDirectory)
                 .start();
+    }
+
+    private String getJava() {
+        Toolchain toolchain = this.toolchainManager.getToolchainFromBuildContext("jdk", mavenSession);
+        if (toolchain != null) {
+            return toolchain.findTool("java");
+        } else {
+            File javaBinariesDir = new File(new File(System.getProperty("java.home")), "bin");
+            if (Os.isFamily(Os.FAMILY_UNIX)) {
+                return new File(javaBinariesDir, "java").getAbsolutePath();
+            } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                return new File(javaBinariesDir, "java.exe").getAbsolutePath();
+            } else {
+                return "java";
+            }
+        }
     }
 
     private boolean compileProject() {
