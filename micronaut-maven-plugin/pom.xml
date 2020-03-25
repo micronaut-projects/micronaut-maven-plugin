@@ -13,17 +13,21 @@
     <description>Maven plugin to execute and package Micronaut applications</description>
     <url>https://github.com/micronaut-projects/micronaut-build</url>
     <inceptionYear>2020</inceptionYear>
+
     <prerequisites>
         <maven>${maven.version}</maven>
     </prerequisites>
+
     <issueManagement>
         <system>GitHub</system>
         <url>https://github.com/micronaut-projects/micronaut-build/issues</url>
     </issueManagement>
+
     <ciManagement>
         <system>GitHub Actions</system>
         <url>https://github.com/micronaut-projects/micronaut-build/actions</url>
     </ciManagement>
+
     <distributionManagement>
         <repository>
             <id>oss.releases.https</id>
@@ -31,8 +35,7 @@
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
         </repository>
         <snapshotRepository>
-            <id>oss.snapshots.https</id>
-            <name>Sonatype Snapshot Distribution Repository</name>
+            <id>ossrh</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
@@ -41,6 +44,7 @@
         <connection>scm:git:git@github.com:micronaut-projects/micronaut-build.git</connection>
         <developerConnection>scm:git:git@github.com:micronaut-projects/micronaut-build.git</developerConnection>
     </scm>
+
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
@@ -48,10 +52,12 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+
     <organization>
         <name>Micronaut</name>
         <url>https://micronaut.io/</url>
     </organization>
+
     <developers>
         <developer>
             <name>Álvaro Sánchez-Mariscal</name>
@@ -66,6 +72,7 @@
         <maven.version>3.3.9</maven.version>
         <site.name>${project.name}</site.name>
         <site.description>${project.description}</site.description>
+        <site.version>${project.version}</site.version>
     </properties>
 
     <dependencies>
@@ -178,13 +185,50 @@
                     <artifactId>maven-invoker-plugin</artifactId>
                     <version>3.2.1</version>
                 </plugin>
+                <plugin>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.1.1</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.8.2</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-project-info-reports-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.2.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>com.github.github</groupId>
+                    <artifactId>site-maven-plugin</artifactId>
+                    <version>0.12</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.sonatype.plugins</groupId>
+                    <artifactId>nexus-staging-maven-plugin</artifactId>
+                    <version>1.6.8</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-jxr-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-invoker-plugin</artifactId>
+                    <version>3.2.1</version>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>1.6</version>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <version>3.6.0</version>
                 <configuration>
                     <goalPrefix>mn</goalPrefix>
                     <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
@@ -207,7 +251,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
-                <version>3.8.2</version>
                 <configuration>
                     <asciidoc>
                         <attributes>
@@ -228,14 +271,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.0.0</version>
             </plugin>
             <plugin>
                 <groupId>com.github.github</groupId>
                 <artifactId>site-maven-plugin</artifactId>
-                <version>0.12</version>
                 <configuration>
-                    <message>Creating site for ${project.version}</message>
+                    <message>Creating site for version ${project.version}</message>
                     <userName>${env.GITHUB_USERNAME}</userName>
                     <oauth2Token>${env.GITHUB_TOKEN}</oauth2Token>
                     <path>${project.artifactId}</path>
@@ -249,6 +290,16 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -261,7 +312,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.1.1</version>
                 <configuration>
                     <minmemory>128m</minmemory>
                     <maxmemory>512</maxmemory>
@@ -290,7 +340,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
-                <version>3.0.0</version>
             </plugin>
         </plugins>
     </reporting>
@@ -304,7 +353,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-invoker-plugin</artifactId>
-                        <version>3.2.1</version>
                         <configuration>
                             <debug>true</debug>
                             <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
@@ -326,6 +374,50 @@
                                     <goal>install</goal>
                                     <goal>integration-test</goal>
                                     <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
                                 </goals>
                             </execution>
                         </executions>
