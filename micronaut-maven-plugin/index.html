@@ -126,7 +126,39 @@ the changes are anywhere underneath <code>src/main</code>, it will recompile the
 <div class="sect2">
 <h3 id="usage">Usage</h3>
 <div class="paragraph">
-<p>Check the <a href="dependency-info.html">plugin dependency info</a> to see how to declare it in your project build.</p>
+<p>Add the plugin to your <code>build/plugins</code> section:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;build&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;plugins&gt;</span>
+
+        <span style="color:#777">&lt;!-- ... --&gt;</span>
+
+        <span style="color:#070;font-weight:bold">&lt;plugin&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>io.micronaut.build<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>micronaut-maven-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;version&gt;</span>{site-version}<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;/plugin&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/plugins&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/build&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For snapshot versions, you need the Sonatype OSSRH Snapshot repository:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;pluginRepositories&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;pluginRepository&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;id&gt;</span>ossrh<span style="color:#070;font-weight:bold">&lt;/id&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;url&gt;</span>https://oss.sonatype.org/content/repositories/snapshots<span style="color:#070;font-weight:bold">&lt;/url&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;snapshots&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;enabled&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/enabled&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;/snapshots&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/pluginRepository&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/pluginRepositories&gt;</span></code></pre>
+</div>
 </div>
 <div class="paragraph">
 <p>Then, you can use <code>mn:run</code> to run your application in development mode:</p>
