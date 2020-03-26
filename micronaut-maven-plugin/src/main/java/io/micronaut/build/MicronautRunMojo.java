@@ -85,6 +85,7 @@ public class MicronautRunMojo extends AbstractMojo {
     private final ProjectBuilder projectBuilder;
     private final ExecutionEnvironment executionEnvironment;
     private final ToolchainManager toolchainManager;
+    private final String javaExecutable;
 
     /**
      * The project's target directory.
@@ -137,6 +138,7 @@ public class MicronautRunMojo extends AbstractMojo {
         this.projectRootDirectory = mavenProject.getBasedir().toPath();
         this.toolchainManager = toolchainManager;
         this.executionEnvironment = executionEnvironment(mavenProject, mavenSession, pluginManager);
+        this.javaExecutable = findJavaExecutable();
         resolveDependencies();
     }
 
@@ -225,7 +227,7 @@ public class MicronautRunMojo extends AbstractMojo {
         getLog().debug("Cleaning up");
         try {
             directoryWatcher.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             // Do nothing
         }
     }
@@ -264,9 +266,9 @@ public class MicronautRunMojo extends AbstractMojo {
     }
 
     private void runApplication() throws IOException {
-        String classpathArgument = new File(targetDirectory, "classes:").getAbsolutePath() + this.classpath;
+        String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
         List<String> args = new ArrayList<>();
-        args.add(getJava());
+        args.add(javaExecutable);
 
         if (debug) {
             String suspend = debugSuspend ? "y" : "n";
@@ -288,7 +290,7 @@ public class MicronautRunMojo extends AbstractMojo {
                 .start();
     }
 
-    private String getJava() {
+    private String findJavaExecutable() {
         Toolchain toolchain = this.toolchainManager.getToolchainFromBuildContext("jdk", mavenSession);
         if (toolchain != null) {
             return toolchain.findTool("java");
