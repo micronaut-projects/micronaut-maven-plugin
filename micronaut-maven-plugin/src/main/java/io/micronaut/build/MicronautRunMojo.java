@@ -185,7 +185,7 @@ public class MicronautRunMojo extends AbstractMojo {
                 .filter(File::exists)
                 .peek(f -> getLog().debug("Found source: " + f.getPath()))
                 .map(File::toPath)
-                .collect(Collectors.toMap(path -> path.toString().substring(path.toString().lastIndexOf("/") + 1), Function.identity()));
+                .collect(Collectors.toMap(path -> lang.get(), Function.identity()));
         if (sourceDirectories.isEmpty()) {
             throw new IllegalStateException("Source folders not found for neither Java/Groovy/Kotlin");
         }
