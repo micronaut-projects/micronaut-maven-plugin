@@ -156,14 +156,19 @@ public class MicronautRunMojo extends AbstractMojo {
 
             List<Path> pathsToWatch = new ArrayList<>(sourceDirectories.values());
             pathsToWatch.add(projectRootDirectory);
+
+            getLog().debug("pathsToWatch: " + pathsToWatch.toString());
+
             this.directoryWatcher = DirectoryWatcher
                     .builder()
                     .paths(pathsToWatch)
                     .listener(this::handleEvent)
                     .build();
 
+            getLog().debug("Watching for changes...");
             this.directoryWatcher.watch();
         } catch (Exception e) {
+            getLog().debug("Exception while watching for changes", e);
             throw new MojoExecutionException("Exception while watching for changes", e);
         } finally {
             killProcess();
@@ -172,11 +177,13 @@ public class MicronautRunMojo extends AbstractMojo {
     }
 
     private void resolveSourceDirectories() {
+        getLog().debug("Resolving source directories...");
         AtomicReference<String> lang = new AtomicReference<>();
         this.sourceDirectories = Stream.of("java", "groovy", "kotlin")
                 .peek(lang::set)
                 .map(l -> new File(mavenProject.getBasedir(), "src/main/" + l))
                 .filter(File::exists)
+                .peek(f -> getLog().debug("Found source: " + f.getPath()))
                 .map(File::toPath)
                 .collect(Collectors.toMap(path -> path.toString().substring(path.toString().lastIndexOf("/") + 1), Function.identity()));
         if (sourceDirectories.isEmpty()) {
@@ -215,6 +222,7 @@ public class MicronautRunMojo extends AbstractMojo {
     }
 
     private void cleanup() {
+        getLog().debug("Cleaning up");
         try {
             directoryWatcher.close();
         } catch (IOException e) {
@@ -297,6 +305,7 @@ public class MicronautRunMojo extends AbstractMojo {
     }
 
     private boolean compileProject() {
+        getLog().debug("Compiling the project");
         try {
             if(sourceDirectories.containsKey("groovy")) {
                 executeGoal(GMAVEN_PLUS_PLUGIN, "addSources");
@@ -353,6 +362,7 @@ public class MicronautRunMojo extends AbstractMojo {
     }
 
     private void killProcess() {
+        getLog().debug("Stopping the background process");
         if (process != null && process.isAlive()) {
             process.destroy();
             try {
