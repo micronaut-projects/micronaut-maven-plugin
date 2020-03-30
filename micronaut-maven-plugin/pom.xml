@@ -30,8 +30,7 @@
 
     <distributionManagement>
         <repository>
-            <id>oss.releases.https</id>
-            <name>Sonatype Release Distribution Staging Repository</name>
+            <id>ossrh</id>
             <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
         </repository>
         <snapshotRepository>
@@ -39,6 +38,7 @@
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
+
     <scm>
         <url>https://github.com/micronaut-projects/micronaut-build</url>
         <connection>scm:git:git@github.com:micronaut-projects/micronaut-build.git</connection>
@@ -294,6 +294,13 @@
                     <serverId>ossrh</serverId>
                     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <configuration>
+                    <retryFailedDeploymentCount>5</retryFailedDeploymentCount>
                 </configuration>
             </plugin>
         </plugins>
