@@ -218,10 +218,6 @@
                     <version>3.0.0</version>
                 </plugin>
                 <plugin>
-                    <artifactId>maven-invoker-plugin</artifactId>
-                    <version>3.2.1</version>
-                </plugin>
-                <plugin>
                     <artifactId>maven-gpg-plugin</artifactId>
                     <version>1.6</version>
                 </plugin>
