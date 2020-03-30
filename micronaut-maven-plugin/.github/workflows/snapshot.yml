@@ -1,0 +1,41 @@
+name: Snapshots
+
+on:
+  push:
+    branches:
+      - maven-plugin
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Install Java and Maven and set up Apache Maven Central
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+#          server-id: ossrh # Value of the distributionManagement/repository/id field of the pom.xml
+#          server-username: SONATYPE_USERNAME # env variable for username in deploy
+#          server-password: SONATYPE_PASSWORD # env variable for token in deploy
+
+      - name: Cache Maven packages
+        uses: actions/cache@v1
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Release Maven package
+        uses: samuelmeuli/action-maven-publish@v1
+        env:
+          GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          maven_goals_phases: site deploy
+          maven_args: "-Dsite.path=snapshot"
+          gpg_private_key: ${{ secrets.GPG_FILE }}
+          gpg_passphrase: ${{ secrets.GPG_PASSWORD }}
+          nexus_username: ${{ secrets.SONATYPE_USERNAME }}
+          nexus_password: ${{ secrets.SONATYPE_PASSWORD }}

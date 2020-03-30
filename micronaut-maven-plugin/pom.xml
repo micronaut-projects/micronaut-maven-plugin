@@ -70,6 +70,7 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.version>3.3.9</maven.version>
+        <site.path>${project.artifactId}</site.path>
         <site.name>${project.name}</site.name>
         <site.description>${project.description}</site.description>
         <site.version>${project.version}</site.version>
@@ -279,7 +280,7 @@
                     <message>Creating site for version ${project.version}</message>
                     <userName>${env.GITHUB_USERNAME}</userName>
                     <oauth2Token>${env.GITHUB_TOKEN}</oauth2Token>
-                    <path>${project.artifactId}</path>
+                    <path>${site.path}</path>
                 </configuration>
                 <executions>
                     <execution>
