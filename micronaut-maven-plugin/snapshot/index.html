@@ -130,18 +130,23 @@ the changes are anywhere underneath <code>src/main</code>, it will recompile the
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;build&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;plugins&gt;</span>
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;project&gt;</span>
 
-        <span style="color:#777">&lt;!-- ... --&gt;</span>
+    <span style="color:#777">&lt;!-- ... --&gt;</span>
 
-        <span style="color:#070;font-weight:bold">&lt;plugin&gt;</span>
-            <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>io.micronaut.build<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
-            <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>micronaut-maven-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
-            <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.0.0.BUILD-SNAPSHOT<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
-        <span style="color:#070;font-weight:bold">&lt;/plugin&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;/plugins&gt;</span>
-<span style="color:#070;font-weight:bold">&lt;/build&gt;</span></code></pre>
+    <span style="color:#070;font-weight:bold">&lt;build&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;plugins&gt;</span>
+
+            <span style="color:#777">&lt;!-- ... --&gt;</span>
+
+            <span style="color:#070;font-weight:bold">&lt;plugin&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>io.micronaut.build<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>micronaut-maven-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;version&gt;</span>1.0.0.BUILD-SNAPSHOT<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/plugin&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;/plugins&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/build&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/project&gt;</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -149,15 +154,23 @@ the changes are anywhere underneath <code>src/main</code>, it will recompile the
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;pluginRepositories&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;pluginRepository&gt;</span>
-        <span style="color:#070;font-weight:bold">&lt;id&gt;</span>ossrh<span style="color:#070;font-weight:bold">&lt;/id&gt;</span>
-        <span style="color:#070;font-weight:bold">&lt;url&gt;</span>https://oss.sonatype.org/content/repositories/snapshots<span style="color:#070;font-weight:bold">&lt;/url&gt;</span>
-        <span style="color:#070;font-weight:bold">&lt;snapshots&gt;</span>
-            <span style="color:#070;font-weight:bold">&lt;enabled&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/enabled&gt;</span>
-        <span style="color:#070;font-weight:bold">&lt;/snapshots&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;/pluginRepository&gt;</span>
-<span style="color:#070;font-weight:bold">&lt;/pluginRepositories&gt;</span></code></pre>
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;project&gt;</span>
+
+    <span style="color:#777">&lt;!-- ... --&gt;</span>
+
+    <span style="color:#070;font-weight:bold">&lt;pluginRepositories&gt;</span>
+
+        <span style="color:#777">&lt;!-- ... --&gt;</span>
+
+        <span style="color:#070;font-weight:bold">&lt;pluginRepository&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;id&gt;</span>ossrh<span style="color:#070;font-weight:bold">&lt;/id&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;url&gt;</span>https://oss.sonatype.org/content/repositories/snapshots<span style="color:#070;font-weight:bold">&lt;/url&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;snapshots&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;enabled&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/enabled&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/snapshots&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;/pluginRepository&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/pluginRepositories&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/project&gt;</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
