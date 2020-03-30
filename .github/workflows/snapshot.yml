@@ -6,7 +6,7 @@ on:
       - maven-plugin
 
 jobs:
-  site:
+  snapshot:
     runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
@@ -27,25 +27,6 @@ jobs:
       - name: Deploy site
         run: mvn site -Dsite.path=micronaut-maven-plugin/snapshot
         working-directory: ./micronaut-maven-plugin
-
-
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v2
-
-      - name: Install Java and Maven and set up Apache Maven Central
-        uses: actions/setup-java@v1
-        with:
-          java-version: 1.8
-
-      - name: Cache Maven packages
-        uses: actions/cache@v1
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
 
       - name: Deploy snapshot
         uses: samuelmeuli/action-maven-publish@v1
