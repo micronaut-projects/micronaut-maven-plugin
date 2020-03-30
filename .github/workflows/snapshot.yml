@@ -33,7 +33,7 @@ jobs:
           GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-	        directory: micronaut-maven-plugin
+          directory: micronaut-maven-plugin
           maven_goals_phases: site deploy
           maven_args: "-Dsite.path=snapshot"
           gpg_private_key: ${{ secrets.GPG_FILE }}
