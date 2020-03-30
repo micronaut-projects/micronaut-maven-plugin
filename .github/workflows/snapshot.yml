@@ -35,7 +35,7 @@ jobs:
         with:
           directory: micronaut-maven-plugin
           maven_goals_phases: site deploy
-          maven_args: "-Dsite.path=snapshot"
+          maven_args: "-Dsite.path=micronaut-maven-plugin/snapshot"
           gpg_private_key: ${{ secrets.GPG_FILE }}
           gpg_passphrase: ${{ secrets.GPG_PASSWORD }}
           nexus_username: ${{ secrets.SONATYPE_USERNAME }}
