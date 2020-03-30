@@ -1,0 +1,40 @@
+name: Release
+on:
+  release:
+    types: [published]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+          ref: ${{ github.head_ref }}
+
+      - name: Cache Maven packages
+        uses: actions/cache@v1
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Set the current release version
+        id: release_version
+        run: echo ::set-output name=release_version::${GITHUB_REF:11}
+
+      - name: Figure out next version
+        id: next_version
+        run: |
+          wget -q https://raw.githubusercontent.com/micronaut-projects/github-actions/master/post-release/increment_version.sh -O /tmp/iv.sh
+          chmod +x /tmp/iv.sh 
+          NV=`/tmp/iv.sh -p ${{ steps.release_version.outputs.release_version }}`
+          echo ::set-output name=next_version::${NV}
+
+      - name: Prepare release
+        uses: mvn release:prepare -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }}
+
+      - name: Perform release
+        uses: mvn release:perform -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }}
