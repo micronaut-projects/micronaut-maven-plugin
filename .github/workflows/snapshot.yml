@@ -1,9 +1,9 @@
-name: Snapshots
+name: Snapshot
 
 on:
   push:
     branches:
-      - maven-plugin
+      - master
 
 jobs:
   snapshot:
@@ -26,15 +26,13 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Deploy site
-        run: mvn site -Dsite.path=micronaut-maven-plugin/snapshot
-        working-directory: ./micronaut-maven-plugin
+        run: mvn site -Dsite.path=snapshot
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Deploy snapshot
         uses: samuelmeuli/action-maven-publish@v1
         with:
-          directory: micronaut-maven-plugin
           gpg_private_key: ${{ secrets.GPG_FILE }}
           gpg_passphrase: ${{ secrets.GPG_PASSWORD }}
           nexus_username: ${{ secrets.SONATYPE_USERNAME }}
