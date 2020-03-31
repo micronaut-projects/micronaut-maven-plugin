@@ -15,9 +15,9 @@
         </menu>
 
         <menu name="Examples">
-            <item name="Java" href="https://github.com/micronaut-projects/micronaut-build/blob/master/micronaut-maven-plugin/examples/java/pom.xml"/>
-            <item name="Groovy" href="https://github.com/micronaut-projects/micronaut-build/blob/master/micronaut-maven-plugin/examples/groovy/pom.xml"/>
-            <item name="Kotlin" href="https://github.com/micronaut-projects/micronaut-build/blob/master/micronaut-maven-plugin/examples/kotlin/pom.xml"/>
+            <item name="Java" href="https://github.com/micronaut-projects/micronaut-maven-plugin/blob/master/examples/java/pom.xml"/>
+            <item name="Groovy" href="https://github.com/micronaut-projects/micronaut-maven-plugin/blob/master/examples/groovy/pom.xml"/>
+            <item name="Kotlin" href="https://github.com/micronaut-projects/micronaut-maven-plugin/blob/master/examples/kotlin/pom.xml"/>
         </menu>
 
         <menu ref="reports"/>

@@ -11,7 +11,7 @@
 
     <name>Micronaut Maven Plugin</name>
     <description>Maven plugin to execute and package Micronaut applications</description>
-    <url>https://github.com/micronaut-projects/micronaut-build</url>
+    <url>https://github.com/micronaut-projects/micronaut-maven-plugin</url>
     <inceptionYear>2020</inceptionYear>
 
     <prerequisites>
@@ -20,12 +20,12 @@
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/micronaut-projects/micronaut-build/issues</url>
+        <url>https://github.com/micronaut-projects/micronaut-maven-plugin/issues</url>
     </issueManagement>
 
     <ciManagement>
         <system>GitHub Actions</system>
-        <url>https://github.com/micronaut-projects/micronaut-build/actions</url>
+        <url>https://github.com/micronaut-projects/micronaut-maven-plugin/actions</url>
     </ciManagement>
 
     <distributionManagement>
@@ -40,9 +40,9 @@
     </distributionManagement>
 
     <scm>
-        <url>https://github.com/micronaut-projects/micronaut-build</url>
-        <connection>scm:git:git@github.com:micronaut-projects/micronaut-build.git</connection>
-        <developerConnection>scm:git:git@github.com:micronaut-projects/micronaut-build.git</developerConnection>
+        <url>https://github.com/micronaut-projects/micronaut-maven-plugin</url>
+        <connection>scm:git:git@github.com:micronaut-projects/micronaut-maven-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:micronaut-projects/micronaut-maven-plugin.git</developerConnection>
     </scm>
 
     <licenses>
@@ -218,6 +218,7 @@
                     <version>3.0.0</version>
                 </plugin>
                 <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
                     <version>1.6</version>
                 </plugin>
@@ -256,9 +257,9 @@
                 <configuration>
                     <asciidoc>
                         <attributes>
+                            <icons>font</icons>
                             <source-highlighter>coderay</source-highlighter>
                             <coderay-css>style</coderay-css>
-                            <toclevels>2</toclevels>
                         </attributes>
                     </asciidoc>
                 </configuration>
