@@ -277,7 +277,6 @@ public class MicronautRunMojo extends AbstractMojo {
 
         args.add("-classpath");
         args.add(classpathArgument);
-        args.add("-noverify");
         args.add("-XX:TieredStopAtLevel=1");
         args.add("-Dcom.sun.management.jmxremote");
         args.add(mainClass);
