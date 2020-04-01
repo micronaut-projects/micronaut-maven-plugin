@@ -1,6 +1,6 @@
 # Micronaut Maven Plugin
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.micronaut.build/micronaut-maven-plugin.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.micronaut.build%22%20AND%20a:%micronaut-maven-plugin%22)
+[![Maven Central](https://img.shields.io/maven-central/v/io.micronaut.build/micronaut-maven-plugin.svg?label=Maven%20Central)](https://search.maven.org/artifact/io.micronaut.build/micronaut-maven-plugin)
 [![Build Status](https://github.com/micronaut-projects/micronaut-maven-plugin/workflows/Snapshot/badge.svg)](https://github.com/micronaut-projects/micronaut-maven-plugin/actions)
 
 Maven plugin to execute Micronaut applications.
