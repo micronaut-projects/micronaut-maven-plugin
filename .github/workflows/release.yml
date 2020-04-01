@@ -44,6 +44,7 @@ jobs:
           git tag -d v${{ steps.release_version.outputs.release_version }}
           git push origin :refs/tags/v${{ steps.release_version.outputs.release_version }}
           echo $SSH_PRIVATE_KEY > ~/.ssh/github_rsa
+          chmod 0400 ~/.ssh/github_rsa
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/github_rsa
 
