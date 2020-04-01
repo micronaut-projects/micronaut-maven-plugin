@@ -29,12 +29,17 @@ jobs:
           GPG_FILE: ${{ secrets.GPG_FILE }}
         run: mkdir ~/.gnupg && echo $GPG_FILE > ~/.gnupg/secring.gpg
 
+      - name: Set the current release version
+        id: release_version
+        run: echo ::set-output name=release_version::${GITHUB_REF:11}
+
       - name: Setup git
         run: |
           git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           git config --global user.name "${GITHUB_ACTOR}"
           git fetch
           git checkout master
+          git push origin :refs/tags/v${{ steps.release_version.outputs.release_version }}
 
       - name: Cache Maven packages
         uses: actions/cache@v1
@@ -42,10 +47,6 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-
-      - name: Set the current release version
-        id: release_version
-        run: echo ::set-output name=release_version::${GITHUB_REF:11}
 
       - name: Figure out next version
         id: next_version
