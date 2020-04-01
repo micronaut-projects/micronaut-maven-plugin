@@ -11,6 +11,8 @@ See the [Documentation](https://micronaut-projects.github.io/micronaut-maven-plu
 
 See the [Snapshot Documentation](https://micronaut-projects.github.io/micronaut-maven-plugin/snapshot) for the current development docs.
 
+To see the documentation of a particular version, replace `latest` or `snapshot` in the above URLs with the version string.
+
 ## Snapshots and Releases
 
 Snaphots and releases are automatically published to Maven Central using [Github Actions](https://github.com/micronaut-projects/micronaut-maven-plugin/actions).
