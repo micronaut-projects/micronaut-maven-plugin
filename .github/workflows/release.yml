@@ -38,3 +38,9 @@ jobs:
 
       - name: Perform release
         uses: mvn release:perform
+
+      - name: Deploy site
+        if: ${{ !contains(steps.release_version.outputs.release_version, 'M') && contains(steps.release_version.outputs.release_version, 'RC') }}
+        run: mvn site -Dsite.path=latest
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
