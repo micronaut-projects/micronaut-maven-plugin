@@ -14,6 +14,17 @@ jobs:
           java-version: 1.8
           ref: ${{ github.head_ref }}
 
+      - name: Setup Maven settings.xml
+        uses: s4u/maven-settings-action@v2
+        with:
+          servers: '[{"id": "ossrh", "username": "${{ secrets.SONATYPE_USERNAME }}", "password": "${{ secrets.SONATYPE_PASSWORD }}"}]'
+          properties: '[{"gpg.executable": "gpg2"}, {"gpg.passphrase": "${{ secrets.GPG_PASSWORD }}"}]'
+
+      - name: Setup gpg keyring
+        env:
+          GPG_FILE: ${{ secrets.GPG_FILE }}
+        run: echo $GPG_FILE > ~/.gnupg/secring.gpg
+
       - name: Cache Maven packages
         uses: actions/cache@v1
         with:
