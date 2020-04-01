@@ -23,7 +23,7 @@ jobs:
       - name: Setup gpg keyring
         env:
           GPG_FILE: ${{ secrets.GPG_FILE }}
-        run: echo $GPG_FILE > ~/.gnupg/secring.gpg
+        run: mkdir ~/.gnupg && echo $GPG_FILE > ~/.gnupg/secring.gpg
 
       - name: Cache Maven packages
         uses: actions/cache@v1
