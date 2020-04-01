@@ -34,8 +34,6 @@ jobs:
         run: echo ::set-output name=release_version::${GITHUB_REF:11}
 
       - name: Setup git
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
           git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           git config --global user.name "${GITHUB_ACTOR}"
@@ -43,10 +41,11 @@ jobs:
           git checkout master
           git tag -d v${{ steps.release_version.outputs.release_version }}
           git push origin :refs/tags/v${{ steps.release_version.outputs.release_version }}
-          echo $SSH_PRIVATE_KEY > ~/.ssh/github_rsa
-          chmod 0400 ~/.ssh/github_rsa
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/github_rsa
+
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.2.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Cache Maven packages
         uses: actions/cache@v1
