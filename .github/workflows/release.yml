@@ -13,6 +13,7 @@ jobs:
         with:
           java-version: 1.8
           ref: ${{ github.head_ref }}
+          settings-path: /tmp
 
       - name: Setup Maven settings.xml
         uses: s4u/maven-settings-action@v2
