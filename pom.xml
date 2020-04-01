@@ -292,6 +292,7 @@
                 <configuration>
                     <tagNameFormat>v@{project.version}</tagNameFormat>
                     <releaseProfiles>release</releaseProfiles>
+                    <preparationGoals>clean verify site:site</preparationGoals>
                 </configuration>
             </plugin>
         </plugins>

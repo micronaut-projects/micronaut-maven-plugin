@@ -3,7 +3,7 @@ on:
   release:
     types: [published]
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -61,10 +61,7 @@ jobs:
           echo ::set-output name=next_version::${NV}.BUILD-SNAPSHOT
 
       - name: Prepare release
-        run: mvn release:prepare -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }}
-
-      - name: Generate site
-        run: mvn site:site
+        run: mvn --batch-mode release:prepare -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }}
 
       - name: Publish to Github Pages
         uses: micronaut-projects/github-pages-deploy-action@master
@@ -77,7 +74,7 @@ jobs:
           VERSION: ${{ steps.release_version.outputs.release_version }}
 
       - name: Perform release
-        run: mvn release:perform
+        run: mvn --batch-mode release:perform
 
       - name: Close release
         if: success()
