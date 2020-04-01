@@ -22,7 +22,7 @@ jobs:
         with:
           override: true
           servers: '[{"id": "ossrh", "username": "${{ secrets.SONATYPE_USERNAME }}", "password": "${{ secrets.SONATYPE_PASSWORD }}"}]'
-          properties: '[{"gpg.executable": "gpg2"}, {"gpg.passphrase": "${{ secrets.GPG_PASSWORD }}"}]'
+          properties: '[{"gpg.executable": "gpg"}, {"gpg.passphrase": "${{ secrets.GPG_PASSWORD }}"}]'
 
       - name: Setup gpg keyring
         env:
