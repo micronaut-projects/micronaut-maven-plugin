@@ -54,7 +54,7 @@ jobs:
           echo ::set-output name=next_version::${NV}.BUILD-SNAPSHOT
 
       - name: Prepare release
-        run: mvn release:prepare -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }}
+        run: mvn release:prepare -DdeveloperConnectionUrl="scm:git:`git remote get-url --push origin`" -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }}
 
       - name: Perform release
         run: mvn release:perform
