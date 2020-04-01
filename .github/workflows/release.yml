@@ -40,7 +40,7 @@ jobs:
           git tag -d v${{ steps.release_version.outputs.release_version }}
           git push origin :refs/tags/v${{ steps.release_version.outputs.release_version }}
           release_url=`cat $GITHUB_EVENT_PATH | jq '.release.url' | sed -e 's/^"\(.*\)"$/\1/g'`
-          curl -s --request PATCH -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" -H "Content-Type: application/json" $release_url --data "{\"draft\": false}"
+          curl -s --request PATCH -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/json" $release_url --data "{\"draft\": false}"
 
       - name: Setup SSH key
         uses: webfactory/ssh-agent@v0.2.0
