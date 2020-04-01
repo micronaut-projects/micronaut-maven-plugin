@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
   snapshot:
@@ -29,14 +32,21 @@ jobs:
         id: release_version
         run: echo ::set-output name=release_version::`mvn help:evaluate -Dexpression=project.version -q -DforceStdout`
 
-      - name: Deploy site
-        if: ${{ endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') }}
-        run: mvn site -Dsite.path=snapshot
+      - name: Generate site
+        if: success() && github.event_name == 'push'
+        run: mvn site:site
+
+      - name: Publish to Github Pages
+        if: success() && github.event_name == 'push'
+        uses: micronaut-projects/github-pages-deploy-action@master
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          BASE_BRANCH: master
+          BRANCH: gh-pages
+          FOLDER: target/site
 
       - name: Deploy snapshot
-        if: ${{ endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') }}
+        if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT')
         uses: samuelmeuli/action-maven-publish@v1
         with:
           gpg_private_key: ${{ secrets.GPG_FILE }}
