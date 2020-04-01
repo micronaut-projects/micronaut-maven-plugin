@@ -7,8 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Set up JDK
         uses: actions/setup-java@v1
