@@ -159,7 +159,9 @@ public class MicronautRunMojo extends AbstractMojo {
             List<Path> pathsToWatch = new ArrayList<>(sourceDirectories.values());
             pathsToWatch.add(projectRootDirectory);
 
-            getLog().debug("pathsToWatch: " + pathsToWatch.toString());
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("pathsToWatch: " + pathsToWatch.toString());
+            }
 
             this.directoryWatcher = DirectoryWatcher
                     .builder()
@@ -167,10 +169,14 @@ public class MicronautRunMojo extends AbstractMojo {
                     .listener(this::handleEvent)
                     .build();
 
-            getLog().debug("Watching for changes...");
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Watching for changes...");
+            }
             this.directoryWatcher.watch();
         } catch (Exception e) {
-            getLog().debug("Exception while watching for changes", e);
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Exception while watching for changes", e);
+            }
             throw new MojoExecutionException("Exception while watching for changes", e);
         } finally {
             killProcess();
@@ -179,13 +185,15 @@ public class MicronautRunMojo extends AbstractMojo {
     }
 
     private void resolveSourceDirectories() {
-        getLog().debug("Resolving source directories...");
+        if (getLog().isDebugEnabled()) {
+            getLog().debug("Resolving source directories...");
+        }
         AtomicReference<String> lang = new AtomicReference<>();
         this.sourceDirectories = Stream.of("java", "groovy", "kotlin")
                 .peek(lang::set)
                 .map(l -> new File(mavenProject.getBasedir(), "src/main/" + l))
                 .filter(File::exists)
-                .peek(f -> getLog().debug("Found source: " + f.getPath()))
+                .peek(f -> { if (getLog().isDebugEnabled()) { getLog().debug("Found source: " + f.getPath()); } })
                 .map(File::toPath)
                 .collect(Collectors.toMap(path -> lang.get(), Function.identity()));
         if (sourceDirectories.isEmpty()) {
@@ -199,13 +207,19 @@ public class MicronautRunMojo extends AbstractMojo {
 
         if (parent.equals(projectRootDirectory)) {
             if (path.endsWith("pom.xml")) {
-                getLog().info("Detected POM change. Resolving dependencies...");
+                if (getLog().isInfoEnabled()) {
+                    getLog().info("Detected POM change. Resolving dependencies...");
+                }
                 rebuildMavenProject();
                 resolveDependencies();
-                getLog().info("Finished resolving dependencies. Recompilation is not necessary");
+                if (getLog().isInfoEnabled()) {
+                    getLog().info("Finished resolving dependencies. Recompilation is not necessary");
+                }
             }
         } else if (isChangeInSourceDirectory(parent, path)) {
-            getLog().info("Detected change in " + path);
+            if (getLog().isInfoEnabled()) {
+                getLog().info("Detected change in " + path);
+            }
             boolean compiledOk = compileProject();
             if (compiledOk) {
                 runApplication();
@@ -224,7 +238,9 @@ public class MicronautRunMojo extends AbstractMojo {
     }
 
     private void cleanup() {
-        getLog().debug("Cleaning up");
+        if (getLog().isDebugEnabled()) {
+            getLog().debug("Cleaning up");
+        }
         try {
             directoryWatcher.close();
         } catch (Exception e) {
@@ -241,7 +257,9 @@ public class MicronautRunMojo extends AbstractMojo {
             mavenProject = project;
             mavenSession.setCurrentProject(project);
         } catch (ProjectBuildingException e) {
-            getLog().warn("Error while trying to build the Maven project model", e);
+            if (getLog().isWarnEnabled()) {
+                getLog().warn("Error while trying to build the Maven project model", e);
+            }
         }
     }
 
@@ -255,7 +273,9 @@ public class MicronautRunMojo extends AbstractMojo {
             this.projectDependencies = result.getDependencies();
             buildClasspath();
         } catch (DependencyResolutionException e) {
-            getLog().warn("Error while trying to resolve dependencies for the current project", e);
+            if (getLog().isWarnEnabled()) {
+                getLog().warn("Error while trying to resolve dependencies for the current project", e);
+            }
         }
     }
 
@@ -281,7 +301,10 @@ public class MicronautRunMojo extends AbstractMojo {
         args.add("-Dcom.sun.management.jmxremote");
         args.add(mainClass);
 
-        getLog().debug("Running " + String.join(" ", args));
+        if (getLog().isDebugEnabled()) {
+            getLog().debug("Running " + String.join(" ", args));
+        }
+
         killProcess();
         process = new ProcessBuilder(args)
                 .inheritIO()
@@ -306,7 +329,9 @@ public class MicronautRunMojo extends AbstractMojo {
     }
 
     private boolean compileProject() {
-        getLog().debug("Compiling the project");
+        if (getLog().isDebugEnabled()) {
+            getLog().debug("Compiling the project");
+        }
         try {
             if(sourceDirectories.containsKey("groovy")) {
                 executeGoal(GMAVEN_PLUS_PLUGIN, "addSources");
@@ -330,7 +355,9 @@ public class MicronautRunMojo extends AbstractMojo {
                 lastCompilation = System.currentTimeMillis();
             }
         } catch (MojoExecutionException e) {
-            getLog().error("Error while compiling the project: ", e);
+            if (getLog().isErrorEnabled()) {
+                getLog().error("Error while compiling the project: ", e);
+            }
             return false;
         }
         return true;
@@ -363,7 +390,9 @@ public class MicronautRunMojo extends AbstractMojo {
     }
 
     private void killProcess() {
-        getLog().debug("Stopping the background process");
+        if (getLog().isDebugEnabled()) {
+            getLog().debug("Stopping the background process");
+        }
         if (process != null && process.isAlive()) {
             process.destroy();
             try {
