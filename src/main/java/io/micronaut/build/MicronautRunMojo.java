@@ -79,6 +79,9 @@ public class MicronautRunMojo extends AbstractMojo {
     private static final String GMAVEN_PLUS_PLUGIN = "org.codehaus.gmavenplus:gmavenplus-plugin";
     private static final String KOTLIN_MAVEN_PLUGIN = "org.jetbrains.kotlin:kotlin-maven-plugin";
     private static final int LAST_COMPILATION_THRESHOLD = 500;
+    private static final String JAVA = "java";
+    private static final String GROOVY = "groovy";
+    private static final String KOTLIN = "kotlin";
 
     private final MavenSession mavenSession;
     private final ProjectDependenciesResolver resolver;
@@ -189,7 +192,7 @@ public class MicronautRunMojo extends AbstractMojo {
             getLog().debug("Resolving source directories...");
         }
         AtomicReference<String> lang = new AtomicReference<>();
-        this.sourceDirectories = Stream.of("java", "groovy", "kotlin")
+        this.sourceDirectories = Stream.of(JAVA, GROOVY, KOTLIN)
                 .peek(lang::set)
                 .map(l -> new File(mavenProject.getBasedir(), "src/main/" + l))
                 .filter(File::exists)
@@ -315,15 +318,15 @@ public class MicronautRunMojo extends AbstractMojo {
     private String findJavaExecutable() {
         Toolchain toolchain = this.toolchainManager.getToolchainFromBuildContext("jdk", mavenSession);
         if (toolchain != null) {
-            return toolchain.findTool("java");
+            return toolchain.findTool(JAVA);
         } else {
             File javaBinariesDir = new File(new File(System.getProperty("java.home")), "bin");
             if (Os.isFamily(Os.FAMILY_UNIX)) {
-                return new File(javaBinariesDir, "java").getAbsolutePath();
+                return new File(javaBinariesDir, JAVA).getAbsolutePath();
             } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
                 return new File(javaBinariesDir, "java.exe").getAbsolutePath();
             } else {
-                return "java";
+                return JAVA;
             }
         }
     }
@@ -333,7 +336,7 @@ public class MicronautRunMojo extends AbstractMojo {
             getLog().debug("Compiling the project");
         }
         try {
-            if(sourceDirectories.containsKey("groovy")) {
+            if(sourceDirectories.containsKey(GROOVY)) {
                 executeGoal(GMAVEN_PLUS_PLUGIN, "addSources");
                 executeGoal(GMAVEN_PLUS_PLUGIN, "generateStubs");
                 executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
@@ -342,14 +345,14 @@ public class MicronautRunMojo extends AbstractMojo {
                 executeGoal(GMAVEN_PLUS_PLUGIN, "removeStubs");
                 lastCompilation = System.currentTimeMillis();
             }
-            if (sourceDirectories.containsKey("kotlin")) {
+            if (sourceDirectories.containsKey(KOTLIN)) {
                 executeGoal(KOTLIN_MAVEN_PLUGIN, "kapt");
                 executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
                 executeGoal(KOTLIN_MAVEN_PLUGIN, "compile");
                 executeGoal(MAVEN_COMPILER_PLUGIN, "compile#java-compile");
                 lastCompilation = System.currentTimeMillis();
             }
-            if (sourceDirectories.containsKey("java")) {
+            if (sourceDirectories.containsKey(JAVA)) {
                 executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
                 executeGoal(MAVEN_COMPILER_PLUGIN, "compile");
                 lastCompilation = System.currentTimeMillis();
