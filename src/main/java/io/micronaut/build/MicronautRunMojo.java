@@ -3,6 +3,7 @@ package io.micronaut.build;
 import io.methvin.watcher.DirectoryChangeEvent;
 import io.methvin.watcher.DirectoryWatcher;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.FileSet;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.AbstractMojo;
@@ -15,6 +16,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.*;
 import org.apache.maven.toolchain.Toolchain;
 import org.apache.maven.toolchain.ToolchainManager;
+import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystemSession;
@@ -121,6 +123,13 @@ public class MicronautRunMojo extends AbstractMojo {
     @Parameter(property = "mn.debug.port", defaultValue = "5005")
     private int debugPort;
 
+    /**
+     * Lists of exclusion paths that should not trigger an application restart.
+     */
+    @SuppressWarnings("MismatchedReadAndWriteOfArray")
+    @Parameter
+    private String[] excludes;
+
     private MavenProject mavenProject;
     private DirectoryWatcher directoryWatcher;
     private Process process;
@@ -213,15 +222,13 @@ public class MicronautRunMojo extends AbstractMojo {
                 if (getLog().isInfoEnabled()) {
                     getLog().info("Detected POM change. Resolving dependencies...");
                 }
-                rebuildMavenProject();
-                resolveDependencies();
-                if (getLog().isInfoEnabled()) {
-                    getLog().info("Finished resolving dependencies. Recompilation is not necessary");
+                if (rebuildMavenProject() && resolveDependencies()) {
+                    runApplication();
                 }
             }
         } else if (isChangeInSourceDirectory(parent, path)) {
             if (getLog().isInfoEnabled()) {
-                getLog().info("Detected change in " + path);
+                getLog().info("Detected change in " + projectRootDirectory.relativize(path).toString());
             }
             boolean compiledOk = compileProject();
             if (compiledOk) {
@@ -235,9 +242,27 @@ public class MicronautRunMojo extends AbstractMojo {
                 .values()
                 .stream()
                 .anyMatch(parent::startsWith)
+                    && isNotExcluded(path)
                     && !isDirectory(path, NOFOLLOW_LINKS)
                     && isReadable(path)
-                    && !((System.currentTimeMillis() - lastCompilation) < LAST_COMPILATION_THRESHOLD);
+                    && hasNotBeenCompiledRecently();
+    }
+
+    private boolean isNotExcluded(Path path) {
+        boolean isNotExcluded = true;
+        if (excludes != null) {
+            isNotExcluded = Arrays.stream(excludes)
+                    .map(this.projectRootDirectory::resolve)
+                    .noneMatch(path::startsWith);
+        }
+        if (!isNotExcluded && getLog().isInfoEnabled()) {
+            getLog().info("Ignoring change in excluded path: " + projectRootDirectory.relativize(path).toString());
+        }
+        return isNotExcluded;
+    }
+
+    private boolean hasNotBeenCompiledRecently() {
+        return !((System.currentTimeMillis() - lastCompilation) < LAST_COMPILATION_THRESHOLD);
     }
 
     private void cleanup() {
@@ -251,7 +276,8 @@ public class MicronautRunMojo extends AbstractMojo {
         }
     }
 
-    private void rebuildMavenProject() {
+    private boolean rebuildMavenProject() {
+        boolean success = true;
         try {
             ProjectBuildingRequest projectBuildingRequest = mavenSession.getProjectBuildingRequest();
             projectBuildingRequest.setResolveDependencies(true);
@@ -260,13 +286,16 @@ public class MicronautRunMojo extends AbstractMojo {
             mavenProject = project;
             mavenSession.setCurrentProject(project);
         } catch (ProjectBuildingException e) {
+            success = false;
             if (getLog().isWarnEnabled()) {
                 getLog().warn("Error while trying to build the Maven project model", e);
             }
         }
+        return success;
     }
 
-    private void resolveDependencies() {
+    private boolean resolveDependencies() {
+        boolean success = true;
         try {
             DependencyFilter filter = DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE, JavaScopes.RUNTIME);
             RepositorySystemSession session = mavenSession.getRepositorySession();
@@ -276,10 +305,12 @@ public class MicronautRunMojo extends AbstractMojo {
             this.projectDependencies = result.getDependencies();
             buildClasspath();
         } catch (DependencyResolutionException e) {
+            success = false;
             if (getLog().isWarnEnabled()) {
                 getLog().warn("Error while trying to resolve dependencies for the current project", e);
             }
         }
+        return success;
     }
 
     private void buildClasspath() {
@@ -288,6 +319,7 @@ public class MicronautRunMojo extends AbstractMojo {
                 .collect(Collectors.joining(File.pathSeparator));
     }
 
+    //TODO prevent multiple restarts
     private void runApplication() throws IOException {
         String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
         List<String> args = new ArrayList<>();
