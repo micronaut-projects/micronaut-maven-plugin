@@ -3,7 +3,6 @@ package io.micronaut.build;
 import io.methvin.watcher.DirectoryChangeEvent;
 import io.methvin.watcher.DirectoryWatcher;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.model.FileSet;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.AbstractMojo;
@@ -16,7 +15,6 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.*;
 import org.apache.maven.toolchain.Toolchain;
 import org.apache.maven.toolchain.ToolchainManager;
-import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystemSession;
@@ -136,6 +134,7 @@ public class MicronautRunMojo extends AbstractMojo {
     private Path projectRootDirectory;
     private List<Dependency> projectDependencies;
     private String classpath;
+    private int classpathHash;
     private long lastCompilation;
     private Map<String, Path> sourceDirectories;
 
@@ -152,6 +151,7 @@ public class MicronautRunMojo extends AbstractMojo {
         this.executionEnvironment = executionEnvironment(mavenProject, mavenSession, pluginManager);
         this.javaExecutable = findJavaExecutable();
         resolveDependencies();
+        this.classpathHash = this.classpath.hashCode();
     }
 
     @Override
@@ -218,13 +218,11 @@ public class MicronautRunMojo extends AbstractMojo {
         Path parent = path.getParent();
 
         if (parent.equals(projectRootDirectory)) {
-            if (path.endsWith("pom.xml")) {
+            if (path.endsWith("pom.xml") && rebuildMavenProject() && resolveDependencies() && classpathHasChanged()) {
                 if (getLog().isInfoEnabled()) {
-                    getLog().info("Detected POM change. Resolving dependencies...");
+                    getLog().info("Detected POM dependencies change. Restarting application");
                 }
-                if (rebuildMavenProject() && resolveDependencies()) {
-                    runApplication();
-                }
+                runApplication();
             }
         } else if (isChangeInSourceDirectory(parent, path)) {
             if (getLog().isInfoEnabled()) {
@@ -314,9 +312,19 @@ public class MicronautRunMojo extends AbstractMojo {
     }
 
     private void buildClasspath() {
+        Comparator<Dependency> byGroupId = Comparator.comparing(d -> d.getArtifact().getGroupId());
+        Comparator<Dependency> byArtifactId = Comparator.comparing(d -> d.getArtifact().getArtifactId());
         classpath = this.projectDependencies.stream()
+                .sorted(byGroupId.thenComparing(byArtifactId))
                 .map(dependency -> dependency.getArtifact().getFile().getAbsolutePath())
                 .collect(Collectors.joining(File.pathSeparator));
+    }
+
+    private boolean classpathHasChanged() {
+        int oldClasspathHash = this.classpathHash;
+        this.classpathHash = this.classpath.hashCode();
+        return oldClasspathHash != classpathHash;
+
     }
 
     //TODO prevent multiple restarts
