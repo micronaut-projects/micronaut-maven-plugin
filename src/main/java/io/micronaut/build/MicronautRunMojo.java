@@ -3,6 +3,7 @@ package io.micronaut.build;
 import io.methvin.watcher.DirectoryChangeEvent;
 import io.methvin.watcher.DirectoryWatcher;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.FileSet;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.AbstractMojo;
@@ -15,6 +16,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.*;
 import org.apache.maven.toolchain.Toolchain;
 import org.apache.maven.toolchain.ToolchainManager;
+import org.codehaus.plexus.util.DirectoryScanner;
 import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystemSession;
@@ -82,6 +84,13 @@ public class MicronautRunMojo extends AbstractMojo {
     private static final String JAVA = "java";
     private static final String GROOVY = "groovy";
     private static final String KOTLIN = "kotlin";
+    private static final List<String> DEFAULT_EXCLUDES;
+
+    static {
+        DEFAULT_EXCLUDES = new ArrayList<>();
+        Collections.addAll(DEFAULT_EXCLUDES, DirectoryScanner.DEFAULTEXCLUDES);
+        Collections.addAll(DEFAULT_EXCLUDES, "**/.idea/**");
+    }
 
     private final MavenSession mavenSession;
     private final ProjectDependenciesResolver resolver;
@@ -124,9 +133,8 @@ public class MicronautRunMojo extends AbstractMojo {
     /**
      * Lists of exclusion paths that should not trigger an application restart.
      */
-    @SuppressWarnings("MismatchedReadAndWriteOfArray")
     @Parameter
-    private String[] excludes;
+    private List<FileSet> watches;
 
     private MavenProject mavenProject;
     private DirectoryWatcher directoryWatcher;
@@ -171,8 +179,17 @@ public class MicronautRunMojo extends AbstractMojo {
             List<Path> pathsToWatch = new ArrayList<>(sourceDirectories.values());
             pathsToWatch.add(projectRootDirectory);
 
-            if (getLog().isDebugEnabled()) {
-                getLog().debug("pathsToWatch: " + pathsToWatch.toString());
+            if (watches != null && !watches.isEmpty()) {
+                for (FileSet fileSet : watches) {
+                    File directory = new File(fileSet.getDirectory());
+                    if (directory.exists()) {
+                        pathsToWatch.add(directory.toPath());
+                    } else {
+                        if (getLog().isWarnEnabled()) {
+                            getLog().warn("The specified directory to watch doesn't exist: " + directory.getPath());
+                        }
+                    }
+                }
             }
 
             this.directoryWatcher = DirectoryWatcher
@@ -224,7 +241,7 @@ public class MicronautRunMojo extends AbstractMojo {
                 }
                 runApplication();
             }
-        } else if (isChangeInSourceDirectory(parent, path)) {
+        } else if (matches(path)) {
             if (getLog().isInfoEnabled()) {
                 getLog().info("Detected change in " + projectRootDirectory.relativize(path).toString());
             }
@@ -235,32 +252,79 @@ public class MicronautRunMojo extends AbstractMojo {
         }
     }
 
-    private boolean isChangeInSourceDirectory(Path parent, Path path) {
-        return this.sourceDirectories
+    private boolean matches(Path path) {
+        // Apply default exclusions
+        if (isDefaultExcluded(path) || isDirectory(path, NOFOLLOW_LINKS) || !isReadable(path) || hasBeenCompiledRecently()) {
+            return false;
+        }
+
+        // Start by checking whether it's a change in any source directory
+        boolean matches = this.sourceDirectories
                 .values()
                 .stream()
-                .anyMatch(parent::startsWith)
-                    && isNotExcluded(path)
-                    && !isDirectory(path, NOFOLLOW_LINKS)
-                    && isReadable(path)
-                    && hasNotBeenCompiledRecently();
+                .anyMatch(path.getParent()::startsWith);
+
+        String relativePath = projectRootDirectory.relativize(path).toString();
+
+        if (getLog().isDebugEnabled()) {
+            String belongs = matches ? "belongs" : "does not belong";
+            getLog().debug("Path [" + relativePath + "] " + belongs + " to a source directory");
+        }
+
+        if (watches != null && !watches.isEmpty()) {
+            // Then process includes
+            if (!matches){
+                for (FileSet fileSet : watches) {
+                    if (fileSet.getIncludes() != null && !fileSet.getIncludes().isEmpty()) {
+                        File directory = new File(fileSet.getDirectory());
+                        if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath()))
+                            for (String includePattern : fileSet.getIncludes()) {
+                                if (DirectoryScanner.match(includePattern, path.toString()) || new File(directory, includePattern).toPath().toAbsolutePath().equals(path)) {
+                                    matches = true;
+                                    if (getLog().isDebugEnabled()) {
+                                        getLog().debug("Path [" + relativePath + "] matched the include pattern [" + includePattern + "] of the directory [" + fileSet.getDirectory() + "]");
+                                    }
+                                    break;
+                                }
+                            }
+                    }
+                    if (matches) break;
+                }
+            }
+
+            // Finally process excludes only if the path is matching
+            if (matches) {
+                for (FileSet fileSet : watches) {
+                    if (fileSet.getExcludes() != null && !fileSet.getExcludes().isEmpty()) {
+                        File directory = new File(fileSet.getDirectory());
+                        if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath())) {
+                            for (String excludePattern : fileSet.getExcludes()) {
+                                if (DirectoryScanner.match(excludePattern, path.toString()) || new File(directory, excludePattern).toPath().toAbsolutePath().equals(path)) {
+                                    matches = false;
+                                    if (getLog().isDebugEnabled()) {
+                                        getLog().debug("Path [" + relativePath + "] matched the exclude pattern [" + excludePattern + "] of the directory [" + fileSet.getDirectory() + "]");
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (!matches) break;
+                }
+            }
+        }
+
+        return matches;
     }
 
-    private boolean isNotExcluded(Path path) {
-        boolean isNotExcluded = true;
-        if (excludes != null) {
-            isNotExcluded = Arrays.stream(excludes)
-                    .map(this.projectRootDirectory::resolve)
-                    .noneMatch(path::startsWith);
-        }
-        if (!isNotExcluded && getLog().isInfoEnabled()) {
-            getLog().info("Ignoring change in excluded path: " + projectRootDirectory.relativize(path).toString());
-        }
-        return isNotExcluded;
+    private boolean isDefaultExcluded(Path path) {
+        return path.startsWith(targetDirectory.getAbsolutePath()) ||
+                DEFAULT_EXCLUDES.stream()
+                .anyMatch(excludePattern -> DirectoryScanner.match(excludePattern, path.toString()));
     }
 
-    private boolean hasNotBeenCompiledRecently() {
-        return !((System.currentTimeMillis() - lastCompilation) < LAST_COMPILATION_THRESHOLD);
+    private boolean hasBeenCompiledRecently() {
+        return (System.currentTimeMillis() - lastCompilation) < LAST_COMPILATION_THRESHOLD;
     }
 
     private void cleanup() {
