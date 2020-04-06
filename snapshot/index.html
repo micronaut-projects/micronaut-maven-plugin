@@ -204,6 +204,9 @@ application.</p>
                                 <span style="color:#070;font-weight:bold">&lt;exclude&gt;</span>test.properties<span style="color:#070;font-weight:bold">&lt;/exclude&gt;</span>
                             <span style="color:#070;font-weight:bold">&lt;/excludes&gt;</span>
                         <span style="color:#070;font-weight:bold">&lt;/watch&gt;</span>
+                        <span style="color:#070;font-weight:bold">&lt;watch&gt;</span>
+                            <span style="color:#070;font-weight:bold">&lt;directory&gt;</span>src/main/webapp<span style="color:#070;font-weight:bold">&lt;/directory&gt;</span>
+                        <span style="color:#070;font-weight:bold">&lt;/watch&gt;</span>
                     <span style="color:#070;font-weight:bold">&lt;/watches&gt;</span>
                 <span style="color:#070;font-weight:bold">&lt;/configuration&gt;</span>
             <span style="color:#070;font-weight:bold">&lt;/plugin&gt;</span>
@@ -214,6 +217,9 @@ application.</p>
 </div>
 <div class="paragraph">
 <p>Note that exclusions take precedence over inclusions, so if a file change matches both, it will be excluded.</p>
+</div>
+<div class="paragraph">
+<p>When no <code>includes/excludes</code> rules are specified, a <code><strong>*/</strong></code> pattern will be included by default.</p>
 </div>
 </div>
 <div class="sect3">
