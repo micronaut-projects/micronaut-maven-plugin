@@ -1,57 +1,15 @@
 {site-description}.
 
-It watches for changes in the project tree. If there are changes in the `pom.xml` file, dependencies will be reloaded. If
-the changes are anywhere underneath `src/main`, it will recompile the project and restart the application.
+It watches for changes in the project tree, and if they match certain conditions, it will recompile and restart the
+application.
 
 The plugin can handle changes in all the languages supported by Micronaut: Java, Kotlin and Groovy.
 
+:toc:
+
 === Usage
 
-Add the plugin to your `build/plugins` section:
-
-[source,xml,subs="verbatim,attributes"]
-----
-<project>
-
-    <!-- ... -->
-
-    <build>
-        <plugins>
-
-            <!-- ... -->
-
-            <plugin>
-                <groupId>io.micronaut.build</groupId>
-                <artifactId>micronaut-maven-plugin</artifactId>
-                <version>{site-version}</version>
-            </plugin>
-        </plugins>
-    </build>
-</project>
-----
-
-For snapshot versions, you need the Sonatype OSSRH Snapshot repository:
-
-[source,xml]
-----
-<project>
-
-    <!-- ... -->
-
-    <pluginRepositories>
-
-        <!-- ... -->
-
-        <pluginRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
-</project>
-----
+Check the link:usage.html[usage page] to see how to declare the plugin in your `pom.xml`.
 
 Then, you can use `mn:run` to run your application in development mode:
 
@@ -76,12 +34,62 @@ $ mvn clean mn:run
 13:36:32.665 [main] INFO  io.micronaut.runtime.Micronaut - Startup completed in 919ms. Server Running: http://localhost:8080
 ----
 
-==== Other options
+==== Including and excluding options
+
+By default, this plugin watches for changes in the following locations:
+
+* `/pom.xml`. Only dependency changes may trigger an application restart.
+* `src/main/java` (if it exists).
+* `src/main/groovy` (if it exists).
+* `src/main/kotlin` (if it exists).
+
+You can further include or exclude some other locations:
+
+[source,xml,subs="verbatim,attributes"]
+----
+<project>
+
+    <!-- ... -->
+
+    <build>
+        <plugins>
+
+            <!-- ... -->
+
+            <plugin>
+                <groupId>io.micronaut.build</groupId>
+                <artifactId>micronaut-maven-plugin</artifactId>
+                <version>{site-version}</version>
+                <configuration>
+                    <watches>
+                        <watch>
+                            <directory>src/main/resources</directory>
+                            <includes>
+                                <include>**/*.yml</include>
+                                <include>**/*.properties</include>
+                            </includes>
+                            <excludes>
+                                <exclude>test.properties</exclude>
+                            </excludes>
+                        </watch>
+                    </watches>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+----
+
+Note that exclusions take precedence over inclusions, so if a file change matches both, it will be excluded.
+
+==== Debugging
+
+Debugging options can be specified on the command line directly:
 
 * Running in debug mode: `mvn mn:run -Dmn.debug`.
 * Changing the debugger port: `mvn mn:run -Dmn.debug -Dmn.debug.port=5006`.
 * Suspending the debugger execution: `mn:run -Dmn.debug -Dmn.debug.suspend`.
 
-=== Goals
+==== Other options
 
-* link:run-mojo.html[mn:run]: executes a Micronaut application in development mode.
+For a full list of configuration options, check the link:run-mojo.html[mn:run] goal documentation.

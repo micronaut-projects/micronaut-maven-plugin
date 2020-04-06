@@ -131,7 +131,11 @@ public class MicronautRunMojo extends AbstractMojo {
     private int debugPort;
 
     /**
-     * Lists of exclusion paths that should not trigger an application restart.
+     * List of inclusion/exclusion paths that should not trigger an application restart. Check the
+     * <a href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a>
+     * documentation for more details.
+     *
+     * @see <a href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a>
      */
     @Parameter
     private List<FileSet> watches;

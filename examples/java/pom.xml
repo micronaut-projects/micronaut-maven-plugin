@@ -127,6 +127,20 @@
         <groupId>io.micronaut.build</groupId>
         <artifactId>micronaut-maven-plugin</artifactId>
         <version>1.0.0.BUILD-SNAPSHOT</version>
+        <configuration>
+          <watches>
+            <watch>
+              <directory>src/main/resources</directory>
+              <includes>
+                <include>*.yml</include>
+                <include>*.xml</include>
+              </includes>
+              <excludes>
+                <exclude>logback.xml</exclude>
+              </excludes>
+            </watch>
+          </watches>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
