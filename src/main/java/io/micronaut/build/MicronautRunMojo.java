@@ -184,10 +184,14 @@ public class MicronautRunMojo extends AbstractMojo {
             pathsToWatch.add(projectRootDirectory);
 
             if (watches != null && !watches.isEmpty()) {
-                for (FileSet fileSet : watches) {
-                    File directory = new File(fileSet.getDirectory());
+                for (FileSet fs : watches) {
+                    File directory = new File(fs.getDirectory());
                     if (directory.exists()) {
                         pathsToWatch.add(directory.toPath());
+                        //If neither includes nor excludes, add a default include
+                        if ((fs.getIncludes() == null || fs.getIncludes().isEmpty() ) && (fs.getExcludes() == null || fs.getExcludes().isEmpty() )) {
+                            fs.addInclude("**/*");
+                        }
                     } else {
                         if (getLog().isWarnEnabled()) {
                             getLog().warn("The specified directory to watch doesn't exist: " + directory.getPath());
