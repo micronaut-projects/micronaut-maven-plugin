@@ -5,6 +5,9 @@ application.
 
 The plugin can handle changes in all the languages supported by Micronaut: Java, Kotlin and Groovy.
 
+Note that this plugin can work with any Micronaut version (and potentially with any Java application), since it only
+deals with file changes and JVM restarts.
+
 :toc:
 
 === Usage
