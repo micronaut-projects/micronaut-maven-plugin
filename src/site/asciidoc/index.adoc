@@ -85,7 +85,7 @@ You can further include or exclude some other locations:
 
 Note that exclusions take precedence over inclusions, so if a file change matches both, it will be excluded.
 
-When no `includes/excludes` rules are specified, a `**/*` pattern will be included by default.
+When no `includes/excludes` rules are specified, a `\**/*` pattern will be included by default.
 
 ==== Debugging
 
