@@ -140,6 +140,12 @@ public class MicronautRunMojo extends AbstractMojo {
     @Parameter
     private List<FileSet> watches;
 
+    /**
+     * List of additional arguments that will be passed to the JVM process.
+     */
+    @Parameter
+    private List<String> arguments;
+
     private MavenProject mavenProject;
     private DirectoryWatcher directoryWatcher;
     private Process process;
@@ -399,7 +405,6 @@ public class MicronautRunMojo extends AbstractMojo {
 
     }
 
-    //TODO prevent multiple restarts
     private void runApplication() throws IOException {
         String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
         List<String> args = new ArrayList<>();
@@ -408,6 +413,10 @@ public class MicronautRunMojo extends AbstractMojo {
         if (debug) {
             String suspend = debugSuspend ? "y" : "n";
             args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=" + suspend + ",address=" + debugPort);
+        }
+
+        if (arguments != null && arguments.size() > 0) {
+            args.addAll(arguments);
         }
 
         args.add("-classpath");
