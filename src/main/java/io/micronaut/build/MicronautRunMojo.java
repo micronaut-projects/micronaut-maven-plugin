@@ -141,10 +141,16 @@ public class MicronautRunMojo extends AbstractMojo {
     private List<FileSet> watches;
 
     /**
-     * List of additional arguments that will be passed to the JVM process.
+     * List of additional arguments that will be passed to the JVM process, such as Java agent properties.
      */
-    @Parameter
-    private List<String> arguments;
+    @Parameter(property = "mn.jvmArgs")
+    private List<String> jvmArguments;
+
+    /**
+     * List of additional arguments that will be passed to the application, after the class name.
+     */
+    @Parameter(property = "mn.appArgs")
+    private List<String> appArguments;
 
     private MavenProject mavenProject;
     private DirectoryWatcher directoryWatcher;
@@ -415,8 +421,8 @@ public class MicronautRunMojo extends AbstractMojo {
             args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=" + suspend + ",address=" + debugPort);
         }
 
-        if (arguments != null && arguments.size() > 0) {
-            args.addAll(arguments);
+        if (jvmArguments != null && jvmArguments.size() > 0) {
+            args.addAll(jvmArguments);
         }
 
         args.add("-classpath");
@@ -424,6 +430,10 @@ public class MicronautRunMojo extends AbstractMojo {
         args.add("-XX:TieredStopAtLevel=1");
         args.add("-Dcom.sun.management.jmxremote");
         args.add(mainClass);
+
+        if (appArguments != null && appArguments.size() > 0) {
+            args.addAll(appArguments);
+        }
 
         if (getLog().isDebugEnabled()) {
             getLog().debug("Running " + String.join(" ", args));
