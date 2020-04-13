@@ -152,6 +152,12 @@ public class MicronautRunMojo extends AbstractMojo {
     @Parameter(property = "mn.appArgs")
     private List<String> appArguments;
 
+    /**
+     * Whether to watch for changes, or finish the execution after the first run.
+     */
+    @Parameter(property = "mn.watch", defaultValue = "true")
+    private boolean watchForChanges;
+
     private MavenProject mavenProject;
     private DirectoryWatcher directoryWatcher;
     private Process process;
@@ -192,36 +198,40 @@ public class MicronautRunMojo extends AbstractMojo {
             Thread shutdownHook = new Thread(this::killProcess);
             Runtime.getRuntime().addShutdownHook(shutdownHook);
 
-            List<Path> pathsToWatch = new ArrayList<>(sourceDirectories.values());
-            pathsToWatch.add(projectRootDirectory);
+            if (watchForChanges) {
+                List<Path> pathsToWatch = new ArrayList<>(sourceDirectories.values());
+                pathsToWatch.add(projectRootDirectory);
 
-            if (watches != null && !watches.isEmpty()) {
-                for (FileSet fs : watches) {
-                    File directory = new File(fs.getDirectory());
-                    if (directory.exists()) {
-                        pathsToWatch.add(directory.toPath());
-                        //If neither includes nor excludes, add a default include
-                        if ((fs.getIncludes() == null || fs.getIncludes().isEmpty() ) && (fs.getExcludes() == null || fs.getExcludes().isEmpty() )) {
-                            fs.addInclude("**/*");
-                        }
-                    } else {
-                        if (getLog().isWarnEnabled()) {
-                            getLog().warn("The specified directory to watch doesn't exist: " + directory.getPath());
+                if (watches != null && !watches.isEmpty()) {
+                    for (FileSet fs : watches) {
+                        File directory = new File(fs.getDirectory());
+                        if (directory.exists()) {
+                            pathsToWatch.add(directory.toPath());
+                            //If neither includes nor excludes, add a default include
+                            if ((fs.getIncludes() == null || fs.getIncludes().isEmpty() ) && (fs.getExcludes() == null || fs.getExcludes().isEmpty() )) {
+                                fs.addInclude("**/*");
+                            }
+                        } else {
+                            if (getLog().isWarnEnabled()) {
+                                getLog().warn("The specified directory to watch doesn't exist: " + directory.getPath());
+                            }
                         }
                     }
                 }
-            }
 
-            this.directoryWatcher = DirectoryWatcher
-                    .builder()
-                    .paths(pathsToWatch)
-                    .listener(this::handleEvent)
-                    .build();
+                this.directoryWatcher = DirectoryWatcher
+                        .builder()
+                        .paths(pathsToWatch)
+                        .listener(this::handleEvent)
+                        .build();
 
-            if (getLog().isDebugEnabled()) {
-                getLog().debug("Watching for changes...");
+                if (getLog().isDebugEnabled()) {
+                    getLog().debug("Watching for changes...");
+                }
+                this.directoryWatcher.watch();
+            } else if (process != null && process.isAlive()) {
+                process.waitFor();
             }
-            this.directoryWatcher.watch();
         } catch (Exception e) {
             if (getLog().isDebugEnabled()) {
                 getLog().debug("Exception while watching for changes", e);
