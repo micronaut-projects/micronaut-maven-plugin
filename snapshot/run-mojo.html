@@ -166,14 +166,14 @@ Micronaut: Java, Kotlin and Groovy.</p></div>
           
 <tr class="b">
             
-<td><a href="#arguments">&lt;arguments&gt;</a></td>
+<td><a href="#appArguments">&lt;appArguments&gt;</a></td>
             
 <td>List</td>
             
 <td>1.0.0</td>
             
-<td>List of additional arguments that will be passed to the JVM
-process.<br /></td>
+<td>List of additional arguments that will be passed to the
+application, after the class name.<br /><b>User property is</b>: mn.appArgs.<br /></td>
           </tr>
           
 <tr class="a">
@@ -212,6 +212,18 @@ debug mode.<br /><b>Default value is</b>: false.<br /><b>User property is</b>: m
           
 <tr class="b">
             
+<td><a href="#jvmArguments">&lt;jvmArguments&gt;</a></td>
+            
+<td>List</td>
+            
+<td>1.0.0</td>
+            
+<td>List of additional arguments that will be passed to the JVM
+process, such as Java agent properties.<br /><b>User property is</b>: mn.jvmArgs.<br /></td>
+          </tr>
+          
+<tr class="a">
+            
 <td><a href="#mainClass">&lt;mainClass&gt;</a></td>
             
 <td>String</td>
@@ -222,7 +234,7 @@ debug mode.<br /><b>Default value is</b>: false.<br /><b>User property is</b>: m
 Maven Plugin</a>.<br /><b>Default value is</b>: ${exec.mainClass}.<br /></td>
           </tr>
           
-<tr class="a">
+<tr class="b">
             
 <td><a href="#targetDirectory">&lt;targetDirectory&gt;</a></td>
             
@@ -231,6 +243,18 @@ Maven Plugin</a>.<br /><b>Default value is</b>: ${exec.mainClass}.<br /></td>
 <td>1.0.0</td>
             
 <td>The project's target directory.<br /><b>Default value is</b>: ${project.build.directory}.<br /></td>
+          </tr>
+          
+<tr class="a">
+            
+<td><a href="#watchForChanges">&lt;watchForChanges&gt;</a></td>
+            
+<td>boolean</td>
+            
+<td>1.0.0</td>
+            
+<td>Whether to watch for changes, or finish the execution after the
+first run.<br /><b>Default value is</b>: true.<br /><b>User property is</b>: mn.watch.<br /></td>
           </tr>
           
 <tr class="b">
@@ -250,10 +274,10 @@ documentation for more details.<br /></td>
       <section>
 <h3><a name="Parameter_Details"></a>Parameter Details</h3>
         <section>
-<h4><a name="a.3Carguments.3E"></a><b><a name="arguments">&lt;arguments&gt;</a></b></h4>
+<h4><a name="a.3CappArguments.3E"></a><b><a name="appArguments">&lt;appArguments&gt;</a></b></h4>
         
-<div>List of additional arguments that will be passed to the JVM
-process.</div>
+<div>List of additional arguments that will be passed to the
+application, after the class name.</div>
         
 <ul>
           
@@ -262,6 +286,8 @@ process.</div>
 <li><b>Since</b>: 1.0.0</li>
           
 <li><b>Required</b>: No</li>
+          
+<li><b>User Property</b>: mn.appArgs</li>
         </ul><hr /></section><section>
 <h4><a name="a.3Cdebug.3E"></a><b><a name="debug">&lt;debug&gt;</a></b></h4>
         
@@ -312,6 +338,21 @@ debug mode.</div>
           
 <li><b>Default</b>: false</li>
         </ul><hr /></section><section>
+<h4><a name="a.3CjvmArguments.3E"></a><b><a name="jvmArguments">&lt;jvmArguments&gt;</a></b></h4>
+        
+<div>List of additional arguments that will be passed to the JVM
+process, such as Java agent properties.</div>
+        
+<ul>
+          
+<li><b>Type</b>: java.util.List</li>
+          
+<li><b>Since</b>: 1.0.0</li>
+          
+<li><b>Required</b>: No</li>
+          
+<li><b>User Property</b>: mn.jvmArgs</li>
+        </ul><hr /></section><section>
 <h4><a name="a.3CmainClass.3E"></a><b><a name="mainClass">&lt;mainClass&gt;</a></b></h4>
         
 <div>The main class of the application, as defined in the <a class="externalLink" href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec
@@ -340,6 +381,23 @@ Maven Plugin</a>.</div>
 <li><b>Required</b>: No</li>
           
 <li><b>Default</b>: ${project.build.directory}</li>
+        </ul><hr /></section><section>
+<h4><a name="a.3CwatchForChanges.3E"></a><b><a name="watchForChanges">&lt;watchForChanges&gt;</a></b></h4>
+        
+<div>Whether to watch for changes, or finish the execution after the
+first run.</div>
+        
+<ul>
+          
+<li><b>Type</b>: boolean</li>
+          
+<li><b>Since</b>: 1.0.0</li>
+          
+<li><b>Required</b>: No</li>
+          
+<li><b>User Property</b>: mn.watch</li>
+          
+<li><b>Default</b>: true</li>
         </ul><hr /></section><section>
 <h4><a name="a.3Cwatches.3E"></a><b><a name="watches">&lt;watches&gt;</a></b></h4>
         
