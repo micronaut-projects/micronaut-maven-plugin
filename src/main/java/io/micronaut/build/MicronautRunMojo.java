@@ -141,7 +141,9 @@ public class MicronautRunMojo extends AbstractMojo {
     private List<FileSet> watches;
 
     /**
-     * List of additional arguments that will be passed to the JVM process, such as Java agent properties.
+     * <p>List of additional arguments that will be passed to the JVM process, such as Java agent properties.</p>
+     *
+     * <p>When using the command line, user properties will be passed through, eg: <code>mnv mn:run -Dmicronaut.environments=dev</code>.</p>
      */
     @Parameter(property = "mn.jvmArgs")
     private List<String> jvmArguments;
@@ -433,6 +435,10 @@ public class MicronautRunMojo extends AbstractMojo {
 
         if (jvmArguments != null && jvmArguments.size() > 0) {
             args.addAll(jvmArguments);
+        }
+
+        if (mavenSession.getUserProperties().size() > 0) {
+            mavenSession.getUserProperties().forEach((k, v) -> args.add("-D" + k + "=" + v));
         }
 
         args.add("-classpath");
