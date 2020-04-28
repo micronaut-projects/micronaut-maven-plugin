@@ -22,4 +22,4 @@ jobs:
           name: Micronaut Maven Plugin ${{ steps.release_notes.outputs.next_version }}
           tag: v${{ steps.release_notes.outputs.next_version }}
           bodyFile: CHANGELOG.md
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_TOKEN }}
