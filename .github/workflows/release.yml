@@ -83,6 +83,22 @@ jobs:
           echo $release_url
           curl -s --request PATCH -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/json" $release_url --data "{\"draft\": false}"
 
+      - name: Checkout micronaut-core
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          repository: micronaut-projects/micronaut-core
+          ref: master
+          path: micronaut-core
+
+      - name: Update BOM
+        uses: micronaut-projects/github-actions/update-bom@master
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          branch: master
+          property: micronautMavenPluginVersion # Refers to the key in gradle.properties
+          version: ${{ steps.release_version.outputs.release_version }}
+
       - name: Rollback release
         if: failure()
         run: mvn release:rollback
