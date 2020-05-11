@@ -98,7 +98,6 @@ jobs:
           branch: master
           properties: |
             micronautMavenPluginVersion=${{ steps.release_version.outputs.release_version }}
-          version: ${{ steps.release_version.outputs.release_version }}
 
       - name: Rollback release
         if: failure()
