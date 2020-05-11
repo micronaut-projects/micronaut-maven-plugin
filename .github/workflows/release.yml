@@ -96,7 +96,8 @@ jobs:
         with:
           token: ${{ secrets.GH_TOKEN }}
           branch: master
-          property: micronautMavenPluginVersion # Refers to the key in gradle.properties
+          properties: |
+            micronautMavenPluginVersion=${{ steps.release_version.outputs.release_version }}
           version: ${{ steps.release_version.outputs.release_version }}
 
       - name: Rollback release
