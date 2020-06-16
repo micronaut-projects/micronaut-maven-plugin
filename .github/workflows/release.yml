@@ -93,10 +93,11 @@ jobs:
 
       - name: Update BOM
         uses: micronaut-projects/github-actions/update-bom@master
+        continue-on-error: true
         with:
           token: ${{ secrets.GH_TOKEN }}
-          branch: master
-          properties: |
+        env: 
+          bomProperties: |
             micronautMavenPluginVersion=${{ steps.release_version.outputs.release_version }}
 
       - name: Rollback release
