@@ -109,7 +109,7 @@ public class MicronautRunMojo extends AbstractMojo {
      * The main class of the application, as defined in the
      * <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.
      */
-    @Parameter(defaultValue = "${exec.mainClass}")
+    @Parameter(defaultValue = "${exec.mainClass}", required = true)
     private String mainClass;
 
     /**
