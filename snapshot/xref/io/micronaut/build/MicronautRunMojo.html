@@ -117,7 +117,7 @@
 <a class="jxr_linenumber" name="L109" href="#L109">109</a> <em class="jxr_javadoccomment">     * The main class of the application, as defined in the</em>
 <a class="jxr_linenumber" name="L110" href="#L110">110</a> <em class="jxr_javadoccomment">     * &lt;a href="<a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html" target="alexandria_uri">https://www.mojohaus.org/exec-maven-plugin/java-mojo.html</a>#mainClass"&gt;Exec Maven Plugin&lt;/a&gt;.</em>
 <a class="jxr_linenumber" name="L111" href="#L111">111</a> <em class="jxr_javadoccomment">     */</em>
-<a class="jxr_linenumber" name="L112" href="#L112">112</a>     @Parameter(defaultValue = <span class="jxr_string">"${exec.mainClass}"</span>)
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>     @Parameter(defaultValue = <span class="jxr_string">"${exec.mainClass}"</span>, required = <strong class="jxr_keyword">true</strong>)
 <a class="jxr_linenumber" name="L113" href="#L113">113</a>     <strong class="jxr_keyword">private</strong> String mainClass;
 <a class="jxr_linenumber" name="L114" href="#L114">114</a> 
 <a class="jxr_linenumber" name="L115" href="#L115">115</a>     <em class="jxr_javadoccomment">/**</em>
