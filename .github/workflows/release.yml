@@ -41,7 +41,7 @@ jobs:
           git push origin :refs/tags/v${{ steps.release_version.outputs.release_version }}
 
       - name: Setup SSH key
-        uses: webfactory/ssh-agent@v0.2.0
+        uses: webfactory/ssh-agent@v0.4.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
