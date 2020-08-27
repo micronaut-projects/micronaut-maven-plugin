@@ -1,0 +1,3 @@
+=== Release History
+
+To see the release history, check the https://github.com/micronaut-projects/micronaut-maven-plugin/releases[GitHub Releases] page.
