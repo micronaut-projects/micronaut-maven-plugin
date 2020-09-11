@@ -52,7 +52,7 @@ import static org.twdata.maven.mojoexecutor.MojoExecutor.*;
  * @since 1.0.0
  */
 @Mojo(name = "run", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PREPARE_PACKAGE)
-public class MicronautRunMojo extends AbstractMojo {
+public class RunMojo extends AbstractMojo {
 
     /**
      * @see <a href="https://maven.apache.org/ref/3.6.3/maven-core/lifecycles.html#default_Lifecycle">default Lifecycle</a>
@@ -172,8 +172,8 @@ public class MicronautRunMojo extends AbstractMojo {
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    public MicronautRunMojo(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager,
-                            ProjectDependenciesResolver resolver, ProjectBuilder projectBuilder, ToolchainManager toolchainManager) {
+    public RunMojo(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager,
+                   ProjectDependenciesResolver resolver, ProjectBuilder projectBuilder, ToolchainManager toolchainManager) {
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
         this.resolver = resolver;
