@@ -83,7 +83,7 @@
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
             <version>${maven.version}</version>
-            <scope>provided</scope>
+<!--            <scope>provided</scope>-->
         </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>
@@ -115,12 +115,6 @@
             <artifactId>mojo-executor</artifactId>
             <version>2.3.1</version>
         </dependency>
-        <!--    <dependency>-->
-        <!--      <groupId>org.apache.maven.plugins</groupId>-->
-        <!--      <artifactId>maven-compiler-plugin</artifactId>-->
-        <!--      <version>3.8.1</version>-->
-        <!--      <scope>provided</scope>-->
-        <!--    </dependency>-->
         <dependency>
             <groupId>org.apache.maven.resolver</groupId>
             <artifactId>maven-resolver-util</artifactId>
@@ -132,6 +126,11 @@
             <version>0.10.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+            <version>0.33.0</version>
+        </dependency>
         <!-- JUnit -->
         <dependency>
             <groupId>junit</groupId>

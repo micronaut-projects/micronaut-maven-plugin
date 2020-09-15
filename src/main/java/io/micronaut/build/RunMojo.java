@@ -4,8 +4,6 @@ import io.methvin.watcher.DirectoryChangeEvent;
 import io.methvin.watcher.DirectoryWatcher;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
-import org.apache.maven.model.Plugin;
-import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -18,7 +16,6 @@ import org.apache.maven.toolchain.Toolchain;
 import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.codehaus.plexus.util.Os;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyFilter;
@@ -35,6 +32,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.micronaut.build.PluginUtils.*;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isReadable;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
@@ -76,10 +74,6 @@ public class RunMojo extends AbstractMojo {
             "install",
             "deploy");
 
-    private static final String MAVEN_COMPILER_PLUGIN = "org.apache.maven.plugins:maven-compiler-plugin";
-    private static final String MAVEN_RESOURCES_PLUGIN = "org.apache.maven.plugins:maven-resources-plugin";
-    private static final String GMAVEN_PLUS_PLUGIN = "org.codehaus.gmavenplus:gmavenplus-plugin";
-    private static final String KOTLIN_MAVEN_PLUGIN = "org.jetbrains.kotlin:kotlin-maven-plugin";
     private static final int LAST_COMPILATION_THRESHOLD = 500;
     private static final String JAVA = "java";
     private static final String GROOVY = "groovy";
@@ -514,29 +508,7 @@ public class RunMojo extends AbstractMojo {
     }
 
     private void executeGoal(String pluginKey, String goal) throws MojoExecutionException {
-        final Plugin plugin = mavenProject.getPlugin(pluginKey);
-        if (plugin != null) {
-            AtomicReference<String> executionId = new AtomicReference<>(goal);
-            if (goal != null && goal.length() > 0 && goal.indexOf('#') > -1) {
-                int pos = goal.indexOf('#');
-                executionId.set(goal.substring(pos + 1));
-                goal = goal.substring(0, pos);
-            }
-            Optional<PluginExecution> execution = plugin
-                    .getExecutions()
-                    .stream()
-                    .filter(e -> e.getId().equals(executionId.get()))
-                    .findFirst();
-            Xpp3Dom configuration;
-            if (execution.isPresent()) {
-                configuration = (Xpp3Dom) execution.get().getConfiguration();
-            } else if (plugin.getConfiguration() != null) {
-                configuration = (Xpp3Dom) plugin.getConfiguration();
-            } else {
-                configuration = configuration();
-            }
-            executeMojo(plugin, goal(goal), configuration, executionEnvironment);
-        }
+        PluginUtils.executeGoal(this.executionEnvironment, this.mavenProject, pluginKey, goal);
     }
 
     private void killProcess() {

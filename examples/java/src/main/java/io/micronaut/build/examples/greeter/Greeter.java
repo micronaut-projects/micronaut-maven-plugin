@@ -2,8 +2,6 @@ package io.micronaut.build.examples.greeter;
 
 //import org.apache.commons.text.WordUtils;
 
-import org.apache.commons.text.WordUtils;
-
 /**
  * TODO: javadoc
  *
@@ -13,6 +11,6 @@ import org.apache.commons.text.WordUtils;
 public class Greeter {
 
     public String greet(String name) {
-        return "HELLO " + WordUtils.capitalize(name);
+        return "HELLO " + name;
     }
 }
