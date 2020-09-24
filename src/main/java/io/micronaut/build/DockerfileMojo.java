@@ -1,13 +1,5 @@
 package io.micronaut.build;
 
-import io.fabric8.maven.docker.AbstractDockerMojo;
-import io.fabric8.maven.docker.access.ExecException;
-import io.fabric8.maven.docker.assembly.DockerFileBuilder;
-import io.fabric8.maven.docker.config.Arguments;
-import io.fabric8.maven.docker.config.AssemblyConfiguration;
-import io.fabric8.maven.docker.config.BuildImageConfiguration;
-import io.fabric8.maven.docker.config.ImageConfiguration;
-import io.fabric8.maven.docker.service.ServiceHub;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.execution.MavenSession;
@@ -18,6 +10,16 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.jkube.kit.build.service.docker.ServiceHub;
+import org.eclipse.jkube.kit.build.service.docker.access.ExecException;
+import org.eclipse.jkube.kit.common.AssemblyConfiguration;
+import org.eclipse.jkube.kit.config.image.ImageConfiguration;
+import org.eclipse.jkube.kit.config.image.ImageConfiguration.ImageConfigurationBuilder;
+import org.eclipse.jkube.kit.config.image.build.Arguments;
+import org.eclipse.jkube.kit.config.image.build.BuildConfiguration;
+import org.eclipse.jkube.kit.config.image.build.BuildConfiguration.BuildConfigurationBuilder;
+import org.eclipse.jkube.kit.config.image.build.DockerFileBuilder;
+import org.eclipse.jkube.maven.plugin.mojo.build.AbstractDockerMojo;
 import org.twdata.maven.mojoexecutor.MojoExecutor;
 
 import javax.inject.Inject;
@@ -64,7 +66,12 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     @Override
-    protected void executeInternal(ServiceHub serviceHub) throws IOException, ExecException, MojoExecutionException {
+    public List<ImageConfiguration> customizeConfig(List<ImageConfiguration> configs) {
+        return configs;
+    }
+
+    @Override
+    protected void executeInternal() throws IOException, MojoExecutionException {
         if (micronautRuntime == null) {
             micronautRuntime = MicronautRuntime.NONE;
         }
@@ -85,9 +92,10 @@ public class DockerfileMojo extends AbstractDockerMojo {
                 .filter(ports -> !ports.isEmpty())
                 .orElse(Collections.singletonList("8080"));
 
-        BuildImageConfiguration.Builder builder = new BuildImageConfiguration.Builder(
-                imageConfiguration.map(ImageConfiguration::getBuildConfiguration).orElse(null)
-        );
+        BuildConfigurationBuilder builder = imageConfiguration
+                .map(ImageConfiguration::getBuildConfiguration)
+                .map(BuildConfiguration::toBuilder)
+                .orElse(BuildConfiguration.builder());
 
         switch (micronautRuntime) {
             case ORACLE_FUNCTION:
@@ -96,23 +104,23 @@ public class DockerfileMojo extends AbstractDockerMojo {
 
                 builder.from(configuredFrom.orElse("fnproject/fn-java-fdk:" + determineProjectFnVersion()))
                         .workdir(workdir)
-                        .cmd(Arguments.Builder.get().withParam(command).build());
+                        .cmd(Arguments.builder().execArgument(command).build());
             break;
             default:
-                Arguments.Builder argBuilder = Arguments.Builder.get()
-                        .withParam("java");
+                Arguments.ArgumentsBuilder argBuilder = Arguments.builder()
+                        .execArgument("java");
                 if (args != null && args.size() > 0) {
                     for (String arg : args) {
-                        argBuilder.withParam(arg);
+                        argBuilder.execArgument(arg);
                     }
                 }
                 builder.from(configuredFrom.orElse("openjdk:14-alpine"))
                         .workdir("/home/app")
                         .ports(portsToExpose)
                         .entryPoint(argBuilder
-                                .withParam("java") //TODO args
-                                .withParam("-jar")
-                                .withParam("/home/app/application.jar")
+                                .execArgument("java") //TODO args
+                                .execArgument("-jar")
+                                .execArgument("/home/app/application.jar")
                                 .build()
                         );
 
@@ -142,10 +150,10 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     /*
-     * Source: https://github.com/fabric8io/docker-maven-plugin/blob/v0.34.0/src/main/java/io/fabric8/maven/docker/assembly/DockerAssemblyManager.java#L408
+     * Source: https://github.com/eclipse/jkube/blob/v1.0.0/jkube-kit/build/api/src/main/java/org/eclipse/jkube/kit/build/api/assembly/AssemblyManager.java#L247
      */
     @SuppressWarnings("deprecation")
-    DockerFileBuilder createDockerFileBuilder(BuildImageConfiguration buildConfig, AssemblyConfiguration assemblyConfig) {
+    DockerFileBuilder createDockerFileBuilder(BuildConfiguration buildConfig, AssemblyConfiguration assemblyConfig) {
         DockerFileBuilder builder =
                 new DockerFileBuilder()
                         .env(buildConfig.getEnv())
@@ -160,8 +168,15 @@ public class DockerfileMojo extends AbstractDockerMojo {
         if (buildConfig.getWorkdir() != null) {
             builder.workdir(buildConfig.getWorkdir());
         }
+        if (assemblyConfig != null) {
+            builder.add(assemblyConfig.getTargetDir(), "")
+                    .basedir(assemblyConfig.getTargetDir())
+                    .assemblyUser(assemblyConfig.getUser())
+                    .exportTargetDir(assemblyConfig.getExportTargetDir());
+        } else {
+            builder.exportTargetDir(false);
+        }
 
-        builder.exportTargetDir(false);
         builder.baseImage(buildConfig.getFrom());
 
         if (buildConfig.getHealthCheck() != null) {
@@ -170,9 +185,6 @@ public class DockerfileMojo extends AbstractDockerMojo {
 
         if (buildConfig.getCmd() != null){
             builder.cmd(buildConfig.getCmd());
-        } else if (buildConfig.getCommand() != null) {
-            Arguments args = Arguments.Builder.get().withShell(buildConfig.getCommand()).build();
-            builder.cmd(args);
         }
 
         if (buildConfig.getEntryPoint() != null){
