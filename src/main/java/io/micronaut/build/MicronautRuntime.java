@@ -1,5 +1,6 @@
 package io.micronaut.build;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -11,54 +12,67 @@ import java.util.Map;
  * @since 1.1
  */
 public enum MicronautRuntime {
+
     /**
      * No specific runtime specified.
      */
     NONE(),
+
     /**
      * Default packaging.
      */
-    NETTY("io.micronaut:micronaut-http-server-netty"),
+    NETTY(),
+
     /**
      * Tomcat server.
      */
-    TOMCAT("io.micronaut.servlet:micronaut-http-server-tomcat"),
+    TOMCAT(),
+
     /**
      * Jetty server.
      */
-    JETTY("io.micronaut.servlet:micronaut-http-server-jetty"),
+    JETTY(),
+
     /**
      * Undertow server.
      */
-    UNDERTOW("io.micronaut.servlet:micronaut-http-server-undertow"),
+    UNDERTOW(),
+
     /**
      * AWS lambda packaged as a Jar file.
      */
-    LAMBDA(),
+    LAMBDA(DockerBuildStrategy.LAMBDA),
+
     /**
      * Oracle Cloud Function, packaged as a docker container.
      */
-    ORACLE_FUNCTION(),
+    ORACLE_FUNCTION(DockerBuildStrategy.ORACLE_FUNCTION),
+
     /**
      * Google Cloud Function, packaged as a Fat JAR.
      */
     GOOGLE_FUNCTION(),
+
     /**
      * Azure Cloud Function.
      */
     AZURE_FUNCTION();
 
-    private final Map<String, List<String>> dependencies;
+    private final DockerBuildStrategy buildStrategy;
 
-    MicronautRuntime(String... dependencies) {
-        this.dependencies = Collections.emptyMap();
+    MicronautRuntime() {
+        this.buildStrategy = DockerBuildStrategy.DEFAULT;
     }
 
-    MicronautRuntime(Map<String, List<String>> dependencies) {
-        this.dependencies = dependencies;
+    MicronautRuntime(DockerBuildStrategy buildStrategy) {
+        this.buildStrategy = buildStrategy;
     }
 
-    public Map<String, List<String>> getDependencies() {
-        return dependencies;
+    /**
+     * @return The docker build strategy
+     */
+    public DockerBuildStrategy getBuildStrategy() {
+        return buildStrategy;
     }
+
 }

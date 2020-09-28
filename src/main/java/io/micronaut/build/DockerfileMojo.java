@@ -97,7 +97,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
                 .map(BuildConfiguration::toBuilder)
                 .orElse(BuildConfiguration.builder());
 
-        switch (micronautRuntime) {
+        switch (micronautRuntime.getBuildStrategy()) {
             case ORACLE_FUNCTION:
                 String workdir = "/function";
                 String command = "io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest";
@@ -106,7 +106,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
                         .workdir(workdir)
                         .cmd(Arguments.builder().execArgument(command).build());
             break;
-            default:
+            case LAMBDA:
                 Arguments.ArgumentsBuilder argBuilder = Arguments.builder()
                         .execArgument("java");
                 if (args != null && args.size() > 0) {
@@ -126,82 +126,23 @@ public class DockerfileMojo extends AbstractDockerMojo {
 
         }
 
-//        PluginUtils.executeGoal(executionEnvironment, mavenProject, "org.apache.maven.plugins", "maven-dependency-plugin", "3.1.2", "copy-dependencies");
-//        PluginUtils.executeGoal(executionEnvironment, mavenProject, PluginUtils.MAVEN_RESOURCES_PLUGIN, "copy-resources", configuration(
-//                element(name("outputDirectory"), "${basedir}/target/resources"),
-//                element(name("resources"),
-//                    element(name("resource"),
-//                        element(name("directory"), "${basedir}/src/main/resources")
-//                    )
-//                )
-//        ));
-
         builder.optimise(true);
-        DockerFileBuilder dfb = createDockerFileBuilder(builder.build(), null);
+        DockerFileBuilder dfb = PluginUtils.createDockerFileBuilder(builder.build(), null);
 
         dfb.basedir("/");
-        dfb.add("target/dependency/*.jar", "/function/app/");
-        dfb.add("target/resources/*", "/function/app/");
-        dfb.add("target/original-" + mavenProject.getArtifactId() + "-" + mavenProject.getVersion() + ".jar", "/function/app/");
+        dfb.add("target/layers/libs/*.jar", "/function/app/");
+        dfb.add("target/layers/resources/*", "/function/app/");
+        dfb.add("target/layers/" + mavenProject.getArtifactId() + "-" + mavenProject.getVersion() + ".jar", "/function/app/");
 
         targetDirectory.mkdir();
         File result = dfb.write(targetDirectory);
         getLog().info("Dockerfile written to: " + result.getAbsolutePath());
     }
 
-    /*
-     * Source: https://github.com/eclipse/jkube/blob/v1.0.0/jkube-kit/build/api/src/main/java/org/eclipse/jkube/kit/build/api/assembly/AssemblyManager.java#L247
-     */
-    @SuppressWarnings("deprecation")
-    DockerFileBuilder createDockerFileBuilder(BuildConfiguration buildConfig, AssemblyConfiguration assemblyConfig) {
-        DockerFileBuilder builder =
-                new DockerFileBuilder()
-                        .env(buildConfig.getEnv())
-                        .labels(buildConfig.getLabels())
-                        .expose(buildConfig.getPorts())
-                        .run(buildConfig.getRunCmds())
-                        .volumes(buildConfig.getVolumes())
-                        .user(buildConfig.getUser());
-        if (buildConfig.getMaintainer() != null) {
-            builder.maintainer(buildConfig.getMaintainer());
-        }
-        if (buildConfig.getWorkdir() != null) {
-            builder.workdir(buildConfig.getWorkdir());
-        }
-        if (assemblyConfig != null) {
-            builder.add(assemblyConfig.getTargetDir(), "")
-                    .basedir(assemblyConfig.getTargetDir())
-                    .assemblyUser(assemblyConfig.getUser())
-                    .exportTargetDir(assemblyConfig.getExportTargetDir());
-        } else {
-            builder.exportTargetDir(false);
-        }
-
-        builder.baseImage(buildConfig.getFrom());
-
-        if (buildConfig.getHealthCheck() != null) {
-            builder.healthCheck(buildConfig.getHealthCheck());
-        }
-
-        if (buildConfig.getCmd() != null){
-            builder.cmd(buildConfig.getCmd());
-        }
-
-        if (buildConfig.getEntryPoint() != null){
-            builder.entryPoint(buildConfig.getEntryPoint());
-        }
-
-        if (buildConfig.optimise()) {
-            builder.optimise();
-        }
-
-        return builder;
-    }
-
     private String determineProjectFnVersion() {
         ArtifactVersion javaVersion = new DefaultArtifactVersion(System.getProperty("java.version"));
         if (javaVersion.getMajorVersion() >= 11) {
-            return "jre-latest";
+            return "jre11-latest";
         } else {
             return "latest";
         }
