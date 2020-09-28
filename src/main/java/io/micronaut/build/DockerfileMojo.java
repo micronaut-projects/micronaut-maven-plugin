@@ -1,35 +1,19 @@
 package io.micronaut.build;
 
-import org.apache.maven.artifact.versioning.ArtifactVersion;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
-import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.BuildPluginManager;
-import org.apache.maven.plugin.MojoExecutionException;
+import io.micronaut.build.services.DockerService;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-import org.eclipse.jkube.kit.build.service.docker.ServiceHub;
-import org.eclipse.jkube.kit.build.service.docker.access.ExecException;
-import org.eclipse.jkube.kit.common.AssemblyConfiguration;
 import org.eclipse.jkube.kit.config.image.ImageConfiguration;
-import org.eclipse.jkube.kit.config.image.ImageConfiguration.ImageConfigurationBuilder;
-import org.eclipse.jkube.kit.config.image.build.Arguments;
-import org.eclipse.jkube.kit.config.image.build.BuildConfiguration;
-import org.eclipse.jkube.kit.config.image.build.BuildConfiguration.BuildConfigurationBuilder;
 import org.eclipse.jkube.kit.config.image.build.DockerFileBuilder;
 import org.eclipse.jkube.maven.plugin.mojo.build.AbstractDockerMojo;
-import org.twdata.maven.mojoexecutor.MojoExecutor;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-
-import static org.twdata.maven.mojoexecutor.MojoExecutor.*;
 
 /**
  * TODO: javadoc
@@ -44,7 +28,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
     public static final String MAVEN_DEPENDENCY_PLUGIN = "org.apache.maven.plugins:maven-dependency-plugin:3.1.2";
 
     private final MavenProject mavenProject;
-    private final MojoExecutor.ExecutionEnvironment executionEnvironment;
+    private final DockerService dockerService;
 
     @Parameter(defaultValue = "${mn.runtime}")
     private MicronautRuntime micronautRuntime;
@@ -60,9 +44,9 @@ public class DockerfileMojo extends AbstractDockerMojo {
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    public DockerfileMojo(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager) {
+    public DockerfileMojo(MavenProject mavenProject, DockerService dockerService) {
         this.mavenProject = mavenProject;
-        this.executionEnvironment = executionEnvironment(mavenProject, mavenSession, pluginManager);
+        this.dockerService = dockerService;
     }
 
     @Override
@@ -71,81 +55,40 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     @Override
-    protected void executeInternal() throws IOException, MojoExecutionException {
+    protected void executeInternal() throws IOException {
         if (micronautRuntime == null) {
             micronautRuntime = MicronautRuntime.NONE;
         }
 
         List<ImageConfiguration> resolvedImages = getResolvedImages();
-        Optional<ImageConfiguration> imageConfiguration = Optional.empty();
+        ImageConfiguration userDefinedImageConfiguration = new ImageConfiguration();
         if (resolvedImages.size() > 0) {
             if (resolvedImages.size() > 1) {
                 if (getLog().isWarnEnabled()) {
                     getLog().warn("Only one image configuration should be defined. The first one will be used");
                 }
             }
-            imageConfiguration = Optional.of(resolvedImages.get(0));
-        }
-        Optional<String> configuredFrom = imageConfiguration.map(ic -> ic.getBuildConfiguration().getFrom());
-        List<String> portsToExpose = imageConfiguration
-                .map(ic -> ic.getBuildConfiguration().getPorts())
-                .filter(ports -> !ports.isEmpty())
-                .orElse(Collections.singletonList("8080"));
-
-        BuildConfigurationBuilder builder = imageConfiguration
-                .map(ImageConfiguration::getBuildConfiguration)
-                .map(BuildConfiguration::toBuilder)
-                .orElse(BuildConfiguration.builder());
-
-        switch (micronautRuntime.getBuildStrategy()) {
-            case ORACLE_FUNCTION:
-                String workdir = "/function";
-                String command = "io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest";
-
-                builder.from(configuredFrom.orElse("fnproject/fn-java-fdk:" + determineProjectFnVersion()))
-                        .workdir(workdir)
-                        .cmd(Arguments.builder().execArgument(command).build());
-            break;
-            case LAMBDA:
-                Arguments.ArgumentsBuilder argBuilder = Arguments.builder()
-                        .execArgument("java");
-                if (args != null && args.size() > 0) {
-                    for (String arg : args) {
-                        argBuilder.execArgument(arg);
-                    }
-                }
-                builder.from(configuredFrom.orElse("openjdk:14-alpine"))
-                        .workdir("/home/app")
-                        .ports(portsToExpose)
-                        .entryPoint(argBuilder
-                                .execArgument("java") //TODO args
-                                .execArgument("-jar")
-                                .execArgument("/home/app/application.jar")
-                                .build()
-                        );
-
+            userDefinedImageConfiguration = resolvedImages.get(0);
         }
 
-        builder.optimise(true);
-        DockerFileBuilder dfb = PluginUtils.createDockerFileBuilder(builder.build(), null);
-
+        ImageConfiguration imageConfiguration = dockerService.createImageConfiguration(userDefinedImageConfiguration, micronautRuntime, args, targetDirectory);
+        DockerFileBuilder dfb = PluginUtils.createDockerFileBuilder(imageConfiguration.getBuild(), null);
         dfb.basedir("/");
-        dfb.add("target/layers/libs/*.jar", "/function/app/");
-        dfb.add("target/layers/resources/*", "/function/app/");
-        dfb.add("target/layers/" + mavenProject.getArtifactId() + "-" + mavenProject.getVersion() + ".jar", "/function/app/");
 
-        targetDirectory.mkdir();
+        if (micronautRuntime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION) {
+            dfb.add("target/layers/libs/*.jar", "/function/app");
+            dfb.add("target/layers/resources/*", "/function/app");
+            dfb.add("target/layers/" + mavenProject.getArtifactId() + "-" + mavenProject.getVersion() + ".jar", "/function/app/application.jar");
+        } else {
+            dfb.add("target/layers/libs/*.jar", "/home/app/libs");
+            dfb.add("target/layers/resources/*", "/home/app/resources");
+            dfb.add("target/layers/" + mavenProject.getArtifactId() + "-" + mavenProject.getVersion() + ".jar", "/home/app/application.jar");
+        }
+
+        targetDirectory.mkdirs();
         File result = dfb.write(targetDirectory);
         getLog().info("Dockerfile written to: " + result.getAbsolutePath());
     }
 
-    private String determineProjectFnVersion() {
-        ArtifactVersion javaVersion = new DefaultArtifactVersion(System.getProperty("java.version"));
-        if (javaVersion.getMajorVersion() >= 11) {
-            return "jre11-latest";
-        } else {
-            return "latest";
-        }
-    }
 
 }

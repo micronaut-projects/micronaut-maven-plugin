@@ -85,9 +85,9 @@
         <groupId>io.micronaut.build</groupId>
         <artifactId>micronaut-maven-plugin</artifactId>
         <version>1.0.1.BUILD-SNAPSHOT</version>
-<!--        <configuration>-->
-<!--          <micronautRuntime>ORACLE_FUNCTION</micronautRuntime>-->
-<!--        </configuration>-->
+        <configuration>
+          <micronautRuntime>ORACLE_FUNCTION</micronautRuntime>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
