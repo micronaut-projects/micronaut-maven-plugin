@@ -1,5 +1,7 @@
 package io.micronaut.build;
 
+import io.micronaut.build.services.CompilerService;
+import io.micronaut.build.services.ExecutorService;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.execution.MavenSession;
@@ -10,24 +12,20 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-import org.eclipse.jkube.kit.common.Assembly;
 import org.eclipse.jkube.kit.common.AssemblyConfiguration;
-import org.eclipse.jkube.kit.common.AssemblyFileSet;
 import org.eclipse.jkube.kit.config.image.ImageConfiguration;
 import org.eclipse.jkube.kit.config.image.build.Arguments;
 import org.eclipse.jkube.kit.config.image.build.BuildConfiguration;
 import org.eclipse.jkube.kit.config.image.build.DockerFileBuilder;
-import org.eclipse.jkube.kit.config.image.build.JKubeBuildStrategy;
-import org.eclipse.jkube.maven.plugin.mojo.build.AbstractDockerMojo;
 import org.eclipse.jkube.maven.plugin.mojo.build.BuildMojo;
 import org.twdata.maven.mojoexecutor.MojoExecutor;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
 
+import static io.micronaut.build.services.CompilerService.MAVEN_RESOURCES_PLUGIN;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.*;
 
 /**
@@ -62,28 +60,35 @@ public class DockerBuildMojo extends BuildMojo {
     private final MavenProject mavenProject;
     private final MavenSession mavenSession;
     private final MojoExecutor.ExecutionEnvironment executionEnvironment;
-    private Map<String, Path> sourceDirectories;
+    private final CompilerService compilerService;
+    private final ExecutorService executorService;
 
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    public DockerBuildMojo(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager) {
+    public DockerBuildMojo(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager, CompilerService compilerService, ExecutorService executorService) {
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
+        this.compilerService = compilerService;
+        this.executorService = executorService;
         this.executionEnvironment = executionEnvironment(mavenProject, mavenSession, pluginManager);
         System.setProperty("org.slf4j.simpleLogger.log.org.apache.maven.plugins.dependency", "warn");
     }
 
     @Override
     public void executeInternal() throws MojoExecutionException {
-        resolveSourceDirectories();
-        if (PluginUtils.needsCompilation(mavenSession)) {
-            compileProject();
+        if (compilerService.needsCompilation()) {
+            compilerService.compileProject(false);
         }
-        PluginUtils.executeGoal(executionEnvironment, mavenProject, "org.apache.maven.plugins", "maven-dependency-plugin", "3.1.2", "copy-dependencies", configuration(
+
+        executorService.executeGoal("org.apache.maven.plugins", "maven-dependency-plugin", "3.1.2", "copy-dependencies", configuration(
                 element(name("outputDirectory"), "${project.build.directory}/layers/libs")
         ));
-        PluginUtils.executeGoal(executionEnvironment, mavenProject, PluginUtils.MAVEN_RESOURCES_PLUGIN, "copy-resources", configuration(
+
+        executorService.executeGoal("org.apache.maven.plugins", "maven-dependency-plugin", "3.1.2", "copy-dependencies", configuration(
+                element(name("outputDirectory"), "${project.build.directory}/layers/libs")
+        ));
+        executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, "copy-resources", configuration(
                 element(name("outputDirectory"), "${project.build.directory}/layers/resources"),
                 element(name("resources"),
                     element(name("resource"),
@@ -91,7 +96,7 @@ public class DockerBuildMojo extends BuildMojo {
                     )
                 )
         ));
-        PluginUtils.executeGoal(executionEnvironment, mavenProject, "org.apache.maven.plugins:maven-jar-plugin", "jar", configuration(
+        executorService.executeGoal("org.apache.maven.plugins:maven-jar-plugin", "jar", configuration(
                 element(name("outputDirectory"), "${project.build.directory}/layers/"),
                 element(name("archive"),
                         element("addMavenDescriptor", "false"),
@@ -212,12 +217,5 @@ public class DockerBuildMojo extends BuildMojo {
         }
     }
 
-    private void compileProject() {
-        PluginUtils.compileProject(getLog(), sourceDirectories, executionEnvironment, mavenProject, false);
-    }
-
-    private void resolveSourceDirectories() {
-        this.sourceDirectories = PluginUtils.resolveSourceDirectories(getLog(), mavenProject);
-    }
 
 }

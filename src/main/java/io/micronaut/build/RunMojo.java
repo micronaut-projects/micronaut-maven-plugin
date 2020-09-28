@@ -2,6 +2,8 @@ package io.micronaut.build;
 
 import io.methvin.watcher.DirectoryChangeEvent;
 import io.methvin.watcher.DirectoryWatcher;
+import io.micronaut.build.services.CompilerService;
+import io.micronaut.build.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.plugin.AbstractMojo;
@@ -32,7 +34,6 @@ import java.util.stream.Collectors;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isReadable;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
-import static org.twdata.maven.mojoexecutor.MojoExecutor.*;
 
 /**
  * <p>Executes a Micronaut application in development mode.</p>
@@ -45,13 +46,12 @@ import static org.twdata.maven.mojoexecutor.MojoExecutor.*;
  * @author Álvaro Sánchez-Mariscal
  * @since 1.0.0
  */
+@SuppressWarnings("unused")
 @Mojo(name = "run", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PREPARE_PACKAGE)
 public class RunMojo extends AbstractMojo {
 
     private static final int LAST_COMPILATION_THRESHOLD = 500;
     private static final String JAVA = "java";
-    private static final String GROOVY = "groovy";
-    private static final String KOTLIN = "kotlin";
     private static final List<String> DEFAULT_EXCLUDES;
 
     static {
@@ -63,9 +63,10 @@ public class RunMojo extends AbstractMojo {
     private final MavenSession mavenSession;
     private final ProjectDependenciesResolver resolver;
     private final ProjectBuilder projectBuilder;
-    private final ExecutionEnvironment executionEnvironment;
     private final ToolchainManager toolchainManager;
     private final String javaExecutable;
+    private final CompilerService compilerService;
+    private final Path projectRootDirectory;
 
     /**
      * The project's target directory.
@@ -131,7 +132,6 @@ public class RunMojo extends AbstractMojo {
     private MavenProject mavenProject;
     private DirectoryWatcher directoryWatcher;
     private Process process;
-    private Path projectRootDirectory;
     private List<Dependency> projectDependencies;
     private String classpath;
     private int classpathHash;
@@ -141,25 +141,26 @@ public class RunMojo extends AbstractMojo {
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     public RunMojo(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager,
-                   ProjectDependenciesResolver resolver, ProjectBuilder projectBuilder, ToolchainManager toolchainManager) {
+                   ProjectDependenciesResolver resolver, ProjectBuilder projectBuilder, ToolchainManager toolchainManager,
+                   CompilerService compilerService, ExecutorService executorService) {
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
         this.resolver = resolver;
         this.projectBuilder = projectBuilder;
         this.projectRootDirectory = mavenProject.getBasedir().toPath();
         this.toolchainManager = toolchainManager;
-        this.executionEnvironment = executionEnvironment(mavenProject, mavenSession, pluginManager);
+        this.compilerService = compilerService;
         this.javaExecutable = findJavaExecutable();
-        resolveDependencies();
         this.classpathHash = this.classpath.hashCode();
+        resolveDependencies();
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public void execute() throws MojoExecutionException {
-        resolveSourceDirectories();
-        if (PluginUtils.needsCompilation(mavenSession)) {
-            compileProject();
+        this.sourceDirectories = compilerService.resolveSourceDirectories();
+        if (compilerService.needsCompilation()) {
+            compilerService.compileProject(true);
         }
 
         try {
@@ -210,10 +211,6 @@ public class RunMojo extends AbstractMojo {
             killProcess();
             cleanup();
         }
-    }
-
-    private void resolveSourceDirectories() {
-        this.sourceDirectories = PluginUtils.resolveSourceDirectories(getLog(), mavenProject);
     }
 
     private void handleEvent(DirectoryChangeEvent event) throws IOException {
@@ -433,7 +430,7 @@ public class RunMojo extends AbstractMojo {
     }
 
     private boolean compileProject() {
-        Optional<Long> lastCompilation = PluginUtils.compileProject(getLog(), sourceDirectories, executionEnvironment, mavenProject, true);
+        Optional<Long> lastCompilation = compilerService.compileProject(true);
         lastCompilation.ifPresent(lc -> this.lastCompilation = lc);
         return lastCompilation.isPresent();
     }
