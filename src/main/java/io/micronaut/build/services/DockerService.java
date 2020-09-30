@@ -5,7 +5,9 @@ import io.micronaut.build.PluginUtils;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.jkube.kit.common.Assembly;
 import org.eclipse.jkube.kit.common.AssemblyConfiguration;
+import org.eclipse.jkube.kit.common.AssemblyFileSet;
 import org.eclipse.jkube.kit.config.image.ImageConfiguration;
 import org.eclipse.jkube.kit.config.image.build.Arguments;
 import org.eclipse.jkube.kit.config.image.build.BuildConfiguration;
@@ -81,9 +83,8 @@ public class DockerService {
                                 .execArgument("-jar")
                                 .execArgument("/home/app/" + mavenProject.getArtifactId() + "-" + mavenProject.getVersion() + ".jar")
                                 .build()
-                        ).assembly(
-                        AssemblyConfiguration.builder()
-                                .name("target/layers/")
+                        ).assembly(AssemblyConfiguration.builder()
+                                .name("target")
                                 .build()
 //                        ).assembly(AssemblyConfiguration.builder()
 //                                .targetDir("/")
@@ -97,6 +98,7 @@ public class DockerService {
 //                                ).build()
                 );
 
+
                 BuildConfiguration buildConfiguration = builder.build();
                 dfb = PluginUtils.createDockerFileBuilder(buildConfiguration, buildConfiguration.getAssembly());
                 dfb.basedir("/");
@@ -108,7 +110,8 @@ public class DockerService {
 
         try {
             File dockerfile = dfb.write(targetDirectory);
-            builder.dockerFileFile(dockerfile);
+            builder = BuildConfiguration.builder();
+            builder.dockerFile(dockerfile.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
         }

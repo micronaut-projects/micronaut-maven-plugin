@@ -1,8 +1,10 @@
 package io.micronaut.build;
 
+import io.micronaut.build.jkube.MicronautProject;
 import io.micronaut.build.services.CompilerService;
 import io.micronaut.build.services.DockerService;
 import io.micronaut.build.services.ExecutorService;
+import org.apache.maven.artifact.DependencyResolutionRequiredException;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -11,7 +13,12 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.jkube.generator.api.GeneratorContext;
+import org.eclipse.jkube.kit.common.JavaProject;
 import org.eclipse.jkube.kit.config.image.ImageConfiguration;
+import org.eclipse.jkube.kit.config.resource.ProcessorConfig;
+import org.eclipse.jkube.kit.enricher.api.EnricherContext;
+import org.eclipse.jkube.maven.plugin.mojo.build.AbstractDockerMojo;
 import org.eclipse.jkube.maven.plugin.mojo.build.BuildMojo;
 import org.twdata.maven.mojoexecutor.MojoExecutor;
 
@@ -80,24 +87,37 @@ public class DockerBuildMojo extends BuildMojo {
     }
 
     @Override
+    protected GeneratorContext.GeneratorContextBuilder generatorContextBuilder() throws DependencyResolutionRequiredException {
+        GeneratorContext.GeneratorContextBuilder builder = super.generatorContextBuilder();
+
+        ProcessorConfig processorConfig = builder.build().getConfig();
+        processorConfig.setIncludes(Collections.singletonList("micronaut"));
+
+        JavaProject javaProject = builder.build().getProject();
+        MicronautProject micronautProject = new MicronautProject(javaProject, dockerService, micronautRuntime, args, targetDirectory);
+
+        return builder.config(processorConfig).project(micronautProject);
+    }
+
+    @Override
     public List<ImageConfiguration> customizeConfig(List<ImageConfiguration> configs) {
         if (micronautRuntime == null) {
             micronautRuntime = MicronautRuntime.NONE;
         }
 
-        Optional<ImageConfiguration> imageConfiguration = Optional.empty();
-        if (configs.size() > 0) {
-            if (configs.size() > 1) {
-                if (getLog().isWarnEnabled()) {
-                    getLog().warn("Only one image configuration should be defined. The first one will be used");
-                }
-            }
-            imageConfiguration = Optional.of(configs.get(0));
-        }
+//        Optional<ImageConfiguration> imageConfiguration = Optional.empty();
+//        if (configs.size() > 0) {
+//            if (configs.size() > 1) {
+//                if (getLog().isWarnEnabled()) {
+//                    getLog().warn("Only one image configuration should be defined. The first one will be used");
+//                }
+//            }
+//            imageConfiguration = Optional.of(configs.get(0));
+//        }
 
-        List<ImageConfiguration> result = new ArrayList<>();
-        result.add(dockerService.createImageConfiguration(imageConfiguration.orElse(null), micronautRuntime, args, targetDirectory));
-        return result;
+//        List<ImageConfiguration> result = new ArrayList<>();
+//        result.add(dockerService.createImageConfiguration(imageConfiguration.orElse(null), micronautRuntime, args, targetDirectory));
+        return super.customizeConfig(configs);
     }
 
     private void createJar() throws MojoExecutionException {
