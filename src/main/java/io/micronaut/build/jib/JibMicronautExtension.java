@@ -7,6 +7,8 @@ import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import io.micronaut.build.MicronautRuntime;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,6 +30,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     public ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan buildPlan, Map<String, String> properties,
                                                        Optional<Void> extraConfig, MavenData mavenData,
                                                        ExtensionLogger logger) throws JibPluginExtensionException {
+        //TODO make a best-effort guess
         MicronautRuntime runtime = MicronautRuntime.valueOf(properties.getOrDefault("micronautRuntime", "NONE"));
         ContainerBuildPlan.Builder builder = buildPlan.toBuilder();
 
@@ -46,12 +49,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
                     builder.addLayer(remapLayer(layer));
                 }
 
-                //TODO determine projectfn version
-                builder.setBaseImage("fnproject/fn-java-fdk:jre11-latest")
+                builder.setBaseImage("fnproject/fn-java-fdk:" + determineProjectFnVersion())
                         .setWorkingDirectory(AbsoluteUnixPath.get("/function"))
                         .setEntrypoint(null)
                         .setCmd(Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest"));
-
                 break;
             case LAMBDA:
                 List<String> entrypoint = buildPlan.getEntrypoint();
@@ -78,6 +79,15 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         AbsoluteUnixPath newPath = AbsoluteUnixPath.get("/function/app/" + pathComponents.get(pathComponents.size() - 1));
         return new FileEntry(originalEntry.getSourceFile(), newPath, originalEntry.getPermissions(),
                 originalEntry.getModificationTime(), originalEntry.getOwnership());
+    }
+
+    private String determineProjectFnVersion() {
+        ArtifactVersion javaVersion = new DefaultArtifactVersion(System.getProperty("java.version"));
+        if (javaVersion.getMajorVersion() >= 11) {
+            return "jre11-latest";
+        } else {
+            return "latest";
+        }
     }
 
 
