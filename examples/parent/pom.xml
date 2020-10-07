@@ -46,14 +46,14 @@
         <azure-functions-maven-plugin.version>1.5.0</azure-functions-maven-plugin.version>
         <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
         <function-maven-plugin.version>0.9.4</function-maven-plugin.version>
-        <jib-maven-plugin.version>2.5.2</jib-maven-plugin.version>
+        <jib-maven-plugin.version>2.6.0</jib-maven-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-failsafe-plugin.version>2.22.2</maven-failsafe-plugin.version>
         <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
         <maven-shade-plugin.version>3.1.0</maven-shade-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <protoc-jar-maven-plugin.version>3.11.4</protoc-jar-maven-plugin.version>
-        <micronaut.runtime>DEFAULT</micronaut.runtime>
+        <micronaut.runtime>NONE</micronaut.runtime>
     </properties>
     <profiles>
         <profile>
@@ -122,11 +122,6 @@
                     <groupId>com.google.cloud.functions</groupId>
                     <artifactId>function-maven-plugin</artifactId>
                     <version>${function-maven-plugin.version}</version>
-                </plugin>
-                <plugin>
-                    <groupId>com.google.cloud.tools</groupId>
-                    <artifactId>jib-maven-plugin</artifactId>
-                    <version>${jib-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>com.microsoft.azure</groupId>
@@ -212,7 +207,7 @@
                 <plugin>
                     <groupId>com.google.cloud.tools</groupId>
                     <artifactId>jib-maven-plugin</artifactId>
-                    <version>2.6.0</version>
+                    <version>${jib-maven-plugin.version}</version>
                     <dependencies>
                         <dependency>
                             <groupId>io.micronaut.build</groupId>
@@ -234,7 +229,6 @@
                         </pluginExtensions>
                     </configuration>
                 </plugin>
-
             </plugins>
         </pluginManagement>
     </build>

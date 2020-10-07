@@ -4,6 +4,7 @@ import com.google.cloud.tools.jib.api.buildplan.*;
 import com.google.cloud.tools.jib.buildplan.UnixPathParser;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
+import com.google.cloud.tools.jib.maven.extension.nativeimage.JibNativeImageExtension;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import io.micronaut.build.MicronautRuntime;
@@ -13,6 +14,9 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.google.cloud.tools.jib.plugins.extension.ExtensionLogger.LogLevel.INFO;
+import static com.google.cloud.tools.jib.plugins.extension.ExtensionLogger.LogLevel.LIFECYCLE;
+
 /**
  * TODO: javadoc
  *
@@ -20,6 +24,8 @@ import java.util.stream.Collectors;
  * @since 1.0.0
  */
 public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
+
+    private final JibNativeImageExtension nativeImageExtension = new JibNativeImageExtension();
 
     @Override
     public Optional<Class<Void>> getExtraConfigType() {
@@ -30,6 +36,13 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     public ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan buildPlan, Map<String, String> properties,
                                                        Optional<Void> extraConfig, MavenData mavenData,
                                                        ExtensionLogger logger) throws JibPluginExtensionException {
+
+        String packaging = mavenData.getMavenProject().getPackaging();
+        if ("docker-native".equals(packaging)) {
+            logger.log(LIFECYCLE, "Will generate a Native Image inside a Docker image");
+            //TODO implement it
+        }
+
         //TODO make a best-effort guess
         MicronautRuntime runtime = MicronautRuntime.valueOf(properties.getOrDefault("micronautRuntime", "NONE"));
         ContainerBuildPlan.Builder builder = buildPlan.toBuilder();
@@ -60,6 +73,11 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
                 builder.setEntrypoint(entrypoint);
                 break;
         }
+
+        if ("docker-native".equals(packaging)) {
+            return nativeImageExtension.extendContainerBuildPlan(builder.build(), properties, Optional.empty(), mavenData, logger);
+        }
+
         return builder.build();
     }
 

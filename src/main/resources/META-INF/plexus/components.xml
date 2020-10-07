@@ -90,5 +90,37 @@
                 </lifecycles>
             </configuration>
         </component>
+
+        <!-- Docker packaging, with a Native Image inside -->
+        <component>
+            <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
+            <role-hint>docker-native</role-hint>
+            <implementation>
+                org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping
+            </implementation>
+            <configuration>
+                <lifecycles>
+                    <lifecycle>
+                        <id>default</id>
+                        <phases>
+                            <process-resources>
+                                org.apache.maven.plugins:maven-resources-plugin:resources
+                            </process-resources>
+                            <compile>
+                                org.apache.maven.plugins:maven-compiler-plugin:compile
+                            </compile>
+                            <prepare-package>
+                                org.apache.maven.plugins:maven-jar-plugin:jar,
+                                org.graalvm.nativeimage:native-image-maven-plugin:native-image
+                            </prepare-package>
+                            <package>
+                                com.google.cloud.tools:jib-maven-plugin:dockerBuild
+                            </package>
+                        </phases>
+                    </lifecycle>
+                </lifecycles>
+            </configuration>
+        </component>
+
     </components>
 </component-set>
