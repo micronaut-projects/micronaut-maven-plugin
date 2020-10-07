@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<component-set>
+    <components>
+
+        <!-- JAR packaging, with repackaging into a JAR of JARs-->
+        <component>
+            <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
+            <role-hint>jar</role-hint>
+            <implementation>
+                org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping
+            </implementation>
+            <configuration>
+                <lifecycles>
+                    <lifecycle>
+                        <id>default</id>
+                        <phases>
+                            <process-resources>
+                                org.apache.maven.plugins:maven-resources-plugin:resources
+                            </process-resources>
+                            <compile>
+                                org.apache.maven.plugins:maven-compiler-plugin:compile
+                            </compile>
+                            <package>
+                                org.apache.maven.plugins:maven-jar-plugin:jar,
+                                org.springframework.boot:spring-boot-maven-plugin:repackage
+                            </package>
+                        </phases>
+                    </lifecycle>
+                </lifecycles>
+            </configuration>
+        </component>
+
+        <!-- Native image packaging, using GraalVM Native Image Maven Plugin -->
+        <component>
+            <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
+            <role-hint>native-image</role-hint>
+            <implementation>
+                org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping
+            </implementation>
+            <configuration>
+                <lifecycles>
+                    <lifecycle>
+                        <id>default</id>
+                        <phases>
+                            <process-resources>
+                                org.apache.maven.plugins:maven-resources-plugin:resources
+                            </process-resources>
+                            <compile>
+                                org.apache.maven.plugins:maven-compiler-plugin:compile
+                            </compile>
+                            <prepare-package>
+                                org.apache.maven.plugins:maven-jar-plugin:jar
+                            </prepare-package>
+                            <package>
+                                org.graalvm.nativeimage:native-image-maven-plugin:native-image
+                            </package>
+                        </phases>
+                    </lifecycle>
+                </lifecycles>
+            </configuration>
+        </component>
+    </components>
+</component-set>
