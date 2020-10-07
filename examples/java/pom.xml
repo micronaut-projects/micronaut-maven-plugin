@@ -4,7 +4,7 @@
   <groupId>com.example</groupId>
   <artifactId>demo</artifactId>
   <version>0.1</version>
-  <packaging>native-image</packaging>
+  <packaging>docker</packaging>
 
   <parent>
     <groupId>io.micronaut</groupId>
@@ -26,7 +26,6 @@
       <url>https://jcenter.bintray.com</url>
     </repository>
   </repositories>
-
 
   <dependencies>
     <dependency>
@@ -95,35 +94,6 @@
         <version>1.0.1.BUILD-SNAPSHOT</version>
         <extensions>true</extensions>
       </plugin>
-
-      <plugin>
-        <groupId>com.google.cloud.tools</groupId>
-        <artifactId>jib-maven-plugin</artifactId>
-        <version>2.5.2</version>
-        <dependencies>
-          <dependency>
-            <groupId>io.micronaut.build</groupId>
-            <artifactId>micronaut-maven-plugin</artifactId>
-            <version>1.0.1.BUILD-SNAPSHOT</version>
-          </dependency>
-        </dependencies>
-        <configuration>
-          <to>
-            <image>demo</image>
-          </to>
-          <pluginExtensions>
-            <pluginExtension>
-              <implementation>io.micronaut.build.jib.JibMicronautExtension</implementation>
-<!--              <properties>-->
-<!--                <micronautRuntime>ORACLE_FUNCTION</micronautRuntime>-->
-<!--              </properties>-->
-<!--              <properties>-->
-<!--                <micronautRuntime>LAMBDA</micronautRuntime>-->
-<!--              </properties>-->
-            </pluginExtension>
-          </pluginExtensions>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
@@ -152,12 +122,6 @@
           </compilerArgs>
         </configuration>
       </plugin>
-
-      <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-      </plugin>
-
     </plugins>
   </build>
 
