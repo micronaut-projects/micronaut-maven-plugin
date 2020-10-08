@@ -199,7 +199,7 @@
                         <imageName>demo</imageName>
                         <mainClass>${exec.mainClass}</mainClass>
                         <buildArgs>
-                            -cp ${project.build.directory}/${project.artifactId}-${project.version}.jar
+                            --no-fallback -cp ${project.build.directory}/${project.artifactId}-${project.version}.jar
                         </buildArgs>
                     </configuration>
                 </plugin>

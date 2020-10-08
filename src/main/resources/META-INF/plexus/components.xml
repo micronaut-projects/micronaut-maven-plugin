@@ -111,7 +111,6 @@
                             </compile>
                             <prepare-package>
                                 org.apache.maven.plugins:maven-jar-plugin:jar,
-                                org.graalvm.nativeimage:native-image-maven-plugin:native-image
                             </prepare-package>
                             <package>
                                 com.google.cloud.tools:jib-maven-plugin:dockerBuild
