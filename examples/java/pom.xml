@@ -123,6 +123,25 @@
           </compilerArgs>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <!-- TODO: put this into a native-image execution -->
+        <configuration>
+<!--          <from>-->
+<!--            <image>oracle/graalvm-ce:20.1.0-java11</image>-->
+<!--          </from>-->
+          <to>
+            <image>custom-${project.artifactId}:my-tag</image>
+            <tags>
+              <tag>tag2</tag>
+              <tag>latest</tag>
+            </tags>
+          </to>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 
