@@ -151,8 +151,9 @@ public class RunMojo extends AbstractMojo {
         this.toolchainManager = toolchainManager;
         this.compilerService = compilerService;
         this.javaExecutable = findJavaExecutable();
-        this.classpathHash = this.classpath.hashCode();
+
         resolveDependencies();
+        this.classpathHash = this.classpath.hashCode();
     }
 
     @Override
