@@ -85,6 +85,18 @@
       <version>${graal.version}</version>
       <scope>provided</scope>
     </dependency>
+
+    <!-- For aws-custom-runtime -->
+    <dependency>
+      <groupId>io.micronaut.aws</groupId>
+      <artifactId>micronaut-function-aws-api-proxy</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut.aws</groupId>
+      <artifactId>micronaut-function-aws-custom-runtime</artifactId>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
 
   <build>
