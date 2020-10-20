@@ -9,14 +9,14 @@
   <parent>
     <groupId>io.micronaut</groupId>
     <artifactId>micronaut-parent</artifactId>
-    <version>2.1.0</version>
+    <version>2.1.1</version>
     <relativePath>../parent/pom.xml</relativePath>
   </parent>
 
   <properties>
     <jdk.version>11</jdk.version>
     <release.version>11</release.version>
-    <micronaut.version>2.1.0</micronaut.version>
+    <micronaut.version>2.1.1</micronaut.version>
     <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     <packaging>jar</packaging>
   </properties>
@@ -130,7 +130,7 @@
             </path>
           </annotationProcessorPaths>
           <compilerArgs>
-            <arg>-Amicronaut.processing.group=com.example</arg>
+            <arg>-Amicronaut.processing.group=io.micronaut.build.examples</arg>
             <arg>-Amicronaut.processing.module=demo</arg>
           </compilerArgs>
         </configuration>
