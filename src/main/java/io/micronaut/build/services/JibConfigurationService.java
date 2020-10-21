@@ -22,12 +22,15 @@ import java.util.stream.Collectors;
 @Singleton
 public class JibConfigurationService {
 
+    private final MavenProject mavenProject;
+
     private Xpp3Dom configuration;
     private Xpp3Dom to;
     private Xpp3Dom from;
 
     @Inject
     public JibConfigurationService(MavenProject mavenProject) {
+        this.mavenProject = mavenProject;
         final Plugin plugin = mavenProject.getPlugin(MavenProjectProperties.PLUGIN_KEY);
         if (plugin != null && plugin.getConfiguration() != null) {
             configuration = (Xpp3Dom) plugin.getConfiguration();
@@ -56,6 +59,7 @@ public class JibConfigurationService {
             if (tags != null && tags.getChildCount() > 0) {
                 return Arrays.stream(tags.getChildren())
                         .map(Xpp3Dom::getValue)
+                        .map(t -> t.contains(":") ? t : mavenProject.getArtifactId() + ":" + t)
                         .collect(Collectors.toSet());
             }
         }

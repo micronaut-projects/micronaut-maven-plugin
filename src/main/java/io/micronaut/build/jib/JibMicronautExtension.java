@@ -32,7 +32,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
         ContainerBuildPlan.Builder builder = buildPlan.toBuilder();
         //TODO make a best-effort guess
-        MicronautRuntime runtime = MicronautRuntime.valueOf(properties.getOrDefault("micronautRuntime", "NONE"));
+        MicronautRuntime runtime = MicronautRuntime.valueOf(properties.getOrDefault("micronautRuntime", "none").toUpperCase());
 
         //TODO be able to tell if the user has configured a from - read plugin configuration using Maven API?
         builder.setBaseImage("openjdk:14-alpine")

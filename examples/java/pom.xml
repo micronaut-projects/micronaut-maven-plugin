@@ -14,11 +14,12 @@
   </parent>
 
   <properties>
-    <jdk.version>11</jdk.version>
-    <release.version>11</release.version>
+    <jdk.version>8</jdk.version>
+    <release.version>8</release.version>
     <micronaut.version>2.1.1</micronaut.version>
     <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     <packaging>jar</packaging>
+    <micronaut.runtime>netty</micronaut.runtime>
   </properties>
 
   <repositories>
@@ -79,6 +80,8 @@
       <artifactId>micronaut-test-junit5</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!-- For native-image -->
     <dependency>
       <groupId>org.graalvm.sdk</groupId>
       <artifactId>graal-sdk</artifactId>
@@ -105,11 +108,6 @@
         <groupId>io.micronaut.build</groupId>
         <artifactId>micronaut-maven-plugin</artifactId>
         <version>1.0.1.BUILD-SNAPSHOT</version>
-        <extensions>true</extensions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
