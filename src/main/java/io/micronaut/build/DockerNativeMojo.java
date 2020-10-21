@@ -86,7 +86,7 @@ public class DockerNativeMojo extends AbstractMojo {
     }
 
     private void checkJavaVersion() throws MojoExecutionException {
-        if (javaVersion().getMajorVersion() >= 11) {
+        if (javaVersion().getMajorVersion() > 11) {
             throw new MojoExecutionException("To build native images you must set the Java target byte code level to Java 11 or below");
         }
     }
@@ -108,7 +108,7 @@ public class DockerNativeMojo extends AbstractMojo {
     }
 
     private void buildDockerNative() throws IOException {
-        String from = jibConfigurationService.getFromImage().orElse(determineGraalVmBaseImage());
+        String from = jibConfigurationService.getFromImage().orElse("oracle/graalvm-ce:" + graalVmVersion() + "-" + DEFAULT_GRAAL_JVM_VERSION);
 
         Set<String> tags = new HashSet<>(Collections.singletonList(jibConfigurationService.getToImage().orElse(mavenProject.getArtifactId())));
         tags.addAll(jibConfigurationService.getTags());
@@ -125,14 +125,6 @@ public class DockerNativeMojo extends AbstractMojo {
         dockerService.buildImage(buildImageCmd);
     }
 
-    private String determineGraalVmBaseImage() {
-        String image = "oracle/graalvm-ce:" + graalVmVersion();
-        if (javaVersion().getMajorVersion() >= 11) {
-            image += "-" + DEFAULT_GRAAL_JVM_VERSION;
-        }
-        return image;
-    }
-
     private String graalVmVersion() {
         return mavenProject.getProperties().getProperty("graal.version", DEFAULT_GRAAL_VERSION);
     }
@@ -143,10 +135,7 @@ public class DockerNativeMojo extends AbstractMojo {
 
     private void copyDependencies() throws IOException {
         List<String> imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
-        mavenProject.setArtifactFilter(artifact -> {
-            getLog().info("Artifact " + artifact.getArtifactId() + " has scope " + artifact.getScope());
-            return imageClasspathScopes.contains(artifact.getScope());
-        });
+        mavenProject.setArtifactFilter(artifact -> imageClasspathScopes.contains(artifact.getScope()));
         File target = new File(mavenProject.getBuild().getDirectory(), "dependency");
         if (!target.exists()) {
             target.mkdirs();
