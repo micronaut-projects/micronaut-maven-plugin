@@ -75,6 +75,7 @@ public class DockerNativeMojo extends AbstractMojo {
                     break;
 
                 case ORACLE_FUNCTION:
+                    buildOracleCloud();
                     break;
 
                 case DEFAULT:
@@ -111,6 +112,20 @@ public class DockerNativeMojo extends AbstractMojo {
     }
 
     private void buildDockerNative() throws IOException {
+        String dockerfileName = "DockerfileNative";
+        if (staticNativeImage) {
+            getLog().info("Generating a static native image");
+            dockerfileName = "DockerfileNativeStatic";
+        }
+
+        buildDockerfile(dockerfileName);
+    }
+
+    private void buildOracleCloud() throws IOException {
+        buildDockerfile("DockerfileNativeOracleCloud");
+    }
+
+    private void buildDockerfile(String dockerfileName) throws IOException {
         String from = jibConfigurationService.getFromImage().orElse("oracle/graalvm-ce:" + graalVmVersion() + "-" + DEFAULT_GRAAL_JVM_VERSION);
 
         Set<String> tags = new HashSet<>(Collections.singletonList(jibConfigurationService.getToImage().orElse(mavenProject.getArtifactId())));
@@ -118,12 +133,6 @@ public class DockerNativeMojo extends AbstractMojo {
 
         getLog().info("Using BASE_IMAGE: " + from);
         getLog().info("Using CLASS_NAME: " + mainClass);
-
-        if (staticNativeImage) {
-            getLog().info("Generating a static native image");
-        }
-
-        String dockerfileName = staticNativeImage ? "DockerfileNativeStatic" : "DockerfileNative";
 
         //TODO read GraalVM native-image plugin config to look for additional args
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd(dockerfileName)

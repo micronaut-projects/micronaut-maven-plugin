@@ -27,6 +27,11 @@
       <id>jcenter.bintray.com</id>
       <url>https://jcenter.bintray.com</url>
     </repository>
+    <repository>
+      <id>bintray-fnproject-fnproject</id>
+      <name>bintray</name>
+      <url>https://dl.bintray.com/fnproject/fnproject</url>
+    </repository>
   </repositories>
 
   <dependencies>

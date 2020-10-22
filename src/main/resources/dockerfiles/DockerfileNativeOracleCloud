@@ -11,7 +11,7 @@ FROM fnproject/fn-java-fdk:jre11-latest AS fnfdk
 FROM oraclelinux:7-slim
 WORKDIR /function
 RUN groupadd -g 1000 fn && useradd --uid 1000 -g fn fn
-COPY --from=graalvm /home/app/application /function/func
+COPY --from=builder /home/app/application /function/func
 COPY --from=fnfdk /function/runtime/lib/* .
 ENTRYPOINT ["./func"]
 CMD ["io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest"]
