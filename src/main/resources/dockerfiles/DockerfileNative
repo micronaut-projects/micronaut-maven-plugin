@@ -3,29 +3,12 @@ FROM $BASE_IMAGE AS builder
 RUN gu install native-image
 WORKDIR /home/app
 
-ARG RESULT_LIB="/staticlibs"
-RUN mkdir ${RESULT_LIB} && \
-    curl -L -o musl.tar.gz https://musl.libc.org/releases/musl-1.2.1.tar.gz && \
-    mkdir musl && tar -xvzf musl.tar.gz -C musl --strip-components 1 && cd musl && \
-    ./configure --disable-shared --prefix=${RESULT_LIB} && \
-    make && make install && \
-    cd / && rm -rf /muscl && rm -f /musl.tar.gz && \
-    cp /usr/lib/gcc/x86_64-redhat-linux/4.8.2/libstdc++.a ${RESULT_LIB}/lib/
-
-ENV PATH="$PATH:${RESULT_LIB}/bin"
-ENV CC="musl-gcc"
-
-RUN curl -L -o zlib.tar.gz https://zlib.net/zlib-1.2.11.tar.gz && \
-   mkdir zlib && tar -xvzf zlib.tar.gz -C zlib --strip-components 1 && cd zlib && \
-   ./configure --static --prefix=${RESULT_LIB} && \
-    make && make install && \
-    cd / && rm -rf /zlib && rm -f /zlib.tar.gz
-
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
 ARG CLASS_NAME
-RUN native-image --static --libc=musl -H:Class=$CLASS_NAME -H:Name=application --no-fallback --install-exit-handlers -cp "/home/app/libs/*:/home/app/classes/"
+RUN native-image -H:Class=$CLASS_NAME -H:Name=application --no-fallback --install-exit-handlers -cp "/home/app/libs/*:/home/app/classes/"
 
-FROM scratch
+FROM frolvlad/alpine-glibc
+RUN apk update && apk add libstdc++
 COPY --from=builder /home/app/application /app/application
 ENTRYPOINT ["/app/application"]

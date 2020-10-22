@@ -47,6 +47,9 @@ public class DockerNativeMojo extends AbstractMojo {
     @Parameter(property = "micronaut.runtime", defaultValue = "NONE")
     private String micronautRuntime;
 
+    @Parameter(defaultValue = "false", property = "mn.staticImage")
+    private Boolean staticNativeImage;
+
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -116,8 +119,14 @@ public class DockerNativeMojo extends AbstractMojo {
         getLog().info("Using BASE_IMAGE: " + from);
         getLog().info("Using CLASS_NAME: " + mainClass);
 
+        if (staticNativeImage) {
+            getLog().info("Generating a static native image");
+        }
+
+        String dockerfileName = staticNativeImage ? "DockerfileNativeStatic" : "DockerfileNative";
+
         //TODO read GraalVM native-image plugin config to look for additional args
-        BuildImageCmd buildImageCmd = dockerService.buildImageCmd("DockerfileNative")
+        BuildImageCmd buildImageCmd = dockerService.buildImageCmd(dockerfileName)
                 .withTags(tags)
                 .withBuildArg("BASE_IMAGE", from)
                 .withBuildArg("CLASS_NAME", mainClass);
