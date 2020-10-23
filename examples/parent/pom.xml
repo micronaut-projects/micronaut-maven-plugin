@@ -64,27 +64,27 @@
                 <maven.compiler.release>${release.version}</maven.compiler.release>
             </properties>
         </profile>
-        <profile>
-            <id>oracle-cloud</id>
-            <activation>
-                <property>
-                    <name>micronaut.runtime</name>
-                    <value>oracle_function</value>
-                </property>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>io.micronaut.oraclecloud</groupId>
-                    <artifactId>micronaut-oraclecloud-function-http</artifactId>
-                </dependency>
-                <dependency>
-                    <groupId>com.fnproject.fn</groupId>
-                    <artifactId>runtime</artifactId>
-                    <version>1.0.110</version>
-                    <scope>runtime</scope>
-                </dependency>
-            </dependencies>
-        </profile>
+<!--        <profile>-->
+<!--            <id>oracle-cloud</id>-->
+<!--            <activation>-->
+<!--                <property>-->
+<!--                    <name>micronaut.runtime</name>-->
+<!--                    <value>oracle_function</value>-->
+<!--                </property>-->
+<!--            </activation>-->
+<!--            <dependencies>-->
+<!--                <dependency>-->
+<!--                    <groupId>io.micronaut.oraclecloud</groupId>-->
+<!--                    <artifactId>micronaut-oraclecloud-function-http</artifactId>-->
+<!--                </dependency>-->
+<!--                <dependency>-->
+<!--                    <groupId>com.fnproject.fn</groupId>-->
+<!--                    <artifactId>runtime</artifactId>-->
+<!--                    <version>1.0.110</version>-->
+<!--                    <scope>runtime</scope>-->
+<!--                </dependency>-->
+<!--            </dependencies>-->
+<!--        </profile>-->
     </profiles>
     <build>
         <pluginManagement>
@@ -221,7 +221,7 @@
                 <plugin>
                     <groupId>org.graalvm.nativeimage</groupId>
                     <artifactId>native-image-maven-plugin</artifactId>
-                    <version>20.2.0</version>
+                    <version>${graal.version}</version>
                     <executions>
                         <execution>
                             <goals>

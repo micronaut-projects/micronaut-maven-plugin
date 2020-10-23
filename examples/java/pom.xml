@@ -20,6 +20,7 @@
     <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
+    <micronaut.native-image.static>false</micronaut.native-image.static>
   </properties>
 
   <repositories>
@@ -105,6 +106,19 @@
       <artifactId>micronaut-function-aws-custom-runtime</artifactId>
       <scope>compile</scope>
     </dependency>
+
+    <!-- For oracle-cloud -->
+<!--    <dependency>-->
+<!--      <groupId>io.micronaut.oraclecloud</groupId>-->
+<!--      <artifactId>micronaut-oraclecloud-function-http</artifactId>-->
+<!--    </dependency>-->
+<!--    <dependency>-->
+<!--      <groupId>com.fnproject.fn</groupId>-->
+<!--      <artifactId>runtime</artifactId>-->
+<!--      <version>1.0.110</version>-->
+<!--      <scope>runtime</scope>-->
+<!--    </dependency>-->
+
   </dependencies>
 
   <build>
@@ -113,6 +127,11 @@
         <groupId>io.micronaut.build</groupId>
         <artifactId>micronaut-maven-plugin</artifactId>
         <version>1.0.1.BUILD-SNAPSHOT</version>
+        <configuration>
+          <micronautRuntime>${micronaut.runtime}</micronautRuntime>
+          <staticNativeImage>${micronaut.native-image.static}</staticNativeImage>
+          <nativeImageBuildArgs>${micronaut.native-image.args}</nativeImageBuildArgs>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -120,7 +139,7 @@
         <configuration>
           <!-- Uncomment to enable incremental compilation -->
           <!-- <useIncrementalCompilation>false</useIncrementalCompilation> -->
-          <annotationProcessorPaths>
+          <annotationProcessorPaths combine.children="append">
             <path>
               <groupId>io.micronaut</groupId>
               <artifactId>micronaut-inject-java</artifactId>
@@ -129,6 +148,11 @@
             <path>
               <groupId>io.micronaut</groupId>
               <artifactId>micronaut-validation</artifactId>
+              <version>${micronaut.version}</version>
+            </path>
+            <path>
+              <groupId>io.micronaut</groupId>
+              <artifactId>micronaut-graal</artifactId>
               <version>${micronaut.version}</version>
             </path>
           </annotationProcessorPaths>

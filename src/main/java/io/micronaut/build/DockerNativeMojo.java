@@ -21,10 +21,18 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /**
- * TODO: javadoc
+ * <p>Implementation of the <code>docker-native</code> packaging.</p>
+ * <p>
+ *     <strong>WARNING</strong>: this goal is not intended to be executed directly. Instead, specify the packaging type
+ *     using the <code>packaging</code> property, eg:
+ *
+ *    <pre><code>
+ *        mvn package -Dpackaging=docker
+ *    </code></pre>
+ * </p>
  *
  * @author Álvaro Sánchez-Mariscal
- * @since 1.0.0
+ * @since 1.1
  */
 @Mojo(name = DockerNativeMojo.DOCKER_NATIVE_PACKAGING, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class DockerNativeMojo extends AbstractMojo {
@@ -47,8 +55,11 @@ public class DockerNativeMojo extends AbstractMojo {
     @Parameter(property = "micronaut.runtime", defaultValue = "NONE")
     private String micronautRuntime;
 
-    @Parameter(defaultValue = "false", property = "mn.staticImage")
+    @Parameter(defaultValue = "false", property = "micronaut.native-image.static")
     private Boolean staticNativeImage;
+
+    @Parameter(property = "micronaut.native-image.args")
+    private String nativeImageBuildArgs;
 
 
     @SuppressWarnings("CdiInjectionPointsInspection")
@@ -66,7 +77,6 @@ public class DockerNativeMojo extends AbstractMojo {
         try {
             copyDependencies();
 
-            //TODO make a best-effort guess
             MicronautRuntime runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
 
             switch (runtime.getBuildStrategy()) {
@@ -101,10 +111,18 @@ public class DockerNativeMojo extends AbstractMojo {
             graalVmJvmVersion = "java11";
         }
 
-        //TODO read GraalVM native-image plugin config to look for additional args
+
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd("DockerfileAwsCustomRuntime")
                 .withBuildArg("GRAALVM_VERSION", graalVmVersion())
                 .withBuildArg("GRAALVM_JVM_VERSION", graalVmJvmVersion);
+
+        getLog().info("Using GRAALVM_VERSION: " + graalVmVersion());
+        getLog().info("Using GRAALVM_JVM_VERSION: " + graalVmJvmVersion);
+
+        if (nativeImageBuildArgs != null && !nativeImageBuildArgs.trim().isEmpty()) {
+            getLog().info("Using GRAALVM_ARGS: " + nativeImageBuildArgs);
+            buildImageCmd = buildImageCmd.withBuildArg("GRAALVM_ARGS", nativeImageBuildArgs);
+        }
 
         String imageId = dockerService.buildImage(buildImageCmd);
         File functionZip = dockerService.copyFromContainer(imageId, "/function/function.zip");
@@ -118,27 +136,34 @@ public class DockerNativeMojo extends AbstractMojo {
             dockerfileName = "DockerfileNativeStatic";
         }
 
-        buildDockerfile(dockerfileName);
+        buildDockerfile(dockerfileName, true);
     }
 
     private void buildOracleCloud() throws IOException {
-        buildDockerfile("DockerfileNativeOracleCloud");
+        buildDockerfile("DockerfileNativeOracleCloud", false);
     }
 
-    private void buildDockerfile(String dockerfileName) throws IOException {
+    private void buildDockerfile(String dockerfileName, boolean passClassName) throws IOException {
         String from = jibConfigurationService.getFromImage().orElse("oracle/graalvm-ce:" + graalVmVersion() + "-" + DEFAULT_GRAAL_JVM_VERSION);
 
         Set<String> tags = new HashSet<>(Collections.singletonList(jibConfigurationService.getToImage().orElse(mavenProject.getArtifactId())));
         tags.addAll(jibConfigurationService.getTags());
 
-        getLog().info("Using BASE_IMAGE: " + from);
-        getLog().info("Using CLASS_NAME: " + mainClass);
-
-        //TODO read GraalVM native-image plugin config to look for additional args
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd(dockerfileName)
                 .withTags(tags)
-                .withBuildArg("BASE_IMAGE", from)
-                .withBuildArg("CLASS_NAME", mainClass);
+                .withBuildArg("BASE_IMAGE", from);
+
+        getLog().info("Using BASE_IMAGE: " + from);
+
+        if (passClassName) {
+            getLog().info("Using CLASS_NAME: " + mainClass);
+            buildImageCmd = buildImageCmd.withBuildArg("CLASS_NAME", mainClass);
+        }
+
+        if (nativeImageBuildArgs != null && !nativeImageBuildArgs.trim().isEmpty()) {
+            getLog().info("Using GRAALVM_ARGS: " + nativeImageBuildArgs);
+            buildImageCmd = buildImageCmd.withBuildArg("GRAALVM_ARGS", nativeImageBuildArgs);
+        }
 
         dockerService.buildImage(buildImageCmd);
     }
