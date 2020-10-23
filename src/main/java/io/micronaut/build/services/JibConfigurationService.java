@@ -14,10 +14,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * TODO: javadoc
+ * Exposes the Jib plugin configuration so that it can be read by other mojos.
  *
  * @author Álvaro Sánchez-Mariscal
- * @since 1.0.0
+ * @since 1.1
  */
 @Singleton
 public class JibConfigurationService {

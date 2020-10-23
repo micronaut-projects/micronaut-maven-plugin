@@ -21,10 +21,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * TODO: javadoc
+ * Provides methods to compile a Maven project
  *
  * @author Álvaro Sánchez-Mariscal
- * @since 1.0.0
+ * @since 1.1
  */
 @Singleton
 public class CompilerService {

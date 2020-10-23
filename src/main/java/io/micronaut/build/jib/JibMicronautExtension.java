@@ -7,16 +7,17 @@ import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import io.micronaut.build.MicronautRuntime;
+import io.micronaut.build.services.JibConfigurationService;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import java.util.*;
 
 /**
- * TODO: javadoc
+ * Jib extension to support building Docker images
  *
  * @author Álvaro Sánchez-Mariscal
- * @since 1.0.0
+ * @since 1.1
  */
 public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
@@ -31,11 +32,12 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
                                                        ExtensionLogger logger) throws JibPluginExtensionException {
 
         ContainerBuildPlan.Builder builder = buildPlan.toBuilder();
-        //TODO make a best-effort guess
         MicronautRuntime runtime = MicronautRuntime.valueOf(properties.getOrDefault("micronautRuntime", "none").toUpperCase());
 
-        //TODO be able to tell if the user has configured a from - read plugin configuration using Maven API?
-        builder.setBaseImage("openjdk:14-alpine")
+        JibConfigurationService jibConfigurationService = new JibConfigurationService(mavenData.getMavenProject());
+        String from = jibConfigurationService.getFromImage().orElse("openjdk:14-alpine");
+
+        builder.setBaseImage(from)
                 //TODO detect ports
                 .addExposedPort(Port.tcp(8080));
 

@@ -18,10 +18,10 @@ import static org.twdata.maven.mojoexecutor.MojoExecutor.*;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.goal;
 
 /**
- * TODO: javadoc
+ * Provides methods to execute goals on the current project
  *
  * @author Álvaro Sánchez-Mariscal
- * @since 1.0.0
+ * @since 1.1
  */
 @Singleton
 public class ExecutorService {

@@ -5,7 +5,6 @@ package io.micronaut.build;
  *
  * @author graemerocher
  * @since 1.1
- *
  */
 public enum DockerBuildStrategy {
     /**

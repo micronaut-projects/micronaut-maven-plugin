@@ -27,10 +27,10 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * TODO: javadoc
+ * Provides methods to work with Docker images
  *
  * @author Álvaro Sánchez-Mariscal
- * @since 1.0.0
+ * @since 1.1
  */
 @Singleton
 public class DockerService {

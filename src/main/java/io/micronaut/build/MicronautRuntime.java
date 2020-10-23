@@ -9,6 +9,7 @@ import java.util.Map;
  * The packaging kind of the application.
  *
  * @author graemerocher
+ * @author Álvaro Sánchez-Mariscal
  * @since 1.1
  */
 public enum MicronautRuntime {
