@@ -1,6 +1,7 @@
 package io.micronaut.build;
 
 import com.github.dockerjava.api.command.BuildImageCmd;
+import io.micronaut.build.services.ApplicationConfigurationService;
 import io.micronaut.build.services.DockerService;
 import io.micronaut.build.services.JibConfigurationService;
 import org.apache.maven.artifact.Artifact;
@@ -43,6 +44,7 @@ public class DockerNativeMojo extends AbstractMojo {
 
     private final MavenProject mavenProject;
     private final JibConfigurationService jibConfigurationService;
+    private final ApplicationConfigurationService applicationConfigurationService;
     private final DockerService dockerService;
 
     /**
@@ -64,9 +66,10 @@ public class DockerNativeMojo extends AbstractMojo {
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    public DockerNativeMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService, DockerService dockerService) {
+    public DockerNativeMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService, ApplicationConfigurationService applicationConfigurationService, DockerService dockerService) {
         this.mavenProject = mavenProject;
         this.jibConfigurationService = jibConfigurationService;
+        this.applicationConfigurationService = applicationConfigurationService;
         this.dockerService = dockerService;
     }
 
@@ -149,9 +152,14 @@ public class DockerNativeMojo extends AbstractMojo {
         Set<String> tags = new HashSet<>(Collections.singletonList(jibConfigurationService.getToImage().orElse(mavenProject.getArtifactId())));
         tags.addAll(jibConfigurationService.getTags());
 
+        Map<String, Object> applicationConfiguration = applicationConfigurationService.getApplicationConfiguration();
+        String port = applicationConfiguration.getOrDefault("micronaut.server.port", 8080).toString();
+        getLog().info("Exposing port: " + port);
+
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd(dockerfileName)
                 .withTags(tags)
-                .withBuildArg("BASE_IMAGE", from);
+                .withBuildArg("BASE_IMAGE", from)
+                .withBuildArg("PORT", port);
 
         getLog().info("Using BASE_IMAGE: " + from);
 

@@ -29,4 +29,6 @@ RUN native-image ${GRAALVM_ARGS} --static --libc=musl -H:Class=$CLASS_NAME -H:Na
 
 FROM scratch
 COPY --from=builder /home/app/application /app/application
+ARG PORT=8080
+EXPOSE ${PORT}
 ENTRYPOINT ["/app/application"]

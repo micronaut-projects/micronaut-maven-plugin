@@ -12,4 +12,7 @@ RUN native-image ${GRAALVM_ARGS} -H:Class=$CLASS_NAME -H:Name=application --no-f
 FROM frolvlad/alpine-glibc
 RUN apk update && apk add libstdc++
 COPY --from=builder /home/app/application /app/application
+
+ARG PORT=8080
+EXPOSE ${PORT}
 ENTRYPOINT ["/app/application"]

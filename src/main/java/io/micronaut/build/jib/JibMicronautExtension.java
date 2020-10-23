@@ -7,6 +7,7 @@ import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import io.micronaut.build.MicronautRuntime;
+import io.micronaut.build.services.ApplicationConfigurationService;
 import io.micronaut.build.services.JibConfigurationService;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
@@ -37,9 +38,13 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         JibConfigurationService jibConfigurationService = new JibConfigurationService(mavenData.getMavenProject());
         String from = jibConfigurationService.getFromImage().orElse("openjdk:14-alpine");
 
+        ApplicationConfigurationService applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());
+        Map<String, Object> applicationConfiguration = applicationConfigurationService.getApplicationConfiguration();
+
+        int port = Integer.parseInt(applicationConfiguration.getOrDefault("micronaut.server.port", 8080).toString());
+        logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Exposing port: " + port);
         builder.setBaseImage(from)
-                //TODO detect ports
-                .addExposedPort(Port.tcp(8080));
+                .addExposedPort(Port.tcp(port));
 
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION:

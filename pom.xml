@@ -169,6 +169,16 @@
             <artifactId>commons-compress</artifactId>
             <version>1.20</version>
         </dependency>
+        <dependency>
+            <groupId>io.micronaut</groupId>
+            <artifactId>micronaut-inject</artifactId>
+            <version>2.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.27</version>
+        </dependency>
 
         <!-- JUnit -->
         <dependency>
