@@ -149,8 +149,18 @@ public class DockerNativeMojo extends AbstractMojo {
     private void buildDockerfile(String dockerfileName, boolean passClassName) throws IOException {
         String from = jibConfigurationService.getFromImage().orElse("oracle/graalvm-ce:" + graalVmVersion() + "-" + DEFAULT_GRAAL_JVM_VERSION);
 
-        Set<String> tags = new HashSet<>(Collections.singletonList(jibConfigurationService.getToImage().orElse(mavenProject.getArtifactId())));
-        tags.addAll(jibConfigurationService.getTags());
+        Set<String> tags = new HashSet<>();
+        Optional<String> toImageOptional = jibConfigurationService.getToImage();
+        String imageName = mavenProject.getArtifactId();
+        if (toImageOptional.isPresent()) {
+            tags.add(toImageOptional.get());
+            imageName = toImageOptional.get().split(":")[0];
+        } else {
+            tags.add(imageName + ":latest");
+        }
+        for (String tag : jibConfigurationService.getTags()) {
+            tags.add(imageName + ":" + tag);
+        }
 
         Map<String, Object> applicationConfiguration = applicationConfigurationService.getApplicationConfiguration();
         String port = applicationConfiguration.getOrDefault("micronaut.server.port", 8080).toString();

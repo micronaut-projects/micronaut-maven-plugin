@@ -175,7 +175,7 @@
             <image>custom-${project.artifactId}:my-tag</image>
             <tags>
               <tag>tag2</tag>
-              <tag>latest</tag>
+              <tag>tag3</tag>
             </tags>
           </to>
         </configuration>
