@@ -4,7 +4,6 @@ import com.github.dockerjava.api.command.BuildImageCmd;
 import io.micronaut.build.services.ApplicationConfigurationService;
 import io.micronaut.build.services.DockerService;
 import io.micronaut.build.services.JibConfigurationService;
-import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -13,20 +12,16 @@ import org.apache.maven.project.MavenProject;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * <p>Implementation of the <code>docker-native</code> packaging.</p>
- * <p>
- *     <strong>WARNING</strong>: this goal is not intended to be executed directly. Instead, specify the packaging type
- *     using the <code>packaging</code> property, eg:
+ * <p><strong>WARNING</strong>: this goal is not intended to be executed directly. Instead, specify the packaging type
+ * using the <code>packaging</code> property, eg:</p>
  *
- *    <pre><code>
- *        mvn package -Dpackaging=docker
- *    </code></pre>
- * </p>
+ * <pre>mvn package -Dpackaging=docker</pre>
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 1.1

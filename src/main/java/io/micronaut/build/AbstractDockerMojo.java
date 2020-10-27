@@ -22,10 +22,10 @@ import java.util.Optional;
 import static io.micronaut.build.DockerNativeMojo.DEFAULT_GRAAL_JVM_VERSION;
 
 /**
- * TODO: javadoc
+ * Abstract base class for mojos related to Docker files and builds.
  *
  * @author Álvaro Sánchez-Mariscal
- * @since 1.0.0
+ * @since 1.1
  */
 public abstract class AbstractDockerMojo extends AbstractMojo {
 
@@ -37,6 +37,14 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     protected final DockerService dockerService;
 
 
+    /**
+     * Additional arguments that will be passed to the <code>native-image</code> executable. Note that this will only
+     * be used when using a packaging of type <code>docker-native</code>. For <code>native-image</code> packaging
+     * you should use the
+     * <a href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization">
+     * Native Image Maven Plugin
+     * </a> configuration options.
+     */
     @Parameter(property = "micronaut.native-image.args")
     protected String nativeImageBuildArgs;
 
@@ -47,9 +55,15 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     @Parameter(defaultValue = "${exec.mainClass}", required = true)
     protected String mainClass;
 
+    /**
+     * Whether to produce a static native image when using <code>docker-native</code> packaging
+     */
     @Parameter(defaultValue = "false", property = "micronaut.native-image.static")
     protected Boolean staticNativeImage;
 
+    /**
+     * The target runtime of the application
+     */
     @Parameter(property = "micronaut.runtime", defaultValue = "NONE")
     protected String micronautRuntime;
 
@@ -73,7 +87,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
         if (javaVersion().getMajorVersion() >= 11) {
             graalVmJvmVersion = "java11";
         }
-        return  graalVmJvmVersion;
+        return graalVmJvmVersion;
     }
 
     protected String getFrom() {

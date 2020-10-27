@@ -19,10 +19,11 @@ import java.util.Optional;
 import static io.micronaut.build.DockerNativeMojo.DOCKER_NATIVE_PACKAGING;
 
 /**
- * TODO: javadoc
+ * Generates a <code>Dockerfile</code> depending on the <code>packaging</code> and <code>micronaut.runtime</code>
+ * properties.
  *
  * @author Álvaro Sánchez-Mariscal
- * @since 1.0.0
+ * @since 1.1
  */
 @Mojo(name = "dockerfile", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class DockerfileMojo extends AbstractDockerMojo {

@@ -1,10 +1,5 @@
 package io.micronaut.build;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 /**
  * The packaging kind of the application.
  *

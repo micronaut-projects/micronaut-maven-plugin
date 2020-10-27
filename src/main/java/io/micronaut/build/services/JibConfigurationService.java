@@ -53,7 +53,7 @@ public class JibConfigurationService {
         return Optional.empty();
     }
 
-    public Set<String> getTags(){
+    public Set<String> getTags() {
         if (to != null) {
             Xpp3Dom tags = to.getChild("tags");
             if (tags != null && tags.getChildCount() > 0) {

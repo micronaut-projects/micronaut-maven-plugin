@@ -1,7 +1,6 @@
 package io.micronaut.build.services;
 
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.MavenPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
@@ -37,7 +36,6 @@ public class CompilerService {
     public static final String MAVEN_RESOURCES_PLUGIN = "org.apache.maven.plugins:maven-resources-plugin";
     public static final String GMAVEN_PLUS_PLUGIN = "org.codehaus.gmavenplus:gmavenplus-plugin";
     public static final String KOTLIN_MAVEN_PLUGIN = "org.jetbrains.kotlin:kotlin-maven-plugin";
-
 
 
     /**
@@ -88,7 +86,7 @@ public class CompilerService {
             log.debug("Compiling the project");
         }
         try {
-            if(sourceDirectories.containsKey(GROOVY)) {
+            if (sourceDirectories.containsKey(GROOVY)) {
                 executorService.executeGoal(GMAVEN_PLUS_PLUGIN, "addSources");
                 executorService.executeGoal(GMAVEN_PLUS_PLUGIN, "generateStubs");
                 if (copyResources) {

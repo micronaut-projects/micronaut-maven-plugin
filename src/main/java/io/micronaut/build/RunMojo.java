@@ -179,7 +179,7 @@ public class RunMojo extends AbstractMojo {
                         if (directory.exists()) {
                             pathsToWatch.add(directory.toPath());
                             //If neither includes nor excludes, add a default include
-                            if ((fs.getIncludes() == null || fs.getIncludes().isEmpty() ) && (fs.getExcludes() == null || fs.getExcludes().isEmpty() )) {
+                            if ((fs.getIncludes() == null || fs.getIncludes().isEmpty()) && (fs.getExcludes() == null || fs.getExcludes().isEmpty())) {
                                 fs.addInclude("**/*");
                             }
                         } else {
@@ -257,7 +257,7 @@ public class RunMojo extends AbstractMojo {
 
         if (watches != null && !watches.isEmpty()) {
             // Then process includes
-            if (!matches){
+            if (!matches) {
                 for (FileSet fileSet : watches) {
                     if (fileSet.getIncludes() != null && !fileSet.getIncludes().isEmpty()) {
                         File directory = new File(fileSet.getDirectory());
@@ -304,7 +304,7 @@ public class RunMojo extends AbstractMojo {
     private boolean isDefaultExcluded(Path path) {
         return path.startsWith(targetDirectory.getAbsolutePath()) ||
                 DEFAULT_EXCLUDES.stream()
-                .anyMatch(excludePattern -> DirectoryScanner.match(excludePattern, path.toString()));
+                        .anyMatch(excludePattern -> DirectoryScanner.match(excludePattern, path.toString()));
     }
 
     private boolean hasBeenCompiledRecently() {
