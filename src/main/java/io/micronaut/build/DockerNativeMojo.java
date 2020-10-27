@@ -5,12 +5,8 @@ import io.micronaut.build.services.ApplicationConfigurationService;
 import io.micronaut.build.services.DockerService;
 import io.micronaut.build.services.JibConfigurationService;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
@@ -36,41 +32,16 @@ import java.util.*;
  * @since 1.1
  */
 @Mojo(name = DockerNativeMojo.DOCKER_NATIVE_PACKAGING, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
-public class DockerNativeMojo extends AbstractMojo {
+public class DockerNativeMojo extends AbstractDockerMojo {
 
     public static final String DOCKER_NATIVE_PACKAGING = "docker-native";
-    public static final String DEFAULT_GRAAL_VERSION = "20.2.0";
     public static final String DEFAULT_GRAAL_JVM_VERSION = "java11";
-
-    private final MavenProject mavenProject;
-    private final JibConfigurationService jibConfigurationService;
-    private final ApplicationConfigurationService applicationConfigurationService;
-    private final DockerService dockerService;
-
-    /**
-     * The main class of the application, as defined in the
-     * <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.
-     */
-    @Parameter(defaultValue = "${exec.mainClass}", required = true)
-    private String mainClass;
-
-    @Parameter(property = "micronaut.runtime", defaultValue = "NONE")
-    private String micronautRuntime;
-
-    @Parameter(defaultValue = "false", property = "micronaut.native-image.static")
-    private Boolean staticNativeImage;
-
-    @Parameter(property = "micronaut.native-image.args")
-    private String nativeImageBuildArgs;
-
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    public DockerNativeMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService, ApplicationConfigurationService applicationConfigurationService, DockerService dockerService) {
-        this.mavenProject = mavenProject;
-        this.jibConfigurationService = jibConfigurationService;
-        this.applicationConfigurationService = applicationConfigurationService;
-        this.dockerService = dockerService;
+    public DockerNativeMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
+                            ApplicationConfigurationService applicationConfigurationService, DockerService dockerService) {
+        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService);
     }
 
     @Override
@@ -109,18 +80,12 @@ public class DockerNativeMojo extends AbstractMojo {
     }
 
     private void buildDockerNativeLambda() throws IOException {
-        String graalVmJvmVersion = "java8";
-        if (javaVersion().getMajorVersion() >= 11) {
-            graalVmJvmVersion = "java11";
-        }
-
-
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd("DockerfileAwsCustomRuntime")
                 .withBuildArg("GRAALVM_VERSION", graalVmVersion())
-                .withBuildArg("GRAALVM_JVM_VERSION", graalVmJvmVersion);
+                .withBuildArg("GRAALVM_JVM_VERSION", graalVmJvmVersion());
 
         getLog().info("Using GRAALVM_VERSION: " + graalVmVersion());
-        getLog().info("Using GRAALVM_JVM_VERSION: " + graalVmJvmVersion);
+        getLog().info("Using GRAALVM_JVM_VERSION: " + graalVmJvmVersion());
 
         if (nativeImageBuildArgs != null && !nativeImageBuildArgs.trim().isEmpty()) {
             getLog().info("Using GRAALVM_ARGS: " + nativeImageBuildArgs);
@@ -147,8 +112,7 @@ public class DockerNativeMojo extends AbstractMojo {
     }
 
     private void buildDockerfile(String dockerfileName, boolean passClassName) throws IOException {
-        String from = jibConfigurationService.getFromImage().orElse("oracle/graalvm-ce:" + graalVmVersion() + "-" + DEFAULT_GRAAL_JVM_VERSION);
-
+        String from = getFrom();
         Set<String> tags = new HashSet<>();
         Optional<String> toImageOptional = jibConfigurationService.getToImage();
         String imageName = mavenProject.getArtifactId();
@@ -162,8 +126,7 @@ public class DockerNativeMojo extends AbstractMojo {
             tags.add(imageName + ":" + tag);
         }
 
-        Map<String, Object> applicationConfiguration = applicationConfigurationService.getApplicationConfiguration();
-        String port = applicationConfiguration.getOrDefault("micronaut.server.port", 8080).toString();
+        String port = getPort();
         getLog().info("Exposing port: " + port);
 
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd(dockerfileName)
@@ -184,26 +147,6 @@ public class DockerNativeMojo extends AbstractMojo {
         }
 
         dockerService.buildImage(buildImageCmd);
-    }
-
-    private String graalVmVersion() {
-        return mavenProject.getProperties().getProperty("graal.version", DEFAULT_GRAAL_VERSION);
-    }
-
-    private ArtifactVersion javaVersion() {
-        return new DefaultArtifactVersion(Optional.ofNullable(mavenProject.getProperties().getProperty("maven.compiler.target")).orElse(System.getProperty("java.version")));
-    }
-
-    private void copyDependencies() throws IOException {
-        List<String> imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
-        mavenProject.setArtifactFilter(artifact -> imageClasspathScopes.contains(artifact.getScope()));
-        File target = new File(mavenProject.getBuild().getDirectory(), "dependency");
-        if (!target.exists()) {
-            target.mkdirs();
-        }
-        for (Artifact dependency : mavenProject.getArtifacts()) {
-            Files.copy(dependency.getFile().toPath(), target.toPath().resolve(dependency.getFile().getName()), StandardCopyOption.REPLACE_EXISTING);
-        }
     }
 
 }

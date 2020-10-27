@@ -91,12 +91,11 @@ public class DockerService {
         return null;
     }
 
-    private File loadDockerfileAsResource(String name) throws IOException {
+    public File loadDockerfileAsResource(String name) throws IOException {
         String path = "/dockerfiles/" + name;
         InputStream stream = getClass().getResourceAsStream(path);
         if (stream != null) {
-            String fileName = path.substring(path.lastIndexOf("/") + 1);
-            File dockerfile = new File(mavenProject.getBuild().getDirectory(), fileName);
+            File dockerfile = new File(mavenProject.getBuild().getDirectory(), "Dockerfile");
             FileUtils.copyInputStreamToFile(stream, dockerfile);
             return dockerfile;
         }

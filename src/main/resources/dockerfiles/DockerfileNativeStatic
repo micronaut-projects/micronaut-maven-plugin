@@ -1,9 +1,9 @@
 ARG BASE_IMAGE
-FROM $BASE_IMAGE AS builder
+FROM ${BASE_IMAGE} AS builder
 RUN gu install native-image
 WORKDIR /home/app
 
-ARG RESULT_LIB="/staticlibs"
+ENV RESULT_LIB="/staticlibs"
 RUN mkdir ${RESULT_LIB} && \
     curl -L -o musl.tar.gz https://musl.libc.org/releases/musl-1.2.1.tar.gz && \
     mkdir musl && tar -xvzf musl.tar.gz -C musl --strip-components 1 && cd musl && \
@@ -25,7 +25,7 @@ COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
 ARG CLASS_NAME
 ARG GRAALVM_ARGS=""
-RUN native-image ${GRAALVM_ARGS} --static --libc=musl -H:Class=$CLASS_NAME -H:Name=application --no-fallback --install-exit-handlers -cp "/home/app/libs/*:/home/app/classes/"
+RUN native-image ${GRAALVM_ARGS} --static --libc=musl -H:Class=${CLASS_NAME} -H:Name=application --no-fallback --install-exit-handlers -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM scratch
 COPY --from=builder /home/app/application /app/application

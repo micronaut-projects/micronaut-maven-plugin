@@ -59,7 +59,6 @@ public class JibConfigurationService {
             if (tags != null && tags.getChildCount() > 0) {
                 return Arrays.stream(tags.getChildren())
                         .map(Xpp3Dom::getValue)
-                        .map(t -> t.contains(":") ? t : mavenProject.getArtifactId() + ":" + t)
                         .collect(Collectors.toSet());
             }
         }

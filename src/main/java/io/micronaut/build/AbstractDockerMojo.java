@@ -1,0 +1,100 @@
+package io.micronaut.build;
+
+import io.micronaut.build.services.ApplicationConfigurationService;
+import io.micronaut.build.services.DockerService;
+import io.micronaut.build.services.JibConfigurationService;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static io.micronaut.build.DockerNativeMojo.DEFAULT_GRAAL_JVM_VERSION;
+
+/**
+ * TODO: javadoc
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 1.0.0
+ */
+public abstract class AbstractDockerMojo extends AbstractMojo {
+
+    public static final String DEFAULT_GRAAL_VERSION = "20.2.0";
+
+    protected final MavenProject mavenProject;
+    protected final JibConfigurationService jibConfigurationService;
+    protected final ApplicationConfigurationService applicationConfigurationService;
+    protected final DockerService dockerService;
+
+
+    @Parameter(property = "micronaut.native-image.args")
+    protected String nativeImageBuildArgs;
+
+    /**
+     * The main class of the application, as defined in the
+     * <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.
+     */
+    @Parameter(defaultValue = "${exec.mainClass}", required = true)
+    protected String mainClass;
+
+    @Parameter(defaultValue = "false", property = "micronaut.native-image.static")
+    protected Boolean staticNativeImage;
+
+    @Parameter(property = "micronaut.runtime", defaultValue = "NONE")
+    protected String micronautRuntime;
+
+    protected AbstractDockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService, ApplicationConfigurationService applicationConfigurationService, DockerService dockerService) {
+        this.mavenProject = mavenProject;
+        this.jibConfigurationService = jibConfigurationService;
+        this.applicationConfigurationService = applicationConfigurationService;
+        this.dockerService = dockerService;
+    }
+
+    protected ArtifactVersion javaVersion() {
+        return new DefaultArtifactVersion(Optional.ofNullable(mavenProject.getProperties().getProperty("maven.compiler.target")).orElse(System.getProperty("java.version")));
+    }
+
+    protected String graalVmVersion() {
+        return mavenProject.getProperties().getProperty("graal.version", DEFAULT_GRAAL_VERSION);
+    }
+
+    protected String graalVmJvmVersion() {
+        String graalVmJvmVersion = "java8";
+        if (javaVersion().getMajorVersion() >= 11) {
+            graalVmJvmVersion = "java11";
+        }
+        return  graalVmJvmVersion;
+    }
+
+    protected String getFrom() {
+        return jibConfigurationService.getFromImage().orElse("oracle/graalvm-ce:" + graalVmVersion() + "-" + DEFAULT_GRAAL_JVM_VERSION);
+    }
+
+    protected String getPort() {
+        Map<String, Object> applicationConfiguration = applicationConfigurationService.getApplicationConfiguration();
+        return applicationConfiguration.getOrDefault("micronaut.server.port", 8080).toString();
+    }
+
+    protected void copyDependencies() throws IOException {
+        List<String> imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
+        mavenProject.setArtifactFilter(artifact -> imageClasspathScopes.contains(artifact.getScope()));
+        File target = new File(mavenProject.getBuild().getDirectory(), "dependency");
+        if (!target.exists()) {
+            target.mkdirs();
+        }
+        for (Artifact dependency : mavenProject.getArtifacts()) {
+            Files.copy(dependency.getFile().toPath(), target.toPath().resolve(dependency.getFile().getName()), StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+}
