@@ -71,4 +71,6 @@ public enum MicronautRuntime {
         return buildStrategy;
     }
 
+    public static final String PROPERTY = "micronaut.runtime";
+
 }

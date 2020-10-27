@@ -64,7 +64,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     /**
      * The target runtime of the application
      */
-    @Parameter(property = "micronaut.runtime", defaultValue = "NONE")
+    @Parameter(property = MicronautRuntime.PROPERTY, defaultValue = "NONE")
     protected String micronautRuntime;
 
     protected AbstractDockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService, ApplicationConfigurationService applicationConfigurationService, DockerService dockerService) {

@@ -22,6 +22,8 @@ import java.util.*;
  */
 public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
+    public static final String DEFAULT_BASE_IMAGE = "openjdk:15-alpine";
+
     @Override
     public Optional<Class<Void>> getExtraConfigType() {
         return Optional.empty();
@@ -33,10 +35,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
                                                        ExtensionLogger logger) throws JibPluginExtensionException {
 
         ContainerBuildPlan.Builder builder = buildPlan.toBuilder();
-        MicronautRuntime runtime = MicronautRuntime.valueOf(properties.getOrDefault("micronautRuntime", "none").toUpperCase());
+        MicronautRuntime runtime = MicronautRuntime.valueOf(properties.getOrDefault(MicronautRuntime.PROPERTY, "none").toUpperCase());
 
         JibConfigurationService jibConfigurationService = new JibConfigurationService(mavenData.getMavenProject());
-        String from = jibConfigurationService.getFromImage().orElse("openjdk:14-alpine");
+        String from = jibConfigurationService.getFromImage().orElse(DEFAULT_BASE_IMAGE);
 
         ApplicationConfigurationService applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());
         Map<String, Object> applicationConfiguration = applicationConfigurationService.getApplicationConfiguration();
