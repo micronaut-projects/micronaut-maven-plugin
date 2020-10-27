@@ -19,8 +19,10 @@ import java.util.Optional;
 import static io.micronaut.build.DockerNativeMojo.DOCKER_NATIVE_PACKAGING;
 
 /**
- * Generates a <code>Dockerfile</code> depending on the <code>packaging</code> and <code>micronaut.runtime</code>
- * properties.
+ * <p>Generates a <code>Dockerfile</code> depending on the <code>packaging</code> and <code>micronaut.runtime</code>
+ * properties, eg:</p>
+ *
+ * <pre>mvn mn:dockerfile -Dpackaging=docker-native -Dmicronaut.runtime=lambda</pre>
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 1.1

@@ -1,0 +1,41 @@
+=== Packaging an application
+
+This plugin supports different `<packaging>` types:
+
+* `jar` (default): produces a runnable fat JAR.
+* `native-image`: generates a GraalVM native image.
+* `docker`: builds a Docker image with the application artifacts (compiled classes, resources, dependencies, etc).
+* `docker-native`: builds a Docker image with a GraalVM native image inside.
+
+To package an application, `mvn package` is the one-stop shop to produce the desired artifact. By default, applications
+generated from https://micronaut.io/launch/[Micronaut Launch] have the packaging defined like
+`<packaging>${packaging}</packaging>`, so that you can do:
+
+----
+$ mvn package -Dpackaging=native-image
+----
+
+:toc:
+
+=== Packaging the application in a fat JAR
+
+If the `<packaging>` is set to `jar`, this plugin will delegate to the `maven-shade-plugin` to produce a JAR file. Its
+configuration is defined in the `io.micronaut:micronaut-parent` POM, and the defaults should be enough. Should you want
+to customize how to produce the JAR file, refer to the
+https://maven.apache.org/plugins/maven-shade-plugin/[Maven Shade Plugin documentation].
+
+=== Generating GraalVM native images
+
+If the `<packaging>` is set to `native-image`, this plugin will delegate to the
+`org.graalvm.nativeimage:native-image-maven-plugin` to generate a native image. Note that for this packaging to work,
+you need to run locally a GraalVM JDK.
+
+Refer to the
+https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization[Native Image Maven Plugin documentation]
+for more information about how to customize the generated native image.
+
+=== Building JVM-based Docker images
+
+If the `<packaging>` is set to `docker`
+
+=== Building GraalVM-based Docker images
