@@ -257,9 +257,6 @@
                         <pluginExtensions>
                             <pluginExtension>
                                 <implementation>io.micronaut.build.jib.JibMicronautExtension</implementation>
-                                <properties>
-                                    <micronautRuntime>${micronaut.runtime}</micronautRuntime>
-                                </properties>
                             </pluginExtension>
                         </pluginExtensions>
                     </configuration>
