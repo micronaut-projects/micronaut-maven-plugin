@@ -1,7 +1,0 @@
-FROM oracle/graalvm-ce:20.2.0-java11
-RUN gu install native-image
-WORKDIR /home/app
-ONBUILD ARG className
-ONBUILD COPY classes /home/app/classes
-ONBUILD COPY dependency/* /home/app/libs/
-ONBUILD RUN native-image -H:Class=$className -H:Name=application --no-fallback --install-exit-handlers -cp "/home/app/libs/*:/home/app/classes/"
