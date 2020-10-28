@@ -1,4 +1,4 @@
-FROM amazonlinux:latest AS graalvm
+FROM amazonlinux:2 AS graalvm
 ARG GRAALVM_VERSION
 ARG GRAALVM_JVM_VERSION
 ENV LANG=en_US.UTF-8
@@ -15,7 +15,7 @@ COPY dependency/* /home/app/libs/
 ARG GRAALVM_ARGS=""
 RUN native-image ${GRAALVM_ARGS} -H:Class=io.micronaut.function.aws.runtime.MicronautLambdaRuntime -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
 
-FROM amazonlinux:latest
+FROM amazonlinux:2
 WORKDIR /function
 RUN yum install -y zip && yum clean all
 COPY --from=graalvm /home/app/application /function/func
