@@ -12,16 +12,13 @@ import org.apache.maven.project.MavenProject;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * <p>Implementation of the <code>docker-native</code> packaging.</p>
  * <p><strong>WARNING</strong>: this goal is not intended to be executed directly. Instead, specify the packaging type
  * using the <code>packaging</code> property, eg:</p>
  *
- * <pre>mvn package -Dpackaging=docker</pre>
+ * <pre>mvn package -Dpackaging=docker-native</pre>
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 1.1
@@ -108,24 +105,11 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
     private void buildDockerfile(String dockerfileName, boolean passClassName) throws IOException {
         String from = getFrom();
-        Set<String> tags = new HashSet<>();
-        Optional<String> toImageOptional = jibConfigurationService.getToImage();
-        String imageName = mavenProject.getArtifactId();
-        if (toImageOptional.isPresent()) {
-            tags.add(toImageOptional.get());
-            imageName = toImageOptional.get().split(":")[0];
-        } else {
-            tags.add(imageName + ":latest");
-        }
-        for (String tag : jibConfigurationService.getTags()) {
-            tags.add(imageName + ":" + tag);
-        }
-
         String port = getPort();
         getLog().info("Exposing port: " + port);
 
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd(dockerfileName)
-                .withTags(tags)
+                .withTags(getTags())
                 .withBuildArg("BASE_IMAGE", from)
                 .withBuildArg("PORT", port);
 

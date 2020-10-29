@@ -62,6 +62,29 @@ Refer to the
 https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration[Jib Maven Plugin documentation]
 to see what are the configuration options that can be used.
 
+=== Bringing your own `Dockerfile`
+
+----
+$ mvn package -Dpackaging=docker
+----
+
+If there is a `Dockerfile` in the project's root directory, it will be used to build the image. The image will be built
+using the `target` folder as the context directory. This plugin will also prepare all the `compile` and `runtime`
+dependency JARs in the `target/dependency` folder, so that in your `Dockerfile` you can leverage this and do:
+
+----
+FROM ...
+
+...
+
+COPY classes /home/app/classes
+COPY dependency/* /home/app/libs/
+
+...
+
+ENTRYPOINT ["java", "-cp", "/home/app/libs/*:/home/app/classes/", "com.example.app.Application"]
+----
+
 === Building GraalVM-based Docker images
 
 ----

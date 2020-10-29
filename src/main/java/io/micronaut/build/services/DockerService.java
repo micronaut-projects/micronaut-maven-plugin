@@ -56,6 +56,10 @@ public class DockerService {
         return dockerClient.buildImageCmd(loadDockerfileAsResource(dockerfileName));
     }
 
+    public BuildImageCmd buildImageCmd() {
+        return dockerClient.buildImageCmd();
+    }
+
     public String buildImage(BuildImageCmd builder) {
         BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
             @Override

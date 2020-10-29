@@ -14,10 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static io.micronaut.build.DockerNativeMojo.DEFAULT_GRAAL_JVM_VERSION;
 
@@ -92,6 +89,22 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
 
     protected String getFrom() {
         return jibConfigurationService.getFromImage().orElse("oracle/graalvm-ce:" + graalVmVersion() + "-" + DEFAULT_GRAAL_JVM_VERSION);
+    }
+
+    protected Set<String> getTags() {
+        Set<String> tags = new HashSet<>();
+        Optional<String> toImageOptional = jibConfigurationService.getToImage();
+        String imageName = mavenProject.getArtifactId();
+        if (toImageOptional.isPresent()) {
+            tags.add(toImageOptional.get());
+            imageName = toImageOptional.get().split(":")[0];
+        } else {
+            tags.add(imageName + ":latest");
+        }
+        for (String tag : jibConfigurationService.getTags()) {
+            tags.add(imageName + ":" + tag);
+        }
+        return tags;
     }
 
     protected String getPort() {

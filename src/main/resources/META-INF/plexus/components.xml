@@ -98,6 +98,7 @@
                                 org.springframework.boot:spring-boot-maven-plugin:repackage
                             </prepare-package>
                             <package>
+                                ${project.groupId}:${project.artifactId}:${project.version}:docker,
                                 com.google.cloud.tools:jib-maven-plugin:dockerBuild
                             </package>
                         </phases>
