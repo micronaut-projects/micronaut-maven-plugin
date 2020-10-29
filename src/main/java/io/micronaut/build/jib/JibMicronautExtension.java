@@ -35,7 +35,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
                                                        ExtensionLogger logger) throws JibPluginExtensionException {
 
         ContainerBuildPlan.Builder builder = buildPlan.toBuilder();
-        MicronautRuntime runtime = MicronautRuntime.valueOf(properties.getOrDefault(MicronautRuntime.PROPERTY, "none").toUpperCase());
+        MicronautRuntime runtime = MicronautRuntime.valueOf(mavenData.getMavenProject().getProperties().getProperty(MicronautRuntime.PROPERTY, "none").toUpperCase());
 
         JibConfigurationService jibConfigurationService = new JibConfigurationService(mavenData.getMavenProject());
         String from = jibConfigurationService.getFromImage().orElse(DEFAULT_BASE_IMAGE);

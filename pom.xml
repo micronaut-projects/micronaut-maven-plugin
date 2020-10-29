@@ -154,11 +154,6 @@
             <artifactId>docker-java-transport-zerodep</artifactId>
             <version>3.2.5</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.testcontainers</groupId>-->
-<!--            <artifactId>testcontainers</artifactId>-->
-<!--            <version>1.15.0-rc2</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.graalvm.nativeimage</groupId>
             <artifactId>native-image-maven-plugin</artifactId>
