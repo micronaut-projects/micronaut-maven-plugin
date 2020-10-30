@@ -116,14 +116,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
         if (appArguments != null && appArguments.size() > 0) {
             getLog().info("Using application arguments: " + appArguments);
-            StringBuffer cmd = new StringBuffer("\nCMD [");
-            cmd.append(
-                    appArguments.stream()
-                        .map(s -> "\"" + s + "\"")
-                        .collect(Collectors.joining(", "))
-            );
-            cmd.append("]");
-            Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(cmd.toString());
+            Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());
         }
 
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd()

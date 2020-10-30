@@ -1,5 +1,6 @@
 package io.micronaut.build;
 
+import com.google.common.io.FileWriteMode;
 import io.micronaut.build.services.ApplicationConfigurationService;
 import io.micronaut.build.services.DockerService;
 import io.micronaut.build.services.JibConfigurationService;
@@ -11,10 +12,12 @@ import org.apache.maven.project.MavenProject;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static io.micronaut.build.DockerNativeMojo.DOCKER_NATIVE_PACKAGING;
 
@@ -129,6 +132,12 @@ public class DockerfileMojo extends AbstractDockerMojo {
                     }
                 }
             }
+
+            if (appArguments != null && appArguments.size() > 0) {
+                getLog().info("Using application arguments: " + appArguments);
+                result.add(getCmd());
+            }
+
             Files.write(dockerfile.toPath(), result);
         }
     }

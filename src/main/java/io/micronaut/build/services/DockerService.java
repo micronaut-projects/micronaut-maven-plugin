@@ -68,7 +68,7 @@ public class DockerService {
                 if (item.isErrorIndicated()) {
                     LOG.error(item.getErrorDetail().getMessage());
                 } else if (item.getStream() != null) {
-                    LOG.info(StringUtils.chomp(item.getStream(), "\n"));
+                    LOG.info(StringUtils.chomp(item.getStream(), System.lineSeparator()));
                 }
             }
         };

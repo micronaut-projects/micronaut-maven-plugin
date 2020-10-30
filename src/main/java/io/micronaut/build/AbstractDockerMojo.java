@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.micronaut.build.DockerNativeMojo.DEFAULT_GRAAL_JVM_VERSION;
 
@@ -128,6 +129,14 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
         for (Artifact dependency : mavenProject.getArtifacts()) {
             Files.copy(dependency.getFile().toPath(), target.toPath().resolve(dependency.getFile().getName()), StandardCopyOption.REPLACE_EXISTING);
         }
+    }
+
+    protected String getCmd() {
+        return "CMD [" +
+                appArguments.stream()
+                        .map(s -> "\"" + s + "\"")
+                        .collect(Collectors.joining(", ")) +
+                "]";
     }
 
 }
