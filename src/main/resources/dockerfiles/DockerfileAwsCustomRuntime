@@ -4,7 +4,7 @@ ARG GRAALVM_JVM_VERSION
 ENV LANG=en_US.UTF-8
 RUN yum update -y && yum install -y gcc gcc-c++ zlib-devel zip tar gzip && yum clean all
 RUN curl -4 -L https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-${GRAALVM_VERSION}/graalvm-ce-${GRAALVM_JVM_VERSION}-linux-amd64-${GRAALVM_VERSION}.tar.gz -o /tmp/graalvm.tar.gz \
-    && tar -zxvf /tmp/graalvm.tar.gz -C /tmp \
+    && tar -zxf /tmp/graalvm.tar.gz -C /tmp \
     && mv /tmp/graalvm-ce-${GRAALVM_JVM_VERSION}-${GRAALVM_VERSION} /usr/lib/graalvm \
     && rm -rf /tmp/*
 RUN /usr/lib/graalvm/bin/gu install native-image
