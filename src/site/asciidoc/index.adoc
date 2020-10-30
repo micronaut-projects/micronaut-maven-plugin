@@ -1,103 +1,62 @@
 {site-description}.
 
-It watches for changes in the project tree, and if they match certain conditions, it will recompile and restart the
-application.
+This plugin has the following features:
 
-The plugin can handle changes in all the languages supported by Micronaut: Java, Kotlin and Groovy.
-
-Note that this plugin can work with any Micronaut version (and potentially with any Java application), since it only
-deals with file changes and JVM restarts.
-
-:toc:
+1. link:examples/run.html[Running in development mode].
+2. link:examples/package.html[Packaging] an application into different formats: fat JAR, native image, Docker, etc.
+3. link:dockerfile-mojo.html[Generating `Dockerfile`]s.
 
 === Usage
 
-Check the link:usage.html[usage page] to see how to declare the plugin in your `pom.xml`.
-
-Then, you can use `mn:run` to run your application in development mode:
-
-[source,bash]
-----
-$ mvn clean mn:run
-
-[INFO] Scanning for projects...
-[INFO]
-[INFO] -----------------< java.maven.junit:java-maven-junit >------------------
-[INFO] Building java-maven-junit 0.1
-[INFO] --------------------------------[ jar ]---------------------------------
-[INFO]
-[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ java-maven-junit ---
-[INFO] Deleting /Users/alvarosanchez/Micronaut/micronaut-maven-plugin/examples/java/target
-[INFO]
-[INFO] --- micronaut-maven-plugin:1.0.0.BUILD-SNAPSHOT:run (default-cli) @ java-maven-junit ---
-[INFO] Using 'UTF-8' encoding to copy filtered resources.
-[INFO] Copying 2 resources
-[INFO] Changes detected - recompiling the module!
-[INFO] Compiling 2 source files to /Users/alvarosanchez/Micronaut/micronaut-maven-plugin/examples/java/target/classes
-13:36:32.665 [main] INFO  io.micronaut.runtime.Micronaut - Startup completed in 919ms. Server Running: http://localhost:8080
-----
-
-==== Including and excluding options
-
-By default, this plugin watches for changes in the following locations:
-
-* `/pom.xml`. Only dependency changes may trigger an application restart.
-* `src/main/java` (if it exists).
-* `src/main/groovy` (if it exists).
-* `src/main/kotlin` (if it exists).
-
-You can further include or exclude some other locations:
+Add the plugin to your `build/plugins` section:
 
 [source,xml,subs="verbatim,attributes"]
 ----
-<project>
-
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <!-- ... -->
+    <packaging>${packaging}</packaging>
+
+    <properties>
+        <!-- ... -->
+        <packaging>jar</packaging>
+        <micronaut.runtime>netty</micronaut.runtime>
+    </properties>
 
     <build>
         <plugins>
-
             <!-- ... -->
 
             <plugin>
                 <groupId>io.micronaut.build</groupId>
                 <artifactId>micronaut-maven-plugin</artifactId>
-                <version>{site-version}</version>
-                <configuration>
-                    <watches>
-                        <watch>
-                            <directory>src/main/resources</directory>
-                            <includes>
-                                <include>**/*.yml</include>
-                                <include>**/*.properties</include>
-                            </includes>
-                            <excludes>
-                                <exclude>test.properties</exclude>
-                            </excludes>
-                        </watch>
-                        <watch>
-                            <directory>src/main/webapp</directory>
-                        </watch>
-                    </watches>
-                </configuration>
             </plugin>
         </plugins>
     </build>
 </project>
 ----
 
-Note that exclusions take precedence over inclusions, so if a file change matches both, it will be excluded.
+The `<packaging>` part is important since the plugin support several packaging types. The default is `jar`.
 
-When no `includes/excludes` rules are specified, a `\**/*` pattern will be included by default.
+For snapshot versions, you need the Sonatype OSSRH Snapshot repository:
 
-==== Debugging
+[source,xml]
+----
+<project>
 
-Debugging options can be specified on the command line directly:
+    <!-- ... -->
 
-* Running in debug mode: `mvn mn:run -Dmn.debug`.
-* Changing the debugger port: `mvn mn:run -Dmn.debug -Dmn.debug.port=5006`.
-* Suspending the debugger execution: `mn:run -Dmn.debug -Dmn.debug.suspend`.
+    <pluginRepositories>
 
-==== Other options
+        <!-- ... -->
 
-For a full list of configuration options, check the link:run-mojo.html[mn:run] goal documentation.
+        <pluginRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+</project>
+----

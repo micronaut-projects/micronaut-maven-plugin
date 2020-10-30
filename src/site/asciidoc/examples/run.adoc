@@ -1,0 +1,101 @@
+=== Running an application in development mode
+
+It watches for changes in the project tree, and if they match certain conditions, it will recompile and restart the
+application.
+
+The plugin can handle changes in all the languages supported by Micronaut: Java, Kotlin and Groovy.
+
+Note that this plugin can work with any Micronaut version (and potentially with any Java application), since it only
+deals with file changes and JVM restarts.
+
+:toc:
+
+=== Usage
+
+You can use `mn:run` to run your application in development mode:
+
+[source,bash]
+----
+$ mvn clean mn:run
+
+[INFO] Scanning for projects...
+[INFO]
+[INFO] -----------------< java.maven.junit:java-maven-junit >------------------
+[INFO] Building java-maven-junit 0.1
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ java-maven-junit ---
+[INFO] Deleting /Users/alvarosanchez/Micronaut/micronaut-maven-plugin/examples/java/target
+[INFO]
+[INFO] --- micronaut-maven-plugin:1.0.0.BUILD-SNAPSHOT:run (default-cli) @ java-maven-junit ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Copying 2 resources
+[INFO] Changes detected - recompiling the module!
+[INFO] Compiling 2 source files to /Users/alvarosanchez/Micronaut/micronaut-maven-plugin/examples/java/target/classes
+13:36:32.665 [main] INFO  io.micronaut.runtime.Micronaut - Startup completed in 919ms. Server Running: http://localhost:8080
+----
+
+==== Including and excluding options
+
+By default, this plugin watches for changes in the following locations:
+
+* `/pom.xml`. Only dependency changes may trigger an application restart.
+* `src/main/java` (if it exists).
+* `src/main/groovy` (if it exists).
+* `src/main/kotlin` (if it exists).
+
+You can further include or exclude some other locations:
+
+[source,xml,subs="verbatim,attributes"]
+----
+<project>
+
+    <!-- ... -->
+
+    <build>
+        <plugins>
+
+            <!-- ... -->
+
+            <plugin>
+                <groupId>io.micronaut.build</groupId>
+                <artifactId>micronaut-maven-plugin</artifactId>
+                <version>{site-version}</version>
+                <configuration>
+                    <watches>
+                        <watch>
+                            <directory>src/main/resources</directory>
+                            <includes>
+                                <include>**/*.yml</include>
+                                <include>**/*.properties</include>
+                            </includes>
+                            <excludes>
+                                <exclude>test.properties</exclude>
+                            </excludes>
+                        </watch>
+                        <watch>
+                            <directory>src/main/webapp</directory>
+                        </watch>
+                    </watches>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+----
+
+Note that exclusions take precedence over inclusions, so if a file change matches both, it will be excluded.
+
+When no `includes/excludes` rules are specified, a `\**/*` pattern will be included by default.
+
+==== Debugging
+
+Debugging options can be specified on the command line directly:
+
+* Running in debug mode: `mvn mn:run -Dmn.debug`.
+* Changing the debugger port: `mvn mn:run -Dmn.debug -Dmn.debug.port=5006`.
+* Suspending the debugger execution: `mn:run -Dmn.debug -Dmn.debug.suspend`.
+
+==== Other options
+
+For a full list of configuration options, check the link:../run-mojo.html[mn:run] goal documentation.

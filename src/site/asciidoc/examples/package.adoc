@@ -1,0 +1,177 @@
+=== Packaging an application
+
+This plugin supports different `<packaging>` types:
+
+* `jar` (default): produces a runnable fat JAR.
+* `native-image`: generates a GraalVM native image.
+* `docker`: builds a Docker image with the application artifacts (compiled classes, resources, dependencies, etc).
+* `docker-native`: builds a Docker image with a GraalVM native image inside.
+
+To package an application, `mvn package` is the one-stop shop to produce the desired artifact. By default, applications
+generated from https://micronaut.io/launch/[Micronaut Launch] have the packaging defined like
+`<packaging>${packaging}</packaging>`, so that you can do something like `mvn package -Dpackaging=native-image`:
+
+:toc:
+
+=== Packaging the application in a fat JAR
+
+----
+$ mvn package
+----
+
+If the `<packaging>` is set to `jar`, this plugin will delegate to the `maven-shade-plugin` to produce a JAR file. Its
+configuration is defined in the `io.micronaut:micronaut-parent` POM, and the defaults should be enough. Should you want
+to customize how to produce the JAR file, refer to the
+https://maven.apache.org/plugins/maven-shade-plugin/[Maven Shade Plugin documentation].
+
+=== Generating GraalVM native images
+
+----
+$ mvn package -Dpackaging=native-image
+----
+
+If the `<packaging>` is set to `native-image`, this plugin will delegate to the
+`org.graalvm.nativeimage:native-image-maven-plugin` to generate a native image. Note that for this packaging to work,
+you need to run locally a GraalVM JDK.
+
+Refer to the
+https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization[Native Image Maven Plugin documentation]
+for more information about how to customize the generated native image.
+
+Note that the parent POM already provides a value for the `<buildArgs>` parameter. If you override the plugin definition
+in your POM, you should include the parent-defined `<buildArgs>`. For example, to add `--verbose` to the native image
+args, you should define:
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.graalvm.nativeimage</groupId>
+  <artifactId>native-image-maven-plugin</artifactId>
+  <configuration>
+    <buildArgs>
+      --no-fallback -cp ${project.build.directory}/${project.artifactId}-${project.version}.jar --verbose
+    </buildArgs>
+  </configuration>
+</plugin>
+----
+
+=== Building JVM-based Docker images
+
+----
+$ mvn package -Dpackaging=docker
+----
+
+If the `<packaging>` is set to `docker`, this plugin will use `com.google.cloud.tools:jib-maven-plugin` to produce a
+Docker image with the application artifacts (compiled classes, resources, dependencies, etc) inside.
+
+The Docker image is built to a local Docker daemon (the equivalent of executing the `jib::dockerBuild` goal).
+
+Depending on the `micronaut.runtime` property, the image built might be different. Options are:
+
+* Default runtime: `mvn package -Dpackaging=docker`.
+* Oracle Cloud Function: `mvn package -Dpackaging=docker -Dmicronaut.runtime=oracle_function`.
+* AWS Lambda (Java runtimes): `mvn package -Dpackaging=docker -Dmicronaut.runtime=lambda`.
+
+You can use the link:dockerfile-mojo.html[`mn:dockerfile`] goal to generate the equivalent `Dockerfile`. For example,
+to generate the `Dockerfile` for AWS Lambda, run `mvn mn:dockerfile -Dpackaging=docker -Dmicronaut.runtime=lambda`.
+
+Refer to the
+https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration[Jib Maven Plugin documentation]
+to see what are the configuration options that can be used.
+
+For example, you can define the `jib-maven-plugin` in your POM as follows to pass additional JVM and application args:
+
+[source,xml]
+----
+<plugin>
+  <groupId>com.google.cloud.tools</groupId>
+  <artifactId>jib-maven-plugin</artifactId>
+  <configuration>
+    <container>
+      <jvmFlags>
+        <jvmFlag>-Dmy.property=example.value</jvmFlag>
+        <jvmFlag>-Xms512m</jvmFlag>
+        <jvmFlag>-Xdebug</jvmFlag>
+      </jvmFlags>
+      <args>
+        <arg>some</arg>
+        <arg>args</arg>
+      </args>
+    </container>
+  </configuration>
+</plugin>
+----
+
+=== Bringing your own `Dockerfile`
+
+----
+$ mvn package -Dpackaging=docker
+----
+
+If there is a `Dockerfile` in the project's root directory, it will be used to build the image. The image will be built
+using the `target` folder as the context directory. This plugin will also prepare all the `compile` and `runtime`
+dependency JARs in the `target/dependency` folder, so that in your `Dockerfile` you can leverage this and do:
+
+----
+FROM ...
+
+...
+
+COPY classes /home/app/classes
+COPY dependency/* /home/app/libs/
+
+...
+
+ENTRYPOINT ["java", "-cp", "/home/app/libs/*:/home/app/classes/", "com.example.app.Application"]
+----
+
+=== Building GraalVM-based Docker images
+
+----
+$ mvn package -Dpackaging=docker-native
+----
+
+If the `<packaging>` is set to `docker-native`, this plugin will use a Docker client to build and tag custom Docker
+images. In this case, the `micronaut.runtime` property will also determine how the image is prepared.
+
+* Default runtime.
+** Default image (dynamic): `mvn package -Dpackaging=docker-native`.
+** Static image: `mvn package -Dpackaging=docker-native -Dmicronaut.native-image.static=true`. This uses GraalVM's
+   `--static --libc=musl` flags and then puts the binary in a `scratch` image.
+* Oracle Cloud Function: `mvn package -Dpackaging=docker-native -Dmicronaut.runtime=oracle_function`.
+* AWS Lambda (custom runtime): `mvn package -Dpackaging=docker-native -Dmicronaut.runtime=lambda`.
+
+The image built can be customised using
+https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration[Jib]. In particular, you can set:
+
+* The base image, using `<from><image>`.
+* The image name/tags that will be used for building, using either `<to><image>` and/or `<to><tags>`.
+
+Note that changing the base image to a totally different one than the default might break image building, since the rest
+of the build steps expect a certain base image. By default, the native images are built from an `oracle/graalvm-ce` image.
+
+In the case of AWS custom runtime, it starts from `amazonlinux:2, and this cannot be changed. Also, in this case the
+result is not a tagged Docker image, but a `function.zip` archive that contains the launch script and the native binary.
+Essentially, what you need to upload to AWS Lambda.
+
+You can pass additional arguments to the executable in the following way:
+
+[source,xml]
+----
+<plugin>
+  <groupId>io.micronaut.build</groupId>
+  <artifactId>micronaut-maven-plugin</artifactId>
+  <configuration>
+    <appArguments>
+      <appArgument>foo</appArgument>
+      <appArgument>bar</appArgument>
+    </appArguments>
+  </configuration>
+</plugin>
+----
+
+Or when packaging:
+
+----
+$ mvn package -Dpackaging=docker-native -Dmn.appArgs="foo,bar"
+----
