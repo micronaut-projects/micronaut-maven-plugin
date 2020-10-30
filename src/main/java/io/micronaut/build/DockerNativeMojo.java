@@ -1,6 +1,8 @@
 package io.micronaut.build;
 
 import com.github.dockerjava.api.command.BuildImageCmd;
+import com.google.common.io.FileWriteMode;
+import com.google.common.io.Files;
 import io.micronaut.build.services.ApplicationConfigurationService;
 import io.micronaut.build.services.DockerService;
 import io.micronaut.build.services.JibConfigurationService;
@@ -12,6 +14,8 @@ import org.apache.maven.project.MavenProject;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.stream.Collectors;
 
 /**
  * <p>Implementation of the <code>docker-native</code> packaging.</p>
@@ -108,7 +112,22 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         String port = getPort();
         getLog().info("Exposing port: " + port);
 
-        BuildImageCmd buildImageCmd = dockerService.buildImageCmd(dockerfileName)
+        File dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);
+
+        if (appArguments != null && appArguments.size() > 0) {
+            getLog().info("Using application arguments: " + appArguments);
+            StringBuffer cmd = new StringBuffer("\nCMD [");
+            cmd.append(
+                    appArguments.stream()
+                        .map(s -> "\"" + s + "\"")
+                        .collect(Collectors.joining(", "))
+            );
+            cmd.append("]");
+            Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(cmd.toString());
+        }
+
+        BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
+                .withDockerfile(dockerfile)
                 .withTags(getTags())
                 .withBuildArg("BASE_IMAGE", from)
                 .withBuildArg("PORT", port);

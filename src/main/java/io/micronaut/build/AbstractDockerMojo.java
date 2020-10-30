@@ -46,6 +46,12 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     protected String nativeImageBuildArgs;
 
     /**
+     * List of additional arguments that will be passed to the application.
+     */
+    @Parameter(property = "mn.appArgs")
+    protected List<String> appArguments;
+
+    /**
      * The main class of the application, as defined in the
      * <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.
      */

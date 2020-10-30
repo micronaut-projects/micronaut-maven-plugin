@@ -153,3 +153,25 @@ of the build steps expect a certain base image. By default, the native images ar
 In the case of AWS custom runtime, it starts from `amazonlinux:2, and this cannot be changed. Also, in this case the
 result is not a tagged Docker image, but a `function.zip` archive that contains the launch script and the native binary.
 Essentially, what you need to upload to AWS Lambda.
+
+You can pass additional arguments to the executable in the following way:
+
+[source,xml]
+----
+<plugin>
+  <groupId>io.micronaut.build</groupId>
+  <artifactId>micronaut-maven-plugin</artifactId>
+  <configuration>
+    <appArguments>
+      <appArgument>foo</appArgument>
+      <appArgument>bar</appArgument>
+    </appArguments>
+  </configuration>
+</plugin>
+----
+
+Or when packaging:
+
+----
+$ mvn package -Dpackaging=docker-native -Dmn.appArgs="foo,bar"
+----
