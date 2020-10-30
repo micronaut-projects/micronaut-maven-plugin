@@ -1,9 +1,6 @@
 package io.micronaut.build.services;
 
-import io.micronaut.context.env.MapPropertySource;
-import io.micronaut.context.env.PropertiesPropertySourceLoader;
-import io.micronaut.context.env.PropertySource;
-import io.micronaut.context.env.PropertySourceLoader;
+import io.micronaut.context.env.*;
 import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
 import io.micronaut.core.io.file.DefaultFileSystemResourceLoader;
 import org.apache.maven.project.MavenProject;
@@ -46,6 +43,14 @@ public class ApplicationConfigurationService {
                 MapPropertySource mapPropertySource = (MapPropertySource) propertySource.get();
                 configuration.putAll(mapPropertySource.asMap());
             }
+        }
+
+        MapPropertySource[] propertySources = new MapPropertySource[] {
+                new EnvironmentPropertySource(),
+                new SystemPropertiesPropertySource()
+        };
+        for (MapPropertySource propertySource : propertySources) {
+            configuration.putAll(propertySource.asMap());
         }
 
         return configuration;

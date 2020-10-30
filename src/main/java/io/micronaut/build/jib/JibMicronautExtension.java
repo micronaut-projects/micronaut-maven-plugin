@@ -43,7 +43,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         ApplicationConfigurationService applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());
         Map<String, Object> applicationConfiguration = applicationConfigurationService.getApplicationConfiguration();
 
-        int port = Integer.parseInt(applicationConfiguration.getOrDefault("micronaut.server.port", 8080).toString());
+        int port = Integer.parseInt(applicationConfiguration.getOrDefault("MICRONAUT_SERVER_PORT", applicationConfiguration.getOrDefault("micronaut.server.port", 8080)).toString());
         logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Exposing port: " + port);
         builder.setBaseImage(from)
                 .addExposedPort(Port.tcp(port));
