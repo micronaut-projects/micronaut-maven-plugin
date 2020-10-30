@@ -79,6 +79,29 @@ Refer to the
 https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration[Jib Maven Plugin documentation]
 to see what are the configuration options that can be used.
 
+For example, you can define the `jib-maven-plugin` in your POM as follows to pass additional JVM and application args:
+
+[source,xml]
+----
+<plugin>
+  <groupId>com.google.cloud.tools</groupId>
+  <artifactId>jib-maven-plugin</artifactId>
+  <configuration>
+    <container>
+      <jvmFlags>
+        <jvmFlag>-Dmy.property=example.value</jvmFlag>
+        <jvmFlag>-Xms512m</jvmFlag>
+        <jvmFlag>-Xdebug</jvmFlag>
+      </jvmFlags>
+      <args>
+        <arg>some</arg>
+        <arg>args</arg>
+      </args>
+    </container>
+  </configuration>
+</plugin>
+----
+
 === Bringing your own `Dockerfile`
 
 ----
