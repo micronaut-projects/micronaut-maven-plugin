@@ -12,9 +12,7 @@ deals with file changes and JVM restarts.
 
 === Usage
 
-Check the link:usage.html[usage page] to see how to declare the plugin in your `pom.xml`.
-
-Then, you can use `mn:run` to run your application in development mode:
+You can use `mn:run` to run your application in development mode:
 
 [source,bash]
 ----
@@ -100,4 +98,4 @@ Debugging options can be specified on the command line directly:
 
 ==== Other options
 
-For a full list of configuration options, check the link:run-mojo.html[mn:run] goal documentation.
+For a full list of configuration options, check the link:../run-mojo.html[mn:run] goal documentation.

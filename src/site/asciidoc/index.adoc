@@ -21,7 +21,6 @@ Add the plugin to your `build/plugins` section:
         <!-- ... -->
         <packaging>jar</packaging>
         <micronaut.runtime>netty</micronaut.runtime>
-        <micronaut.native-image.static>false</micronaut.native-image.static>
     </properties>
 
     <build>
@@ -31,12 +30,6 @@ Add the plugin to your `build/plugins` section:
             <plugin>
                 <groupId>io.micronaut.build</groupId>
                 <artifactId>micronaut-maven-plugin</artifactId>
-                <version>{site-version}</version>
-                <configuration>
-                    <micronautRuntime>${micronaut.runtime}</micronautRuntime>
-                    <staticNativeImage>${micronaut.native-image.static}</staticNativeImage>
-                    <nativeImageBuildArgs>${micronaut.native-image.args}</nativeImageBuildArgs>
-                </configuration>
             </plugin>
         </plugins>
     </build>
