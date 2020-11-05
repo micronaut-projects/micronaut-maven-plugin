@@ -27,7 +27,6 @@ jobs:
         env:
           GPG_FILE: ${{ secrets.GPG_FILE }}
         run: |
-          cat ~/.m2/settings.xml
           mkdir ~/.gnupg && echo "$GPG_FILE" | base64 -d > ~/.gnupg/secring.gpg
           eval $(gpg-agent --daemon --no-grab --write-env-file $HOME/.gpg-agent-info)
           export GPG_TTY=$(tty)
@@ -84,7 +83,10 @@ jobs:
       - name: Perform release
         env:
           GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
-        run: mvn --batch-mode release:perform
+        run: |
+          cat ~/.m2/settings.xml
+          mvn help:effective-settings
+          mvn --batch-mode release:perform
 
       - name: Close release
         if: success()

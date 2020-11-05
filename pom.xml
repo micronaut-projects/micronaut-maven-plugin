@@ -471,6 +471,7 @@
                                     <goal>sign</goal>
                                 </goals>
                                 <configuration>
+                                    <!--suppress UnresolvedMavenProperty -->
                                     <passphrase>${env.GPG_PASSWORD}</passphrase>
                                     <gpgArguments>
                                         <arg>--pinentry-mode</arg>
