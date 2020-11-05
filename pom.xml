@@ -74,7 +74,7 @@
         <site.name>${project.name}</site.name>
         <site.description>${project.description}</site.description>
         <site.version>${project.version}</site.version>
-        <project.build.outputTimestamp>2020-11-05T17:02:32Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2020-06-16T13:10:27Z</project.build.outputTimestamp>
     </properties>
 
     <dependencies>
