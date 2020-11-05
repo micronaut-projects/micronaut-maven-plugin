@@ -69,7 +69,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <maven.version>3.6.3</maven.version>
+        <maven.version>3.3.9</maven.version>
         <site.path>${project.artifactId}</site.path>
         <site.name>${project.name}</site.name>
         <site.description>${project.description}</site.description>
@@ -465,9 +465,8 @@
                                     <goal>sign</goal>
                                 </goals>
                                 <configuration>
-                                    <useAgent>true</useAgent>
+                                    <passphrase>${env.GPG_PASSWORD}</passphrase>
                                     <gpgArguments>
-                                        <arg>--no-tty</arg>
                                         <arg>--pinentry-mode</arg>
                                         <arg>loopback</arg>
                                     </gpgArguments>

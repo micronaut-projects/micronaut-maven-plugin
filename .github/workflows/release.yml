@@ -81,6 +81,8 @@ jobs:
           VERSION: ${{ steps.release_version.outputs.release_version }}
 
       - name: Perform release
+        env:
+          GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
         run: mvn --batch-mode release:perform
 
       - name: Close release
