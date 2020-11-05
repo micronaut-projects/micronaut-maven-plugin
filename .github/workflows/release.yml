@@ -10,6 +10,13 @@ jobs:
         with:
           token: ${{ secrets.GH_TOKEN }}
 
+      - name: Cache Maven packages
+        uses: actions/cache@v2.1.2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
@@ -17,7 +24,7 @@ jobs:
           settings-path: /tmp
 
       - name: Setup Maven settings.xml
-        uses: s4u/maven-settings-action@v2.1.1
+        uses: s4u/maven-settings-action@v2.2.0
         with:
           override: true
           servers: '[{"id": "ossrh", "username": "${{ secrets.SONATYPE_USERNAME }}", "password": "${{ secrets.SONATYPE_PASSWORD }}"}]'
@@ -27,6 +34,8 @@ jobs:
         env:
           GPG_FILE: ${{ secrets.GPG_FILE }}
         run: |
+          cat ~/.m2/settings.xml
+          mvn help:effective-settings
           mkdir ~/.gnupg && echo "$GPG_FILE" | base64 -d > ~/.gnupg/secring.gpg
           eval $(gpg-agent --daemon --no-grab --write-env-file $HOME/.gpg-agent-info)
           export GPG_TTY=$(tty)
@@ -51,13 +60,6 @@ jobs:
         uses: webfactory/ssh-agent@v0.4.1
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Cache Maven packages
-        uses: actions/cache@v2.1.2
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
 
       - name: Figure out next version
         id: next_version
