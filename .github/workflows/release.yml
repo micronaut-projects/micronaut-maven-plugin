@@ -14,7 +14,6 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-          ref: ${{ github.head_ref }}
           settings-path: /tmp
 
       - name: Setup Maven settings.xml
@@ -27,7 +26,11 @@ jobs:
       - name: Setup gpg keyring
         env:
           GPG_FILE: ${{ secrets.GPG_FILE }}
-        run: mkdir ~/.gnupg && echo "$GPG_FILE" | base64 -d > ~/.gnupg/secring.gpg
+        run: |
+          mkdir ~/.gnupg && echo "$GPG_FILE" | base64 -d > ~/.gnupg/secring.gpg
+          eval $(gpg-agent --daemon --no-grab --write-env-file $HOME/.gpg-agent-info)
+          export GPG_TTY=$(tty)
+          export GPG_AGENT_INFO
 
       - name: Set the current release version
         id: release_version
