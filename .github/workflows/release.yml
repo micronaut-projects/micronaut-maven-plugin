@@ -24,9 +24,11 @@ jobs:
           properties: '[{"gpg.executable": "gpg"}, {"gpg.passphrase": "${{ secrets.GPG_PASSWORD }}"}]'
 
       - name: Setup gpg keyring
+        shell: bash
         env:
           GPG_FILE: ${{ secrets.GPG_FILE }}
         run: |
+          cat ~/.m2/settings.xml | grep -v pass
           mkdir ~/.gnupg && echo "$GPG_FILE" | base64 -d > ~/.gnupg/secring.gpg
           eval $(gpg-agent --daemon --no-grab --write-env-file $HOME/.gpg-agent-info)
           export GPG_TTY=$(tty)
