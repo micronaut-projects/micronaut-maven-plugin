@@ -7,6 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: Set up JDK
         uses: actions/setup-java@v1
@@ -32,9 +34,11 @@ jobs:
         run: echo ::set-output name=release_version::${GITHUB_REF:11}
 
       - name: Setup git
+        env:
+          MICRONAUT_BUILD_EMAIL: ${{ secrets.MICRONAUT_BUILD_EMAIL }}
         run: |
-          git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
-          git config --global user.name "${GITHUB_ACTOR}"
+          git config --global user.email "$MICRONAUT_BUILD_EMAIL"
+          git config --global user.name "micronaut-build"
           git fetch
           git checkout master
           git tag -d v${{ steps.release_version.outputs.release_version }}
@@ -88,17 +92,20 @@ jobs:
         with:
           token: ${{ secrets.GH_TOKEN }}
           repository: micronaut-projects/micronaut-core
-          ref: master
-          path: micronaut-core
+          ref: 2.2.x
+          path: micronaut-core # Must be micronaut-core
+        continue-on-error: true
 
       - name: Update BOM
         uses: micronaut-projects/github-actions/update-bom@master
         continue-on-error: true
         with:
           token: ${{ secrets.GH_TOKEN }}
-        env: 
-          bomProperties: |
-            micronautMavenPluginVersion=${{ steps.release_version.outputs.release_version }}
+        env:
+          MICRONAUT_BUILD_EMAIL: ${{ secrets.MICRONAUT_BUILD_EMAIL }}
+          githubCoreBranch: 2.2.x
+          projectVersion: ${{ steps.release_version.outputs.release_version }}
+          bomProperty: micronautMavenPluginVersion
 
       - name: Rollback release
         if: failure()
