@@ -127,6 +127,7 @@
         <groupId>io.micronaut.build</groupId>
         <artifactId>micronaut-maven-plugin</artifactId>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -136,23 +137,13 @@
           <annotationProcessorPaths combine.children="append">
             <path>
               <groupId>io.micronaut</groupId>
-              <artifactId>micronaut-inject-java</artifactId>
-              <version>${micronaut.version}</version>
-            </path>
-            <path>
-              <groupId>io.micronaut</groupId>
-              <artifactId>micronaut-validation</artifactId>
-              <version>${micronaut.version}</version>
-            </path>
-            <path>
-              <groupId>io.micronaut</groupId>
               <artifactId>micronaut-graal</artifactId>
               <version>${micronaut.version}</version>
             </path>
           </annotationProcessorPaths>
           <compilerArgs>
             <arg>-Amicronaut.processing.group=io.micronaut.build.examples</arg>
-            <arg>-Amicronaut.processing.module=demo</arg>
+            <arg>-Amicronaut.processing.module=${project.artifactId}</arg>
           </compilerArgs>
         </configuration>
       </plugin>
