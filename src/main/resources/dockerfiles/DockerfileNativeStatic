@@ -25,7 +25,7 @@ COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
 ARG CLASS_NAME
 ARG GRAALVM_ARGS=""
-RUN native-image ${GRAALVM_ARGS} --static --libc=musl -H:Class=${CLASS_NAME} -H:Name=application --no-fallback --install-exit-handlers -cp "/home/app/libs/*:/home/app/classes/"
+RUN native-image ${GRAALVM_ARGS} --static --libc=musl -H:Class=${CLASS_NAME} -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM scratch
 COPY --from=builder /home/app/application /app/application
