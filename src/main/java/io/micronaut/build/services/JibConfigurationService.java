@@ -1,5 +1,6 @@
 package io.micronaut.build.services;
 
+import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
@@ -63,5 +64,29 @@ public class JibConfigurationService {
             }
         }
         return Collections.emptySet();
+    }
+
+    public Optional<Credential> getCredentials() {
+        if (to != null) {
+            Xpp3Dom auth = to.getChild("auth");
+            if (auth != null) {
+                Xpp3Dom username = auth.getChild("username");
+                Xpp3Dom password = auth.getChild("password");
+                if (username != null & password != null) {
+                    return Optional.of(Credential.from(username.getValue(), password.getValue()));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    public Optional<String> getCredHelper() {
+        if (to != null) {
+            Xpp3Dom credHelper = to.getChild("credHelper");
+            if (credHelper != null) {
+                return Optional.of(credHelper.getValue());
+            }
+        }
+        return Optional.empty();
     }
 }

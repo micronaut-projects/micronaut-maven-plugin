@@ -1,0 +1,75 @@
+=== Deploying an application
+
+Similarly to the link:package.html[packaging support], with this plugin you can use `mvn deploy` as the only command
+required to deploy an application that, depending on the `<packaging>`:
+
+* `jar` (default): will deploy the artifact to a remote repository using `org.apache.maven.plugins:maven-deploy-plugin:deploy`.
+* `docker` or `docker-native`: will push the Docker image to the configured Docker registry.
+
+You can use Jib to configure which registry should the image be pushed to. Refer to the
+https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration[Jib Maven Plugin documentation]
+to see what are the configuration options that can be used.
+
+For example, to push an image to Docker Hub:
+
+[source,xml]
+----
+<plugin>
+  <groupId>com.google.cloud.tools</groupId>
+  <artifactId>jib-maven-plugin</artifactId>
+  <configuration>
+    <to>
+      <image>docker.io/my-company/my-app:${project.version}</image>
+    </to>
+  </configuration>
+</plugin>
+----
+
+Then, you can execute `mvn deploy -Dpackaging=docker` or `mvn deploy -Dpackaging=docker-native`.
+
+Note that in Maven, the `deploy` phase runs after the `package` phase (among others), so invoking `deploy` will also build
+the Docker image. Check the link:package.html[packaging support] to see what options can be used.
+
+This plugin will attempt to use https://github.com/docker/docker-credential-helpers[credential helpers] to help with
+registry authentication, including:
+
+* `docker-credential-gcr` for Google Cloud's `gcr.io`.
+* `docker-credential-ecr-login` for Amazon's ECR.
+* Docker configuration at `~/.docker/config.json`.
+
+Essentially, if you can run `docker push` from your command line, you will also be able to `mvn deploy` your application.
+
+You can also specify other credential helpers, for example:
+
+[source,xml]
+----
+<plugin>
+  <groupId>com.google.cloud.tools</groupId>
+  <artifactId>jib-maven-plugin</artifactId>
+  <configuration>
+    <to>
+      <image>mycontainerregistry.azurecr.io/${project.artifactId}:latest</image>
+      <credHelper>docker-credential-acr-darwin</credHelper>
+    </to>
+  </configuration>
+</plugin>
+----
+
+In addition to that, you can supply credentials via username and password:
+
+[source,xml]
+----
+<plugin>
+  <groupId>com.google.cloud.tools</groupId>
+  <artifactId>jib-maven-plugin</artifactId>
+  <configuration>
+    <to>
+      <image>gcr.io/my-gcp-project/my-app</image>
+      <auth>
+        <username>${env.REGISTRY_USERNAME}</username>
+        <password>${env.REGISTRY_PASSWORD}</password>
+      </auth>
+    </to>
+  </configuration>
+</plugin>
+----
