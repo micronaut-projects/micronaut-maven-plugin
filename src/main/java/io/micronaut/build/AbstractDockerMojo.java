@@ -116,7 +116,8 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
 
     protected String getPort() {
         Map<String, Object> applicationConfiguration = applicationConfigurationService.getApplicationConfiguration();
-        return applicationConfiguration.getOrDefault("MICRONAUT_SERVER_PORT", applicationConfiguration.getOrDefault("micronaut.server.port", 8080)).toString();
+        String port = applicationConfiguration.getOrDefault("MICRONAUT_SERVER_PORT", applicationConfiguration.getOrDefault("micronaut.server.port", 8080)).toString();
+        return "-1".equals(port) ? "8080" : port;
     }
 
     protected void copyDependencies() throws IOException {

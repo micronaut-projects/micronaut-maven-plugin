@@ -45,8 +45,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
         int port = Integer.parseInt(applicationConfiguration.getOrDefault("MICRONAUT_SERVER_PORT", applicationConfiguration.getOrDefault("micronaut.server.port", 8080)).toString());
         logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Exposing port: " + port);
-        builder.setBaseImage(from)
-                .addExposedPort(Port.tcp(port));
+        builder.setBaseImage(from);
+        if (port > 0) {
+            builder.addExposedPort(Port.tcp(port));
+        }
 
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION:
