@@ -15,7 +15,6 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.stream.Collectors;
 
 /**
  * <p>Implementation of the <code>docker-native</code> packaging.</p>

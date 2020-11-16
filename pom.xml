@@ -150,6 +150,11 @@
             <version>0.1.0</version>
         </dependency>
         <dependency>
+            <groupId>com.google.cloud.tools</groupId>
+            <artifactId>jib-core</artifactId>
+            <version>0.16.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java-core</artifactId>
             <version>3.2.5</version>
