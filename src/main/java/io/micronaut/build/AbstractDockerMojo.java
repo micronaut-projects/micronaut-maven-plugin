@@ -27,8 +27,6 @@ import static io.micronaut.build.DockerNativeMojo.DEFAULT_GRAAL_JVM_VERSION;
  */
 public abstract class AbstractDockerMojo extends AbstractMojo {
 
-    public static final String DEFAULT_GRAAL_VERSION = "20.2.0";
-
     protected final MavenProject mavenProject;
     protected final JibConfigurationService jibConfigurationService;
     protected final ApplicationConfigurationService applicationConfigurationService;
@@ -83,7 +81,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     }
 
     protected String graalVmVersion() {
-        return mavenProject.getProperties().getProperty("graal.version", DEFAULT_GRAAL_VERSION);
+        return mavenProject.getProperties().getProperty("graal.version");
     }
 
     protected String graalVmJvmVersion() {
