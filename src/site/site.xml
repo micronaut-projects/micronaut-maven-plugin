@@ -11,15 +11,15 @@
     <body>
         <menu name="Overview">
             <item name="Introduction" href="index.html"/>
-            <item name="Usage" href="usage.html"/>
             <item name="Goals" href="plugin-info.html"/>
             <item name="Release History" href="release-history.html" />
         </menu>
 
         <menu name="Examples">
-            <item name="Java" href="https://github.com/micronaut-projects/micronaut-maven-plugin/blob/master/examples/java/pom.xml"/>
-            <item name="Groovy" href="https://github.com/micronaut-projects/micronaut-maven-plugin/blob/master/examples/groovy/pom.xml"/>
-            <item name="Kotlin" href="https://github.com/micronaut-projects/micronaut-maven-plugin/blob/master/examples/kotlin/pom.xml"/>
+            <item name="Running in development mode" href="examples/run.html"/>
+            <item name="Packaging" href="examples/package.html"/>
+            <item name="Generating Dockerfiles" href="dockerfile-mojo.html"/>
+            <item name="Deploying Docker images" href="examples/deploy.html"/>
         </menu>
 
         <menu ref="reports"/>
