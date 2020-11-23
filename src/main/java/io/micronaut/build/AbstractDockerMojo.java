@@ -42,7 +42,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
      * </a> configuration options.
      */
     @Parameter(property = "micronaut.native-image.args")
-    protected String nativeImageBuildArgs;
+    protected List<String> buildArgs;
 
     /**
      * List of additional arguments that will be passed to the application.
@@ -136,6 +136,14 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
                         .map(s -> "\"" + s + "\"")
                         .collect(Collectors.joining(", ")) +
                 "]";
+    }
+
+    protected String getGraalVmBuildArgs() {
+        if (buildArgs != null && !buildArgs.isEmpty()) {
+            return String.join(" ", buildArgs);
+        } else {
+            return "";
+        }
     }
 
 }
