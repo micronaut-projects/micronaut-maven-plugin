@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static io.micronaut.build.DockerMojo.DOCKER_PACKAGING;
 import static io.micronaut.build.DockerNativeMojo.DOCKER_NATIVE_PACKAGING;
 
 /**
@@ -30,7 +31,11 @@ import static io.micronaut.build.DockerNativeMojo.DOCKER_NATIVE_PACKAGING;
 @Mojo(name = "dockerfile", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class DockerfileMojo extends AbstractDockerMojo {
 
-    public static final String DOCKER_PACKAGING = "docker";
+    public static final String DOCKERFILE = "Dockerfile";
+    public static final String DOCKERFILE_AWS_CUSTOM_RUNTIME = "DockerfileAwsCustomRuntime";
+    public static final String DOCKERFILE_NATIVE = "DockerfileNative";
+    public static final String DOCKERFILE_NATIVE_STATIC = "DockerfileNativeStatic";
+    public static final String DOCKERFILE_NATIVE_ORACLE_CLOUD = "DockerfileNativeOracleCloud";
 
     @Inject
     public DockerfileMojo(MavenProject mavenProject, DockerService dockerService, JibConfigurationService jibConfigurationService,
@@ -61,7 +66,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
 
             dockerfile.ifPresent(file -> getLog().info("Dockerfile written to: " + file.getAbsolutePath()));
 
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
     }
@@ -74,7 +79,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
 
             case LAMBDA:
             case DEFAULT:
-                dockerfile = dockerService.loadDockerfileAsResource("Dockerfile");
+                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE);
                 break;
         }
         processDockerfile(dockerfile);
@@ -85,18 +90,18 @@ public class DockerfileMojo extends AbstractDockerMojo {
         File dockerfile = null;
         switch (runtime.getBuildStrategy()) {
             case LAMBDA:
-                dockerfile = dockerService.loadDockerfileAsResource("DockerfileAwsCustomRuntime");
+                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS_CUSTOM_RUNTIME);
                 break;
 
             case ORACLE_FUNCTION:
-                dockerfile = dockerService.loadDockerfileAsResource("DockerfileNativeOracleCloud");
+                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_NATIVE_ORACLE_CLOUD);
                 break;
 
             case DEFAULT:
-                String dockerfileName = "DockerfileNative";
+                String dockerfileName = DOCKERFILE_NATIVE;
                 if (staticNativeImage) {
                     getLog().info("Generating a static native image");
-                    dockerfileName = "DockerfileNativeStatic";
+                    dockerfileName = DOCKERFILE_NATIVE_STATIC;
                 }
                 dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);
                 break;
@@ -130,7 +135,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
                 }
             }
 
-            if (appArguments != null && appArguments.size() > 0) {
+            if (appArguments != null && !appArguments.isEmpty()) {
                 getLog().info("Using application arguments: " + appArguments);
                 result.add(getCmd());
             }

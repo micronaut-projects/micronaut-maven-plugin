@@ -16,6 +16,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.*;
 import org.apache.maven.toolchain.Toolchain;
 import org.apache.maven.toolchain.ToolchainManager;
+import org.codehaus.plexus.util.AbstractScanner;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.codehaus.plexus.util.Os;
 import org.eclipse.aether.RepositorySystemSession;
@@ -50,6 +51,9 @@ import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 @Mojo(name = "run", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PREPARE_PACKAGE)
 public class RunMojo extends AbstractMojo {
 
+    public static final String MN_APP_ARGS = "mn.appArgs";
+    public static final String EXEC_MAIN_CLASS = "${exec.mainClass}";
+
     private static final int LAST_COMPILATION_THRESHOLD = 500;
     private static final String JAVA = "java";
     private static final List<String> DEFAULT_EXCLUDES;
@@ -78,7 +82,7 @@ public class RunMojo extends AbstractMojo {
      * The main class of the application, as defined in the
      * <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.
      */
-    @Parameter(defaultValue = "${exec.mainClass}", required = true)
+    @Parameter(defaultValue = EXEC_MAIN_CLASS, required = true)
     private String mainClass;
 
     /**
@@ -120,7 +124,7 @@ public class RunMojo extends AbstractMojo {
     /**
      * List of additional arguments that will be passed to the application, after the class name.
      */
-    @Parameter(property = "mn.appArgs")
+    @Parameter(property = MN_APP_ARGS)
     private List<String> appArguments;
 
     /**
@@ -385,11 +389,11 @@ public class RunMojo extends AbstractMojo {
             args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=" + suspend + ",address=" + debugPort);
         }
 
-        if (jvmArguments != null && jvmArguments.size() > 0) {
+        if (jvmArguments != null && !jvmArguments.isEmpty()) {
             args.addAll(jvmArguments);
         }
 
-        if (mavenSession.getUserProperties().size() > 0) {
+        if (!mavenSession.getUserProperties().isEmpty()) {
             mavenSession.getUserProperties().forEach((k, v) -> args.add("-D" + k + "=" + v));
         }
 
@@ -399,7 +403,7 @@ public class RunMojo extends AbstractMojo {
         args.add("-Dcom.sun.management.jmxremote");
         args.add(mainClass);
 
-        if (appArguments != null && appArguments.size() > 0) {
+        if (appArguments != null && !appArguments.isEmpty()) {
             args.addAll(appArguments);
         }
 
@@ -415,19 +419,21 @@ public class RunMojo extends AbstractMojo {
     }
 
     private String findJavaExecutable() {
+        String executable;
         Toolchain toolchain = this.toolchainManager.getToolchainFromBuildContext("jdk", mavenSession);
         if (toolchain != null) {
-            return toolchain.findTool(JAVA);
+            executable = toolchain.findTool(JAVA);
         } else {
             File javaBinariesDir = new File(new File(System.getProperty("java.home")), "bin");
             if (Os.isFamily(Os.FAMILY_UNIX)) {
-                return new File(javaBinariesDir, JAVA).getAbsolutePath();
+                executable = new File(javaBinariesDir, JAVA).getAbsolutePath();
             } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                return new File(javaBinariesDir, "java.exe").getAbsolutePath();
+                executable = new File(javaBinariesDir, "java.exe").getAbsolutePath();
             } else {
-                return JAVA;
+                executable = JAVA;
             }
         }
+        return executable;
     }
 
     private boolean compileProject() {

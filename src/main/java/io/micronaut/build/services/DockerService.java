@@ -10,6 +10,7 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
+import io.micronaut.build.DockerfileMojo;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
@@ -99,7 +100,7 @@ public class DockerService {
         String path = "/dockerfiles/" + name;
         InputStream stream = getClass().getResourceAsStream(path);
         if (stream != null) {
-            File dockerfile = new File(mavenProject.getBuild().getDirectory(), "Dockerfile");
+            File dockerfile = new File(mavenProject.getBuild().getDirectory(), DockerfileMojo.DOCKERFILE);
             FileUtils.copyInputStreamToFile(stream, dockerfile);
             return dockerfile;
         }
