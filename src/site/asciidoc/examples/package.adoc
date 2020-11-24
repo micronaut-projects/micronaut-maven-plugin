@@ -182,9 +182,9 @@ Also, to pass additional arguments to the `native-image` process:
   <groupId>io.micronaut.build</groupId>
   <artifactId>micronaut-maven-plugin</artifactId>
   <configuration>
-    <buildArgs>
-      <buildArg>--verbose</buildArg>
-    </buildArgs>
+    <nativeImageBuildArgs>
+      <nativeImageBuildArg>--verbose</nativeImageBuildArg>
+    </nativeImageBuildArgs>
   </configuration>
 </plugin>
 ----
