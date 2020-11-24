@@ -27,6 +27,12 @@ For example, to push an image to Docker Hub:
 
 Then, you can execute `mvn deploy -Dpackaging=docker` or `mvn deploy -Dpackaging=docker-native`.
 
+You can also omit the plugin declaration in your POM, and execute directly:
+
+----
+$ mvn deploy -Dpackaging=docker-native -Djib.to.image=docker.io/my-company/my-app:latest
+----
+
 Note that in Maven, the `deploy` phase runs after the `package` phase (among others), so invoking `deploy` will also build
 the Docker image. Check the link:package.html[packaging support] to see what options can be used.
 
@@ -55,6 +61,12 @@ You can also specify other credential helpers, for example:
 </plugin>
 ----
 
+Or with the command line:
+
+----
+$ mvn deploy -Dpackaging=docker-native -Djib.to.image=mycontainerregistry.azurecr.io/my-app:latest -Djib.to.credHelper=docker-credential-acr-darwin
+----
+
 In addition to that, you can supply credentials via username and password:
 
 [source,xml]
@@ -72,4 +84,10 @@ In addition to that, you can supply credentials via username and password:
     </to>
   </configuration>
 </plugin>
+----
+
+Or with the command line:
+
+----
+$ mvn deploy -Dpackaging=docker-native -Djib.to.image=gcr.io/my-gcp-project/my-app -Djib.to.auth.username=$REGISTRY_USERNAME -Djib.to.auth.password=$REGISTRY_PASSWORD
 ----
