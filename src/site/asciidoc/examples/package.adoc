@@ -38,9 +38,7 @@ Refer to the
 https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization[Native Image Maven Plugin documentation]
 for more information about how to customize the generated native image.
 
-Note that the parent POM already provides a value for the `<buildArgs>` parameter. If you override the plugin definition
-in your POM, you should include the parent-defined `<buildArgs>`. For example, to add `--verbose` to the native image
-args, you should define:
+For example, to add `--verbose` to the native image args, you should define:
 
 [source,xml]
 ----
@@ -48,8 +46,8 @@ args, you should define:
   <groupId>org.graalvm.nativeimage</groupId>
   <artifactId>native-image-maven-plugin</artifactId>
   <configuration>
-    <buildArgs>
-      --no-fallback -cp ${project.build.directory}/${project.artifactId}-${project.version}.jar --verbose
+    <buildArgs combine.children="append">
+      <buildArg>--verbose</buildArg>
     </buildArgs>
   </configuration>
 </plugin>
@@ -174,4 +172,25 @@ Or when packaging:
 
 ----
 $ mvn package -Dpackaging=docker-native -Dmn.appArgs="foo,bar"
+----
+
+Also, to pass additional arguments to the `native-image` process:
+
+[source,xml]
+----
+<plugin>
+  <groupId>io.micronaut.build</groupId>
+  <artifactId>micronaut-maven-plugin</artifactId>
+  <configuration>
+    <nativeImageBuildArgs>
+      <nativeImageBuildArg>--verbose</nativeImageBuildArg>
+    </nativeImageBuildArgs>
+  </configuration>
+</plugin>
+----
+
+Or from the command line:
+
+----
+$ mvn package -Dpackaging=docker-native -Dmicronaut.native-image.args="--verbose"
 ----

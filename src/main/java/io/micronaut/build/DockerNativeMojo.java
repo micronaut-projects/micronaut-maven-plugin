@@ -82,9 +82,10 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         getLog().info("Using GRAALVM_VERSION: " + graalVmVersion());
         getLog().info("Using GRAALVM_JVM_VERSION: " + graalVmJvmVersion());
 
-        if (nativeImageBuildArgs != null && !nativeImageBuildArgs.trim().isEmpty()) {
-            getLog().info("Using GRAALVM_ARGS: " + nativeImageBuildArgs);
-            buildImageCmd = buildImageCmd.withBuildArg("GRAALVM_ARGS", nativeImageBuildArgs);
+        String graalVmBuildArgs = getGraalVmBuildArgs();
+        if (!"".equals(graalVmBuildArgs)) {
+            getLog().info("Using GRAALVM_ARGS: " + graalVmBuildArgs);
+            buildImageCmd = buildImageCmd.withBuildArg("GRAALVM_ARGS", graalVmBuildArgs);
         }
 
         String imageId = dockerService.buildImage(buildImageCmd);
@@ -131,10 +132,12 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             buildImageCmd = buildImageCmd.withBuildArg("CLASS_NAME", mainClass);
         }
 
-        if (nativeImageBuildArgs != null && !nativeImageBuildArgs.trim().isEmpty()) {
-            getLog().info("Using GRAALVM_ARGS: " + nativeImageBuildArgs);
-            buildImageCmd = buildImageCmd.withBuildArg("GRAALVM_ARGS", nativeImageBuildArgs);
+        String graalVmBuildArgs = getGraalVmBuildArgs();
+        if (!"".equals(graalVmBuildArgs)) {
+            getLog().info("Using GRAALVM_ARGS: " + graalVmBuildArgs);
+            buildImageCmd = buildImageCmd.withBuildArg("GRAALVM_ARGS", graalVmBuildArgs);
         }
+
 
         dockerService.buildImage(buildImageCmd);
     }
