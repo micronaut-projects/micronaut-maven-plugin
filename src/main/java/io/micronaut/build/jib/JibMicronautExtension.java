@@ -6,6 +6,7 @@ import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
+import io.micronaut.build.AbstractDockerMojo;
 import io.micronaut.build.MicronautRuntime;
 import io.micronaut.build.services.ApplicationConfigurationService;
 import io.micronaut.build.services.JibConfigurationService;
@@ -40,12 +41,11 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         JibConfigurationService jibConfigurationService = new JibConfigurationService(mavenData.getMavenProject());
         String from = jibConfigurationService.getFromImage().orElse(DEFAULT_BASE_IMAGE);
 
-        ApplicationConfigurationService applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());
-        Map<String, Object> applicationConfiguration = applicationConfigurationService.getApplicationConfiguration();
 
         builder.setBaseImage(from);
 
-        int port = Integer.parseInt(applicationConfiguration.getOrDefault("MICRONAUT_SERVER_PORT", applicationConfiguration.getOrDefault("micronaut.server.port", 8080)).toString());
+        ApplicationConfigurationService applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());
+        int port = Integer.parseInt(applicationConfigurationService.getServerPort());
         if (port > 0) {
             logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Exposing port: " + port);
             builder.addExposedPort(Port.tcp(port));
@@ -98,7 +98,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         if (javaVersion.getMajorVersion() >= 11) {
             return "jre11-latest";
         } else {
-            return "latest";
+            return AbstractDockerMojo.LATEST_TAG;
         }
     }
 

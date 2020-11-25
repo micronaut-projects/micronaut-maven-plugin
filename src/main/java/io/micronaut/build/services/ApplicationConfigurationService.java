@@ -21,18 +21,26 @@ import java.util.Optional;
 @Singleton
 public class ApplicationConfigurationService {
 
+    public static final String DEFAULT_PORT = "8080";
+
     private final MavenProject mavenProject;
+    private final Map<String, Object> applicationConfiguration;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     public ApplicationConfigurationService(MavenProject mavenProject) {
         this.mavenProject = mavenProject;
+        this.applicationConfiguration = parseApplicationConfiguration();
     }
 
-    public Map<String, Object> getApplicationConfiguration() {
+    public String getServerPort() {
+        return applicationConfiguration.getOrDefault("MICRONAUT_SERVER_PORT", applicationConfiguration.getOrDefault("micronaut.server.port", DEFAULT_PORT)).toString();
+    }
+
+    private Map<String, Object> parseApplicationConfiguration() {
         Map<String, Object> configuration = new HashMap<>();
 
-        PropertySourceLoader[] loaders = new PropertySourceLoader[]{
+        PropertySourceLoader[] loaders = {
                 new YamlPropertySourceLoader(),
                 new PropertiesPropertySourceLoader()
         };
@@ -45,7 +53,7 @@ public class ApplicationConfigurationService {
             }
         }
 
-        MapPropertySource[] propertySources = new MapPropertySource[] {
+        MapPropertySource[] propertySources = {
                 new EnvironmentPropertySource(),
                 new SystemPropertiesPropertySource()
         };

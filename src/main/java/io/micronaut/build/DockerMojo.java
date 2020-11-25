@@ -13,6 +13,7 @@ import org.apache.maven.shared.utils.io.FileUtils;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.io.IOException;
 
 /**
  * <p>Allows using a provided Dockerfile.</p>
@@ -38,7 +39,7 @@ public class DockerMojo extends AbstractDockerMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        File dockerfile = new File(mavenProject.getBasedir(), "Dockerfile");
+        File dockerfile = new File(mavenProject.getBasedir(), DockerfileMojo.DOCKERFILE);
         if (dockerfile.exists()) {
             try {
                 getLog().info("Using provided Dockerfile: " + dockerfile.getAbsolutePath());
@@ -55,7 +56,7 @@ public class DockerMojo extends AbstractDockerMojo {
                         .withTags(getTags())
                         .withBaseDirectory(new File(targetDir));
                 dockerService.buildImage(buildImageCmd);
-            } catch (Exception e) {
+            } catch (IOException e) {
                 throw new MojoExecutionException(e.getMessage(), e);
             }
         }

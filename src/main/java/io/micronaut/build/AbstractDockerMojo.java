@@ -17,7 +17,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static io.micronaut.build.DockerNativeMojo.DEFAULT_GRAAL_JVM_VERSION;
+import static io.micronaut.build.services.ApplicationConfigurationService.DEFAULT_PORT;
 
 /**
  * Abstract base class for mojos related to Docker files and builds.
@@ -26,6 +26,9 @@ import static io.micronaut.build.DockerNativeMojo.DEFAULT_GRAAL_JVM_VERSION;
  * @since 1.1
  */
 public abstract class AbstractDockerMojo extends AbstractMojo {
+
+    public static final String DEFAULT_GRAAL_DOCKER_VERSION = "java11";
+    public static final String LATEST_TAG = "latest";
 
     protected final MavenProject mavenProject;
     protected final JibConfigurationService jibConfigurationService;
@@ -47,14 +50,14 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     /**
      * List of additional arguments that will be passed to the application.
      */
-    @Parameter(property = "mn.appArgs")
+    @Parameter(property = RunMojo.MN_APP_ARGS)
     protected List<String> appArguments;
 
     /**
      * The main class of the application, as defined in the
      * <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.
      */
-    @Parameter(defaultValue = "${exec.mainClass}", required = true)
+    @Parameter(defaultValue = RunMojo.EXEC_MAIN_CLASS, required = true)
     protected String mainClass;
 
     /**
@@ -93,7 +96,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     }
 
     protected String getFrom() {
-        return jibConfigurationService.getFromImage().orElse("oracle/graalvm-ce:" + graalVmVersion() + "-" + DEFAULT_GRAAL_JVM_VERSION);
+        return jibConfigurationService.getFromImage().orElse("oracle/graalvm-ce:" + graalVmVersion() + "-" + DEFAULT_GRAAL_DOCKER_VERSION);
     }
 
     protected Set<String> getTags() {
@@ -101,23 +104,32 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
         Optional<String> toImageOptional = jibConfigurationService.getToImage();
         String imageName = mavenProject.getArtifactId();
         if (toImageOptional.isPresent()) {
-            tags.add(toImageOptional.get());
-            imageName = toImageOptional.get().split(":")[0];
+            String toImage = toImageOptional.get();
+            if (toImage.contains(":")) {
+                tags.add(toImage);
+                imageName = toImageOptional.get().split(":")[0];
+            } else {
+                tags.add(toImage + ":" + LATEST_TAG);
+                imageName = toImage;
+            }
         } else {
-            tags.add(imageName + ":latest");
+            tags.add(imageName + ":" + LATEST_TAG);
         }
         for (String tag : jibConfigurationService.getTags()) {
-            tags.add(imageName + ":" + tag);
+            if (LATEST_TAG.equals(tag) && tags.stream().anyMatch(t -> t.contains(LATEST_TAG))) {
+                continue;
+            }
+            tags.add(String.format("%s:%s", imageName, tag));
         }
         return tags;
     }
 
     protected String getPort() {
-        Map<String, Object> applicationConfiguration = applicationConfigurationService.getApplicationConfiguration();
-        String port = applicationConfiguration.getOrDefault("MICRONAUT_SERVER_PORT", applicationConfiguration.getOrDefault("micronaut.server.port", 8080)).toString();
-        return "-1".equals(port) ? "8080" : port;
+        String port = applicationConfigurationService.getServerPort();
+        return "-1".equals(port) ? DEFAULT_PORT : port;
     }
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     protected void copyDependencies() throws IOException {
         List<String> imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
         mavenProject.setArtifactFilter(artifact -> imageClasspathScopes.contains(artifact.getScope()));

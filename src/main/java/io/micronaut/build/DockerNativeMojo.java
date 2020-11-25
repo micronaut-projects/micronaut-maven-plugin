@@ -1,6 +1,8 @@
 package io.micronaut.build;
 
 import com.github.dockerjava.api.command.BuildImageCmd;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.common.io.FileWriteMode;
 import com.google.common.io.Files;
 import io.micronaut.build.services.ApplicationConfigurationService;
@@ -15,6 +17,7 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Set;
 
 /**
  * <p>Implementation of the <code>docker-native</code> packaging.</p>
@@ -30,7 +33,7 @@ import java.nio.charset.Charset;
 public class DockerNativeMojo extends AbstractDockerMojo {
 
     public static final String DOCKER_NATIVE_PACKAGING = "docker-native";
-    public static final String DEFAULT_GRAAL_JVM_VERSION = "java11";
+    public static final String GRAALVM_ARGS = "GRAALVM_ARGS";
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -63,7 +66,14 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             }
 
 
-        } catch (Exception e) {
+        } catch (InvalidImageReferenceException iire) {
+            String message = "Invalid image reference "
+                    + iire.getInvalidReference()
+                    + ", perhaps you should check that the reference is formatted correctly according to " +
+                    "https://docs.docker.com/engine/reference/commandline/tag/#extended-description" +
+                    "\nFor example, slash-separated name components cannot have uppercase letters";
+            throw new MojoExecutionException(message);
+        } catch (IOException | IllegalArgumentException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
     }
@@ -75,7 +85,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
     }
 
     private void buildDockerNativeLambda() throws IOException {
-        BuildImageCmd buildImageCmd = dockerService.buildImageCmd("DockerfileAwsCustomRuntime")
+        BuildImageCmd buildImageCmd = dockerService.buildImageCmd(DockerfileMojo.DOCKERFILE_AWS_CUSTOM_RUNTIME)
                 .withBuildArg("GRAALVM_VERSION", graalVmVersion())
                 .withBuildArg("GRAALVM_JVM_VERSION", graalVmJvmVersion());
 
@@ -83,9 +93,9 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         getLog().info("Using GRAALVM_JVM_VERSION: " + graalVmJvmVersion());
 
         String graalVmBuildArgs = getGraalVmBuildArgs();
-        if (!"".equals(graalVmBuildArgs)) {
+        if (graalVmBuildArgs != null && !graalVmBuildArgs.isEmpty()) {
             getLog().info("Using GRAALVM_ARGS: " + graalVmBuildArgs);
-            buildImageCmd = buildImageCmd.withBuildArg("GRAALVM_ARGS", graalVmBuildArgs);
+            buildImageCmd = buildImageCmd.withBuildArg(GRAALVM_ARGS, graalVmBuildArgs);
         }
 
         String imageId = dockerService.buildImage(buildImageCmd);
@@ -93,28 +103,33 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         getLog().info("AWS Lambda Custom Runtime ZIP: " + functionZip.getPath());
     }
 
-    private void buildDockerNative() throws IOException {
-        String dockerfileName = "DockerfileNative";
+    private void buildDockerNative() throws IOException, InvalidImageReferenceException {
+        String dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE;
         if (staticNativeImage) {
             getLog().info("Generating a static native image");
-            dockerfileName = "DockerfileNativeStatic";
+            dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_STATIC;
         }
 
         buildDockerfile(dockerfileName, true);
     }
 
-    private void buildOracleCloud() throws IOException {
-        buildDockerfile("DockerfileNativeOracleCloud", false);
+    private void buildOracleCloud() throws IOException, InvalidImageReferenceException {
+        buildDockerfile(DockerfileMojo.DOCKERFILE_NATIVE_ORACLE_CLOUD, false);
     }
 
-    private void buildDockerfile(String dockerfileName, boolean passClassName) throws IOException {
+    private void buildDockerfile(String dockerfileName, boolean passClassName) throws IOException, InvalidImageReferenceException {
+        Set<String> tags = getTags();
+        for (String tag : tags) {
+            ImageReference.parse(tag);
+        }
+
         String from = getFrom();
         String port = getPort();
         getLog().info("Exposing port: " + port);
 
         File dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);
 
-        if (appArguments != null && appArguments.size() > 0) {
+        if (appArguments != null && !appArguments.isEmpty()) {
             getLog().info("Using application arguments: " + appArguments);
             Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());
         }
@@ -133,9 +148,9 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         }
 
         String graalVmBuildArgs = getGraalVmBuildArgs();
-        if (!"".equals(graalVmBuildArgs)) {
+        if (graalVmBuildArgs != null && !graalVmBuildArgs.isEmpty()) {
             getLog().info("Using GRAALVM_ARGS: " + graalVmBuildArgs);
-            buildImageCmd = buildImageCmd.withBuildArg("GRAALVM_ARGS", graalVmBuildArgs);
+            buildImageCmd = buildImageCmd.withBuildArg(GRAALVM_ARGS, graalVmBuildArgs);
         }
 
 
