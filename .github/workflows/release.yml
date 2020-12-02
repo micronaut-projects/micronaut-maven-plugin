@@ -61,7 +61,7 @@ jobs:
           wget -q https://raw.githubusercontent.com/micronaut-projects/github-actions/master/post-release/increment_version.sh -O /tmp/iv.sh
           chmod +x /tmp/iv.sh
           NV=`/tmp/iv.sh -p ${{ steps.release_version.outputs.release_version }}`
-          echo ::set-output name=next_version::${NV}.BUILD-SNAPSHOT
+          echo ::set-output name=next_version::${NV}-SNAPSHOT
 
       - name: Prepare release
         run: mvn --batch-mode release:prepare -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }}
