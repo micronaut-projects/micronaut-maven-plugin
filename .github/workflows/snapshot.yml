@@ -28,6 +28,9 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+      - name: Run tests
+        run: mvn verify -Prun-its
+
       - name: Determine current version
         id: release_version
         run: echo ::set-output name=release_version::`mvn help:evaluate -Dexpression=project.version -q -DforceStdout`
