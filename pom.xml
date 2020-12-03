@@ -5,7 +5,7 @@
 
     <groupId>io.micronaut.build</groupId>
     <artifactId>micronaut-maven-plugin</artifactId>
-    <version>1.1.2-SNAPSHOT</version>
+    <version>1.1.1.BUILD-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>Micronaut Maven Plugin</name>
@@ -74,7 +74,7 @@
         <site.name>${project.name}</site.name>
         <site.description>${project.description}</site.description>
         <site.version>${project.version}</site.version>
-        <project.build.outputTimestamp>2020-12-03T17:27:25Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2020-11-18T12:21:46Z</project.build.outputTimestamp>
         <native-image-plugin.version>20.3.0</native-image-plugin.version>
     </properties>
 
