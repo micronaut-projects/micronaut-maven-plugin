@@ -334,6 +334,7 @@
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
                     <detail>true</detail>
                     <keepStagingRepositoryOnCloseRuleFailure>true</keepStagingRepositoryOnCloseRuleFailure>
+                    <stagingProgressTimeoutMinutes>60</stagingProgressTimeoutMinutes>
                 </configuration>
             </plugin>
             <plugin>
