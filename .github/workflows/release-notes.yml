@@ -16,9 +16,10 @@ jobs:
       - uses: micronaut-projects/github-actions/release-notes@master
         id: release_notes
       - uses: ncipollo/release-action@v1
+        if: steps.release_notes.outputs.generated_changelog == 'true'
         with:
           allowUpdates: true
-          commit: master
+          commit: ${{ steps.release_notes.outputs.current_branch }}
           draft: true
           name: Micronaut Maven Plugin ${{ steps.release_notes.outputs.next_version }}
           tag: v${{ steps.release_notes.outputs.next_version }}
