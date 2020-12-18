@@ -15,8 +15,8 @@
   <properties>
     <jdk.version>8</jdk.version>
     <release.version>8</release.version>
-    <micronaut.version>2.2.0.BUILD-SNAPSHOT</micronaut.version>
-    <micronaut-maven-plugin.version>1.1.1.BUILD-SNAPSHOT</micronaut-maven-plugin.version>
+    <micronaut.version>2.2.1</micronaut.version>
+    <micronaut-maven-plugin.version>1.1.2.BUILD-SNAPSHOT</micronaut-maven-plugin.version>
     <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
@@ -152,9 +152,11 @@
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
+        <version>2.7.0</version>
         <configuration>
           <to>
-            <image>docker.io/alvarosanchez/demo:${project.version}</image>
+<!--            <image>docker.io/alvarosanchez/demo:${project.version}</image>-->
+            <image>gcr.io/micronaut-kubernetes/demo:${project.version}</image>
           </to>
         </configuration>
       </plugin>

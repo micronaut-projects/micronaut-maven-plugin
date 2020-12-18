@@ -4,6 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.command.BuildImageResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
@@ -105,6 +106,10 @@ public class DockerService {
             return dockerfile;
         }
         return null;
+    }
+
+    public PushImageCmd pushImageCmd(String imageName) {
+        return dockerClient.pushImageCmd(imageName);
     }
 
 }
