@@ -76,6 +76,7 @@
         <site.version>${project.version}</site.version>
         <project.build.outputTimestamp>2020-11-18T12:21:46Z</project.build.outputTimestamp>
         <native-image-plugin.version>20.3.0</native-image-plugin.version>
+        <micronaut.version>2.2.1</micronaut.version>
     </properties>
 
     <dependencies>
@@ -166,6 +167,11 @@
             <version>3.2.7</version>
         </dependency>
         <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.15.1</version>
+        </dependency>
+        <dependency>
             <groupId>org.graalvm.nativeimage</groupId>
             <artifactId>native-image-maven-plugin</artifactId>
             <version>${native-image-plugin.version}</version>
@@ -178,7 +184,7 @@
         <dependency>
             <groupId>io.micronaut</groupId>
             <artifactId>micronaut-inject</artifactId>
-            <version>2.2.1</version>
+            <version>${micronaut.version}</version>
         </dependency>
         <dependency>
             <groupId>org.yaml</groupId>
@@ -427,6 +433,7 @@
                                 <pomInclude>*/pom.xml</pomInclude>
                             </pomIncludes>
                             <postBuildHookScript>verify</postBuildHookScript>
+                            <selectorScript>selector</selectorScript>
                             <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
                             <settingsFile>src/it/settings.xml</settingsFile>
                             <scriptVariables>
@@ -436,6 +443,7 @@
                                 <goal>clean</goal>
                                 <goal>test-compile</goal>
                             </goals>
+                            <mavenOpts>-Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn</mavenOpts>
                         </configuration>
                         <executions>
                             <execution>

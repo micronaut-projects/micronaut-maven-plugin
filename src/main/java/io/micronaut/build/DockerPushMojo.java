@@ -1,7 +1,8 @@
 package io.micronaut.build;
 
-import com.google.cloud.tools.jib.api.*;
-import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
+import com.github.dockerjava.api.command.PushImageCmd;
+import com.github.dockerjava.api.model.AuthConfig;
+import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import io.micronaut.build.services.ApplicationConfigurationService;
 import io.micronaut.build.services.DockerService;
@@ -10,6 +11,8 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.project.MavenProject;
+import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.utility.RegistryAuthLocator;
 
 import javax.inject.Inject;
 import java.util.Optional;
@@ -43,21 +46,23 @@ public class DockerPushMojo extends AbstractDockerMojo {
             Optional<String> toImage = jibConfigurationService.getToImage();
             if (toImage.isPresent()) {
                 getLog().info("Pushing image: " + toImage.get());
-                try {
-                    ImageReference imageReference = ImageReference.parse(toImage.get());
-                    DockerDaemonImage dockerDaemonImage = DockerDaemonImage.named(toImage.get());
-                    RegistryImage targetImage = RegistryImage.named(imageReference);
+                try (PushImageCmd pushImageCmd = dockerService.pushImageCmd(toImage.get())) {
+                    AuthConfig defaultAuthConfig = new AuthConfig();
+                    if (jibConfigurationService.getCredentials().isPresent()) {
+                        Credential credential = jibConfigurationService.getCredentials().get();
+                        defaultAuthConfig
+                                .withUsername(credential.getUsername())
+                                .withPassword(credential.getPassword());
+                    }
+                    RegistryAuthLocator registryAuthLocator = RegistryAuthLocator.instance();
+                    DockerImageName dockerImageName = DockerImageName.parse(toImage.get());
+                    AuthConfig authConfig = registryAuthLocator.lookupAuthConfig(dockerImageName, defaultAuthConfig);
 
-                    CredentialRetrieverFactory credentialRetrieverFactory = CredentialRetrieverFactory
-                            .forImage(imageReference, logEvent -> getLog().info(logEvent.getMessage()));
-                    targetImage.addCredentialRetriever(credentialRetrieverFactory.dockerConfig());
-                    targetImage.addCredentialRetriever(credentialRetrieverFactory.wellKnownCredentialHelpers());
+                    pushImageCmd
+                            .withAuthConfig(authConfig)
+                            .start()
+                            .awaitCompletion();
 
-                    jibConfigurationService.getCredentials().ifPresent(c -> targetImage.addCredential(c.getUsername(), c.getPassword()));
-                    jibConfigurationService.getCredHelper().ifPresent(credHelper -> targetImage.addCredentialRetriever(credentialRetrieverFactory.dockerCredentialHelper(credHelper)));
-
-                    Containerizer containerizer = Containerizer.to(targetImage);
-                    Jib.from(dockerDaemonImage).containerize(containerizer);
                 } catch (Exception e) {
                     throw new MojoExecutionException(e.getMessage(), e);
                 }

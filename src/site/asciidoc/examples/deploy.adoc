@@ -19,7 +19,7 @@ For example, to push an image to Docker Hub:
   <artifactId>jib-maven-plugin</artifactId>
   <configuration>
     <to>
-      <image>docker.io/my-company/my-app:${project.version}</image>
+      <image>my-company/my-app:${project.version}</image>
     </to>
   </configuration>
 </plugin>
@@ -30,42 +30,14 @@ Then, you can execute `mvn deploy -Dpackaging=docker` or `mvn deploy -Dpackaging
 You can also omit the plugin declaration in your POM, and execute directly:
 
 ----
-$ mvn deploy -Dpackaging=docker-native -Djib.to.image=docker.io/my-company/my-app:latest
+$ mvn deploy -Dpackaging=docker-native -Djib.to.image=my-company/my-app:latest
 ----
 
 Note that in Maven, the `deploy` phase runs after the `package` phase (among others), so invoking `deploy` will also build
 the Docker image. Check the link:package.html[packaging support] to see what options can be used.
 
-This plugin will attempt to use https://github.com/docker/docker-credential-helpers[credential helpers] to help with
-registry authentication, including:
-
-* `docker-credential-gcr` for Google Cloud's `gcr.io`.
-* `docker-credential-ecr-login` for Amazon's ECR.
-* Docker configuration at `~/.docker/config.json`.
-
-Essentially, if you can run `docker push` from your command line, you will also be able to `mvn deploy` your application.
-
-You can also specify other credential helpers, for example:
-
-[source,xml]
-----
-<plugin>
-  <groupId>com.google.cloud.tools</groupId>
-  <artifactId>jib-maven-plugin</artifactId>
-  <configuration>
-    <to>
-      <image>mycontainerregistry.azurecr.io/${project.artifactId}:latest</image>
-      <credHelper>docker-credential-acr-darwin</credHelper>
-    </to>
-  </configuration>
-</plugin>
-----
-
-Or with the command line:
-
-----
-$ mvn deploy -Dpackaging=docker-native -Djib.to.image=mycontainerregistry.azurecr.io/my-app:latest -Djib.to.credHelper=docker-credential-acr-darwin
-----
+This plugin will use your Docker configuration at `~/.docker/config.json`. Essentially, if you can run `docker push` from
+your command line, you will also be able to `mvn deploy` your application.
 
 In addition to that, you can supply credentials via username and password:
 
