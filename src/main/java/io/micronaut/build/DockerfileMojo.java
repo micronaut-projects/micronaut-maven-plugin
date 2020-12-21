@@ -1,5 +1,6 @@
 package io.micronaut.build;
 
+import io.micronaut.build.jib.JibMicronautExtension;
 import io.micronaut.build.services.ApplicationConfigurationService;
 import io.micronaut.build.services.DockerService;
 import io.micronaut.build.services.JibConfigurationService;
@@ -15,6 +16,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static io.micronaut.build.DockerMojo.DOCKER_PACKAGING;
 import static io.micronaut.build.DockerNativeMojo.DOCKER_NATIVE_PACKAGING;
@@ -75,15 +77,31 @@ public class DockerfileMojo extends AbstractDockerMojo {
         File dockerfile = null;
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION:
-                return Optional.ofNullable(dockerService.loadDockerfileAsResource("DockerfileOracleCloud"));
-
+                dockerfile = dockerService.loadDockerfileAsResource("DockerfileOracleCloud");
+                processOracleFunctionDockerfile(dockerfile);
+                break;
             case LAMBDA:
             case DEFAULT:
                 dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE);
+                processDockerfile(dockerfile);
                 break;
         }
-        processDockerfile(dockerfile);
         return Optional.ofNullable(dockerfile);
+    }
+
+    private void processOracleFunctionDockerfile(File dockerfile) throws IOException {
+        if (dockerfile != null) {
+            List<String> allLines = Files.readAllLines(dockerfile.toPath());
+            allLines.add(0, allLines.remove(0) + JibMicronautExtension.determineProjectFnVersion());
+            String entrypoint = JibMicronautExtension.buildProjectFnEntrypoint()
+                    .stream()
+                    .map(s -> "\"" + s + "\"")
+                    .collect(Collectors.joining(", "));
+
+            allLines.add("ENTRYPOINT [" + entrypoint + "]");
+
+            Files.write(dockerfile.toPath(), allLines);
+        }
     }
 
     private Optional<File> buildDockerfileNative(MicronautRuntime runtime) throws IOException {

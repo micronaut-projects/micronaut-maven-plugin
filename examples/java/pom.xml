@@ -108,19 +108,6 @@
       <artifactId>micronaut-function-aws-custom-runtime</artifactId>
       <scope>compile</scope>
     </dependency>
-
-    <!-- For oracle-cloud -->
-<!--    <dependency>-->
-<!--      <groupId>io.micronaut.oraclecloud</groupId>-->
-<!--      <artifactId>micronaut-oraclecloud-function-http</artifactId>-->
-<!--    </dependency>-->
-<!--    <dependency>-->
-<!--      <groupId>com.fnproject.fn</groupId>-->
-<!--      <artifactId>runtime</artifactId>-->
-<!--      <version>1.0.110</version>-->
-<!--      <scope>runtime</scope>-->
-<!--    </dependency>-->
-
   </dependencies>
 
   <build>
