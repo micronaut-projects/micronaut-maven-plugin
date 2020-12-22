@@ -1,5 +1,6 @@
-profile: service
+applicationType: default
 defaultPackage: java.maven.junit
----
 testFramework: junit
 sourceLanguage: java
+buildTool: maven
+features: [app-name, logback, netty-server, http-client, shade, java, junit, maven, readme, yaml]

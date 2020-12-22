@@ -41,7 +41,6 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         JibConfigurationService jibConfigurationService = new JibConfigurationService(mavenData.getMavenProject());
         String from = jibConfigurationService.getFromImage().orElse(DEFAULT_BASE_IMAGE);
 
-
         builder.setBaseImage(from);
 
         ApplicationConfigurationService applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());
@@ -61,10 +60,15 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
                     builder.addLayer(remapLayer(layer));
                 }
 
+                List<String> cmd = jibConfigurationService.getArgs();
+                if (cmd.isEmpty()) {
+                    cmd = Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest");
+                }
+
                 builder.setBaseImage("fnproject/fn-java-fdk:" + determineProjectFnVersion())
-                        .setWorkingDirectory(AbsoluteUnixPath.get("/function"))
-                        .setEntrypoint(null)
-                        .setCmd(Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest"));
+                        .setWorkingDirectory(AbsoluteUnixPath.get(jibConfigurationService.getWorkingDirectory().orElse("/function")))
+                        .setEntrypoint(buildProjectFnEntrypoint())
+                        .setCmd(cmd);
                 break;
             case LAMBDA:
                 List<String> entrypoint = buildPlan.getEntrypoint();
@@ -74,6 +78,45 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         }
         return builder.build();
     }
+
+    public static List<String> buildProjectFnEntrypoint() {
+        List<String> entrypoint = new ArrayList<>(9);
+        String projectFnVersion = determineProjectFnVersion();
+        if (AbstractDockerMojo.LATEST_TAG.equals(projectFnVersion)) {
+            entrypoint.add("java");
+            entrypoint.add("-XX:+UnlockExperimentalVMOptions");
+            entrypoint.add("-XX:+UseCGroupMemoryLimitForHeap");
+            entrypoint.add("-XX:-UsePerfData");
+            entrypoint.add("-XX:MaxRAMFraction=2");
+            entrypoint.add("-XX:+UseSerialGC");
+            entrypoint.add("-Xshare:on");
+            entrypoint.add("-Djava.library.path=/function/runtime/lib");
+            entrypoint.add("-cp");
+            entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");
+            entrypoint.add("com.fnproject.fn.runtime.EntryPoint");
+        } else {
+            entrypoint.add("/usr/local/openjdk-11/bin/java");
+            entrypoint.add("-XX:-UsePerfData");
+            entrypoint.add("-XX:+UseSerialGC");
+            entrypoint.add("-Xshare:on");
+            entrypoint.add("-Djava.awt.headless=true");
+            entrypoint.add("-Djava.library.path=/function/runtime/lib");
+            entrypoint.add("-cp");
+            entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");
+            entrypoint.add("com.fnproject.fn.runtime.EntryPoint");
+        }
+        return entrypoint;
+    }
+
+    public static String determineProjectFnVersion() {
+        ArtifactVersion javaVersion = new DefaultArtifactVersion(System.getProperty("java.version"));
+        if (javaVersion.getMajorVersion() >= 11) {
+            return "jre11-latest";
+        } else {
+            return AbstractDockerMojo.LATEST_TAG;
+        }
+    }
+
 
     private LayerObject remapLayer(LayerObject layerObject) {
         FileEntriesLayer originalLayer = (FileEntriesLayer) layerObject;
@@ -92,15 +135,5 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         return new FileEntry(originalEntry.getSourceFile(), newPath, originalEntry.getPermissions(),
                 originalEntry.getModificationTime(), originalEntry.getOwnership());
     }
-
-    private String determineProjectFnVersion() {
-        ArtifactVersion javaVersion = new DefaultArtifactVersion(System.getProperty("java.version"));
-        if (javaVersion.getMajorVersion() >= 11) {
-            return "jre11-latest";
-        } else {
-            return AbstractDockerMojo.LATEST_TAG;
-        }
-    }
-
 
 }

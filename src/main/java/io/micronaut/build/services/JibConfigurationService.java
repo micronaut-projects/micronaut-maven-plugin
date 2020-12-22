@@ -22,6 +22,10 @@ import java.util.stream.Collectors;
 public class JibConfigurationService {
 
     private static final String IMAGE = "image";
+    private static final String CONTAINER = "container";
+    private static final String WORKING_DIRECTORY = "workingDirectory";
+
+    private Xpp3Dom configuration;
     private Xpp3Dom to;
     private Xpp3Dom from;
 
@@ -29,7 +33,7 @@ public class JibConfigurationService {
     public JibConfigurationService(MavenProject mavenProject) {
         final Plugin plugin = mavenProject.getPlugin(MavenProjectProperties.PLUGIN_KEY);
         if (plugin != null && plugin.getConfiguration() != null) {
-            Xpp3Dom configuration = (Xpp3Dom) plugin.getConfiguration();
+            configuration = (Xpp3Dom) plugin.getConfiguration();
             to = configuration.getChild("to");
             from = configuration.getChild("from");
         }
@@ -113,6 +117,34 @@ public class JibConfigurationService {
                 Xpp3Dom credHelper = to.getChild("credHelper");
                 if (credHelper != null) {
                     result = Optional.of(credHelper.getValue());
+                }
+            }
+        }
+        return result;
+    }
+
+    public Optional<String> getWorkingDirectory() {
+        if (configuration != null) {
+            Xpp3Dom container = configuration.getChild(CONTAINER);
+            if (container != null && container.getChild(WORKING_DIRECTORY) != null) {
+                return Optional.ofNullable(container.getChild(WORKING_DIRECTORY).getValue());
+            }
+        }
+        return Optional.empty();
+    }
+
+    public List<String> getArgs() {
+        List<String> result = new ArrayList<>();
+        if (configuration != null) {
+            Xpp3Dom container = configuration.getChild(CONTAINER);
+            if (container != null) {
+                Xpp3Dom args = container.getChild("args");
+                if (args.getChildCount() > 0) {
+                    for (Xpp3Dom arg : args.getChildren()) {
+                        result.add(arg.getValue());
+                    }
+                } else {
+                    result.add(args.getValue());
                 }
             }
         }
