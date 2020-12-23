@@ -130,21 +130,27 @@
 <a class="jxr_linenumber" name="L122" href="#L122">122</a>         FileEntriesLayer originalLayer = (FileEntriesLayer) layerObject;
 <a class="jxr_linenumber" name="L123" href="#L123">123</a>         FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(originalLayer.getName());
 <a class="jxr_linenumber" name="L124" href="#L124">124</a>         <strong class="jxr_keyword">for</strong> (FileEntry originalEntry : originalLayer.getEntries()) {
-<a class="jxr_linenumber" name="L125" href="#L125">125</a>             builder.addEntry(remapEntry(originalEntry));
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>             builder.addEntry(remapEntry(originalEntry, layerObject.getName()));
 <a class="jxr_linenumber" name="L126" href="#L126">126</a>         }
 <a class="jxr_linenumber" name="L127" href="#L127">127</a> 
 <a class="jxr_linenumber" name="L128" href="#L128">128</a>         <strong class="jxr_keyword">return</strong> builder.build();
 <a class="jxr_linenumber" name="L129" href="#L129">129</a>     }
 <a class="jxr_linenumber" name="L130" href="#L130">130</a> 
-<a class="jxr_linenumber" name="L131" href="#L131">131</a>     <strong class="jxr_keyword">private</strong> FileEntry remapEntry(FileEntry originalEntry) {
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>     <strong class="jxr_keyword">private</strong> FileEntry remapEntry(FileEntry originalEntry, String layerName) {
 <a class="jxr_linenumber" name="L132" href="#L132">132</a>         List&lt;String&gt; pathComponents = UnixPathParser.parse(originalEntry.getExtractionPath().toString());
-<a class="jxr_linenumber" name="L133" href="#L133">133</a> 
-<a class="jxr_linenumber" name="L134" href="#L134">134</a>         AbsoluteUnixPath newPath = AbsoluteUnixPath.get(<span class="jxr_string">"/function/app/"</span> + pathComponents.get(pathComponents.size() - 1));
-<a class="jxr_linenumber" name="L135" href="#L135">135</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> FileEntry(originalEntry.getSourceFile(), newPath, originalEntry.getPermissions(),
-<a class="jxr_linenumber" name="L136" href="#L136">136</a>                 originalEntry.getModificationTime(), originalEntry.getOwnership());
-<a class="jxr_linenumber" name="L137" href="#L137">137</a>     }
-<a class="jxr_linenumber" name="L138" href="#L138">138</a> 
-<a class="jxr_linenumber" name="L139" href="#L139">139</a> }
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>         AbsoluteUnixPath newPath;
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>         <strong class="jxr_keyword">if</strong> (layerName.contains(<span class="jxr_string">"dependencies"</span>)) {
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>             newPath = AbsoluteUnixPath.get(<span class="jxr_string">"/function/app/libs/"</span> + pathComponents.get(pathComponents.size() - 1));
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>             <em class="jxr_comment">//classes or resources</em>
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>             newPath = AbsoluteUnixPath.get(<span class="jxr_string">"/function"</span> + originalEntry.getExtractionPath());
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>         }
+<a class="jxr_linenumber" name="L140" href="#L140">140</a> 
+<a class="jxr_linenumber" name="L141" href="#L141">141</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> FileEntry(originalEntry.getSourceFile(), newPath, originalEntry.getPermissions(),
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>                 originalEntry.getModificationTime(), originalEntry.getOwnership());
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>     }
+<a class="jxr_linenumber" name="L144" href="#L144">144</a> 
+<a class="jxr_linenumber" name="L145" href="#L145">145</a> }
 </pre>
 <hr/>
 <div id="footer">Copyright &#169; 2020 <a href="https://micronaut.io/">Micronaut</a>. All rights reserved.</div>
