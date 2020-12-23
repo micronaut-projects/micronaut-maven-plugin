@@ -122,16 +122,22 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         FileEntriesLayer originalLayer = (FileEntriesLayer) layerObject;
         FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(originalLayer.getName());
         for (FileEntry originalEntry : originalLayer.getEntries()) {
-            builder.addEntry(remapEntry(originalEntry));
+            builder.addEntry(remapEntry(originalEntry, layerObject.getName()));
         }
 
         return builder.build();
     }
 
-    private FileEntry remapEntry(FileEntry originalEntry) {
+    private FileEntry remapEntry(FileEntry originalEntry, String layerName) {
         List<String> pathComponents = UnixPathParser.parse(originalEntry.getExtractionPath().toString());
+        AbsoluteUnixPath newPath;
+        if (layerName.contains("dependencies")) {
+            newPath = AbsoluteUnixPath.get("/function/app/libs/" + pathComponents.get(pathComponents.size() - 1));
+        } else {
+            //classes or resources
+            newPath = AbsoluteUnixPath.get("/function" + originalEntry.getExtractionPath());
+        }
 
-        AbsoluteUnixPath newPath = AbsoluteUnixPath.get("/function/app/" + pathComponents.get(pathComponents.size() - 1));
         return new FileEntry(originalEntry.getSourceFile(), newPath, originalEntry.getPermissions(),
                 originalEntry.getModificationTime(), originalEntry.getOwnership());
     }
