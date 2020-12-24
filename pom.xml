@@ -76,7 +76,7 @@
         <site.version>${project.version}</site.version>
         <project.build.outputTimestamp>2020-12-23T16:51:12Z</project.build.outputTimestamp>
         <native-image-plugin.version>20.3.0</native-image-plugin.version>
-        <micronaut.version>2.2.1</micronaut.version>
+        <micronaut.version>2.2.2</micronaut.version>
     </properties>
 
     <dependencies>
