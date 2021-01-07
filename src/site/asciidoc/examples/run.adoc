@@ -94,6 +94,7 @@ Debugging options can be specified on the command line directly:
 
 * Running in debug mode: `mvn mn:run -Dmn.debug`.
 * Changing the debugger port: `mvn mn:run -Dmn.debug -Dmn.debug.port=5006`.
+* Changing the debugger host: `mvn mn:run -Dmn.debug -Dmn.debug.host=192.168.1.8` or `mvn mn:run -Dmn.debug -Dmn.debug.host=*`
 * Suspending the debugger execution: `mn:run -Dmn.debug -Dmn.debug.suspend`.
 
 ==== Other options
