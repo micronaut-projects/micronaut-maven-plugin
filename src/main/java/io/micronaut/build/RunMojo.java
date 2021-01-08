@@ -104,6 +104,12 @@ public class RunMojo extends AbstractMojo {
     private int debugPort;
 
     /**
+     * The host where remote debuggers can connect.
+     */
+    @Parameter(property = "mn.debug.host", defaultValue = "127.0.0.1")
+    private String debugHost;
+
+    /**
      * List of inclusion/exclusion paths that should not trigger an application restart. Check the
      * <a href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a>
      * documentation for more details.
@@ -386,7 +392,7 @@ public class RunMojo extends AbstractMojo {
 
         if (debug) {
             String suspend = debugSuspend ? "y" : "n";
-            args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=" + suspend + ",address=" + debugPort);
+            args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=" + suspend + ",address=" + debugHost + ":" + debugPort);
         }
 
         if (jvmArguments != null && !jvmArguments.isEmpty()) {
