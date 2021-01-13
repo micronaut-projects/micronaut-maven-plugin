@@ -153,7 +153,7 @@
         <dependency>
             <groupId>com.google.cloud.tools</groupId>
             <artifactId>jib-core</artifactId>
-            <version>0.16.0</version>
+            <version>0.17.0</version>
         </dependency>
         <dependency>
             <groupId>com.github.docker-java</groupId>
