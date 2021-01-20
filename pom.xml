@@ -75,9 +75,22 @@
         <site.description>${project.description}</site.description>
         <site.version>${project.version}</site.version>
         <project.build.outputTimestamp>2021-01-08T07:04:46Z</project.build.outputTimestamp>
-        <native-image-plugin.version>20.3.0</native-image-plugin.version>
-        <micronaut.version>2.2.3</micronaut.version>
+        <native-image-plugin.version>21.0.0</native-image-plugin.version>
+        <micronaut.version>2.3.0-SNAPSHOT</micronaut.version>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>jfrog-snapshots</id>
+            <url>https://oss.jfrog.org/oss-snapshot-local</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
+    </repositories>
 
     <dependencies>
         <!-- Maven -->

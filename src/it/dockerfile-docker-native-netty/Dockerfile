@@ -1,4 +1,4 @@
-FROM oracle/graalvm-ce:20.3.0-java11 AS builder
+FROM ghcr.io/graalvm/graalvm-ce:java11-21.0.0 AS builder
 RUN gu install native-image
 WORKDIR /home/app
 
