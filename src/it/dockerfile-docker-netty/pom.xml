@@ -9,13 +9,13 @@
   <parent>
     <groupId>io.micronaut</groupId>
     <artifactId>micronaut-parent</artifactId>
-    <version>@micronaut.version@</version>
+    <version>@it.micronaut.version@</version>
   </parent>
 
   <properties>
     <jdk.version>8</jdk.version>
     <release.version>8</release.version>
-    <micronaut.version>@micronaut.version@</micronaut.version>
+    <micronaut.version>@it.micronaut.version@</micronaut.version>
     <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
     <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     <packaging>jar</packaging>
