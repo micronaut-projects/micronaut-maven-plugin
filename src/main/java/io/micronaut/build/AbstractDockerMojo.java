@@ -96,7 +96,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     }
 
     protected String getFrom() {
-        return jibConfigurationService.getFromImage().orElse("oracle/graalvm-ce:" + graalVmVersion() + "-" + DEFAULT_GRAAL_DOCKER_VERSION);
+        return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/graalvm-ce:" + DEFAULT_GRAAL_DOCKER_VERSION + "-" + graalVmVersion());
     }
 
     protected Set<String> getTags() {
