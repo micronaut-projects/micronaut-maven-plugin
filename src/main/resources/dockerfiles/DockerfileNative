@@ -9,7 +9,7 @@ ARG CLASS_NAME
 ARG GRAALVM_ARGS=""
 RUN native-image ${GRAALVM_ARGS} -H:Class=${CLASS_NAME} -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
 
-FROM frolvlad/alpine-glibc
+FROM frolvlad/alpine-glibc:alpine-3.12
 RUN apk update && apk add libstdc++
 COPY --from=builder /home/app/application /app/application
 
