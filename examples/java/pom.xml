@@ -9,14 +9,14 @@
   <parent>
     <groupId>io.micronaut</groupId>
     <artifactId>micronaut-parent</artifactId>
-    <version>2.2.1</version>
+    <version>2.3.0</version>
   </parent>
 
   <properties>
     <jdk.version>8</jdk.version>
     <release.version>8</release.version>
-    <micronaut.version>2.2.1</micronaut.version>
-    <micronaut-maven-plugin.version>1.1.2.BUILD-SNAPSHOT</micronaut-maven-plugin.version>
+    <micronaut.version>2.3.0</micronaut.version>
+    <micronaut-maven-plugin.version>1.1.5-SNAPSHOT</micronaut-maven-plugin.version>
     <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
@@ -89,14 +89,6 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- For native-image -->
-    <dependency>
-      <groupId>org.graalvm.sdk</groupId>
-      <artifactId>graal-sdk</artifactId>
-      <version>${graal.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
     <!-- For aws-custom-runtime -->
     <dependency>
       <groupId>io.micronaut.aws</groupId>
@@ -123,11 +115,6 @@
           <!-- Uncomment to enable incremental compilation -->
           <!-- <useIncrementalCompilation>false</useIncrementalCompilation> -->
           <annotationProcessorPaths combine.children="append">
-            <path>
-              <groupId>io.micronaut</groupId>
-              <artifactId>micronaut-graal</artifactId>
-              <version>${micronaut.version}</version>
-            </path>
           </annotationProcessorPaths>
           <compilerArgs>
             <arg>-Amicronaut.processing.group=io.micronaut.build.examples</arg>
