@@ -45,6 +45,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
     @Override
     public void execute() throws MojoExecutionException {
         checkJavaVersion();
+        checkGraalVm();
 
         try {
             copyDependencies();
@@ -75,6 +76,18 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             throw new MojoExecutionException(message);
         } catch (IOException | IllegalArgumentException e) {
             throw new MojoExecutionException(e.getMessage(), e);
+        }
+    }
+
+    private void checkGraalVm() throws MojoExecutionException {
+        String micronautVersion = mavenProject.getProperties().getProperty("micronaut.version");
+        if (!mavenProject.getInjectedProfileIds().get("io.micronaut:micronaut-parent:" + micronautVersion).contains("graalvm")) {
+            String javaVendor = System.getProperty("java.vendor", "");
+            if (javaVendor.toLowerCase().contains("graalvm")) {
+                throw new MojoExecutionException("The [graalvm] profile was not activated automatically because the native-image component is not installed (or not found in your path). Either activate the profile manually (-Pgraalvm) or install the native-image component (gu install native-image), and try again");
+            } else {
+                throw new MojoExecutionException("The [graalvm] profile was not activated automatically because you are not using a GraalVM JDK. Activate the profile manually (-Pgraalvm) and try again");
+            }
         }
     }
 
