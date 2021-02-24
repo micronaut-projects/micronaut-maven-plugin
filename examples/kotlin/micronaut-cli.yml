@@ -1,5 +1,0 @@
-profile: service
-defaultPackage: io.micronaut.build.examples
----
-testFramework: kotlintest
-sourceLanguage: kotlin
