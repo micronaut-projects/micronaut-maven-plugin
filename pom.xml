@@ -30,11 +30,11 @@
     <distributionManagement>
         <repository>
             <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2</url>
         </repository>
         <snapshotRepository>
             <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -76,14 +76,14 @@
         <site.version>${project.version}</site.version>
         <project.build.outputTimestamp>2021-02-01T17:09:46Z</project.build.outputTimestamp>
         <native-image-plugin.version>21.0.0</native-image-plugin.version>
-        <micronaut.version>2.3.1</micronaut.version>
-        <it.micronaut.version>2.3.1</it.micronaut.version>
+        <micronaut.version>2.3.3</micronaut.version>
+        <it.micronaut.version>2.3.4-SNAPSHOT</it.micronaut.version>
     </properties>
 
     <repositories>
         <repository>
-            <id>jfrog-snapshots</id>
-            <url>https://oss.jfrog.org/oss-snapshot-local</url>
+            <id>sonatype-snapshots</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -349,7 +349,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
                     <autoReleaseAfterClose>true</autoReleaseAfterClose>
                     <detail>true</detail>
                     <keepStagingRepositoryOnCloseRuleFailure>true</keepStagingRepositoryOnCloseRuleFailure>
