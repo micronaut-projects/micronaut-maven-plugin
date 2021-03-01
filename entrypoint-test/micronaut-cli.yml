@@ -1,0 +1,6 @@
+applicationType: cli
+defaultPackage: foo
+testFramework: junit
+sourceLanguage: java
+buildTool: maven
+features: [app-name, java, junit, logback, maven, picocli, picocli-java-application, picocli-junit, readme, shade, yaml]
