@@ -24,7 +24,7 @@ jobs:
           settings-path: /tmp
 
       - name: Setup Maven settings.xml
-        uses: s4u/maven-settings-action@v2.3.0
+        uses: s4u/maven-settings-action@v2.4.0
         with:
           override: true
           servers: '[{"id": "ossrh", "username": "${{ secrets.SONATYPE_USERNAME }}", "password": "${{ secrets.SONATYPE_PASSWORD }}"}]'
