@@ -44,10 +44,15 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         builder.setBaseImage(from);
 
         ApplicationConfigurationService applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());
-        int port = Integer.parseInt(applicationConfigurationService.getServerPort());
-        if (port > 0) {
-            logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Exposing port: " + port);
-            builder.addExposedPort(Port.tcp(port));
+        try {
+            int port = Integer.parseInt(applicationConfigurationService.getServerPort());
+            if (port > 0) {
+                logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Exposing port: " + port);
+                builder.addExposedPort(Port.tcp(port));
+            }
+        } catch (NumberFormatException e) {
+            // ignore, can't automatically expose port
+            logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Dynamically resolved port present. Ensure the port is correctly exposed in the <container> configuration. See https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#example for an example.");
         }
 
         switch (runtime.getBuildStrategy()) {
