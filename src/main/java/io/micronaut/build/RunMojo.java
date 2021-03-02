@@ -19,6 +19,7 @@ import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.util.AbstractScanner;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.codehaus.plexus.util.Os;
+import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyFilter;
@@ -125,13 +126,13 @@ public class RunMojo extends AbstractMojo {
      * <p>When using the command line, user properties will be passed through, eg: <code>mnv mn:run -Dmicronaut.environments=dev</code>.</p>
      */
     @Parameter(property = "mn.jvmArgs")
-    private List<String> jvmArguments;
+    private String jvmArguments;
 
     /**
      * List of additional arguments that will be passed to the application, after the class name.
      */
     @Parameter(property = MN_APP_ARGS)
-    private List<String> appArguments;
+    private String appArguments;
 
     /**
      * Whether to watch for changes, or finish the execution after the first run.
@@ -233,7 +234,11 @@ public class RunMojo extends AbstractMojo {
                 if (getLog().isInfoEnabled()) {
                     getLog().info("Detected POM dependencies change. Restarting application");
                 }
-                runApplication();
+                try {
+                    runApplication();
+                } catch (Exception e) {
+                    getLog().error("Unable to run application: " + e.getMessage(), e);
+                }
             }
         } else if (matches(path)) {
             if (getLog().isInfoEnabled()) {
@@ -241,7 +246,11 @@ public class RunMojo extends AbstractMojo {
             }
             boolean compiledOk = compileProject();
             if (compiledOk) {
-                runApplication();
+                try {
+                    runApplication();
+                } catch (Exception e) {
+                    getLog().error("Unable to run application: " + e.getMessage(), e);
+                }
             }
         }
     }
@@ -385,7 +394,7 @@ public class RunMojo extends AbstractMojo {
 
     }
 
-    private void runApplication() throws IOException {
+    private void runApplication() throws Exception {
         String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
         List<String> args = new ArrayList<>();
         args.add(javaExecutable);
@@ -396,7 +405,8 @@ public class RunMojo extends AbstractMojo {
         }
 
         if (jvmArguments != null && !jvmArguments.isEmpty()) {
-            args.addAll(jvmArguments);
+            final String[] strings = CommandLineUtils.translateCommandline(jvmArguments);
+            args.addAll(Arrays.asList(strings));
         }
 
         if (!mavenSession.getUserProperties().isEmpty()) {
@@ -410,7 +420,8 @@ public class RunMojo extends AbstractMojo {
         args.add(mainClass);
 
         if (appArguments != null && !appArguments.isEmpty()) {
-            args.addAll(appArguments);
+            final String[] strings = CommandLineUtils.translateCommandline(appArguments);
+            args.addAll(Arrays.asList(strings));
         }
 
         if (getLog().isDebugEnabled()) {
