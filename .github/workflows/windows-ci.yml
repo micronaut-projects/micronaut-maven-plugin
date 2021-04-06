@@ -7,20 +7,15 @@ on:
   pull_request:
     branches:
       - master
-
 jobs:
-  snapshot:
-    runs-on: windows-latest
+  build:
+    if: github.repository != 'micronaut-projects/micronaut-project-template'
+    runs-on: windows-2016
+    strategy:
+      matrix:
+        graalvm: ['21.0.0.2']
     steps:
-      - name: Check out Git repository
-        uses: actions/checkout@v2
-
-      - name: Install Java and Maven and set up Apache Maven Central
-        uses: actions/setup-java@v1
-        with:
-          java-version: 1.8
-          server-password: GH_TOKEN
-
+      - uses: actions/checkout@v2.3.4
       - name: Cache Maven packages
         uses: actions/cache@v2.1.4
         with:
@@ -28,7 +23,24 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Run tests
-        run: mvn verify -Prun-its
+      - name: Download GraalVM
+        run: Invoke-RestMethod -Uri https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-${{ matrix.graalvm }}/graalvm-ce-java11-windows-amd64-${{ matrix.graalvm }}.zip -OutFile 'graal.zip'
+      - name: Install GraalVM
+        run: Expand-Archive -path 'graal.zip' -destinationpath 'C:\graalvm'
+      - name: Install Native Image
+        run: C:\graalvm\graalvm-ce-java11-${{ matrix.graalvm }}\bin\gu.cmd install native-image
+      - name: Set up Visual C Build Tools Workload for Visual Studio 2017 Build Tools
+        run: |
+          choco install visualstudio2017-workload-vctools
+      - name: Build with Maven
+        shell: cmd
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+          ./mvnw verify -Prun-its 
+        env:
+          JAVA_HOME: C:\graalvm\graalvm-ce-java11-${{ matrix.graalvm }}
+          GRAALVM_HOME: C:\graalvm\graalvm-ce-java11-${{ matrix.graalvm }}
+          TESTCONTAINERS_RYUK_DISABLED: true
+
 
 

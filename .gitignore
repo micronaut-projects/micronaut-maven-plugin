@@ -1,7 +1,6 @@
 .gradle
 /build/
 target/
-.mvn/
 .settings/
 .classpath
 .project
