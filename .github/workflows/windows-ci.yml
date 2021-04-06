@@ -28,7 +28,7 @@ jobs:
       - name: Install GraalVM
         run: Expand-Archive -path 'graal.zip' -destinationpath 'C:\graalvm'
       - name: Install Native Image
-        run: C:\graalvm\graalvm-ce-java8-${{ matrix.graalvm }}\bin\gu.cmd install native-image
+        run: C:\graalvm\graalvm-ce-java11-${{ matrix.graalvm }}\bin\gu.cmd install native-image
       - name: Set up Visual C Build Tools Workload for Visual Studio 2017 Build Tools
         run: |
           choco install visualstudio2017-workload-vctools
@@ -36,10 +36,10 @@ jobs:
         shell: cmd
         run: |
           call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-          ./mvnw verify -Prun-its
+          ./mvnw verify -Prun-its -Dinvoker.test=package-native*
         env:
-          JAVA_HOME: C:\graalvm\graalvm-ce-java8-${{ matrix.graalvm }}
-          GRAALVM_HOME: C:\graalvm\graalvm-ce-java8-${{ matrix.graalvm }}
+          JAVA_HOME: C:\graalvm\graalvm-ce-java11-${{ matrix.graalvm }}
+          GRAALVM_HOME: C:\graalvm\graalvm-ce-java11-${{ matrix.graalvm }}
           TESTCONTAINERS_RYUK_DISABLED: true
 
 
