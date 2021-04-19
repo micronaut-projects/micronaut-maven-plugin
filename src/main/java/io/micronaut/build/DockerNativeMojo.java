@@ -105,6 +105,12 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         getLog().info("Using GRAALVM_VERSION: " + graalVmVersion());
         getLog().info("Using GRAALVM_JVM_VERSION: " + graalVmJvmVersion());
 
+        // Starter sets the right class in pom.xml:
+        //   - For applications: io.micronaut.function.aws.runtime.MicronautLambdaRuntime
+        //   - For function apps: com.example.BookLambdaRuntime
+        getLog().info("Using CLASS_NAME: " + mainClass);
+        buildImageCmd.withBuildArg("CLASS_NAME", mainClass);
+
         String graalVmBuildArgs = getGraalVmBuildArgs();
         if (graalVmBuildArgs != null && !graalVmBuildArgs.isEmpty()) {
             getLog().info("Using GRAALVM_ARGS: " + graalVmBuildArgs);
