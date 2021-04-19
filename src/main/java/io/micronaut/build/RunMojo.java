@@ -6,6 +6,7 @@ import io.micronaut.build.services.CompilerService;
 import io.micronaut.build.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
+import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -16,10 +17,10 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.*;
 import org.apache.maven.toolchain.Toolchain;
 import org.apache.maven.toolchain.ToolchainManager;
-import org.codehaus.plexus.util.AbstractScanner;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyFilter;
@@ -148,6 +149,7 @@ public class RunMojo extends AbstractMojo {
     private int classpathHash;
     private long lastCompilation;
     private Map<String, Path> sourceDirectories;
+    private final boolean isEnabledPreview;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -165,6 +167,7 @@ public class RunMojo extends AbstractMojo {
 
         resolveDependencies();
         this.classpathHash = this.classpath.hashCode();
+        this.isEnabledPreview = this.resolveEnabledPreview();
     }
 
     @Override
@@ -417,6 +420,9 @@ public class RunMojo extends AbstractMojo {
         args.add(classpathArgument);
         args.add("-XX:TieredStopAtLevel=1");
         args.add("-Dcom.sun.management.jmxremote");
+        if (isEnabledPreview) {
+            args.add("--enable-preview");
+        }
         args.add(mainClass);
 
         if (appArguments != null && !appArguments.isEmpty()) {
@@ -471,6 +477,19 @@ public class RunMojo extends AbstractMojo {
                 process.destroyForcibly();
             }
         }
+    }
+
+    private boolean resolveEnabledPreview() {
+        Plugin plugin = mavenProject.getPlugin(CompilerService.MAVEN_COMPILER_PLUGIN);
+        if (plugin != null && plugin.getConfiguration() != null) {
+            Xpp3Dom configuration = (Xpp3Dom) plugin.getConfiguration();
+            Xpp3Dom compilerArgs = configuration.getChild("compilerArgs");
+            if (compilerArgs != null) {
+                return Arrays.stream(compilerArgs.getChildren()).anyMatch(xpp3Dom -> xpp3Dom.getValue().equals("--enable-preview"));
+            }
+        }
+
+        return false;
     }
 
 }
