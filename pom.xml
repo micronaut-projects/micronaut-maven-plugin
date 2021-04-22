@@ -75,9 +75,9 @@
         <site.description>${project.description}</site.description>
         <site.version>${project.version}</site.version>
         <project.build.outputTimestamp>2021-04-19T13:04:58Z</project.build.outputTimestamp>
-        <native-image-plugin.version>21.0.0.2</native-image-plugin.version>
-        <micronaut.version>2.3.3</micronaut.version>
-        <it.micronaut.version>2.3.4-SNAPSHOT</it.micronaut.version>
+        <native-image-plugin.version>21.1.0</native-image-plugin.version>
+        <micronaut.version>2.4.2</micronaut.version>
+        <it.micronaut.version>2.4.3-SNAPSHOT</it.micronaut.version>
     </properties>
 
     <repositories>
