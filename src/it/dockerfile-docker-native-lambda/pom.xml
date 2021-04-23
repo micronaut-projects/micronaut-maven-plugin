@@ -19,7 +19,6 @@
     <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
     <exec.mainClass>io.micronaut.function.aws.runtime.MicronautLambdaRuntime</exec.mainClass>
     <micronaut.runtime>lambda</micronaut.runtime>
-    <graal.version>21.1.0</graal.version>
   </properties>
 
   <repositories>

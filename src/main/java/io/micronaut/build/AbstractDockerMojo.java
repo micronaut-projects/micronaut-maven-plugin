@@ -30,6 +30,8 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     public static final String DEFAULT_GRAAL_DOCKER_VERSION = "java11";
     public static final String LATEST_TAG = "latest";
 
+    private static final String GRAALVM_VERSION = "21.1.0";
+
     protected final MavenProject mavenProject;
     protected final JibConfigurationService jibConfigurationService;
     protected final ApplicationConfigurationService applicationConfigurationService;
@@ -84,7 +86,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     }
 
     protected String graalVmVersion() {
-        return mavenProject.getProperties().getProperty("graal.version");
+        return GRAALVM_VERSION;
     }
 
     protected String graalVmJvmVersion() {
