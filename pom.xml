@@ -5,7 +5,7 @@
 
     <groupId>io.micronaut.build</groupId>
     <artifactId>micronaut-maven-plugin</artifactId>
-    <version>2.0.0</version>
+    <version>2.0.1-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>Micronaut Maven Plugin</name>
@@ -42,7 +42,7 @@
         <url>https://github.com/micronaut-projects/micronaut-maven-plugin</url>
         <connection>scm:git:git@github.com:micronaut-projects/micronaut-maven-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:micronaut-projects/micronaut-maven-plugin.git</developerConnection>
-        <tag>v2.0.0</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <licenses>
@@ -74,7 +74,7 @@
         <site.name>${project.name}</site.name>
         <site.description>${project.description}</site.description>
         <site.version>${project.version}</site.version>
-        <project.build.outputTimestamp>2021-04-27T09:35:52Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2021-04-27T09:36:40Z</project.build.outputTimestamp>
         <native-image-plugin.version>21.1.0</native-image-plugin.version>
         <micronaut.version>2.4.3</micronaut.version>
         <it.micronaut.version>2.4.3-SNAPSHOT</it.micronaut.version>
