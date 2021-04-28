@@ -4,6 +4,7 @@ import io.micronaut.build.jib.JibMicronautExtension;
 import io.micronaut.build.services.ApplicationConfigurationService;
 import io.micronaut.build.services.DockerService;
 import io.micronaut.build.services.JibConfigurationService;
+import io.micronaut.core.util.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -36,6 +37,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
     public static final String DOCKERFILE = "Dockerfile";
     public static final String DOCKERFILE_AWS_CUSTOM_RUNTIME = "DockerfileAwsCustomRuntime";
     public static final String DOCKERFILE_NATIVE = "DockerfileNative";
+    public static final String DOCKERFILE_NATIVE_DISTROLESS = "DockerfileNativeDistroless";
     public static final String DOCKERFILE_NATIVE_STATIC = "DockerfileNativeStatic";
     public static final String DOCKERFILE_NATIVE_ORACLE_CLOUD = "DockerfileNativeOracleCloud";
 
@@ -119,7 +121,10 @@ public class DockerfileMojo extends AbstractDockerMojo {
                 String dockerfileName = DOCKERFILE_NATIVE;
                 if (staticNativeImage) {
                     getLog().info("Generating a static native image");
-                    dockerfileName = DOCKERFILE_NATIVE_STATIC;
+                    dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_STATIC;
+                } else if (baseImageRun.contains("distroless")) {
+                    getLog().info("Generating a mostly static native image");
+                    dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_DISTROLESS;
                 }
                 dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);
                 break;
@@ -136,13 +141,26 @@ public class DockerfileMojo extends AbstractDockerMojo {
 
             for (String line : allLines) {
                 if (!line.startsWith("ARG")) {
-                    if (line.contains("BASE_IMAGE")) {
+                    if (line.contains("BASE_IMAGE_RUN")) {
+                        result.add(line.replace("${BASE_IMAGE_RUN}", baseImageRun));
+                    } else if (line.contains("BASE_IMAGE")) {
                         result.add(line.replace("${BASE_IMAGE}", getFrom()));
+                    } else if (line.contains("EXTRA_CMD")) {
+                        if (baseImageRun.contains("alpine-glibc")) {
+                            result.add("RUN apk update && apk add libstdc++");
+                        } else {
+                            result.add("");
+                        }
                     } else if (line.contains("GRAALVM_") || line.contains("CLASS_NAME")) {
+                        String graalVmBuildArgs = getGraalVmBuildArgs();
+                        if (baseImageRun.contains("distroless") && !graalVmBuildArgs.contains(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG)) {
+                            graalVmBuildArgs = MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG + " " + graalVmBuildArgs;
+                        }
+
                         result.add(line
                                 .replace("${GRAALVM_VERSION}", graalVmVersion())
                                 .replace("${GRAALVM_JVM_VERSION}", graalVmJvmVersion())
-                                .replace("${GRAALVM_ARGS} ", getGraalVmBuildArgs())
+                                .replace("${GRAALVM_ARGS} ", graalVmBuildArgs)
                                 .replace("${CLASS_NAME}", mainClass)
                         );
                     } else if (line.contains("PORT")) {

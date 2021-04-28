@@ -10,7 +10,7 @@ RUN mkdir ${RESULT_LIB} && \
     ./configure --disable-shared --prefix=${RESULT_LIB} && \
     make && make install && \
     cd / && rm -rf /muscl && rm -f /musl.tar.gz && \
-    cp /usr/lib/gcc/x86_64-redhat-linux/4.8.2/libstdc++.a ${RESULT_LIB}/lib/
+    cp /usr/lib/gcc/x86_64-redhat-linux/8/libstdc++.a ${RESULT_LIB}/lib/
 
 ENV PATH="$PATH:${RESULT_LIB}/bin"
 ENV CC="musl-gcc"
