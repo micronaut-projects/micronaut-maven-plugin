@@ -77,7 +77,7 @@
         <project.build.outputTimestamp>2021-04-27T09:36:40Z</project.build.outputTimestamp>
         <native-image-plugin.version>21.1.0</native-image-plugin.version>
         <micronaut.version>2.4.4</micronaut.version>
-        <it.micronaut.version>2.4.3-SNAPSHOT</it.micronaut.version>
+        <it.micronaut.version>2.4.5-SNAPSHOT</it.micronaut.version>
     </properties>
 
     <repositories>
