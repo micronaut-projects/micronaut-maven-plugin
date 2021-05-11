@@ -29,6 +29,8 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
 
     public static final String DEFAULT_GRAAL_DOCKER_VERSION = "java11";
     public static final String LATEST_TAG = "latest";
+    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "frolvlad/alpine-glibc:alpine-3.12";
+    public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
 
     protected final MavenProject mavenProject;
     protected final JibConfigurationService jibConfigurationService;
@@ -71,6 +73,13 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
      */
     @Parameter(property = MicronautRuntime.PROPERTY, defaultValue = "NONE")
     protected String micronautRuntime;
+
+    /**
+     * The Docker image used to run the native image
+     * @since 1.2
+     */
+    @Parameter(property = "micronaut.native-image.base-image-run", defaultValue = DEFAULT_BASE_IMAGE_GRAALVM_RUN)
+    protected String baseImageRun;
 
     protected AbstractDockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService, ApplicationConfigurationService applicationConfigurationService, DockerService dockerService) {
         this.mavenProject = mavenProject;

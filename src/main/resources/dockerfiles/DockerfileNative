@@ -1,4 +1,5 @@
 ARG BASE_IMAGE
+ARG BASE_IMAGE_RUN
 FROM ${BASE_IMAGE} AS builder
 RUN gu install native-image
 WORKDIR /home/app
@@ -9,8 +10,9 @@ ARG CLASS_NAME
 ARG GRAALVM_ARGS=""
 RUN native-image ${GRAALVM_ARGS} -H:Class=${CLASS_NAME} -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
 
-FROM frolvlad/alpine-glibc:alpine-3.12
-RUN apk update && apk add libstdc++
+FROM ${BASE_IMAGE_RUN}
+ARG EXTRA_CMD
+RUN if [[ -n "${EXTRA_CMD}" ]] ; then eval ${EXTRA_CMD} ; fi
 COPY --from=builder /home/app/application /app/application
 
 ARG PORT=8080

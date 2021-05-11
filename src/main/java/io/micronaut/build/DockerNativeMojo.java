@@ -8,6 +8,7 @@ import com.google.common.io.Files;
 import io.micronaut.build.services.ApplicationConfigurationService;
 import io.micronaut.build.services.DockerService;
 import io.micronaut.build.services.JibConfigurationService;
+import io.micronaut.core.util.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -127,6 +128,9 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         if (staticNativeImage) {
             getLog().info("Generating a static native image");
             dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_STATIC;
+        } else if (baseImageRun.contains("distroless")) {
+            getLog().info("Generating a mostly static native image");
+            dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_DISTROLESS;
         }
 
         buildDockerfile(dockerfileName, true);
@@ -160,6 +164,16 @@ public class DockerNativeMojo extends AbstractDockerMojo {
                 .withBuildArg("PORT", port);
 
         getLog().info("Using BASE_IMAGE: " + from);
+        if (StringUtils.isNotEmpty(baseImageRun) && !staticNativeImage) {
+            getLog().info("Using BASE_IMAGE_RUN: " + baseImageRun);
+            buildImageCmd.withBuildArg("BASE_IMAGE_RUN", baseImageRun);
+        }
+
+        if (baseImageRun.contains("alpine-glibc")) {
+            buildImageCmd.withBuildArg("EXTRA_CMD", "apk update && apk add libstdc++");
+        } else {
+            buildImageCmd.withBuildArg("EXTRA_CMD", "");
+        }
 
         if (passClassName) {
             getLog().info("Using CLASS_NAME: " + mainClass);
@@ -167,11 +181,14 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         }
 
         String graalVmBuildArgs = getGraalVmBuildArgs();
+        if (baseImageRun.contains("distroless") && !graalVmBuildArgs.contains(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG)) {
+            graalVmBuildArgs = MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG + " " + graalVmBuildArgs;
+        }
+
         if (graalVmBuildArgs != null && !graalVmBuildArgs.isEmpty()) {
             getLog().info("Using GRAALVM_ARGS: " + graalVmBuildArgs);
             buildImageCmd = buildImageCmd.withBuildArg(GRAALVM_ARGS, graalVmBuildArgs);
         }
-
 
         dockerService.buildImage(buildImageCmd);
     }

@@ -1,0 +1,5 @@
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains("Generating a static native image")
+assert !log.text.contains("Using BASE_IMAGE_RUN")
+assert !log.text.contains("alpine-glibc")
