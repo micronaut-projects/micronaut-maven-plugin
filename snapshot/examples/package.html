@@ -110,7 +110,7 @@
           <ul class="breadcrumb">
         <li id="publishDate">Last Published: 2021-05-11<span class="divider">|</span>
 </li>
-          <li id="projectVersion">Version: 2.0.1-SNAPSHOT</li>
+          <li id="projectVersion">Version: 2.1.0-SNAPSHOT</li>
           </ul>
         </div>
       </header>
@@ -304,6 +304,13 @@ images. In this case, the <code>micronaut.runtime</code> property will also dete
 <li>
 <p>Static image: <code>mvn package -Dpackaging=docker-native -Dmicronaut.native-image.static=true</code>. This uses GraalVM&#8217;s
 <code>--static --libc=musl</code> flags and then puts the binary in a <code>scratch</code> image.</p>
+</li>
+<li>
+<p>Mostly static image: <code>mvn package -Dpackaging=docker-native -Dmicronaut.native-image.base-image-run=gcr.io/distroless/cc-debian10 -Pgraalvm</code>.
+This will create a "mostly" static native image and adds automatically <code>-H:+StaticExecutableWithDynamicLibC</code> flag.</p>
+</li>
+<li>
+<p>Custom image: <code>mvn package -Dpackaging=docker-native -Dmicronaut.native-image.base-image-run=your-own-image-for-run-the-native-image</code></p>
 </li>
 </ul>
 </div>

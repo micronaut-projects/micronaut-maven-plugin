@@ -110,7 +110,7 @@
           <ul class="breadcrumb">
         <li id="publishDate">Last Published: 2021-05-11<span class="divider">|</span>
 </li>
-          <li id="projectVersion">Version: 2.0.1-SNAPSHOT</li>
+          <li id="projectVersion">Version: 2.1.0-SNAPSHOT</li>
           </ul>
         </div>
       </header>
@@ -122,7 +122,7 @@
       
 <p><b>Full name</b>:</p>
       
-<p>io.micronaut.build:micronaut-maven-plugin:2.0.1-SNAPSHOT:docker-push</p>
+<p>io.micronaut.build:micronaut-maven-plugin:2.1.0-SNAPSHOT:docker-push</p>
       
 <p><b>Description</b>:</p>
       
@@ -206,6 +206,17 @@ application.<br /><b>User property is</b>: <code>mn.appArgs</code>.<br /></td>
           
 <tr class="a">
             
+<td><code><a href="#baseImageRun">&lt;baseImageRun&gt;</a></code></td>
+            
+<td><code>String</code></td>
+            
+<td><code>1.2</code></td>
+            
+<td>The Docker image used to run the native image<br /><b>Default value is</b>: <code>frolvlad/alpine-glibc:alpine-3.12</code>.<br /><b>User property is</b>: <code>micronaut.native-image.base-image-run</code>.<br /></td>
+          </tr>
+          
+<tr class="b">
+            
 <td><code><a href="#micronautRuntime">&lt;micronautRuntime&gt;</a></code></td>
             
 <td><code>String</code></td>
@@ -215,7 +226,7 @@ application.<br /><b>User property is</b>: <code>mn.appArgs</code>.<br /></td>
 <td>The target runtime of the application<br /><b>Default value is</b>: <code>NONE</code>.<br /><b>User property is</b>: <code>micronaut.runtime</code>.<br /></td>
           </tr>
           
-<tr class="b">
+<tr class="a">
             
 <td><code><a href="#nativeImageBuildArgs">&lt;nativeImageBuildArgs&gt;</a></code></td>
             
@@ -230,7 +241,7 @@ used when using a packaging of type <code>docker-native</code>. For
 Image Maven Plugin</a> configuration options.<br /><b>User property is</b>: <code>micronaut.native-image.args</code>.<br /></td>
           </tr>
           
-<tr class="a">
+<tr class="b">
             
 <td><code><a href="#staticNativeImage">&lt;staticNativeImage&gt;</a></code></td>
             
@@ -260,6 +271,22 @@ application.</div>
 <li><b>Required</b>: <code>No</code></li>
           
 <li><b>User Property</b>: <code>mn.appArgs</code></li>
+        </ul><hr /></section><section>
+<h4><a name="a.3CbaseImageRun.3E"></a><b><a name="baseImageRun">&lt;baseImageRun&gt;</a></b></h4>
+        
+<div>The Docker image used to run the native image</div>
+        
+<ul>
+          
+<li><b>Type</b>: <code>java.lang.String</code></li>
+          
+<li><b>Since</b>: <code>1.2</code></li>
+          
+<li><b>Required</b>: <code>No</code></li>
+          
+<li><b>User Property</b>: <code>micronaut.native-image.base-image-run</code></li>
+          
+<li><b>Default</b>: <code>frolvlad/alpine-glibc:alpine-3.12</code></li>
         </ul><hr /></section><section>
 <h4><a name="a.3CmainClass.3E"></a><b><a name="mainClass">&lt;mainClass&gt;</a></b></h4>
         
