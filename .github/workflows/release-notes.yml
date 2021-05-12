@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: micronaut-projects/github-actions/release-notes@master
         id: release_notes
-      - uses: ncipollo/release-action@v1
+      - uses: ncipollo/release-action@v1.8.4
         if: steps.release_notes.outputs.generated_changelog == 'true'
         with:
           allowUpdates: true
