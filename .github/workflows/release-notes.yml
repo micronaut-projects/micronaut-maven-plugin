@@ -12,7 +12,7 @@ jobs:
   release_notes:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2.3.4
       - uses: micronaut-projects/github-actions/release-notes@master
         id: release_notes
       - uses: ncipollo/release-action@v1
