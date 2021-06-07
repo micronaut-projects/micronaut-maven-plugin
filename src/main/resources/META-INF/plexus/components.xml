@@ -18,8 +18,7 @@
                                 org.apache.maven.plugins:maven-resources-plugin:resources
                             </process-resources>
                             <compile>
-                                org.apache.maven.plugins:maven-compiler-plugin:compile,
-                                ${project.groupId}:${project.artifactId}:${project.version}:graalvm-resources
+                                org.apache.maven.plugins:maven-compiler-plugin:compile
                             </compile>
                             <process-test-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:testResources
@@ -30,6 +29,9 @@
                             <test>
                                 org.apache.maven.plugins:maven-surefire-plugin:test
                             </test>
+                            <prepare-package>
+                                ${project.groupId}:${project.artifactId}:${project.version}:graalvm-resources
+                            </prepare-package>
                             <package>
                                 org.apache.maven.plugins:maven-jar-plugin:jar,
                                 org.apache.maven.plugins:maven-shade-plugin:shade
@@ -62,10 +64,10 @@
                                 org.apache.maven.plugins:maven-resources-plugin:resources
                             </process-resources>
                             <compile>
-                                org.apache.maven.plugins:maven-compiler-plugin:compile,
-                                ${project.groupId}:${project.artifactId}:${project.version}:graalvm-resources
+                                org.apache.maven.plugins:maven-compiler-plugin:compile
                             </compile>
                             <prepare-package>
+                                ${project.groupId}:${project.artifactId}:${project.version}:graalvm-resources,
                                 org.apache.maven.plugins:maven-jar-plugin:jar
                             </prepare-package>
                             <package>
@@ -124,9 +126,11 @@
                                 org.apache.maven.plugins:maven-resources-plugin:resources
                             </process-resources>
                             <compile>
-                                org.apache.maven.plugins:maven-compiler-plugin:compile,
-                                ${project.groupId}:${project.artifactId}:${project.version}:graalvm-resources
+                                org.apache.maven.plugins:maven-compiler-plugin:compile
                             </compile>
+                            <prepare-package>
+                                ${project.groupId}:${project.artifactId}:${project.version}:graalvm-resources
+                            </prepare-package>
                             <package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:docker-native
                             </package>
