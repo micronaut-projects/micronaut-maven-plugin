@@ -18,7 +18,8 @@
                                 org.apache.maven.plugins:maven-resources-plugin:resources
                             </process-resources>
                             <compile>
-                                org.apache.maven.plugins:maven-compiler-plugin:compile
+                                org.apache.maven.plugins:maven-compiler-plugin:compile,
+                                ${project.groupId}:${project.artifactId}:${project.version}:graalvm-resources
                             </compile>
                             <process-test-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:testResources
@@ -61,7 +62,8 @@
                                 org.apache.maven.plugins:maven-resources-plugin:resources
                             </process-resources>
                             <compile>
-                                org.apache.maven.plugins:maven-compiler-plugin:compile
+                                org.apache.maven.plugins:maven-compiler-plugin:compile,
+                                ${project.groupId}:${project.artifactId}:${project.version}:graalvm-resources
                             </compile>
                             <prepare-package>
                                 org.apache.maven.plugins:maven-jar-plugin:jar
@@ -122,7 +124,8 @@
                                 org.apache.maven.plugins:maven-resources-plugin:resources
                             </process-resources>
                             <compile>
-                                org.apache.maven.plugins:maven-compiler-plugin:compile
+                                org.apache.maven.plugins:maven-compiler-plugin:compile,
+                                ${project.groupId}:${project.artifactId}:${project.version}:graalvm-resources
                             </compile>
                             <package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:docker-native
