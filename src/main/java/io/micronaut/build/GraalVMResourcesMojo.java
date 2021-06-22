@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.resources.ResourcesMojo;
 
 import java.io.File;
@@ -43,8 +44,16 @@ public class GraalVMResourcesMojo extends ResourcesMojo {
 
     private final ObjectWriter writer = new ObjectMapper().writer(new DefaultPrettyPrinter());
 
+    @Parameter(property = "micronaut.native-image.skip-resources", defaultValue = "false")
+    private Boolean nativeImageSkipResources;
+
     @Override
     public void execute() throws MojoExecutionException {
+        if (nativeImageSkipResources) {
+            getLog().info("Skipping generation of resource-config.json");
+            return;
+        }
+
         Set<String> resourcesToAdd = new HashSet<>();
 
         // Application resources (src/main/resources)
