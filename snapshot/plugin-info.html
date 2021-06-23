@@ -159,11 +159,17 @@ properties, eg:</p>
 mvn mn:dockerfile -Dpackaging=docker-native -Dmicronaut.runtime=lambda
 </pre></td></tr>
 <tr class="b">
+<td><a href="./graalvm-resources-mojo.html">mn:graalvm-resources</a></td>
+<td><p>Generate GraalVM <code>resources-config.json</code> with all the
+resources included in the application</p>
+<p><strong>WARNING</strong>: this goal is not intended to be
+executed directly.</p></td></tr>
+<tr class="a">
 <td><a href="./help-mojo.html">mn:help</a></td>
 <td>Display help information on micronaut-maven-plugin.<br />
 Call <code>mvn mn:help -Ddetail=true
 -Dgoal=&lt;goal-name&gt;</code> to display parameter details.</td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="./run-mojo.html">mn:run</a></td>
 <td><p>Executes a Micronaut application in development mode.</p>
 <p>It watches for changes in the project tree. If there are changes
