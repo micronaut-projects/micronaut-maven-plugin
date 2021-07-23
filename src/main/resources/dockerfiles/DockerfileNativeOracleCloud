@@ -9,9 +9,8 @@ RUN native-image ${GRAALVM_ARGS} --report-unsupported-elements-at-runtime -H:Cla
 
 FROM fnproject/fn-java-fdk:jre11-latest AS fnfdk
 
-FROM oraclelinux:7-slim
+FROM busybox:glibc
 WORKDIR /function
-RUN groupadd -g 1000 fn && useradd --uid 1000 -g fn fn
 COPY --from=builder /home/app/application /function/func
 COPY --from=fnfdk /function/runtime/lib/* .
 ENTRYPOINT ["./func"]
