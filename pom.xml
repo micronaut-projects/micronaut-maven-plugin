@@ -75,10 +75,10 @@
         <site.name>${project.name}</site.name>
         <site.description>${project.description}</site.description>
         <site.version>${project.version}</site.version>
-        <project.build.outputTimestamp>2021-07-23T08:02:58Z</project.build.outputTimestamp>
-        <native-image-plugin.version>21.1.0</native-image-plugin.version>
-        <micronaut.version>2.5.6</micronaut.version>
-        <it.micronaut.version>2.4.5-SNAPSHOT</it.micronaut.version>
+        <project.build.outputTimestamp>2021-06-23T13:53:55Z</project.build.outputTimestamp>
+        <native-image-plugin.version>21.2.0</native-image-plugin.version>
+        <micronaut.version>2.5.9</micronaut.version>
+        <it.micronaut.version>2.5.10-SNAPSHOT</it.micronaut.version>
     </properties>
 
     <repositories>
