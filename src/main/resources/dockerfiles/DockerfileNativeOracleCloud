@@ -1,4 +1,5 @@
 ARG BASE_IMAGE
+ARG BASE_IMAGE_RUN=busybox:glibc
 FROM ${BASE_IMAGE} AS builder
 RUN gu install native-image
 WORKDIR /home/app
@@ -9,7 +10,7 @@ RUN native-image ${GRAALVM_ARGS} --report-unsupported-elements-at-runtime -H:Cla
 
 FROM fnproject/fn-java-fdk:jre11-latest AS fnfdk
 
-FROM busybox:glibc
+FROM ${BASE_IMAGE_RUN}
 WORKDIR /function
 COPY --from=builder /home/app/application /function/func
 COPY --from=fnfdk /function/runtime/lib/* .
