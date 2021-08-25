@@ -1,5 +1,5 @@
 ARG BASE_IMAGE
-ARG BASE_IMAGE_RUN=busybox:glibc
+ARG BASE_IMAGE_RUN=frolvlad/alpine-glibc:alpine-3.12
 FROM ${BASE_IMAGE} AS builder
 RUN gu install native-image
 WORKDIR /home/app

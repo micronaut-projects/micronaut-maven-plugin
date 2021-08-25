@@ -7,9 +7,9 @@ RUN native-image --report-unsupported-elements-at-runtime -H:Class=com.fnproject
 
 FROM fnproject/fn-java-fdk:jre11-latest AS fnfdk
 
-FROM busybox:glibc
+FROM frolvlad/alpine-glibc:alpine-3.12
 WORKDIR /function
 COPY --from=builder /home/app/application /function/func
 COPY --from=fnfdk /function/runtime/lib/* .
-ENTRYPOINT ["./func"]
+ENTRYPOINT ["./func", "-XX:MaximumHeapSizePercent=80", "-Djava.library.path=/function"]
 CMD ["io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest"]
