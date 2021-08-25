@@ -13,5 +13,5 @@ FROM busybox:glibc
 WORKDIR /function
 COPY --from=builder /home/app/application /function/func
 COPY --from=fnfdk /function/runtime/lib/* .
-ENTRYPOINT ["./func"]
+ENTRYPOINT ["./func", "-XX:MaximumHeapSizePercent=80", "-Djava.library.path=/function"]
 CMD ["io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest"]
