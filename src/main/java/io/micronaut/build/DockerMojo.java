@@ -60,7 +60,7 @@ public class DockerMojo extends AbstractDockerMojo {
             } catch (IOException e) {
                 throw new MojoExecutionException(e.getMessage(), e);
             }
-        } else {
+        } else if(!jibConfigurationService.getFromImage().isPresent()) {
             mavenProject.getProperties().setProperty(PropertyNames.FROM_IMAGE, JibMicronautExtension.DEFAULT_BASE_IMAGE);
         }
     }
