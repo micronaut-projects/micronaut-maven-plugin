@@ -23,7 +23,7 @@ import java.util.*;
  */
 public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
-    public static final String DEFAULT_BASE_IMAGE = "openjdk:16-alpine";
+    public static final String DEFAULT_BASE_IMAGE = "openjdk:17-alpine";
 
     @Override
     public Optional<Class<Void>> getExtraConfigType() {
