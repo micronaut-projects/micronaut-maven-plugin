@@ -20,7 +20,7 @@
     <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
-    <graal.version>21.2.0</graal.version>
+    <graal.version>21.3.0</graal.version>
   </properties>
 
   <repositories>
@@ -140,6 +140,22 @@
         <artifactId>micronaut-maven-plugin</artifactId>
         <version>${micronaut-maven-plugin.version}</version>
       </plugin>
+
+      <!-- TODO: Remove this when the plugin is upgraded to Micronaut 3.2 -->
+      <plugin>
+        <groupId>org.graalvm.buildtools</groupId>
+        <artifactId>native-maven-plugin</artifactId>
+        <version>0.9.6</version>
+        <configuration>
+          <imageName>${project.artifactId}</imageName>
+          <mainClass>${exec.mainClass}</mainClass>
+          <buildArgs>
+            <buildArg>--no-fallback</buildArg>
+            <buildArg>-cp ${project.build.directory}/${project.artifactId}-${project.version}.jar</buildArg>
+          </buildArgs>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>

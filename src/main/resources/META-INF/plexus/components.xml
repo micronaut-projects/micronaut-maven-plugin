@@ -71,7 +71,7 @@
                                 org.apache.maven.plugins:maven-jar-plugin:jar
                             </prepare-package>
                             <package>
-                                org.graalvm.nativeimage:native-image-maven-plugin:native-image
+                                org.graalvm.buildtools:native-maven-plugin:build
                             </package>
                         </phases>
                     </lifecycle>
