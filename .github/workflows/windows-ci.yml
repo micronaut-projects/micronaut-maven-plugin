@@ -31,11 +31,11 @@ jobs:
         run: C:\graalvm\graalvm-ce-java11-${{ matrix.graalvm }}\bin\gu.cmd install native-image
       - name: Set up Visual C Build Tools Workload for Visual Studio 2017 Build Tools
         run: |
-          choco install visualstudio2017-workload-vctools
+          choco install visualstudio2019-workload-vctools
       - name: Build with Maven
         shell: cmd
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
           ./mvnw verify -Prun-its 
         env:
           JAVA_HOME: C:\graalvm\graalvm-ce-java11-${{ matrix.graalvm }}
