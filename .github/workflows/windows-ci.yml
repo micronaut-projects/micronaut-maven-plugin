@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     if: github.repository != 'micronaut-projects/micronaut-project-template'
-    runs-on: windows-2016
+    runs-on: windows-2019
     strategy:
       matrix:
         graalvm: ['21.3.0']
