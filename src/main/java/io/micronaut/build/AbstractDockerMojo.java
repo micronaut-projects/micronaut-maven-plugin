@@ -105,7 +105,12 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     }
 
     protected String getFrom() {
-        return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/graalvm-ce:" + DEFAULT_GRAAL_DOCKER_VERSION + "-" + graalVmVersion());
+        if (staticNativeImage) {
+            // For building a static native image we need a base image with tools (cc, make,...) already installed
+            return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/graalvm-ce:" + DEFAULT_GRAAL_DOCKER_VERSION + "-" + graalVmVersion());
+        } else {
+            return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/native-image:" + DEFAULT_GRAAL_DOCKER_VERSION + "-" + graalVmVersion());
+        }
     }
 
     protected Set<String> getTags() {

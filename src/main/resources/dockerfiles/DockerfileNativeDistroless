@@ -1,7 +1,6 @@
 ARG BASE_IMAGE
 ARG BASE_IMAGE_RUN
 FROM ${BASE_IMAGE} AS builder
-RUN gu install native-image
 WORKDIR /home/app
 
 COPY classes /home/app/classes
