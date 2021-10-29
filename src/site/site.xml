@@ -34,7 +34,7 @@
             <topBarIcon>
                 <name>Micronaut Maven Plugin</name>
                 <alt>Micronaut Logo</alt>
-                <src>https://micronaut.io/images/favicon-16x16.png</src>
+                <src>https://micronaut.io/wp-content/uploads/2021/10/favicon-16x16-1.png</src>
                 <href>/index.html</href>
             </topBarIcon>
             <sideBarEnabled>false</sideBarEnabled>
