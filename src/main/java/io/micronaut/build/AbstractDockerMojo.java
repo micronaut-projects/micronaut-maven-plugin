@@ -14,7 +14,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.micronaut.build.services.ApplicationConfigurationService.DEFAULT_PORT;
@@ -105,7 +109,12 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     }
 
     protected String getFrom() {
-        return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/graalvm-ce:" + DEFAULT_GRAAL_DOCKER_VERSION + "-" + graalVmVersion());
+        if (staticNativeImage) {
+            // For building a static native image we need a base image with tools (cc, make,...) already installed
+            return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/graalvm-ce:" + DEFAULT_GRAAL_DOCKER_VERSION + "-" + graalVmVersion());
+        } else {
+            return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/native-image:" + DEFAULT_GRAAL_DOCKER_VERSION + "-" + graalVmVersion());
+        }
     }
 
     protected Set<String> getTags() {

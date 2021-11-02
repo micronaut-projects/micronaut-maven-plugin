@@ -10,8 +10,8 @@ ENV PATH="$PATH:${TOOLCHAIN_DIR}/bin"
 ENV CC="${TOOLCHAIN_DIR}/bin/gcc"
 
 RUN curl -L -o zlib.tar.gz https://zlib.net/zlib-1.2.11.tar.gz && \
-   mkdir zlib && tar -xzf zlib.tar.gz -C zlib --strip-components 1 && cd zlib && \
-   ./configure --static --prefix=${TOOLCHAIN_DIR} && \
+    mkdir zlib && tar -xzf zlib.tar.gz -C zlib --strip-components 1 && cd zlib && \
+    ./configure --static --prefix=${TOOLCHAIN_DIR} && \
     make && make install && \
     cd / && rm -rf /zlib && rm -f /zlib.tar.gz
 

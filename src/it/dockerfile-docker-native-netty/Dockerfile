@@ -1,5 +1,4 @@
-FROM ghcr.io/graalvm/graalvm-ce:java11-21.3.0 AS builder
-RUN gu install native-image
+FROM ghcr.io/graalvm/native-image:java11-21.3.0 AS builder
 WORKDIR /home/app
 
 COPY classes /home/app/classes
