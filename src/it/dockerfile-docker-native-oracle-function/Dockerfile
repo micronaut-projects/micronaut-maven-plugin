@@ -1,6 +1,6 @@
-FROM ghcr.io/graalvm/graalvm-ce:java11-21.3.0 AS builder
-RUN gu install native-image
+FROM ghcr.io/graalvm/native-image:java11-21.3.0 AS builder
 WORKDIR /home/app
+
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
 RUN native-image --report-unsupported-elements-at-runtime -H:Class=com.fnproject.fn.runtime.EntryPoint -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
