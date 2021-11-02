@@ -105,9 +105,9 @@
 <a class="jxr_linenumber" name="L97" href="#L97">97</a>      }
 <a class="jxr_linenumber" name="L98" href="#L98">98</a>  
 <a class="jxr_linenumber" name="L99" href="#L99">99</a>      <strong class="jxr_keyword">protected</strong> String graalVmJvmVersion() {
-<a class="jxr_linenumber" name="L100" href="#L100">100</a>         String graalVmJvmVersion = <span class="jxr_string">"java8"</span>;
-<a class="jxr_linenumber" name="L101" href="#L101">101</a>         <strong class="jxr_keyword">if</strong> (javaVersion().getMajorVersion() &gt;= 11) {
-<a class="jxr_linenumber" name="L102" href="#L102">102</a>             graalVmJvmVersion = <span class="jxr_string">"java11"</span>;
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>         String graalVmJvmVersion = <span class="jxr_string">"java11"</span>;
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>         <strong class="jxr_keyword">if</strong> (javaVersion().getMajorVersion() &gt;= 17) {
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>             graalVmJvmVersion = <span class="jxr_string">"java17"</span>;
 <a class="jxr_linenumber" name="L103" href="#L103">103</a>         }
 <a class="jxr_linenumber" name="L104" href="#L104">104</a>         <strong class="jxr_keyword">return</strong> graalVmJvmVersion;
 <a class="jxr_linenumber" name="L105" href="#L105">105</a>     }
