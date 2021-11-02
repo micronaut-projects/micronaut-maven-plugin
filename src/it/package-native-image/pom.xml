@@ -20,7 +20,7 @@
     <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
-    <graal.version>21.2.0</graal.version>
+    <graal.version>21.3.0</graal.version>
   </properties>
 
   <repositories>
@@ -140,6 +140,54 @@
         <artifactId>micronaut-maven-plugin</artifactId>
         <version>${micronaut-maven-plugin.version}</version>
       </plugin>
+
+      <!-- Use shade plugin because Windows doesn't support long paths and without this it fails on CI -->
+      <!-- See https://graalvm.github.io/native-build-tools/0.9.7.1/maven-plugin.html#long_classpath_and_shading_support -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.2.4</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <shadedArtifactAttached>true</shadedArtifactAttached>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- TODO: Remove this when the plugin is upgraded to Micronaut 3.2 -->
+      <plugin>
+        <groupId>org.graalvm.buildtools</groupId>
+        <artifactId>native-maven-plugin</artifactId>
+        <version>0.9.7.1</version>
+        <extensions>true</extensions>
+        <executions>
+          <execution>
+            <id>build-native</id>
+            <goals>
+              <goal>build</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <skip>false</skip>
+          <imageName>${project.artifactId}</imageName>
+          <mainClass>${exec.mainClass}</mainClass>
+          <buildArgs>
+            <buildArg>--no-fallback</buildArg>
+          </buildArgs>
+          <classpath>
+            <param>${project.build.directory}/${project.artifactId}-${project.version}-shaded.jar</param>
+          </classpath>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>

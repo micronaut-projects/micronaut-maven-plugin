@@ -97,9 +97,9 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     }
 
     protected String graalVmJvmVersion() {
-        String graalVmJvmVersion = "java8";
-        if (javaVersion().getMajorVersion() >= 11) {
-            graalVmJvmVersion = "java11";
+        String graalVmJvmVersion = "java11";
+        if (javaVersion().getMajorVersion() >= 17) {
+            graalVmJvmVersion = "java17";
         }
         return graalVmJvmVersion;
     }

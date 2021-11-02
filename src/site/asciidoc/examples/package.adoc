@@ -30,12 +30,12 @@ https://maven.apache.org/plugins/maven-shade-plugin/[Maven Shade Plugin document
 $ mvn package -Dpackaging=native-image
 ----
 
-If the `<packaging>` is set to `native-image`, this plugin will delegate to the
-`org.graalvm.nativeimage:native-image-maven-plugin` to generate a native image. Note that for this packaging to work,
+If the `<packaging>` is set to `native-image`, this plugin will delegate to the official GraalVM Maven Native plugin
+(`org.graalvm.buildtools:native-maven-plugin`) to generate a native image. Note that for this packaging to work,
 you need to run locally a GraalVM JDK.
 
 Refer to the
-https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization[Native Image Maven Plugin documentation]
+https://graalvm.github.io/native-build-tools/0.9.7.1/[Native Maven Plugin documentation]
 for more information about how to customize the generated native image.
 
 For example, to add `--verbose` to the native image args, you should define:
@@ -43,8 +43,8 @@ For example, to add `--verbose` to the native image args, you should define:
 [source,xml]
 ----
 <plugin>
-  <groupId>org.graalvm.nativeimage</groupId>
-  <artifactId>native-image-maven-plugin</artifactId>
+  <groupId>org.graalvm.buildtools</groupId>
+  <artifactId>native-maven-plugin</artifactId>
   <configuration>
     <buildArgs combine.children="append">
       <buildArg>--verbose</buildArg>
@@ -52,6 +52,56 @@ For example, to add `--verbose` to the native image args, you should define:
   </configuration>
 </plugin>
 ----
+
+==== Windows users
+
+Sometimes, depending on how many classes are in the classpath you may see an error `The command line is too long` when
+building a native-image. This is a https://graalvm.github.io/native-build-tools/0.9.7.1/maven-plugin.html#long_classpath_and_shading_support[known issue]
+with Windows. To workaround this you need to configure the Shade plugin in your `pom.xml` and then configure the native image
+plugin to use that shaded jar for building the native image:
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-shade-plugin</artifactId>
+  <version>3.2.4</version>
+  <executions>
+    <execution>
+      <phase>package</phase>
+      <goals>
+        <goal>shade</goal>
+      </goals>
+      <configuration>
+        <shadedArtifactAttached>true</shadedArtifactAttached>
+        <shadedClassifierName>shaded</shadedClassifierName>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+
+<plugin>
+  <groupId>org.graalvm.buildtools</groupId>
+  <artifactId>native-maven-plugin</artifactId>
+  <configuration combine.self="override">
+    <mainClass>${exec.mainClass}</mainClass>
+    <classpath>
+      <param>${project.build.directory}/${project.artifactId}-${project.version}-shaded.jar</param>
+    </classpath>
+  </configuration>
+</plugin>
+----
+
+Then run:
+
+[source,shell]
+----
+mvn package # <1>
+mvn package -Dpackaging=native-image # <2>
+----
+<1> Create the shaded runnable jar for the application.
+<2> Use the shaded runnable jar to build the native image.
+
 
 === Building JVM-based Docker images
 
