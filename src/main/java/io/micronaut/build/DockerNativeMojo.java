@@ -28,6 +28,7 @@ import java.util.Set;
  * <pre>mvn package -Dpackaging=docker-native</pre>
  *
  * @author Álvaro Sánchez-Mariscal
+ * @author Iván López
  * @since 1.1
  */
 @Mojo(name = DockerNativeMojo.DOCKER_NATIVE_PACKAGING, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
@@ -93,8 +94,8 @@ public class DockerNativeMojo extends AbstractDockerMojo {
     }
 
     private void checkJavaVersion() throws MojoExecutionException {
-        if (javaVersion().getMajorVersion() > 11) {
-            throw new MojoExecutionException("To build native images you must set the Java target byte code level to Java 11 or below");
+        if (javaVersion().getMajorVersion() > 17) {
+            throw new MojoExecutionException("To build native images you must set the Java target byte code level to Java 17 or below");
         }
     }
 

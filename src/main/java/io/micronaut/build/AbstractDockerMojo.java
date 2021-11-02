@@ -27,11 +27,11 @@ import static io.micronaut.build.services.ApplicationConfigurationService.DEFAUL
  * Abstract base class for mojos related to Docker files and builds.
  *
  * @author Álvaro Sánchez-Mariscal
+ * @author Iván López
  * @since 1.1
  */
 public abstract class AbstractDockerMojo extends AbstractMojo {
 
-    public static final String DEFAULT_GRAAL_DOCKER_VERSION = "java11";
     public static final String LATEST_TAG = "latest";
     public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "frolvlad/alpine-glibc:alpine-3.12";
     public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
@@ -111,9 +111,9 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     protected String getFrom() {
         if (staticNativeImage) {
             // For building a static native image we need a base image with tools (cc, make,...) already installed
-            return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/graalvm-ce:" + DEFAULT_GRAAL_DOCKER_VERSION + "-" + graalVmVersion());
+            return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/graalvm-ce:" + graalVmJvmVersion() + "-" + graalVmVersion());
         } else {
-            return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/native-image:" + DEFAULT_GRAAL_DOCKER_VERSION + "-" + graalVmVersion());
+            return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/native-image:" + graalVmJvmVersion() + "-" + graalVmVersion());
         }
     }
 
