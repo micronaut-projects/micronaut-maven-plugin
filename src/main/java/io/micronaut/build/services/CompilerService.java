@@ -33,6 +33,7 @@ public class CompilerService {
     private static final String KOTLIN = "kotlin";
 
     public static final String MAVEN_COMPILER_PLUGIN = "org.apache.maven.plugins:maven-compiler-plugin";
+    public static final String MAVEN_JAR_PLUGIN = "org.apache.maven.plugins:maven-jar-plugin";
     public static final String MAVEN_RESOURCES_PLUGIN = "org.apache.maven.plugins:maven-resources-plugin";
     public static final String GMAVEN_PLUS_PLUGIN = "org.codehaus.gmavenplus:gmavenplus-plugin";
     public static final String KOTLIN_MAVEN_PLUGIN = "org.jetbrains.kotlin:kotlin-maven-plugin";
@@ -119,6 +120,20 @@ public class CompilerService {
             }
         }
         return Optional.ofNullable(lastCompilation);
+    }
+
+    public Optional<Long> packageProject() {
+        if (compileProject(true).isPresent()) {
+            try {
+                executorService.executeGoal(MAVEN_JAR_PLUGIN, "jar");
+            } catch (MojoExecutionException e) {
+                if (log.isErrorEnabled()) {
+                    log.error("Error while compiling the project: ", e);
+                }
+                return Optional.empty();
+            }
+        }
+        return Optional.of(System.currentTimeMillis());
     }
 
     public Map<String, Path> resolveSourceDirectories() {

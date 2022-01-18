@@ -58,6 +58,8 @@ public class ExecutorService {
                 configuration = configuration();
             }
             executeMojo(plugin, goal(goal), configuration, executionEnvironment);
+        } else {
+            throw new MojoExecutionException("Plugin not found: " + pluginKey);
         }
     }
 
