@@ -77,7 +77,7 @@
         <site.version>${project.version}</site.version>
         <project.build.outputTimestamp>2022-02-02T09:54:22Z</project.build.outputTimestamp>
         <native-maven-plugin.version>0.9.7.1</native-maven-plugin.version>
-        <micronaut.version>3.2.7</micronaut.version>
+        <micronaut.version>3.3.0</micronaut.version>
         <it.micronaut.version>3.2.8-SNAPSHOT</it.micronaut.version>
     </properties>
 
