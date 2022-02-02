@@ -77,7 +77,7 @@
         <site.version>${project.version}</site.version>
         <project.build.outputTimestamp>2022-02-02T09:54:22Z</project.build.outputTimestamp>
         <native-maven-plugin.version>0.9.7.1</native-maven-plugin.version>
-        <micronaut.version>3.2.7</micronaut.version>
+        <micronaut.version>3.3.0</micronaut.version>
         <it.micronaut.version>3.2.8-SNAPSHOT</it.micronaut.version>
     </properties>
 
@@ -240,7 +240,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
+                    <version>3.9.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-plugin-plugin</artifactId>
@@ -341,7 +341,7 @@
                     <dependency><!-- add Asciidoctor Doxia Parser Module -->
                         <groupId>org.asciidoctor</groupId>
                         <artifactId>asciidoctor-maven-plugin</artifactId>
-                        <version>2.2.1</version>
+                        <version>2.2.2</version>
                     </dependency>
                 </dependencies>
             </plugin>
