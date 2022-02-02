@@ -5,7 +5,7 @@
 
     <groupId>io.micronaut.build</groupId>
     <artifactId>micronaut-maven-plugin</artifactId>
-    <version>3.1.2-SNAPSHOT</version>
+    <version>3.2.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>Micronaut Maven Plugin</name>
@@ -188,7 +188,7 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.16.2</version>
+            <version>1.16.3</version>
         </dependency>
         <dependency>
             <groupId>org.graalvm.buildtools</groupId>
