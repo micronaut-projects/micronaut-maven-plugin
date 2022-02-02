@@ -94,7 +94,7 @@ jobs:
         with:
           token: ${{ secrets.GH_TOKEN }}
           repository: micronaut-projects/micronaut-core
-          ref: 3.2.x
+          ref: 3.3.x
           path: micronaut-core # Must be micronaut-core
         continue-on-error: true
 
@@ -105,7 +105,7 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
         env:
           MICRONAUT_BUILD_EMAIL: ${{ secrets.MICRONAUT_BUILD_EMAIL }}
-          githubCoreBranch: 3.2.x
+          githubCoreBranch: 3.3.x
           projectVersion: ${{ steps.release_version.outputs.release_version }}
           bomProperty: micronautMavenPluginVersion
 
