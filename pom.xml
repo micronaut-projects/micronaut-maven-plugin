@@ -5,7 +5,7 @@
 
     <groupId>io.micronaut.build</groupId>
     <artifactId>micronaut-maven-plugin</artifactId>
-    <version>3.1.1-SNAPSHOT</version>
+    <version>3.2.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>Micronaut Maven Plugin</name>
@@ -76,11 +76,11 @@
         <site.name>${project.name}</site.name>
         <site.description>${project.description}</site.description>
         <site.version>${project.version}</site.version>
-        <project.build.outputTimestamp>2021-11-02T09:46:37Z</project.build.outputTimestamp>
-        <native-maven-plugin.version>0.9.7.1</native-maven-plugin.version>
-        <micronaut.version>3.1.3</micronaut.version>
-        <it.micronaut.version>3.2.5</it.micronaut.version>
+        <project.build.outputTimestamp>2022-02-02T09:54:22Z</project.build.outputTimestamp>
+        <native-maven-plugin.version>0.9.9</native-maven-plugin.version>
+        <micronaut.version>3.3.0</micronaut.version>
         <micronaut.aot.version>1.0.0-M5</micronaut.aot.version>
+        <it.micronaut.version>3.2.8-SNAPSHOT</it.micronaut.version>
     </properties>
 
     <repositories>
@@ -130,7 +130,7 @@
         <dependency>
             <groupId>org.apache.maven.plugin-tools</groupId>
             <artifactId>maven-plugin-annotations</artifactId>
-            <version>3.6.1</version>
+            <version>3.6.4</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -151,7 +151,7 @@
         <dependency>
             <groupId>org.apache.maven.resolver</groupId>
             <artifactId>maven-resolver-util</artifactId>
-            <version>1.7.2</version>
+            <version>1.7.3</version>
         </dependency>
         <dependency>
             <groupId>io.methvin</groupId>
@@ -163,7 +163,7 @@
         <dependency>
             <groupId>com.google.cloud.tools</groupId>
             <artifactId>jib-maven-plugin</artifactId>
-            <version>3.1.4</version>
+            <version>3.2.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -194,7 +194,7 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.16.2</version>
+            <version>1.16.3</version>
         </dependency>
         <dependency>
             <groupId>org.graalvm.buildtools</groupId>
@@ -214,7 +214,7 @@
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>1.29</version>
+            <version>1.30</version>
         </dependency>
 
         <!-- JUnit -->
@@ -268,11 +268,11 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
+                    <version>3.9.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-plugin-plugin</artifactId>
-                    <version>3.6.1</version>
+                    <version>3.6.4</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
@@ -280,7 +280,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.2.0</version>
+                    <version>3.2.2</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-install-plugin</artifactId>
@@ -300,7 +300,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.9.1</version>
+                    <version>3.10.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-project-info-reports-plugin</artifactId>
@@ -326,7 +326,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-release-plugin</artifactId>
-                    <version>3.0.0-M4</version>
+                    <version>3.0.0-M5</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -369,7 +369,7 @@
                     <dependency><!-- add Asciidoctor Doxia Parser Module -->
                         <groupId>org.asciidoctor</groupId>
                         <artifactId>asciidoctor-maven-plugin</artifactId>
-                        <version>2.2.1</version>
+                        <version>2.2.2</version>
                     </dependency>
                 </dependencies>
             </plugin>

@@ -1,7 +1,7 @@
 FROM ghcr.io/graalvm/graalvm-ce:java11-21.3.0 AS builder
 RUN gu install native-image
 
-RUN curl -L -o musl.tar.gz http://musl.cc/x86_64-linux-musl-native.tgz && \
+RUN curl -L -o musl.tar.gz https://more.musl.cc/10/x86_64-linux-musl/x86_64-linux-musl-native.tgz && \
     mkdir musl && tar -xzf musl.tar.gz -C musl --strip-components 1 && \
     rm -f /musl.tar.gz
 

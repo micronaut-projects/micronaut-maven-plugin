@@ -11,7 +11,7 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
 
       - name: Cache Maven packages
-        uses: actions/cache@v2.1.6
+        uses: actions/cache@v2.1.7
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -52,7 +52,7 @@ jobs:
           git push origin :refs/tags/v${{ steps.release_version.outputs.release_version }}
 
       - name: Setup SSH key
-        uses: webfactory/ssh-agent@v0.5.3
+        uses: webfactory/ssh-agent@v0.5.4
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
@@ -94,7 +94,7 @@ jobs:
         with:
           token: ${{ secrets.GH_TOKEN }}
           repository: micronaut-projects/micronaut-core
-          ref: 3.2.x
+          ref: 3.3.x
           path: micronaut-core # Must be micronaut-core
         continue-on-error: true
 
@@ -105,7 +105,7 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
         env:
           MICRONAUT_BUILD_EMAIL: ${{ secrets.MICRONAUT_BUILD_EMAIL }}
-          githubCoreBranch: 3.2.x
+          githubCoreBranch: 3.3.x
           projectVersion: ${{ steps.release_version.outputs.release_version }}
           bomProperty: micronautMavenPluginVersion
 
