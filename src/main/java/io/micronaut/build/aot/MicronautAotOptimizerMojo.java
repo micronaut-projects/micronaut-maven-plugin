@@ -18,6 +18,7 @@ package io.micronaut.build.aot;
 import io.micronaut.aot.std.sourcegen.AbstractStaticServiceLoaderSourceGenerator;
 import io.micronaut.aot.std.sourcegen.KnownMissingTypesSourceGenerator;
 import io.micronaut.build.services.CompilerService;
+import io.micronaut.build.services.ExecutorService;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -25,12 +26,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 import javax.inject.Inject;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -38,19 +34,15 @@ import java.util.Properties;
 @Mojo(name = "aot-analysis", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class MicronautAotOptimizerMojo extends AbstractMicronautAotCliMojo {
 
-
     @Parameter(property = "project.baseDir", defaultValue = "${project.build.directory}", required = true)
     private File baseDirectory;
 
-    @Parameter(property = "project.build.directory", defaultValue = "${project.build.directory}", required = true)
-    private File buildDirectory;
-
-    @Parameter(property = "micronaut.aot.config", required = false, defaultValue = "aot.properties")
+    @Parameter(property = "micronaut.aot.config", defaultValue = "aot.properties")
     private File configFile;
 
     @Inject
-    public MicronautAotOptimizerMojo(CompilerService compilerService) {
-        super(compilerService);
+    public MicronautAotOptimizerMojo(CompilerService compilerService, ExecutorService executorService) {
+        super(compilerService, executorService);
     }
 
     @Override

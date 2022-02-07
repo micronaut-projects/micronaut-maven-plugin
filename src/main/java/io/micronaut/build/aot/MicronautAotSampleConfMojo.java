@@ -16,6 +16,7 @@
 package io.micronaut.build.aot;
 
 import io.micronaut.build.services.CompilerService;
+import io.micronaut.build.services.ExecutorService;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -29,8 +30,8 @@ import java.util.List;
 public class MicronautAotSampleConfMojo extends AbstractMicronautAotCliMojo {
 
     @Inject
-    public MicronautAotSampleConfMojo(CompilerService compilerService) {
-        super(compilerService);
+    public MicronautAotSampleConfMojo(CompilerService compilerService, ExecutorService executorService) {
+        super(compilerService, executorService);
     }
 
     @Override

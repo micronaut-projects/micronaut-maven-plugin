@@ -16,8 +16,7 @@
 package io.micronaut.build.aot;
 
 import io.micronaut.build.services.CompilerService;
-import org.apache.maven.model.Plugin;
-import org.apache.maven.model.PluginExecution;
+import io.micronaut.build.services.ExecutorService;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -39,7 +38,6 @@ import javax.inject.Inject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -57,14 +55,20 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
             "cli",
             "std-optimizers"
     };
+    public static final String EXEC_MAVEN_PLUGIN_GROUP = "org.codehaus.mojo";
+    public static final String EXEC_MAVEN_PLUGIN_ARTIFACT = "exec-maven-plugin";
+    public static final String EXEC_MAVEN_PLUGIN_VERSION = "3.0.0";
+
+    private final ExecutorService executorService;
 
     @Parameter(property = "micronaut.aot.packageName", required = true)
     protected String packageName;
 
 
     @Inject
-    public AbstractMicronautAotCliMojo(CompilerService compilerService) {
+    public AbstractMicronautAotCliMojo(CompilerService compilerService, ExecutorService executorService) {
         super(compilerService);
+        this.executorService = executorService;
     }
 
     protected abstract List<String> getExtraArgs() throws MojoExecutionException;
@@ -72,10 +76,8 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     @Override
     protected void doExecute() throws DependencyResolutionException, MojoExecutionException {
         if (compilerService.packageProject().isPresent()) {
-            MojoExecutor.ExecutionEnvironment executionEnvironment = MojoExecutor.executionEnvironment(mavenProject, mavenSession, pluginManager);
-            Plugin execPlugin = newExecPlugin("aot-exec");
             Xpp3Dom config = createExecPluginConfig();
-            MojoExecutor.executeMojo(execPlugin, "exec", config, executionEnvironment);
+            executorService.executeGoal(EXEC_MAVEN_PLUGIN_GROUP, EXEC_MAVEN_PLUGIN_ARTIFACT, EXEC_MAVEN_PLUGIN_VERSION, "exec", config);
         }
     }
 
@@ -105,18 +107,6 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
         return configuration;
     }
 
-    protected Plugin newExecPlugin(String id) {
-        Plugin execPlugin = new Plugin();
-        execPlugin.setGroupId("org.codehaus.mojo");
-        execPlugin.setArtifactId("exec-maven-plugin");
-        execPlugin.setVersion("3.0.0");
-        PluginExecution pluginExecution = new PluginExecution();
-        pluginExecution.setGoals(Collections.singletonList("exec"));
-        pluginExecution.setId(id);
-        execPlugin.setExecutions(Collections.singletonList(pluginExecution));
-        return execPlugin;
-    }
-
     private List<String> resolveApplicationClasspath() throws DependencyResolutionException {
         return resolveClasspath(
                 new DefaultArtifact(
@@ -134,7 +124,7 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
 
     private List<String> resolveClasspath(Artifact rootArtifact, Stream<Artifact> artifacts) throws DependencyResolutionException {
         RepositorySystemSession repositorySession = mavenSession.getRepositorySession();
-        DependencyFilter classpathFlter = DependencyFilterUtils.classpathFilter(JavaScopes.RUNTIME);
+        DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.RUNTIME);
 
         CollectRequest collectRequest = new CollectRequest();
         if (rootArtifact != null) {
@@ -144,7 +134,7 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
                 .forEach(collectRequest::addDependency);
         collectRequest.setRepositories(mavenProject.getRemoteProjectRepositories());
 
-        DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, classpathFlter);
+        DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, classpathFilter);
 
         DependencyResult dependencyResult = repositorySystem.resolveDependencies(repositorySession, dependencyRequest);
         List<ArtifactResult> artifactResults = dependencyResult.getArtifactResults();

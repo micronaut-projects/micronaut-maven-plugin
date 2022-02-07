@@ -36,7 +36,9 @@ abstract class Constants {
             "io.methvin.watchservice.MacOSXListeningWatchService",
             "io.micronaut.core.async.publisher.CompletableFuturePublisher",
             "io.micronaut.core.async.publisher.Publishers.JustPublisher",
-            "io.micronaut.core.async.subscriber.Completable"));
+            "io.micronaut.core.async.subscriber.Completable"
+    ));
+
     static final List<String> SERVICE_TYPES = Collections.unmodifiableList(Arrays.asList(
             "io.micronaut.context.env.PropertySourceLoader",
             "io.micronaut.inject.BeanConfiguration",

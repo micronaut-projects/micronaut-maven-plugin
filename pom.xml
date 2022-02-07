@@ -234,21 +234,6 @@
         <!-- Micronaut AOT -->
         <dependency>
             <groupId>io.micronaut.aot</groupId>
-            <artifactId>micronaut-aot-api</artifactId>
-            <version>${micronaut.aot.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut.aot</groupId>
-            <artifactId>micronaut-aot-core</artifactId>
-            <version>${micronaut.aot.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut.aot</groupId>
-            <artifactId>micronaut-aot-cli</artifactId>
-            <version>${micronaut.aot.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut.aot</groupId>
             <artifactId>micronaut-aot-std-optimizers</artifactId>
             <version>${micronaut.aot.version}</version>
         </dependency>
