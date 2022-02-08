@@ -100,7 +100,6 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
                         "io.micronaut.aot.cli.Main",
 
                         // CLI args
-                        "--optimizer-classpath=",
                         "--classpath=" + String.join(File.pathSeparator, classpath),
                         "--package=" + packageName,
                         "--runtime=" + runtime
