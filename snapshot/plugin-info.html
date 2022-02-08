@@ -123,6 +123,28 @@
 <th>Goal</th>
 <th>Description</th></tr>
 <tr class="b">
+<td align="left"><a href="./aot-analysis-mojo.html">mn:aot-analysis</a></td>
+<td>Invokes the <a
+href="https://micronaut-projects.github.io/micronaut-aot/latest/guide/">Micronaut
+AOT</a> optimizer, generating sources/classes and the effective AOT
+configuration properties file. Refer to the Micronaut AOT
+documentation for more information.</td></tr>
+<tr class="a">
+<td align="left"><a href="./aot-jar-mojo.html">mn:aot-jar</a></td>
+<td>Generates a jar optimized by Micronaut AOT, which is a jar
+corresponding to the regular application jar, except that it
+contains some optimizations computed at build time. It may contain,
+for example, additional classes, or even have different resources.</td></tr>
+<tr class="b">
+<td align="left"><a href="./aot-run-mojo.html">mn:aot-run</a></td>
+<td>Runs the application in development mode similarly to what the <a
+href="run-mojo.html"><code>run</code> goal</a> does, but using a
+Micronaut AOT-optimized artifact.</td></tr>
+<tr class="a">
+<td align="left"><a href="./aot-sample-mojo.html">mn:aot-sample</a></td>
+<td>Generates a sample aot.properties showcasing all the possible
+values along with a description.</td></tr>
+<tr class="b">
 <td align="left"><a href="./docker-mojo.html">mn:docker</a></td>
 <td><p>Allows using a provided Dockerfile.</p>
 <p><strong>WARNING</strong>: this goal is not intended to be
