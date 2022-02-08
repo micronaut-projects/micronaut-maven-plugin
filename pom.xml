@@ -102,6 +102,19 @@
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-plugin-api</artifactId>
             <version>${maven.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-model</artifactId>
+            <version>${maven.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-settings</artifactId>
+            <version>${maven.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>
@@ -470,7 +483,7 @@
                             <settingsFile>src/it/settings.xml</settingsFile>
                             <scriptVariables>
                                 <nativeMavenPluginVersion>${native-maven-plugin.version}</nativeMavenPluginVersion>
-                                <pluginVersion>${version}</pluginVersion>
+                                <pluginVersion>${project.version}</pluginVersion>
                             </scriptVariables>
                             <goals>
                                 <goal>clean</goal>
