@@ -20,32 +20,35 @@ import io.micronaut.build.services.ExecutorService;
 import org.apache.maven.archiver.MavenArchiveConfiguration;
 import org.apache.maven.archiver.MavenArchiver;
 import org.apache.maven.artifact.DependencyResolutionRequiredException;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.Component;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.plugins.annotations.*;
+import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.archiver.Archiver;
 import org.codehaus.plexus.archiver.jar.JarArchiver;
 import org.codehaus.plexus.archiver.jar.ManifestException;
 import org.codehaus.plexus.archiver.util.DefaultArchivedFileSet;
 import org.codehaus.plexus.archiver.util.DefaultFileSet;
+import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 
 import javax.inject.Inject;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Generates a jar optimized by Micronaut AOT, which is a jar corresponding to the regular application jar, except that
+ * it contains some optimizations computed at build time. It may contain, for example, additional classes, or even have
+ * different resources.
+ */
 @Mojo(name = "aot-jar", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
-public class MicronautAotJarMojo extends AbstractMicronautAotMojo {
+public class AotJarMojo extends AbstractMicronautAotMojo {
 
+    /**
+     * The filename (excluding the extension, and with no path information) that the produced artifact will be called.
+     */
     @Parameter( defaultValue = "${project.build.finalName}", readonly = true )
     private String finalName;
 
@@ -58,8 +61,10 @@ public class MicronautAotJarMojo extends AbstractMicronautAotMojo {
     private final ExecutorService executorService;
 
     @Inject
-    public MicronautAotJarMojo(CompilerService compilerService, ExecutorService executorService) {
-        super(compilerService);
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    public AotJarMojo(CompilerService compilerService, ExecutorService executorService, MavenProject mavenProject,
+                      MavenSession mavenSession, RepositorySystem repositorySystem) {
+        super(compilerService, mavenProject, mavenSession, repositorySystem);
         this.executorService = executorService;
     }
 

@@ -36,13 +36,23 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Runs the application in development mode similarly to what the <a href="run-mojo.html"><code>run</code> goal</a> does,
+ * but using a Micronaut AOT-optimized artifact.
+ */
 @Mojo(name = "aot-run", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PACKAGE)
 public class AotRunMojo extends AbstractRunMojo {
+
+    /**
+     * The filename (excluding the extension, and with no path information) that the produced artifact will be called.
+     */
     @Parameter(defaultValue = "${project.build.finalName}", readonly = true)
     private String finalName;
 
     @Inject
-    public AotRunMojo(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager, ProjectDependenciesResolver resolver, ProjectBuilder projectBuilder, ToolchainManager toolchainManager, CompilerService compilerService, ExecutorService executorService) {
+    public AotRunMojo(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager,
+                      ProjectDependenciesResolver resolver, ProjectBuilder projectBuilder,
+                      ToolchainManager toolchainManager, CompilerService compilerService, ExecutorService executorService) {
         super(mavenProject, mavenSession, pluginManager, resolver, projectBuilder, toolchainManager, compilerService, executorService);
     }
 

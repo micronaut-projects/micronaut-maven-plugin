@@ -17,9 +17,12 @@ package io.micronaut.build.aot;
 
 import io.micronaut.build.services.CompilerService;
 import io.micronaut.build.services.ExecutorService;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
@@ -61,13 +64,17 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
 
     private final ExecutorService executorService;
 
+    /**
+     * Package name to use for generated sources.
+     */
     @Parameter(property = "micronaut.aot.packageName", required = true)
     protected String packageName;
 
 
     @Inject
-    public AbstractMicronautAotCliMojo(CompilerService compilerService, ExecutorService executorService) {
-        super(compilerService);
+    public AbstractMicronautAotCliMojo(CompilerService compilerService, ExecutorService executorService,
+                                       MavenProject mavenProject, MavenSession mavenSession, RepositorySystem repositorySystem) {
+        super(compilerService, mavenProject, mavenSession, repositorySystem);
         this.executorService = executorService;
     }
 

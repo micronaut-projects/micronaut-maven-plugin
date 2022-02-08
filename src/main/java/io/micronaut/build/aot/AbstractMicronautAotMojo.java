@@ -18,10 +18,8 @@ package io.micronaut.build.aot;
 import io.micronaut.build.services.CompilerService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
@@ -30,31 +28,39 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 import java.io.File;
 
 public abstract class AbstractMicronautAotMojo extends AbstractMojo {
+
     protected final CompilerService compilerService;
 
-    @Parameter(defaultValue = "${project}", readonly = true)
-    protected MavenProject mavenProject;
+    protected final MavenProject mavenProject;
 
-    @Parameter(defaultValue = "${session}", readonly = true)
-    protected MavenSession mavenSession;
+    protected final MavenSession mavenSession;
 
+    protected final RepositorySystem repositorySystem;
+
+    /**
+     * Micronaut AOT runtime. Possible values: <code>jit</code>, <code>native</code>.
+     */
     @Parameter(property = "micronaut.aot.runtime", required = true, defaultValue = "jit")
     protected String runtime;
 
-    @Parameter(property = "micronaut.aot.version", required = true, defaultValue = "1.0.0-M5")
+    /**
+     * Micronaut AOT version.
+     */
+    @Parameter(property = "micronaut.aot.version", required = true, defaultValue = "1.0.0-M7")
     protected String micronautAotVersion;
 
-    @Component
-    protected RepositorySystem repositorySystem;
-
+    /**
+     * Whether to enable or disable Micronaut AOT.
+     */
     @Parameter(property = "micronaut.aot.enabled", required = false, defaultValue = "false")
     protected boolean enabled;
 
-    @Component
-    protected BuildPluginManager pluginManager;
 
-    public AbstractMicronautAotMojo(CompilerService compilerService) {
+    public AbstractMicronautAotMojo(CompilerService compilerService, MavenProject mavenProject, MavenSession mavenSession, RepositorySystem repositorySystem) {
         this.compilerService = compilerService;
+        this.mavenProject = mavenProject;
+        this.mavenSession = mavenSession;
+        this.repositorySystem = repositorySystem;
     }
 
     protected void onSuccess(File outputDir) {
