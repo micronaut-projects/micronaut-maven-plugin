@@ -4,6 +4,7 @@ import io.micronaut.build.services.CompilerService;
 import io.micronaut.build.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.BuildPluginManager;
+import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -27,6 +28,7 @@ import javax.inject.Inject;
  */
 @SuppressWarnings("unused")
 @Mojo(name = "run", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PREPARE_PACKAGE)
+@Execute(phase = LifecyclePhase.GENERATE_SOURCES, goal = "aot-analysis")
 public class RunMojo extends AbstractRunMojo {
 
     @Inject

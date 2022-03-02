@@ -81,6 +81,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
         if (!enabled) {
             return;
         }
+        getLog().info("Running Micronaut AOT " + micronautAotVersion);
         getLog().debug("Invoking " + getClass().getSimpleName());
         try {
             getBaseOutputDirectory().mkdirs();
