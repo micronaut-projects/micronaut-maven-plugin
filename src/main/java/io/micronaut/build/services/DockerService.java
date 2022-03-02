@@ -1,10 +1,7 @@
 package io.micronaut.build.services;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.BuildImageCmd;
-import com.github.dockerjava.api.command.BuildImageResultCallback;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.PushImageCmd;
+import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
@@ -16,7 +13,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.project.MavenProject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,10 +64,11 @@ public class DockerService {
             @Override
             public void onNext(BuildResponseItem item) {
                 super.onNext(item);
-                if (item.isErrorIndicated()) {
+                if (item.isErrorIndicated() && item.getErrorDetail() != null) {
                     LOG.error(item.getErrorDetail().getMessage());
                 } else if (item.getStream() != null) {
-                    LOG.info(StringUtils.chomp(item.getStream(), System.lineSeparator()));
+                    String msg = StringUtils.removeEnd(item.getStream(), System.lineSeparator());
+                    LOG.info(msg);
                 }
             }
         };
@@ -81,7 +79,8 @@ public class DockerService {
     }
 
     public File copyFromContainer(String imageId, String containerPath) {
-        CreateContainerResponse container = dockerClient.createContainerCmd(imageId).exec();
+        CreateContainerCmd containerCmd = dockerClient.createContainerCmd(imageId);
+        CreateContainerResponse container = containerCmd.exec();
         dockerClient.startContainerCmd(container.getId());
         InputStream nativeImage = dockerClient.copyArchiveFromContainerCmd(container.getId(), containerPath).exec();
 
@@ -93,6 +92,8 @@ public class DockerService {
             return file;
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            containerCmd.close();
         }
         return null;
     }
