@@ -16,6 +16,7 @@ import org.testcontainers.utility.RegistryAuthLocator;
 
 import javax.inject.Inject;
 import java.util.Optional;
+import java.util.Set;
 
 import static io.micronaut.build.DockerMojo.DOCKER_PACKAGING;
 import static io.micronaut.build.DockerNativeMojo.DOCKER_NATIVE_PACKAGING;
@@ -43,28 +44,33 @@ public class DockerPushMojo extends AbstractDockerMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         String packaging = mavenProject.getPackaging();
         if (DOCKER_PACKAGING.equals(packaging) || DOCKER_NATIVE_PACKAGING.equals(packaging)) {
-            Optional<String> toImage = jibConfigurationService.getToImage();
-            if (toImage.isPresent()) {
-                getLog().info("Pushing image: " + toImage.get());
-                try (PushImageCmd pushImageCmd = dockerService.pushImageCmd(toImage.get())) {
-                    AuthConfig defaultAuthConfig = new AuthConfig();
-                    if (jibConfigurationService.getCredentials().isPresent()) {
-                        Credential credential = jibConfigurationService.getCredentials().get();
-                        defaultAuthConfig
-                                .withUsername(credential.getUsername())
-                                .withPassword(credential.getPassword());
+            Set<String> images = getTags();
+
+            // getTags() will automatically generate an image name if none is specified
+            // To maintain error compatibility, check that an image name has been
+            // manually specified.
+            if (jibConfigurationService.getToImage().isPresent()) {
+                for (String taggedImage : images) {
+                    getLog().info("Pushing image: " + taggedImage);
+                    try (PushImageCmd pushImageCmd = dockerService.pushImageCmd(taggedImage)) {
+                        AuthConfig defaultAuthConfig = new AuthConfig();
+                        if (jibConfigurationService.getCredentials().isPresent()) {
+                            Credential credential = jibConfigurationService.getCredentials().get();
+                            defaultAuthConfig
+                                    .withUsername(credential.getUsername())
+                                    .withPassword(credential.getPassword());
+                        }
+                        RegistryAuthLocator registryAuthLocator = RegistryAuthLocator.instance();
+                        DockerImageName dockerImageName = DockerImageName.parse(taggedImage);
+                        AuthConfig authConfig = registryAuthLocator.lookupAuthConfig(dockerImageName, defaultAuthConfig);
+
+                        pushImageCmd
+                                .withAuthConfig(authConfig)
+                                .start()
+                                .awaitCompletion();
+                    } catch (Exception e) {
+                        throw new MojoExecutionException(e.getMessage(), e);
                     }
-                    RegistryAuthLocator registryAuthLocator = RegistryAuthLocator.instance();
-                    DockerImageName dockerImageName = DockerImageName.parse(toImage.get());
-                    AuthConfig authConfig = registryAuthLocator.lookupAuthConfig(dockerImageName, defaultAuthConfig);
-
-                    pushImageCmd
-                            .withAuthConfig(authConfig)
-                            .start()
-                            .awaitCompletion();
-
-                } catch (Exception e) {
-                    throw new MojoExecutionException(e.getMessage(), e);
                 }
             } else {
                 throw new MojoFailureException("The plugin " + MavenProjectProperties.PLUGIN_KEY + " is misconfigured. Missing <to> tag");
