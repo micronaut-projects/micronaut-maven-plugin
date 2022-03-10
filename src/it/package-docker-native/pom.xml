@@ -20,7 +20,7 @@
     <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
-    <graal.version>21.3.0</graal.version>
+    <graal.version>21.3.1</graal.version>
   </properties>
 
   <repositories>
