@@ -32,10 +32,11 @@ import java.util.List;
 /**
  * Generates a sample aot.properties showcasing all the possible values along with a description.
  */
-@Mojo(name = "aot-sample", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+@Mojo(name = AotSampleMojo.NAME, defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class AotSampleMojo extends AbstractMicronautAotCliMojo {
 
     public static final String AOT_PROPERTIES_FILE_NAME = "aot.properties";
+    public static final String NAME = "aot-sample";
 
     @Inject
     public AotSampleMojo(CompilerService compilerService, ExecutorService executorService, MavenProject mavenProject,
@@ -57,5 +58,10 @@ public class AotSampleMojo extends AbstractMicronautAotCliMojo {
         if (sampleFile.exists()) {
             getLog().info("Sample configuration file written to " + sampleFile);
         }
+    }
+
+    @Override
+    String getName() {
+        return NAME;
     }
 }

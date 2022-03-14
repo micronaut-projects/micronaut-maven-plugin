@@ -52,7 +52,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
     /**
      * Whether to enable or disable Micronaut AOT.
      */
-    @Parameter(property = "micronaut.aot.enabled", required = false, defaultValue = "false")
+    @Parameter(property = "micronaut.aot.enabled", defaultValue = "false")
     protected boolean enabled;
 
 
@@ -81,8 +81,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
         if (!enabled) {
             return;
         }
-        getLog().info("Running Micronaut AOT " + micronautAotVersion);
-        getLog().debug("Invoking " + getClass().getSimpleName());
+        getLog().info("Running Micronaut AOT " + micronautAotVersion + " " + getName());
         try {
             getBaseOutputDirectory().mkdirs();
             doExecute();
@@ -93,4 +92,6 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
     }
 
     protected abstract void doExecute() throws DependencyResolutionException, MojoExecutionException;
+
+    abstract String getName();
 }

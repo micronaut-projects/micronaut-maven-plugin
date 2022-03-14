@@ -19,6 +19,7 @@ import io.micronaut.aot.std.sourcegen.AbstractStaticServiceLoaderSourceGenerator
 import io.micronaut.aot.std.sourcegen.KnownMissingTypesSourceGenerator;
 import io.micronaut.build.services.CompilerService;
 import io.micronaut.build.services.ExecutorService;
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -30,6 +31,7 @@ import org.eclipse.aether.RepositorySystem;
 
 import javax.inject.Inject;
 import java.io.*;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -41,14 +43,22 @@ import static io.micronaut.build.aot.AotSampleMojo.AOT_PROPERTIES_FILE_NAME;
  * optimizer, generating sources/classes and the effective AOT configuration properties file. Refer to the Micronaut
  * AOT documentation for more information.
  */
-@Mojo(name = "aot-analysis", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+@Mojo(name = AotAnalysisMojo.NAME, defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
+
+    public static final String NAME = "aot-analysis";
 
     /**
      * The project's target directory.
      */
-    @Parameter(property = "project.baseDir", defaultValue = "${project.build.directory}", required = true)
+    @Parameter(defaultValue = "${project.build.directory}", required = true)
     private File baseDirectory;
+
+    /**
+     * Directory where compiled application classes are.
+     */
+    @Parameter(defaultValue = "${project.build.outputDirectory}", required = true)
+    private File outputDirectory;
 
     /**
      * Micronaut AOT configuration file. Run the <a href="aot-sample-mojo.html"><code>aot-sample</code> goal</a> to
@@ -70,9 +80,9 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
         args.add("--output");
         File outputDirectory = outputFile("generated");
         args.add(outputDirectory.getAbsolutePath());
-        File configFile = writeEffectiveConfigFile();
+        File effectiveConfigFile = writeEffectiveConfigFile();
         args.add("--config");
-        args.add(configFile.getAbsolutePath());
+        args.add(effectiveConfigFile.getAbsolutePath());
         return args;
     }
 
@@ -101,4 +111,23 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
         return effectiveConfig;
     }
 
+    @Override
+    protected void onSuccess(File outputDir) {
+        getLog().info("onSuccess " + getName() + " = " + outputDir.getAbsolutePath());
+        Path generated = outputDir.toPath().resolve("generated");
+        Path generatedSources = generated.resolve("sources");
+        Path generatedClasses = generated.resolve("classes");
+        try {
+            FileUtils.copyDirectory(generatedSources.toFile(), new File(baseDirectory, "generated-sources"));
+            FileUtils.copyDirectory(generatedClasses.toFile(), outputDirectory);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        compilerService.compileProject(false);
+    }
+
+    @Override
+    String getName() {
+        return NAME;
+    }
 }

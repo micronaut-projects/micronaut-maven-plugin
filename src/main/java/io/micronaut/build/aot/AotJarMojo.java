@@ -43,8 +43,10 @@ import java.util.Set;
  * it contains some optimizations computed at build time. It may contain, for example, additional classes, or even have
  * different resources.
  */
-@Mojo(name = "aot-jar", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+@Mojo(name = AotJarMojo.NAME, defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class AotJarMojo extends AbstractMicronautAotMojo {
+
+    public static final String NAME = "aot-jar";
 
     /**
      * The filename (excluding the extension, and with no path information) that the produced artifact will be called.
@@ -70,7 +72,7 @@ public class AotJarMojo extends AbstractMicronautAotMojo {
 
     @Override
     protected void doExecute() throws DependencyResolutionException, MojoExecutionException {
-        executorService.executeGoal("io.micronaut.build:micronaut-maven-plugin", "aot-analysis");
+//        executorService.executeGoal("io.micronaut.build:micronaut-maven-plugin", "aot-analysis");
         MavenArchiver archiver = new MavenArchiver();;
         try {
             configureAotJar(archiver);
@@ -78,6 +80,11 @@ public class AotJarMojo extends AbstractMicronautAotMojo {
         } catch (ManifestException | IOException | DependencyResolutionRequiredException e) {
             throw new MojoExecutionException("Unable to package AOT jar", e);
         }
+    }
+
+    @Override
+    String getName() {
+        return NAME;
     }
 
     private void configureAotJar(MavenArchiver archiver) throws MojoExecutionException {

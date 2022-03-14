@@ -37,8 +37,7 @@
                             </prepare-package>
                             <package>
                                 org.apache.maven.plugins:maven-jar-plugin:jar,
-                                org.apache.maven.plugins:maven-shade-plugin:shade,
-                                ${project.groupId}:${project.artifactId}:${project.version}:aot-jar
+                                org.apache.maven.plugins:maven-shade-plugin:shade
                             </package>
                             <install>
                                 org.apache.maven.plugins:maven-install-plugin:install
@@ -64,6 +63,9 @@
                     <lifecycle>
                         <id>default</id>
                         <phases>
+                            <generate-sources>
+                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
+                            </generate-sources>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:resources
                             </process-resources>
@@ -95,6 +97,9 @@
                     <lifecycle>
                         <id>default</id>
                         <phases>
+                            <generate-sources>
+                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
+                            </generate-sources>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:resources
                             </process-resources>
@@ -126,6 +131,9 @@
                     <lifecycle>
                         <id>default</id>
                         <phases>
+                            <generate-sources>
+                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
+                            </generate-sources>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:resources
                             </process-resources>
