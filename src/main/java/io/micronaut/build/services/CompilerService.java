@@ -69,6 +69,7 @@ public class CompilerService {
     private final MavenSession mavenSession;
     private final ExecutorService executorService;
     private final ProjectDependenciesResolver resolver;
+    private final Invoker invoker;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -80,6 +81,7 @@ public class CompilerService {
         this.mavenSession = mavenSession;
         this.executorService = executorService;
         this.sourceDirectories = resolveSourceDirectories();
+        this.invoker = new DefaultInvoker();
     }
 
     public boolean needsCompilation() {
@@ -180,7 +182,6 @@ public class CompilerService {
         request.setGoals(Collections.singletonList(MAVEN_JAR_PLUGIN + ":jar"));
         request.setBatchMode(true);
         request.setQuiet(true);
-        Invoker invoker = new DefaultInvoker();
         return invoker.execute(request);
     }
 }

@@ -38,9 +38,15 @@ import java.util.Properties;
 import static io.micronaut.build.aot.AotSampleMojo.AOT_PROPERTIES_FILE_NAME;
 
 /**
- * Invokes the <a href="https://micronaut-projects.github.io/micronaut-aot/latest/guide/">Micronaut AOT</a>
+ * <p>Invokes the <a href="https://micronaut-projects.github.io/micronaut-aot/latest/guide/">Micronaut AOT</a>
  * optimizer, generating sources/classes and the effective AOT configuration properties file. Refer to the Micronaut
- * AOT documentation for more information.
+ * AOT documentation for more information.</p>
+ *
+ * <p><strong>WARNING</strong>: this goal is not intended to be executed directly. Instead, enable AOT with the
+ * <code>micronaut.aot.enabled</code> property, eg:</p>
+ *
+ * <pre>mvn -Dmicronaut.aot.enabled=true package</pre>
+ * <pre>mvn -Dmicronaut.aot.enabled=true mn:run</pre>
  */
 @Mojo(name = AotAnalysisMojo.NAME, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
