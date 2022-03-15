@@ -59,24 +59,27 @@ import static org.twdata.maven.mojoexecutor.MojoExecutor.element;
  * Base class for Micronaut AOT mojos.
  */
 public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMojo {
-    private final static String[] AOT_MODULES = new String[]{
+
+    public static final String EXEC_MAVEN_PLUGIN_GROUP = "org.codehaus.mojo";
+    public static final String EXEC_MAVEN_PLUGIN_ARTIFACT = "exec-maven-plugin";
+    public static final String EXEC_MAVEN_PLUGIN_VERSION = "3.0.0";
+
+    private static final String DEFAULT_PACKAGE = "com.example";
+
+    private static final String[] AOT_MODULES = new String[]{
             "api",
             "core",
             "cli",
             "std-optimizers"
     };
-    public static final String EXEC_MAVEN_PLUGIN_GROUP = "org.codehaus.mojo";
-    public static final String EXEC_MAVEN_PLUGIN_ARTIFACT = "exec-maven-plugin";
-    public static final String EXEC_MAVEN_PLUGIN_VERSION = "3.0.0";
 
     private final ExecutorService executorService;
 
     /**
      * Package name to use for generated sources.
      */
-    @Parameter(property = "micronaut.aot.packageName", required = true, defaultValue = "com.example")
+    @Parameter(property = "micronaut.aot.packageName", required = true, defaultValue = DEFAULT_PACKAGE)
     protected String packageName;
-
 
     @Inject
     public AbstractMicronautAotCliMojo(CompilerService compilerService, ExecutorService executorService,
@@ -89,6 +92,9 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
 
     @Override
     protected void doExecute() throws DependencyResolutionException, MojoExecutionException {
+        if (DEFAULT_PACKAGE.equals(packageName)) {
+            getLog().warn("Micronaut AOT will generate sources in the " + DEFAULT_PACKAGE + " package");
+        }
         try {
             getLog().info("Packaging project");
             InvocationResult packagingResult = compilerService.packageProject();
