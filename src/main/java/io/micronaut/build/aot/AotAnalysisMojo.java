@@ -22,7 +22,6 @@ import io.micronaut.build.services.ExecutorService;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -43,7 +42,7 @@ import static io.micronaut.build.aot.AotSampleMojo.AOT_PROPERTIES_FILE_NAME;
  * optimizer, generating sources/classes and the effective AOT configuration properties file. Refer to the Micronaut
  * AOT documentation for more information.
  */
-@Mojo(name = AotAnalysisMojo.NAME, defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+@Mojo(name = AotAnalysisMojo.NAME, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
 
     public static final String NAME = "aot-analysis";
@@ -113,7 +112,6 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
 
     @Override
     protected void onSuccess(File outputDir) {
-        getLog().info("onSuccess " + getName() + " = " + outputDir.getAbsolutePath());
         Path generated = outputDir.toPath().resolve("generated");
         Path generatedSources = generated.resolve("sources");
         Path generatedClasses = generated.resolve("classes");
@@ -123,7 +121,6 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        compilerService.compileProject(false);
     }
 
     @Override

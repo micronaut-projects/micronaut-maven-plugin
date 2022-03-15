@@ -16,18 +16,14 @@ import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.util.DirectoryScanner;
 import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
-import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
-import org.eclipse.aether.graph.DependencyFilter;
 import org.eclipse.aether.util.artifact.JavaScopes;
-import org.eclipse.aether.util.filter.DependencyFilterUtils;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isReadable;
@@ -357,31 +353,14 @@ public class RunMojo extends AbstractMojo {
     }
 
     private boolean resolveDependencies() {
-        boolean success = true;
-        try {
-            DependencyFilter filter = DependencyFilterUtils.classpathFilter(JavaScopes.COMPILE, JavaScopes.RUNTIME);
-            RepositorySystemSession session = mavenSession.getRepositorySession();
-            DependencyResolutionRequest dependencyResolutionRequest = new DefaultDependencyResolutionRequest(mavenProject, session);
-            dependencyResolutionRequest.setResolutionFilter(filter);
-            DependencyResolutionResult result = resolver.resolve(dependencyResolutionRequest);
-            this.projectDependencies = result.getDependencies();
-            buildClasspath();
-        } catch (DependencyResolutionException e) {
-            success = false;
-            if (getLog().isWarnEnabled()) {
-                getLog().warn("Error while trying to resolve dependencies for the current project", e);
-            }
+        List<Dependency> dependencies = compilerService.resolveDependencies(JavaScopes.COMPILE, JavaScopes.RUNTIME);
+        if (dependencies.isEmpty()) {
+            return false;
+        } else {
+            this.projectDependencies = dependencies;
+            this.classpath = compilerService.buildClasspath(this.projectDependencies);
+            return true;
         }
-        return success;
-    }
-
-    private void buildClasspath() {
-        Comparator<Dependency> byGroupId = Comparator.comparing(d -> d.getArtifact().getGroupId());
-        Comparator<Dependency> byArtifactId = Comparator.comparing(d -> d.getArtifact().getArtifactId());
-        classpath = this.projectDependencies.stream()
-                .sorted(byGroupId.thenComparing(byArtifactId))
-                .map(dependency -> dependency.getArtifact().getFile().getAbsolutePath())
-                .collect(Collectors.joining(File.pathSeparator));
     }
 
     private boolean classpathHasChanged() {
