@@ -81,6 +81,18 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
         if (!enabled) {
             return;
         }
+        String packaging = mavenProject.getPackaging();
+        AotRuntime aotRuntime = AotRuntime.valueOf(runtime.toUpperCase());
+        switch (aotRuntime) {
+            case JIT:
+                if (packaging.contains("native")) warnPackagingRuntimeMismatch();
+                break;
+
+            case NATIVE:
+                if (!packaging.contains("native")) warnPackagingRuntimeMismatch();
+                break;
+        }
+
         getLog().info("Running Micronaut AOT " + micronautAotVersion + " " + getName());
         try {
             getBaseOutputDirectory().mkdirs();
@@ -89,6 +101,10 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
         } catch (DependencyResolutionException e) {
             throw new MojoExecutionException("Unable to generate AOT optimizations", e);
         }
+    }
+
+    private void warnPackagingRuntimeMismatch() {
+        getLog().warn("Packaging is set to [" + mavenProject.getPackaging() + "], but Micronaut AOT runtime is set to [" + runtime + "]. Please change them so that they match");
     }
 
     protected abstract void doExecute() throws DependencyResolutionException, MojoExecutionException;

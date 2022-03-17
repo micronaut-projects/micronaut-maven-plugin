@@ -1,0 +1,90 @@
+=== Using Micronaut AOT
+
+*WARNING*: The Micronaut AOT module is in experimental stages. Use at your own risk!
+
+:toc:
+
+https://micronaut-projects.github.io/micronaut-aot/latest/guide/[Micronaut AOT] is a module which aims at pre-computing
+a number of things at _build time_ in order to provide faster startup times and smaller binaries. At the moment, it
+supports optimizing Micronaut applications only (Micronaut libraries or functions will be supported in a future release).
+
+To enable Micronaut AOT, simply set the property `micronaut.aot.enabled`, either in the POM or via the command-line:
+
+----
+$ mvn package -Dmicronaut.aot.enabled=true
+----
+
+When Micronaut AOT is enabled, the packaged (or exploded) format of the application will contain some optimizations
+computed at build time. It may contain, for example, additional classes, or even have different resources.
+
+*IMPORTANT*: Micronaut AOT is a deployment optimization: it adds to build time, in order to make the final application
+faster to start, or the native images smaller. Therefore, if you use the AOT tasks during development, your feedback
+cycle will be slower (but the application will start faster). It is a good idea, however, to check the result of the
+optimization locally, similarly to what you’d do for a native image.
+
+Currently, Micronaut AOT supports 2 runtimes: `jit` (the default) and `native`. To change it, use the
+`micronaut.aot.runtime` property. Note that if your `packaging` and `micronaut.aot.runtime` properties don't match,
+the plugin will issue a warning in the build log:
+
+----
+$ mvn package -Dmicronaut.aot.enabled=true -Dpackaging=native-image
+
+[INFO] --- micronaut-maven-plugin:3.2.0-SNAPSHOT:aot-sample-config (default-cli) @ demo ---
+[WARNING] Packaging is set to [native-image], but Micronaut AOT runtime is set to [jit]. Please change them so that they match
+----
+
+==== Defining additional AOT dependencies
+
+It is possible to add additional dependencies to the AOT execution classpath that may be required by some optimizations,
+or to include an external AOT optimizer (in the future, some modules such as `micronaut-security` may offer additional
+optimizers that can be used).
+
+For example, the `logback.xml.to.java` optimization requires additional dependencies that can be defined in your POM
+as follows:
+
+[source,xml]
+----
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.micronaut.build</groupId>
+        <artifactId>micronaut-maven-plugin</artifactId>
+        <configuration>
+          <aotDependencies>
+            <dependency>
+              <groupId>ch.qos.logback</groupId>
+              <artifactId>logback-classic</artifactId>
+              <version>1.3.0-alpha12</version>
+            </dependency>
+            <dependency>
+              <groupId>org.fusesource.jansi</groupId>
+              <artifactId>jansi</artifactId>
+              <version>1.18</version>
+            </dependency>
+          </aotDependencies>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+----
+
+==== Configuration
+
+Micronaut AOT can be configured with a `.properties` file. To get started with the possible options and their
+description, run the `aot-sample-config` goal:
+
+----
+$ mvn -Dmicronaut.aot.enabled mn:aot-sample-config
+
+[INFO] ...
+[INFO] Executing Micronaut AOT analysis
+[INFO] Sample configuration file written to /my-app/target/aot/jit/aot.properties
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+----
+
+Then, copy the `target/aot/jit/aot.properties` to your root directory, and adapt it to your needs. If using a different
+directory, use the `micronaut.aot.config` property to specify its location.
+
+For a full list of configuration options, check the link:../aot-analysis-mojo.html[`aot-analysis`] goal documentation.

@@ -69,7 +69,7 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
     private File outputDirectory;
 
     /**
-     * Micronaut AOT configuration file. Run the <a href="aot-sample-mojo.html"><code>aot-sample</code> goal</a> to
+     * Micronaut AOT configuration file. Run the <a href="aot-sample-config-mojo.html"><code>aot-sample-config</code> goal</a> to
      * see all the possible options.
      */
     @Parameter(property = "micronaut.aot.config", defaultValue = AOT_PROPERTIES_FILE_NAME)
