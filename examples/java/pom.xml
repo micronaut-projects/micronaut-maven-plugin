@@ -21,7 +21,7 @@
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
     <micronaut.aot.packageName>io.micronaut.build.examples</micronaut.aot.packageName>
-    <micronaut.aot.version>@micronaut.aot.version@</micronaut.aot.version>
+    <micronaut.aot.version>1.0.0-M7</micronaut.aot.version>
   </properties>
 
   <repositories>
