@@ -58,7 +58,8 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
 
     public static final String EXEC_MAVEN_PLUGIN_GROUP = "org.codehaus.mojo";
     public static final String EXEC_MAVEN_PLUGIN_ARTIFACT = "exec-maven-plugin";
-    public static final String EXEC_MAVEN_PLUGIN_VERSION = "3.0.0";
+    public static final String EXEC_MAVEN_PLUGIN_VERSION_PROPERTY = "exec-maven-plugin.version";
+    public static final String DEFAULT_EXEC_MAVEN_PLUGIN_VERSION = "3.0.0";
 
     private static final String DEFAULT_PACKAGE = "com.example";
 
@@ -116,7 +117,7 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
         executorService.executeGoal(
                 EXEC_MAVEN_PLUGIN_GROUP,
                 EXEC_MAVEN_PLUGIN_ARTIFACT,
-                EXEC_MAVEN_PLUGIN_VERSION,
+                mavenProject.getProperties().getProperty(EXEC_MAVEN_PLUGIN_VERSION_PROPERTY, DEFAULT_EXEC_MAVEN_PLUGIN_VERSION),
                 "exec",
                 config
         );
