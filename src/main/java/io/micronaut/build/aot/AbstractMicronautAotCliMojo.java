@@ -41,14 +41,9 @@ import org.twdata.maven.mojoexecutor.MojoExecutor;
 
 import javax.inject.Inject;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -116,12 +111,6 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     private void executeAot() throws DependencyResolutionException, MojoExecutionException {
         getLog().info("Executing Micronaut AOT analysis");
         Xpp3Dom config = createExecPluginConfig();
-
-        try(InputStream is = getClass().getClassLoader().getResourceAsStream("aot-logback.xml")) {
-            Files.copy(Objects.requireNonNull(is), Paths.get(mavenProject.getBuild().getDirectory(), "aot-logback.xml"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
         executorService.executeGoal(
                 EXEC_MAVEN_PLUGIN_GROUP,
