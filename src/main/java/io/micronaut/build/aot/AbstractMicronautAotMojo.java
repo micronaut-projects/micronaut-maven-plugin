@@ -46,7 +46,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
     /**
      * Micronaut AOT version.
      */
-    @Parameter(property = "micronaut.aot.version", required = true, defaultValue = "1.0.0-M7")
+    @Parameter(property = "micronaut.aot.version", required = true)
     protected String micronautAotVersion;
 
     /**

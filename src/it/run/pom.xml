@@ -21,6 +21,7 @@
         <exec.mainClass>io.micronaut.build.examples.RunCommand</exec.mainClass>
         <picocli.version>4.5.2</picocli.version>
         <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
+        <micronaut.aot.version>@micronaut.aot.version@</micronaut.aot.version>
     </properties>
 
     <repositories>
