@@ -63,7 +63,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
         this.repositorySystem = repositorySystem;
     }
 
-    protected void onSuccess(File outputDir) {
+    protected void onSuccess(File outputDir) throws MojoExecutionException {
 
     }
 

@@ -120,7 +120,7 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
     }
 
     @Override
-    protected void onSuccess(File outputDir) {
+    protected void onSuccess(File outputDir) throws MojoExecutionException {
         Path generated = outputDir.toPath().resolve("generated");
         Path generatedClasses = generated.resolve("classes");
         try {
@@ -138,7 +138,7 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
                 });
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new MojoExecutionException("Error when copying the Micronaut AOT generated classes into the target directory", e);
         }
     }
 
