@@ -69,7 +69,6 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     private static final String[] AOT_MODULES = new String[]{
             "api",
             "core",
-            "cli",
             "std-optimizers"
     };
 
@@ -81,6 +80,9 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     @Parameter(property = "micronaut.aot.packageName", required = true, defaultValue = DEFAULT_PACKAGE)
     protected String packageName;
 
+    @Parameter
+    private List<org.apache.maven.model.Dependency> aotDependencies;
+
     @Inject
     public AbstractMicronautAotCliMojo(CompilerService compilerService, ExecutorService executorService,
                                        MavenProject mavenProject, MavenSession mavenSession, RepositorySystem repositorySystem) {
@@ -91,12 +93,13 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     protected abstract List<String> getExtraArgs() throws MojoExecutionException;
 
     @Override
-    protected void doExecute() throws DependencyResolutionException, MojoExecutionException {
+    protected void doExecute() throws MojoExecutionException {
         if (DEFAULT_PACKAGE.equals(packageName)) {
             getLog().warn("Micronaut AOT will generate sources in the " + DEFAULT_PACKAGE + " package");
         }
         try {
             getLog().info("Packaging project");
+            compilerService.compileProject(true);
             InvocationResult packagingResult = compilerService.packageProject();
             if (packagingResult.getExitCode() != 0) {
                 getLog().error("Error when packaging the project: ", packagingResult.getExecutionException());
@@ -104,7 +107,9 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
                 executeAot();
             }
         } catch (MavenInvocationException e) {
-            throw new MojoExecutionException(e.getMessage(), e);
+            getLog().error("Error when packaging project", e);
+        } catch (MojoExecutionException | DependencyResolutionException e) {
+            getLog().error("Error when running Micronaut AOT", e);
         }
     }
 
@@ -128,14 +133,17 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     }
 
     private Xpp3Dom createExecPluginConfig() throws DependencyResolutionException, MojoExecutionException {
-        List<String> aotClasspath = resolveAotClasspath();
+        List<String> aotCliClasspath = resolveAotCliClasspath();
+        List<String> aotPluginsClasspath = resolveAotPluginsClasspath();
+        List<String> aotModulesClasspath = resolveAotModulesClasspath();
         List<String> applicationClasspath = resolveApplicationClasspath();
-        List<String> classpath = new ArrayList<>(aotClasspath.size() + applicationClasspath.size());
+
+        List<String> classpath = new ArrayList<>(aotPluginsClasspath.size() + + aotModulesClasspath.size() + applicationClasspath.size());
+        classpath.addAll(aotCliClasspath);
+        classpath.addAll(aotPluginsClasspath);
+        classpath.addAll(aotModulesClasspath);
         classpath.addAll(applicationClasspath);
-        classpath.addAll(aotClasspath);
-        String logbackConfig = Paths.get(mavenProject.getBuild().getDirectory(), "aot-logback.xml").toString();
         MojoExecutor.Element[] runnerArgs = Stream.concat(Stream.of(
-                        "-Dlogback.configurationFile=" + logbackConfig,
                         "-classpath",
                         String.join(File.pathSeparator, classpath),
                         "io.micronaut.aot.cli.Main",
@@ -162,15 +170,25 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
         return result;
     }
 
-    private List<String> resolveAotClasspath() throws DependencyResolutionException {
-        List<String> aotClasspath = resolveAotClasspath(Arrays.stream(AOT_MODULES).map(module -> new DefaultArtifact("io.micronaut.aot:micronaut-aot-" + module + ":" + micronautAotVersion)));
-        return aotClasspath;
+    private List<String> resolveAotModulesClasspath() throws DependencyResolutionException {
+        Stream<Artifact> aotArtifacts = Arrays.stream(AOT_MODULES)
+                .map(m -> new DefaultArtifact("io.micronaut.aot:micronaut-aot-" + m + ":" + micronautAotVersion));
+        return getClasspath(getArtifactResults(aotArtifacts));
     }
 
-    private List<String> resolveAotClasspath(Stream<Artifact> artifacts) throws DependencyResolutionException {
+    private List<String> resolveAotPluginsClasspath() throws DependencyResolutionException {
+        Stream<Artifact> aotPlugins = aotDependencies.stream().map(d -> new DefaultArtifact(d.getGroupId(), d.getArtifactId(), d.getType(), d.getVersion()));
+        return getClasspath(getArtifactResults(aotPlugins));
+    }
+
+    private List<String> resolveAotCliClasspath() throws DependencyResolutionException {
+        Stream<Artifact> aotCliArtifact = Stream.of(new DefaultArtifact("io.micronaut.aot:micronaut-aot-cli:" + micronautAotVersion));
+        return getClasspath(getArtifactResults(aotCliArtifact));
+    }
+
+    private List<ArtifactResult> getArtifactResults(Stream<Artifact> artifacts) throws DependencyResolutionException {
         RepositorySystemSession repositorySession = mavenSession.getRepositorySession();
         DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.RUNTIME);
-
         CollectRequest collectRequest = new CollectRequest();
         artifacts.map(a -> new Dependency(a, JavaScopes.RUNTIME))
                 .forEach(collectRequest::addDependency);
@@ -179,12 +197,13 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
         DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, classpathFilter);
 
         DependencyResult dependencyResult = repositorySystem.resolveDependencies(repositorySession, dependencyRequest);
-        List<ArtifactResult> artifactResults = dependencyResult.getArtifactResults();
-        List<Dependency> projectDependencies = compilerService.resolveDependencies(JavaScopes.RUNTIME);
+        return dependencyResult.getArtifactResults();
+    }
 
-        return artifactResults.stream()
+    private List<String> getClasspath(List<ArtifactResult> resolutionResult) {
+        return resolutionResult
+                .stream()
                 .map(ArtifactResult::getArtifact)
-                .filter(a -> projectDependencies.stream().noneMatch(d-> d.getArtifact().getGroupId().equals(a.getGroupId()) && d.getArtifact().getArtifactId().equals(a.getArtifactId())))
                 .map(Artifact::getFile)
                 .map(File::getAbsolutePath)
                 .collect(Collectors.toList());

@@ -181,7 +181,7 @@ public class CompilerService {
         request.setPomFile(mavenProject.getFile());
         request.setGoals(Collections.singletonList(MAVEN_JAR_PLUGIN + ":jar"));
         request.setBatchMode(true);
-        request.setQuiet(true);
+        request.setQuiet(false);
         return invoker.execute(request);
     }
 }
