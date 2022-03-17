@@ -30,10 +30,13 @@ import org.eclipse.aether.RepositorySystem;
 
 import javax.inject.Inject;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 import static io.micronaut.build.aot.AotSampleMojo.AOT_PROPERTIES_FILE_NAME;
 
@@ -83,8 +86,8 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
     protected List<String> getExtraArgs() throws MojoExecutionException {
         List<String> args = new ArrayList<>();
         args.add("--output");
-        File outputDirectory = outputFile("generated");
-        args.add(outputDirectory.getAbsolutePath());
+        File generated = outputFile("generated");
+        args.add(generated.getAbsolutePath());
         File effectiveConfigFile = writeEffectiveConfigFile();
         args.add("--config");
         args.add(effectiveConfigFile.getAbsolutePath());
@@ -119,11 +122,21 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
     @Override
     protected void onSuccess(File outputDir) {
         Path generated = outputDir.toPath().resolve("generated");
-        Path generatedSources = generated.resolve("sources");
         Path generatedClasses = generated.resolve("classes");
         try {
-            FileUtils.copyDirectory(generatedSources.toFile(), new File(baseDirectory, "generated-sources"));
             FileUtils.copyDirectory(generatedClasses.toFile(), outputDirectory);
+            try(Stream<String> linesStream = Files.lines(generated.resolve("logs").resolve("resource-filter.txt"))) {
+                linesStream.forEach(toRemove -> {
+                    try {
+                        Files.delete(outputDirectory.toPath().resolve(toRemove));
+                        getLog().debug("Removed " + toRemove);
+                    } catch (IOException e) {
+                        if (!(e instanceof NoSuchFileException)) {
+                            getLog().warn("Error while deleting " + toRemove, e);
+                        }
+                    }
+                });
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

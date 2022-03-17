@@ -43,6 +43,7 @@ import javax.inject.Inject;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -166,8 +167,12 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     }
 
     private List<String> resolveAotPluginsClasspath() throws DependencyResolutionException {
-        Stream<Artifact> aotPlugins = aotDependencies.stream().map(d -> new DefaultArtifact(d.getGroupId(), d.getArtifactId(), d.getType(), d.getVersion()));
-        return getClasspath(getArtifactResults(aotPlugins));
+        if (aotDependencies != null && !aotDependencies.isEmpty()) {
+            Stream<Artifact> aotPlugins = aotDependencies.stream().map(d -> new DefaultArtifact(d.getGroupId(), d.getArtifactId(), d.getType(), d.getVersion()));
+            return getClasspath(getArtifactResults(aotPlugins));
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     private List<String> resolveAotCliClasspath() throws DependencyResolutionException {

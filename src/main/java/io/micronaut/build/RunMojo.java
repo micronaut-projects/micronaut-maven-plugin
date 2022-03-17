@@ -42,7 +42,7 @@ import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
  */
 @SuppressWarnings("unused")
 @Mojo(name = "run", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PREPARE_PACKAGE)
-@Execute(phase = LifecyclePhase.COMPILE)
+@Execute(phase = LifecyclePhase.PROCESS_CLASSES)
 public class RunMojo extends AbstractMojo {
 
     public static final String MN_APP_ARGS = "mn.appArgs";
