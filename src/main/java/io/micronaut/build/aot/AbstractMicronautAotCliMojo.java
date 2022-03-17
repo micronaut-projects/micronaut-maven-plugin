@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.micronaut.build.aot.Constants.*;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.configuration;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.element;
 
@@ -137,7 +138,7 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
         MojoExecutor.Element[] runnerArgs = Stream.concat(Stream.of(
                         "-classpath",
                         String.join(File.pathSeparator, classpath),
-                        "io.micronaut.aot.cli.Main",
+                        MICRONAUT_AOT_MAIN_CLASS,
 
                         // CLI args
                         "--classpath=" + String.join(File.pathSeparator, classpath),
@@ -163,7 +164,7 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
 
     private List<String> resolveAotModulesClasspath() throws DependencyResolutionException {
         Stream<Artifact> aotArtifacts = Arrays.stream(AOT_MODULES)
-                .map(m -> new DefaultArtifact("io.micronaut.aot:micronaut-aot-" + m + ":" + micronautAotVersion));
+                .map(m -> new DefaultArtifact(MICRONAUT_AOT_GROUP_ID + ":" + MICRONAUT_AOT_ARTIFACT_ID_PREFIX + m + ":" + micronautAotVersion));
         return getClasspath(getArtifactResults(aotArtifacts));
     }
 
@@ -177,7 +178,7 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     }
 
     private List<String> resolveAotCliClasspath() throws DependencyResolutionException {
-        Stream<Artifact> aotCliArtifact = Stream.of(new DefaultArtifact("io.micronaut.aot:micronaut-aot-cli:" + micronautAotVersion));
+        Stream<Artifact> aotCliArtifact = Stream.of(new DefaultArtifact(MICRONAUT_AOT_GROUP_ID + ":" + MICRONAUT_AOT_ARTIFACT_ID_PREFIX + "cli:" + micronautAotVersion));
         return getClasspath(getArtifactResults(aotCliArtifact));
     }
 
