@@ -36,7 +36,8 @@ jobs:
         shell: cmd
         run: |
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-          ./mvnw install verify -Prun-its
+          ./mvnw install
+          ./mvnw verify -Prun-its
         env:
           JAVA_HOME: C:\graalvm\graalvm-ce-java11-${{ matrix.graalvm }}
           GRAALVM_HOME: C:\graalvm\graalvm-ce-java11-${{ matrix.graalvm }}
