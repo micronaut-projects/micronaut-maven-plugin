@@ -20,4 +20,8 @@ public enum Packaging {
     public String id() {
         return this.id;
     }
+
+    public static Packaging of(String value) {
+        return Packaging.valueOf(value.replace("-", "_").toUpperCase());
+    }
 }

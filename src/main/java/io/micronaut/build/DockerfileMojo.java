@@ -46,7 +46,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
     @Override
     public void execute() throws MojoExecutionException {
         MicronautRuntime runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
-        Packaging packaging = Packaging.valueOf(mavenProject.getPackaging().toUpperCase());
+        Packaging packaging = Packaging.of(mavenProject.getPackaging());
         try {
             copyDependencies();
             Optional<File> dockerfile;

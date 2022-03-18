@@ -92,7 +92,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
     }
 
     private void validateRuntime() {
-        Packaging packaging = Packaging.valueOf(mavenProject.getPackaging().toUpperCase());
+        Packaging packaging = Packaging.of(mavenProject.getPackaging());
         AotRuntime aotRuntime = AotRuntime.valueOf(runtime.toUpperCase());
         switch (packaging) {
             case JAR:
