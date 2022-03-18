@@ -6,6 +6,7 @@ This plugin has the following features:
 2. link:examples/package.html[Packaging] an application into different formats: fat JAR, native image, Docker, etc.
 3. link:dockerfile-mojo.html[Generating `Dockerfile`]s.
 4. link:examples/deploy.html[Deploying] Docker images to different registries.
+5. link:examples/aot.html[Using Micronaut AOT].
 
 === Usage
 

@@ -15,11 +15,7 @@ import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.RegistryAuthLocator;
 
 import javax.inject.Inject;
-import java.util.Optional;
 import java.util.Set;
-
-import static io.micronaut.build.DockerMojo.DOCKER_PACKAGING;
-import static io.micronaut.build.DockerNativeMojo.DOCKER_NATIVE_PACKAGING;
 
 /**
  * <p>Implementation of the <code>deploy</code> lifecycle for pushing Docker images</p>
@@ -42,8 +38,8 @@ public class DockerPushMojo extends AbstractDockerMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        String packaging = mavenProject.getPackaging();
-        if (DOCKER_PACKAGING.equals(packaging) || DOCKER_NATIVE_PACKAGING.equals(packaging)) {
+        Packaging packaging =Packaging.of(mavenProject.getPackaging());
+        if (packaging == Packaging.DOCKER || packaging == Packaging.DOCKER_NATIVE) {
             Set<String> images = getTags();
 
             // getTags() will automatically generate an image name if none is specified
@@ -76,7 +72,7 @@ public class DockerPushMojo extends AbstractDockerMojo {
                 throw new MojoFailureException("The plugin " + MavenProjectProperties.PLUGIN_KEY + " is misconfigured. Missing <to> tag");
             }
         } else {
-            throw new MojoFailureException("The <packaging> must be set to either [" + DOCKER_PACKAGING + "] or [" + DOCKER_NATIVE_PACKAGING + "]");
+            throw new MojoFailureException("The <packaging> must be set to either [" + Packaging.DOCKER.id() + "] or [" + Packaging.DOCKER_NATIVE.id() + "]");
         }
     }
 }

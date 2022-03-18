@@ -19,9 +19,9 @@ import io.micronaut.aot.std.sourcegen.AbstractStaticServiceLoaderSourceGenerator
 import io.micronaut.aot.std.sourcegen.KnownMissingTypesSourceGenerator;
 import io.micronaut.build.services.CompilerService;
 import io.micronaut.build.services.ExecutorService;
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -30,28 +30,45 @@ import org.eclipse.aether.RepositorySystem;
 
 import javax.inject.Inject;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-
-import static io.micronaut.build.aot.AotSampleMojo.AOT_PROPERTIES_FILE_NAME;
+import java.util.stream.Stream;
 
 /**
- * Invokes the <a href="https://micronaut-projects.github.io/micronaut-aot/latest/guide/">Micronaut AOT</a>
+ * <p>Invokes the <a href="https://micronaut-projects.github.io/micronaut-aot/latest/guide/">Micronaut AOT</a>
  * optimizer, generating sources/classes and the effective AOT configuration properties file. Refer to the Micronaut
- * AOT documentation for more information.
+ * AOT documentation for more information.</p>
+ *
+ * <p><strong>WARNING</strong>: this goal is not intended to be executed directly. Instead, enable AOT with the
+ * <code>micronaut.aot.enabled</code> property, eg:</p>
+ *
+ * <pre>mvn -Dmicronaut.aot.enabled=true package</pre>
+ * <pre>mvn -Dmicronaut.aot.enabled=true mn:run</pre>
  */
-@Mojo(name = "aot-analysis", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+@Mojo(name = AotAnalysisMojo.NAME, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
+
+    public static final String NAME = "aot-analysis";
+    public static final String AOT_PROPERTIES_FILE_NAME = "aot.properties";
 
     /**
      * The project's target directory.
      */
-    @Parameter(property = "project.baseDir", defaultValue = "${project.build.directory}", required = true)
+    @Parameter(defaultValue = "${project.build.directory}", required = true)
     private File baseDirectory;
 
     /**
-     * Micronaut AOT configuration file. Run the <a href="aot-sample-mojo.html"><code>aot-sample</code> goal</a> to
+     * Directory where compiled application classes are.
+     */
+    @Parameter(defaultValue = "${project.build.outputDirectory}", required = true)
+    private File outputDirectory;
+
+    /**
+     * Micronaut AOT configuration file. Run the <a href="aot-sample-config-mojo.html"><code>aot-sample-config</code> goal</a> to
      * see all the possible options.
      */
     @Parameter(property = "micronaut.aot.config", defaultValue = AOT_PROPERTIES_FILE_NAME)
@@ -68,11 +85,11 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
     protected List<String> getExtraArgs() throws MojoExecutionException {
         List<String> args = new ArrayList<>();
         args.add("--output");
-        File outputDirectory = outputFile("generated");
-        args.add(outputDirectory.getAbsolutePath());
-        File configFile = writeEffectiveConfigFile();
+        File generated = outputFile("generated");
+        args.add(generated.getAbsolutePath());
+        File effectiveConfigFile = writeEffectiveConfigFile();
         args.add("--config");
-        args.add(configFile.getAbsolutePath());
+        args.add(effectiveConfigFile.getAbsolutePath());
         return args;
     }
 
@@ -101,4 +118,31 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
         return effectiveConfig;
     }
 
+    @Override
+    protected void onSuccess(File outputDir) throws MojoExecutionException {
+        Path generated = outputDir.toPath().resolve("generated");
+        Path generatedClasses = generated.resolve("classes");
+        try {
+            FileUtils.copyDirectory(generatedClasses.toFile(), outputDirectory);
+            try(Stream<String> linesStream = Files.lines(generated.resolve("logs").resolve("resource-filter.txt"))) {
+                linesStream.forEach(toRemove -> {
+                    try {
+                        Files.delete(outputDirectory.toPath().resolve(toRemove));
+                        getLog().debug("Removed " + toRemove);
+                    } catch (IOException e) {
+                        if (!(e instanceof NoSuchFileException)) {
+                            getLog().warn("Error while deleting " + toRemove, e);
+                        }
+                    }
+                });
+            }
+        } catch (IOException e) {
+            throw new MojoExecutionException("Error when copying the Micronaut AOT generated classes into the target directory", e);
+        }
+    }
+
+    @Override
+    String getName() {
+        return NAME;
+    }
 }

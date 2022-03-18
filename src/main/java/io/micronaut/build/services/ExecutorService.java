@@ -63,18 +63,6 @@ public class ExecutorService {
         }
     }
 
-    public void executeGoal(String pluginKey, String goal, Xpp3Dom configuration) throws MojoExecutionException {
-        final Plugin plugin = mavenProject.getPlugin(pluginKey);
-        if (plugin != null) {
-            executeMojo(plugin, goal(goal), configuration, executionEnvironment);
-        }
-    }
-
-    public void executeGoal(String pluginGroup, String pluginArtifact, String pluginVersion, String goal) throws MojoExecutionException {
-        final Plugin plugin = plugin(pluginGroup, pluginArtifact, pluginVersion);
-        executeMojo(plugin, goal(goal), configuration(), executionEnvironment);
-    }
-
     public void executeGoal(String pluginGroup, String pluginArtifact, String pluginVersion, String goal, Xpp3Dom configuration) throws MojoExecutionException {
         final Plugin plugin = plugin(pluginGroup, pluginArtifact, pluginVersion);
         executeMojo(plugin, goal(goal), configuration, executionEnvironment);

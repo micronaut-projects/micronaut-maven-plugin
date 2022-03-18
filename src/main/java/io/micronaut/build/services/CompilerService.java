@@ -4,16 +4,18 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
-import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.*;
+import org.apache.maven.shared.invoker.*;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.graph.DependencyFilter;
+import org.eclipse.aether.util.filter.DependencyFilterUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -66,15 +68,20 @@ public class CompilerService {
     private final MavenProject mavenProject;
     private final MavenSession mavenSession;
     private final ExecutorService executorService;
+    private final ProjectDependenciesResolver resolver;
+    private final Invoker invoker;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    public CompilerService(MavenProject mavenProject, MavenSession mavenSession, ExecutorService executorService) {
+    public CompilerService(MavenProject mavenProject, MavenSession mavenSession, ExecutorService executorService,
+                           ProjectDependenciesResolver resolver) {
+        this.resolver = resolver;
         this.log = new SystemStreamLog();
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
         this.executorService = executorService;
         this.sourceDirectories = resolveSourceDirectories();
+        this.invoker = new DefaultInvoker();
     }
 
     public boolean needsCompilation() {
@@ -122,20 +129,6 @@ public class CompilerService {
         return Optional.ofNullable(lastCompilation);
     }
 
-    public Optional<Long> packageProject() {
-        if (compileProject(true).isPresent()) {
-            try {
-                executorService.executeGoal(MAVEN_JAR_PLUGIN, "jar");
-            } catch (MojoExecutionException e) {
-                if (log.isErrorEnabled()) {
-                    log.error("Error while compiling the project: ", e);
-                }
-                return Optional.empty();
-            }
-        }
-        return Optional.of(System.currentTimeMillis());
-    }
-
     public Map<String, Path> resolveSourceDirectories() {
         if (log.isDebugEnabled()) {
             log.debug("Resolving source directories...");
@@ -158,4 +151,37 @@ public class CompilerService {
         return sourceDirectories;
     }
 
+    public List<Dependency> resolveDependencies(String... scopes) {
+        try {
+            DependencyFilter filter = DependencyFilterUtils.classpathFilter(scopes);
+            RepositorySystemSession session = mavenSession.getRepositorySession();
+            DependencyResolutionRequest dependencyResolutionRequest = new DefaultDependencyResolutionRequest(mavenProject, session);
+            dependencyResolutionRequest.setResolutionFilter(filter);
+            DependencyResolutionResult result = resolver.resolve(dependencyResolutionRequest);
+            return result.getDependencies();
+        } catch (org.apache.maven.project.DependencyResolutionException e) {
+            if (log.isWarnEnabled()) {
+                log.warn("Error while trying to resolve dependencies for the current project", e);
+            }
+            return Collections.emptyList();
+        }
+    }
+
+    public String buildClasspath(List<Dependency> dependencies) {
+        Comparator<Dependency> byGroupId = Comparator.comparing(d -> d.getArtifact().getGroupId());
+        Comparator<Dependency> byArtifactId = Comparator.comparing(d -> d.getArtifact().getArtifactId());
+        return dependencies.stream()
+                .sorted(byGroupId.thenComparing(byArtifactId))
+                .map(dependency -> dependency.getArtifact().getFile().getAbsolutePath())
+                .collect(Collectors.joining(File.pathSeparator));
+    }
+
+    public InvocationResult packageProject() throws MavenInvocationException {
+        InvocationRequest request = new DefaultInvocationRequest();
+        request.setPomFile(mavenProject.getFile());
+        request.setGoals(Collections.singletonList(MAVEN_JAR_PLUGIN + ":jar"));
+        request.setBatchMode(true);
+        request.setQuiet(true);
+        return invoker.execute(request);
+    }
 }

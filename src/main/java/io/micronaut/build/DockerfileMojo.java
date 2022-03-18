@@ -4,7 +4,6 @@ import io.micronaut.build.jib.JibMicronautExtension;
 import io.micronaut.build.services.ApplicationConfigurationService;
 import io.micronaut.build.services.DockerService;
 import io.micronaut.build.services.JibConfigurationService;
-import io.micronaut.core.util.StringUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -18,9 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static io.micronaut.build.DockerMojo.DOCKER_PACKAGING;
-import static io.micronaut.build.DockerNativeMojo.DOCKER_NATIVE_PACKAGING;
 
 /**
  * <p>Generates a <code>Dockerfile</code> depending on the <code>packaging</code> and <code>micronaut.runtime</code>
@@ -50,22 +46,22 @@ public class DockerfileMojo extends AbstractDockerMojo {
     @Override
     public void execute() throws MojoExecutionException {
         MicronautRuntime runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
-        String packaging = mavenProject.getPackaging();
+        Packaging packaging = Packaging.of(mavenProject.getPackaging());
         try {
             copyDependencies();
             Optional<File> dockerfile;
 
             switch (packaging) {
-                case DOCKER_NATIVE_PACKAGING:
+                case DOCKER_NATIVE:
                     dockerfile = buildDockerfileNative(runtime);
                     break;
 
-                case DOCKER_PACKAGING:
+                case DOCKER:
                     dockerfile = buildDockerfile(runtime);
                     break;
 
                 default:
-                    throw new MojoExecutionException("Packaging is set to [" + packaging + "]. To generate a Dockerfile, set the packaging to either [" + DOCKER_PACKAGING + "] or [" + DOCKER_NATIVE_PACKAGING + "]");
+                    throw new MojoExecutionException("Packaging is set to [" + packaging + "]. To generate a Dockerfile, set the packaging to either [" + Packaging.DOCKER.id() + "] or [" + Packaging.DOCKER_NATIVE.id() + "]");
             }
 
             dockerfile.ifPresent(file -> getLog().info("Dockerfile written to: " + file.getAbsolutePath()));

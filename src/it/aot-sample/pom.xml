@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.micronaut.build.examples</groupId>
-    <artifactId>run</artifactId>
+    <artifactId>aot-sample</artifactId>
     <version>0.1</version>
     <packaging>${packaging}</packaging>
 
@@ -21,6 +21,7 @@
         <exec.mainClass>io.micronaut.build.examples.RunCommand</exec.mainClass>
         <picocli.version>4.5.2</picocli.version>
         <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
+        <micronaut.aot.version>@micronaut.aot.version@</micronaut.aot.version>
         <micronaut.aot.enabled>true</micronaut.aot.enabled>
         <micronaut.aot.packageName>io.micronaut.build.examples</micronaut.aot.packageName>
     </properties>

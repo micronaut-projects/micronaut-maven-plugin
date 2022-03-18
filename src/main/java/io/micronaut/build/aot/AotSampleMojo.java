@@ -30,12 +30,13 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Generates a sample aot.properties showcasing all the possible values along with a description.
+ * Generates a sample <code>aot.properties</code> showcasing all the possible values along with a description.
  */
-@Mojo(name = "aot-sample", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+@Mojo(name = AotSampleMojo.NAME, defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class AotSampleMojo extends AbstractMicronautAotCliMojo {
 
-    public static final String AOT_PROPERTIES_FILE_NAME = "aot.properties";
+    public static final String SAMPLE_AOT_PROPERTIES_FILE_NAME = "aot.properties";
+    public static final String NAME = "aot-sample-config";
 
     @Inject
     public AotSampleMojo(CompilerService compilerService, ExecutorService executorService, MavenProject mavenProject,
@@ -47,15 +48,20 @@ public class AotSampleMojo extends AbstractMicronautAotCliMojo {
     protected List<String> getExtraArgs() {
         return Arrays.asList(
                 "--config",
-                outputFile(AOT_PROPERTIES_FILE_NAME).getAbsolutePath()
+                outputFile(SAMPLE_AOT_PROPERTIES_FILE_NAME).getAbsolutePath()
         );
     }
 
     @Override
     protected void onSuccess(File outputDir) {
-        File sampleFile = new File(outputDir, AOT_PROPERTIES_FILE_NAME);
+        File sampleFile = new File(outputDir, SAMPLE_AOT_PROPERTIES_FILE_NAME);
         if (sampleFile.exists()) {
             getLog().info("Sample configuration file written to " + sampleFile);
         }
+    }
+
+    @Override
+    String getName() {
+        return NAME;
     }
 }

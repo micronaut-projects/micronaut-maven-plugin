@@ -20,6 +20,7 @@
             <item name="Packaging" href="examples/package.html"/>
             <item name="Generating Dockerfiles" href="dockerfile-mojo.html"/>
             <item name="Deploying Docker images" href="examples/deploy.html"/>
+            <item name="Using Micronaut AOT" href="examples/aot.html"/>
         </menu>
 
         <menu ref="reports"/>

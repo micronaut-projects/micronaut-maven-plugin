@@ -120,7 +120,7 @@ Depending on the `micronaut.runtime` property, the image built might be differen
 * Oracle Cloud Function: `mvn package -Dpackaging=docker -Dmicronaut.runtime=oracle_function`.
 * AWS Lambda (Java runtimes): `mvn package -Dpackaging=docker -Dmicronaut.runtime=lambda`.
 
-You can use the link:dockerfile-mojo.html[`mn:dockerfile`] goal to generate the equivalent `Dockerfile`. For example,
+You can use the link:../dockerfile-mojo.html[`mn:dockerfile`] goal to generate the equivalent `Dockerfile`. For example,
 to generate the `Dockerfile` for AWS Lambda, run `mvn mn:dockerfile -Dpackaging=docker -Dmicronaut.runtime=lambda`.
 
 Refer to the
