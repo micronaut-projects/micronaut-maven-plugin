@@ -23,6 +23,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.MavenInvocationException;
+import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
@@ -62,8 +63,6 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     public static final String EXEC_MAVEN_PLUGIN_VERSION_PROPERTY = "exec-maven-plugin.version";
     public static final String DEFAULT_EXEC_MAVEN_PLUGIN_VERSION = "3.0.0";
 
-    private static final String DEFAULT_PACKAGE = "com.example";
-
     private static final String[] AOT_MODULES = new String[]{
             "api",
             "core",
@@ -75,7 +74,7 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     /**
      * Package name to use for generated sources.
      */
-    @Parameter(property = "micronaut.aot.packageName", required = true, defaultValue = DEFAULT_PACKAGE)
+    @Parameter(property = MICRONAUT_AOT_PACKAGE_NAME)
     protected String packageName;
 
     @Parameter
@@ -91,9 +90,9 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     protected abstract List<String> getExtraArgs() throws MojoExecutionException;
 
     @Override
-    protected void doExecute() throws MojoExecutionException {
-        if (DEFAULT_PACKAGE.equals(packageName)) {
-            getLog().warn("Micronaut AOT will generate sources in the " + DEFAULT_PACKAGE + " package");
+    protected void doExecute() throws MojoExecutionException, DependencyResolutionException {
+        if (StringUtils.isEmpty(packageName)) {
+            throw new MojoExecutionException(MICRONAUT_AOT_PACKAGE_NAME + " is not set, and is required if AOT is enabled");
         }
         try {
             getLog().info("Packaging project");
@@ -106,8 +105,6 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
             }
         } catch (MavenInvocationException e) {
             getLog().error("Error when packaging project", e);
-        } catch (MojoExecutionException | DependencyResolutionException e) {
-            getLog().error("Error when running Micronaut AOT", e);
         }
     }
 
