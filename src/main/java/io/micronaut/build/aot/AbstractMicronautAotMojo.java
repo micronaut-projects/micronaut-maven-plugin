@@ -15,6 +15,7 @@
  */
 package io.micronaut.build.aot;
 
+import io.micronaut.build.Packaging;
 import io.micronaut.build.services.CompilerService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -63,9 +64,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
         this.repositorySystem = repositorySystem;
     }
 
-    protected void onSuccess(File outputDir) throws MojoExecutionException {
-
-    }
+    abstract void onSuccess(File outputDir) throws MojoExecutionException;
 
     protected final File getBaseOutputDirectory() {
         File targetDirectory = new File(mavenProject.getBuild().getDirectory(), "aot");
@@ -81,18 +80,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
         if (!enabled) {
             return;
         }
-        String packaging = mavenProject.getPackaging();
-        AotRuntime aotRuntime = AotRuntime.valueOf(runtime.toUpperCase());
-        switch (aotRuntime) {
-            case JIT:
-                if (packaging.contains("native")) warnPackagingRuntimeMismatch();
-                break;
-
-            case NATIVE:
-                if (!packaging.contains("native")) warnPackagingRuntimeMismatch();
-                break;
-        }
-
+        validateRuntime();
         getLog().info("Running Micronaut AOT " + micronautAotVersion + " " + getName());
         try {
             getBaseOutputDirectory().mkdirs();
@@ -103,8 +91,26 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
         }
     }
 
-    private void warnPackagingRuntimeMismatch() {
-        getLog().warn("Packaging is set to [" + mavenProject.getPackaging() + "], but Micronaut AOT runtime is set to [" + runtime + "]. Please change them so that they match");
+    private void validateRuntime() {
+        Packaging packaging = Packaging.valueOf(mavenProject.getPackaging().toUpperCase());
+        AotRuntime aotRuntime = AotRuntime.valueOf(runtime.toUpperCase());
+        switch (packaging) {
+            case JAR:
+            case DOCKER:
+                if (aotRuntime != AotRuntime.JIT) warnRuntimeMismatchAndSetCorrectValue(AotRuntime.JIT);
+                break;
+
+            case NATIVE_IMAGE:
+            case DOCKER_NATIVE:
+                if (aotRuntime != AotRuntime.NATIVE) warnRuntimeMismatchAndSetCorrectValue(AotRuntime.NATIVE);
+                break;
+        }
+    }
+
+    private void warnRuntimeMismatchAndSetCorrectValue(final AotRuntime correctRuntime) {
+        String correctRuntimeString = correctRuntime.name().toLowerCase();
+        getLog().warn("Packaging is set to [" + mavenProject.getPackaging() + "], but Micronaut AOT runtime is set to [" + runtime + "]. Setting AOT runtime to: " + correctRuntimeString);
+        this.runtime = correctRuntimeString;
     }
 
     protected abstract void doExecute() throws DependencyResolutionException, MojoExecutionException;

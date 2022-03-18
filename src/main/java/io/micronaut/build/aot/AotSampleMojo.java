@@ -35,7 +35,7 @@ import java.util.List;
 @Mojo(name = AotSampleMojo.NAME, defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class AotSampleMojo extends AbstractMicronautAotCliMojo {
 
-    public static final String AOT_PROPERTIES_FILE_NAME = "aot.properties";
+    public static final String SAMPLE_AOT_PROPERTIES_FILE_NAME = "aot.properties";
     public static final String NAME = "aot-sample-config";
 
     @Inject
@@ -48,13 +48,13 @@ public class AotSampleMojo extends AbstractMicronautAotCliMojo {
     protected List<String> getExtraArgs() {
         return Arrays.asList(
                 "--config",
-                outputFile(AOT_PROPERTIES_FILE_NAME).getAbsolutePath()
+                outputFile(SAMPLE_AOT_PROPERTIES_FILE_NAME).getAbsolutePath()
         );
     }
 
     @Override
     protected void onSuccess(File outputDir) {
-        File sampleFile = new File(outputDir, AOT_PROPERTIES_FILE_NAME);
+        File sampleFile = new File(outputDir, SAMPLE_AOT_PROPERTIES_FILE_NAME);
         if (sampleFile.exists()) {
             getLog().info("Sample configuration file written to " + sampleFile);
         }

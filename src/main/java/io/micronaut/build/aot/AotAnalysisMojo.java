@@ -38,8 +38,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Stream;
 
-import static io.micronaut.build.aot.AotSampleMojo.AOT_PROPERTIES_FILE_NAME;
-
 /**
  * <p>Invokes the <a href="https://micronaut-projects.github.io/micronaut-aot/latest/guide/">Micronaut AOT</a>
  * optimizer, generating sources/classes and the effective AOT configuration properties file. Refer to the Micronaut
@@ -55,6 +53,7 @@ import static io.micronaut.build.aot.AotSampleMojo.AOT_PROPERTIES_FILE_NAME;
 public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
 
     public static final String NAME = "aot-analysis";
+    public static final String AOT_PROPERTIES_FILE_NAME = "aot.properties";
 
     /**
      * The project's target directory.
