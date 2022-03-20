@@ -22,6 +22,7 @@
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
     <graal.version>21.3.1</graal.version>
+    <maven.native.plugin.version>0.9.10</maven.native.plugin.version>
   </properties>
 
   <repositories>
@@ -150,7 +151,8 @@
         <version>3.2.4</version>
         <executions>
           <execution>
-            <phase>package</phase>
+            <id>default-shade</id>
+            <phase>prepare-package</phase>
             <goals>
               <goal>shade</goal>
             </goals>
@@ -160,31 +162,16 @@
           </execution>
         </executions>
       </plugin>
-
-      <!-- TODO: Remove this when the plugin is upgraded to Micronaut 3.2 -->
       <plugin>
         <groupId>org.graalvm.buildtools</groupId>
         <artifactId>native-maven-plugin</artifactId>
-        <version>0.9.10</version>
-        <extensions>true</extensions>
-        <executions>
-          <execution>
-            <id>build-native</id>
-            <goals>
-              <goal>build</goal>
-            </goals>
-            <phase>package</phase>
-          </execution>
-        </executions>
         <configuration>
           <skip>false</skip>
-          <imageName>${project.artifactId}</imageName>
-          <mainClass>${exec.mainClass}</mainClass>
           <buildArgs>
             <buildArg>--no-fallback</buildArg>
           </buildArgs>
           <classpath>
-            <param>${project.build.directory}/${project.artifactId}-${project.version}-shaded.jar</param>
+            <param>${project.build.directory}/${project.artifactId}-${project.version}-shaded.native-image</param>
           </classpath>
         </configuration>
       </plugin>
