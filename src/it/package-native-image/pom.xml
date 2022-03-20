@@ -143,7 +143,7 @@
       </plugin>
 
       <!-- Use shade plugin because Windows doesn't support long paths and without this it fails on CI -->
-      <!-- See https://graalvm.github.io/native-build-tools/0.9.7.1/maven-plugin.html#long_classpath_and_shading_support -->
+      <!-- See https://graalvm.github.io/native-build-tools/latest/maven-plugin.html#long_classpath_and_shading_support -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
