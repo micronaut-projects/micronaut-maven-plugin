@@ -80,7 +80,7 @@
         <native-maven-plugin.version>0.9.10</native-maven-plugin.version>
         <micronaut.version>3.3.4</micronaut.version>
         <micronaut.aot.version>1.0.0-M7</micronaut.aot.version>
-        <it.micronaut.version>3.3.1-SNAPSHOT</it.micronaut.version>
+        <it.micronaut.version>3.4.0-SNAPSHOT</it.micronaut.version>
     </properties>
 
     <repositories>
