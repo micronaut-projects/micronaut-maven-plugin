@@ -35,7 +35,7 @@ If the `<packaging>` is set to `native-image`, this plugin will delegate to the 
 you need to run locally a GraalVM JDK.
 
 Refer to the
-https://graalvm.github.io/native-build-tools/0.9.7.1/[Native Maven Plugin documentation]
+https://graalvm.github.io/native-build-tools/latest/[Native Maven Plugin documentation]
 for more information about how to customize the generated native image.
 
 For example, to add `--verbose` to the native image args, you should define:
@@ -56,7 +56,7 @@ For example, to add `--verbose` to the native image args, you should define:
 ==== Windows users
 
 Sometimes, depending on how many classes are in the classpath you may see an error `The command line is too long` when
-building a native-image. This is a https://graalvm.github.io/native-build-tools/0.9.7.1/maven-plugin.html#long_classpath_and_shading_support[known issue]
+building a native-image. This is a https://graalvm.github.io/native-build-tools/latest/maven-plugin.html#long_classpath_and_shading_support[known issue]
 with Windows. To workaround this you need to configure the Shade plugin in your `pom.xml` and then configure the native image
 plugin to use that shaded jar for building the native image:
 
