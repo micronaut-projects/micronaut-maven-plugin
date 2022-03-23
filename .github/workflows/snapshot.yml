@@ -30,7 +30,8 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Run tests
-        run: mvn verify -Prun-its
+        run: |
+          mvn install && mvn verify -Prun-its
 
       - name: Determine current version
         id: release_version
