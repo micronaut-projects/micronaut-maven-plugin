@@ -23,7 +23,7 @@
     <micronaut.aot.version>@micronaut.aot.version@</micronaut.aot.version>
     <micronaut.aot.enabled>true</micronaut.aot.enabled>
     <micronaut.aot.packageName>io.micronaut.build.examples.generated</micronaut.aot.packageName>
-    <maven.native.plugin.version>0.9.10</maven.native.plugin.version>
+    <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
   </properties>
 
   <repositories>
