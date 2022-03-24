@@ -23,14 +23,15 @@ jobs:
           server-password: GH_TOKEN
 
       - name: Cache Maven packages
-        uses: actions/cache@v2.1.7
+        uses: actions/cache@v3
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
       - name: Run tests
-        run: mvn verify -Prun-its
+        run: |
+          mvn install && mvn verify -Prun-its
 
       - name: Determine current version
         id: release_version

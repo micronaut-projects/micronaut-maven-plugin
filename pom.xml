@@ -5,7 +5,7 @@
 
     <groupId>io.micronaut.build</groupId>
     <artifactId>micronaut-maven-plugin</artifactId>
-    <version>3.2.0-SNAPSHOT</version>
+    <version>3.2.1-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>Micronaut Maven Plugin</name>
@@ -76,11 +76,11 @@
         <site.name>${project.name}</site.name>
         <site.description>${project.description}</site.description>
         <site.version>${project.version}</site.version>
-        <project.build.outputTimestamp>2022-02-02T09:54:22Z</project.build.outputTimestamp>
-        <native-maven-plugin.version>0.9.10</native-maven-plugin.version>
-        <micronaut.version>3.3.4</micronaut.version>
-        <micronaut.aot.version>1.0.0-M7</micronaut.aot.version>
-        <it.micronaut.version>3.3.1-SNAPSHOT</it.micronaut.version>
+        <project.build.outputTimestamp>2022-03-20T11:56:42Z</project.build.outputTimestamp>
+        <native-maven-plugin.version>0.9.11</native-maven-plugin.version>
+        <micronaut.version>3.4.0</micronaut.version>
+        <micronaut.aot.version>1.0.0</micronaut.aot.version>
+        <it.micronaut.version>3.4.0-SNAPSHOT</it.micronaut.version>
     </properties>
 
     <repositories>
@@ -319,7 +319,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-jxr-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
