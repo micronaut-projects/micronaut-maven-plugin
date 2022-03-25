@@ -117,7 +117,7 @@
 <a class="jxr_linenumber" name="L109" href="#L109">109</a> 
 <a class="jxr_linenumber" name="L110" href="#L110">110</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> warnRuntimeMismatchAndSetCorrectValue(<strong class="jxr_keyword">final</strong> <a name="AotRuntime" href="../../../../io/micronaut/build/aot/AotRuntime.html#AotRuntime">AotRuntime</a> correctRuntime) {
 <a class="jxr_linenumber" name="L111" href="#L111">111</a>         String correctRuntimeString = correctRuntime.name().toLowerCase();
-<a class="jxr_linenumber" name="L112" href="#L112">112</a>         getLog().warn(<span class="jxr_string">"Packaging is set to ["</span> + mavenProject.getPackaging() + <span class="jxr_string">"], but Micronaut AOT runtime is set to ["</span> + runtime + <span class="jxr_string">"]. Setting AOT runtime to: "</span> + correctRuntimeString);
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>         getLog().warn(<span class="jxr_string">"Packaging is set to ["</span> + mavenProject.getPackaging() + <span class="jxr_string">"], but Micronaut AOT runtime is set to ["</span> + runtime + <span class="jxr_string">"]. Setting AOT runtime to: ["</span> + correctRuntimeString + <span class="jxr_string">"]"</span>);
 <a class="jxr_linenumber" name="L113" href="#L113">113</a>         <strong class="jxr_keyword">this</strong>.runtime = correctRuntimeString;
 <a class="jxr_linenumber" name="L114" href="#L114">114</a>     }
 <a class="jxr_linenumber" name="L115" href="#L115">115</a> 
