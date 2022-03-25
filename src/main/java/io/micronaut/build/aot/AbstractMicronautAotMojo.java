@@ -109,7 +109,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
 
     private void warnRuntimeMismatchAndSetCorrectValue(final AotRuntime correctRuntime) {
         String correctRuntimeString = correctRuntime.name().toLowerCase();
-        getLog().warn("Packaging is set to [" + mavenProject.getPackaging() + "], but Micronaut AOT runtime is set to [" + runtime + "]. Setting AOT runtime to: " + correctRuntimeString);
+        getLog().warn("Packaging is set to [" + mavenProject.getPackaging() + "], but Micronaut AOT runtime is set to [" + runtime + "]. Setting AOT runtime to: [" + correctRuntimeString + "]");
         this.runtime = correctRuntimeString;
     }
 

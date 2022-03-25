@@ -15,7 +15,7 @@
   <properties>
     <jdk.version>8</jdk.version>
     <release.version>8</release.version>
-    <micronaut.version>3.4.0-SNAPSHOT</micronaut.version>
+    <micronaut.version>3.4.1-SNAPSHOT</micronaut.version>
     <micronaut-maven-plugin.version>3.2.0-SNAPSHOT</micronaut-maven-plugin.version>
     <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     <packaging>jar</packaging>
