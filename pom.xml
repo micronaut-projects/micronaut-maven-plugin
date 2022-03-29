@@ -79,7 +79,7 @@
         <project.build.outputTimestamp>2022-03-20T11:56:42Z</project.build.outputTimestamp>
         <native-maven-plugin.version>0.9.11</native-maven-plugin.version>
         <micronaut.version>3.4.0</micronaut.version>
-        <micronaut.aot.version>1.0.0</micronaut.aot.version>
+        <micronaut.aot.version>1.0.1</micronaut.aot.version>
         <it.micronaut.version>3.4.1-SNAPSHOT</it.micronaut.version>
     </properties>
 
