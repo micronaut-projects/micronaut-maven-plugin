@@ -164,9 +164,6 @@ public class RunMojo extends AbstractMojo {
     @SuppressWarnings("unchecked")
     public void execute() throws MojoExecutionException {
         this.sourceDirectories = compilerService.resolveSourceDirectories();
-        if (compilerService.needsCompilation()) {
-            compilerService.compileProject(true);
-        }
 
         try {
             runApplication();

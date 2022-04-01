@@ -17,6 +17,7 @@ package io.micronaut.build.aot;
 
 import io.micronaut.build.Packaging;
 import io.micronaut.build.services.CompilerService;
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -27,6 +28,7 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 
 import java.io.File;
+import java.io.IOException;
 
 public abstract class AbstractMicronautAotMojo extends AbstractMojo {
 
@@ -83,12 +85,21 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
         validateRuntime();
         getLog().info("Running Micronaut AOT " + micronautAotVersion + " " + getName());
         try {
-            getBaseOutputDirectory().mkdirs();
+            File baseOutputDirectory = getBaseOutputDirectory();
+            clean(baseOutputDirectory);
             doExecute();
-            onSuccess(getBaseOutputDirectory());
-        } catch (DependencyResolutionException e) {
+            onSuccess(baseOutputDirectory);
+        } catch (DependencyResolutionException | IOException e) {
             throw new MojoExecutionException("Unable to generate AOT optimizations", e);
         }
+    }
+
+    private void clean(File baseOutputDirectory) throws IOException {
+        if (baseOutputDirectory.exists()) {
+            getLog().debug("Deleting " + baseOutputDirectory.getAbsolutePath());
+            FileUtils.deleteDirectory(baseOutputDirectory);
+        }
+        baseOutputDirectory.mkdirs();
     }
 
     private void validateRuntime() {
