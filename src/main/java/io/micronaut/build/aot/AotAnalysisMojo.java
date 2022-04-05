@@ -98,6 +98,7 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
         Properties props = new Properties();
         if (userProvidedFile.exists()) {
             try (InputStream in = new FileInputStream(userProvidedFile)) {
+                getLog().info("Using AOT configuration file: " + configFile.getAbsolutePath());
                 props.load(in);
             } catch (IOException e) {
                 throw new MojoExecutionException("Unable to parse configuration file", e);
