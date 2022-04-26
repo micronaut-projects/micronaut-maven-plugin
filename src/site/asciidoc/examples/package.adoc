@@ -57,7 +57,7 @@ For example, to add `--verbose` to the native image args, you should define:
 
 Sometimes, depending on how many classes are in the classpath you may see an error `The command line is too long` when
 building a native-image. This is a https://graalvm.github.io/native-build-tools/latest/maven-plugin.html#long_classpath_and_shading_support[known issue]
-with Windows. To workaround this you need to configure the Shade plugin in your `pom.xml` and then configure the native image
+with Windows. To work around this you need to configure the Shade plugin in your `pom.xml` and then configure the native image
 plugin to use that shaded jar for building the native image:
 
 [source,xml]

@@ -175,7 +175,6 @@ public class RunMojo extends AbstractMojo {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void execute() throws MojoExecutionException {
         this.sourceDirectories = compilerService.resolveSourceDirectories();
 
@@ -246,7 +245,7 @@ public class RunMojo extends AbstractMojo {
             }
         } else if (matches(path)) {
             if (getLog().isInfoEnabled()) {
-                getLog().info("Detected change in " + projectRootDirectory.relativize(path).toString());
+                getLog().info("Detected change in " + projectRootDirectory.relativize(path));
             }
             boolean compiledOk = compileProject();
             if (compiledOk) {
@@ -284,7 +283,7 @@ public class RunMojo extends AbstractMojo {
                 for (FileSet fileSet : watches) {
                     if (fileSet.getIncludes() != null && !fileSet.getIncludes().isEmpty()) {
                         File directory = new File(fileSet.getDirectory());
-                        if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath()))
+                        if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath())) {
                             for (String includePattern : fileSet.getIncludes()) {
                                 if (AbstractScanner.match(includePattern, path.toString()) || new File(directory, includePattern).toPath().toAbsolutePath().equals(path)) {
                                     matches = true;
@@ -294,12 +293,15 @@ public class RunMojo extends AbstractMojo {
                                     break;
                                 }
                             }
+                        }
                     }
-                    if (matches) break;
+                    if (matches) {
+                        break;
+                    }
                 }
             }
 
-            // Finally process excludes only if the path is matching
+            // Finally, process excludes only if the path is matching
             if (matches) {
                 for (FileSet fileSet : watches) {
                     if (fileSet.getExcludes() != null && !fileSet.getExcludes().isEmpty()) {
@@ -316,7 +318,9 @@ public class RunMojo extends AbstractMojo {
                             }
                         }
                     }
-                    if (!matches) break;
+                    if (!matches) {
+                        break;
+                    }
                 }
             }
         }

@@ -36,12 +36,12 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 
 /**
- * Provides methods to work with Docker images
+ * Provides methods to work with Docker images.
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 1.1
@@ -66,14 +66,25 @@ public class DockerService {
         dockerClient = DockerClientImpl.getInstance(config, httpClient);
     }
 
+    /**
+     * Creates the {@link BuildImageCmd} by loading the given Dockerfile as classpath resource.
+     */
     public BuildImageCmd buildImageCmd(String dockerfileName) throws IOException {
         return dockerClient.buildImageCmd(loadDockerfileAsResource(dockerfileName));
     }
 
+    /**
+     * Creates a default {@link BuildImageCmd}.
+     */
     public BuildImageCmd buildImageCmd() {
         return dockerClient.buildImageCmd();
     }
 
+    /**
+     * Builds the Docker image from the given {@link BuildImageCmd} builder.
+     *
+     * @return The resulting image ID.
+     */
     public String buildImage(BuildImageCmd builder) {
         BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
             @Override
@@ -93,6 +104,9 @@ public class DockerService {
                 .awaitImageId();
     }
 
+    /**
+     * Copies a file from the specified container path in the given image ID, into a temporal location.
+     */
     public File copyFromContainer(String imageId, String containerPath) {
         CreateContainerCmd containerCmd = dockerClient.createContainerCmd(imageId);
         CreateContainerResponse container = containerCmd.exec();
@@ -102,7 +116,7 @@ public class DockerService {
         try (TarArchiveInputStream fin = new TarArchiveInputStream(nativeImage)) {
             TarArchiveEntry tarEntry = fin.getNextTarEntry();
             File file = new File(mavenProject.getBuild().getDirectory(), tarEntry.getName());
-            IOUtils.copy(fin, new FileOutputStream(file));
+            IOUtils.copy(fin, Files.newOutputStream(file.toPath()));
 
             return file;
         } catch (IOException e) {
@@ -113,6 +127,9 @@ public class DockerService {
         return null;
     }
 
+    /**
+     * Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.
+     */
     public File loadDockerfileAsResource(String name) throws IOException {
         String path = "/dockerfiles/" + name;
         InputStream stream = getClass().getResourceAsStream(path);
@@ -124,6 +141,9 @@ public class DockerService {
         return null;
     }
 
+    /**
+     * Creates a {@link PushImageCmd} from the given image name.
+     */
     public PushImageCmd pushImageCmd(String imageName) {
         return dockerClient.pushImageCmd(imageName);
     }

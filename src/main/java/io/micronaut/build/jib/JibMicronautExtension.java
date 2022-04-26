@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.buildplan.UnixPathParser;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
-import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import io.micronaut.build.AbstractDockerMojo;
 import io.micronaut.build.MicronautRuntime;
 import io.micronaut.build.services.ApplicationConfigurationService;
@@ -31,7 +30,7 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import java.util.*;
 
 /**
- * Jib extension to support building Docker images
+ * Jib extension to support building Docker images.
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 1.1
@@ -48,7 +47,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     @Override
     public ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan buildPlan, Map<String, String> properties,
                                                        Optional<Void> extraConfig, MavenData mavenData,
-                                                       ExtensionLogger logger) throws JibPluginExtensionException {
+                                                       ExtensionLogger logger) {
 
         ContainerBuildPlan.Builder builder = buildPlan.toBuilder();
         MicronautRuntime runtime = MicronautRuntime.valueOf(mavenData.getMavenProject().getProperties().getProperty(MicronautRuntime.PROPERTY, "none").toUpperCase());
@@ -72,7 +71,6 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION:
-
                 List<? extends LayerObject> originalLayers = buildPlan.getLayers();
                 builder.setLayers(Collections.emptyList());
 
@@ -90,11 +88,15 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
                         .setEntrypoint(buildProjectFnEntrypoint())
                         .setCmd(cmd);
                 break;
+
             case LAMBDA:
                 List<String> entrypoint = buildPlan.getEntrypoint();
                 Objects.requireNonNull(entrypoint).set(entrypoint.size() - 1, "io.micronaut.function.aws.runtime.MicronautLambdaRuntime");
                 builder.setEntrypoint(entrypoint);
                 break;
+
+            default:
+                //no op
         }
         return builder.build();
     }
@@ -136,7 +138,6 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
             return AbstractDockerMojo.LATEST_TAG;
         }
     }
-
 
     private LayerObject remapLayer(LayerObject layerObject) {
         FileEntriesLayer originalLayer = (FileEntriesLayer) layerObject;

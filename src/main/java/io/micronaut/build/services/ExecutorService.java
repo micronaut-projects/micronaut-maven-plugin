@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.*;
 
 /**
- * Provides methods to execute goals on the current project
+ * Provides methods to execute goals on the current project.
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 1.1
@@ -50,11 +50,14 @@ public class ExecutorService {
         this.mavenProject = mavenProject;
     }
 
+    /**
+     * Executes the given goal from the given plugin coordinates.
+     */
     public void executeGoal(String pluginKey, String goal) throws MojoExecutionException {
         final Plugin plugin = mavenProject.getPlugin(pluginKey);
         if (plugin != null) {
             AtomicReference<String> executionId = new AtomicReference<>(goal);
-            if (goal != null && goal.length() > 0 && goal.indexOf('#') > -1) {
+            if (goal != null && goal.indexOf('#') > -1) {
                 int pos = goal.indexOf('#');
                 executionId.set(goal.substring(pos + 1));
                 goal = goal.substring(0, pos);
@@ -78,6 +81,9 @@ public class ExecutorService {
         }
     }
 
+    /**
+     * Executes a goal using the given arguments.
+     */
     public void executeGoal(String pluginGroup, String pluginArtifact, String pluginVersion, String goal, Xpp3Dom configuration) throws MojoExecutionException {
         final Plugin plugin = plugin(pluginGroup, pluginArtifact, pluginVersion);
         executeMojo(plugin, goal(goal), configuration, executionEnvironment);

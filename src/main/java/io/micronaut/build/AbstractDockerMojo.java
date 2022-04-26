@@ -78,19 +78,19 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     protected String mainClass;
 
     /**
-     * Whether to produce a static native image when using <code>docker-native</code> packaging
+     * Whether to produce a static native image when using <code>docker-native</code> packaging.
      */
     @Parameter(defaultValue = "false", property = "micronaut.native-image.static")
     protected Boolean staticNativeImage;
 
     /**
-     * The target runtime of the application
+     * The target runtime of the application.
      */
     @Parameter(property = MicronautRuntime.PROPERTY, defaultValue = "NONE")
     protected String micronautRuntime;
 
     /**
-     * The Docker image used to run the native image
+     * The Docker image used to run the native image.
      * @since 1.2
      */
     @Parameter(property = "micronaut.native-image.base-image-run", defaultValue = DEFAULT_BASE_IMAGE_GRAALVM_RUN)
@@ -103,14 +103,24 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
         this.dockerService = dockerService;
     }
 
+    /**
+     * Returns the Java version from either the <code>maven.compiler.target</code> property or the <code>java.version</code> property.
+     */
     protected ArtifactVersion javaVersion() {
         return new DefaultArtifactVersion(Optional.ofNullable(mavenProject.getProperties().getProperty("maven.compiler.target")).orElse(System.getProperty("java.version")));
     }
 
+    /**
+     * Returns the GraalVM version from the <code>graalvm.version</code> property, which is expected to come from the
+     * Micronaut Parent POM.
+     */
     protected String graalVmVersion() {
         return mavenProject.getProperties().getProperty("graal.version");
     }
 
+    /**
+     * Calculates the JVM version to use for GraalVM.
+     */
     protected String graalVmJvmVersion() {
         String graalVmJvmVersion = "java11";
         if (javaVersion().getMajorVersion() >= 17) {
@@ -119,6 +129,9 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
         return graalVmJvmVersion;
     }
 
+    /**
+     * Determines the base FROM image for the native image.
+     */
     protected String getFrom() {
         if (staticNativeImage) {
             // For building a static native image we need a base image with tools (cc, make,...) already installed
@@ -128,6 +141,9 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
         }
     }
 
+    /**
+     * Calculates the Docker image tags by looking at the Jib plugin configuration.
+     */
     protected Set<String> getTags() {
         Set<String> tags = new HashSet<>();
         Optional<String> toImageOptional = jibConfigurationService.getToImage();
@@ -153,11 +169,17 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
         return tags;
     }
 
+    /**
+     * Determines the application port to expose by looking at the application configuration.
+     */
     protected String getPort() {
         String port = applicationConfigurationService.getServerPort();
         return "-1".equals(port) ? DEFAULT_PORT : port;
     }
 
+    /**
+     * Copy project dependencies to a <code>target/dependency</code> directory.
+     */
     @SuppressWarnings("ResultOfMethodCallIgnored")
     protected void copyDependencies() throws IOException {
         List<String> imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
@@ -171,6 +193,9 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
         }
     }
 
+    /**
+     * Returns the Docker CMD command.
+     */
     protected String getCmd() {
         return "CMD [" +
                 appArguments.stream()
@@ -179,6 +204,9 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
                 "]";
     }
 
+    /**
+     * Returns any additional GraalVM arguments.
+     */
     protected String getGraalVmBuildArgs() {
         if (nativeImageBuildArgs != null && !nativeImageBuildArgs.isEmpty()) {
             return String.join(" ", nativeImageBuildArgs);

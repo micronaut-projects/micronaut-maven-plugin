@@ -30,6 +30,9 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * Abstract Mojo for Micronaut AOT.
+ */
 public abstract class AbstractMicronautAotMojo extends AbstractMojo {
 
     protected final CompilerService compilerService;
@@ -57,7 +60,6 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
      */
     @Parameter(property = "micronaut.aot.enabled", defaultValue = "false")
     protected boolean enabled;
-
 
     public AbstractMicronautAotMojo(CompilerService compilerService, MavenProject mavenProject, MavenSession mavenSession, RepositorySystem repositorySystem) {
         this.compilerService = compilerService;
@@ -108,13 +110,19 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
         switch (packaging) {
             case JAR:
             case DOCKER:
-                if (aotRuntime != AotRuntime.JIT) warnRuntimeMismatchAndSetCorrectValue(AotRuntime.JIT);
+                if (aotRuntime != AotRuntime.JIT) {
+                    warnRuntimeMismatchAndSetCorrectValue(AotRuntime.JIT);
+                }
                 break;
 
             case NATIVE_IMAGE:
             case DOCKER_NATIVE:
-                if (aotRuntime != AotRuntime.NATIVE) warnRuntimeMismatchAndSetCorrectValue(AotRuntime.NATIVE);
+                if (aotRuntime != AotRuntime.NATIVE) {
+                    warnRuntimeMismatchAndSetCorrectValue(AotRuntime.NATIVE);
+                }
                 break;
+            default:
+                throw new IllegalArgumentException("Unsupported packaging: " + packaging);
         }
     }
 

@@ -16,7 +16,7 @@ To see the documentation of a particular version, replace `latest` or `snapshot`
 
 ## Snapshots and Releases
 
-Snaphots and releases are automatically published to Maven Central using [Github Actions](https://github.com/micronaut-projects/micronaut-maven-plugin/actions).
+Snaphots and releases are automatically published to Maven Central using [GitHub Actions](https://github.com/micronaut-projects/micronaut-maven-plugin/actions).
 
 A release is performed with the following steps:
 

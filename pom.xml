@@ -48,7 +48,7 @@
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -446,9 +446,8 @@
                     <configLocation>${project.basedir}/config/checkstyle/checkstyle.xml</configLocation>
                     <propertyExpansion>config_loc=${project.basedir}/config/checkstyle</propertyExpansion>
                     <consoleOutput>true</consoleOutput>
-                    <!-- TODO: skip until we get there -->
-                    <failsOnError>false</failsOnError>
-                    <failOnViolation>false</failOnViolation>
+                    <failsOnError>true</failsOnError>
+                    <failOnViolation>true</failOnViolation>
                     <linkXRef>false</linkXRef>
                     <maxAllowedViolations>1</maxAllowedViolations>
                 </configuration>

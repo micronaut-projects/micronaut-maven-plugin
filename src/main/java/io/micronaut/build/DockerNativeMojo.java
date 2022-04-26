@@ -79,6 +79,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
                     break;
 
                 case DEFAULT:
+                default:
                     buildDockerNative();
                     break;
             }

@@ -21,5 +21,5 @@ package io.micronaut.build.aot;
  * @author Álvaro Sánchez-Mariscal
  */
 public enum AotRuntime {
-    JIT, NATIVE;
+    JIT, NATIVE
 }

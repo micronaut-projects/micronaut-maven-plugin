@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Provides methods to compile a Maven project
+ * Provides methods to compile a Maven project.
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 1.1
@@ -45,38 +45,15 @@ import java.util.stream.Stream;
 @Singleton
 public class CompilerService {
 
-    private static final String JAVA = "java";
-    private static final String GROOVY = "groovy";
-    private static final String KOTLIN = "kotlin";
-
     public static final String MAVEN_COMPILER_PLUGIN = "org.apache.maven.plugins:maven-compiler-plugin";
     public static final String MAVEN_JAR_PLUGIN = "org.apache.maven.plugins:maven-jar-plugin";
     public static final String MAVEN_RESOURCES_PLUGIN = "org.apache.maven.plugins:maven-resources-plugin";
     public static final String GMAVEN_PLUS_PLUGIN = "org.codehaus.gmavenplus:gmavenplus-plugin";
     public static final String KOTLIN_MAVEN_PLUGIN = "org.jetbrains.kotlin:kotlin-maven-plugin";
 
-
-    /**
-     * @see <a href="https://maven.apache.org/ref/3.6.3/maven-core/lifecycles.html#default_Lifecycle">default Lifecycle</a>
-     */
-    private static final List<String> PHASES_AFTER_COMPILE = Arrays.asList(
-            "compile",
-            "process-classes",
-            "generate-test-sources",
-            "process-test-sources",
-            "generate-test-resources",
-            "process-test-resources",
-            "test-compile",
-            "process-test-classes",
-            "test",
-            "prepare-package",
-            "package",
-            "pre-integration-test",
-            "integration-test",
-            "post-integration-test",
-            "verify",
-            "install",
-            "deploy");
+    private static final String JAVA = "java";
+    private static final String GROOVY = "groovy";
+    private static final String KOTLIN = "kotlin";
 
     private final Log log;
     private final Map<String, Path> sourceDirectories;
@@ -99,10 +76,11 @@ public class CompilerService {
         this.invoker = new DefaultInvoker();
     }
 
-    public boolean needsCompilation() {
-        return mavenSession.getGoals().stream().noneMatch(PHASES_AFTER_COMPILE::contains);
-    }
-
+    /**
+     * Compiles the project.
+     * @param copyResources whether to copy resources to the target directory.
+     * @return the last compilation time millis.
+     */
     public Optional<Long> compileProject(boolean copyResources) {
         Long lastCompilation = null;
         if (log.isDebugEnabled()) {
@@ -144,6 +122,9 @@ public class CompilerService {
         return Optional.ofNullable(lastCompilation);
     }
 
+    /**
+     * Resolves the source directories by checking the existence of Java, Groovy or Kotlin sources.
+     */
     public Map<String, Path> resolveSourceDirectories() {
         if (log.isDebugEnabled()) {
             log.debug("Resolving source directories...");
@@ -166,6 +147,9 @@ public class CompilerService {
         return sourceDirectories;
     }
 
+    /**
+     * Resolves project dependencies for the given scopes.
+     */
     public List<Dependency> resolveDependencies(String... scopes) {
         try {
             DependencyFilter filter = DependencyFilterUtils.classpathFilter(scopes);
@@ -182,6 +166,9 @@ public class CompilerService {
         }
     }
 
+    /**
+     * Builds a classpath string for the given dependencies.
+     */
     public String buildClasspath(List<Dependency> dependencies) {
         Comparator<Dependency> byGroupId = Comparator.comparing(d -> d.getArtifact().getGroupId());
         Comparator<Dependency> byArtifactId = Comparator.comparing(d -> d.getArtifact().getArtifactId());
@@ -191,6 +178,9 @@ public class CompilerService {
                 .collect(Collectors.joining(File.pathSeparator));
     }
 
+    /**
+     * Packages the project by invoking the Jar plugin.
+     */
     public InvocationResult packageProject() throws MavenInvocationException {
         InvocationRequest request = new DefaultInvocationRequest();
         request.setPomFile(mavenProject.getFile());

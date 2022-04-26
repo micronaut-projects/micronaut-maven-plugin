@@ -23,15 +23,15 @@ package io.micronaut.build;
  */
 public enum DockerBuildStrategy {
     /**
-     * An oracle function
+     * An oracle function.
      */
     ORACLE_FUNCTION,
     /**
-     * An AWS Lambda
+     * An AWS Lambda.
      */
     LAMBDA,
     /**
-     * Default docker build strategy
+     * Default docker build strategy.
      */
     DEFAULT
 }
