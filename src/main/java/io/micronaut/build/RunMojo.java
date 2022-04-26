@@ -13,7 +13,7 @@ import org.apache.maven.plugins.annotations.*;
 import org.apache.maven.project.*;
 import org.apache.maven.toolchain.Toolchain;
 import org.apache.maven.toolchain.ToolchainManager;
-import org.codehaus.plexus.util.DirectoryScanner;
+import org.codehaus.plexus.util.AbstractScanner;
 import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.eclipse.aether.graph.Dependency;
@@ -21,7 +21,6 @@ import org.eclipse.aether.util.artifact.JavaScopes;
 
 import javax.inject.Inject;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -54,7 +53,7 @@ public class RunMojo extends AbstractMojo {
 
     static {
         DEFAULT_EXCLUDES = new ArrayList<>();
-        Collections.addAll(DEFAULT_EXCLUDES, DirectoryScanner.DEFAULTEXCLUDES);
+        Collections.addAll(DEFAULT_EXCLUDES, AbstractScanner.DEFAULTEXCLUDES);
         Collections.addAll(DEFAULT_EXCLUDES, "**/.idea/**");
     }
 
@@ -215,7 +214,7 @@ public class RunMojo extends AbstractMojo {
         }
     }
 
-    private void handleEvent(DirectoryChangeEvent event) throws IOException {
+    private void handleEvent(DirectoryChangeEvent event) {
         Path path = event.path();
         Path parent = path.getParent();
 
@@ -272,7 +271,7 @@ public class RunMojo extends AbstractMojo {
                         File directory = new File(fileSet.getDirectory());
                         if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath()))
                             for (String includePattern : fileSet.getIncludes()) {
-                                if (DirectoryScanner.match(includePattern, path.toString()) || new File(directory, includePattern).toPath().toAbsolutePath().equals(path)) {
+                                if (AbstractScanner.match(includePattern, path.toString()) || new File(directory, includePattern).toPath().toAbsolutePath().equals(path)) {
                                     matches = true;
                                     if (getLog().isDebugEnabled()) {
                                         getLog().debug("Path [" + relativePath + "] matched the include pattern [" + includePattern + "] of the directory [" + fileSet.getDirectory() + "]");
@@ -292,7 +291,7 @@ public class RunMojo extends AbstractMojo {
                         File directory = new File(fileSet.getDirectory());
                         if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath())) {
                             for (String excludePattern : fileSet.getExcludes()) {
-                                if (DirectoryScanner.match(excludePattern, path.toString()) || new File(directory, excludePattern).toPath().toAbsolutePath().equals(path)) {
+                                if (AbstractScanner.match(excludePattern, path.toString()) || new File(directory, excludePattern).toPath().toAbsolutePath().equals(path)) {
                                     matches = false;
                                     if (getLog().isDebugEnabled()) {
                                         getLog().debug("Path [" + relativePath + "] matched the exclude pattern [" + excludePattern + "] of the directory [" + fileSet.getDirectory() + "]");
@@ -311,9 +310,17 @@ public class RunMojo extends AbstractMojo {
     }
 
     private boolean isDefaultExcluded(Path path) {
-        return path.startsWith(targetDirectory.getAbsolutePath()) ||
+        boolean excludeTargetDirectory = true;
+        if (this.watches != null && !this.watches.isEmpty()) {
+            for (FileSet fileSet : this.watches) {
+                if (fileSet.getDirectory().equals(this.targetDirectory.getName())) {
+                    excludeTargetDirectory = false;
+                }
+            }
+        }
+        return (excludeTargetDirectory && path.startsWith(targetDirectory.getAbsolutePath())) ||
                 DEFAULT_EXCLUDES.stream()
-                        .anyMatch(excludePattern -> DirectoryScanner.match(excludePattern, path.toString()));
+                        .anyMatch(excludePattern -> AbstractScanner.match(excludePattern, path.toString()));
     }
 
     private boolean hasBeenCompiledRecently() {
