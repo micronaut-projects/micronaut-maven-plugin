@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.buildplan.UnixPathParser;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
-import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import io.micronaut.build.AbstractDockerMojo;
 import io.micronaut.build.MicronautRuntime;
 import io.micronaut.build.services.ApplicationConfigurationService;
@@ -48,7 +47,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     @Override
     public ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan buildPlan, Map<String, String> properties,
                                                        Optional<Void> extraConfig, MavenData mavenData,
-                                                       ExtensionLogger logger) throws JibPluginExtensionException {
+                                                       ExtensionLogger logger) {
 
         ContainerBuildPlan.Builder builder = buildPlan.toBuilder();
         MicronautRuntime runtime = MicronautRuntime.valueOf(mavenData.getMavenProject().getProperties().getProperty(MicronautRuntime.PROPERTY, "none").toUpperCase());

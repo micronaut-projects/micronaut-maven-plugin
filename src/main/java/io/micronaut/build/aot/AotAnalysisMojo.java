@@ -29,7 +29,10 @@ import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
 
 import javax.inject.Inject;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -97,7 +100,7 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
         File userProvidedFile = this.configFile == null ? new File(baseDirectory, AOT_PROPERTIES_FILE_NAME) : this.configFile;
         Properties props = new Properties();
         if (userProvidedFile.exists()) {
-            try (InputStream in = new FileInputStream(userProvidedFile)) {
+            try (InputStream in = Files.newInputStream(userProvidedFile.toPath())) {
                 getLog().info("Using AOT configuration file: " + configFile.getAbsolutePath());
                 props.load(in);
             } catch (IOException e) {
@@ -111,7 +114,7 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
             props.put(AbstractStaticServiceLoaderSourceGenerator.SERVICE_TYPES, String.join(",", Constants.SERVICE_TYPES));
         }
         File effectiveConfig = outputFile("effective-" + AOT_PROPERTIES_FILE_NAME);
-        try (OutputStream out = new FileOutputStream(effectiveConfig)) {
+        try (OutputStream out = Files.newOutputStream(effectiveConfig.toPath())) {
             props.store(out, "Effective AOT configuration");
         } catch (IOException e) {
             throw new MojoExecutionException("Unable to parse configuration file", e);

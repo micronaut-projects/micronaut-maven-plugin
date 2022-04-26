@@ -55,28 +55,6 @@ public class CompilerService {
     private static final String GROOVY = "groovy";
     private static final String KOTLIN = "kotlin";
 
-    /**
-     * @see <a href="https://maven.apache.org/ref/3.6.3/maven-core/lifecycles.html#default_Lifecycle">default Lifecycle</a>
-     */
-    private static final List<String> PHASES_AFTER_COMPILE = Arrays.asList(
-            "compile",
-            "process-classes",
-            "generate-test-sources",
-            "process-test-sources",
-            "generate-test-resources",
-            "process-test-resources",
-            "test-compile",
-            "process-test-classes",
-            "test",
-            "prepare-package",
-            "package",
-            "pre-integration-test",
-            "integration-test",
-            "post-integration-test",
-            "verify",
-            "install",
-            "deploy");
-
     private final Log log;
     private final Map<String, Path> sourceDirectories;
     private final MavenProject mavenProject;

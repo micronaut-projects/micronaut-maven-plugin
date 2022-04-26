@@ -175,7 +175,6 @@ public class RunMojo extends AbstractMojo {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void execute() throws MojoExecutionException {
         this.sourceDirectories = compilerService.resolveSourceDirectories();
 
@@ -246,7 +245,7 @@ public class RunMojo extends AbstractMojo {
             }
         } else if (matches(path)) {
             if (getLog().isInfoEnabled()) {
-                getLog().info("Detected change in " + projectRootDirectory.relativize(path).toString());
+                getLog().info("Detected change in " + projectRootDirectory.relativize(path));
             }
             boolean compiledOk = compileProject();
             if (compiledOk) {
@@ -302,7 +301,7 @@ public class RunMojo extends AbstractMojo {
                 }
             }
 
-            // Finally process excludes only if the path is matching
+            // Finally, process excludes only if the path is matching
             if (matches) {
                 for (FileSet fileSet : watches) {
                     if (fileSet.getExcludes() != null && !fileSet.getExcludes().isEmpty()) {

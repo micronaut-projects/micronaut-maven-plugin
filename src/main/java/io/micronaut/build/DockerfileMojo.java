@@ -87,7 +87,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     private Optional<File> buildDockerfile(MicronautRuntime runtime) throws IOException {
-        File dockerfile = null;
+        File dockerfile;
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION:
                 dockerfile = dockerService.loadDockerfileAsResource("DockerfileOracleCloud");
@@ -119,7 +119,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     private Optional<File> buildDockerfileNative(MicronautRuntime runtime) throws IOException {
-        File dockerfile = null;
+        File dockerfile;
         switch (runtime.getBuildStrategy()) {
             case LAMBDA:
                 dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS_CUSTOM_RUNTIME);

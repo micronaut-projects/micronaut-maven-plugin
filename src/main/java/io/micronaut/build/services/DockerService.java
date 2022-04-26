@@ -36,9 +36,9 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 
 /**
  * Provides methods to work with Docker images.
@@ -106,9 +106,6 @@ public class DockerService {
 
     /**
      * Copies a file from the specified container path in the given image ID, into a temporal location.
-     * @param imageId
-     * @param containerPath
-     * @return
      */
     public File copyFromContainer(String imageId, String containerPath) {
         CreateContainerCmd containerCmd = dockerClient.createContainerCmd(imageId);
@@ -119,7 +116,7 @@ public class DockerService {
         try (TarArchiveInputStream fin = new TarArchiveInputStream(nativeImage)) {
             TarArchiveEntry tarEntry = fin.getNextTarEntry();
             File file = new File(mavenProject.getBuild().getDirectory(), tarEntry.getName());
-            IOUtils.copy(fin, new FileOutputStream(file));
+            IOUtils.copy(fin, Files.newOutputStream(file.toPath()));
 
             return file;
         } catch (IOException e) {

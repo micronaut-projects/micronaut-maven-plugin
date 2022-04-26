@@ -57,7 +57,7 @@ public class ExecutorService {
         final Plugin plugin = mavenProject.getPlugin(pluginKey);
         if (plugin != null) {
             AtomicReference<String> executionId = new AtomicReference<>(goal);
-            if (goal != null && goal.length() > 0 && goal.indexOf('#') > -1) {
+            if (goal != null && goal.indexOf('#') > -1) {
                 int pos = goal.indexOf('#');
                 executionId.set(goal.substring(pos + 1));
                 goal = goal.substring(0, pos);
