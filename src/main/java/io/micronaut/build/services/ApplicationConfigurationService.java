@@ -48,6 +48,10 @@ public class ApplicationConfigurationService {
         this.applicationConfiguration = parseApplicationConfiguration();
     }
 
+    /**
+     * Determines the application port by looking at the <code>MICRONAUT_SERVER_PORT</code> environment variable, the
+     * <code>micronaut.server.port</code> configuration property, or falls back to a default port.
+     */
     public String getServerPort() {
         return applicationConfiguration.getOrDefault("MICRONAUT_SERVER_PORT", applicationConfiguration.getOrDefault("micronaut.server.port", DEFAULT_PORT)).toString();
     }

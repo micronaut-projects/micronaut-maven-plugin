@@ -125,7 +125,7 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
         Path generatedClasses = generated.resolve("classes");
         try {
             FileUtils.copyDirectory(generatedClasses.toFile(), outputDirectory);
-            try(Stream<String> linesStream = Files.lines(generated.resolve("logs").resolve("resource-filter.txt"))) {
+            try (Stream<String> linesStream = Files.lines(generated.resolve("logs").resolve("resource-filter.txt"))) {
                 linesStream.forEach(toRemove -> {
                     try {
                         Files.delete(outputDirectory.toPath().resolve(toRemove));

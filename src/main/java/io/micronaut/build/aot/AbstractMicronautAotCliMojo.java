@@ -69,13 +69,13 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
             "std-optimizers"
     };
 
-    private final ExecutorService executorService;
-
     /**
      * Package name to use for generated sources.
      */
     @Parameter(property = MICRONAUT_AOT_PACKAGE_NAME)
     protected String packageName;
+
+    private final ExecutorService executorService;
 
     @Parameter
     private List<org.apache.maven.model.Dependency> aotDependencies;

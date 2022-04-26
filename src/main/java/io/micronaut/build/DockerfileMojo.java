@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 
 /**
  * <p>Generates a <code>Dockerfile</code> depending on the <code>packaging</code> and <code>micronaut.runtime</code>
- * properties, eg:</p>
+ * properties.
  *
  * <pre>mvn mn:dockerfile -Dpackaging=docker-native -Dmicronaut.runtime=lambda</pre>
  *
@@ -95,6 +95,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
                 break;
             case LAMBDA:
             case DEFAULT:
+            default:
                 dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE);
                 processDockerfile(dockerfile);
                 break;
@@ -129,6 +130,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
                 break;
 
             case DEFAULT:
+            default:
                 String dockerfileName = DOCKERFILE_NATIVE;
                 if (staticNativeImage) {
                     getLog().info("Generating a static native image");

@@ -97,6 +97,8 @@
         <!-- See https://checkstyle.org/config_javadoc.html -->
         <module name="JavadocMethod">
             <property name="excludeScope" value="private"/>
+            <property name="allowMissingParamTags" value="true"/>
+            <property name="allowMissingReturnTag" value="true"/>
         </module>
         <module name="JavadocType"/>
         <module name="JavadocStyle"/>

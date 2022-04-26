@@ -284,7 +284,7 @@ public class RunMojo extends AbstractMojo {
                 for (FileSet fileSet : watches) {
                     if (fileSet.getIncludes() != null && !fileSet.getIncludes().isEmpty()) {
                         File directory = new File(fileSet.getDirectory());
-                        if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath()))
+                        if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath())) {
                             for (String includePattern : fileSet.getIncludes()) {
                                 if (AbstractScanner.match(includePattern, path.toString()) || new File(directory, includePattern).toPath().toAbsolutePath().equals(path)) {
                                     matches = true;
@@ -294,8 +294,11 @@ public class RunMojo extends AbstractMojo {
                                     break;
                                 }
                             }
+                        }
                     }
-                    if (matches) break;
+                    if (matches) {
+                        break;
+                    }
                 }
             }
 
@@ -316,7 +319,9 @@ public class RunMojo extends AbstractMojo {
                             }
                         }
                     }
-                    if (!matches) break;
+                    if (!matches) {
+                        break;
+                    }
                 }
             }
         }

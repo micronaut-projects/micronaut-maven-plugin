@@ -69,6 +69,8 @@ public enum MicronautRuntime {
      */
     AZURE_FUNCTION();
 
+    public static final String PROPERTY = "micronaut.runtime";
+
     private final DockerBuildStrategy buildStrategy;
 
     MicronautRuntime() {
@@ -85,7 +87,5 @@ public enum MicronautRuntime {
     public DockerBuildStrategy getBuildStrategy() {
         return buildStrategy;
     }
-
-    public static final String PROPERTY = "micronaut.runtime";
 
 }

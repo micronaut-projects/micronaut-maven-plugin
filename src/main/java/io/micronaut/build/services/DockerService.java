@@ -41,7 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Provides methods to work with Docker images
+ * Provides methods to work with Docker images.
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 1.1
@@ -66,14 +66,25 @@ public class DockerService {
         dockerClient = DockerClientImpl.getInstance(config, httpClient);
     }
 
+    /**
+     * Creates the {@link BuildImageCmd} by loading the given Dockerfile as classpath resource.
+     */
     public BuildImageCmd buildImageCmd(String dockerfileName) throws IOException {
         return dockerClient.buildImageCmd(loadDockerfileAsResource(dockerfileName));
     }
 
+    /**
+     * Creates a default {@link BuildImageCmd}.
+     */
     public BuildImageCmd buildImageCmd() {
         return dockerClient.buildImageCmd();
     }
 
+    /**
+     * Builds the Docker image from the given {@link BuildImageCmd} builder.
+     *
+     * @return The resulting image ID.
+     */
     public String buildImage(BuildImageCmd builder) {
         BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
             @Override
@@ -93,6 +104,12 @@ public class DockerService {
                 .awaitImageId();
     }
 
+    /**
+     * Copies a file from the specified container path in the given image ID, into a temporal location.
+     * @param imageId
+     * @param containerPath
+     * @return
+     */
     public File copyFromContainer(String imageId, String containerPath) {
         CreateContainerCmd containerCmd = dockerClient.createContainerCmd(imageId);
         CreateContainerResponse container = containerCmd.exec();
@@ -113,6 +130,9 @@ public class DockerService {
         return null;
     }
 
+    /**
+     * Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.
+     */
     public File loadDockerfileAsResource(String name) throws IOException {
         String path = "/dockerfiles/" + name;
         InputStream stream = getClass().getResourceAsStream(path);
@@ -124,6 +144,9 @@ public class DockerService {
         return null;
     }
 
+    /**
+     * Creates a {@link PushImageCmd} from the given image name.
+     */
     public PushImageCmd pushImageCmd(String imageName) {
         return dockerClient.pushImageCmd(imageName);
     }
