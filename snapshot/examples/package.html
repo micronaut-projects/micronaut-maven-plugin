@@ -196,7 +196,7 @@ for more information about how to customize the generated native image.</p>
 <div class="paragraph">
 <p>Sometimes, depending on how many classes are in the classpath you may see an error <code>The command line is too long</code> when
 building a native-image. This is a <a href="https://graalvm.github.io/native-build-tools/latest/maven-plugin.html#long_classpath_and_shading_support">known issue</a>
-with Windows. To workaround this you need to configure the Shade plugin in your <code>pom.xml</code> and then configure the native image
+with Windows. To work around this you need to configure the Shade plugin in your <code>pom.xml</code> and then configure the native image
 plugin to use that shaded jar for building the native image:</p>
 </div>
 <div class="listingblock">
