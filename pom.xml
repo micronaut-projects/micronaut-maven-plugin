@@ -5,7 +5,7 @@
 
     <groupId>io.micronaut.build</groupId>
     <artifactId>micronaut-maven-plugin</artifactId>
-    <version>3.2.4-SNAPSHOT</version>
+    <version>3.3.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>Micronaut Maven Plugin</name>
@@ -78,9 +78,9 @@
         <site.version>${project.version}</site.version>
         <project.build.outputTimestamp>2022-04-05T15:03:00Z</project.build.outputTimestamp>
         <native-maven-plugin.version>0.9.11</native-maven-plugin.version>
-        <micronaut.version>3.4.2</micronaut.version>
+        <micronaut.version>3.5.0-SNAPSHOT</micronaut.version>
         <micronaut.aot.version>1.0.3</micronaut.aot.version>
-        <it.micronaut.version>3.4.2-SNAPSHOT</it.micronaut.version>
+        <it.micronaut.version>3.5.0-SNAPSHOT</it.micronaut.version>
     </properties>
 
     <repositories>

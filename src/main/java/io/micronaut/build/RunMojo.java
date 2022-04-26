@@ -51,6 +51,7 @@ public class RunMojo extends AbstractMojo {
     private static final int LAST_COMPILATION_THRESHOLD = 500;
     private static final String JAVA = "java";
     private static final List<String> DEFAULT_EXCLUDES;
+    public static final String RESOURCES_DIR = "src/main/resources";
 
     static {
         DEFAULT_EXCLUDES = new ArrayList<>();
@@ -173,6 +174,7 @@ public class RunMojo extends AbstractMojo {
             if (watchForChanges) {
                 List<Path> pathsToWatch = new ArrayList<>(sourceDirectories.values());
                 pathsToWatch.add(projectRootDirectory);
+                pathsToWatch.add(projectRootDirectory.resolve(RESOURCES_DIR));
 
                 if (watches != null && !watches.isEmpty()) {
                     for (FileSet fs : watches) {
@@ -232,7 +234,7 @@ public class RunMojo extends AbstractMojo {
             }
         } else if (matches(path)) {
             if (getLog().isInfoEnabled()) {
-                getLog().info("Detected change in " + projectRootDirectory.relativize(path).toString());
+                getLog().info("Detected change in " + projectRootDirectory.relativize(path));
             }
             boolean compiledOk = compileProject();
             if (compiledOk) {
@@ -252,10 +254,11 @@ public class RunMojo extends AbstractMojo {
         }
 
         // Start by checking whether it's a change in any source directory
-        boolean matches = this.sourceDirectories
-                .values()
-                .stream()
-                .anyMatch(path.getParent()::startsWith);
+        Collection<Path> values = this.sourceDirectories.values();
+        Collection<Path> pathsToCheck = new ArrayList<>(values.size() + 1);
+        pathsToCheck.addAll(values);
+        pathsToCheck.add(projectRootDirectory.resolve(RESOURCES_DIR));
+        boolean matches = pathsToCheck.stream().anyMatch(path.getParent()::startsWith);
 
         String relativePath = projectRootDirectory.relativize(path).toString();
 

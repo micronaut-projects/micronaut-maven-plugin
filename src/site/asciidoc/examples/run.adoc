@@ -40,9 +40,10 @@ $ mvn clean mn:run
 By default, this plugin watches for changes in the following locations:
 
 * `/pom.xml`. Only dependency changes may trigger an application restart.
-* `src/main/java` (if it exists).
-* `src/main/groovy` (if it exists).
-* `src/main/kotlin` (if it exists).
+* `src/main/resources/**/*`.
+* `src/main/java/**/*` (if it exists).
+* `src/main/groovy/**/*` (if it exists).
+* `src/main/kotlin/**/*` (if it exists).
 
 You can further include or exclude some other locations:
 
@@ -65,12 +66,8 @@ You can further include or exclude some other locations:
                     <watches>
                         <watch>
                             <directory>src/main/resources</directory>
-                            <includes>
-                                <include>**/*.yml</include>
-                                <include>**/*.properties</include>
-                            </includes>
                             <excludes>
-                                <exclude>test.properties</exclude>
+                                <exclude>application-test.yml</exclude>
                             </excludes>
                         </watch>
                         <watch>
