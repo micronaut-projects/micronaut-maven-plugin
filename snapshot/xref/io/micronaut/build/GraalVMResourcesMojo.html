@@ -65,7 +65,7 @@
 <a class="jxr_linenumber" name="L57" href="#L57">57</a>  
 <a class="jxr_linenumber" name="L58" href="#L58">58</a>      @Override
 <a class="jxr_linenumber" name="L59" href="#L59">59</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> execute() <strong class="jxr_keyword">throws</strong> MojoExecutionException {
-<a class="jxr_linenumber" name="L60" href="#L60">60</a>          <strong class="jxr_keyword">if</strong> (nativeImageSkipResources) {
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>          <strong class="jxr_keyword">if</strong> (Boolean.TRUE.equals(nativeImageSkipResources)) {
 <a class="jxr_linenumber" name="L61" href="#L61">61</a>              getLog().info(<span class="jxr_string">"Skipping generation of resource-config.json"</span>);
 <a class="jxr_linenumber" name="L62" href="#L62">62</a>              <strong class="jxr_keyword">return</strong>;
 <a class="jxr_linenumber" name="L63" href="#L63">63</a>          }
@@ -85,7 +85,7 @@
 <a class="jxr_linenumber" name="L77" href="#L77">77</a>          Path graalVMResourcesPath = metaInfPath.resolve(nativeImagePath).toAbsolutePath();
 <a class="jxr_linenumber" name="L78" href="#L78">78</a>  
 <a class="jxr_linenumber" name="L79" href="#L79">79</a>          Map&lt;String, Object&gt; json = <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;();
-<a class="jxr_linenumber" name="L80" href="#L80">80</a>          List&lt;Map&gt; resourceList = resourcesToAdd.stream()
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>          List&lt;Map&lt;String, String&gt;&gt; resourceList = resourcesToAdd.stream()
 <a class="jxr_linenumber" name="L81" href="#L81">81</a>                  .map(<strong class="jxr_keyword">this</strong>::mapToGraalResource)
 <a class="jxr_linenumber" name="L82" href="#L82">82</a>                  .collect(Collectors.toList());
 <a class="jxr_linenumber" name="L83" href="#L83">83</a>  
