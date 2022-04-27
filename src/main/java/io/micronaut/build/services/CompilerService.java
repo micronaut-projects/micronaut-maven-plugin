@@ -54,8 +54,8 @@ public class CompilerService {
     private static final String JAVA = "java";
     private static final String GROOVY = "groovy";
     private static final String KOTLIN = "kotlin";
-    public static final String COMPILE_GOAL = "compile";
-    public static final String RESOURCES_GOAL = "resources";
+    private static final String COMPILE_GOAL = "compile";
+    private static final String RESOURCES_GOAL = "resources";
 
     private final Log log;
     private final Map<String, Path> sourceDirectories;
