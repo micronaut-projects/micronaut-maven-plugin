@@ -125,7 +125,7 @@ public class DockerService {
 
             return file;
         } catch (IOException e) {
-            e.printStackTrace();
+            LOG.error("Failed to copy file from container", e);
         } finally {
             containerCmd.close();
         }
