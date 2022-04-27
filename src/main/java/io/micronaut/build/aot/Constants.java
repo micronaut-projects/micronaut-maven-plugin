@@ -53,4 +53,6 @@ abstract class Constants {
     static final String MICRONAUT_AOT_MAIN_CLASS = "io.micronaut.aot.cli.Main";
     static final String MICRONAUT_AOT_PACKAGE_NAME = "micronaut.aot.packageName";
 
+    private Constants() {
+    }
 }

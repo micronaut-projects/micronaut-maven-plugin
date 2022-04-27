@@ -150,7 +150,6 @@ public class RunMojo extends AbstractMojo {
     private MavenProject mavenProject;
     private DirectoryWatcher directoryWatcher;
     private Process process;
-    private List<Dependency> projectDependencies;
     private String classpath;
     private int classpathHash;
     private long lastCompilation;
@@ -217,6 +216,8 @@ public class RunMojo extends AbstractMojo {
             } else if (process != null && process.isAlive()) {
                 process.waitFor();
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         } catch (Exception e) {
             if (getLog().isDebugEnabled()) {
                 getLog().debug("Exception while watching for changes", e);
@@ -380,8 +381,7 @@ public class RunMojo extends AbstractMojo {
         if (dependencies.isEmpty()) {
             return false;
         } else {
-            this.projectDependencies = dependencies;
-            this.classpath = compilerService.buildClasspath(this.projectDependencies);
+            this.classpath = compilerService.buildClasspath(dependencies);
             return true;
         }
     }
@@ -453,9 +453,9 @@ public class RunMojo extends AbstractMojo {
     }
 
     private boolean compileProject() {
-        Optional<Long> lastCompilation = compilerService.compileProject(true);
-        lastCompilation.ifPresent(lc -> this.lastCompilation = lc);
-        return lastCompilation.isPresent();
+        Optional<Long> lastCompilationMillis = compilerService.compileProject(true);
+        lastCompilationMillis.ifPresent(lc -> this.lastCompilation = lc);
+        return lastCompilationMillis.isPresent();
     }
 
     private void killProcess() {
@@ -468,6 +468,7 @@ public class RunMojo extends AbstractMojo {
                 process.waitFor();
             } catch (InterruptedException e) {
                 process.destroyForcibly();
+                Thread.currentThread().interrupt();
             }
         }
     }

@@ -25,11 +25,13 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.shared.utils.io.FileUtils;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.StandardCopyOption;
 
 /**
  * <p>Allows using a provided Dockerfile.</p>
@@ -65,7 +67,8 @@ public class DockerMojo extends AbstractDockerMojo {
 
                 String targetDir = mavenProject.getBuild().getDirectory();
                 File targetDockerfile = new File(targetDir, dockerfile.getName());
-                FileUtils.copyFile(dockerfile, targetDockerfile);
+                Files.copy(dockerfile.toPath(), targetDockerfile.toPath(), LinkOption.NOFOLLOW_LINKS,
+                        StandardCopyOption.REPLACE_EXISTING);
 
                 BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
                         .withDockerfile(targetDockerfile)

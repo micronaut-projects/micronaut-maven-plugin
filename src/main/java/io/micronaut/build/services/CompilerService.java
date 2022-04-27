@@ -54,6 +54,8 @@ public class CompilerService {
     private static final String JAVA = "java";
     private static final String GROOVY = "groovy";
     private static final String KOTLIN = "kotlin";
+    public static final String COMPILE_GOAL = "compile";
+    public static final String RESOURCES_GOAL = "resources";
 
     private final Log log;
     private final Map<String, Path> sourceDirectories;
@@ -91,27 +93,27 @@ public class CompilerService {
                 executorService.executeGoal(GMAVEN_PLUS_PLUGIN, "addSources");
                 executorService.executeGoal(GMAVEN_PLUS_PLUGIN, "generateStubs");
                 if (copyResources) {
-                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
+                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, RESOURCES_GOAL);
                 }
-                executorService.executeGoal(MAVEN_COMPILER_PLUGIN, "compile");
-                executorService.executeGoal(GMAVEN_PLUS_PLUGIN, "compile");
+                executorService.executeGoal(MAVEN_COMPILER_PLUGIN, COMPILE_GOAL);
+                executorService.executeGoal(GMAVEN_PLUS_PLUGIN, COMPILE_GOAL);
                 executorService.executeGoal(GMAVEN_PLUS_PLUGIN, "removeStubs");
                 lastCompilation = System.currentTimeMillis();
             }
             if (sourceDirectories.containsKey(KOTLIN)) {
                 executorService.executeGoal(KOTLIN_MAVEN_PLUGIN, "kapt");
                 if (copyResources) {
-                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
+                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, RESOURCES_GOAL);
                 }
-                executorService.executeGoal(KOTLIN_MAVEN_PLUGIN, "compile");
+                executorService.executeGoal(KOTLIN_MAVEN_PLUGIN, COMPILE_GOAL);
                 executorService.executeGoal(MAVEN_COMPILER_PLUGIN, "compile#java-compile");
                 lastCompilation = System.currentTimeMillis();
             }
             if (sourceDirectories.containsKey(JAVA)) {
                 if (copyResources) {
-                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
+                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, RESOURCES_GOAL);
                 }
-                executorService.executeGoal(MAVEN_COMPILER_PLUGIN, "compile");
+                executorService.executeGoal(MAVEN_COMPILER_PLUGIN, COMPILE_GOAL);
                 lastCompilation = System.currentTimeMillis();
             }
         } catch (MojoExecutionException e) {

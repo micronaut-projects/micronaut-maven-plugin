@@ -110,9 +110,8 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
         if (!props.containsKey(KnownMissingTypesSourceGenerator.OPTION.key())) {
             props.put(KnownMissingTypesSourceGenerator.OPTION.key(), String.join(",", Constants.TYPES_TO_CHECK));
         }
-        if (!props.containsKey(AbstractStaticServiceLoaderSourceGenerator.SERVICE_TYPES)) {
-            props.put(AbstractStaticServiceLoaderSourceGenerator.SERVICE_TYPES, String.join(",", Constants.SERVICE_TYPES));
-        }
+        props.computeIfAbsent(AbstractStaticServiceLoaderSourceGenerator.SERVICE_TYPES,
+                key -> String.join(",", Constants.SERVICE_TYPES));
         File effectiveConfig = outputFile("effective-" + AOT_PROPERTIES_FILE_NAME);
         try (OutputStream out = Files.newOutputStream(effectiveConfig.toPath())) {
             props.store(out, "Effective AOT configuration");
