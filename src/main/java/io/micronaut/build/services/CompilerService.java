@@ -132,7 +132,7 @@ public class CompilerService {
             log.debug("Resolving source directories...");
         }
         AtomicReference<String> lang = new AtomicReference<>();
-        Map<String, Path> sourceDirectories = Stream.of(JAVA, GROOVY, KOTLIN)
+        Map<String, Path> sourceDirectoriesToResolve = Stream.of(JAVA, GROOVY, KOTLIN)
                 .peek(lang::set)
                 .map(l -> new File(mavenProject.getBasedir(), "src/main/" + l))
                 .filter(File::exists)
@@ -143,10 +143,10 @@ public class CompilerService {
                 })
                 .map(File::toPath)
                 .collect(Collectors.toMap(path -> lang.get(), Function.identity()));
-        if (sourceDirectories.isEmpty()) {
+        if (sourceDirectoriesToResolve.isEmpty()) {
             throw new IllegalStateException("Source folders not found for neither Java/Groovy/Kotlin");
         }
-        return sourceDirectories;
+        return sourceDirectoriesToResolve;
     }
 
     /**
