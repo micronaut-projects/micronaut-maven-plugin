@@ -57,7 +57,7 @@ public class GraalVMResourcesMojo extends ResourcesMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        if (nativeImageSkipResources) {
+        if (Boolean.TRUE.equals(nativeImageSkipResources)) {
             getLog().info("Skipping generation of resource-config.json");
             return;
         }
@@ -77,7 +77,7 @@ public class GraalVMResourcesMojo extends ResourcesMojo {
         Path graalVMResourcesPath = metaInfPath.resolve(nativeImagePath).toAbsolutePath();
 
         Map<String, Object> json = new HashMap<>();
-        List<Map> resourceList = resourcesToAdd.stream()
+        List<Map<String, String>> resourceList = resourcesToAdd.stream()
                 .map(this::mapToGraalResource)
                 .collect(Collectors.toList());
 

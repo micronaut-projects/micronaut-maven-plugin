@@ -54,6 +54,8 @@ public class CompilerService {
     private static final String JAVA = "java";
     private static final String GROOVY = "groovy";
     private static final String KOTLIN = "kotlin";
+    private static final String COMPILE_GOAL = "compile";
+    private static final String RESOURCES_GOAL = "resources";
 
     private final Log log;
     private final Map<String, Path> sourceDirectories;
@@ -91,27 +93,27 @@ public class CompilerService {
                 executorService.executeGoal(GMAVEN_PLUS_PLUGIN, "addSources");
                 executorService.executeGoal(GMAVEN_PLUS_PLUGIN, "generateStubs");
                 if (copyResources) {
-                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
+                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, RESOURCES_GOAL);
                 }
-                executorService.executeGoal(MAVEN_COMPILER_PLUGIN, "compile");
-                executorService.executeGoal(GMAVEN_PLUS_PLUGIN, "compile");
+                executorService.executeGoal(MAVEN_COMPILER_PLUGIN, COMPILE_GOAL);
+                executorService.executeGoal(GMAVEN_PLUS_PLUGIN, COMPILE_GOAL);
                 executorService.executeGoal(GMAVEN_PLUS_PLUGIN, "removeStubs");
                 lastCompilation = System.currentTimeMillis();
             }
             if (sourceDirectories.containsKey(KOTLIN)) {
                 executorService.executeGoal(KOTLIN_MAVEN_PLUGIN, "kapt");
                 if (copyResources) {
-                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
+                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, RESOURCES_GOAL);
                 }
-                executorService.executeGoal(KOTLIN_MAVEN_PLUGIN, "compile");
+                executorService.executeGoal(KOTLIN_MAVEN_PLUGIN, COMPILE_GOAL);
                 executorService.executeGoal(MAVEN_COMPILER_PLUGIN, "compile#java-compile");
                 lastCompilation = System.currentTimeMillis();
             }
             if (sourceDirectories.containsKey(JAVA)) {
                 if (copyResources) {
-                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, "resources");
+                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, RESOURCES_GOAL);
                 }
-                executorService.executeGoal(MAVEN_COMPILER_PLUGIN, "compile");
+                executorService.executeGoal(MAVEN_COMPILER_PLUGIN, COMPILE_GOAL);
                 lastCompilation = System.currentTimeMillis();
             }
         } catch (MojoExecutionException e) {
@@ -130,7 +132,7 @@ public class CompilerService {
             log.debug("Resolving source directories...");
         }
         AtomicReference<String> lang = new AtomicReference<>();
-        Map<String, Path> sourceDirectories = Stream.of(JAVA, GROOVY, KOTLIN)
+        Map<String, Path> sourceDirectoriesToResolve = Stream.of(JAVA, GROOVY, KOTLIN)
                 .peek(lang::set)
                 .map(l -> new File(mavenProject.getBasedir(), "src/main/" + l))
                 .filter(File::exists)
@@ -141,10 +143,10 @@ public class CompilerService {
                 })
                 .map(File::toPath)
                 .collect(Collectors.toMap(path -> lang.get(), Function.identity()));
-        if (sourceDirectories.isEmpty()) {
+        if (sourceDirectoriesToResolve.isEmpty()) {
             throw new IllegalStateException("Source folders not found for neither Java/Groovy/Kotlin");
         }
-        return sourceDirectories;
+        return sourceDirectoriesToResolve;
     }
 
     /**

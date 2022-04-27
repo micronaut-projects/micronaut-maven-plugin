@@ -116,6 +116,11 @@ public class DockerService {
         try (TarArchiveInputStream fin = new TarArchiveInputStream(nativeImage)) {
             TarArchiveEntry tarEntry = fin.getNextTarEntry();
             File file = new File(mavenProject.getBuild().getDirectory(), tarEntry.getName());
+            String canonicalDestinationPath = file.getCanonicalPath();
+            if (!canonicalDestinationPath.startsWith(mavenProject.getBuild().getDirectory())) {
+                throw new IOException("Entry is outside of the target directory");
+            }
+
             IOUtils.copy(fin, Files.newOutputStream(file.toPath()));
 
             return file;

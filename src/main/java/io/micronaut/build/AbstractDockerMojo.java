@@ -133,7 +133,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
      * Determines the base FROM image for the native image.
      */
     protected String getFrom() {
-        if (staticNativeImage) {
+        if (Boolean.TRUE.equals(staticNativeImage)) {
             // For building a static native image we need a base image with tools (cc, make,...) already installed
             return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/graalvm-ce:ol8-" + graalVmJvmVersion() + "-" + graalVmVersion());
         } else {

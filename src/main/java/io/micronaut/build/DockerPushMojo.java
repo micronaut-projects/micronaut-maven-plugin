@@ -79,6 +79,8 @@ public class DockerPushMojo extends AbstractDockerMojo {
                                 .withAuthConfig(authConfig)
                                 .start()
                                 .awaitCompletion();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                     } catch (Exception e) {
                         throw new MojoExecutionException(e.getMessage(), e);
                     }
