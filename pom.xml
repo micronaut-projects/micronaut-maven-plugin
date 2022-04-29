@@ -88,6 +88,7 @@
         <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.java.checkstyle.reportPaths>${project.build.directory}/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
         <jacoco.version>0.8.8</jacoco.version>
+        <junit-jupiter.version>5.8.2</junit-jupiter.version>
     </properties>
 
     <repositories>
@@ -243,9 +244,9 @@
 
         <!-- JUnit -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit-jupiter.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -512,6 +513,10 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
         </plugins>
         <resources>
             <resource>
@@ -614,6 +619,7 @@
                             <extraArtifacts>
                                 <extraArtifact>org.jacoco:org.jacoco.agent:${jacoco.version}:jar:runtime</extraArtifact>
                             </extraArtifacts>
+                            <writeJunitReport>true</writeJunitReport>
                         </configuration>
                         <executions>
                             <execution>
