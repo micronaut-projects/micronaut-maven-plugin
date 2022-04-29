@@ -61,6 +61,12 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
     @Parameter(property = "micronaut.aot.enabled", defaultValue = "false")
     protected boolean enabled;
 
+    /**
+     * Directory where compiled application classes are.
+     */
+    @Parameter(defaultValue = "${project.build.outputDirectory}", required = true)
+    protected File outputDirectory;
+
     public AbstractMicronautAotMojo(CompilerService compilerService, MavenProject mavenProject, MavenSession mavenSession, RepositorySystem repositorySystem) {
         this.compilerService = compilerService;
         this.mavenProject = mavenProject;
@@ -89,6 +95,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
         try {
             File baseOutputDirectory = getBaseOutputDirectory();
             clean(baseOutputDirectory);
+            clean(outputDirectory);
             doExecute();
             onSuccess(baseOutputDirectory);
         } catch (DependencyResolutionException | IOException e) {
