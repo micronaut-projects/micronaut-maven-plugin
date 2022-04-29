@@ -5,7 +5,7 @@ assert log.exists()
 assert log.text.contains("native-maven-plugin:${nativeMavenPluginVersion}:build")
 assert log.text.contains("micronaut-maven-plugin:${pluginVersion}:graalvm-resources")
 
-File resourceConfigFile = new File(basedir, 'target/classes/META-INF/native-image/io.micronaut.build.examples/package-native-image-aot/resource-config.json')
+File resourceConfigFile = new File(basedir, 'target/classes/META-INF/native-image/io.micronaut.build.examples/package-native-image-aot-spaces/resource-config.json')
 def resourceConfigJson = new groovy.json.JsonSlurper().parse(resourceConfigFile)
 
 assert resourceConfigJson.resources.pattern.any { it == "\\Qapplication.yml\\E" }
