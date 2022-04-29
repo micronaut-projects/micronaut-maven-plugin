@@ -1,4 +1,4 @@
-FROM openjdk:17-alpine
+FROM openjdk:19-alpine
 WORKDIR /home/app
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
