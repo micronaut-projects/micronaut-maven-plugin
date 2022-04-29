@@ -12,7 +12,7 @@ assert resourceConfigJson.resources.pattern.any { it == "\\Qapplication.yml\\E" 
 assert resourceConfigJson.resources.pattern.any { it == "\\QMETA-INF/swagger/app-0.0.yml\\E" }
 assert resourceConfigJson.resources.pattern.any { it == "\\QMETA-INF/swagger/views/swagger-ui/index.html\\E" }
 
-File fatJar = new File(basedir, "target/package-native-image-aot-0.1.jar")
+File fatJar = new File(basedir, "target/package-native-image-aot-spaces-0.1.jar")
 assert fatJar.exists()
 
 JarFile jarFile = new JarFile(fatJar)
