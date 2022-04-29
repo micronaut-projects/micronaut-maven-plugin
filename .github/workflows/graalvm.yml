@@ -1,0 +1,57 @@
+name: GraalVM CE CI
+on:
+  push:
+    branches:
+      - master
+      - '[1-9]+.[0-9]+.x'
+  pull_request:
+    branches:
+      - master
+      - '[1-9]+.[0-9]+.x'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: ['11', '17']
+    steps:
+      # https://github.com/actions/virtual-environments/issues/709
+      - name: Free disk space
+        run: |
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo apt-get clean
+          df -h
+      - uses: actions/checkout@v3
+      - name: Install Java and Maven and set up Apache Maven Central
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'adopt'
+          java-version: '8'
+          server-password: GH_TOKEN
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Setup GraalVM CE
+        uses: graalvm/setup-graalvm@v1
+        with:
+          version: '22.0.0.2'
+          java-version: ${{ matrix.java }}
+          components: 'native-image'
+      - name: Run tests
+        run: |
+          mvn install && mvn verify -Prun-its
+        env:
+          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
+          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
+          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+      - name: Publish Test Report
+        if: always()
+        uses: mikepenz/action-junit-report@v3.0.2
+        with:
+          check_name: GraalVM CE CI / Test Report (Java ${{ matrix.java }})
+          report_paths: '**/target/invoker-reports/TEST-*.xml'
+          check_retries: 'true'

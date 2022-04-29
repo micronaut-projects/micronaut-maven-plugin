@@ -614,6 +614,7 @@
                             <extraArtifacts>
                                 <extraArtifact>org.jacoco:org.jacoco.agent:${jacoco.version}:jar:runtime</extraArtifact>
                             </extraArtifacts>
+                            <writeJunitReport>true</writeJunitReport>
                         </configuration>
                         <executions>
                             <execution>
