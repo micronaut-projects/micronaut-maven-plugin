@@ -65,12 +65,6 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
     private File baseDirectory;
 
     /**
-     * Directory where compiled application classes are.
-     */
-    @Parameter(defaultValue = "${project.build.outputDirectory}", required = true)
-    private File outputDirectory;
-
-    /**
      * Micronaut AOT configuration file. Run the <a href="aot-sample-config-mojo.html"><code>aot-sample-config</code> goal</a> to
      * see all the possible options.
      */
