@@ -173,6 +173,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
                         result.add(line
                                 .replace("${GRAALVM_VERSION}", graalVmVersion())
                                 .replace("${GRAALVM_JVM_VERSION}", graalVmJvmVersion())
+                                .replace("${GRAALVM_ARCH}", graalVmArch())
                                 .replace("${GRAALVM_ARGS} ", graalVmBuildArgs)
                                 .replace("${CLASS_NAME}", mainClass)
                         );
