@@ -118,10 +118,12 @@ public class DockerNativeMojo extends AbstractDockerMojo {
     private void buildDockerNativeLambda() throws IOException {
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd(DockerfileMojo.DOCKERFILE_AWS_CUSTOM_RUNTIME)
                 .withBuildArg("GRAALVM_VERSION", graalVmVersion())
-                .withBuildArg("GRAALVM_JVM_VERSION", graalVmJvmVersion());
+                .withBuildArg("GRAALVM_JVM_VERSION", graalVmJvmVersion())
+                .withBuildArg("GRAALVM_ARCH", graalVmArch());
 
         getLog().info("Using GRAALVM_VERSION: " + graalVmVersion());
         getLog().info("Using GRAALVM_JVM_VERSION: " + graalVmJvmVersion());
+        getLog().info("Using GRAALVM_ARCH: " + graalVmArch());
 
         // Starter sets the right class in pom.xml:
         //   - For applications: io.micronaut.function.aws.runtime.MicronautLambdaRuntime

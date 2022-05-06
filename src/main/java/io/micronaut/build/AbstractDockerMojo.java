@@ -46,6 +46,8 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     public static final String LATEST_TAG = "latest";
     public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "frolvlad/alpine-glibc:alpine-3.12";
     public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
+    public static final String ARM_ARCH = "aarch64";
+    public static final String X86_64_ARCH = "amd64";
 
     protected final MavenProject mavenProject;
     protected final JibConfigurationService jibConfigurationService;
@@ -127,6 +129,18 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
             graalVmJvmVersion = "java17";
         }
         return graalVmJvmVersion;
+    }
+
+    /**
+     * Detects the OS architecture to use for GraalVM depending on the <code>os.arch</code> system property.
+     */
+    protected String graalVmArch() {
+        String osArch = System.getProperty("os.arch");
+        if (ARM_ARCH.equals(osArch)) {
+            return ARM_ARCH;
+        } else {
+            return X86_64_ARCH;
+        }
     }
 
     /**
