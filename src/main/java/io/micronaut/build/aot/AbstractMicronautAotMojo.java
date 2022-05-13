@@ -22,7 +22,6 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
@@ -30,18 +29,11 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 
 /**
  * Abstract Mojo for Micronaut AOT.
  */
 public abstract class AbstractMicronautAotMojo extends AbstractMojo {
-
-    private static final String[] TESTING_PHASES = {
-            LifecyclePhase.TEST.id(),
-            LifecyclePhase.INTEGRATION_TEST.id(),
-            LifecyclePhase.VERIFY.id()
-    };
 
     protected final CompilerService compilerService;
 
@@ -98,12 +90,6 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
         if (!enabled) {
             return;
         }
-        boolean isTestingGoal = mavenSession.getGoals().stream().anyMatch(this::isTestingGoal);
-        if (isTestingGoal) {
-            String testingGoals = String.join(", ", TESTING_PHASES);
-            getLog().info("Skipping AOT since the current execution contains a testing goal. To execute AOT, make sure you don't include any of the following phases: " + testingGoals);
-            return;
-        }
         validateRuntime();
         getLog().info("Running Micronaut AOT " + micronautAotVersion + " " + getName());
         try {
@@ -115,10 +101,6 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
         } catch (DependencyResolutionException | IOException e) {
             throw new MojoExecutionException("Unable to generate AOT optimizations", e);
         }
-    }
-
-    private boolean isTestingGoal(String goal) {
-        return Arrays.asList(TESTING_PHASES).contains(goal);
     }
 
     private void clean(File baseOutputDirectory) throws IOException {

@@ -17,6 +17,7 @@ package io.micronaut.build;
 
 import io.methvin.watcher.DirectoryChangeEvent;
 import io.methvin.watcher.DirectoryWatcher;
+import io.micronaut.build.aot.AotAnalysisMojo;
 import io.micronaut.build.services.CompilerService;
 import io.micronaut.build.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
@@ -65,6 +66,7 @@ public class RunMojo extends AbstractMojo {
     private static final int LAST_COMPILATION_THRESHOLD = 500;
     private static final String JAVA = "java";
     private static final List<String> DEFAULT_EXCLUDES;
+    private static final String THIS_PLUGIN = "io.micronaut.build:micronaut-maven-plugin";
 
     static {
         DEFAULT_EXCLUDES = new ArrayList<>();
@@ -78,6 +80,7 @@ public class RunMojo extends AbstractMojo {
     private final ToolchainManager toolchainManager;
     private final String javaExecutable;
     private final CompilerService compilerService;
+    private final ExecutorService executorService;
     private final Path projectRootDirectory;
 
     /**
@@ -147,6 +150,12 @@ public class RunMojo extends AbstractMojo {
     @Parameter(property = "mn.watch", defaultValue = "true")
     private boolean watchForChanges;
 
+    /**
+     * Whether to enable or disable Micronaut AOT.
+     */
+    @Parameter(property = "micronaut.aot.enabled", defaultValue = "false")
+    private boolean aotEnabled;
+
     private MavenProject mavenProject;
     private DirectoryWatcher directoryWatcher;
     private Process process;
@@ -167,6 +176,7 @@ public class RunMojo extends AbstractMojo {
         this.projectRootDirectory = mavenProject.getBasedir().toPath();
         this.toolchainManager = toolchainManager;
         this.compilerService = compilerService;
+        this.executorService = executorService;
         this.javaExecutable = findJavaExecutable();
 
         resolveDependencies();
@@ -394,6 +404,8 @@ public class RunMojo extends AbstractMojo {
     }
 
     private void runApplication() throws Exception {
+        runAotIfNeeded();
+
         String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
         List<String> args = new ArrayList<>();
         args.add(javaExecutable);
@@ -432,6 +444,16 @@ public class RunMojo extends AbstractMojo {
                 .inheritIO()
                 .directory(targetDirectory)
                 .start();
+    }
+
+    private void runAotIfNeeded() {
+        if (aotEnabled) {
+            try {
+                executorService.executeGoal(THIS_PLUGIN, AotAnalysisMojo.NAME);
+            } catch (MojoExecutionException e) {
+                getLog().error(e);
+            }
+        }
     }
 
     private String findJavaExecutable() {
