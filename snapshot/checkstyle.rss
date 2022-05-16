@@ -26,7 +26,7 @@ under the License.
     <copyright>&#169;2020 - 2022 Micronaut</copyright>
     <item>
       <title>File: 22,
-             Errors: 687,
+             Errors: 691,
              Warnings: 0,
              Infos: 0
       </title>
@@ -181,7 +181,7 @@ under the License.
                   0
                 </td>
                 <td>
-                  23
+                  22
                 </td>
               </tr>
                           <tr>
@@ -228,6 +228,20 @@ under the License.
               </tr>
                           <tr>
                 <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.RunMojo.java">io/micronaut/build/RunMojo.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  102
+                </td>
+              </tr>
+                          <tr>
+                <td>
                   <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.AbstractDockerMojo.java">io/micronaut/build/AbstractDockerMojo.java</a>
                 </td>
                 <td>
@@ -238,20 +252,6 @@ under the License.
                 </td>
                 <td>
                   65
-                </td>
-              </tr>
-                          <tr>
-                <td>
-                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.RunMojo.java">io/micronaut/build/RunMojo.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  98
                 </td>
               </tr>
                           <tr>
@@ -293,7 +293,7 @@ under the License.
                   0
                 </td>
                 <td>
-                  14
+                  13
                 </td>
               </tr>
                           <tr>
@@ -307,7 +307,7 @@ under the License.
                   0
                 </td>
                 <td>
-                  28
+                  29
                 </td>
               </tr>
                           <tr>
@@ -335,7 +335,7 @@ under the License.
                   0
                 </td>
                 <td>
-                  4
+                  5
                 </td>
               </tr>
                           <tr>
