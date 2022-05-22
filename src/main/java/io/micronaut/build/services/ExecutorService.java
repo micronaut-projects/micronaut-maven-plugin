@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.build.services;
 
 import org.apache.maven.execution.MavenSession;
@@ -17,7 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.*;
 
 /**
- * Provides methods to execute goals on the current project
+ * Provides methods to execute goals on the current project.
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 1.1
@@ -35,11 +50,14 @@ public class ExecutorService {
         this.mavenProject = mavenProject;
     }
 
+    /**
+     * Executes the given goal from the given plugin coordinates.
+     */
     public void executeGoal(String pluginKey, String goal) throws MojoExecutionException {
         final Plugin plugin = mavenProject.getPlugin(pluginKey);
         if (plugin != null) {
             AtomicReference<String> executionId = new AtomicReference<>(goal);
-            if (goal != null && goal.length() > 0 && goal.indexOf('#') > -1) {
+            if (goal != null && goal.indexOf('#') > -1) {
                 int pos = goal.indexOf('#');
                 executionId.set(goal.substring(pos + 1));
                 goal = goal.substring(0, pos);
@@ -63,6 +81,9 @@ public class ExecutorService {
         }
     }
 
+    /**
+     * Executes a goal using the given arguments.
+     */
     public void executeGoal(String pluginGroup, String pluginArtifact, String pluginVersion, String goal, Xpp3Dom configuration) throws MojoExecutionException {
         final Plugin plugin = plugin(pluginGroup, pluginArtifact, pluginVersion);
         executeMojo(plugin, goal(goal), configuration, executionEnvironment);

@@ -33,6 +33,14 @@ jobs:
         run: |
           mvn install && mvn verify -Prun-its
 
+      - name: Publish Test Report
+        if: always()
+        uses: mikepenz/action-junit-report@v3.0.3
+        with:
+          check_name: Java CI / Test Report
+          report_paths: '**/target/invoker-reports/TEST-*.xml'
+          check_retries: 'true'
+
       - name: Determine current version
         id: release_version
         run: echo ::set-output name=release_version::`mvn help:evaluate -Dexpression=project.version -q -DforceStdout`

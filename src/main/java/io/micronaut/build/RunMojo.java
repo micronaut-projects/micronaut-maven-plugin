@@ -1,7 +1,23 @@
+/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.build;
 
 import io.methvin.watcher.DirectoryChangeEvent;
 import io.methvin.watcher.DirectoryWatcher;
+import io.micronaut.build.aot.AotAnalysisMojo;
 import io.micronaut.build.services.CompilerService;
 import io.micronaut.build.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
@@ -13,7 +29,7 @@ import org.apache.maven.plugins.annotations.*;
 import org.apache.maven.project.*;
 import org.apache.maven.toolchain.Toolchain;
 import org.apache.maven.toolchain.ToolchainManager;
-import org.codehaus.plexus.util.DirectoryScanner;
+import org.codehaus.plexus.util.AbstractScanner;
 import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.eclipse.aether.graph.Dependency;
@@ -21,7 +37,6 @@ import org.eclipse.aether.util.artifact.JavaScopes;
 
 import javax.inject.Inject;
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -47,15 +62,16 @@ public class RunMojo extends AbstractMojo {
 
     public static final String MN_APP_ARGS = "mn.appArgs";
     public static final String EXEC_MAIN_CLASS = "${exec.mainClass}";
+    public static final String RESOURCES_DIR = "src/main/resources";
 
     private static final int LAST_COMPILATION_THRESHOLD = 500;
     private static final String JAVA = "java";
     private static final List<String> DEFAULT_EXCLUDES;
-    public static final String RESOURCES_DIR = "src/main/resources";
+    private static final String THIS_PLUGIN = "io.micronaut.build:micronaut-maven-plugin";
 
     static {
         DEFAULT_EXCLUDES = new ArrayList<>();
-        Collections.addAll(DEFAULT_EXCLUDES, DirectoryScanner.DEFAULTEXCLUDES);
+        Collections.addAll(DEFAULT_EXCLUDES, AbstractScanner.DEFAULTEXCLUDES);
         Collections.addAll(DEFAULT_EXCLUDES, "**/.idea/**");
     }
 
@@ -65,6 +81,7 @@ public class RunMojo extends AbstractMojo {
     private final ToolchainManager toolchainManager;
     private final String javaExecutable;
     private final CompilerService compilerService;
+    private final ExecutorService executorService;
     private final Path projectRootDirectory;
 
     /**
@@ -134,10 +151,15 @@ public class RunMojo extends AbstractMojo {
     @Parameter(property = "mn.watch", defaultValue = "true")
     private boolean watchForChanges;
 
+    /**
+     * Whether to enable or disable Micronaut AOT.
+     */
+    @Parameter(property = "micronaut.aot.enabled", defaultValue = "false")
+    private boolean aotEnabled;
+
     private MavenProject mavenProject;
     private DirectoryWatcher directoryWatcher;
     private Process process;
-    private List<Dependency> projectDependencies;
     private String classpath;
     private int classpathHash;
     private long lastCompilation;
@@ -155,6 +177,7 @@ public class RunMojo extends AbstractMojo {
         this.projectRootDirectory = mavenProject.getBasedir().toPath();
         this.toolchainManager = toolchainManager;
         this.compilerService = compilerService;
+        this.executorService = executorService;
         this.javaExecutable = findJavaExecutable();
 
         resolveDependencies();
@@ -162,7 +185,6 @@ public class RunMojo extends AbstractMojo {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public void execute() throws MojoExecutionException {
         this.sourceDirectories = compilerService.resolveSourceDirectories();
 
@@ -206,6 +228,8 @@ public class RunMojo extends AbstractMojo {
             } else if (process != null && process.isAlive()) {
                 process.waitFor();
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         } catch (Exception e) {
             if (getLog().isDebugEnabled()) {
                 getLog().debug("Exception while watching for changes", e);
@@ -217,7 +241,7 @@ public class RunMojo extends AbstractMojo {
         }
     }
 
-    private void handleEvent(DirectoryChangeEvent event) throws IOException {
+    private void handleEvent(DirectoryChangeEvent event) {
         Path path = event.path();
         Path parent = path.getParent();
 
@@ -273,9 +297,9 @@ public class RunMojo extends AbstractMojo {
                 for (FileSet fileSet : watches) {
                     if (fileSet.getIncludes() != null && !fileSet.getIncludes().isEmpty()) {
                         File directory = new File(fileSet.getDirectory());
-                        if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath()))
+                        if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath())) {
                             for (String includePattern : fileSet.getIncludes()) {
-                                if (DirectoryScanner.match(includePattern, path.toString()) || new File(directory, includePattern).toPath().toAbsolutePath().equals(path)) {
+                                if (AbstractScanner.match(includePattern, path.toString()) || new File(directory, includePattern).toPath().toAbsolutePath().equals(path)) {
                                     matches = true;
                                     if (getLog().isDebugEnabled()) {
                                         getLog().debug("Path [" + relativePath + "] matched the include pattern [" + includePattern + "] of the directory [" + fileSet.getDirectory() + "]");
@@ -283,19 +307,22 @@ public class RunMojo extends AbstractMojo {
                                     break;
                                 }
                             }
+                        }
                     }
-                    if (matches) break;
+                    if (matches) {
+                        break;
+                    }
                 }
             }
 
-            // Finally process excludes only if the path is matching
+            // Finally, process excludes only if the path is matching
             if (matches) {
                 for (FileSet fileSet : watches) {
                     if (fileSet.getExcludes() != null && !fileSet.getExcludes().isEmpty()) {
                         File directory = new File(fileSet.getDirectory());
                         if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath())) {
                             for (String excludePattern : fileSet.getExcludes()) {
-                                if (DirectoryScanner.match(excludePattern, path.toString()) || new File(directory, excludePattern).toPath().toAbsolutePath().equals(path)) {
+                                if (AbstractScanner.match(excludePattern, path.toString()) || new File(directory, excludePattern).toPath().toAbsolutePath().equals(path)) {
                                     matches = false;
                                     if (getLog().isDebugEnabled()) {
                                         getLog().debug("Path [" + relativePath + "] matched the exclude pattern [" + excludePattern + "] of the directory [" + fileSet.getDirectory() + "]");
@@ -305,7 +332,9 @@ public class RunMojo extends AbstractMojo {
                             }
                         }
                     }
-                    if (!matches) break;
+                    if (!matches) {
+                        break;
+                    }
                 }
             }
         }
@@ -314,9 +343,17 @@ public class RunMojo extends AbstractMojo {
     }
 
     private boolean isDefaultExcluded(Path path) {
-        return path.startsWith(targetDirectory.getAbsolutePath()) ||
+        boolean excludeTargetDirectory = true;
+        if (this.watches != null && !this.watches.isEmpty()) {
+            for (FileSet fileSet : this.watches) {
+                if (fileSet.getDirectory().equals(this.targetDirectory.getName())) {
+                    excludeTargetDirectory = false;
+                }
+            }
+        }
+        return (excludeTargetDirectory && path.startsWith(targetDirectory.getAbsolutePath())) ||
                 DEFAULT_EXCLUDES.stream()
-                        .anyMatch(excludePattern -> DirectoryScanner.match(excludePattern, path.toString()));
+                        .anyMatch(excludePattern -> AbstractScanner.match(excludePattern, path.toString()));
     }
 
     private boolean hasBeenCompiledRecently() {
@@ -357,8 +394,7 @@ public class RunMojo extends AbstractMojo {
         if (dependencies.isEmpty()) {
             return false;
         } else {
-            this.projectDependencies = dependencies;
-            this.classpath = compilerService.buildClasspath(this.projectDependencies);
+            this.classpath = compilerService.buildClasspath(dependencies);
             return true;
         }
     }
@@ -371,6 +407,8 @@ public class RunMojo extends AbstractMojo {
     }
 
     private void runApplication() throws Exception {
+        runAotIfNeeded();
+
         String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
         List<String> args = new ArrayList<>();
         args.add(javaExecutable);
@@ -411,6 +449,16 @@ public class RunMojo extends AbstractMojo {
                 .start();
     }
 
+    private void runAotIfNeeded() {
+        if (aotEnabled) {
+            try {
+                executorService.executeGoal(THIS_PLUGIN, AotAnalysisMojo.NAME);
+            } catch (MojoExecutionException e) {
+                getLog().error(e);
+            }
+        }
+    }
+
     private String findJavaExecutable() {
         String executable;
         Toolchain toolchain = this.toolchainManager.getToolchainFromBuildContext("jdk", mavenSession);
@@ -430,9 +478,9 @@ public class RunMojo extends AbstractMojo {
     }
 
     private boolean compileProject() {
-        Optional<Long> lastCompilation = compilerService.compileProject(true);
-        lastCompilation.ifPresent(lc -> this.lastCompilation = lc);
-        return lastCompilation.isPresent();
+        Optional<Long> lastCompilationMillis = compilerService.compileProject(true);
+        lastCompilationMillis.ifPresent(lc -> this.lastCompilation = lc);
+        return lastCompilationMillis.isPresent();
     }
 
     private void killProcess() {
@@ -445,6 +493,7 @@ public class RunMojo extends AbstractMojo {
                 process.waitFor();
             } catch (InterruptedException e) {
                 process.destroyForcibly();
+                Thread.currentThread().interrupt();
             }
         }
     }

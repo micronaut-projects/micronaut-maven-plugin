@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.build;
 
 import io.micronaut.build.jib.JibMicronautExtension;
@@ -20,7 +35,7 @@ import java.util.stream.Collectors;
 
 /**
  * <p>Generates a <code>Dockerfile</code> depending on the <code>packaging</code> and <code>micronaut.runtime</code>
- * properties, eg:</p>
+ * properties.
  *
  * <pre>mvn mn:dockerfile -Dpackaging=docker-native -Dmicronaut.runtime=lambda</pre>
  *
@@ -72,7 +87,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     private Optional<File> buildDockerfile(MicronautRuntime runtime) throws IOException {
-        File dockerfile = null;
+        File dockerfile;
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION:
                 dockerfile = dockerService.loadDockerfileAsResource("DockerfileOracleCloud");
@@ -80,6 +95,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
                 break;
             case LAMBDA:
             case DEFAULT:
+            default:
                 dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE);
                 processDockerfile(dockerfile);
                 break;
@@ -103,7 +119,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     private Optional<File> buildDockerfileNative(MicronautRuntime runtime) throws IOException {
-        File dockerfile = null;
+        File dockerfile;
         switch (runtime.getBuildStrategy()) {
             case LAMBDA:
                 dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS_CUSTOM_RUNTIME);
@@ -114,6 +130,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
                 break;
 
             case DEFAULT:
+            default:
                 String dockerfileName = DOCKERFILE_NATIVE;
                 if (staticNativeImage) {
                     getLog().info("Generating a static native image");
@@ -156,6 +173,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
                         result.add(line
                                 .replace("${GRAALVM_VERSION}", graalVmVersion())
                                 .replace("${GRAALVM_JVM_VERSION}", graalVmJvmVersion())
+                                .replace("${GRAALVM_ARCH}", graalVmArch())
                                 .replace("${GRAALVM_ARGS} ", graalVmBuildArgs)
                                 .replace("${CLASS_NAME}", mainClass)
                         );

@@ -2,6 +2,7 @@
 
 [![Maven Central](https://img.shields.io/maven-central/v/io.micronaut.build/micronaut-maven-plugin.svg?label=Maven%20Central)](https://search.maven.org/artifact/io.micronaut.build/micronaut-maven-plugin)
 [![Build Status](https://github.com/micronaut-projects/micronaut-maven-plugin/workflows/Snapshot/badge.svg)](https://github.com/micronaut-projects/micronaut-maven-plugin/actions)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=micronaut-projects_micronaut-maven-plugin&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=micronaut-projects_micronaut-maven-plugin)
 
 Maven plugin to execute Micronaut applications.
 
@@ -15,7 +16,7 @@ To see the documentation of a particular version, replace `latest` or `snapshot`
 
 ## Snapshots and Releases
 
-Snaphots and releases are automatically published to Maven Central using [Github Actions](https://github.com/micronaut-projects/micronaut-maven-plugin/actions).
+Snaphots and releases are automatically published to Maven Central using [GitHub Actions](https://github.com/micronaut-projects/micronaut-maven-plugin/actions).
 
 A release is performed with the following steps:
 

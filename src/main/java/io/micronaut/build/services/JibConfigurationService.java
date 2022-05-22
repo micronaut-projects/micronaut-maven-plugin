@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.build.services;
 
 import com.google.cloud.tools.jib.api.Credential;
@@ -39,6 +54,9 @@ public class JibConfigurationService {
         }
     }
 
+    /**
+     * Returns the <code>to.image</code> configuration.
+     */
     public Optional<String> getToImage() {
         Optional<String> result;
         String propertyValue = System.getProperties().getProperty(PropertyNames.TO_IMAGE);
@@ -52,6 +70,9 @@ public class JibConfigurationService {
         return result;
     }
 
+    /**
+     * Returns the <code>from.image</code> configuration.
+     */
     public Optional<String> getFromImage() {
         Optional<String> result;
         String propertyValue = System.getProperties().getProperty(PropertyNames.FROM_IMAGE);
@@ -65,6 +86,9 @@ public class JibConfigurationService {
         return result;
     }
 
+    /**
+     * Returns the <code>to.tags</code> configuration.
+     */
     public Set<String> getTags() {
         Set<String> result = null;
         String propertyValue = System.getProperties().getProperty(PropertyNames.TO_TAGS);
@@ -86,6 +110,9 @@ public class JibConfigurationService {
         return result;
     }
 
+    /**
+     * Returns the <code>to.auth.username</code> and <code>to.auth.password</code> configuration.
+     */
     public Optional<Credential> getCredentials() {
         Optional<Credential> result = Optional.empty();
         String usernameProp = System.getProperties().getProperty(PropertyNames.TO_AUTH_USERNAME);
@@ -107,22 +134,9 @@ public class JibConfigurationService {
         return result;
     }
 
-    public Optional<String> getCredHelper() {
-        Optional<String> result = Optional.empty();
-        String propertyValue = System.getProperties().getProperty(PropertyNames.TO_CRED_HELPER);
-        if (propertyValue != null) {
-            result = Optional.of(propertyValue);
-        } else {
-            if (to != null) {
-                Xpp3Dom credHelper = to.getChild("credHelper");
-                if (credHelper != null) {
-                    result = Optional.of(credHelper.getValue());
-                }
-            }
-        }
-        return result;
-    }
-
+    /**
+     * Returns the <code>container.workingDirectory</code> configuration.
+     */
     public Optional<String> getWorkingDirectory() {
         if (configuration != null) {
             Xpp3Dom container = configuration.getChild(CONTAINER);
@@ -133,6 +147,9 @@ public class JibConfigurationService {
         return Optional.empty();
     }
 
+    /**
+     * Returns the <code>container.args</code> configuration.
+     */
     public List<String> getArgs() {
         List<String> result = new ArrayList<>();
         if (configuration != null) {

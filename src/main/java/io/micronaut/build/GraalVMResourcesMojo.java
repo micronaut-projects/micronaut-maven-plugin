@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.build;
 
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
@@ -14,14 +29,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -49,7 +57,7 @@ public class GraalVMResourcesMojo extends ResourcesMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        if (nativeImageSkipResources) {
+        if (Boolean.TRUE.equals(nativeImageSkipResources)) {
             getLog().info("Skipping generation of resource-config.json");
             return;
         }
@@ -69,7 +77,7 @@ public class GraalVMResourcesMojo extends ResourcesMojo {
         Path graalVMResourcesPath = metaInfPath.resolve(nativeImagePath).toAbsolutePath();
 
         Map<String, Object> json = new HashMap<>();
-        List<Map> resourceList = resourcesToAdd.stream()
+        List<Map<String, String>> resourceList = resourcesToAdd.stream()
                 .map(this::mapToGraalResource)
                 .collect(Collectors.toList());
 

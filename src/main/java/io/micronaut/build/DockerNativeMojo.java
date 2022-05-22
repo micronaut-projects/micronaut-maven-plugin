@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.build;
 
 import com.github.dockerjava.api.command.BuildImageCmd;
@@ -64,6 +79,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
                     break;
 
                 case DEFAULT:
+                default:
                     buildDockerNative();
                     break;
             }
@@ -102,10 +118,12 @@ public class DockerNativeMojo extends AbstractDockerMojo {
     private void buildDockerNativeLambda() throws IOException {
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd(DockerfileMojo.DOCKERFILE_AWS_CUSTOM_RUNTIME)
                 .withBuildArg("GRAALVM_VERSION", graalVmVersion())
-                .withBuildArg("GRAALVM_JVM_VERSION", graalVmJvmVersion());
+                .withBuildArg("GRAALVM_JVM_VERSION", graalVmJvmVersion())
+                .withBuildArg("GRAALVM_ARCH", graalVmArch());
 
         getLog().info("Using GRAALVM_VERSION: " + graalVmVersion());
         getLog().info("Using GRAALVM_JVM_VERSION: " + graalVmJvmVersion());
+        getLog().info("Using GRAALVM_ARCH: " + graalVmArch());
 
         // Starter sets the right class in pom.xml:
         //   - For applications: io.micronaut.function.aws.runtime.MicronautLambdaRuntime
