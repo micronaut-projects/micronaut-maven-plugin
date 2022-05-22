@@ -62,6 +62,7 @@ public class RunMojo extends AbstractMojo {
 
     public static final String MN_APP_ARGS = "mn.appArgs";
     public static final String EXEC_MAIN_CLASS = "${exec.mainClass}";
+    public static final String RESOURCES_DIR = "src/main/resources";
 
     private static final int LAST_COMPILATION_THRESHOLD = 500;
     private static final String JAVA = "java";
@@ -195,6 +196,7 @@ public class RunMojo extends AbstractMojo {
             if (watchForChanges) {
                 List<Path> pathsToWatch = new ArrayList<>(sourceDirectories.values());
                 pathsToWatch.add(projectRootDirectory);
+                pathsToWatch.add(projectRootDirectory.resolve(RESOURCES_DIR));
 
                 if (watches != null && !watches.isEmpty()) {
                     for (FileSet fs : watches) {
@@ -276,10 +278,11 @@ public class RunMojo extends AbstractMojo {
         }
 
         // Start by checking whether it's a change in any source directory
-        boolean matches = this.sourceDirectories
-                .values()
-                .stream()
-                .anyMatch(path.getParent()::startsWith);
+        Collection<Path> values = this.sourceDirectories.values();
+        Collection<Path> pathsToCheck = new ArrayList<>(values.size() + 1);
+        pathsToCheck.addAll(values);
+        pathsToCheck.add(projectRootDirectory.resolve(RESOURCES_DIR));
+        boolean matches = pathsToCheck.stream().anyMatch(path.getParent()::startsWith);
 
         String relativePath = projectRootDirectory.relativize(path).toString();
 
