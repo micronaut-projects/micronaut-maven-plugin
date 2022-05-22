@@ -29,7 +29,7 @@ the plugin will issue a warning in the build log:
 ----
 $ mvn package -Dmicronaut.aot.enabled=true -Dpackaging=native-image
 
-[INFO] --- micronaut-maven-plugin:3.2.0-SNAPSHOT:aot-sample-config (default-cli) @ demo ---
+[INFO] --- micronaut-maven-plugin:3.3.0:aot-sample-config (default-cli) @ demo ---
 [WARNING] Packaging is set to [native-image], but Micronaut AOT runtime is set to [jit]. Please change them so that they match
 ----
 
