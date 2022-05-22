@@ -1,4 +1,4 @@
-FROM ghcr.io/graalvm/graalvm-ce:ol8-java11-22.0.0.2 AS builder
+FROM ghcr.io/graalvm/graalvm-ce:ol8-java11-22.1.0 AS builder
 RUN gu install native-image
 
 RUN curl -L -o musl.tar.gz https://more.musl.cc/10/x86_64-linux-musl/x86_64-linux-musl-native.tgz && \
