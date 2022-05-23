@@ -165,6 +165,7 @@
         <artifactId>native-maven-plugin</artifactId>
         <configuration>
           <skip>false</skip>
+          <useArgFile>false</useArgFile>
           <buildArgs>
             <buildArg>--no-fallback</buildArg>
             <buildArg>-Ob</buildArg>

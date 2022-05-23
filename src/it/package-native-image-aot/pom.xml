@@ -202,9 +202,15 @@
         <artifactId>native-maven-plugin</artifactId>
         <extensions>true</extensions>
         <configuration>
+          <skip>false</skip>
+          <useArgFile>false</useArgFile>
           <buildArgs>
+            <buildArg>--no-fallback</buildArg>
             <buildArg>-Ob</buildArg>
           </buildArgs>
+          <classpath>
+            <param>${project.build.directory}/${project.artifactId}-${project.version}-shaded.native-image</param>
+          </classpath>
         </configuration>
       </plugin>
     </plugins>
