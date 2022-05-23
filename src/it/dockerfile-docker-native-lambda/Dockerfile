@@ -10,7 +10,7 @@ ENV PATH=/usr/lib/graalvm/bin:${PATH}
 WORKDIR /home/app
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
-RUN native-image -H:Class=io.micronaut.function.aws.runtime.MicronautLambdaRuntime -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
+RUN native-image -Ob -H:Class=io.micronaut.function.aws.runtime.MicronautLambdaRuntime -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM amazonlinux:2
 WORKDIR /function

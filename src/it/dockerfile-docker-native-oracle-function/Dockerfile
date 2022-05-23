@@ -3,7 +3,7 @@ WORKDIR /home/app
 
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
-RUN native-image --report-unsupported-elements-at-runtime -H:Class=com.fnproject.fn.runtime.EntryPoint -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
+RUN native-image -Ob --report-unsupported-elements-at-runtime -H:Class=com.fnproject.fn.runtime.EntryPoint -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM fnproject/fn-java-fdk:jre11-latest AS fnfdk
 

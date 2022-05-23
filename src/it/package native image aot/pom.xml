@@ -203,6 +203,9 @@
         <extensions>true</extensions>
         <configuration>
           <useArgFile>false</useArgFile>
+          <buildArgs>
+            <buildArg>-Ob</buildArg>
+          </buildArgs>
         </configuration>
       </plugin>
 

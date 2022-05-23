@@ -130,6 +130,9 @@
         <groupId>io.micronaut.build</groupId>
         <artifactId>micronaut-maven-plugin</artifactId>
         <version>${micronaut-maven-plugin.version}</version>
+        <configuration>
+          <nativeImageBuildArgs>-Ob</nativeImageBuildArgs>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

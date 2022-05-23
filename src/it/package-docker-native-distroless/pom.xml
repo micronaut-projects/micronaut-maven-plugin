@@ -133,6 +133,7 @@
         <version>${micronaut-maven-plugin.version}</version>
         <configuration>
           <baseImageRun>gcr.io/distroless/cc-debian10</baseImageRun>
+          <nativeImageBuildArgs>-Ob</nativeImageBuildArgs>
         </configuration>
       </plugin>
       <plugin>

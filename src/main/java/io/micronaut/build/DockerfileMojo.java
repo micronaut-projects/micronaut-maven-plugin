@@ -174,7 +174,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
                                 .replace("${GRAALVM_VERSION}", graalVmVersion())
                                 .replace("${GRAALVM_JVM_VERSION}", graalVmJvmVersion())
                                 .replace("${GRAALVM_ARCH}", graalVmArch())
-                                .replace("${GRAALVM_ARGS} ", graalVmBuildArgs)
+                                .replace("${GRAALVM_ARGS}", graalVmBuildArgs)
                                 .replace("${CLASS_NAME}", mainClass)
                         );
                     } else if (line.contains("PORT")) {
