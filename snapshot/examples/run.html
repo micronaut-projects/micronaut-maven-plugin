@@ -168,13 +168,16 @@ deals with file changes and JVM restarts.</p>
 <p><code>/pom.xml</code>. Only dependency changes may trigger an application restart.</p>
 </li>
 <li>
-<p><code>src/main/java</code> (if it exists).</p>
+<p><code>src/main/resources/<strong>*/</strong></code>.</p>
 </li>
 <li>
-<p><code>src/main/groovy</code> (if it exists).</p>
+<p><code>src/main/java/<strong>*/</strong></code> (if it exists).</p>
 </li>
 <li>
-<p><code>src/main/kotlin</code> (if it exists).</p>
+<p><code>src/main/groovy/<strong>*/</strong></code> (if it exists).</p>
+</li>
+<li>
+<p><code>src/main/kotlin/<strong>*/</strong></code> (if it exists).</p>
 </li>
 </ul>
 </div>
@@ -200,12 +203,8 @@ deals with file changes and JVM restarts.</p>
                     <span style="color:#070;font-weight:bold">&lt;watches&gt;</span>
                         <span style="color:#070;font-weight:bold">&lt;watch&gt;</span>
                             <span style="color:#070;font-weight:bold">&lt;directory&gt;</span>src/main/resources<span style="color:#070;font-weight:bold">&lt;/directory&gt;</span>
-                            <span style="color:#070;font-weight:bold">&lt;includes&gt;</span>
-                                <span style="color:#070;font-weight:bold">&lt;include&gt;</span>**/*.yml<span style="color:#070;font-weight:bold">&lt;/include&gt;</span>
-                                <span style="color:#070;font-weight:bold">&lt;include&gt;</span>**/*.properties<span style="color:#070;font-weight:bold">&lt;/include&gt;</span>
-                            <span style="color:#070;font-weight:bold">&lt;/includes&gt;</span>
                             <span style="color:#070;font-weight:bold">&lt;excludes&gt;</span>
-                                <span style="color:#070;font-weight:bold">&lt;exclude&gt;</span>test.properties<span style="color:#070;font-weight:bold">&lt;/exclude&gt;</span>
+                                <span style="color:#070;font-weight:bold">&lt;exclude&gt;</span>application-test.yml<span style="color:#070;font-weight:bold">&lt;/exclude&gt;</span>
                             <span style="color:#070;font-weight:bold">&lt;/excludes&gt;</span>
                         <span style="color:#070;font-weight:bold">&lt;/watch&gt;</span>
                         <span style="color:#070;font-weight:bold">&lt;watch&gt;</span>
