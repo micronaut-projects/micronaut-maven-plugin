@@ -165,8 +165,10 @@
         <artifactId>native-maven-plugin</artifactId>
         <configuration>
           <skip>false</skip>
+          <useArgFile>false</useArgFile>
           <buildArgs>
             <buildArg>--no-fallback</buildArg>
+            <buildArg>-Ob</buildArg>
           </buildArgs>
           <classpath>
             <param>${project.build.directory}/${project.artifactId}-${project.version}-shaded.native-image</param>

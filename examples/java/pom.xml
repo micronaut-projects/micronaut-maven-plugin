@@ -23,23 +23,6 @@
     <micronaut.aot.packageName>io.micronaut.build.examples</micronaut.aot.packageName>
   </properties>
 
-  <repositories>
-    <repository>
-      <id>central</id>
-      <url>https://repo.maven.apache.org/maven2</url>
-    </repository>
-    <repository>
-      <id>sonatype-snapshots</id>
-      <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-    </repository>
-  </repositories>
-
   <dependencies>
     <dependency>
       <groupId>io.micronaut</groupId>
@@ -134,6 +117,16 @@
           <to>
             <image>alvarosanchez/demo:${project.version}</image>
           </to>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.graalvm.buildtools</groupId>
+        <artifactId>native-maven-plugin</artifactId>
+        <configuration>
+          <buildArgs>
+            <buildArg>-Ob</buildArg>
+          </buildArgs>
         </configuration>
       </plugin>
     </plugins>

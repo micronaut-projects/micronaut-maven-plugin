@@ -1,6 +1,7 @@
-FROM ghcr.io/graalvm/graalvm-ce:ol8-java11-22.0.0.2 AS builder
+FROM ghcr.io/graalvm/graalvm-ce:ol8-java11-22.1.0 AS builder
 RUN gu install native-image
 
+WORKDIR /
 RUN curl -L -o musl.tar.gz https://more.musl.cc/10/x86_64-linux-musl/x86_64-linux-musl-native.tgz && \
     mkdir musl && tar -xzf musl.tar.gz -C musl --strip-components 1 && \
     rm -f /musl.tar.gz
@@ -18,7 +19,7 @@ RUN curl -L -o zlib.tar.gz https://zlib.net/zlib-1.2.12.tar.gz && \
 WORKDIR /home/app
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
-RUN native-image --static --libc=musl -H:Class=io.micronaut.build.examples.Application -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
+RUN native-image -Ob --static --libc=musl -H:Class=io.micronaut.build.examples.Application -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM scratch
 COPY --from=builder /home/app/application /app/application
