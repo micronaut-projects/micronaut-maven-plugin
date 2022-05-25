@@ -78,7 +78,7 @@
         <site.version>${project.version}</site.version>
         <project.build.outputTimestamp>2022-05-23T15:08:29Z</project.build.outputTimestamp>
         <native-maven-plugin.version>0.9.11</native-maven-plugin.version>
-        <micronaut.version>3.4.4</micronaut.version>
+        <micronaut.version>3.5.0</micronaut.version>
         <micronaut.aot.version>1.1.0</micronaut.aot.version>
         <it.micronaut.version>3.5.0-SNAPSHOT</it.micronaut.version>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
