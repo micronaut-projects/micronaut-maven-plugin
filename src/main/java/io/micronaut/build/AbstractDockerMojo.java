@@ -149,9 +149,9 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     protected String getFrom() {
         if (Boolean.TRUE.equals(staticNativeImage)) {
             // For building a static native image we need a base image with tools (cc, make,...) already installed
-            return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/graalvm-ce:ol8-" + graalVmJvmVersion() + "-" + graalVmVersion());
+            return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/graalvm-ce:ol7-" + graalVmJvmVersion() + "-" + graalVmVersion());
         } else {
-            return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/native-image:ol8-" + graalVmJvmVersion() + "-" + graalVmVersion());
+            return jibConfigurationService.getFromImage().orElse("ghcr.io/graalvm/native-image:ol7-" + graalVmJvmVersion() + "-" + graalVmVersion());
         }
     }
 
