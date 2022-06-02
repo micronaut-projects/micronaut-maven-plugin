@@ -157,9 +157,9 @@
 <a class="jxr_linenumber" name="L149" href="#L149">149</a>     <strong class="jxr_keyword">protected</strong> String getFrom() {
 <a class="jxr_linenumber" name="L150" href="#L150">150</a>         <strong class="jxr_keyword">if</strong> (Boolean.TRUE.equals(staticNativeImage)) {
 <a class="jxr_linenumber" name="L151" href="#L151">151</a>             <em class="jxr_comment">// For building a static native image we need a base image with tools (cc, make,...) already installed</em>
-<a class="jxr_linenumber" name="L152" href="#L152">152</a>             <strong class="jxr_keyword">return</strong> jibConfigurationService.getFromImage().orElse(<span class="jxr_string">"ghcr.io/graalvm/graalvm-ce:ol8-"</span> + graalVmJvmVersion() + <span class="jxr_string">"-"</span> + graalVmVersion());
+<a class="jxr_linenumber" name="L152" href="#L152">152</a>             <strong class="jxr_keyword">return</strong> jibConfigurationService.getFromImage().orElse(<span class="jxr_string">"ghcr.io/graalvm/graalvm-ce:ol7-"</span> + graalVmJvmVersion() + <span class="jxr_string">"-"</span> + graalVmVersion());
 <a class="jxr_linenumber" name="L153" href="#L153">153</a>         } <strong class="jxr_keyword">else</strong> {
-<a class="jxr_linenumber" name="L154" href="#L154">154</a>             <strong class="jxr_keyword">return</strong> jibConfigurationService.getFromImage().orElse(<span class="jxr_string">"ghcr.io/graalvm/native-image:ol8-"</span> + graalVmJvmVersion() + <span class="jxr_string">"-"</span> + graalVmVersion());
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>             <strong class="jxr_keyword">return</strong> jibConfigurationService.getFromImage().orElse(<span class="jxr_string">"ghcr.io/graalvm/native-image:ol7-"</span> + graalVmJvmVersion() + <span class="jxr_string">"-"</span> + graalVmVersion());
 <a class="jxr_linenumber" name="L155" href="#L155">155</a>         }
 <a class="jxr_linenumber" name="L156" href="#L156">156</a>     }
 <a class="jxr_linenumber" name="L157" href="#L157">157</a> 
