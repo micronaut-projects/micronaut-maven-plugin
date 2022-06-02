@@ -51,6 +51,8 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
     public static final String DOCKER_NATIVE_PACKAGING = "docker-native";
     public static final String GRAALVM_ARGS = "GRAALVM_ARGS";
+    public static final String MICRONAUT_PARENT = "io.micronaut:micronaut-parent";
+    public static final String MICRONAUT_VERSION = "micronaut.version";
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -98,14 +100,29 @@ public class DockerNativeMojo extends AbstractDockerMojo {
     }
 
     private void checkGraalVm() throws MojoExecutionException {
-        String micronautVersion = mavenProject.getProperties().getProperty("micronaut.version");
-        if (!mavenProject.getInjectedProfileIds().get("io.micronaut:micronaut-parent:" + micronautVersion).contains("graalvm")) {
-            String javaVendor = System.getProperty("java.vendor", "");
-            if (javaVendor.toLowerCase().contains("graalvm")) {
-                throw new MojoExecutionException("The [graalvm] profile was not activated automatically because the native-image component is not installed (or not found in your path). Either activate the profile manually (-Pgraalvm) or install the native-image component (gu install native-image), and try again");
+        String micronautVersion = mavenProject.getProperties().getProperty(MICRONAUT_VERSION);
+        if (mavenProject.hasParent()) {
+            String ga = mavenProject.getParent().getGroupId() + ":" + mavenProject.getParent().getArtifactId();
+            if (MICRONAUT_PARENT.equals(ga)) {
+                String micronautParentVersion = mavenProject.getParent().getVersion();
+                if (micronautVersion.equals(micronautParentVersion)) {
+                    if (!mavenProject.getInjectedProfileIds().get("io.micronaut:micronaut-parent:" + micronautParentVersion).contains("graalvm")) {
+                        String javaVendor = System.getProperty("java.vendor", "");
+                        if (javaVendor.toLowerCase().contains("graalvm")) {
+                            throw new MojoExecutionException("The [graalvm] profile was not activated automatically because the native-image component is not installed (or not found in your path). Either activate the profile manually (-Pgraalvm) or install the native-image component (gu install native-image), and try again");
+                        } else {
+                            throw new MojoExecutionException("The [graalvm] profile was not activated automatically because you are not using a GraalVM JDK. Activate the profile manually (-Pgraalvm) and try again");
+                        }
+                    }
+                } else {
+                    String message = String.format("The %s version (%s) differs from the %s property (%s). Please, make sure both refer to the same version", MICRONAUT_PARENT, micronautParentVersion, MICRONAUT_VERSION, micronautVersion);
+                    throw new MojoExecutionException(message);
+                }
             } else {
-                throw new MojoExecutionException("The [graalvm] profile was not activated automatically because you are not using a GraalVM JDK. Activate the profile manually (-Pgraalvm) and try again");
+                getLog().warn("The parent POM of this project is not set to " + MICRONAUT_PARENT);
             }
+        } else {
+            getLog().warn("This project has no parent POM defined. To avoid build problems, please set the parent to " + MICRONAUT_PARENT);
         }
     }
 
