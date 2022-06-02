@@ -50,9 +50,21 @@ public enum MicronautRuntime {
     UNDERTOW(),
 
     /**
-     * AWS lambda packaged as a Jar file.
+     * AWS lambda deployed to a Provided runtime.
+     * @deprecated Use {@link #LAMBDA_PROVIDED} instead.
      */
+    @Deprecated
     LAMBDA(DockerBuildStrategy.LAMBDA),
+
+    /**
+     * AWS lambda deployed to a Provided runtime.
+     */
+    LAMBDA_PROVIDED(DockerBuildStrategy.LAMBDA),
+
+    /**
+     * AWS lambda packaged as a Jar file and deployed to a Java runtime.
+     */
+    LAMBDA_JAVA,
 
     /**
      * Oracle Cloud Function, packaged as a docker container.
