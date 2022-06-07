@@ -26,18 +26,10 @@ import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystem;
-import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
-import org.eclipse.aether.collection.CollectRequest;
-import org.eclipse.aether.graph.Dependency;
-import org.eclipse.aether.graph.DependencyFilter;
-import org.eclipse.aether.resolution.ArtifactResult;
-import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResolutionException;
-import org.eclipse.aether.resolution.DependencyResult;
 import org.eclipse.aether.util.artifact.JavaScopes;
-import org.eclipse.aether.util.filter.DependencyFilterUtils;
 import org.twdata.maven.mojoexecutor.MojoExecutor;
 
 import javax.inject.Inject;
@@ -46,9 +38,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.micronaut.build.DependencyResolutionUtils.artifactResultsFor;
+import static io.micronaut.build.DependencyResolutionUtils.toClasspath;
 import static io.micronaut.build.aot.Constants.*;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.configuration;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.element;
@@ -160,38 +153,16 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     private List<String> resolveAotClasspath() throws DependencyResolutionException {
         Stream<Artifact> aotArtifacts = Arrays.stream(AOT_MODULES)
                 .map(m -> new DefaultArtifact(MICRONAUT_AOT_GROUP_ID + ":" + MICRONAUT_AOT_ARTIFACT_ID_PREFIX + m + ":" + micronautAotVersion));
-        return getClasspath(getArtifactResults(aotArtifacts));
+        return toClasspath(artifactResultsFor(mavenSession, mavenProject, repositorySystem, aotArtifacts));
     }
 
     private List<String> resolveAotPluginsClasspath() throws DependencyResolutionException {
         if (aotDependencies != null && !aotDependencies.isEmpty()) {
             Stream<Artifact> aotPlugins = aotDependencies.stream().map(d -> new DefaultArtifact(d.getGroupId(), d.getArtifactId(), d.getType(), d.getVersion()));
-            return getClasspath(getArtifactResults(aotPlugins));
+            return toClasspath(artifactResultsFor(mavenSession, mavenProject, repositorySystem, aotPlugins));
         } else {
             return Collections.emptyList();
         }
     }
 
-    private List<ArtifactResult> getArtifactResults(Stream<Artifact> artifacts) throws DependencyResolutionException {
-        RepositorySystemSession repositorySession = mavenSession.getRepositorySession();
-        DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.RUNTIME);
-        CollectRequest collectRequest = new CollectRequest();
-        artifacts.map(a -> new Dependency(a, JavaScopes.RUNTIME))
-                .forEach(collectRequest::addDependency);
-        collectRequest.setRepositories(mavenProject.getRemoteProjectRepositories());
-
-        DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, classpathFilter);
-
-        DependencyResult dependencyResult = repositorySystem.resolveDependencies(repositorySession, dependencyRequest);
-        return dependencyResult.getArtifactResults();
-    }
-
-    private List<String> getClasspath(List<ArtifactResult> resolutionResult) {
-        return resolutionResult
-                .stream()
-                .map(ArtifactResult::getArtifact)
-                .map(Artifact::getFile)
-                .map(File::getAbsolutePath)
-                .collect(Collectors.toList());
-    }
 }
