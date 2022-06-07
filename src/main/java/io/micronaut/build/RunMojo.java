@@ -20,6 +20,7 @@ import io.methvin.watcher.DirectoryWatcher;
 import io.micronaut.build.aot.AotAnalysisMojo;
 import io.micronaut.build.services.CompilerService;
 import io.micronaut.build.services.ExecutorService;
+import io.micronaut.build.testing.MicronautTestResourcesProxyMojo;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.plugin.AbstractMojo;
@@ -32,14 +33,21 @@ import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.util.AbstractScanner;
 import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.artifact.JavaScopes;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static io.micronaut.build.DependencyResolutionUtils.artifactResultsFor;
+import static io.micronaut.build.DependencyResolutionUtils.toClasspath;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isReadable;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
@@ -83,6 +91,8 @@ public class RunMojo extends AbstractMojo {
     private final CompilerService compilerService;
     private final ExecutorService executorService;
     private final Path projectRootDirectory;
+
+    private final RepositorySystem repositorySystem;
 
     /**
      * The project's target directory.
@@ -169,7 +179,7 @@ public class RunMojo extends AbstractMojo {
     @Inject
     public RunMojo(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager,
                    ProjectDependenciesResolver resolver, ProjectBuilder projectBuilder, ToolchainManager toolchainManager,
-                   CompilerService compilerService, ExecutorService executorService) {
+                   CompilerService compilerService, ExecutorService executorService, RepositorySystem repositorySystem) {
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
         this.resolver = resolver;
@@ -179,6 +189,7 @@ public class RunMojo extends AbstractMojo {
         this.compilerService = compilerService;
         this.executorService = executorService;
         this.javaExecutable = findJavaExecutable();
+        this.repositorySystem = repositorySystem;
 
         resolveDependencies();
         this.classpathHash = this.classpath.hashCode();
@@ -407,9 +418,28 @@ public class RunMojo extends AbstractMojo {
     }
 
     private void runApplication() throws Exception {
+        List<String> testResourcesClientClasspath = startTestResourcesController();
         runAotIfNeeded();
 
         String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
+        // TODO: better handle duplicates, this is a dirty hack for tests:
+        // The client should in theory be injected into the app classpath and resolved in
+        // the same graph as the app itself
+        Iterator<String> iterator = testResourcesClientClasspath.iterator();
+        while (iterator.hasNext()) {
+            String e = iterator.next();
+            File f = new File(e);
+            if (f.getName().endsWith(".jar")) {
+                String simplifiedName = f.getName().substring(0, f.getName().lastIndexOf("-"));
+                if (classpathArgument.contains(simplifiedName)) {
+                    getLog().debug("Removing duplicate entry " + e);
+                    iterator.remove();
+                }
+            }
+        }
+        if (!testResourcesClientClasspath.isEmpty()) {
+            classpathArgument = classpathArgument + File.pathSeparator + String.join(File.pathSeparator, testResourcesClientClasspath);
+        }
         List<String> args = new ArrayList<>();
         args.add(javaExecutable);
 
@@ -457,6 +487,22 @@ public class RunMojo extends AbstractMojo {
                 getLog().error(e);
             }
         }
+    }
+
+    private List<String> startTestResourcesController() {
+        try {
+            executorService.executeGoal(THIS_PLUGIN, MicronautTestResourcesProxyMojo.NAME);
+            List<String> cp = toClasspath(artifactResultsFor(
+                    mavenSession, mavenProject, repositorySystem,
+                    Stream.of(new DefaultArtifact("io.micronaut.test:micronaut-test-resources-client:1.0.0-SNAPSHOT")))
+            );
+            // TODO: put generated config into a different directory
+            String configDir = new File(targetDirectory, "test-classes").getAbsolutePath();
+            return Stream.concat(cp.stream(), Stream.of(configDir)).collect(Collectors.toList());
+        } catch (MojoExecutionException | DependencyResolutionException e) {
+            getLog().error(e);
+        }
+        return Collections.emptyList();
     }
 
     private String findJavaExecutable() {

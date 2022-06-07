@@ -16,7 +16,6 @@
 package io.micronaut.build.testing;
 
 import io.micronaut.build.services.CompilerService;
-import io.micronaut.build.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -35,6 +34,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -86,19 +87,15 @@ public class MicronautTestResourcesProxyMojo extends AbstractMojo {
 
     protected final RepositorySystem repositorySystem;
 
-    private final ExecutorService executorService;
-
     @Inject
     public MicronautTestResourcesProxyMojo(CompilerService compilerService,
                                            MavenProject mavenProject,
                                            MavenSession mavenSession,
-                                           RepositorySystem repositorySystem,
-                                           ExecutorService executorService) {
+                                           RepositorySystem repositorySystem) {
         this.compilerService = compilerService;
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
         this.repositorySystem = repositorySystem;
-        this.executorService = executorService;
     }
 
     @Override
@@ -128,8 +125,11 @@ public class MicronautTestResourcesProxyMojo extends AbstractMojo {
                 ProcessBuilder builder = new ProcessBuilder(commandLine);
                 Process process = builder.inheritIO().start();
                 File propertiesFile = new File(buildDirectory, "test-classes/test-resources.properties");
-                try (PrintWriter prn = new PrintWriter(new FileOutputStream(propertiesFile))) {
-                    prn.println("proxy.uri=http\\://localhost\\:13667");
+                Path classesDir = propertiesFile.getParentFile().toPath();
+                if (Files.isDirectory(classesDir) || Files.createDirectory(classesDir) != null) {
+                    try (PrintWriter prn = new PrintWriter(new FileOutputStream(propertiesFile))) {
+                        prn.println("proxy.uri=http\\://localhost\\:13667");
+                    }
                 }
                 Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                     getLog().info("Stopping Micronaut Test Resources proxy");
