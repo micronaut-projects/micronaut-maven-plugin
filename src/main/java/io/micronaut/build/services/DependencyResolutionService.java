@@ -1,4 +1,19 @@
-package io.micronaut.build;
+/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.build.services;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
@@ -15,6 +30,8 @@ import org.eclipse.aether.resolution.DependencyResult;
 import org.eclipse.aether.util.artifact.JavaScopes;
 import org.eclipse.aether.util.filter.DependencyFilterUtils;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,9 +40,20 @@ import java.util.stream.Stream;
 /**
  * Utility methods for performing dependency resolution.
  */
-public final class DependencyResolutionUtils {
+@Singleton
+public class DependencyResolutionService {
 
-    private DependencyResolutionUtils() {
+    private final MavenSession mavenSession;
+
+    private final MavenProject mavenProject;
+
+    private final RepositorySystem repositorySystem;
+
+    @Inject
+    public DependencyResolutionService(MavenSession mavenSession, MavenProject mavenProject, RepositorySystem repositorySystem) {
+        this.mavenSession = mavenSession;
+        this.mavenProject = mavenProject;
+        this.repositorySystem = repositorySystem;
     }
 
     public static List<String> toClasspath(List<ArtifactResult> resolutionResult) {
@@ -37,10 +65,10 @@ public final class DependencyResolutionUtils {
                 .collect(Collectors.toList());
     }
 
-    public static List<ArtifactResult> artifactResultsFor(MavenSession mavenSession,
-                                                          MavenProject mavenProject,
-                                                          RepositorySystem repositorySystem,
-                                                          Stream<Artifact> artifacts) throws DependencyResolutionException {
+    /**
+     * Performs a dependency request to compute the transitive dependencies of the given artifacts.
+     */
+    public List<ArtifactResult> artifactResultsFor(Stream<Artifact> artifacts) throws DependencyResolutionException {
         RepositorySystemSession repositorySession = mavenSession.getRepositorySession();
         DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.RUNTIME);
         CollectRequest collectRequest = new CollectRequest();

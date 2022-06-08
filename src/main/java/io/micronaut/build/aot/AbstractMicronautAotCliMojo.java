@@ -16,6 +16,7 @@
 package io.micronaut.build.aot;
 
 import io.micronaut.build.services.CompilerService;
+import io.micronaut.build.services.DependencyResolutionService;
 import io.micronaut.build.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -40,9 +41,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static io.micronaut.build.DependencyResolutionUtils.artifactResultsFor;
-import static io.micronaut.build.DependencyResolutionUtils.toClasspath;
 import static io.micronaut.build.aot.Constants.*;
+import static io.micronaut.build.services.DependencyResolutionService.toClasspath;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.configuration;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.element;
 
@@ -70,14 +70,18 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
 
     private final ExecutorService executorService;
 
+    private final DependencyResolutionService dependencyResolutionService;
+
     @Parameter
     private List<org.apache.maven.model.Dependency> aotDependencies;
 
     @Inject
     public AbstractMicronautAotCliMojo(CompilerService compilerService, ExecutorService executorService,
-                                       MavenProject mavenProject, MavenSession mavenSession, RepositorySystem repositorySystem) {
+                                       MavenProject mavenProject, MavenSession mavenSession,
+                                       RepositorySystem repositorySystem, DependencyResolutionService dependencyResolutionService) {
         super(compilerService, mavenProject, mavenSession, repositorySystem);
         this.executorService = executorService;
+        this.dependencyResolutionService = dependencyResolutionService;
     }
 
     protected abstract List<String> getExtraArgs() throws MojoExecutionException;
@@ -153,13 +157,13 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     private List<String> resolveAotClasspath() throws DependencyResolutionException {
         Stream<Artifact> aotArtifacts = Arrays.stream(AOT_MODULES)
                 .map(m -> new DefaultArtifact(MICRONAUT_AOT_GROUP_ID + ":" + MICRONAUT_AOT_ARTIFACT_ID_PREFIX + m + ":" + micronautAotVersion));
-        return toClasspath(artifactResultsFor(mavenSession, mavenProject, repositorySystem, aotArtifacts));
+        return toClasspath(dependencyResolutionService.artifactResultsFor(aotArtifacts));
     }
 
     private List<String> resolveAotPluginsClasspath() throws DependencyResolutionException {
         if (aotDependencies != null && !aotDependencies.isEmpty()) {
             Stream<Artifact> aotPlugins = aotDependencies.stream().map(d -> new DefaultArtifact(d.getGroupId(), d.getArtifactId(), d.getType(), d.getVersion()));
-            return toClasspath(artifactResultsFor(mavenSession, mavenProject, repositorySystem, aotPlugins));
+            return toClasspath(dependencyResolutionService.artifactResultsFor(aotPlugins));
         } else {
             return Collections.emptyList();
         }
