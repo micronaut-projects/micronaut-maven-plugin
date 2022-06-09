@@ -27,10 +27,8 @@ import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.*;
 import org.apache.maven.project.*;
-import org.apache.maven.toolchain.Toolchain;
 import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.util.AbstractScanner;
-import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.util.artifact.JavaScopes;
@@ -40,6 +38,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.*;
 
+import static io.micronaut.build.MojoUtils.findJavaExecutable;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isReadable;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
@@ -65,7 +64,6 @@ public class RunMojo extends AbstractMojo {
     public static final String RESOURCES_DIR = "src/main/resources";
 
     private static final int LAST_COMPILATION_THRESHOLD = 500;
-    private static final String JAVA = "java";
     private static final List<String> DEFAULT_EXCLUDES;
     private static final String THIS_PLUGIN = "io.micronaut.build:micronaut-maven-plugin";
 
@@ -178,7 +176,7 @@ public class RunMojo extends AbstractMojo {
         this.toolchainManager = toolchainManager;
         this.compilerService = compilerService;
         this.executorService = executorService;
-        this.javaExecutable = findJavaExecutable();
+        this.javaExecutable = findJavaExecutable(toolchainManager, mavenSession);
 
         resolveDependencies();
         this.classpathHash = this.classpath.hashCode();
@@ -457,24 +455,6 @@ public class RunMojo extends AbstractMojo {
                 getLog().error(e);
             }
         }
-    }
-
-    private String findJavaExecutable() {
-        String executable;
-        Toolchain toolchain = this.toolchainManager.getToolchainFromBuildContext("jdk", mavenSession);
-        if (toolchain != null) {
-            executable = toolchain.findTool(JAVA);
-        } else {
-            File javaBinariesDir = new File(new File(System.getProperty("java.home")), "bin");
-            if (Os.isFamily(Os.FAMILY_UNIX)) {
-                executable = new File(javaBinariesDir, JAVA).getAbsolutePath();
-            } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                executable = new File(javaBinariesDir, "java.exe").getAbsolutePath();
-            } else {
-                executable = JAVA;
-            }
-        }
-        return executable;
     }
 
     private boolean compileProject() {

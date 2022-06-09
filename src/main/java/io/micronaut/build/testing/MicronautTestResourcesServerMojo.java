@@ -25,6 +25,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.toolchain.ToolchainManager;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
@@ -40,9 +41,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.micronaut.build.MojoUtils.findJavaExecutable;
 import static io.micronaut.build.services.DependencyResolutionService.toClasspath;
 import static java.util.stream.Stream.concat;
 
@@ -93,17 +96,21 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
 
     protected final DependencyResolutionService dependencyResolutionService;
 
+    protected final ToolchainManager toolchainManager;
+
     @Inject
     public MicronautTestResourcesServerMojo(CompilerService compilerService,
                                             MavenProject mavenProject,
                                             MavenSession mavenSession,
                                             RepositorySystem repositorySystem,
-                                            DependencyResolutionService dependencyResolutionService) {
+                                            DependencyResolutionService dependencyResolutionService,
+                                            ToolchainManager toolchainManager) {
         this.compilerService = compilerService;
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
         this.repositorySystem = repositorySystem;
         this.dependencyResolutionService = dependencyResolutionService;
+        this.toolchainManager = toolchainManager;
     }
 
     @Override
@@ -113,44 +120,44 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
         }
         try {
             doExecute();
-        } catch (DependencyResolutionException e) {
+        } catch (IOException e) {
+            e.printStackTrace();
             throw new MojoExecutionException("Unable to start test resources server", e);
         }
     }
 
-    private void doExecute() throws DependencyResolutionException, MojoExecutionException {
+    private void doExecute() throws IOException {
         getLog().info("Starting Micronaut Test Resources server");
-
-        Thread thread = new Thread(() -> {
-            String javaHome = System.getProperty("java.home");
-            // This is a SPIKE, must do something which works on all platforms
-            String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
-            List<String> commandLine = new ArrayList<>();
-            commandLine.add(javaBin);
-            try {
-                List<String> classpath = createExecPluginConfig();
-                commandLine.addAll(classpath);
-                ProcessBuilder builder = new ProcessBuilder(commandLine);
-                Process process = builder.inheritIO().start();
-                File propertiesFile = new File(buildDirectory, "test-classes/test-resources.properties");
-                Path classesDir = propertiesFile.getParentFile().toPath();
-                if (!Files.isDirectory(classesDir)) {
-                    Files.createDirectory(classesDir);
-                }
-                try (PrintWriter prn = new PrintWriter(Files.newOutputStream(propertiesFile.toPath()))) {
-                    prn.println("server.uri=http\\://localhost\\:13667");
-                }
-                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                    getLog().info("Stopping Micronaut Test Resources server");
-                    process.destroy();
-                }));
-            } catch (DependencyResolutionException | IOException e) {
-                getLog().error(e.getMessage());
-                throw new RuntimeException(e);
+        String javaBin = findJavaExecutable(toolchainManager, mavenSession);
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add(javaBin);
+        try {
+            List<String> classpath = createExecPluginConfig();
+            commandLine.addAll(classpath);
+            ProcessBuilder builder = new ProcessBuilder(commandLine);
+            Process process = builder.inheritIO().start();
+            File propertiesFile = new File(buildDirectory, "test-classes/test-resources.properties");
+            Path classesDir = propertiesFile.getParentFile().toPath();
+            if (!Files.isDirectory(classesDir)) {
+                Files.createDirectory(classesDir);
             }
-        });
-        thread.setDaemon(true);
-        thread.start();
+            Path serverPortFile = buildDirectory.toPath().resolve(TEST_RESOURCES_GROUP + ".port");
+            while (!Files.exists(serverPortFile)) {
+                getLog().info("Waiting for Test Resources server to become available...");
+                process.waitFor(500, TimeUnit.MILLISECONDS);
+            }
+            String serverPort = Files.readAllLines(serverPortFile).get(0);
+            try (PrintWriter prn = new PrintWriter(Files.newOutputStream(propertiesFile.toPath()))) {
+                prn.println("server.uri=http\\://localhost\\:" + serverPort);
+            }
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                getLog().info("Stopping Micronaut Test Resources server");
+                process.destroy();
+            }));
+        } catch (DependencyResolutionException | IOException | InterruptedException e) {
+            getLog().error(e.getMessage());
+            throw new RuntimeException(e);
+        }
 
     }
 
@@ -164,7 +171,7 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
 
                 // CLI args
                 "-Dmicronaut.http.client.read-timeout=60s",
-                "-Dmicronaut.server.port=13667"
+                "--port-file=" + buildDirectory.toPath().resolve(TEST_RESOURCES_GROUP + ".port")
         ).collect(Collectors.toList());
     }
 
