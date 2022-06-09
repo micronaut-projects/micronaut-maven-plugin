@@ -20,6 +20,7 @@ import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyFilter;
@@ -75,6 +76,13 @@ public class DependencyResolutionService {
         artifacts.map(a -> new Dependency(a, JavaScopes.RUNTIME))
                 .forEach(collectRequest::addDependency);
         collectRequest.setRepositories(mavenProject.getRemoteProjectRepositories());
+        List<Dependency> managedDependencies = mavenProject.getDependencyManagement().getDependencies().stream()
+                .map(d -> {
+                    Artifact artifact = new DefaultArtifact(d.getGroupId(), d.getArtifactId(), d.getClassifier(), "jar", d.getVersion());
+                    return new Dependency(artifact, d.getScope(), Boolean.valueOf(d.getOptional()));
+                })
+                .collect(Collectors.toList());
+        collectRequest.setManagedDependencies(managedDependencies);
 
         DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, classpathFilter);
 

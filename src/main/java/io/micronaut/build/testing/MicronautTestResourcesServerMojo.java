@@ -58,11 +58,16 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
     private static final String TEST_RESOURCES_ARTIFACT_ID_PREFIX = "micronaut-test-resources-";
     private static final String TEST_RESOURCES_VERSION = "1.0.0-SNAPSHOT";
     private static final String[] TEST_RESOURCES_MODULES = new String[]{
-            "server",
             "testcontainers",
+            "server",
+            "hivemq",
+            "jdbc-mariadb",
             "jdbc-mysql",
+            "jdbc-oracle-xe",
             "jdbc-postgresql",
-            "kafka"
+            "kafka",
+            "mongodb",
+            "neo4j"
     };
 
 
@@ -76,7 +81,7 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
     protected File buildDirectory;
 
     @Parameter
-    protected List<org.apache.maven.model.Dependency> serverDependencies;
+    protected List<org.apache.maven.model.Dependency> testResourcesDependencies;
 
     protected final CompilerService compilerService;
 
@@ -164,13 +169,12 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
     }
 
     private List<String> resolveServerClasspath() throws DependencyResolutionException {
-        List<org.apache.maven.model.Dependency> extraDependencies = serverDependencies != null ? serverDependencies : Collections.emptyList();
-        Stream<Artifact> artifacts = concat(concat(
-                // don't ask me why Maven resolves wrong version
-                Stream.of(new DefaultArtifact("com.fasterxml.jackson.core:jackson-annotations:2.13.2")),
+        List<org.apache.maven.model.Dependency> extraDependencies =
+                testResourcesDependencies != null ? testResourcesDependencies : Collections.emptyList();
+        Stream<Artifact> artifacts = concat(
                 Arrays.stream(TEST_RESOURCES_MODULES)
-                        .map(m -> new DefaultArtifact(TEST_RESOURCES_GROUP + ":" + TEST_RESOURCES_ARTIFACT_ID_PREFIX + m + ":" + TEST_RESOURCES_VERSION))
-        ), extraDependencies.stream().map(d -> new DefaultArtifact(
+                        .map(m -> new DefaultArtifact(TEST_RESOURCES_GROUP + ":" + TEST_RESOURCES_ARTIFACT_ID_PREFIX + m + ":" + TEST_RESOURCES_VERSION)),
+        extraDependencies.stream().map(d -> new DefaultArtifact(
                 d.getGroupId(),
                 d.getArtifactId(),
                 d.getType(),
