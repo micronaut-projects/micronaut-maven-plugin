@@ -15,6 +15,7 @@
  */
 package io.micronaut.build.services;
 
+import io.micronaut.testresources.buildtools.MavenDependency;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
@@ -44,6 +45,11 @@ import java.util.stream.Stream;
 @Singleton
 public class DependencyResolutionService {
 
+    public static final String TEST_RESOURCES_GROUP = "io.micronaut.testresources";
+
+    private static final String JAR_EXTENSION = "jar";
+    private static final String TEST_RESOURCES_ARTIFACT_ID_PREFIX = "micronaut-test-resources-";
+
     private final MavenSession mavenSession;
 
     private final MavenProject mavenProject;
@@ -66,6 +72,33 @@ public class DependencyResolutionService {
                 .collect(Collectors.toList());
     }
 
+    public static Dependency mavenDependencyToAetherDependency(org.apache.maven.model.Dependency d) {
+        Artifact artifact = mavenDependencyToAetherArtifact(d);
+        return new Dependency(artifact, d.getScope(), Boolean.valueOf(d.getOptional()));
+    }
+
+    public static Artifact mavenDependencyToAetherArtifact(org.apache.maven.model.Dependency d) {
+        return new DefaultArtifact(d.getGroupId(), d.getArtifactId(), d.getClassifier(), d.getType(), d.getVersion());
+    }
+
+    public static MavenDependency mavenDependencyToTestResourcesDependency(org.apache.maven.model.Dependency d) {
+        return new MavenDependency(d.getGroupId(), d.getArtifactId(), d.getVersion());
+    }
+
+    public static Artifact testResourcesDependencyToAetherArtifact(MavenDependency d) {
+        return new DefaultArtifact(d.getGroup(), d.getArtifact(), JAR_EXTENSION, d.getVersion());
+    }
+
+    public static Artifact testResourcesModuleToAetherArtifact(String module, String testResourcesVersion) {
+        String coords = String.format(
+                "%s:%s:%s",
+                TEST_RESOURCES_GROUP,
+                TEST_RESOURCES_ARTIFACT_ID_PREFIX + module,
+                testResourcesVersion
+        );
+        return new DefaultArtifact(coords);
+    }
+
     /**
      * Performs a dependency request to compute the transitive dependencies of the given artifacts.
      */
@@ -77,10 +110,7 @@ public class DependencyResolutionService {
                 .forEach(collectRequest::addDependency);
         collectRequest.setRepositories(mavenProject.getRemoteProjectRepositories());
         List<Dependency> managedDependencies = mavenProject.getDependencyManagement().getDependencies().stream()
-                .map(d -> {
-                    Artifact artifact = new DefaultArtifact(d.getGroupId(), d.getArtifactId(), d.getClassifier(), "jar", d.getVersion());
-                    return new Dependency(artifact, d.getScope(), Boolean.valueOf(d.getOptional()));
-                })
+                .map(DependencyResolutionService::mavenDependencyToAetherDependency)
                 .collect(Collectors.toList());
         collectRequest.setManagedDependencies(managedDependencies);
 

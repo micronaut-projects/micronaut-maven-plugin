@@ -17,6 +17,8 @@ package io.micronaut.build.testresources;
 
 import io.micronaut.build.services.CompilerService;
 import io.micronaut.build.services.DependencyResolutionService;
+import io.micronaut.testresources.buildtools.MavenDependency;
+import io.micronaut.testresources.buildtools.TestResourcesClasspath;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
@@ -29,7 +31,6 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.toolchain.ToolchainManager;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
-import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 
 import javax.inject.Inject;
@@ -47,6 +48,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.micronaut.build.MojoUtils.findJavaExecutable;
+import static io.micronaut.build.services.DependencyResolutionService.TEST_RESOURCES_GROUP;
 import static io.micronaut.build.services.DependencyResolutionService.toClasspath;
 import static java.util.stream.Stream.concat;
 
@@ -58,8 +60,7 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
     public static final String NAME = "start-testresources-server";
 
     private static final String SERVER_MAIN_CLASS = "io.micronaut.testresources.server.Application";
-    private static final String TEST_RESOURCES_GROUP = "io.micronaut.testresources";
-    private static final String TEST_RESOURCES_ARTIFACT_ID_PREFIX = "micronaut-test-resources-";
+
     private static final String[] TEST_RESOURCES_MODULES = new String[]{
             "testcontainers",
             "server",
@@ -206,18 +207,31 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
     }
 
     private List<String> resolveServerClasspath() throws DependencyResolutionException {
+        Stream<Artifact> serverDependencies;
+
+        if (classpathInference) {
+            serverDependencies =
+                    TestResourcesClasspath.inferTestResourcesClasspath(getApplicationDependencies(), testResourcesVersion)
+                                    .stream()
+                                    .map(DependencyResolutionService::testResourcesDependencyToAetherArtifact);
+        } else {
+            serverDependencies = Arrays.stream(TEST_RESOURCES_MODULES)
+                    .map(m -> DependencyResolutionService.testResourcesModuleToAetherArtifact(m, testResourcesVersion));
+        }
+
         List<org.apache.maven.model.Dependency> extraDependencies =
                 testResourcesDependencies != null ? testResourcesDependencies : Collections.emptyList();
-        Stream<Artifact> artifacts = concat(
-                Arrays.stream(TEST_RESOURCES_MODULES)
-                        .map(m -> new DefaultArtifact(TEST_RESOURCES_GROUP + ":" + TEST_RESOURCES_ARTIFACT_ID_PREFIX + m + ":" + testResourcesVersion)),
-        extraDependencies.stream().map(d -> new DefaultArtifact(
-                d.getGroupId(),
-                d.getArtifactId(),
-                d.getType(),
-                d.getVersion()
-        )));
+
+        Stream<Artifact> extraDependenciesStream = extraDependencies.stream().map(DependencyResolutionService::mavenDependencyToAetherArtifact);
+
+        Stream<Artifact> artifacts = concat(serverDependencies, extraDependenciesStream);
+
         return toClasspath(dependencyResolutionService.artifactResultsFor(artifacts));
     }
 
+    private List<MavenDependency> getApplicationDependencies() {
+        return this.mavenProject.getDependencies().stream()
+                .map(DependencyResolutionService::mavenDependencyToTestResourcesDependency)
+                .collect(Collectors.toList());
+    }
 }
