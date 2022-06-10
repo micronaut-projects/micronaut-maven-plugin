@@ -172,12 +172,7 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
             if (!Files.isDirectory(classesDir)) {
                 Files.createDirectory(classesDir);
             }
-            Path serverPortFile = buildDirectory.toPath().resolve(TEST_RESOURCES_GROUP + ".port");
-            while (!Files.exists(serverPortFile)) {
-                getLog().info("Waiting for Test Resources server to become available...");
-                process.waitFor(500, TimeUnit.MILLISECONDS);
-            }
-            String serverPort = Files.readAllLines(serverPortFile).get(0);
+            String serverPort = determineServerPort(process);
             try (PrintWriter prn = new PrintWriter(Files.newOutputStream(propertiesFile.toPath()))) {
                 prn.println("server.uri=http\\://localhost\\:" + serverPort);
             }
@@ -192,18 +187,36 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
 
     }
 
+    private String determineServerPort(Process process) throws InterruptedException, IOException {
+        if (explicitPort != null) {
+            return explicitPort.toString();
+        } else {
+            Path serverPortFile = buildDirectory.toPath().resolve(TEST_RESOURCES_GROUP + ".port");
+            while (!Files.exists(serverPortFile)) {
+                getLog().info("Waiting for Test Resources server to become available...");
+                process.waitFor(500, TimeUnit.MILLISECONDS);
+            }
+            return Files.readAllLines(serverPortFile).get(0);
+        }
+    }
+
     private List<String> createExecPluginConfig() throws DependencyResolutionException {
         List<String> serverClasspath = resolveServerClasspath();
 
-        return Stream.of(
+        List<String> args = Stream.of(
                 "-classpath",
                 String.join(File.pathSeparator, serverClasspath),
                 SERVER_MAIN_CLASS,
 
                 // CLI args
-                "-Dmicronaut.http.client.read-timeout=60s",
-                "--port-file=" + buildDirectory.toPath().resolve(TEST_RESOURCES_GROUP + ".port")
+                "-Dmicronaut.http.client.read-timeout=60s"
         ).collect(Collectors.toList());
+        if (explicitPort == null) {
+            args.add("--port-file=" + buildDirectory.toPath().resolve(TEST_RESOURCES_GROUP + ".port"));
+        } else {
+            args.add("-Dmicronaut.server.port=" + explicitPort);
+        }
+        return args;
     }
 
     private List<String> resolveServerClasspath() throws DependencyResolutionException {
