@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.build.testing;
+package io.micronaut.build.testresources;
 
 import io.micronaut.build.services.CompilerService;
 import io.micronaut.build.services.DependencyResolutionService;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -72,36 +73,60 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
             "neo4j"
     };
 
+    private static final String DEFAULT_ENABLED = "false";
+    private static final String DEFAULT_CLASSPATH_INFERENCE = "true";
+
+    private static final String CONFIG_PROPERTY_PREFIX = "micronaut.test-resources.";
 
     /**
      * Whether to enable or disable Micronaut test resources support.
      */
-    @Parameter(property = "micronaut.test-resources.enabled", defaultValue = "false")
-    protected boolean enabled;
-
-    @Parameter(defaultValue = "${project.build.directory}", required = true)
-    protected File buildDirectory;
-
-    @Parameter
-    protected List<org.apache.maven.model.Dependency> testResourcesDependencies;
+    @Parameter(property =  "micronaut.test-resources.enabled", defaultValue = DEFAULT_ENABLED)
+    private Boolean testResourcesEnabled = Boolean.valueOf(DEFAULT_ENABLED);
 
     /**
-     * Micronaut Test Resources version.
+     * Micronaut Test Resources version. Should be defined by the Micronaut BOM, but this parameter can be used to
+     * define a different version.
      */
-    @Parameter(property = "micronaut.test-resources.version", required = true)
-    protected String testResourcesVersion;
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + "version", required = true)
+    private String testResourcesVersion;
 
-    protected final CompilerService compilerService;
+    /**
+     * If set to true, Micronaut will attempt to infer which dependencies should be added to the Test Resources server
+     * classpath, based on the project dependencies. In general the result will consist of modules from the
+     * test-resources project, but it may consist of additional entries, for example database drivers.
+     */
+    @Parameter(defaultValue = DEFAULT_CLASSPATH_INFERENCE)
+    private Boolean classpathInference = Boolean.valueOf(DEFAULT_CLASSPATH_INFERENCE);
 
-    protected final MavenProject mavenProject;
+    /**
+     * Additional dependencies to add to the Test Resources server classpath when not using classpath inference, or when
+     * the inference doesn't produce the desired result.
+     */
+    @Parameter
+    private List<Dependency> testResourcesDependencies;
 
-    protected final MavenSession mavenSession;
+    /**
+     * By default, the Test Resources server will be started on a random (available) port, but it can be set a fixed port
+     * by using this parameter.
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + "port")
+    private Integer explicitPort;
 
-    protected final RepositorySystem repositorySystem;
+    @Parameter(defaultValue = "${project.build.directory}", required = true)
+    private File buildDirectory;
 
-    protected final DependencyResolutionService dependencyResolutionService;
+    private final CompilerService compilerService;
 
-    protected final ToolchainManager toolchainManager;
+    private final MavenProject mavenProject;
+
+    private final MavenSession mavenSession;
+
+    private final RepositorySystem repositorySystem;
+
+    private final DependencyResolutionService dependencyResolutionService;
+
+    private final ToolchainManager toolchainManager;
 
     @Inject
     public MicronautTestResourcesServerMojo(CompilerService compilerService,
@@ -120,7 +145,7 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
 
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException {
-        if (!enabled) {
+        if (!testResourcesEnabled) {
             return;
         }
         try {
