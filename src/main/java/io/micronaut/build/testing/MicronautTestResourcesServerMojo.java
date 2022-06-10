@@ -76,7 +76,7 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
     /**
      * Whether to enable or disable Micronaut test resources support.
      */
-    @Parameter(property = "micronaut.test-resources.enabled", defaultValue = "true")
+    @Parameter(property = "micronaut.test-resources.enabled", defaultValue = "false")
     protected boolean enabled;
 
     @Parameter(defaultValue = "${project.build.directory}", required = true)
