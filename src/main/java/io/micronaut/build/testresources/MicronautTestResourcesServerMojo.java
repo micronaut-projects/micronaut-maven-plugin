@@ -40,7 +40,6 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -60,19 +59,6 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
     public static final String NAME = "start-testresources-server";
 
     private static final String SERVER_MAIN_CLASS = "io.micronaut.testresources.server.Application";
-
-    private static final String[] TEST_RESOURCES_MODULES = new String[]{
-            "testcontainers",
-            "server",
-            "hivemq",
-            "jdbc-mariadb",
-            "jdbc-mysql",
-            "jdbc-oracle-xe",
-            "jdbc-postgresql",
-            "kafka",
-            "mongodb",
-            "neo4j"
-    };
 
     private static final String DEFAULT_ENABLED = "false";
     private static final String DEFAULT_CLASSPATH_INFERENCE = "true";
@@ -220,16 +206,13 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
     }
 
     private List<String> resolveServerClasspath() throws DependencyResolutionException {
-        Stream<Artifact> serverDependencies;
+        Stream<Artifact> serverDependencies = Stream.empty();
 
         if (classpathInference) {
             serverDependencies =
                     TestResourcesClasspath.inferTestResourcesClasspath(getApplicationDependencies(), testResourcesVersion)
                                     .stream()
                                     .map(DependencyResolutionService::testResourcesDependencyToAetherArtifact);
-        } else {
-            serverDependencies = Arrays.stream(TEST_RESOURCES_MODULES)
-                    .map(m -> DependencyResolutionService.testResourcesModuleToAetherArtifact(m, testResourcesVersion));
         }
 
         List<org.apache.maven.model.Dependency> extraDependencies =
