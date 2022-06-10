@@ -59,7 +59,6 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
     private static final String SERVER_MAIN_CLASS = "io.micronaut.testresources.server.Application";
     private static final String TEST_RESOURCES_GROUP = "io.micronaut.testresources";
     private static final String TEST_RESOURCES_ARTIFACT_ID_PREFIX = "micronaut-test-resources-";
-    private static final String TEST_RESOURCES_VERSION = "1.0.0-SNAPSHOT";
     private static final String[] TEST_RESOURCES_MODULES = new String[]{
             "testcontainers",
             "server",
@@ -85,6 +84,12 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
 
     @Parameter
     protected List<org.apache.maven.model.Dependency> testResourcesDependencies;
+
+    /**
+     * Micronaut Test Resources version.
+     */
+    @Parameter(property = "micronaut.test-resources.version", required = true)
+    protected String testResourcesVersion;
 
     protected final CompilerService compilerService;
 
@@ -180,7 +185,7 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
                 testResourcesDependencies != null ? testResourcesDependencies : Collections.emptyList();
         Stream<Artifact> artifacts = concat(
                 Arrays.stream(TEST_RESOURCES_MODULES)
-                        .map(m -> new DefaultArtifact(TEST_RESOURCES_GROUP + ":" + TEST_RESOURCES_ARTIFACT_ID_PREFIX + m + ":" + TEST_RESOURCES_VERSION)),
+                        .map(m -> new DefaultArtifact(TEST_RESOURCES_GROUP + ":" + TEST_RESOURCES_ARTIFACT_ID_PREFIX + m + ":" + testResourcesVersion)),
         extraDependencies.stream().map(d -> new DefaultArtifact(
                 d.getGroupId(),
                 d.getArtifactId(),
