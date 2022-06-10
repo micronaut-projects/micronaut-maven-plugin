@@ -15,7 +15,6 @@
  */
 package io.micronaut.build.testresources;
 
-import io.micronaut.build.services.CompilerService;
 import io.micronaut.build.services.DependencyResolutionService;
 import io.micronaut.testresources.buildtools.MavenDependency;
 import io.micronaut.testresources.buildtools.TestResourcesClasspath;
@@ -29,26 +28,22 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.toolchain.ToolchainManager;
-import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.micronaut.build.MojoUtils.findJavaExecutable;
-import static io.micronaut.build.services.DependencyResolutionService.TEST_RESOURCES_GROUP;
-import static io.micronaut.build.services.DependencyResolutionService.toClasspath;
+import static io.micronaut.build.services.DependencyResolutionService.*;
 import static java.util.stream.Stream.concat;
 
 /**
@@ -62,6 +57,7 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
 
     private static final String DEFAULT_ENABLED = "false";
     private static final String DEFAULT_CLASSPATH_INFERENCE = "true";
+    private static final String DEFAULT_CLIENT_TIMEOUT = "60";
 
     private static final String CONFIG_PROPERTY_PREFIX = "micronaut.test-resources.";
 
@@ -100,32 +96,32 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
     @Parameter(property = CONFIG_PROPERTY_PREFIX + "port")
     private Integer explicitPort;
 
+    /**
+     * Configures the maximum amount of time to wait for the server to start a test resource. Some containeres may take
+     * a long amount of time to start with slow internet connections.
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + "client-timeout", defaultValue = DEFAULT_CLIENT_TIMEOUT)
+    private Integer clientTimeout = Integer.valueOf(DEFAULT_CLIENT_TIMEOUT);
+
     @Parameter(defaultValue = "${project.build.directory}", required = true)
     private File buildDirectory;
-
-    private final CompilerService compilerService;
 
     private final MavenProject mavenProject;
 
     private final MavenSession mavenSession;
-
-    private final RepositorySystem repositorySystem;
 
     private final DependencyResolutionService dependencyResolutionService;
 
     private final ToolchainManager toolchainManager;
 
     @Inject
-    public MicronautTestResourcesServerMojo(CompilerService compilerService,
-                                            MavenProject mavenProject,
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    public MicronautTestResourcesServerMojo(MavenProject mavenProject,
                                             MavenSession mavenSession,
-                                            RepositorySystem repositorySystem,
                                             DependencyResolutionService dependencyResolutionService,
                                             ToolchainManager toolchainManager) {
-        this.compilerService = compilerService;
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
-        this.repositorySystem = repositorySystem;
         this.dependencyResolutionService = dependencyResolutionService;
         this.toolchainManager = toolchainManager;
     }
@@ -137,56 +133,58 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
         }
         try {
             doExecute();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
             throw new MojoExecutionException("Unable to start test resources server", e);
         }
     }
 
-    private void doExecute() throws IOException {
+    private void doExecute() throws DependencyResolutionException, IOException {
         getLog().info("Starting Micronaut Test Resources server");
         String javaBin = findJavaExecutable(toolchainManager, mavenSession);
         List<String> commandLine = new ArrayList<>();
         commandLine.add(javaBin);
-        try {
-            List<String> classpath = createExecPluginConfig();
-            commandLine.addAll(classpath);
-            ProcessBuilder builder = new ProcessBuilder(commandLine);
-            Process process = builder.inheritIO().start();
-            File propertiesFile = new File(buildDirectory, "test-classes/test-resources.properties");
-            Path classesDir = propertiesFile.getParentFile().toPath();
-            if (!Files.isDirectory(classesDir)) {
-                Files.createDirectory(classesDir);
-            }
-            String serverPort = determineServerPort(process);
-            try (PrintWriter prn = new PrintWriter(Files.newOutputStream(propertiesFile.toPath()))) {
-                prn.println("server.uri=http\\://localhost\\:" + serverPort);
-            }
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                getLog().info("Stopping Micronaut Test Resources server");
-                process.destroy();
-            }));
-        } catch (DependencyResolutionException | IOException | InterruptedException e) {
-            getLog().error(e.getMessage());
-            throw new RuntimeException(e);
+        String accessToken = UUID.randomUUID().toString();
+        List<String> classpath = createExecPluginConfig(accessToken);
+        commandLine.addAll(classpath);
+        ProcessBuilder builder = new ProcessBuilder(commandLine);
+        Process process = builder.inheritIO().start();
+        File propertiesFile = new File(buildDirectory, "test-classes/test-resources.properties");
+        Path classesDir = propertiesFile.getParentFile().toPath();
+        if (!Files.isDirectory(classesDir)) {
+            Files.createDirectory(classesDir);
         }
-
+        String serverPort = determineServerPort(process);
+        Properties properties = new Properties();
+        properties.put("server.uri", "http://localhost:" + serverPort);
+        properties.put("server.access.token", accessToken);
+        properties.put("server.client.read.timeout", clientTimeout.toString());
+        try (OutputStream out = Files.newOutputStream(propertiesFile.toPath())) {
+            properties.store(out, "Test Resources client properties generated by the Micronaut Maven Plugin");
+        }
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            getLog().info("Stopping Micronaut Test Resources server");
+            process.destroy();
+        }));
     }
 
-    private String determineServerPort(Process process) throws InterruptedException, IOException {
+    private String determineServerPort(Process process) throws IOException {
         if (explicitPort != null) {
             return explicitPort.toString();
         } else {
             Path serverPortFile = buildDirectory.toPath().resolve(TEST_RESOURCES_GROUP + ".port");
+            getLog().info("Waiting for Test Resources server to become available...");
             while (!Files.exists(serverPortFile)) {
-                getLog().info("Waiting for Test Resources server to become available...");
-                process.waitFor(500, TimeUnit.MILLISECONDS);
+                try {
+                    process.waitFor(200, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
             }
             return Files.readAllLines(serverPortFile).get(0);
         }
     }
 
-    private List<String> createExecPluginConfig() throws DependencyResolutionException {
+    private List<String> createExecPluginConfig(String accessToken) throws DependencyResolutionException {
         List<String> serverClasspath = resolveServerClasspath();
 
         List<String> args = Stream.of(
@@ -195,7 +193,7 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
                 SERVER_MAIN_CLASS,
 
                 // CLI args
-                "-Dmicronaut.http.client.read-timeout=60s"
+                "-Dserver.access-token=" + accessToken
         ).collect(Collectors.toList());
         if (explicitPort == null) {
             args.add("--port-file=" + buildDirectory.toPath().resolve(TEST_RESOURCES_GROUP + ".port"));
@@ -206,21 +204,24 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
     }
 
     private List<String> resolveServerClasspath() throws DependencyResolutionException {
-        Stream<Artifact> serverDependencies = Stream.empty();
+        Stream<Artifact> clientDependencies = Stream.of(testResourcesModuleToAetherArtifact("client", testResourcesVersion));
 
+        List<MavenDependency> applicationDependencies = Collections.emptyList();
         if (classpathInference) {
-            serverDependencies =
-                    TestResourcesClasspath.inferTestResourcesClasspath(getApplicationDependencies(), testResourcesVersion)
-                                    .stream()
-                                    .map(DependencyResolutionService::testResourcesDependencyToAetherArtifact);
+            applicationDependencies = getApplicationDependencies();
         }
+        Stream<Artifact> serverDependencies =
+                TestResourcesClasspath.inferTestResourcesClasspath(applicationDependencies, testResourcesVersion)
+                        .stream()
+                        .map(DependencyResolutionService::testResourcesDependencyToAetherArtifact);
 
         List<org.apache.maven.model.Dependency> extraDependencies =
                 testResourcesDependencies != null ? testResourcesDependencies : Collections.emptyList();
 
-        Stream<Artifact> extraDependenciesStream = extraDependencies.stream().map(DependencyResolutionService::mavenDependencyToAetherArtifact);
+        Stream<Artifact> extraDependenciesStream = extraDependencies.stream()
+                .map(DependencyResolutionService::mavenDependencyToAetherArtifact);
 
-        Stream<Artifact> artifacts = concat(serverDependencies, extraDependenciesStream);
+        Stream<Artifact> artifacts = concat(concat(clientDependencies, serverDependencies), extraDependenciesStream);
 
         return toClasspath(dependencyResolutionService.artifactResultsFor(artifacts));
     }
