@@ -63,12 +63,21 @@ public class DependencyResolutionService {
         this.repositorySystem = repositorySystem;
     }
 
-    public static List<String> toClasspath(List<ArtifactResult> resolutionResult) {
+    private static Stream<File> streamClasspath(List<ArtifactResult> resolutionResult) {
         return resolutionResult
                 .stream()
                 .map(ArtifactResult::getArtifact)
-                .map(Artifact::getFile)
+                .map(Artifact::getFile);
+    }
+
+    public static List<String> toClasspath(List<ArtifactResult> resolutionResult) {
+        return streamClasspath(resolutionResult)
                 .map(File::getAbsolutePath)
+                .collect(Collectors.toList());
+    }
+
+    public static List<File> toClasspathFiles(List<ArtifactResult> resolutionResult) {
+        return streamClasspath(resolutionResult)
                 .collect(Collectors.toList());
     }
 

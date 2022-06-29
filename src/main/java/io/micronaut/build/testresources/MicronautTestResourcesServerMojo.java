@@ -17,6 +17,8 @@ package io.micronaut.build.testresources;
 
 import io.micronaut.build.services.DependencyResolutionService;
 import io.micronaut.testresources.buildtools.MavenDependency;
+import io.micronaut.testresources.buildtools.ServerFactory;
+import io.micronaut.testresources.buildtools.ServerUtils;
 import io.micronaut.testresources.buildtools.TestResourcesClasspath;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
@@ -34,17 +36,19 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.micronaut.build.MojoUtils.findJavaExecutable;
-import static io.micronaut.build.services.DependencyResolutionService.*;
+import static io.micronaut.build.services.DependencyResolutionService.testResourcesModuleToAetherArtifact;
+import static io.micronaut.build.services.DependencyResolutionService.toClasspathFiles;
 import static java.util.stream.Stream.concat;
 
 /**
@@ -53,8 +57,6 @@ import static java.util.stream.Stream.concat;
 @Mojo(name = MicronautTestResourcesServerMojo.NAME, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class MicronautTestResourcesServerMojo extends AbstractMojo {
     public static final String NAME = "start-testresources-server";
-
-    private static final String SERVER_MAIN_CLASS = "io.micronaut.testresources.server.Application";
 
     private static final String DEFAULT_ENABLED = "false";
     private static final String DEFAULT_CLASSPATH_INFERENCE = "true";
@@ -141,109 +143,48 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
 
     private void doExecute() throws DependencyResolutionException, IOException {
         String accessToken = UUID.randomUUID().toString();
-        String serverPort;
-        if (explicitPort != null) {
-            warnAboutPotentialSecurityIssue();
-            serverPort = explicitPort.toString();
-            if (shouldStartServer()) {
-                startServer(null);
-            }
-        } else {
-            Process process = startServer(accessToken);
-            serverPort = determineServerPort(process);
-        }
+        Path buildDir = buildDirectory.toPath();
+        ServerUtils.startOrConnectToExistingServer(
+                explicitPort,
+                buildDir.resolve("ts-port-file.txt"),
+                buildDir.resolve("test-classes"),
+                accessToken,
+                resolveServerClasspath(),
+                clientTimeout,
+                new ServerFactory() {
+                    Process process;
 
-        writeClientProperties(accessToken, serverPort);
-    }
+                    @Override
+                    public void startServer(ServerUtils.ProcessParameters processParameters) throws IOException {
+                        getLog().info("Starting Micronaut Test Resources server");
+                        String javaBin = findJavaExecutable(toolchainManager, mavenSession);
+                        List<String> cli = new ArrayList<>();
+                        cli.add(javaBin);
+                        cli.addAll(processParameters.getJvmArguments());
+                        processParameters.getSystemProperties().forEach((key, value) -> cli.add("-D" + key + "=" + value));
+                        cli.add("-cp");
+                        cli.add(processParameters.getClasspath().stream().map(File::getAbsolutePath).collect(Collectors.joining(File.pathSeparator)));
+                        cli.add(processParameters.getMainClass());
+                        cli.addAll(processParameters.getArguments());
+                        ProcessBuilder builder = new ProcessBuilder(cli);
+                        process = builder.inheritIO().start();
+                        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                            getLog().info("Stopping Micronaut Test Resources server");
+                            process.destroy();
+                        }));
+                    }
 
-    private boolean shouldStartServer() {
-        try (Socket ignored = new Socket("localhost", explicitPort)) {
-            getLog().info("Test resources service already started on port " + explicitPort);
-            return false;
-        } catch (IOException e) {
-            return true;
-        }
-    }
-
-    private void writeClientProperties(String accessToken, String serverPort) throws IOException {
-        File propertiesFile = new File(buildDirectory, "test-classes/test-resources.properties");
-        Path classesDir = propertiesFile.getParentFile().toPath();
-        if (!Files.isDirectory(classesDir)) {
-            Files.createDirectory(classesDir);
-        }
-        Properties properties = new Properties();
-        properties.put("server.uri", "http://localhost:" + serverPort);
-        properties.put("server.client.read.timeout", clientTimeout.toString());
-
-        if (explicitPort == null) {
-            properties.put("server.access.token", accessToken);
-        }
-
-        try (OutputStream out = Files.newOutputStream(propertiesFile.toPath())) {
-            properties.store(out, "Test Resources client properties generated by the Micronaut Maven Plugin");
-        }
-    }
-
-    private void warnAboutPotentialSecurityIssue() {
-        getLog().warn("********************************************");
-        getLog().warn("An explicit port was configured for the test resources server: it will accept any incoming connection from the loopback network interface");
-        getLog().warn("********************************************");
-    }
-
-    private Process startServer(String accessToken) throws IOException, DependencyResolutionException {
-        getLog().info("Starting Micronaut Test Resources server");
-        String javaBin = findJavaExecutable(toolchainManager, mavenSession);
-        List<String> commandLine = new ArrayList<>();
-        commandLine.add(javaBin);
-        List<String> classpath = createExecPluginConfig(accessToken);
-        commandLine.addAll(classpath);
-        ProcessBuilder builder = new ProcessBuilder(commandLine);
-        Process process = builder.inheritIO().start();
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            getLog().info("Stopping Micronaut Test Resources server");
-            process.destroy();
-        }));
-        return process;
-    }
-
-    private String determineServerPort(Process process) throws IOException {
-        if (explicitPort != null) {
-            return explicitPort.toString();
-        } else {
-            Path serverPortFile = buildDirectory.toPath().resolve(TEST_RESOURCES_GROUP + ".port");
-            getLog().info("Waiting for Test Resources server to become available...");
-            while (!Files.exists(serverPortFile)) {
-                try {
-                    process.waitFor(200, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
+                    @Override
+                    public void waitFor(Duration duration) throws InterruptedException {
+                        if (process != null) {
+                            process.waitFor(duration.toMillis(), TimeUnit.MILLISECONDS);
+                        }
+                    }
                 }
-            }
-            return Files.readAllLines(serverPortFile).get(0);
-        }
+        );
     }
 
-    private List<String> createExecPluginConfig(String accessToken) throws DependencyResolutionException {
-        List<String> serverClasspath = resolveServerClasspath();
-
-        List<String> args = Stream.of(
-                "-classpath",
-                String.join(File.pathSeparator, serverClasspath),
-                SERVER_MAIN_CLASS
-        ).collect(Collectors.toList());
-
-        if (accessToken != null) {
-            args.add("-Dserver.access-token=" + accessToken);
-        }
-        if (explicitPort == null) {
-            args.add("--port-file=" + buildDirectory.toPath().resolve(TEST_RESOURCES_GROUP + ".port"));
-        } else {
-            args.add("-Dmicronaut.server.port=" + explicitPort);
-        }
-        return args;
-    }
-
-    private List<String> resolveServerClasspath() throws DependencyResolutionException {
+    private List<File> resolveServerClasspath() throws DependencyResolutionException {
         Stream<Artifact> clientDependencies = Stream.of(testResourcesModuleToAetherArtifact("client", testResourcesVersion));
 
         List<MavenDependency> applicationDependencies = Collections.emptyList();
@@ -263,7 +204,7 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
 
         Stream<Artifact> artifacts = concat(concat(clientDependencies, serverDependencies), extraDependenciesStream);
 
-        return toClasspath(dependencyResolutionService.artifactResultsFor(artifacts));
+        return toClasspathFiles(dependencyResolutionService.artifactResultsFor(artifacts));
     }
 
     private List<MavenDependency> getApplicationDependencies() {
