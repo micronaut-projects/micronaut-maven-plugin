@@ -57,6 +57,7 @@ public class MicronautStopTestResourcesServerMojo extends AbstractTestResourcesM
     }
 
     private void doExecute() throws IOException {
+        getLog().info("Shutting down test resources service");
         Path buildDir = buildDirectory.toPath();
         ServerUtils.stopServer(buildDir.resolve("test-classes"));
         Files.walkFileTree(getServerSettingsDirectory(), new SimpleFileVisitor<Path>() {

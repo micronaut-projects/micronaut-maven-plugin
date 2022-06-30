@@ -23,6 +23,7 @@ import io.micronaut.build.services.DependencyResolutionService;
 import io.micronaut.build.services.ExecutorService;
 import io.micronaut.build.testresources.AbstractTestResourcesMojo;
 import io.micronaut.build.testresources.MicronautStartTestResourcesServerMojo;
+import io.micronaut.testresources.buildtools.ServerUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.plugin.AbstractMojo;
@@ -64,6 +65,7 @@ import java.util.stream.Stream;
 import static io.micronaut.build.MojoUtils.findJavaExecutable;
 import static io.micronaut.build.services.DependencyResolutionService.testResourcesModuleToAetherArtifact;
 import static io.micronaut.build.testresources.AbstractTestResourcesMojo.CONFIG_PROPERTY_PREFIX;
+import static io.micronaut.build.testresources.AbstractTestResourcesMojo.DISABLED;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isReadable;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
@@ -186,6 +188,13 @@ public class RunMojo extends AbstractMojo {
      */
     @Parameter(property = "micronaut.test-resources.enabled", defaultValue = "false")
     private boolean testResourcesEnabled;
+
+    /**
+     * Whether the test resources service should be shared between independent builds
+     * (e.g different projects, even built with different build tools).
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + "shared", defaultValue = DISABLED)
+    private boolean sharedTestResources;
 
     /**
      * Micronaut Test Resources version. Should be defined by the Micronaut BOM, but this parameter can be used to
@@ -474,7 +483,8 @@ public class RunMojo extends AbstractMojo {
         maybeStartTestResourcesServer();
         String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
         if (testResourcesEnabled) {
-            Path testResourcesSettingsDirectory = AbstractTestResourcesMojo.serverSettingsDirectoryOf(targetDirectory.toPath());
+            Path testResourcesSettingsDirectory = sharedTestResources ? ServerUtils.getDefaultSharedSettingsPath() :
+                    AbstractTestResourcesMojo.serverSettingsDirectoryOf(targetDirectory.toPath());
             if (Files.isDirectory(testResourcesSettingsDirectory)) {
                 classpathArgument += File.pathSeparator + testResourcesSettingsDirectory.toAbsolutePath();
             }
