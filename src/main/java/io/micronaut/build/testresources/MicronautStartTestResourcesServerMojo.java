@@ -22,7 +22,6 @@ import io.micronaut.testresources.buildtools.ServerUtils;
 import io.micronaut.testresources.buildtools.TestResourcesClasspath;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -36,13 +35,16 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -54,21 +56,20 @@ import static java.util.stream.Stream.concat;
 /**
  * Starts the Micronaut test resources server.
  */
-@Mojo(name = MicronautTestResourcesServerMojo.NAME, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
-public class MicronautTestResourcesServerMojo extends AbstractMojo {
-    public static final String NAME = "start-testresources-server";
+@Mojo(name = MicronautStartTestResourcesServerMojo.NAME, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+public class MicronautStartTestResourcesServerMojo extends AbstractTestResourcesMojo {
+    public static final String NAME = "start-testresources-service";
 
-    private static final String DEFAULT_ENABLED = "false";
     private static final String DEFAULT_CLASSPATH_INFERENCE = "true";
     private static final String DEFAULT_CLIENT_TIMEOUT = "60";
 
-    private static final String CONFIG_PROPERTY_PREFIX = "micronaut.test-resources.";
+    private static final String TEST_RESOURCES_PROPERTIES = "test-resources.properties";
 
     /**
      * Whether to enable or disable Micronaut test resources support.
      */
-    @Parameter(property =  "micronaut.test-resources.enabled", defaultValue = DEFAULT_ENABLED)
-    private Boolean testResourcesEnabled = Boolean.valueOf(DEFAULT_ENABLED);
+    @Parameter(property =  "micronaut.test-resources.enabled", defaultValue = "false")
+    private boolean testResourcesEnabled;
 
     /**
      * Micronaut Test Resources version. Should be defined by the Micronaut BOM, but this parameter can be used to
@@ -106,9 +107,6 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
     @Parameter(property = CONFIG_PROPERTY_PREFIX + "client-timeout", defaultValue = DEFAULT_CLIENT_TIMEOUT)
     private Integer clientTimeout = Integer.valueOf(DEFAULT_CLIENT_TIMEOUT);
 
-    @Parameter(defaultValue = "${project.build.directory}", required = true)
-    private File buildDirectory;
-
     private final MavenProject mavenProject;
 
     private final MavenSession mavenSession;
@@ -119,10 +117,10 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
 
     @Inject
     @SuppressWarnings("CdiInjectionPointsInspection")
-    public MicronautTestResourcesServerMojo(MavenProject mavenProject,
-                                            MavenSession mavenSession,
-                                            DependencyResolutionService dependencyResolutionService,
-                                            ToolchainManager toolchainManager) {
+    public MicronautStartTestResourcesServerMojo(MavenProject mavenProject,
+                                                 MavenSession mavenSession,
+                                                 DependencyResolutionService dependencyResolutionService,
+                                                 ToolchainManager toolchainManager) {
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
         this.dependencyResolutionService = dependencyResolutionService;
@@ -144,10 +142,12 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
     private void doExecute() throws DependencyResolutionException, IOException {
         String accessToken = UUID.randomUUID().toString();
         Path buildDir = buildDirectory.toPath();
+        Path serverSettingsDirectory = getServerSettingsDirectory();
+        AtomicBoolean serverStarted = new AtomicBoolean(false);
         ServerUtils.startOrConnectToExistingServer(
                 explicitPort,
                 buildDir.resolve("ts-port-file.txt"),
-                buildDir.resolve("test-classes"),
+                serverSettingsDirectory,
                 accessToken,
                 resolveServerClasspath(),
                 clientTimeout,
@@ -168,10 +168,7 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
                         cli.addAll(processParameters.getArguments());
                         ProcessBuilder builder = new ProcessBuilder(cli);
                         process = builder.inheritIO().start();
-                        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                            getLog().info("Stopping Micronaut Test Resources server");
-                            process.destroy();
-                        }));
+                        serverStarted.set(true);
                     }
 
                     @Override
@@ -182,6 +179,27 @@ public class MicronautTestResourcesServerMojo extends AbstractMojo {
                     }
                 }
         );
+        if (keepAlive) {
+            getLog().info("Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:" + MicronautStopTestResourcesServerMojo.NAME + "'");
+        }
+        if (!serverStarted.get()) {
+            // A server was already listening, which means it was running before
+            // the build was started, so we put a file to indicate to the stop
+            // mojo that it should not stop the server.
+            Path keepalive = getKeepAliveFile();
+            Files.write(keepalive, "true".getBytes());
+        }
+        // In order for the test resources client to connect, we need
+        // to copy the test resources file to the test classes directory
+        copyServerSettingsToClasspath(buildDir, serverSettingsDirectory);
+    }
+
+    private void copyServerSettingsToClasspath(Path buildDir, Path serverSettingsDirectory) throws IOException {
+        Path testClassesDir = buildDir.resolve("test-classes");
+        if (!Files.exists(testClassesDir)) {
+            Files.createDirectories(testClassesDir);
+        }
+        Files.copy(serverSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES), testClassesDir.resolve(TEST_RESOURCES_PROPERTIES), StandardCopyOption.REPLACE_EXISTING);
     }
 
     private List<File> resolveServerClasspath() throws DependencyResolutionException {
