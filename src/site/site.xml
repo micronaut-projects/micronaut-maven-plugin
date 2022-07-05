@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project>
+<project xmlns="http://maven.apache.org/DECORATION/1.8.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/DECORATION/1.8.0 http://maven.apache.org/xsd/decoration-1.8.0.xsd">
     <skin>
         <groupId>org.apache.maven.skins</groupId>
         <artifactId>maven-fluido-skin</artifactId>
-        <version>1.9</version>
+        <version>1.11.1</version>
     </skin>
 
     <edit>${project.scm.url}</edit>
 
     <body>
+        <links>
+            <item name="Micronaut" href="https://micronaut.io"/>
+        </links>
+
         <menu name="Overview">
             <item name="Introduction" href="index.html"/>
             <item name="Goals" href="plugin-info.html"/>
@@ -24,10 +29,6 @@
         </menu>
 
         <menu ref="reports"/>
-
-        <links>
-            <item name="Micronaut" href="https://micronaut.io"/>
-        </links>
     </body>
     <custom>
         <fluidoSkin>
@@ -45,6 +46,11 @@
                 <showUser>true</showUser>
                 <showFollowers>true</showFollowers>
             </twitter>
+            <gitHub>
+                <projectId>micronaut-projects/micronaut-maven-plugin</projectId>
+                <ribbonOrientation>right</ribbonOrientation>
+                <ribbonColor>black</ribbonColor>
+            </gitHub>
         </fluidoSkin>
     </custom>
 </project>
