@@ -446,12 +446,12 @@ public class RunMojo extends AbstractMojo {
             List<Dependency> dependencies = compilerService.resolveDependencies(JavaScopes.COMPILE, JavaScopes.RUNTIME);
             if (testResourcesEnabled) {
                 Artifact clientArtifact = testResourcesModuleToAetherArtifact("client", testResourcesVersion);
-                Dependency dependency = new Dependency(clientArtifact, "runtime");
+                Dependency dependency = new Dependency(clientArtifact, JavaScopes.RUNTIME);
                 try {
-                    List<ArtifactResult> results = dependencyResolutionService.artifactResultsFor(Stream.of(clientArtifact));
+                    List<ArtifactResult> results = dependencyResolutionService.artifactResultsFor(Stream.of(clientArtifact), true);
                     results.forEach(r -> {
                         if (r.isResolved()) {
-                            dependencies.add(new Dependency(r.getArtifact(), "runtime"));
+                            dependencies.add(new Dependency(r.getArtifact(), JavaScopes.RUNTIME));
                         }
                     });
                 } catch (DependencyResolutionException e) {

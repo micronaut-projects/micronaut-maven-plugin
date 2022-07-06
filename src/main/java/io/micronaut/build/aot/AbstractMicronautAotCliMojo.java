@@ -157,13 +157,13 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     private List<String> resolveAotClasspath() throws DependencyResolutionException {
         Stream<Artifact> aotArtifacts = Arrays.stream(AOT_MODULES)
                 .map(m -> new DefaultArtifact(MICRONAUT_AOT_GROUP_ID + ":" + MICRONAUT_AOT_ARTIFACT_ID_PREFIX + m + ":" + micronautAotVersion));
-        return toClasspath(dependencyResolutionService.artifactResultsFor(aotArtifacts));
+        return toClasspath(dependencyResolutionService.artifactResultsFor(aotArtifacts, false));
     }
 
     private List<String> resolveAotPluginsClasspath() throws DependencyResolutionException {
         if (aotDependencies != null && !aotDependencies.isEmpty()) {
             Stream<Artifact> aotPlugins = aotDependencies.stream().map(d -> new DefaultArtifact(d.getGroupId(), d.getArtifactId(), d.getType(), d.getVersion()));
-            return toClasspath(dependencyResolutionService.artifactResultsFor(aotPlugins));
+            return toClasspath(dependencyResolutionService.artifactResultsFor(aotPlugins, false));
         } else {
             return Collections.emptyList();
         }

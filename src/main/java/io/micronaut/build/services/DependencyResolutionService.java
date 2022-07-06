@@ -111,17 +111,20 @@ public class DependencyResolutionService {
     /**
      * Performs a dependency request to compute the transitive dependencies of the given artifacts.
      */
-    public List<ArtifactResult> artifactResultsFor(Stream<Artifact> artifacts) throws DependencyResolutionException {
+    public List<ArtifactResult> artifactResultsFor(Stream<Artifact> artifacts, boolean applyManagedDependencies) throws DependencyResolutionException {
         RepositorySystemSession repositorySession = mavenSession.getRepositorySession();
         DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.RUNTIME);
         CollectRequest collectRequest = new CollectRequest();
         artifacts.map(a -> new Dependency(a, JavaScopes.RUNTIME))
                 .forEach(collectRequest::addDependency);
         collectRequest.setRepositories(mavenProject.getRemoteProjectRepositories());
-        List<Dependency> managedDependencies = mavenProject.getDependencyManagement().getDependencies().stream()
-                .map(DependencyResolutionService::mavenDependencyToAetherDependency)
-                .collect(Collectors.toList());
-        collectRequest.setManagedDependencies(managedDependencies);
+
+        if (applyManagedDependencies) {
+            List<Dependency> managedDependencies = mavenProject.getDependencyManagement().getDependencies().stream()
+                    .map(DependencyResolutionService::mavenDependencyToAetherDependency)
+                    .collect(Collectors.toList());
+            collectRequest.setManagedDependencies(managedDependencies);
+        }
 
         DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, classpathFilter);
 

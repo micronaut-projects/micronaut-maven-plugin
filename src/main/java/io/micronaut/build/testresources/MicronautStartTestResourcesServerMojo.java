@@ -216,7 +216,7 @@ public class MicronautStartTestResourcesServerMojo extends AbstractTestResources
 
         Stream<Artifact> artifacts = concat(concat(clientDependencies, serverDependencies), extraDependenciesStream);
 
-        return toClasspathFiles(dependencyResolutionService.artifactResultsFor(artifacts));
+        return toClasspathFiles(dependencyResolutionService.artifactResultsFor(artifacts, true));
     }
 
     private List<MavenDependency> getApplicationDependencies() {
