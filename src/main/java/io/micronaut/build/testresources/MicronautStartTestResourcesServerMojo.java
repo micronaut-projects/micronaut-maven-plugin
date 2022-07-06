@@ -66,12 +66,6 @@ public class MicronautStartTestResourcesServerMojo extends AbstractTestResources
     private static final String TEST_RESOURCES_PROPERTIES = "test-resources.properties";
 
     /**
-     * Whether to enable or disable Micronaut test resources support.
-     */
-    @Parameter(property =  "micronaut.test-resources.enabled", defaultValue = "false")
-    private boolean testResourcesEnabled;
-
-    /**
      * Micronaut Test Resources version. Should be defined by the Micronaut BOM, but this parameter can be used to
      * define a different version.
      */

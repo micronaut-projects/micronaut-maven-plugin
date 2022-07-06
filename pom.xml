@@ -80,7 +80,7 @@
         <native-maven-plugin.version>0.9.12</native-maven-plugin.version>
         <micronaut.version>3.5.2</micronaut.version>
         <micronaut.aot.version>1.1.0</micronaut.aot.version>
-        <micronaut.test-resources.version>1.0.0-M5</micronaut.test-resources.version>
+        <micronaut.test.resources.version>1.0.0-M5</micronaut.test.resources.version>
         <it.micronaut.version>3.6.0-SNAPSHOT</it.micronaut.version>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.organization>micronaut-projects</sonar.organization>
@@ -266,7 +266,7 @@
         <dependency>
             <groupId>io.micronaut.testresources</groupId>
             <artifactId>micronaut-test-resources-build-tools</artifactId>
-            <version>${micronaut.test-resources.version}</version>
+            <version>${micronaut.test.resources.version}</version>
         </dependency>
     </dependencies>
 

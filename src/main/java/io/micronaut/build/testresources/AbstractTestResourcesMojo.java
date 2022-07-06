@@ -29,7 +29,13 @@ import static io.micronaut.build.testresources.MicronautStopTestResourcesServerM
  */
 public abstract class AbstractTestResourcesMojo extends AbstractMojo {
     public static final String DISABLED = "false";
-    public static final String CONFIG_PROPERTY_PREFIX = "micronaut.test-resources.";
+    public static final String CONFIG_PROPERTY_PREFIX = "micronaut.test.resources.";
+
+    /**
+     * Whether to enable or disable Micronaut test resources support.
+     */
+    @Parameter(property =  CONFIG_PROPERTY_PREFIX + "enabled", defaultValue = "false")
+    protected boolean testResourcesEnabled;
 
     /**
      * Whether the test resources service should be kept alive after the build.

@@ -186,7 +186,7 @@ public class RunMojo extends AbstractMojo {
     /**
      * Whether to enable or disable Micronaut test resources support.
      */
-    @Parameter(property = "micronaut.test-resources.enabled", defaultValue = "false")
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + "enabled", defaultValue = "false")
     private boolean testResourcesEnabled;
 
     /**

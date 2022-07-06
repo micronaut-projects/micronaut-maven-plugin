@@ -38,7 +38,7 @@ public class MicronautStopTestResourcesServerMojo extends AbstractTestResourcesM
 
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException {
-        if (Boolean.TRUE.equals(keepAlive)) {
+        if (!testResourcesEnabled || Boolean.TRUE.equals(keepAlive)) {
             return;
         }
         if (Files.exists(getKeepAliveFile())) {
