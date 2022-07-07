@@ -23,6 +23,7 @@ import io.micronaut.build.services.DependencyResolutionService;
 import io.micronaut.build.services.ExecutorService;
 import io.micronaut.build.testresources.AbstractTestResourcesMojo;
 import io.micronaut.build.testresources.MicronautStartTestResourcesServerMojo;
+import io.micronaut.build.testresources.MicronautStopTestResourcesServerMojo;
 import io.micronaut.testresources.buildtools.ServerUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
@@ -548,7 +549,7 @@ public class RunMojo extends AbstractMojo {
 
     private void maybeStopTestResourcesServer() {
         try {
-            executorService.executeGoal(THIS_PLUGIN, MicronautStartTestResourcesServerMojo.NAME);
+            executorService.executeGoal(THIS_PLUGIN, MicronautStopTestResourcesServerMojo.NAME);
         } catch (MojoExecutionException e) {
             getLog().error(e);
         }
