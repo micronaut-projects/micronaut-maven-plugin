@@ -18,6 +18,7 @@ package io.micronaut.build.aot;
 import io.micronaut.aot.std.sourcegen.AbstractStaticServiceLoaderSourceGenerator;
 import io.micronaut.aot.std.sourcegen.KnownMissingTypesSourceGenerator;
 import io.micronaut.build.services.CompilerService;
+import io.micronaut.build.services.DependencyResolutionService;
 import io.micronaut.build.services.ExecutorService;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.execution.MavenSession;
@@ -74,8 +75,9 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
     @Inject
     @SuppressWarnings("CdiInjectionPointsInspection")
     public AotAnalysisMojo(CompilerService compilerService, ExecutorService executorService, MavenProject mavenProject,
-                           MavenSession mavenSession, RepositorySystem repositorySystem) {
-        super(compilerService, executorService, mavenProject, mavenSession, repositorySystem);
+                           MavenSession mavenSession, RepositorySystem repositorySystem,
+                           DependencyResolutionService dependencyResolutionService) {
+        super(compilerService, executorService, mavenProject, mavenSession, repositorySystem, dependencyResolutionService);
     }
 
     @Override

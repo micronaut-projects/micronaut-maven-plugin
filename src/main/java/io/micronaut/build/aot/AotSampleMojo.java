@@ -16,6 +16,7 @@
 package io.micronaut.build.aot;
 
 import io.micronaut.build.services.CompilerService;
+import io.micronaut.build.services.DependencyResolutionService;
 import io.micronaut.build.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -40,8 +41,9 @@ public class AotSampleMojo extends AbstractMicronautAotCliMojo {
 
     @Inject
     public AotSampleMojo(CompilerService compilerService, ExecutorService executorService, MavenProject mavenProject,
-                         MavenSession mavenSession, RepositorySystem repositorySystem) {
-        super(compilerService, executorService, mavenProject, mavenSession, repositorySystem);
+                         MavenSession mavenSession, RepositorySystem repositorySystem,
+                         DependencyResolutionService dependencyResolutionService) {
+        super(compilerService, executorService, mavenProject, mavenSession, repositorySystem, dependencyResolutionService);
     }
 
     @Override

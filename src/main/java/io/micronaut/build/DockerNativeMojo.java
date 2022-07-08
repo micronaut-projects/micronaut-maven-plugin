@@ -104,7 +104,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         if (mavenProject.hasParent()) {
             String ga = mavenProject.getParent().getGroupId() + ":" + mavenProject.getParent().getArtifactId();
             if (MICRONAUT_PARENT.equals(ga)) {
-                String micronautParentVersion = mavenProject.getParent().getVersion();
+                String micronautParentVersion = mavenProject.getModel().getParent().getVersion();
                 if (micronautVersion.equals(micronautParentVersion)) {
                     if (!mavenProject.getInjectedProfileIds().get("io.micronaut:micronaut-parent:" + micronautParentVersion).contains("graalvm")) {
                         String javaVendor = System.getProperty("java.vendor", "");

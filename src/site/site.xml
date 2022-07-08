@@ -26,6 +26,7 @@
             <item name="Generating Dockerfiles" href="dockerfile-mojo.html"/>
             <item name="Deploying Docker images" href="examples/deploy.html"/>
             <item name="Using Micronaut AOT" href="examples/aot.html"/>
+            <item name="Integration with Micronaut Test Resources" href="examples/test-resources.html"/>
         </menu>
 
         <menu ref="reports"/>

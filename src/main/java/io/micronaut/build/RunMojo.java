@@ -19,27 +19,54 @@ import io.methvin.watcher.DirectoryChangeEvent;
 import io.methvin.watcher.DirectoryWatcher;
 import io.micronaut.build.aot.AotAnalysisMojo;
 import io.micronaut.build.services.CompilerService;
+import io.micronaut.build.services.DependencyResolutionService;
 import io.micronaut.build.services.ExecutorService;
+import io.micronaut.build.testresources.AbstractTestResourcesMojo;
+import io.micronaut.build.testresources.MicronautStartTestResourcesServerMojo;
+import io.micronaut.build.testresources.MicronautStopTestResourcesServerMojo;
+import io.micronaut.testresources.buildtools.ServerUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.*;
-import org.apache.maven.project.*;
-import org.apache.maven.toolchain.Toolchain;
+import org.apache.maven.plugins.annotations.Execute;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuilder;
+import org.apache.maven.project.ProjectBuildingException;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.project.ProjectBuildingResult;
+import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.util.AbstractScanner;
-import org.codehaus.plexus.util.Os;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
+import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.artifact.JavaScopes;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Stream;
 
+import static io.micronaut.build.MojoUtils.findJavaExecutable;
+import static io.micronaut.build.services.DependencyResolutionService.testResourcesModuleToAetherArtifact;
+import static io.micronaut.build.testresources.AbstractTestResourcesMojo.CONFIG_PROPERTY_PREFIX;
+import static io.micronaut.build.testresources.AbstractTestResourcesMojo.DISABLED;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isReadable;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
@@ -65,7 +92,6 @@ public class RunMojo extends AbstractMojo {
     public static final String RESOURCES_DIR = "src/main/resources";
 
     private static final int LAST_COMPILATION_THRESHOLD = 500;
-    private static final String JAVA = "java";
     private static final List<String> DEFAULT_EXCLUDES;
     private static final String THIS_PLUGIN = "io.micronaut.build:micronaut-maven-plugin";
 
@@ -80,6 +106,7 @@ public class RunMojo extends AbstractMojo {
     private final ProjectBuilder projectBuilder;
     private final ToolchainManager toolchainManager;
     private final String javaExecutable;
+    private final DependencyResolutionService dependencyResolutionService;
     private final CompilerService compilerService;
     private final ExecutorService executorService;
     private final Path projectRootDirectory;
@@ -157,6 +184,26 @@ public class RunMojo extends AbstractMojo {
     @Parameter(property = "micronaut.aot.enabled", defaultValue = "false")
     private boolean aotEnabled;
 
+    /**
+     * Whether to enable or disable Micronaut test resources support.
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + "enabled", defaultValue = "false")
+    private boolean testResourcesEnabled;
+
+    /**
+     * Whether the test resources service should be shared between independent builds
+     * (e.g different projects, even built with different build tools).
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + "shared", defaultValue = DISABLED)
+    private boolean sharedTestResources;
+
+    /**
+     * Micronaut Test Resources version. Should be defined by the Micronaut BOM, but this parameter can be used to
+     * define a different version.
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + "version", required = true)
+    private String testResourcesVersion;
+
     private MavenProject mavenProject;
     private DirectoryWatcher directoryWatcher;
     private Process process;
@@ -167,9 +214,15 @@ public class RunMojo extends AbstractMojo {
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    public RunMojo(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager,
-                   ProjectDependenciesResolver resolver, ProjectBuilder projectBuilder, ToolchainManager toolchainManager,
-                   CompilerService compilerService, ExecutorService executorService) {
+    public RunMojo(MavenProject mavenProject,
+                   MavenSession mavenSession,
+                   BuildPluginManager pluginManager,
+                   ProjectDependenciesResolver resolver,
+                   ProjectBuilder projectBuilder,
+                   ToolchainManager toolchainManager,
+                   CompilerService compilerService,
+                   ExecutorService executorService,
+                   DependencyResolutionService dependencyResolutionService) {
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
         this.resolver = resolver;
@@ -178,14 +231,13 @@ public class RunMojo extends AbstractMojo {
         this.toolchainManager = toolchainManager;
         this.compilerService = compilerService;
         this.executorService = executorService;
-        this.javaExecutable = findJavaExecutable();
-
-        resolveDependencies();
-        this.classpathHash = this.classpath.hashCode();
+        this.javaExecutable = findJavaExecutable(toolchainManager, mavenSession);
+        this.dependencyResolutionService = dependencyResolutionService;
     }
 
     @Override
     public void execute() throws MojoExecutionException {
+        resolveDependencies();
         this.sourceDirectories = compilerService.resolveSourceDirectories();
 
         try {
@@ -366,6 +418,7 @@ public class RunMojo extends AbstractMojo {
         }
         try {
             directoryWatcher.close();
+            maybeStopTestResourcesServer();
         } catch (Exception e) {
             // Do nothing
         }
@@ -390,12 +443,32 @@ public class RunMojo extends AbstractMojo {
     }
 
     private boolean resolveDependencies() {
-        List<Dependency> dependencies = compilerService.resolveDependencies(JavaScopes.COMPILE, JavaScopes.RUNTIME);
-        if (dependencies.isEmpty()) {
-            return false;
-        } else {
-            this.classpath = compilerService.buildClasspath(dependencies);
-            return true;
+        try {
+            List<Dependency> dependencies = compilerService.resolveDependencies(JavaScopes.COMPILE, JavaScopes.RUNTIME);
+            if (testResourcesEnabled) {
+                Artifact clientArtifact = testResourcesModuleToAetherArtifact("client", testResourcesVersion);
+                Dependency dependency = new Dependency(clientArtifact, JavaScopes.RUNTIME);
+                try {
+                    List<ArtifactResult> results = dependencyResolutionService.artifactResultsFor(Stream.of(clientArtifact), true);
+                    results.forEach(r -> {
+                        if (r.isResolved()) {
+                            dependencies.add(new Dependency(r.getArtifact(), JavaScopes.RUNTIME));
+                        }
+                    });
+                } catch (DependencyResolutionException e) {
+                    getLog().warn("Unable to resolve test resources client dependencies", e);
+                }
+            }
+            if (dependencies.isEmpty()) {
+                return false;
+            } else {
+                this.classpath = compilerService.buildClasspath(dependencies);
+                return true;
+            }
+        } finally {
+            if (classpath != null) {
+                this.classpathHash = this.classpath.hashCode();
+            }
         }
     }
 
@@ -408,8 +481,15 @@ public class RunMojo extends AbstractMojo {
 
     private void runApplication() throws Exception {
         runAotIfNeeded();
-
+        maybeStartTestResourcesServer();
         String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
+        if (testResourcesEnabled) {
+            Path testResourcesSettingsDirectory = sharedTestResources ? ServerUtils.getDefaultSharedSettingsPath() :
+                    AbstractTestResourcesMojo.serverSettingsDirectoryOf(targetDirectory.toPath());
+            if (Files.isDirectory(testResourcesSettingsDirectory)) {
+                classpathArgument += File.pathSeparator + testResourcesSettingsDirectory.toAbsolutePath();
+            }
+        }
         List<String> args = new ArrayList<>();
         args.add(javaExecutable);
 
@@ -459,22 +539,20 @@ public class RunMojo extends AbstractMojo {
         }
     }
 
-    private String findJavaExecutable() {
-        String executable;
-        Toolchain toolchain = this.toolchainManager.getToolchainFromBuildContext("jdk", mavenSession);
-        if (toolchain != null) {
-            executable = toolchain.findTool(JAVA);
-        } else {
-            File javaBinariesDir = new File(new File(System.getProperty("java.home")), "bin");
-            if (Os.isFamily(Os.FAMILY_UNIX)) {
-                executable = new File(javaBinariesDir, JAVA).getAbsolutePath();
-            } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                executable = new File(javaBinariesDir, "java.exe").getAbsolutePath();
-            } else {
-                executable = JAVA;
-            }
+    private void maybeStartTestResourcesServer() {
+        try {
+            executorService.executeGoal(THIS_PLUGIN, MicronautStartTestResourcesServerMojo.NAME);
+        } catch (MojoExecutionException e) {
+            getLog().error(e);
         }
-        return executable;
+    }
+
+    private void maybeStopTestResourcesServer() {
+        try {
+            executorService.executeGoal(THIS_PLUGIN, MicronautStopTestResourcesServerMojo.NAME);
+        } catch (MojoExecutionException e) {
+            getLog().error(e);
+        }
     }
 
     private boolean compileProject() {
