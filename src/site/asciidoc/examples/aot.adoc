@@ -87,4 +87,4 @@ $ mvn -Dmicronaut.aot.enabled mn:aot-sample-config
 Then, copy the `target/aot/jit/aot.properties` to your root directory, and adapt it to your needs. If using a different
 directory, use the `micronaut.aot.config` property to specify its location.
 
-For a full list of configuration options, check the link:../aot-analysis-mojo.html[`aot-analysis`] goal documentation.
+For a full list of configuration options, check the link:../aot-analysis-mojo.html[`aot-analysis` goal documentation].

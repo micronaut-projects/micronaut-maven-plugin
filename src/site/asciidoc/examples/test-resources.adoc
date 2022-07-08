@@ -1,0 +1,129 @@
+=== Integration with Micronaut Test Resources
+
+https://micronaut-projects.github.io/micronaut-test-resources/latest/guide/index.html[Micronaut Test Resources] adds
+support for managing external resources which are required during development or testing. In particular, it integrates
+with https://www.testcontainers.org/[Testcontainers] to provide throwaway containers for resources like databases or
+other external services like Kafka or RabbitMQ.
+
+Test resources are handled by a "test resources service" which is a server accepting requests for test resources, which
+lifecycle is handled by the Gradle plugin. A test resources request is, to simplify, a request to resolve a missing
+configuration property. For example, if the kafka.bootstrap-servers property isn’t set, Micronaut will query the test
+resources service for the value of this property. This will trigger the creation of a Kafka test container, and the
+service will answer with the URI to the bootstrap server.
+
+You can enable test resources support by adding the following elements to your `pom.xml`:
+
+.Maven
+[source,xml]
+----
+<project>
+    <properties>
+        <micronaut.test.resources.enabled>true</micronaut.test.resources.enabled>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>io.micronaut.testresources</groupId>
+            <artifactId>micronaut-test-resources-client</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>
+----
+
+This will be sufficient for most use cases, and Micronaut will automatically start containers, for example, when a
+particular property is not present in your configuration and that you run tests (`mvn test`) or the application in
+development mode (`mvn mn:run`).
+
+For example, if the `datasources.default.url` configuration property is missing, and that your configuration contains:
+
+[source,yaml]
+----
+datasources:
+  default:
+    dialect: MYSQL
+----
+
+Then a MySQL database will automatically be started and available for use in your tests: the url, username and password
+configuration properties will automatically be injected to your application.
+
+Please refer to the https://micronaut-projects.github.io/micronaut-test-resources/latest/guide/index.html[Micronaut Test
+Resources documentation] for a list of all supported modules and their configuration options.
+
+==== Standalone Test Resource Service
+
+The default behaviour works particularly well in single-module projects, or in multi-module projects where test resources
+are not shared between modules. However, in some cases, you may want to reuse test containers for multiple projects of
+the same multi-project build, in order to save startup times for example.
+
+For example, imagine a multi-project build which consists of :
+
+* A Kafka consumer.
+* A Kafka producer.
+* Functional tests integrating both.
+
+If each project enables the Test Resources integration independently, then each project will use its own Test Resources
+server, separate of the others.
+
+However, you might want to run the consumer in one terminal, and the producer in another, and still want them to talk to
+the same Kafka cluster. For this you can use a shared test server, by passing the `micronaut.test.resources.shared`
+system property, or setting `<shared>true<shared>` in the Micronaut Maven Plugin configuration.
+
+==== Test Resource Service lifecycle
+
+Test resources are handled by a service which is, by default, started at the beginning of a build, and stopped at the end.
+
+For example, if you invoke:
+
+[source,bash]
+----
+$ mvn test
+----
+
+Then the test resources service will be started before tests are executed, then tests will share the resources provided
+by the service. Any test resource started during the test will be stopped when the build finishes.
+
+In development mode, the test resources service is also started in the same JVM. For example, if you run:
+
+[source,bash]
+----
+$ mvn mn:run
+----
+
+Then the test resources will be spawned before the application starts, and shutdown when you Ctrl+C the `mn:run`
+execution.
+
+==== Keeping the Test Resources Service alive
+
+If you want to start the test resources service in the background, and keep it alive for multiple, independent builds
+(different invocations on the command line for example), you can run the `mn:start-testresources-service` goal:
+
+[source,bash]
+----
+$ mvn mn:start-testresources-service
+[INFO] Scanning for projects...
+[INFO]
+[INFO] --------------------------< com.example:demo >--------------------------
+[INFO] Building demo 0.1
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- micronaut-maven-plugin:3.4.0:start-testresources-service (default-cli) @ demo ---
+[INFO] Server settings found in /private/tmp/demo/target/../.micronaut/test-resources
+[INFO] Starting Micronaut Test Resources server
+18:37:31.043 [ForkJoinPool.commonPool-worker-13] INFO  i.m.t.e.TestResourcesResolverLoader - Loaded 2 test resources resolvers: io.micronaut.testresources.mysql.MySQLTestResourceProvider, io.micronaut.testresources.testcontainers.GenericTestContainerProvider
+18:37:31.290 [main] INFO  i.m.testresources.server.Application - A Micronaut Test Resources server is listening on port 51082, started in 387ms
+[INFO] Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:stop-testresources-service'
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  1.813 s
+[INFO] Finished at: 2022-07-08T18:37:31+02:00
+[INFO] ------------------------------------------------------------------------
+----
+
+To stop it, use the `mn:stop-testresources-service` goal.
+
+==== Additional configuration options
+
+You can see all the additional configuration options in the
+link:../start-testresources-service-mojo.html[`start-testresources-service` goal documentation].
+
