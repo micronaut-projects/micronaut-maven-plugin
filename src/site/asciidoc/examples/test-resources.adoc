@@ -154,7 +154,7 @@ it like this:
 The versions of those dependencies will be resolved against the Micronaut BOM.
 
 The list of supported modules is described in the
-https://micronaut-projects.github.io/micronaut-test-resources/latest/guide/#modules-databases-jdbc[Micronaut Test Resources documentation].
+https://micronaut-projects.github.io/micronaut-test-resources/latest/guide/#modules[Micronaut Test Resources documentation].
 
 ==== Additional configuration options
 
