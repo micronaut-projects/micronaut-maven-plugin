@@ -122,6 +122,40 @@ $ mvn mn:start-testresources-service
 
 To stop it, use the `mn:stop-testresources-service` goal.
 
+==== Adding modules or libraries to the Test Resources service classpath
+
+If not using classpath inference, or when the inference doesn't produce the desired result, you can add dependencies
+to the Test Resources service classpath with a `<testResourcesDependencies>` block.
+
+For example, if the classpath inference mechanism fails to detect that you need a MySQL test container, you can configure
+it like this:
+
+[source,xml]
+----
+<build>
+    <plugins>
+        <plugin>
+            <groupId>io.micronaut.build</groupId>
+            <artifactId>micronaut-maven-plugin</artifactId>
+            <configuration>
+                <classpathInference>false</classpathInference>
+                <testResourcesDependencies>
+                    <dependency>
+                        <groupId>io.micronaut.testresources</groupId>
+                        <artifactId>micronaut-test-resources-jdbc-mysql</artifactId>
+                    </dependency>
+                </testResourcesDependencies>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+----
+
+The versions of those dependencies will be resolved against the Micronaut BOM.
+
+The list of supported modules is described in the
+https://micronaut-projects.github.io/micronaut-test-resources/latest/guide/#modules-databases-jdbc[Micronaut Test Resources documentation].
+
 ==== Additional configuration options
 
 You can see all the additional configuration options in the
