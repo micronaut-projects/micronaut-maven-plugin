@@ -144,6 +144,10 @@ it like this:
                         <groupId>io.micronaut.testresources</groupId>
                         <artifactId>micronaut-test-resources-jdbc-mysql</artifactId>
                     </dependency>
+                    <dependency>
+                        <groupId>mysql</groupId>
+                        <artifactId>mysql-connector-java</artifactId>
+                    </dependency>
                 </testResourcesDependencies>
             </configuration>
         </plugin>

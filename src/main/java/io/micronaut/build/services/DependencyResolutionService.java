@@ -15,6 +15,7 @@
  */
 package io.micronaut.build.services;
 
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.testresources.buildtools.MavenDependency;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
@@ -35,7 +36,10 @@ import org.eclipse.aether.util.filter.DependencyFilterUtils;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -115,15 +119,29 @@ public class DependencyResolutionService {
         RepositorySystemSession repositorySession = mavenSession.getRepositorySession();
         DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.RUNTIME);
         CollectRequest collectRequest = new CollectRequest();
-        artifacts.map(a -> new Dependency(a, JavaScopes.RUNTIME))
-                .forEach(collectRequest::addDependency);
         collectRequest.setRepositories(mavenProject.getRemoteProjectRepositories());
 
         if (applyManagedDependencies) {
-            List<Dependency> managedDependencies = mavenProject.getDependencyManagement().getDependencies().stream()
-                    .map(DependencyResolutionService::mavenDependencyToAetherDependency)
-                    .collect(Collectors.toList());
-            collectRequest.setManagedDependencies(managedDependencies);
+            List<org.apache.maven.model.Dependency> dependencies = mavenProject.getDependencyManagement().getDependencies();
+            Map<String, Dependency> dependencyMap = new HashMap<>(dependencies.size());
+            for (org.apache.maven.model.Dependency dependency : dependencies) {
+                String ga = dependency.getGroupId() + ":" + dependency.getArtifactId();
+                dependencyMap.putIfAbsent(ga, DependencyResolutionService.mavenDependencyToAetherDependency(dependency));
+            }
+            collectRequest.setManagedDependencies(new ArrayList<>(dependencyMap.values()));
+
+            artifacts.forEach(a -> {
+                if (StringUtils.isEmpty(a.getVersion())) {
+                    dependencyMap.computeIfPresent(a.getGroupId() + ":" + a.getArtifactId(), (coord, d) -> {
+                        collectRequest.addDependency(new Dependency(new DefaultArtifact(a.getGroupId(), a.getArtifactId(), a.getExtension(), d.getArtifact().getVersion()), JavaScopes.RUNTIME));
+                        return d;
+                    });
+                } else {
+                    collectRequest.addDependency(new Dependency(a, JavaScopes.RUNTIME));
+                }
+            });
+        } else {
+            artifacts.map(a -> new Dependency(a, JavaScopes.RUNTIME)).forEach(collectRequest::addDependency);
         }
 
         DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, classpathFilter);
