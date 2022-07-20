@@ -83,7 +83,7 @@ under the License.
                   0
                 </td>
                 <td>
-                  50
+                  51
                 </td>
               </tr>
                           <tr>
@@ -97,7 +97,7 @@ under the License.
                   0
                 </td>
                 <td>
-                  15
+                  14
                 </td>
               </tr>
                           <tr>
@@ -195,7 +195,7 @@ under the License.
                   0
                 </td>
                 <td>
-                  1
+                  0
                 </td>
               </tr>
                           <tr>
@@ -279,7 +279,7 @@ under the License.
                   0
                 </td>
                 <td>
-                  20
+                  21
                 </td>
               </tr>
                           <tr>
@@ -335,26 +335,12 @@ under the License.
                   0
                 </td>
                 <td>
-                  36
+                  35
                 </td>
               </tr>
                           <tr>
                 <td>
                   <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.services.DependencyResolutionService.java">io/micronaut/build/services/DependencyResolutionService.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  65
-                </td>
-              </tr>
-                          <tr>
-                <td>
-                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.AbstractDockerMojo.java">io/micronaut/build/AbstractDockerMojo.java</a>
                 </td>
                 <td>
                   0
@@ -378,6 +364,20 @@ under the License.
                 </td>
                 <td>
                   113
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.AbstractDockerMojo.java">io/micronaut/build/AbstractDockerMojo.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  65
                 </td>
               </tr>
                           <tr>
@@ -419,7 +419,7 @@ under the License.
                   0
                 </td>
                 <td>
-                  57
+                  58
                 </td>
               </tr>
                           <tr>
