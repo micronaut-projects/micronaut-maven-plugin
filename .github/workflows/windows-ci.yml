@@ -13,7 +13,8 @@ jobs:
     runs-on: windows-2019
     strategy:
       matrix:
-        graalvm: ['22.1.0']
+        java: ['11', '17']
+        graalvm: ['latest', 'dev']
     steps:
       - uses: actions/checkout@v3
       - name: Cache Maven packages
@@ -22,24 +23,17 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-
-      - name: Download GraalVM
-        run: Invoke-RestMethod -Uri https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-${{ matrix.graalvm }}/graalvm-ce-java11-windows-amd64-${{ matrix.graalvm }}.zip -OutFile 'graal.zip'
-      - name: Install GraalVM
-        run: Expand-Archive -path 'graal.zip' -destinationpath 'C:\graalvm'
-      - name: Install Native Image
-        run: C:\graalvm\graalvm-ce-java11-${{ matrix.graalvm }}\bin\gu.cmd install native-image
-      - name: Set up Visual C Build Tools Workload for Visual Studio 2017 Build Tools
-        run: |
-          choco install visualstudio2019-workload-vctools
+      - name: Setup GraalVM CE
+        uses: graalvm/setup-graalvm@v1
+        with:
+          version: ${{ matrix.graalvm }}
+          java-version: ${{ matrix.java }}
+          components: 'native-image'
       - name: Build with Maven
         shell: cmd
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
           .\mvnw install && .\mvnw verify -Prun-its
         env:
-          JAVA_HOME: C:\graalvm\graalvm-ce-java11-${{ matrix.graalvm }}
-          GRAALVM_HOME: C:\graalvm\graalvm-ce-java11-${{ matrix.graalvm }}
           TESTCONTAINERS_RYUK_DISABLED: true
 
 
