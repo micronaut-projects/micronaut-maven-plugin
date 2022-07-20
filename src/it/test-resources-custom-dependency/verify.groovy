@@ -1,0 +1,5 @@
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains("BUILD SUCCESS")
+assert log.text.contains("micronaut-maven-plugin:${pluginVersion}:start-testresources-service")
+assert log.text.contains("micronaut-maven-plugin:${pluginVersion}:stop-testresources-service")
