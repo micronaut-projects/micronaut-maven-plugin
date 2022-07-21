@@ -19,6 +19,7 @@ RUN curl -L -o zlib.tar.gz https://zlib.net/zlib-1.2.12.tar.gz && \
 WORKDIR /home/app
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
+ENV USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM=false
 RUN native-image -Ob --static --libc=musl -H:Class=io.micronaut.build.examples.Application -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM scratch

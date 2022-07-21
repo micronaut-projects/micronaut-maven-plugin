@@ -203,9 +203,10 @@
         <extensions>true</extensions>
         <configuration>
           <useArgFile>false</useArgFile>
-          <buildArgs>
-            <buildArg>-Ob</buildArg>
-          </buildArgs>
+          <quickBuild>true</quickBuild>
+          <environment>
+            <USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM>false</USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM>
+          </environment>
         </configuration>
       </plugin>
 

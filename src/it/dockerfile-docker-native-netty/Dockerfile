@@ -3,6 +3,7 @@ WORKDIR /home/app
 
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
+ENV USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM=false
 RUN native-image -Ob -H:Class=io.micronaut.build.examples.Application -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM frolvlad/alpine-glibc:alpine-3.12

@@ -206,11 +206,14 @@
           <useArgFile>false</useArgFile>
           <buildArgs>
             <buildArg>--no-fallback</buildArg>
-            <buildArg>-Ob</buildArg>
           </buildArgs>
+          <quickBuild>true</quickBuild>
           <classpath>
             <param>${project.build.directory}/${project.artifactId}-${project.version}-shaded.native-image</param>
           </classpath>
+          <environment>
+            <USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM>false</USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM>
+          </environment>
         </configuration>
       </plugin>
     </plugins>
