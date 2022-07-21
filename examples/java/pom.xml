@@ -124,9 +124,7 @@
         <groupId>org.graalvm.buildtools</groupId>
         <artifactId>native-maven-plugin</artifactId>
         <configuration>
-          <buildArgs>
-            <buildArg>-Ob</buildArg>
-          </buildArgs>
+          <quickBuild>true</quickBuild>
         </configuration>
       </plugin>
     </plugins>

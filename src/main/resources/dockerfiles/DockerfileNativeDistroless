@@ -7,6 +7,7 @@ COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
 ARG CLASS_NAME
 ARG GRAALVM_ARGS=""
+ENV USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM=false
 RUN native-image ${GRAALVM_ARGS} -H:Class=${CLASS_NAME} -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM ${BASE_IMAGE_RUN}

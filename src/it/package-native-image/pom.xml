@@ -168,8 +168,8 @@
           <useArgFile>false</useArgFile>
           <buildArgs>
             <buildArg>--no-fallback</buildArg>
-            <buildArg>-Ob</buildArg>
           </buildArgs>
+          <quickBuild>true</quickBuild>
           <classpath>
             <param>${project.build.directory}/${project.artifactId}-${project.version}-shaded.native-image</param>
           </classpath>
