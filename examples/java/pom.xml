@@ -21,6 +21,7 @@
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
     <micronaut.aot.packageName>io.micronaut.build.examples</micronaut.aot.packageName>
+    <micronaut.test.resources.enabled>true</micronaut.test.resources.enabled>
   </properties>
 
   <dependencies>
@@ -72,6 +73,11 @@
     <dependency>
       <groupId>io.micronaut.test</groupId>
       <artifactId>micronaut-test-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut.testresources</groupId>
+      <artifactId>micronaut-test-resources-client</artifactId>
       <scope>test</scope>
     </dependency>
 

@@ -1,6 +1,6 @@
 File log = new File(basedir, 'build.log')
 assert log.exists()
-assert log.text.contains("BUILD SUCCESS")
+assert log.text.contains("BUILD FAILURE")
 assert log.text.contains("Starting Micronaut Test Resources service")
 assert log.text.contains("Shutting down Micronaut Test Resources service")
 

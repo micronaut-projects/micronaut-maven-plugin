@@ -56,14 +56,15 @@ import static java.util.stream.Stream.concat;
 /**
  * Starts the Micronaut test resources server.
  */
-@Mojo(name = MicronautStartTestResourcesServerMojo.NAME, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
-public class MicronautStartTestResourcesServerMojo extends AbstractTestResourcesMojo {
+@Mojo(name = StartTestResourcesServerMojo.NAME, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+public class StartTestResourcesServerMojo extends AbstractTestResourcesMojo {
     public static final String NAME = "start-testresources-service";
 
     private static final String DEFAULT_CLASSPATH_INFERENCE = "true";
     private static final String DEFAULT_CLIENT_TIMEOUT = "60";
 
     private static final String TEST_RESOURCES_PROPERTIES = "test-resources.properties";
+    private static final String PORT_FILE_NAME = "test-resources-port.txt";
 
     /**
      * Micronaut Test Resources version. Should be defined by the Micronaut BOM, but this parameter can be used to
@@ -111,10 +112,10 @@ public class MicronautStartTestResourcesServerMojo extends AbstractTestResources
 
     @Inject
     @SuppressWarnings("CdiInjectionPointsInspection")
-    public MicronautStartTestResourcesServerMojo(MavenProject mavenProject,
-                                                 MavenSession mavenSession,
-                                                 DependencyResolutionService dependencyResolutionService,
-                                                 ToolchainManager toolchainManager) {
+    public StartTestResourcesServerMojo(MavenProject mavenProject,
+                                        MavenSession mavenSession,
+                                        DependencyResolutionService dependencyResolutionService,
+                                        ToolchainManager toolchainManager) {
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
         this.dependencyResolutionService = dependencyResolutionService;
@@ -140,7 +141,7 @@ public class MicronautStartTestResourcesServerMojo extends AbstractTestResources
         AtomicBoolean serverStarted = new AtomicBoolean(false);
         ServerUtils.startOrConnectToExistingServer(
                 explicitPort,
-                buildDir.resolve("ts-port-file.txt"),
+                buildDir.resolve(PORT_FILE_NAME),
                 serverSettingsDirectory,
                 accessToken,
                 resolveServerClasspath(),
@@ -150,7 +151,7 @@ public class MicronautStartTestResourcesServerMojo extends AbstractTestResources
 
                     @Override
                     public void startServer(ServerUtils.ProcessParameters processParameters) throws IOException {
-                        getLog().info("Starting Micronaut Test Resources server");
+                        getLog().info("Starting Micronaut Test Resources service");
                         String javaBin = findJavaExecutable(toolchainManager, mavenSession);
                         List<String> cli = new ArrayList<>();
                         cli.add(javaBin);
@@ -174,7 +175,7 @@ public class MicronautStartTestResourcesServerMojo extends AbstractTestResources
                 }
         );
         if (keepAlive) {
-            getLog().info("Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:" + MicronautStopTestResourcesServerMojo.NAME + "'");
+            getLog().info("Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:" + StopTestResourcesServerMojo.NAME + "'");
         }
         if (!serverStarted.get()) {
             // A server was already listening, which means it was running before
