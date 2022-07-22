@@ -42,6 +42,7 @@ import static io.micronaut.build.testresources.StopTestResourcesServerMojo.MICRO
 public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParticipant {
 
     private static final String EXPLICIT_START_SERVICE_GOAL_NAME = "mn:" + StartTestResourcesServerMojo.NAME;
+    private static final String EXPLICIT_STOP_SERVICE_GOAL_NAME = "mn:" + StopTestResourcesServerMojo.NAME;
 
     @Override
     public void afterProjectsRead(MavenSession session) {
@@ -69,7 +70,7 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
 
     @Override
     public void afterSessionEnd(MavenSession session) throws MavenExecutionException {
-        if (session.getGoals().stream().noneMatch(EXPLICIT_START_SERVICE_GOAL_NAME::equals)) {
+        if (session.getGoals().stream().noneMatch(s -> s.equals(EXPLICIT_START_SERVICE_GOAL_NAME) || s.equals(EXPLICIT_STOP_SERVICE_GOAL_NAME))) {
             MavenProject project = session.getAllProjects().stream()
                     .filter(p -> p.getPlugin(RunMojo.THIS_PLUGIN) != null)
                     .findFirst()
