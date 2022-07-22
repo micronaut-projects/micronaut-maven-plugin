@@ -28,8 +28,7 @@
                             </test-compile>
                             <test>
                                 ${project.groupId}:${project.artifactId}:${project.version}:start-testresources-service,
-                                org.apache.maven.plugins:maven-surefire-plugin:test,
-                                ${project.groupId}:${project.artifactId}:${project.version}:stop-testresources-service
+                                org.apache.maven.plugins:maven-surefire-plugin:test
                             </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
@@ -154,7 +153,7 @@
         <!-- Test resources lifecycle management -->
         <component>
             <role>org.apache.maven.AbstractMavenLifecycleParticipant</role>
-            <role-hint>native-build-tools</role-hint>
+            <role-hint>test-resources</role-hint>
             <implementation>io.micronaut.build.testresources.TestResourcesLifecycleExtension</implementation>
             <description>Micronaut Test Resources Extension</description>
             <isolated-realm>false</isolated-realm>

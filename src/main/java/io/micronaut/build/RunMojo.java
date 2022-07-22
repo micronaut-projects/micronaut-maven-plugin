@@ -22,8 +22,8 @@ import io.micronaut.build.services.CompilerService;
 import io.micronaut.build.services.DependencyResolutionService;
 import io.micronaut.build.services.ExecutorService;
 import io.micronaut.build.testresources.AbstractTestResourcesMojo;
-import io.micronaut.build.testresources.MicronautStartTestResourcesServerMojo;
-import io.micronaut.build.testresources.MicronautStopTestResourcesServerMojo;
+import io.micronaut.build.testresources.StartTestResourcesServerMojo;
+import io.micronaut.build.testresources.StopTestResourcesServerMojo;
 import io.micronaut.testresources.buildtools.ServerUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
@@ -90,10 +90,10 @@ public class RunMojo extends AbstractMojo {
     public static final String MN_APP_ARGS = "mn.appArgs";
     public static final String EXEC_MAIN_CLASS = "${exec.mainClass}";
     public static final String RESOURCES_DIR = "src/main/resources";
+    public static final String THIS_PLUGIN = "io.micronaut.build:micronaut-maven-plugin";
 
     private static final int LAST_COMPILATION_THRESHOLD = 500;
     private static final List<String> DEFAULT_EXCLUDES;
-    private static final String THIS_PLUGIN = "io.micronaut.build:micronaut-maven-plugin";
 
     static {
         DEFAULT_EXCLUDES = new ArrayList<>();
@@ -541,7 +541,7 @@ public class RunMojo extends AbstractMojo {
 
     private void maybeStartTestResourcesServer() {
         try {
-            executorService.executeGoal(THIS_PLUGIN, MicronautStartTestResourcesServerMojo.NAME);
+            executorService.executeGoal(THIS_PLUGIN, StartTestResourcesServerMojo.NAME);
         } catch (MojoExecutionException e) {
             getLog().error(e);
         }
@@ -549,7 +549,7 @@ public class RunMojo extends AbstractMojo {
 
     private void maybeStopTestResourcesServer() {
         try {
-            executorService.executeGoal(THIS_PLUGIN, MicronautStopTestResourcesServerMojo.NAME);
+            executorService.executeGoal(THIS_PLUGIN, StopTestResourcesServerMojo.NAME);
         } catch (MojoExecutionException e) {
             getLog().error(e);
         }

@@ -17,10 +17,9 @@ package io.micronaut.build.testresources;
 
 import io.micronaut.testresources.buildtools.ServerUtils;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.plugin.logging.Log;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -29,16 +28,33 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
 /**
- * Stops the Micronaut test resources server.
+ * Utility class to stop Test Resources service.
  */
-@Mojo(name = MicronautStopTestResourcesServerMojo.NAME, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
-public class MicronautStopTestResourcesServerMojo extends AbstractTestResourcesMojo {
-    public static final String NAME = "stop-testresources-service";
-    public static final String MICRONAUT_TEST_RESOURCES_KEEPALIVE = "keepAlive";
+public class StopTestResourcesHelper {
 
-    @Override
-    public final void execute() throws MojoExecutionException, MojoFailureException {
-        if (!testResourcesEnabled || Boolean.TRUE.equals(keepAlive)) {
+    private final boolean enabled;
+
+    private final boolean keepAlive;
+
+    private final boolean shared;
+
+    private final Log log;
+
+    private final File buildDirectory;
+
+    public StopTestResourcesHelper(boolean enabled, boolean keepAlive, boolean shared, Log log, File buildDirectory) {
+        this.enabled = enabled;
+        this.keepAlive = keepAlive;
+        this.shared = shared;
+        this.log = log;
+        this.buildDirectory = buildDirectory;
+    }
+
+    /**
+     * Contains the logic to stop the Test Resources Service.
+     */
+    public void stopTestResources() throws MojoExecutionException {
+        if (!enabled || Boolean.TRUE.equals(keepAlive)) {
             return;
         }
         if (Files.exists(getKeepAliveFile())) {
@@ -50,14 +66,14 @@ public class MicronautStopTestResourcesServerMojo extends AbstractTestResourcesM
             return;
         }
         try {
-            doExecute();
+            doStop();
         } catch (Exception e) {
             throw new MojoExecutionException("Unable to stop test resources server", e);
         }
     }
 
-    private void doExecute() throws IOException {
-        getLog().info("Shutting down test resources service");
+    private void doStop() throws IOException {
+        log.info("Shutting down Micronaut Test Resources service");
         Path buildDir = buildDirectory.toPath();
         ServerUtils.stopServer(buildDir.resolve("test-classes"));
         Files.walkFileTree(getServerSettingsDirectory(), new SimpleFileVisitor<Path>() {
@@ -75,4 +91,18 @@ public class MicronautStopTestResourcesServerMojo extends AbstractTestResourcesM
         });
     }
 
+    private Path getServerSettingsDirectory() {
+        if (shared) {
+            return ServerUtils.getDefaultSharedSettingsPath();
+        }
+        return serverSettingsDirectoryOf(buildDirectory.toPath());
+    }
+
+    private Path getKeepAliveFile() {
+        return getServerSettingsDirectory().resolve("keepalive");
+    }
+
+    private Path serverSettingsDirectoryOf(Path buildDir) {
+        return buildDir.resolve("../.micronaut/test-resources");
+    }
 }

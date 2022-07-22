@@ -22,7 +22,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import java.io.File;
 import java.nio.file.Path;
 
-import static io.micronaut.build.testresources.MicronautStopTestResourcesServerMojo.MICRONAUT_TEST_RESOURCES_KEEPALIVE;
+import static io.micronaut.build.testresources.StopTestResourcesServerMojo.MICRONAUT_TEST_RESOURCES_KEEPALIVE;
 
 /**
  * Base mojo for Micronaut test resources service handling.
