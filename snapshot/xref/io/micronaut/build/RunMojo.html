@@ -30,8 +30,8 @@
 <a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> io.micronaut.build.services.DependencyResolutionService;
 <a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> io.micronaut.build.services.ExecutorService;
 <a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> io.micronaut.build.testresources.AbstractTestResourcesMojo;
-<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> io.micronaut.build.testresources.MicronautStartTestResourcesServerMojo;
-<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> io.micronaut.build.testresources.MicronautStopTestResourcesServerMojo;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> io.micronaut.build.testresources.StartTestResourcesServerMojo;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> io.micronaut.build.testresources.StopTestResourcesServerMojo;
 <a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> io.micronaut.testresources.buildtools.ServerUtils;
 <a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.apache.maven.execution.MavenSession;
 <a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.apache.maven.model.FileSet;
@@ -98,10 +98,10 @@
 <a class="jxr_linenumber" name="L90" href="#L90">90</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String MN_APP_ARGS = <span class="jxr_string">"mn.appArgs"</span>;
 <a class="jxr_linenumber" name="L91" href="#L91">91</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String EXEC_MAIN_CLASS = <span class="jxr_string">"${exec.mainClass}"</span>;
 <a class="jxr_linenumber" name="L92" href="#L92">92</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String RESOURCES_DIR = <span class="jxr_string">"src/main/resources"</span>;
-<a class="jxr_linenumber" name="L93" href="#L93">93</a>  
-<a class="jxr_linenumber" name="L94" href="#L94">94</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> LAST_COMPILATION_THRESHOLD = 500;
-<a class="jxr_linenumber" name="L95" href="#L95">95</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> List&lt;String&gt; DEFAULT_EXCLUDES;
-<a class="jxr_linenumber" name="L96" href="#L96">96</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String THIS_PLUGIN = <span class="jxr_string">"io.micronaut.build:micronaut-maven-plugin"</span>;
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String THIS_PLUGIN = <span class="jxr_string">"io.micronaut.build:micronaut-maven-plugin"</span>;
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>  
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> LAST_COMPILATION_THRESHOLD = 500;
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> List&lt;String&gt; DEFAULT_EXCLUDES;
 <a class="jxr_linenumber" name="L97" href="#L97">97</a>  
 <a class="jxr_linenumber" name="L98" href="#L98">98</a>      <strong class="jxr_keyword">static</strong> {
 <a class="jxr_linenumber" name="L99" href="#L99">99</a>          DEFAULT_EXCLUDES = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
@@ -549,7 +549,7 @@
 <a class="jxr_linenumber" name="L541" href="#L541">541</a> 
 <a class="jxr_linenumber" name="L542" href="#L542">542</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> maybeStartTestResourcesServer() {
 <a class="jxr_linenumber" name="L543" href="#L543">543</a>         <strong class="jxr_keyword">try</strong> {
-<a class="jxr_linenumber" name="L544" href="#L544">544</a>             executorService.executeGoal(THIS_PLUGIN, MicronautStartTestResourcesServerMojo.NAME);
+<a class="jxr_linenumber" name="L544" href="#L544">544</a>             executorService.executeGoal(THIS_PLUGIN, StartTestResourcesServerMojo.NAME);
 <a class="jxr_linenumber" name="L545" href="#L545">545</a>         } <strong class="jxr_keyword">catch</strong> (MojoExecutionException e) {
 <a class="jxr_linenumber" name="L546" href="#L546">546</a>             getLog().error(e);
 <a class="jxr_linenumber" name="L547" href="#L547">547</a>         }
@@ -557,7 +557,7 @@
 <a class="jxr_linenumber" name="L549" href="#L549">549</a> 
 <a class="jxr_linenumber" name="L550" href="#L550">550</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> maybeStopTestResourcesServer() {
 <a class="jxr_linenumber" name="L551" href="#L551">551</a>         <strong class="jxr_keyword">try</strong> {
-<a class="jxr_linenumber" name="L552" href="#L552">552</a>             executorService.executeGoal(THIS_PLUGIN, MicronautStopTestResourcesServerMojo.NAME);
+<a class="jxr_linenumber" name="L552" href="#L552">552</a>             executorService.executeGoal(THIS_PLUGIN, StopTestResourcesServerMojo.NAME);
 <a class="jxr_linenumber" name="L553" href="#L553">553</a>         } <strong class="jxr_keyword">catch</strong> (MojoExecutionException e) {
 <a class="jxr_linenumber" name="L554" href="#L554">554</a>             getLog().error(e);
 <a class="jxr_linenumber" name="L555" href="#L555">555</a>         }
