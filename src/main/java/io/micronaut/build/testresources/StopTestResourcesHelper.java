@@ -69,11 +69,9 @@ public class StopTestResourcesHelper {
         }
         try {
             Optional<ServerSettings> optionalServerSettings = ServerUtils.readServerSettings(getServerSettingsDirectory());
-            if (optionalServerSettings.isPresent()) {
-                if (ServerUtils.isServerStarted(optionalServerSettings.get().getPort())) {
-                    log.info("Shutting down Micronaut Test Resources service");
-                    doStop();
-                }
+            if (optionalServerSettings.isPresent() && ServerUtils.isServerStarted(optionalServerSettings.get().getPort())) {
+                log.info("Shutting down Micronaut Test Resources service");
+                doStop();
             }
         } catch (Exception e) {
             throw new MojoExecutionException("Unable to stop test resources server", e);
