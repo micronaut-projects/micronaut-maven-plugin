@@ -30,8 +30,8 @@ public class StopTestResourcesServerMojo extends AbstractTestResourcesMojo {
 
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException {
-        StopTestResourcesHelper service = new StopTestResourcesHelper(testResourcesEnabled, keepAlive, shared, getLog(), buildDirectory);
-        service.stopTestResources();
+        StopTestResourcesHelper helper = new StopTestResourcesHelper(testResourcesEnabled, keepAlive, shared, getLog(), buildDirectory);
+        helper.stopTestResources();
     }
 
 }

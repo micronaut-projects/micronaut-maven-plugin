@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.micronaut.build.examples</groupId>
-    <artifactId>test-resources</artifactId>
+    <artifactId>test-resources-disabled</artifactId>
     <version>0.1</version>
     <packaging>${packaging}</packaging>
     <parent>
@@ -19,7 +19,7 @@
         <micronaut.runtime>netty</micronaut.runtime>
         <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
         <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
-        <micronaut.test.resources.enabled>true</micronaut.test.resources.enabled>
+        <micronaut.test.resources.enabled>false</micronaut.test.resources.enabled>
     </properties>
     <repositories>
         <repository>
@@ -145,7 +145,7 @@
                     </annotationProcessorPaths>
                     <compilerArgs>
                         <arg>-Amicronaut.processing.group=io.micronaut.build.examples</arg>
-                        <arg>-Amicronaut.processing.module=test-resources</arg>
+                        <arg>-Amicronaut.processing.module=test-resources-disabled</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>

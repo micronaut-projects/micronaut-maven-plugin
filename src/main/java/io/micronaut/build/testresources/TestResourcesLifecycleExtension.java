@@ -15,23 +15,30 @@
  */
 package io.micronaut.build.testresources;
 
-import io.micronaut.build.RunMojo;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.monitor.logging.DefaultLog;
+import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluationException;
+import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluator;
 import org.codehaus.plexus.logging.console.ConsoleLogger;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.eclipse.aether.util.artifact.JavaScopes;
 
 import java.io.File;
 import java.util.List;
-import java.util.Properties;
 import java.util.function.Consumer;
 
+import static io.micronaut.build.RunMojo.THIS_PLUGIN;
+import static io.micronaut.build.services.DependencyResolutionService.TEST_RESOURCES_ARTIFACT_ID_PREFIX;
+import static io.micronaut.build.services.DependencyResolutionService.TEST_RESOURCES_GROUP;
 import static io.micronaut.build.testresources.AbstractTestResourcesMojo.CONFIG_PROPERTY_PREFIX;
 import static io.micronaut.build.testresources.StopTestResourcesServerMojo.MICRONAUT_TEST_RESOURCES_KEEPALIVE;
 
@@ -44,89 +51,98 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
     private static final String EXPLICIT_START_SERVICE_GOAL_NAME = "mn:" + StartTestResourcesServerMojo.NAME;
     private static final String EXPLICIT_STOP_SERVICE_GOAL_NAME = "mn:" + StopTestResourcesServerMojo.NAME;
 
+    private ExpressionEvaluator evaluator;
+
     @Override
     public void afterProjectsRead(MavenSession session) {
-        List<String> goals = session.getGoals();
-        if (goals.stream().anyMatch(EXPLICIT_START_SERVICE_GOAL_NAME::equals)) {
-            // we need to keep the server alive at the end of the build
-            session.getAllProjects().forEach(p -> {
-                Build build = p.getBuild();
-                withPlugin(build, "micronaut-maven-plugin", plugin -> {
-                    Xpp3Dom configuration = (Xpp3Dom) plugin.getConfiguration();
-                    boolean enabled = isEnabled(configuration, p);
-                    if (enabled) {
-                        if (configuration == null) {
-                            configuration = new Xpp3Dom("configuration");
-                            plugin.setConfiguration(configuration);
-                        }
+        session.getAllProjects().forEach(p -> {
+            Build build = p.getBuild();
+            withPlugin(build, THIS_PLUGIN, plugin -> {
+                this.evaluator = getEvaluator(session, plugin);
+                Xpp3Dom configuration = (Xpp3Dom) plugin.getConfiguration();
+                boolean enabled = isEnabled();
+                if (enabled) {
+                    if (configuration == null) {
+                        configuration = new Xpp3Dom("configuration");
+                        plugin.setConfiguration(configuration);
+                    }
+                    List<String> goals = session.getGoals();
+                    if (goals.stream().anyMatch(EXPLICIT_START_SERVICE_GOAL_NAME::equals)) {
+                        // we need to keep the server alive at the end of the build
+
                         Xpp3Dom flag = new Xpp3Dom(MICRONAUT_TEST_RESOURCES_KEEPALIVE);
                         configuration.addChild(flag);
                         flag.setValue("true");
                     }
-                });
+                    Dependency clientDependency = new Dependency();
+                    clientDependency.setGroupId(TEST_RESOURCES_GROUP);
+                    clientDependency.setArtifactId(TEST_RESOURCES_ARTIFACT_ID_PREFIX + "client");
+                    clientDependency.setVersion(String.valueOf(p.getProperties().get(CONFIG_PROPERTY_PREFIX + "version")));
+                    clientDependency.setScope(JavaScopes.TEST);
+                    p.getDependencies().add(clientDependency);
+                }
             });
-        }
+        });
     }
 
     @Override
     public void afterSessionEnd(MavenSession session) throws MavenExecutionException {
         if (session.getGoals().stream().noneMatch(s -> s.equals(EXPLICIT_START_SERVICE_GOAL_NAME) || s.equals(EXPLICIT_STOP_SERVICE_GOAL_NAME))) {
             MavenProject project = session.getAllProjects().stream()
-                    .filter(p -> p.getPlugin(RunMojo.THIS_PLUGIN) != null)
+                    .filter(p -> p.getPlugin(THIS_PLUGIN) != null)
                     .findFirst()
-                    .orElseThrow(() -> new MavenExecutionException("Could not find plugin" + RunMojo.THIS_PLUGIN, (Throwable) null));
+                    .orElseThrow(() -> new MavenExecutionException("Could not find plugin" + THIS_PLUGIN, (Throwable) null));
 
-            Xpp3Dom configuration = (Xpp3Dom) project.getPlugin(RunMojo.THIS_PLUGIN).getConfiguration();
-
-            boolean enabled = isEnabled(configuration, project);
-            boolean keepAlive = isKeepAlive(configuration, project);
-            boolean shared = isShared(configuration, project);
+            boolean enabled = isEnabled();
+            boolean keepAlive = isKeepAlive();
+            boolean shared = isShared();
             Log log = new DefaultLog(new ConsoleLogger());
             File buildDirectory = new File(project.getBuild().getDirectory());
 
-            StopTestResourcesHelper service = new StopTestResourcesHelper(enabled, keepAlive, shared, log, buildDirectory);
+            StopTestResourcesHelper helper = new StopTestResourcesHelper(enabled, keepAlive, shared, log, buildDirectory);
             try {
-                service.stopTestResources();
+                helper.stopTestResources();
             } catch (Exception e) {
                 //no op
             }
         }
     }
 
-    private boolean isShared(Xpp3Dom configuration, MavenProject project) {
-        return evaluateBooleanProperty(project.getProperties(), configuration, CONFIG_PROPERTY_PREFIX + "shared", "shared");
+    private boolean isShared() {
+        return evaluateBooleanProperty(CONFIG_PROPERTY_PREFIX + "shared");
     }
 
-    private boolean isKeepAlive(Xpp3Dom configuration, MavenProject project) {
-        return evaluateBooleanProperty(project.getProperties(), configuration, MICRONAUT_TEST_RESOURCES_KEEPALIVE, "keepAlive");
+    private boolean isKeepAlive() {
+        return evaluateBooleanProperty(MICRONAUT_TEST_RESOURCES_KEEPALIVE);
     }
 
-    private boolean isEnabled(Xpp3Dom configuration, MavenProject project) {
-        return evaluateBooleanProperty(project.getProperties(), configuration, CONFIG_PROPERTY_PREFIX + "enabled", "testResourcesEnabled");
+    private boolean isEnabled() {
+        return evaluateBooleanProperty(CONFIG_PROPERTY_PREFIX + "enabled");
     }
 
-    private boolean evaluateBooleanProperty(Properties properties, Xpp3Dom configuration, String property, String xmlTag) {
-        boolean systemPropertyEnabled = Boolean.getBoolean(property);
-        if (systemPropertyEnabled) {
-            return true;
-        } else {
-            boolean projectPropertyEnabled = Boolean.parseBoolean(properties.getProperty(property, "false"));
-            if (projectPropertyEnabled) {
-                return true;
-            } else if (configuration != null) {
-                Xpp3Dom testResourcesEnabled = configuration.getChild(xmlTag);
-                if (testResourcesEnabled != null && testResourcesEnabled.getValue() != null) {
-                    return Boolean.parseBoolean(testResourcesEnabled.getValue());
-                }
+    private boolean evaluateBooleanProperty(String property) {
+        try {
+            Object result = evaluator.evaluate("${" + property + "}");
+            if (result instanceof Boolean) {
+                return (Boolean) result;
+            } else if (result instanceof String && (result.equals(Boolean.TRUE.toString()) || result.equals(Boolean.FALSE.toString()))) {
+                return Boolean.parseBoolean((String) result);
             }
+        } catch (ExpressionEvaluationException e) {
+            return false;
         }
         return false;
     }
 
-    private static void withPlugin(Build build, String artifactId, Consumer<? super Plugin> consumer) {
+    private ExpressionEvaluator getEvaluator(MavenSession session, Plugin thisPlugin) {
+        MojoExecution execution = new MojoExecution(thisPlugin, null, null);
+        return new PluginParameterExpressionEvaluator(session, execution);
+    }
+
+    private static void withPlugin(Build build, String groupIdArtifactId, Consumer<? super Plugin> consumer) {
         build.getPlugins()
                 .stream()
-                .filter(p -> artifactId.equals(p.getArtifactId()))
+                .filter(p -> groupIdArtifactId.equals(p.getGroupId() + ":" + p.getArtifactId()))
                 .findFirst()
                 .ifPresent(consumer);
     }
