@@ -25,8 +25,8 @@ under the License.
     <language>en-us</language>
     <copyright>&#169;2020 - 2022 Micronaut</copyright>
     <item>
-      <title>File: 23,
-             Errors: 1180,
+      <title>File: 30,
+             Errors: 1409,
              Warnings: 0,
              Infos: 0
       </title>
@@ -46,34 +46,6 @@ under the License.
           <tbody>
                           <tr>
                 <td>
-                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.GraalVMResourcesMojo.java">io/micronaut/build/GraalVMResourcesMojo.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  30
-                </td>
-              </tr>
-                          <tr>
-                <td>
-                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.DockerNativeMojo.java">io/micronaut/build/DockerNativeMojo.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  50
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.aot.Constants.java">io/micronaut/build/aot/Constants.java</a>
                 </td>
                 <td>
@@ -88,7 +60,7 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.aot.AotSampleMojo.java">io/micronaut/build/aot/AotSampleMojo.java</a>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.DockerNativeMojo.java">io/micronaut/build/DockerNativeMojo.java</a>
                 </td>
                 <td>
                   0
@@ -97,12 +69,12 @@ under the License.
                   0
                 </td>
                 <td>
-                  19
+                  51
                 </td>
               </tr>
                           <tr>
                 <td>
-                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.aot.AbstractMicronautAotCliMojo.java">io/micronaut/build/aot/AbstractMicronautAotCliMojo.java</a>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.testresources.AbstractTestResourcesMojo.java">io/micronaut/build/testresources/AbstractTestResourcesMojo.java</a>
                 </td>
                 <td>
                   0
@@ -111,12 +83,12 @@ under the License.
                   0
                 </td>
                 <td>
-                  44
+                  14
                 </td>
               </tr>
                           <tr>
                 <td>
-                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.Packaging.java">io/micronaut/build/Packaging.java</a>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.testresources.StartTestResourcesServerMojo.java">io/micronaut/build/testresources/StartTestResourcesServerMojo.java</a>
                 </td>
                 <td>
                   0
@@ -125,21 +97,7 @@ under the License.
                   0
                 </td>
                 <td>
-                  10
-                </td>
-              </tr>
-                          <tr>
-                <td>
-                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.aot.AotAnalysisMojo.java">io/micronaut/build/aot/AotAnalysisMojo.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  34
+                  56
                 </td>
               </tr>
                           <tr>
@@ -158,6 +116,20 @@ under the License.
               </tr>
                           <tr>
                 <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.aot.AotAnalysisMojo.java">io/micronaut/build/aot/AotAnalysisMojo.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  36
+                </td>
+              </tr>
+                          <tr>
+                <td>
                   <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.jib.JibMicronautExtension.java">io/micronaut/build/jib/JibMicronautExtension.java</a>
                 </td>
                 <td>
@@ -168,6 +140,174 @@ under the License.
                 </td>
                 <td>
                   41
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.Packaging.java">io/micronaut/build/Packaging.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  10
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.DockerMojo.java">io/micronaut/build/DockerMojo.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  17
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.DockerfileMojo.java">io/micronaut/build/DockerfileMojo.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  43
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.DockerBuildStrategy.java">io/micronaut/build/DockerBuildStrategy.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.services.ExecutorService.java">io/micronaut/build/services/ExecutorService.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  28
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.MicronautRuntime.java">io/micronaut/build/MicronautRuntime.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  4
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.services.DockerService.java">io/micronaut/build/services/DockerService.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  41
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.GraalVMResourcesMojo.java">io/micronaut/build/GraalVMResourcesMojo.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  30
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.testresources.TestResourcesLifecycleExtension.java">io/micronaut/build/testresources/TestResourcesLifecycleExtension.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  42
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.testresources.StopTestResourcesServerMojo.java">io/micronaut/build/testresources/StopTestResourcesServerMojo.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  5
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.aot.AotSampleMojo.java">io/micronaut/build/aot/AotSampleMojo.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  21
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.aot.AbstractMicronautAotCliMojo.java">io/micronaut/build/aot/AbstractMicronautAotCliMojo.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  42
                 </td>
               </tr>
                           <tr>
@@ -214,7 +354,7 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.DockerMojo.java">io/micronaut/build/DockerMojo.java</a>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.services.DependencyResolutionService.java">io/micronaut/build/services/DependencyResolutionService.java</a>
                 </td>
                 <td>
                   0
@@ -223,7 +363,21 @@ under the License.
                   0
                 </td>
                 <td>
-                  18
+                  65
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.testresources.StopTestResourcesHelper.java">io/micronaut/build/testresources/StopTestResourcesHelper.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  28
                 </td>
               </tr>
                           <tr>
@@ -237,7 +391,7 @@ under the License.
                   0
                 </td>
                 <td>
-                  104
+                  113
                 </td>
               </tr>
                           <tr>
@@ -284,20 +438,6 @@ under the License.
               </tr>
                           <tr>
                 <td>
-                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.DockerfileMojo.java">io/micronaut/build/DockerfileMojo.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  43
-                </td>
-              </tr>
-                          <tr>
-                <td>
                   <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.services.ApplicationConfigurationService.java">io/micronaut/build/services/ApplicationConfigurationService.java</a>
                 </td>
                 <td>
@@ -307,12 +447,12 @@ under the License.
                   0
                 </td>
                 <td>
-                  13
+                  14
                 </td>
               </tr>
                           <tr>
                 <td>
-                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.services.ExecutorService.java">io/micronaut/build/services/ExecutorService.java</a>
+                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.MojoUtils.java">io/micronaut/build/MojoUtils.java</a>
                 </td>
                 <td>
                   0
@@ -321,49 +461,7 @@ under the License.
                   0
                 </td>
                 <td>
-                  28
-                </td>
-              </tr>
-                          <tr>
-                <td>
-                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.DockerBuildStrategy.java">io/micronaut/build/DockerBuildStrategy.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-              </tr>
-                          <tr>
-                <td>
-                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.MicronautRuntime.java">io/micronaut/build/MicronautRuntime.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  4
-                </td>
-              </tr>
-                          <tr>
-                <td>
-                  <a href="https://github.com/micronaut-projects/micronaut-maven-plugin/checkstyle.html#io.micronaut.build.services.DockerService.java">io/micronaut/build/services/DockerService.java</a>
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  0
-                </td>
-                <td>
-                  42
+                  8
                 </td>
               </tr>
                       </tbody>
