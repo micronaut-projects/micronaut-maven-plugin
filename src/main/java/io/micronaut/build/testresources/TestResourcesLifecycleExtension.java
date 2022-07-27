@@ -34,6 +34,7 @@ import org.eclipse.aether.util.artifact.JavaScopes;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import static io.micronaut.build.RunMojo.THIS_PLUGIN;
@@ -51,6 +52,8 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
     private static final String EXPLICIT_START_SERVICE_GOAL_NAME = "mn:" + StartTestResourcesServerMojo.NAME;
     private static final String EXPLICIT_STOP_SERVICE_GOAL_NAME = "mn:" + StopTestResourcesServerMojo.NAME;
 
+    private final Object sessionLock = new Object();
+
     private ExpressionEvaluator evaluator;
 
     @Override
@@ -58,9 +61,8 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
         session.getAllProjects().forEach(p -> {
             Build build = p.getBuild();
             withPlugin(build, THIS_PLUGIN, plugin -> {
-                this.evaluator = getEvaluator(session, plugin);
                 Xpp3Dom configuration = (Xpp3Dom) plugin.getConfiguration();
-                boolean enabled = isEnabled();
+                boolean enabled = isEnabled(session);
                 if (enabled) {
                     if (configuration == null) {
                         configuration = new Xpp3Dom("configuration");
@@ -88,14 +90,12 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
     @Override
     public void afterSessionEnd(MavenSession session) throws MavenExecutionException {
         if (session.getGoals().stream().noneMatch(s -> s.equals(EXPLICIT_START_SERVICE_GOAL_NAME) || s.equals(EXPLICIT_STOP_SERVICE_GOAL_NAME))) {
-            MavenProject project = session.getAllProjects().stream()
-                    .filter(p -> p.getPlugin(THIS_PLUGIN) != null)
-                    .findFirst()
+            MavenProject project = findProjectWithThisPlugin(session)
                     .orElseThrow(() -> new MavenExecutionException("Could not find plugin" + THIS_PLUGIN, (Throwable) null));
 
-            boolean enabled = isEnabled();
-            boolean keepAlive = isKeepAlive();
-            boolean shared = isShared();
+            boolean enabled = isEnabled(session);
+            boolean keepAlive = isKeepAlive(session);
+            boolean shared = isShared(session);
             Log log = new DefaultLog(new ConsoleLogger());
             File buildDirectory = new File(project.getBuild().getDirectory());
 
@@ -108,21 +108,21 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
         }
     }
 
-    private boolean isShared() {
-        return evaluateBooleanProperty(CONFIG_PROPERTY_PREFIX + "shared");
+    private boolean isShared(MavenSession session) {
+        return evaluateBooleanProperty(session, CONFIG_PROPERTY_PREFIX + "shared");
     }
 
-    private boolean isKeepAlive() {
-        return evaluateBooleanProperty(MICRONAUT_TEST_RESOURCES_KEEPALIVE);
+    private boolean isKeepAlive(MavenSession session) {
+        return evaluateBooleanProperty(session, MICRONAUT_TEST_RESOURCES_KEEPALIVE);
     }
 
-    private boolean isEnabled() {
-        return evaluateBooleanProperty(CONFIG_PROPERTY_PREFIX + "enabled");
+    private boolean isEnabled(MavenSession session) {
+        return evaluateBooleanProperty(session, CONFIG_PROPERTY_PREFIX + "enabled");
     }
 
-    private boolean evaluateBooleanProperty(String property) {
+    private boolean evaluateBooleanProperty(MavenSession session, String property) {
         try {
-            Object result = evaluator.evaluate("${" + property + "}");
+            Object result = getEvaluator(session).evaluate("${" + property + "}");
             if (result instanceof Boolean) {
                 return (Boolean) result;
             } else if (result instanceof String && (result.equals(Boolean.TRUE.toString()) || result.equals(Boolean.FALSE.toString()))) {
@@ -134,9 +134,30 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
         return false;
     }
 
-    private ExpressionEvaluator getEvaluator(MavenSession session, Plugin thisPlugin) {
-        MojoExecution execution = new MojoExecution(thisPlugin, null, null);
-        return new PluginParameterExpressionEvaluator(session, execution);
+    private ExpressionEvaluator getEvaluator(MavenSession session) {
+        if (evaluator == null) {
+            findProjectWithThisPlugin(session).ifPresent(projectWithThisPlugin -> {
+                Plugin thisPlugin = projectWithThisPlugin.getPlugin(THIS_PLUGIN);
+                MojoExecution execution = new MojoExecution(thisPlugin, null, null);
+                MavenProject currentProject = session.getCurrentProject();
+
+                // Maven 3: PluginParameterExpressionEvaluator gets the current project from the session:
+                // synchronize in case another thread wants to fetch the real current project in between
+                synchronized (sessionLock) {
+                    session.setCurrentProject(projectWithThisPlugin);
+                    evaluator = new PluginParameterExpressionEvaluator(session, execution);
+                    session.setCurrentProject(currentProject);
+                }
+            });
+        }
+
+        return evaluator;
+    }
+
+    private static Optional<MavenProject> findProjectWithThisPlugin(MavenSession session) {
+        return session.getAllProjects().stream()
+                .filter(p -> p.getPlugin(THIS_PLUGIN) != null)
+                .findFirst();
     }
 
     private static void withPlugin(Build build, String groupIdArtifactId, Consumer<? super Plugin> consumer) {
