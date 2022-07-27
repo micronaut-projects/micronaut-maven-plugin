@@ -137,24 +137,8 @@ resources service for the value of this property. This will trigger the creation
 service will answer with the URI to the bootstrap server.</p>
 </div>
 <div class="paragraph">
-<p>You can enable test resources support by adding the following elements to your <code>pom.xml</code>:</p>
-</div>
-<div class="listingblock">
-<div class="title">Maven</div>
-<div class="content">
-<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;project&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;properties&gt;</span>
-        <span style="color:#070;font-weight:bold">&lt;micronaut.test.resources.enabled&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/micronaut.test.resources.enabled&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;/properties&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;dependencies&gt;</span>
-        <span style="color:#070;font-weight:bold">&lt;dependency&gt;</span>
-            <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>io.micronaut.testresources<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
-            <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>micronaut-test-resources-client<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
-            <span style="color:#070;font-weight:bold">&lt;scope&gt;</span>test<span style="color:#070;font-weight:bold">&lt;/scope&gt;</span>
-        <span style="color:#070;font-weight:bold">&lt;/dependency&gt;</span>
-    <span style="color:#070;font-weight:bold">&lt;/dependencies&gt;</span>
-<span style="color:#070;font-weight:bold">&lt;/project&gt;</span></code></pre>
-</div>
+<p>You can enable test resources support simply by setting the property <code>micronaut.test.resources.enabled</code> (either in your
+POM or via the command-line).</p>
 </div>
 <div class="paragraph">
 <p>This will be sufficient for most use cases, and Micronaut will automatically start containers, for example, when a
