@@ -15,6 +15,7 @@
  */
 package io.micronaut.build.testresources;
 
+import io.micronaut.testresources.buildtools.ServerSettings;
 import io.micronaut.testresources.buildtools.ServerUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -26,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Optional;
 
 /**
  * Utility class to stop Test Resources service.
@@ -66,17 +68,22 @@ public class StopTestResourcesHelper {
             return;
         }
         try {
-            doStop();
+            Optional<ServerSettings> optionalServerSettings = ServerUtils.readServerSettings(getServerSettingsDirectory());
+            if (optionalServerSettings.isPresent()) {
+                if (ServerUtils.isServerStarted(optionalServerSettings.get().getPort())) {
+                    log.info("Shutting down Micronaut Test Resources service");
+                    doStop();
+                }
+            }
         } catch (Exception e) {
             throw new MojoExecutionException("Unable to stop test resources server", e);
         }
     }
 
     private void doStop() throws IOException {
-        log.info("Shutting down Micronaut Test Resources service");
-        Path buildDir = buildDirectory.toPath();
-        ServerUtils.stopServer(buildDir.resolve("test-classes"));
-        Files.walkFileTree(getServerSettingsDirectory(), new SimpleFileVisitor<Path>() {
+        Path settingsDirectory = getServerSettingsDirectory();
+        ServerUtils.stopServer(settingsDirectory);
+        Files.walkFileTree(settingsDirectory, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);
