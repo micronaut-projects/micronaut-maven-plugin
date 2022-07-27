@@ -34,7 +34,7 @@ public abstract class AbstractTestResourcesMojo extends AbstractMojo {
     /**
      * Whether to enable or disable Micronaut test resources support.
      */
-    @Parameter(property =  CONFIG_PROPERTY_PREFIX + "enabled", defaultValue = "false")
+    @Parameter(property =  CONFIG_PROPERTY_PREFIX + "enabled", defaultValue = DISABLED)
     protected boolean testResourcesEnabled;
 
     /**

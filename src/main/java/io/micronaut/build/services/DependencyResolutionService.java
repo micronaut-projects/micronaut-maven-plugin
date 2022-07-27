@@ -50,9 +50,9 @@ import java.util.stream.Stream;
 public class DependencyResolutionService {
 
     public static final String TEST_RESOURCES_GROUP = "io.micronaut.testresources";
+    public static final String TEST_RESOURCES_ARTIFACT_ID_PREFIX = "micronaut-test-resources-";
 
     private static final String JAR_EXTENSION = "jar";
-    private static final String TEST_RESOURCES_ARTIFACT_ID_PREFIX = "micronaut-test-resources-";
 
     private final MavenSession mavenSession;
 

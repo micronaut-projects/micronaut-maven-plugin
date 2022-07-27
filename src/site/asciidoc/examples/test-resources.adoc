@@ -11,24 +11,8 @@ configuration property. For example, if the kafka.bootstrap-servers property isn
 resources service for the value of this property. This will trigger the creation of a Kafka test container, and the
 service will answer with the URI to the bootstrap server.
 
-You can enable test resources support by adding the following elements to your `pom.xml`:
-
-.Maven
-[source,xml]
-----
-<project>
-    <properties>
-        <micronaut.test.resources.enabled>true</micronaut.test.resources.enabled>
-    </properties>
-    <dependencies>
-        <dependency>
-            <groupId>io.micronaut.testresources</groupId>
-            <artifactId>micronaut-test-resources-client</artifactId>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-</project>
-----
+You can enable test resources support simply by setting the property `micronaut.test.resources.enabled` (either in your
+POM or via the command-line).
 
 This will be sufficient for most use cases, and Micronaut will automatically start containers, for example, when a
 particular property is not present in your configuration and that you run tests (`mvn test`) or the application in

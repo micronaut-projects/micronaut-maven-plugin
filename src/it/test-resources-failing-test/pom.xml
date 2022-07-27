@@ -19,9 +19,7 @@
         <micronaut.runtime>netty</micronaut.runtime>
         <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
         <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
-        <micronaut.test.resources.version>@micronaut.test.resources.version@</micronaut.test.resources.version>
         <micronaut.test.resources.enabled>true</micronaut.test.resources.enabled>
-<!--        <micronaut.test-resources.shared>true</micronaut.test-resources.shared>-->
     </properties>
     <repositories>
         <repository>
@@ -104,12 +102,6 @@
             <groupId>io.micronaut.data</groupId>
             <artifactId>micronaut-data-jdbc</artifactId>
             <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut.testresources</groupId>
-            <artifactId>micronaut-test-resources-client</artifactId>
-            <version>${micronaut.test.resources.version}</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>
