@@ -6,7 +6,7 @@ with https://www.testcontainers.org/[Testcontainers] to provide throwaway contai
 other external services like Kafka or RabbitMQ.
 
 Test resources are handled by a "test resources service" which is a server accepting requests for test resources, which
-lifecycle is handled by the Gradle plugin. A test resources request is, to simplify, a request to resolve a missing
+lifecycle is handled by the Maven plugin. A test resources request is, to simplify, a request to resolve a missing
 configuration property. For example, if the kafka.bootstrap-servers property isn’t set, Micronaut will query the test
 resources service for the value of this property. This will trigger the creation of a Kafka test container, and the
 service will answer with the URI to the bootstrap server.
