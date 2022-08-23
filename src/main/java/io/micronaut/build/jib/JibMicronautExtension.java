@@ -117,7 +117,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
             entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");
             entrypoint.add("com.fnproject.fn.runtime.EntryPoint");
         } else {
-            entrypoint.add("/usr/local/openjdk-11/bin/java");
+            entrypoint.add("/usr/java/openjdk-11/bin/java");
             entrypoint.add("-XX:-UsePerfData");
             entrypoint.add("-XX:+UseSerialGC");
             entrypoint.add("-Xshare:on");
