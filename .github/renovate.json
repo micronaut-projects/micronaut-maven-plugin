@@ -14,11 +14,11 @@
       "matchPackagePatterns": ["actions.*"],
       "dependencyDashboardApproval": true
     },{
-      "matchPaths": ["package-docker-native-different-parent-version/pom.xml"],
+      "matchPaths": ["**/package-docker-native-different-parent-version/pom.xml"],
       "matchPackageNames": ["io.micronaut:micronaut-parent"],
       "enabled": false
     },{
-      "matchPaths": ["Dockerfile"],
+      "matchPaths": ["src/main/resources/dockerfiles/Dockerfile*"],
       "matchPackageNames": ["openjdk", "amazonlinux"],
       "enabled": false
     }
