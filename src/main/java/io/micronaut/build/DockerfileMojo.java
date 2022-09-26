@@ -48,6 +48,8 @@ public class DockerfileMojo extends AbstractDockerMojo {
     public static final String DOCKERFILE = "Dockerfile";
     public static final String DOCKERFILE_AWS_CUSTOM_RUNTIME = "DockerfileAwsCustomRuntime";
     public static final String DOCKERFILE_NATIVE = "DockerfileNative";
+    public static final String DOCKERFILE_CRAC = "DockerfileCrac";
+    public static final String DOCKERFILE_CRAC_CHECKPOINT = "DockerfileCracCheckpoint";
     public static final String DOCKERFILE_NATIVE_DISTROLESS = "DockerfileNativeDistroless";
     public static final String DOCKERFILE_NATIVE_STATIC = "DockerfileNativeStatic";
     public static final String DOCKERFILE_NATIVE_ORACLE_CLOUD = "DockerfileNativeOracleCloud";

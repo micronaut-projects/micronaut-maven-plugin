@@ -16,8 +16,17 @@
 package io.micronaut.build.services;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.*;
+import com.github.dockerjava.api.command.BuildImageCmd;
+import com.github.dockerjava.api.command.BuildImageResultCallback;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.PushImageCmd;
+import com.github.dockerjava.api.command.StartContainerCmd;
+import com.github.dockerjava.api.command.WaitContainerCmd;
+import com.github.dockerjava.api.command.WaitContainerResultCallback;
+import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.BuildResponseItem;
+import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -39,6 +48,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Provides methods to work with Docker images.
@@ -105,6 +115,33 @@ public class DockerService {
     }
 
     /**
+     * Creates a container based on a given image, and runs it.
+     * @param imageId the image to use
+     */
+    public void runPrivilegedImageAndWait(String imageId, String... binds) {
+        try (CreateContainerCmd create = dockerClient.createContainerCmd(imageId)) {
+            HostConfig hostConfig = create.getHostConfig();
+            if (hostConfig == null) {
+                LOG.error("HostConfig is null");
+            } else {
+                create.withHostConfig(hostConfig.withPrivileged(true));
+                for (String bind : binds) {
+                    hostConfig.withBinds(Bind.parse(bind));
+                }
+            }
+            CreateContainerResponse createResponse = create.exec();
+            try (StartContainerCmd start = dockerClient.startContainerCmd(createResponse.getId())) {
+                start.exec();
+                LOG.info("Container started: {} {}", createResponse.getId(), start.getContainerId());
+                try (WaitContainerCmd wait = dockerClient.waitContainerCmd(createResponse.getId())) {
+                    WaitContainerResultCallback waitResult = wait.start();
+                    waitResult.awaitStatusCode(1, TimeUnit.MINUTES);
+                }
+            }
+        }
+    }
+
+    /**
      * Copies a file from the specified container path in the given image ID, into a temporal location.
      */
     public File copyFromContainer(String imageId, String containerPath) {
@@ -135,10 +172,17 @@ public class DockerService {
      * Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.
      */
     public File loadDockerfileAsResource(String name) throws IOException {
+        return loadDockerfileAsResource(name, DockerfileMojo.DOCKERFILE);
+    }
+
+    /**
+     * Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.
+     */
+    public File loadDockerfileAsResource(String name, String targetFileName) throws IOException {
         String path = "/dockerfiles/" + name;
         InputStream stream = getClass().getResourceAsStream(path);
         if (stream != null) {
-            File dockerfile = new File(mavenProject.getBuild().getDirectory(), DockerfileMojo.DOCKERFILE);
+            File dockerfile = new File(mavenProject.getBuild().getDirectory(), targetFileName);
             FileUtils.copyInputStreamToFile(stream, dockerfile);
             return dockerfile;
         }
@@ -151,5 +195,4 @@ public class DockerService {
     public PushImageCmd pushImageCmd(String imageName) {
         return dockerClient.pushImageCmd(imageName);
     }
-
 }

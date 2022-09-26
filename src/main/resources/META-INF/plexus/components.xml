@@ -116,6 +116,39 @@
             </configuration>
         </component>
 
+        <!-- Docker CRaC packaging, using Jib -->
+        <component>
+            <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
+            <role-hint>docker-crac</role-hint>
+            <implementation>
+                org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping
+            </implementation>
+            <configuration>
+                <lifecycles>
+                    <lifecycle>
+                        <id>default</id>
+                        <phases>
+                            <process-resources>
+                                org.apache.maven.plugins:maven-resources-plugin:resources
+                            </process-resources>
+                            <compile>
+                                org.apache.maven.plugins:maven-compiler-plugin:compile
+                            </compile>
+                            <prepare-package>
+                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
+                            </prepare-package>
+                            <package>
+                                ${project.groupId}:${project.artifactId}:${project.version}:docker-crac
+                            </package>
+                            <deploy>
+                                ${project.groupId}:${project.artifactId}:${project.version}:docker-push
+                            </deploy>
+                        </phases>
+                    </lifecycle>
+                </lifecycles>
+            </configuration>
+        </component>
+
         <!-- Docker packaging, with a Native Image inside -->
         <component>
             <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
