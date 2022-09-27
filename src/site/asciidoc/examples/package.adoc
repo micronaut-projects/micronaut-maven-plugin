@@ -268,6 +268,8 @@ $ mvn package -Dpackaging=docker-native -Dmicronaut.native-image.args="--verbose
 The CRaC (Coordinated Restore at Checkpoint) Project researches coordination of Java programs with mechanisms to checkpoint (make an image of, snapshot) a Java instance while it is executing.
 Restoring from the image could be a solution to some problems with the start-up and warm-up times.
 
+Creation of a pre-warmed, checkpointed docker image cane be done with the following command:
+
 ----
 $ mvn package -Dpackaging=docker-crac
 ----
@@ -276,6 +278,12 @@ This will first create an intermediate image that contains the application and a
 This image is then executed and warmed up via a `warmup.sh` command, and a checkpoint is taken.
 
 A final image is then built which contains this checkpoint.
+
+The image built can be customised using
+https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration[Jib]. In particular, you can set:
+
+* The base image, using `<from><image>`.
+* The image name/tags that will be used for building, using either `<to><image>` and/or `<to><tags>`.
 
 ==== Checking an application is ready
 
