@@ -282,7 +282,27 @@ A final image is then built which contains this checkpoint.
 As part of the checkpointing process, the application will be tested until it is ready to recieve requests.
 This is by default done by executing the command `curl --output /dev/null --silent --head http://localhost:8080`, however you can override this by setting the `crac.readiness` property in your build.
 
+[source,xml]
+.Example checking https
+----
+<properties>
+    <crac.readiness>curl --output /dev/null --silent --head https://localhost</crac.readiness>
+</properties>
+----
+
+
 ==== Customizing warmup
 
 The default warmup script simply makes a request to port 8080 of the application.
 However, you can specify your own by placing a Bash script named `warmup.sh` in the root project folder.
+For example, to hit the root endpoint 10 times, you could create a file with the following contents:
+
+[source,bash]
+.warmup.sh
+----
+#!/bin/bash
+
+for run in {1..10}; do
+  curl --output /dev/null --silent http://localhost:8080
+done
+----
