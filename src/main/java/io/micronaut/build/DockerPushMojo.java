@@ -54,7 +54,7 @@ public class DockerPushMojo extends AbstractDockerMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         Packaging packaging = Packaging.of(mavenProject.getPackaging());
-        if (packaging == Packaging.DOCKER || packaging == Packaging.DOCKER_NATIVE) {
+        if (packaging == Packaging.DOCKER || packaging == Packaging.DOCKER_NATIVE || packaging == Packaging.DOCKER_CRAC) {
             Set<String> images = getTags();
 
             // getTags() will automatically generate an image name if none is specified
