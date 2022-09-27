@@ -73,6 +73,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
     public static final String RUN_SCRIPT_NAME = "run.sh";
     public static final String DEFAULT_READINESS_COMMAND = "curl --output /dev/null --silent --head http://localhost:8080";
     public static final String CRAC_READINESS_PROPERTY = "crac.readiness";
+    public static final String DEFAULT_BASE_IMAGE = "ubuntu:20.04";
 
     private static final EnumSet<PosixFilePermission> POSIX_FILE_PERMISSIONS = EnumSet.of(
             PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
@@ -136,6 +137,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
         File dockerfile = dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_CRAC_CHECKPOINT);
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
                 .withDockerfile(dockerfile)
+                .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))
                 .withTags(checkpointTags);
         dockerService.buildImage(buildImageCmd);
         return name;
@@ -152,16 +154,11 @@ public class DockerCracMojo extends AbstractDockerMojo {
             ImageReference.parse(tag);
         }
         copyScripts(RUN_SCRIPT_NAME);
-        String path = "/dockerfiles/" + DockerfileMojo.DOCKERFILE_CRAC;
-        InputStream stream = getClass().getResourceAsStream(path);
-        if (stream == null) {
-            throw new IOException("Could not find resource " + path);
-        }
-        List<String> tokenized = replaceTokensInTextStream(stream, s -> s.replace("@CHECKPOINT@", checkpointContainerId));
-        File dockerfile = new File(mavenProject.getBuild().getDirectory(), DockerfileMojo.DOCKERFILE);
-        writeStringsToFile(tokenized, dockerfile.toPath());
+        File dockerfile = dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_CRAC);
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
                 .withDockerfile(dockerfile)
+                .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))
+                .withBuildArg("CHECKPOINT_IMAGE", checkpointContainerId)
                 .withTags(getTags());
         dockerService.buildImage(buildImageCmd);
     }

@@ -1,4 +1,8 @@
-FROM ubuntu:20.04
+ARG BASE_IMAGE
+ARG CHECKPOINT_IMAGE
+FROM ${CHECKPOINT_IMAGE} AS crac-checkpoint
+
+FROM ${BASE_IMAGE}
 
 WORKDIR /home/app
 
@@ -8,14 +12,12 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy CRaC JDK from the checkpoint image (to save a download)
-COPY --from=@CHECKPOINT@ /azul-crac-jdk /azul-crac-jdk
+COPY --from=crac-checkpoint /azul-crac-jdk /azul-crac-jdk
 
 # Copy layers
 COPY cr /home/app/cr
-COPY --from=@CHECKPOINT@ /home/app/classes /home/app/classes
-COPY --from=@CHECKPOINT@ /home/app/libs /home/app/libs
+COPY --from=crac-checkpoint /home/app/classes /home/app/classes
+COPY --from=crac-checkpoint /home/app/libs /home/app/libs
 COPY scripts/run.sh /home/app/run.sh
-
-EXPOSE 8080
 
 ENTRYPOINT ["/home/app/run.sh"]
