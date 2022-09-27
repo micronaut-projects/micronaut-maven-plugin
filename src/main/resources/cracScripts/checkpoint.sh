@@ -10,7 +10,7 @@ echo "Starting application"
   -XX:+UnlockDiagnosticVMOptions \
   -XX:+CRTraceStartupTime \
   -Djdk.crac.trace-startup-time=true \
-  -cp /home/app/classes:/home/app/libs/* io.micronaut.build.examples.Application &
+  -cp /home/app/classes:/home/app/libs/* @MAINCLASS@ &
 PROCESS=$!
 echo "Started application as process $PROCESS"
 

@@ -174,7 +174,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
         if (!target.exists()) {
             target.mkdirs();
         }
-        processScripts(target, s -> s.replace("@READINESS@", readinessCommand), scriptNames);
+        processScripts(target, s -> s.replace("@READINESS@", readinessCommand).replace("@MAINCLASS@", mainClass), scriptNames);
     }
 
     private void processScripts(File target, UnaryOperator<String> replacement, String... scriptNames) throws IOException {

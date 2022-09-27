@@ -118,7 +118,7 @@ public class DockerService {
      * Creates a container based on a given image, and runs it.
      * @param imageId the image to use
      */
-    public void runPrivilegedImageAndWait(String imageId, String... binds) {
+    public void runPrivilegedImageAndWait(String imageId, String... binds) throws IOException {
         try (CreateContainerCmd create = dockerClient.createContainerCmd(imageId)) {
             HostConfig hostConfig = create.getHostConfig();
             if (hostConfig == null) {
@@ -135,7 +135,10 @@ public class DockerService {
                 LOG.info("Container started: {} {}", createResponse.getId(), start.getContainerId());
                 try (WaitContainerCmd wait = dockerClient.waitContainerCmd(createResponse.getId())) {
                     WaitContainerResultCallback waitResult = wait.start();
-                    waitResult.awaitStatusCode(1, TimeUnit.MINUTES);
+                    Integer exitcode = waitResult.awaitStatusCode(1, TimeUnit.MINUTES);
+                    if (exitcode != 0) {
+                        throw new IOException("Image " + imageId + " exited with code " + exitcode);
+                    }
                 }
             }
         }
