@@ -263,7 +263,7 @@ $ mvn package -Dpackaging=docker-native -Dmicronaut.native-image.args="--verbose
 
 === Building CRaC-based Docker images
 
-WARNING: The Micronaut CRaC module is in experimental stages. Use at your own risk!
+**Warning**: The Micronaut CRaC module is in experimental stages. Use at your own risk!
 
 The CRaC (Coordinated Restore at Checkpoint) Project researches coordination of Java programs with mechanisms to checkpoint (make an image of, snapshot) a Java instance while it is executing.
 Restoring from the image could be a solution to some problems with the start-up and warm-up times.
@@ -285,4 +285,4 @@ This is by default done by executing the command `curl --output /dev/null --sile
 ==== Customizing warmup
 
 The default warmup script simply makes a request to port 8080 of the application.
-However, you can specify your own by placing a Bash script named "warmup.sh" in the root project folder.
+However, you can specify your own by placing a Bash script named `warmup.sh` in the root project folder.
