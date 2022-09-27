@@ -93,8 +93,6 @@ public class DockerCracMojo extends AbstractDockerMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        checkJavaVersion();
-
         try {
             copyDependencies();
 
@@ -121,12 +119,6 @@ public class DockerCracMojo extends AbstractDockerMojo {
             throw new MojoExecutionException(message);
         } catch (IOException | IllegalArgumentException e) {
             throw new MojoExecutionException(e.getMessage(), e);
-        }
-    }
-
-    private void checkJavaVersion() throws MojoExecutionException {
-        if (javaVersion().getMajorVersion() > 17) {
-            throw new MojoExecutionException("To build native images you must set the Java target byte code level to Java 17 or below");
         }
     }
 
