@@ -25,6 +25,7 @@ import io.micronaut.core.annotation.Experimental;
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
@@ -78,6 +79,9 @@ public class DockerCracMojo extends AbstractDockerMojo {
             PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE,
             PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
     );
+
+    @Parameter(property = DockerCracMojo.CRAC_READINESS_PROPERTY, defaultValue = DockerCracMojo.DEFAULT_READINESS_COMMAND)
+    private String readinessCommand;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -141,11 +145,6 @@ public class DockerCracMojo extends AbstractDockerMojo {
         return name;
     }
 
-    private String getReadinessCommand() {
-        String property = mavenProject.getProperties().getProperty(DockerCracMojo.CRAC_READINESS_PROPERTY);
-        return property == null ? DockerCracMojo.DEFAULT_READINESS_COMMAND : property;
-    }
-
     private void buildFinalDockerfile(String checkpointContainerId) throws IOException, InvalidImageReferenceException {
         Set<String> tags = getTags();
         for (String tag : tags) {
@@ -162,7 +161,6 @@ public class DockerCracMojo extends AbstractDockerMojo {
     }
 
     private void copyScripts(String... scriptNames) throws IOException {
-        String readinessCommand = getReadinessCommand();
         File target = new File(mavenProject.getBuild().getDirectory(), "scripts");
         if (!target.exists()) {
             target.mkdirs();
