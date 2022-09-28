@@ -24,6 +24,7 @@ import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.command.WaitContainerCmd;
 import com.github.dockerjava.api.command.WaitContainerResultCallback;
+import com.github.dockerjava.api.exception.DockerClientException;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.api.model.HostConfig;
@@ -122,12 +123,11 @@ public class DockerService {
         try (CreateContainerCmd create = dockerClient.createContainerCmd(imageId)) {
             HostConfig hostConfig = create.getHostConfig();
             if (hostConfig == null) {
-                LOG.error("HostConfig is null");
-            } else {
-                create.withHostConfig(hostConfig.withPrivileged(true));
-                for (String bind : binds) {
-                    hostConfig.withBinds(Bind.parse(bind));
-                }
+                throw new DockerClientException("When setting binds and privileged, hostConfig was null.  Please check your docker installation and try again");
+            }
+            create.withHostConfig(hostConfig.withPrivileged(true));
+            for (String bind : binds) {
+                hostConfig.withBinds(Bind.parse(bind));
             }
             CreateContainerResponse createResponse = create.exec();
             try (StartContainerCmd start = dockerClient.startContainerCmd(createResponse.getId())) {
