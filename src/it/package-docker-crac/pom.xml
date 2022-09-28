@@ -95,7 +95,6 @@
     <dependency>
       <groupId>io.micronaut.crac</groupId>
       <artifactId>micronaut-crac</artifactId>
-      <version>1.0.1</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
