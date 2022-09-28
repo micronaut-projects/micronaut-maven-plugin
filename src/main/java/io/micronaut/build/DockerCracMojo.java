@@ -23,7 +23,6 @@ import io.micronaut.build.services.DockerService;
 import io.micronaut.build.services.JibConfigurationService;
 import io.micronaut.core.annotation.Experimental;
 import org.apache.commons.io.IOUtils;
-import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -39,7 +38,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -164,9 +162,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
     }
 
     private void copyScripts(String... scriptNames) throws IOException {
-        List<String> imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
         String readinessCommand = getReadinessCommand();
-        mavenProject.setArtifactFilter(artifact -> imageClasspathScopes.contains(artifact.getScope()));
         File target = new File(mavenProject.getBuild().getDirectory(), "scripts");
         if (!target.exists()) {
             target.mkdirs();
