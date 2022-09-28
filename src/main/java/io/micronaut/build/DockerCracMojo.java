@@ -72,6 +72,8 @@ public class DockerCracMojo extends AbstractDockerMojo {
     public static final String RUN_SCRIPT_NAME = "run.sh";
     public static final String DEFAULT_READINESS_COMMAND = "curl --output /dev/null --silent --head http://localhost:8080";
     public static final String CRAC_READINESS_PROPERTY = "crac.readiness";
+    public static final String DEFAULT_CRAC_CHECKPOINT_TIMEOUT = "60";
+    public static final String CRAC_CHECKPOINT_TIMEOUT_PROPERTY = "crac.checkpoint.timeout";
     public static final String DEFAULT_BASE_IMAGE = "ubuntu:20.04";
 
     private static final EnumSet<PosixFilePermission> POSIX_FILE_PERMISSIONS = EnumSet.of(
@@ -82,6 +84,9 @@ public class DockerCracMojo extends AbstractDockerMojo {
 
     @Parameter(property = DockerCracMojo.CRAC_READINESS_PROPERTY, defaultValue = DockerCracMojo.DEFAULT_READINESS_COMMAND)
     private String readinessCommand;
+
+    @Parameter(property = DockerCracMojo.CRAC_CHECKPOINT_TIMEOUT_PROPERTY, defaultValue = DockerCracMojo.DEFAULT_CRAC_CHECKPOINT_TIMEOUT)
+    private Integer checkpointTimeoutSeconds;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -128,7 +133,11 @@ public class DockerCracMojo extends AbstractDockerMojo {
     private void buildDockerCrac() throws IOException, InvalidImageReferenceException {
         String checkpointImage = buildCheckpointDockerfile();
         getLog().info("CRaC Checkpoint image: " + checkpointImage);
-        dockerService.runPrivilegedImageAndWait(checkpointImage, new File(mavenProject.getBuild().getDirectory(), "cr").getAbsolutePath() + ":/home/app/cr");
+        dockerService.runPrivilegedImageAndWait(
+                checkpointImage,
+                checkpointTimeoutSeconds,
+                new File(mavenProject.getBuild().getDirectory(), "cr").getAbsolutePath() + ":/home/app/cr"
+        );
         buildFinalDockerfile(checkpointImage);
     }
 
