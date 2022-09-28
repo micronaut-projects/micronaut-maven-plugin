@@ -265,7 +265,7 @@ $ mvn package -Dpackaging=docker-native -Dmicronaut.native-image.args="--verbose
 
 **Warning**: The Micronaut CRaC module is in experimental stages. Use at your own risk!
 
-The CRaC (Coordinated Restore at Checkpoint) Project researches coordination of Java programs with mechanisms to checkpoint (make an image of, snapshot) a Java instance while it is executing.
+The CRaC (https://openjdk.org/projects/crac/[Coordinated Restore at Checkpoint]) Project researches coordination of Java programs with mechanisms to checkpoint (make an image of, snapshot) a Java instance while it is executing.
 Restoring from the image could be a solution to some problems with the start-up and warm-up times.
 
 Creation of a pre-warmed, checkpointed docker image cane be done with the following command:
