@@ -50,6 +50,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
     public static final String DOCKERFILE_NATIVE = "DockerfileNative";
     public static final String DOCKERFILE_CRAC = "DockerfileCrac";
     public static final String DOCKERFILE_CRAC_CHECKPOINT = "DockerfileCracCheckpoint";
+    public static final String DOCKERFILE_CRAC_CHECKPOINT_FILE = "Dockerfile.crac.checkpoint";
     public static final String DOCKERFILE_NATIVE_DISTROLESS = "DockerfileNativeDistroless";
     public static final String DOCKERFILE_NATIVE_STATIC = "DockerfileNativeStatic";
     public static final String DOCKERFILE_NATIVE_ORACLE_CLOUD = "DockerfileNativeOracleCloud";
@@ -77,6 +78,10 @@ public class DockerfileMojo extends AbstractDockerMojo {
                     dockerfile = buildDockerfile(runtime);
                     break;
 
+                case DOCKER_CRAC:
+                    dockerfile = buildCracDockerfile(runtime);
+                    break;
+
                 default:
                     throw new MojoExecutionException("Packaging is set to [" + packaging + "]. To generate a Dockerfile, set the packaging to either [" + Packaging.DOCKER.id() + "] or [" + Packaging.DOCKER_NATIVE.id() + "]");
             }
@@ -99,6 +104,24 @@ public class DockerfileMojo extends AbstractDockerMojo {
             case DEFAULT:
             default:
                 dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE);
+                processDockerfile(dockerfile);
+                break;
+        }
+        return Optional.ofNullable(dockerfile);
+    }
+
+    private Optional<File> buildCracDockerfile(MicronautRuntime runtime) throws IOException, MojoExecutionException {
+        File dockerfile;
+        switch (runtime.getBuildStrategy()) {
+            case ORACLE_FUNCTION:
+                throw new MojoExecutionException("Oracle Functions are currently unsupported");
+            case LAMBDA:
+                throw new MojoExecutionException("Lambda Functions are currently unsupported");
+            case DEFAULT:
+            default:
+                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_CRAC_CHECKPOINT, DOCKERFILE_CRAC_CHECKPOINT_FILE);
+                processDockerfile(dockerfile);
+                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_CRAC);
                 processDockerfile(dockerfile);
                 break;
         }
