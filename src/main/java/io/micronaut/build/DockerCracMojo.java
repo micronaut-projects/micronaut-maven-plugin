@@ -28,12 +28,16 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.filtering.MavenFilteringException;
+import org.apache.maven.shared.filtering.MavenReaderFilter;
+import org.apache.maven.shared.filtering.MavenReaderFilterRequest;
 
 import javax.inject.Inject;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,10 +45,8 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.List;
+import java.util.Properties;
 import java.util.Set;
-import java.util.function.UnaryOperator;
-import java.util.stream.Collectors;
 
 /**
  * <p>Implementation of the <code>docker-crac</code> packaging.</p>
@@ -52,10 +54,10 @@ import java.util.stream.Collectors;
  * using the <code>packaging</code> property, eg:</p>
  *
  * <pre>mvn package -Dpackaging=docker-crac</pre>
- *
+ * <p>
  * This is a two stage process. First a docker image is built that runs the application under a CRaC enabled JDK. Then
  * the application is warmed up via a shell script. And then a checkpoint is taken via a signal using jcmd.
- *
+ * <p>
  * The second stage takes this checkpoint, and creates the final image containing it plus a run script which passes the
  * correct flags to the CRaC enabled JDK.
  *
@@ -81,6 +83,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
             PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE,
             PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
     );
+    private final MavenReaderFilter mavenReaderFilter;
 
     @Parameter(property = DockerCracMojo.CRAC_READINESS_PROPERTY, defaultValue = DockerCracMojo.DEFAULT_READINESS_COMMAND)
     private String readinessCommand;
@@ -94,9 +97,11 @@ public class DockerCracMojo extends AbstractDockerMojo {
             MavenProject mavenProject,
             JibConfigurationService jibConfigurationService,
             ApplicationConfigurationService applicationConfigurationService,
-            DockerService dockerService
+            DockerService dockerService,
+            MavenReaderFilter mavenReaderFilter
     ) {
         super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService);
+        this.mavenReaderFilter = mavenReaderFilter;
     }
 
     @Override
@@ -125,12 +130,12 @@ public class DockerCracMojo extends AbstractDockerMojo {
                     "https://docs.docker.com/engine/reference/commandline/tag/#extended-description" +
                     "\nFor example, slash-separated name components cannot have uppercase letters";
             throw new MojoExecutionException(message);
-        } catch (IOException | IllegalArgumentException e) {
+        } catch (IOException | IllegalArgumentException | MavenFilteringException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
     }
 
-    private void buildDockerCrac() throws IOException, InvalidImageReferenceException {
+    private void buildDockerCrac() throws IOException, InvalidImageReferenceException, MavenFilteringException {
         String checkpointImage = buildCheckpointDockerfile();
         getLog().info("CRaC Checkpoint image: " + checkpointImage);
         dockerService.runPrivilegedImageAndWait(
@@ -141,7 +146,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
         buildFinalDockerfile(checkpointImage);
     }
 
-    private String buildCheckpointDockerfile() throws IOException {
+    private String buildCheckpointDockerfile() throws IOException, MavenFilteringException {
         String name = mavenProject.getArtifactId() + "-crac-checkpoint";
         Set<String> checkpointTags = Collections.singleton(name);
         copyScripts(CHECKPOINT_SCRIPT_NAME, WARMUP_SCRIPT_NAME, RUN_SCRIPT_NAME);
@@ -154,7 +159,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
         return name;
     }
 
-    private void buildFinalDockerfile(String checkpointContainerId) throws IOException, InvalidImageReferenceException {
+    private void buildFinalDockerfile(String checkpointContainerId) throws IOException, InvalidImageReferenceException, MavenFilteringException {
         Set<String> tags = getTags();
         for (String tag : tags) {
             ImageReference.parse(tag);
@@ -169,41 +174,39 @@ public class DockerCracMojo extends AbstractDockerMojo {
         dockerService.buildImage(buildImageCmd);
     }
 
-    private void copyScripts(String... scriptNames) throws IOException {
+    private Properties replacementProperties(String readinessCommand, String mainClass) {
+        Properties properties = new Properties();
+        properties.setProperty("READINESS", readinessCommand);
+        properties.setProperty("MAINCLASS", mainClass);
+        return properties;
+    }
+
+    private void copyScripts(String... scriptNames) throws IOException, MavenFilteringException {
         File target = new File(mavenProject.getBuild().getDirectory(), "scripts");
         if (!target.exists()) {
             target.mkdirs();
         }
-        processScripts(target, s -> s.replace("@READINESS@", readinessCommand).replace("@MAINCLASS@", mainClass), scriptNames);
+        processScripts(target, replacementProperties(readinessCommand, mainClass), scriptNames);
     }
 
-    private void processScripts(File target, UnaryOperator<String> replacement, String... scriptNames) throws IOException {
+    private void processScripts(File target, Properties replacements, String... scriptNames) throws IOException, MavenFilteringException {
         for (String script : scriptNames) {
             File localOverride = new File(mavenProject.getBasedir(), script);
-            try (InputStream resourceAsStream = localOverride.exists() ?
-                    Files.newInputStream(localOverride.toPath()) :
-                    DockerCracMojo.class.getResourceAsStream("/cracScripts/" + script)) {
-                if (resourceAsStream == null) {
+            InputStream resourceStream = DockerCracMojo.class.getResourceAsStream("/cracScripts/" + script);
+            Reader resourceReader = resourceStream == null ? null : new InputStreamReader(resourceStream);
+            try (Reader reader = localOverride.exists() ? Files.newBufferedReader(localOverride.toPath()) : resourceReader) {
+                if (reader == null) {
                     throw new IOException("Could not find script " + script);
                 }
-                List<String> tokenized = replaceTokensInTextStream(resourceAsStream, replacement);
+                MavenReaderFilterRequest req = new MavenReaderFilterRequest();
+                req.setFrom(reader);
+                req.setFiltering(true);
+                req.setAdditionalProperties(replacements);
                 Path outputPath = target.toPath().resolve(script);
-                writeStringsToFile(tokenized, outputPath);
+                String result = IOUtils.toString(mavenReaderFilter.filter(req));
+                Files.write(outputPath, result.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
                 Files.setPosixFilePermissions(outputPath, POSIX_FILE_PERMISSIONS);
             }
-        }
-    }
-
-    private static List<String> replaceTokensInTextStream(InputStream resourceAsStream, UnaryOperator<String> replacement) throws IOException {
-        return IOUtils.readLines(resourceAsStream, StandardCharsets.UTF_8)
-                .stream()
-                .map(replacement)
-                .collect(Collectors.toList());
-    }
-
-    private static void writeStringsToFile(List<String> tokenized, Path outputPath) throws IOException {
-        try (BufferedWriter out = Files.newBufferedWriter(outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
-            IOUtils.writeLines(tokenized, System.getProperty("line.separator"), out);
         }
     }
 }
