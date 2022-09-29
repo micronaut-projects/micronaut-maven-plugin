@@ -38,7 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
+import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -203,8 +203,9 @@ public class DockerCracMojo extends AbstractDockerMojo {
                 req.setFiltering(true);
                 req.setAdditionalProperties(replacements);
                 Path outputPath = target.toPath().resolve(script);
-                String result = IOUtils.toString(mavenReaderFilter.filter(req));
-                Files.write(outputPath, result.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                try (Writer writer = Files.newBufferedWriter(outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
+                    IOUtils.copy(mavenReaderFilter.filter(req), writer);
+                }
                 Files.setPosixFilePermissions(outputPath, POSIX_FILE_PERMISSIONS);
             }
         }
