@@ -5,7 +5,7 @@
 
     <groupId>io.micronaut.build</groupId>
     <artifactId>micronaut-maven-plugin</artifactId>
-    <version>3.4.1-SNAPSHOT</version>
+    <version>3.5.0-SNAPSHOT</version>
     <packaging>maven-plugin</packaging>
 
     <name>Micronaut Maven Plugin</name>
@@ -78,10 +78,10 @@
         <site.version>${project.version}</site.version>
         <project.build.outputTimestamp>2022-07-27T18:19:41Z</project.build.outputTimestamp>
         <native-maven-plugin.version>0.9.13</native-maven-plugin.version>
-        <micronaut.version>3.7.0</micronaut.version>
+        <micronaut.version>3.7.1</micronaut.version>
         <micronaut.aot.version>1.1.1</micronaut.aot.version>
         <micronaut.test.resources.version>1.1.2</micronaut.test.resources.version>
-        <it.micronaut.version>3.7.1-SNAPSHOT</it.micronaut.version>
+        <it.micronaut.version>3.7.2-SNAPSHOT</it.micronaut.version>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.organization>micronaut-projects</sonar.organization>
         <sonar.projectKey>micronaut-projects_micronaut-maven-plugin</sonar.projectKey>
@@ -220,7 +220,7 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.17.3</version>
+            <version>1.17.5</version>
         </dependency>
         <dependency>
             <groupId>org.graalvm.buildtools</groupId>
@@ -240,7 +240,7 @@
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>1.32</version>
+            <version>1.33</version>
         </dependency>
 
         <!-- JUnit -->
@@ -358,7 +358,7 @@
                 <plugin>
                     <groupId>com.diffplug.spotless</groupId>
                     <artifactId>spotless-maven-plugin</artifactId>
-                    <version>2.27.0</version>
+                    <version>2.27.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>
