@@ -116,6 +116,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
         AotRuntime aotRuntime = AotRuntime.valueOf(runtime.toUpperCase());
         switch (packaging) {
             case JAR:
+            case DOCKER_CRAC:
             case DOCKER:
                 if (aotRuntime != AotRuntime.JIT) {
                     warnRuntimeMismatchAndSetCorrectValue(AotRuntime.JIT);

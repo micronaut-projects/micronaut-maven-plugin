@@ -24,7 +24,8 @@ public enum Packaging {
     JAR("jar"),
     NATIVE_IMAGE("native-image"),
     DOCKER("docker"),
-    DOCKER_NATIVE("docker-native");
+    DOCKER_NATIVE("docker-native"),
+    DOCKER_CRAC("docker-crac");
 
     private final String id;
 

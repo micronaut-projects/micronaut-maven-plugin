@@ -260,3 +260,57 @@ Or from the command line:
 ----
 $ mvn package -Dpackaging=docker-native -Dmicronaut.native-image.args="--verbose"
 ----
+
+=== Building CRaC-based Docker images
+
+**Warning**: The Micronaut CRaC module is in experimental stages. Use at your own risk!
+
+The CRaC (https://openjdk.org/projects/crac/[Coordinated Restore at Checkpoint]) Project researches coordination of Java programs with mechanisms to checkpoint (make an image of, snapshot) a Java instance while it is executing.
+Restoring from the image could be a solution to some problems with the start-up and warm-up times.
+
+Creation of a pre-warmed, checkpointed docker image cane be done with the following command:
+
+----
+$ mvn package -Dpackaging=docker-crac
+----
+
+This will first create an intermediate image that contains the application and all of its dependencies.
+This image is then executed and warmed up via a `warmup.sh` command, and a checkpoint is taken.
+
+A final image is then built which contains this checkpoint.
+
+The image built can be customised using
+https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration[Jib]. In particular, you can set:
+
+* The base image, using `<from><image>`.
+* The image name/tags that will be used for building, using either `<to><image>` and/or `<to><tags>`.
+
+==== Checking an application is ready
+
+As part of the checkpointing process, the application will be tested until it is ready to recieve requests.
+This is by default done by executing the command `curl --output /dev/null --silent --head http://localhost:8080`, however you can override this by setting the `crac.readiness` property in your build.
+
+[source,xml]
+.Example checking https
+----
+<properties>
+    <crac.readiness>curl --output /dev/null --silent --head https://localhost</crac.readiness>
+</properties>
+----
+
+
+==== Customizing warmup
+
+The default warmup script simply makes a request to port 8080 of the application.
+However, you can specify your own by placing a Bash script named `warmup.sh` in the root project folder.
+For example, to hit the root endpoint 10 times, you could create a file with the following contents:
+
+[source,bash]
+.warmup.sh
+----
+#!/bin/bash
+
+for run in {1..10}; do
+  curl --output /dev/null --silent http://localhost:8080
+done
+----
