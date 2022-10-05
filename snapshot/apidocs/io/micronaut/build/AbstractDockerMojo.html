@@ -18,7 +18,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10};
+var methods = {"i0":10,"i1":10,"i2":10,"i3":10,"i4":10,"i5":10,"i6":10,"i7":10,"i8":10,"i9":10,"i10":10};
 var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -118,7 +118,7 @@ var activeTableTab = "activeTableTab";
 </dl>
 <dl>
 <dt>Direct Known Subclasses:</dt>
-<dd><a href="../../../io/micronaut/build/DockerfileMojo.html" title="class in io.micronaut.build">DockerfileMojo</a>, <a href="../../../io/micronaut/build/DockerMojo.html" title="class in io.micronaut.build">DockerMojo</a>, <a href="../../../io/micronaut/build/DockerNativeMojo.html" title="class in io.micronaut.build">DockerNativeMojo</a>, <a href="../../../io/micronaut/build/DockerPushMojo.html" title="class in io.micronaut.build">DockerPushMojo</a></dd>
+<dd><a href="../../../io/micronaut/build/DockerCracMojo.html" title="class in io.micronaut.build">DockerCracMojo</a>, <a href="../../../io/micronaut/build/DockerfileMojo.html" title="class in io.micronaut.build">DockerfileMojo</a>, <a href="../../../io/micronaut/build/DockerMojo.html" title="class in io.micronaut.build">DockerMojo</a>, <a href="../../../io/micronaut/build/DockerNativeMojo.html" title="class in io.micronaut.build">DockerNativeMojo</a>, <a href="../../../io/micronaut/build/DockerPushMojo.html" title="class in io.micronaut.build">DockerPushMojo</a></dd>
 </dl>
 <hr>
 <br>
@@ -285,43 +285,49 @@ extends org.apache.maven.plugin.AbstractMojo</pre>
 </td>
 </tr>
 <tr id="i3" class="rowColor">
+<td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html?is-external=true" title="class or interface in java.util">Optional</a>&lt;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/AbstractDockerMojo.html#getFromImage--">getFromImage</a></span>()</code>
+<div class="block">Returns the base image from the jib configuration (if any).</div>
+</td>
+</tr>
+<tr id="i4" class="altColor">
 <td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/AbstractDockerMojo.html#getGraalVmBuildArgs--">getGraalVmBuildArgs</a></span>()</code>
 <div class="block">Returns any additional GraalVM arguments.</div>
 </td>
 </tr>
-<tr id="i4" class="altColor">
+<tr id="i5" class="rowColor">
 <td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/AbstractDockerMojo.html#getPort--">getPort</a></span>()</code>
 <div class="block">Determines the application port to expose by looking at the application configuration.</div>
 </td>
 </tr>
-<tr id="i5" class="rowColor">
+<tr id="i6" class="altColor">
 <td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Set.html?is-external=true" title="class or interface in java.util">Set</a>&lt;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&gt;</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/AbstractDockerMojo.html#getTags--">getTags</a></span>()</code>
 <div class="block">Calculates the Docker image tags by looking at the Jib plugin configuration.</div>
 </td>
 </tr>
-<tr id="i6" class="altColor">
+<tr id="i7" class="rowColor">
 <td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/AbstractDockerMojo.html#graalVmArch--">graalVmArch</a></span>()</code>
 <div class="block">Detects the OS architecture to use for GraalVM depending on the <code>os.arch</code> system property.</div>
 </td>
 </tr>
-<tr id="i7" class="rowColor">
+<tr id="i8" class="altColor">
 <td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/AbstractDockerMojo.html#graalVmJvmVersion--">graalVmJvmVersion</a></span>()</code>
 <div class="block">Calculates the JVM version to use for GraalVM.</div>
 </td>
 </tr>
-<tr id="i8" class="altColor">
+<tr id="i9" class="rowColor">
 <td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/AbstractDockerMojo.html#graalVmVersion--">graalVmVersion</a></span>()</code>
 <div class="block">Returns the GraalVM version from the <code>graalvm.version</code> property, which is expected to come from the
  Micronaut Parent POM.</div>
 </td>
 </tr>
-<tr id="i9" class="rowColor">
+<tr id="i10" class="altColor">
 <td class="colFirst"><code>protected org.apache.maven.artifact.versioning.ArtifactVersion</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/AbstractDockerMojo.html#javaVersion--">javaVersion</a></span>()</code>
 <div class="block">Returns the Java version from either the <code>maven.compiler.target</code> property or the <code>java.version</code> property.</div>
@@ -621,6 +627,16 @@ protected&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Stri
 <h4>getFrom</h4>
 <pre>protected&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&nbsp;getFrom()</pre>
 <div class="block">Determines the base FROM image for the native image.</div>
+</li>
+</ul>
+<a name="getFromImage--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getFromImage</h4>
+<pre>protected&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html?is-external=true" title="class or interface in java.util">Optional</a>&lt;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a>&gt;&nbsp;getFromImage()</pre>
+<div class="block">Returns the base image from the jib configuration (if any).</div>
 </li>
 </ul>
 <a name="getTags--">

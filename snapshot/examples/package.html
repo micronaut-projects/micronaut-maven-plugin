@@ -489,6 +489,78 @@ the produced native image will be an <code>amd64</code> binary, whilst on an ARM
 </div>
 </div>
 </div>
+<div class="sect2">
+<h3 id="building_crac_based_docker_images">Building CRaC-based Docker images</h3>
+<div class="paragraph">
+<p><strong>Warning</strong>: The Micronaut CRaC module is in experimental stages. Use at your own risk!</p>
+</div>
+<div class="paragraph">
+<p>The CRaC (<a href="https://openjdk.org/projects/crac/">Coordinated Restore at Checkpoint</a>) Project researches coordination of Java programs with mechanisms to checkpoint (make an image of, snapshot) a Java instance while it is executing.
+Restoring from the image could be a solution to some problems with the start-up and warm-up times.</p>
+</div>
+<div class="paragraph">
+<p>Creation of a pre-warmed, checkpointed docker image cane be done with the following command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$ mvn package -Dpackaging=docker-crac</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This will first create an intermediate image that contains the application and all of its dependencies.
+This image is then executed and warmed up via a <code>warmup.sh</code> command, and a checkpoint is taken.</p>
+</div>
+<div class="paragraph">
+<p>A final image is then built which contains this checkpoint.</p>
+</div>
+<div class="paragraph">
+<p>The image built can be customised using
+<a href="https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration">Jib</a>. In particular, you can set:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The base image, using <code>&lt;from&gt;&lt;image&gt;</code>.</p>
+</li>
+<li>
+<p>The image name/tags that will be used for building, using either <code>&lt;to&gt;&lt;image&gt;</code> and/or <code>&lt;to&gt;&lt;tags&gt;</code>.</p>
+</li>
+</ul>
+</div>
+<div class="sect3">
+<h4 id="checking_an_application_is_ready">Checking an application is ready</h4>
+<div class="paragraph">
+<p>As part of the checkpointing process, the application will be tested until it is ready to recieve requests.
+This is by default done by executing the command <code>curl --output /dev/null --silent --head <a href="http://localhost:8080" class="bare">http://localhost:8080</a></code>, however you can override this by setting the <code>crac.readiness</code> property in your build.</p>
+</div>
+<div class="listingblock">
+<div class="title">Example checking https</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;properties&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;crac.readiness&gt;</span>curl --output /dev/null --silent --head https://localhost<span style="color:#070;font-weight:bold">&lt;/crac.readiness&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/properties&gt;</span></code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="customizing_warmup">Customizing warmup</h4>
+<div class="paragraph">
+<p>The default warmup script simply makes a request to port 8080 of the application.
+However, you can specify your own by placing a Bash script named <code>warmup.sh</code> in the root project folder.
+For example, to hit the root endpoint 10 times, you could create a file with the following contents:</p>
+</div>
+<div class="listingblock">
+<div class="title">warmup.sh</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="bash">#!/bin/bash
+
+for run in {1..10}; do
+  curl --output /dev/null --silent http://localhost:8080
+done</code></pre>
+</div>
+</div>
+</div>
+</div>
         </main>
     </div>
     <hr/>

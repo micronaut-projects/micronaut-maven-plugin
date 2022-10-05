@@ -49,7 +49,7 @@ var activeTableTab = "activeTableTab";
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../io/micronaut/build/DockerBuildStrategy.html" title="enum in io.micronaut.build"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../io/micronaut/build/DockerCracMojo.html" title="class in io.micronaut.build"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li><a href="../../../io/micronaut/build/DockerMojo.html" title="class in io.micronaut.build"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
@@ -165,17 +165,29 @@ extends <a href="../../../io/micronaut/build/AbstractDockerMojo.html" title="cla
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>static <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/DockerfileMojo.html#DOCKERFILE_NATIVE">DOCKERFILE_NATIVE</a></span></code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/DockerfileMojo.html#DOCKERFILE_CRAC">DOCKERFILE_CRAC</a></span></code>&nbsp;</td>
 </tr>
 <tr class="rowColor">
 <td class="colFirst"><code>static <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/DockerfileMojo.html#DOCKERFILE_NATIVE_DISTROLESS">DOCKERFILE_NATIVE_DISTROLESS</a></span></code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/DockerfileMojo.html#DOCKERFILE_CRAC_CHECKPOINT">DOCKERFILE_CRAC_CHECKPOINT</a></span></code>&nbsp;</td>
 </tr>
 <tr class="altColor">
 <td class="colFirst"><code>static <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/DockerfileMojo.html#DOCKERFILE_NATIVE_ORACLE_CLOUD">DOCKERFILE_NATIVE_ORACLE_CLOUD</a></span></code>&nbsp;</td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/DockerfileMojo.html#DOCKERFILE_CRAC_CHECKPOINT_FILE">DOCKERFILE_CRAC_CHECKPOINT_FILE</a></span></code>&nbsp;</td>
 </tr>
 <tr class="rowColor">
+<td class="colFirst"><code>static <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/DockerfileMojo.html#DOCKERFILE_NATIVE">DOCKERFILE_NATIVE</a></span></code>&nbsp;</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>static <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/DockerfileMojo.html#DOCKERFILE_NATIVE_DISTROLESS">DOCKERFILE_NATIVE_DISTROLESS</a></span></code>&nbsp;</td>
+</tr>
+<tr class="rowColor">
+<td class="colFirst"><code>static <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/DockerfileMojo.html#DOCKERFILE_NATIVE_ORACLE_CLOUD">DOCKERFILE_NATIVE_ORACLE_CLOUD</a></span></code>&nbsp;</td>
+</tr>
+<tr class="altColor">
 <td class="colFirst"><code>static <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/DockerfileMojo.html#DOCKERFILE_NATIVE_STATIC">DOCKERFILE_NATIVE_STATIC</a></span></code>&nbsp;</td>
 </tr>
@@ -238,7 +250,7 @@ extends <a href="../../../io/micronaut/build/AbstractDockerMojo.html" title="cla
 <!--   -->
 </a>
 <h3>Methods inherited from class&nbsp;io.micronaut.build.<a href="../../../io/micronaut/build/AbstractDockerMojo.html" title="class in io.micronaut.build">AbstractDockerMojo</a></h3>
-<code><a href="../../../io/micronaut/build/AbstractDockerMojo.html#copyDependencies--">copyDependencies</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#getCmd--">getCmd</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#getFrom--">getFrom</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#getGraalVmBuildArgs--">getGraalVmBuildArgs</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#getPort--">getPort</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#getTags--">getTags</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#graalVmArch--">graalVmArch</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#graalVmJvmVersion--">graalVmJvmVersion</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#graalVmVersion--">graalVmVersion</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#javaVersion--">javaVersion</a></code></li>
+<code><a href="../../../io/micronaut/build/AbstractDockerMojo.html#copyDependencies--">copyDependencies</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#getCmd--">getCmd</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#getFrom--">getFrom</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#getFromImage--">getFromImage</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#getGraalVmBuildArgs--">getGraalVmBuildArgs</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#getPort--">getPort</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#getTags--">getTags</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#graalVmArch--">graalVmArch</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#graalVmJvmVersion--">graalVmJvmVersion</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#graalVmVersion--">graalVmVersion</a>, <a href="../../../io/micronaut/build/AbstractDockerMojo.html#javaVersion--">javaVersion</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.org.apache.maven.plugin.AbstractMojo">
@@ -304,6 +316,45 @@ extends <a href="../../../io/micronaut/build/AbstractDockerMojo.html" title="cla
 <dl>
 <dt><span class="seeLabel">See Also:</span></dt>
 <dd><a href="../../../constant-values.html#io.micronaut.build.DockerfileMojo.DOCKERFILE_NATIVE">Constant Field Values</a></dd>
+</dl>
+</li>
+</ul>
+<a name="DOCKERFILE_CRAC">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>DOCKERFILE_CRAC</h4>
+<pre>public static final&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a> DOCKERFILE_CRAC</pre>
+<dl>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><a href="../../../constant-values.html#io.micronaut.build.DockerfileMojo.DOCKERFILE_CRAC">Constant Field Values</a></dd>
+</dl>
+</li>
+</ul>
+<a name="DOCKERFILE_CRAC_CHECKPOINT">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>DOCKERFILE_CRAC_CHECKPOINT</h4>
+<pre>public static final&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a> DOCKERFILE_CRAC_CHECKPOINT</pre>
+<dl>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><a href="../../../constant-values.html#io.micronaut.build.DockerfileMojo.DOCKERFILE_CRAC_CHECKPOINT">Constant Field Values</a></dd>
+</dl>
+</li>
+</ul>
+<a name="DOCKERFILE_CRAC_CHECKPOINT_FILE">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>DOCKERFILE_CRAC_CHECKPOINT_FILE</h4>
+<pre>public static final&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a> DOCKERFILE_CRAC_CHECKPOINT_FILE</pre>
+<dl>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><a href="../../../constant-values.html#io.micronaut.build.DockerfileMojo.DOCKERFILE_CRAC_CHECKPOINT_FILE">Constant Field Values</a></dd>
 </dl>
 </li>
 </ul>
@@ -417,7 +468,7 @@ public&nbsp;DockerfileMojo(org.apache.maven.project.MavenProject&nbsp;mavenProje
 </div>
 <div class="subNav">
 <ul class="navList">
-<li><a href="../../../io/micronaut/build/DockerBuildStrategy.html" title="enum in io.micronaut.build"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
+<li><a href="../../../io/micronaut/build/DockerCracMojo.html" title="class in io.micronaut.build"><span class="typeNameLink">Prev&nbsp;Class</span></a></li>
 <li><a href="../../../io/micronaut/build/DockerMojo.html" title="class in io.micronaut.build"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
 </ul>
 <ul class="navList">
