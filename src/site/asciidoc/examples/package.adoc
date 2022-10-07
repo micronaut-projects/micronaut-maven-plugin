@@ -279,6 +279,13 @@ This image is then executed and warmed up via a `warmup.sh` command, and a check
 
 A final image is then built which contains this checkpoint.
 
+You will then be able to run your image via:
+
+[source, bash]
+----
+docker run --cap-add=cap_sys_ptrace -p 8080:8080 <image-name>
+----
+
 The image built can be customised using
 https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration[Jib]. In particular, you can set:
 
