@@ -76,7 +76,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
     public static final String CRAC_READINESS_PROPERTY = "crac.readiness";
     public static final String DEFAULT_CRAC_CHECKPOINT_TIMEOUT = "60";
     public static final String CRAC_CHECKPOINT_TIMEOUT_PROPERTY = "crac.checkpoint.timeout";
-    public static final String DEFAULT_BASE_IMAGE = "ubuntu:20.04";
+    public static final String DEFAULT_BASE_IMAGE = "ubuntu:22.04";
 
     private static final EnumSet<PosixFilePermission> POSIX_FILE_PERMISSIONS = EnumSet.of(
             PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
