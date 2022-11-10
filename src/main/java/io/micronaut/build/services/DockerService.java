@@ -121,13 +121,16 @@ public class DockerService {
      * @param timeoutSeconds the timeout in seconds for the container to finish execution
      * @param binds the bind mounts to use
      */
-    public void runPrivilegedImageAndWait(String imageId, Integer timeoutSeconds, String... binds) throws IOException {
+    public void runPrivilegedImageAndWait(String imageId, Integer timeoutSeconds, String checkpointNetworkName, String... binds) throws IOException {
         try (CreateContainerCmd create = dockerClient.createContainerCmd(imageId)) {
             HostConfig hostConfig = create.getHostConfig();
             if (hostConfig == null) {
                 throw new DockerClientException("When setting binds and privileged, hostConfig was null.  Please check your docker installation and try again");
             }
-            create.withHostConfig(hostConfig.withPrivileged(true));
+            hostConfig.withPrivileged(true);
+            if (checkpointNetworkName != null) {
+                hostConfig.withNetworkMode(checkpointNetworkName);
+            }
             for (String bind : binds) {
                 hostConfig.withBinds(Bind.parse(bind));
             }

@@ -75,6 +75,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
     public static final String DEFAULT_READINESS_COMMAND = "curl --output /dev/null --silent --head http://localhost:8080";
     public static final String CRAC_READINESS_PROPERTY = "crac.readiness";
     public static final String DEFAULT_CRAC_CHECKPOINT_TIMEOUT = "60";
+    public static final String CRAC_CHECKPOINT_NETWORK_PROPERTY = "crac.checkpoint.network";
     public static final String CRAC_CHECKPOINT_TIMEOUT_PROPERTY = "crac.checkpoint.timeout";
     public static final String DEFAULT_BASE_IMAGE = "ubuntu:22.04";
 
@@ -90,6 +91,9 @@ public class DockerCracMojo extends AbstractDockerMojo {
 
     @Parameter(property = DockerCracMojo.CRAC_CHECKPOINT_TIMEOUT_PROPERTY, defaultValue = DockerCracMojo.DEFAULT_CRAC_CHECKPOINT_TIMEOUT)
     private Integer checkpointTimeoutSeconds;
+
+    @Parameter(property = DockerCracMojo.CRAC_CHECKPOINT_NETWORK_PROPERTY)
+    private String checkpointNetworkName;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -141,6 +145,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
         dockerService.runPrivilegedImageAndWait(
                 checkpointImage,
                 checkpointTimeoutSeconds,
+                checkpointNetworkName,
                 new File(mavenProject.getBuild().getDirectory(), "cr").getAbsolutePath() + ":/home/app/cr"
         );
         buildFinalDockerfile(checkpointImage);
