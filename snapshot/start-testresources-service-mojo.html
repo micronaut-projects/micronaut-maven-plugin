@@ -179,9 +179,7 @@
             
 <td><code>-</code></td>
             
-<td>Micronaut Test Resources version. Should be defined by the
-Micronaut BOM, but this parameter can be used to define a different
-version.<br /><b>User property is</b>: <code>micronaut.test.resources.version</code>.<br /></td>
+<td>Micronaut Test Resources version. Should be defined by the Micronaut BOM, but this parameter can be used to define a different version.<br /><b>User property is</b>: <code>micronaut.test.resources.version</code>.<br /></td>
           </tr>
         </table>
       </section>
@@ -209,11 +207,7 @@ version.<br /><b>User property is</b>: <code>micronaut.test.resources.version</c
             
 <td><code>-</code></td>
             
-<td>If set to true, Micronaut will attempt to infer which dependencies
-should be added to the Test Resources server classpath, based on
-the project dependencies. In general the result will consist of
-modules from the test-resources project, but it may consist of
-additional entries, for example database drivers.<br /><b>Default value is</b>: <code>true</code>.<br /></td>
+<td>If set to true, Micronaut will attempt to infer which dependencies should be added to the Test Resources server classpath, based on the project dependencies. In general the result will consist of modules from the test-resources project, but it may consist of additional entries, for example database drivers.<br /><b>Default value is</b>: <code>true</code>.<br /></td>
           </tr>
           
 <tr class="a">
@@ -224,9 +218,7 @@ additional entries, for example database drivers.<br /><b>Default value is</b>: 
             
 <td><code>-</code></td>
             
-<td>Configures the maximum amount of time to wait for the server to
-start a test resource. Some containeres may take a long amount of
-time to start with slow internet connections.<br /><b>Default value is</b>: <code>60</code>.<br /><b>User property is</b>: <code>micronaut.test.resources.client-timeout</code>.<br /></td>
+<td>Configures the maximum amount of time to wait for the server to start a test resource. Some containeres may take a long amount of time to start with slow internet connections.<br /><b>Default value is</b>: <code>60</code>.<br /><b>User property is</b>: <code>micronaut.test.resources.client-timeout</code>.<br /></td>
           </tr>
           
 <tr class="b">
@@ -237,9 +229,7 @@ time to start with slow internet connections.<br /><b>Default value is</b>: <cod
             
 <td><code>-</code></td>
             
-<td>By default, the Test Resources server will be started on a random
-(available) port, but it can be set a fixed port by using this
-parameter.<br /><b>User property is</b>: <code>micronaut.test.resources.port</code>.<br /></td>
+<td>By default, the Test Resources server will be started on a random (available) port, but it can be set a fixed port by using this parameter.<br /><b>User property is</b>: <code>micronaut.test.resources.port</code>.<br /></td>
           </tr>
           
 <tr class="a">
@@ -250,8 +240,7 @@ parameter.<br /><b>User property is</b>: <code>micronaut.test.resources.port</co
             
 <td><code>-</code></td>
             
-<td>Whether the test resources service should be kept alive after the
-build.<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>keepAlive</code>.<br /></td>
+<td>Whether the test resources service should be kept alive after the build.<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>keepAlive</code>.<br /></td>
           </tr>
           
 <tr class="b">
@@ -262,22 +251,18 @@ build.<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property i
             
 <td><code>-</code></td>
             
-<td>Whether the test resources service should be shared between
-independent builds (e.g different projects, even built with
-different build tools).<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>micronaut.test.resources.shared</code>.<br /></td>
+<td>Whether the test resources service should be shared between independent builds (e.g different projects, even built with different build tools).<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>micronaut.test.resources.shared</code>.<br /></td>
           </tr>
           
 <tr class="a">
             
 <td align="left"><code><a href="#testResourcesDependencies">&lt;testResourcesDependencies&gt;</a></code></td>
             
-<td><code>List</code></td>
+<td><code>List&lt;Dependency&gt;</code></td>
             
 <td><code>-</code></td>
             
-<td>Additional dependencies to add to the Test Resources server
-classpath when not using classpath inference, or when the inference
-doesn't produce the desired result.<br /></td>
+<td>Additional dependencies to add to the Test Resources server classpath when not using classpath inference, or when the inference doesn't produce the desired result.<br /></td>
           </tr>
           
 <tr class="b">
@@ -309,11 +294,7 @@ doesn't produce the desired result.<br /></td>
         </ul><hr /></section><section>
 <h4><a name="a.3CclasspathInference.3E"></a><b><a name="classpathInference">&lt;classpathInference&gt;</a></b></h4>
         
-<div>If set to true, Micronaut will attempt to infer which dependencies
-should be added to the Test Resources server classpath, based on
-the project dependencies. In general the result will consist of
-modules from the test-resources project, but it may consist of
-additional entries, for example database drivers.</div>
+<div>If set to true, Micronaut will attempt to infer which dependencies should be added to the Test Resources server classpath, based on the project dependencies. In general the result will consist of modules from the test-resources project, but it may consist of additional entries, for example database drivers.</div>
         
 <ul>
           
@@ -325,9 +306,7 @@ additional entries, for example database drivers.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CclientTimeout.3E"></a><b><a name="clientTimeout">&lt;clientTimeout&gt;</a></b></h4>
         
-<div>Configures the maximum amount of time to wait for the server to
-start a test resource. Some containeres may take a long amount of
-time to start with slow internet connections.</div>
+<div>Configures the maximum amount of time to wait for the server to start a test resource. Some containeres may take a long amount of time to start with slow internet connections.</div>
         
 <ul>
           
@@ -341,9 +320,7 @@ time to start with slow internet connections.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CexplicitPort.3E"></a><b><a name="explicitPort">&lt;explicitPort&gt;</a></b></h4>
         
-<div>By default, the Test Resources server will be started on a random
-(available) port, but it can be set a fixed port by using this
-parameter.</div>
+<div>By default, the Test Resources server will be started on a random (available) port, but it can be set a fixed port by using this parameter.</div>
         
 <ul>
           
@@ -355,8 +332,7 @@ parameter.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CkeepAlive.3E"></a><b><a name="keepAlive">&lt;keepAlive&gt;</a></b></h4>
         
-<div>Whether the test resources service should be kept alive after the
-build.</div>
+<div>Whether the test resources service should be kept alive after the build.</div>
         
 <ul>
           
@@ -370,9 +346,7 @@ build.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3Cshared.3E"></a><b><a name="shared">&lt;shared&gt;</a></b></h4>
         
-<div>Whether the test resources service should be shared between
-independent builds (e.g different projects, even built with
-different build tools).</div>
+<div>Whether the test resources service should be shared between independent builds (e.g different projects, even built with different build tools).</div>
         
 <ul>
           
@@ -386,13 +360,11 @@ different build tools).</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CtestResourcesDependencies.3E"></a><b><a name="testResourcesDependencies">&lt;testResourcesDependencies&gt;</a></b></h4>
         
-<div>Additional dependencies to add to the Test Resources server
-classpath when not using classpath inference, or when the inference
-doesn't produce the desired result.</div>
+<div>Additional dependencies to add to the Test Resources server classpath when not using classpath inference, or when the inference doesn't produce the desired result.</div>
         
 <ul>
           
-<li><b>Type</b>: <code>java.util.List</code></li>
+<li><b>Type</b>: <code>java.util.List&lt;org.apache.maven.model.Dependency&gt;</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
         </ul><hr /></section><section>
@@ -412,9 +384,7 @@ doesn't produce the desired result.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CtestResourcesVersion.3E"></a><b><a name="testResourcesVersion">&lt;testResourcesVersion&gt;</a></b></h4>
         
-<div>Micronaut Test Resources version. Should be defined by the
-Micronaut BOM, but this parameter can be used to define a different
-version.</div>
+<div>Micronaut Test Resources version. Should be defined by the Micronaut BOM, but this parameter can be used to define a different version.</div>
         
 <ul>
           

@@ -133,25 +133,15 @@
 <p><b>Description</b>:</p>
       
 <div>
-<p>Invokes the <a class="externalLink" href="https://micronaut-projects.github.io/micronaut-aot/latest/guide/">Micronaut
-AOT</a> optimizer, generating sources/classes and the effective AOT
-configuration properties file. Refer to the Micronaut AOT
-documentation for more information.</p>
+<p>Invokes the <a class="externalLink" href="https://micronaut-projects.github.io/micronaut-aot/latest/guide/">Micronaut AOT</a> optimizer, generating sources/classes and the effective AOT configuration properties file. Refer to the Micronaut AOT documentation for more information.</p>
 
-<p><b>WARNING</b>: this goal is not intended to be
-executed directly. Instead, enable AOT with the
-<code>micronaut.aot.enabled</code> property, eg:</p>
+<p><b>WARNING</b>: this goal is not intended to be executed directly. Instead, enable AOT with the <code>micronaut.aot.enabled</code> property, eg:</p>
 
 <div>
-<pre>
-mvn -Dmicronaut.aot.enabled=true package
-</pre></div>
-
+<pre>mvn -Dmicronaut.aot.enabled=true package</pre></div>
 
 <div>
-<pre>
-mvn -Dmicronaut.aot.enabled=true mn:run
-</pre></div></div>
+<pre>mvn -Dmicronaut.aot.enabled=true mn:run</pre></div></div>
       
 <p><b>Attributes</b>:</p>
       
@@ -220,8 +210,7 @@ mvn -Dmicronaut.aot.enabled=true mn:run
             
 <td><code>-</code></td>
             
-<td>Micronaut AOT runtime. Possible values: <code>jit</code>,
-<code>native</code>.<br /><b>Default value is</b>: <code>jit</code>.<br /><b>User property is</b>: <code>micronaut.aot.runtime</code>.<br /></td>
+<td>Micronaut AOT runtime. Possible values: <code>jit</code>, <code>native</code>.<br /><b>Default value is</b>: <code>jit</code>.<br /><b>User property is</b>: <code>micronaut.aot.runtime</code>.<br /></td>
           </tr>
         </table>
       </section>
@@ -245,7 +234,7 @@ mvn -Dmicronaut.aot.enabled=true mn:run
             
 <td align="left"><code><a href="#aotDependencies">&lt;aotDependencies&gt;</a></code></td>
             
-<td><code>List</code></td>
+<td><code>List&lt;Dependency&gt;</code></td>
             
 <td><code>-</code></td>
             
@@ -260,8 +249,7 @@ mvn -Dmicronaut.aot.enabled=true mn:run
             
 <td><code>-</code></td>
             
-<td>Micronaut AOT configuration file. Run the <a href="aot-sample-config-mojo.html"><code>aot-sample-config</code>
-goal</a> to see all the possible options.<br /><b>Default value is</b>: <code>aot.properties</code>.<br /><b>User property is</b>: <code>micronaut.aot.config</code>.<br /></td>
+<td>Micronaut AOT configuration file. Run the <code>aot-sample-config</code> goal to see all the possible options.<br /><b>Default value is</b>: <code>aot.properties</code>.<br /><b>User property is</b>: <code>micronaut.aot.config</code>.<br /></td>
           </tr>
           
 <tr class="b">
@@ -296,7 +284,7 @@ goal</a> to see all the possible options.<br /><b>Default value is</b>: <code>ao
         
 <ul>
           
-<li><b>Type</b>: <code>java.util.List</code></li>
+<li><b>Type</b>: <code>java.util.List&lt;org.apache.maven.model.Dependency&gt;</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
         </ul><hr /></section><section>
@@ -314,8 +302,7 @@ goal</a> to see all the possible options.<br /><b>Default value is</b>: <code>ao
         </ul><hr /></section><section>
 <h4><a name="a.3CconfigFile.3E"></a><b><a name="configFile">&lt;configFile&gt;</a></b></h4>
         
-<div>Micronaut AOT configuration file. Run the <a href="aot-sample-config-mojo.html"><code>aot-sample-config</code>
-goal</a> to see all the possible options.</div>
+<div>Micronaut AOT configuration file. Run the <code>aot-sample-config</code> goal to see all the possible options.</div>
         
 <ul>
           
@@ -379,8 +366,7 @@ goal</a> to see all the possible options.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3Cruntime.3E"></a><b><a name="runtime">&lt;runtime&gt;</a></b></h4>
         
-<div>Micronaut AOT runtime. Possible values: <code>jit</code>,
-<code>native</code>.</div>
+<div>Micronaut AOT runtime. Possible values: <code>jit</code>, <code>native</code>.</div>
         
 <ul>
           

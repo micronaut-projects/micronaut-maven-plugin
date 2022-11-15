@@ -1,5 +1,6 @@
 io.micronaut.build
 io.micronaut.build.aot
 io.micronaut.build.jib
+io.micronaut.build.micronaut_maven_plugin
 io.micronaut.build.services
 io.micronaut.build.testresources

@@ -133,14 +133,10 @@
 <p><b>Description</b>:</p>
       
 <div>
-<p>Generates a <code>Dockerfile</code> depending on the
-<code>packaging</code> and <code>micronaut.runtime</code>
-properties.</p>
+<p>Generates a <code>Dockerfile</code> depending on the <code>packaging</code> and <code>micronaut.runtime</code> properties.</p>
 
 <div>
-<pre>
-mvn mn:dockerfile -Dpackaging=docker-native -Dmicronaut.runtime=lambda
-</pre></div></div>
+<pre>mvn mn:dockerfile -Dpackaging=docker-native -Dmicronaut.runtime=lambda</pre></div></div>
       
 <p><b>Attributes</b>:</p>
       
@@ -176,10 +172,9 @@ mvn mn:dockerfile -Dpackaging=docker-native -Dmicronaut.runtime=lambda
             
 <td><code>String</code></td>
             
-<td><code>1.1</code></td>
+<td><code>-</code></td>
             
-<td>The main class of the application, as defined in the <a class="externalLink" href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec
-Maven Plugin</a>.<br /><b>Default value is</b>: <code>${exec.mainClass}</code>.<br /></td>
+<td>The main class of the application, as defined in the <a class="externalLink" href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.<br /><b>Default value is</b>: <code>${exec.mainClass}</code>.<br /></td>
           </tr>
         </table>
       </section>
@@ -203,12 +198,11 @@ Maven Plugin</a>.<br /><b>Default value is</b>: <code>${exec.mainClass}</code>.<
             
 <td align="left"><code><a href="#appArguments">&lt;appArguments&gt;</a></code></td>
             
-<td><code>List</code></td>
+<td><code>List&lt;String&gt;</code></td>
             
-<td><code>1.1</code></td>
+<td><code>-</code></td>
             
-<td>List of additional arguments that will be passed to the
-application.<br /><b>User property is</b>: <code>mn.appArgs</code>.<br /></td>
+<td>List of additional arguments that will be passed to the application.<br /><b>User property is</b>: <code>mn.appArgs</code>.<br /></td>
           </tr>
           
 <tr class="a">
@@ -228,7 +222,7 @@ application.<br /><b>User property is</b>: <code>mn.appArgs</code>.<br /></td>
             
 <td><code>String</code></td>
             
-<td><code>1.1</code></td>
+<td><code>-</code></td>
             
 <td>The target runtime of the application.<br /><b>Default value is</b>: <code>NONE</code>.<br /><b>User property is</b>: <code>micronaut.runtime</code>.<br /></td>
           </tr>
@@ -237,15 +231,11 @@ application.<br /><b>User property is</b>: <code>mn.appArgs</code>.<br /></td>
             
 <td align="left"><code><a href="#nativeImageBuildArgs">&lt;nativeImageBuildArgs&gt;</a></code></td>
             
-<td><code>List</code></td>
+<td><code>List&lt;String&gt;</code></td>
             
-<td><code>1.1</code></td>
+<td><code>-</code></td>
             
-<td>Additional arguments that will be passed to the
-<code>native-image</code> executable. Note that this will only be
-used when using a packaging of type <code>docker-native</code>. For
-<code>native-image</code> packaging you should use the <a class="externalLink" href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization">Native
-Image Maven Plugin</a> configuration options.<br /><b>User property is</b>: <code>micronaut.native-image.args</code>.<br /></td>
+<td>Additional arguments that will be passed to the <code>native-image</code> executable. Note that this will only be used when using a packaging of type <code>docker-native</code>. For <code>native-image</code> packaging you should use the <a class="externalLink" href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization"> Native Image Maven Plugin </a> configuration options.<br /><b>User property is</b>: <code>micronaut.native-image.args</code>.<br /></td>
           </tr>
           
 <tr class="b">
@@ -254,10 +244,9 @@ Image Maven Plugin</a> configuration options.<br /><b>User property is</b>: <cod
             
 <td><code>Boolean</code></td>
             
-<td><code>1.1</code></td>
+<td><code>-</code></td>
             
-<td>Whether to produce a static native image when using
-<code>docker-native</code> packaging.<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>micronaut.native-image.static</code>.<br /></td>
+<td>Whether to produce a static native image when using <code>docker-native</code> packaging.<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>micronaut.native-image.static</code>.<br /></td>
           </tr>
         </table>
       </section>
@@ -266,14 +255,11 @@ Image Maven Plugin</a> configuration options.<br /><b>User property is</b>: <cod
         <section>
 <h4><a name="a.3CappArguments.3E"></a><b><a name="appArguments">&lt;appArguments&gt;</a></b></h4>
         
-<div>List of additional arguments that will be passed to the
-application.</div>
+<div>List of additional arguments that will be passed to the application.</div>
         
 <ul>
           
-<li><b>Type</b>: <code>java.util.List</code></li>
-          
-<li><b>Since</b>: <code>1.1</code></li>
+<li><b>Type</b>: <code>java.util.List&lt;java.lang.String&gt;</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
           
@@ -297,14 +283,11 @@ application.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CmainClass.3E"></a><b><a name="mainClass">&lt;mainClass&gt;</a></b></h4>
         
-<div>The main class of the application, as defined in the <a class="externalLink" href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec
-Maven Plugin</a>.</div>
+<div>The main class of the application, as defined in the <a class="externalLink" href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.</div>
         
 <ul>
           
 <li><b>Type</b>: <code>java.lang.String</code></li>
-          
-<li><b>Since</b>: <code>1.1</code></li>
           
 <li><b>Required</b>: <code>Yes</code></li>
           
@@ -318,8 +301,6 @@ Maven Plugin</a>.</div>
           
 <li><b>Type</b>: <code>java.lang.String</code></li>
           
-<li><b>Since</b>: <code>1.1</code></li>
-          
 <li><b>Required</b>: <code>No</code></li>
           
 <li><b>User Property</b>: <code>micronaut.runtime</code></li>
@@ -328,17 +309,11 @@ Maven Plugin</a>.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CnativeImageBuildArgs.3E"></a><b><a name="nativeImageBuildArgs">&lt;nativeImageBuildArgs&gt;</a></b></h4>
         
-<div>Additional arguments that will be passed to the
-<code>native-image</code> executable. Note that this will only be
-used when using a packaging of type <code>docker-native</code>. For
-<code>native-image</code> packaging you should use the <a class="externalLink" href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization">Native
-Image Maven Plugin</a> configuration options.</div>
+<div>Additional arguments that will be passed to the <code>native-image</code> executable. Note that this will only be used when using a packaging of type <code>docker-native</code>. For <code>native-image</code> packaging you should use the <a class="externalLink" href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization"> Native Image Maven Plugin </a> configuration options.</div>
         
 <ul>
           
-<li><b>Type</b>: <code>java.util.List</code></li>
-          
-<li><b>Since</b>: <code>1.1</code></li>
+<li><b>Type</b>: <code>java.util.List&lt;java.lang.String&gt;</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
           
@@ -346,14 +321,11 @@ Image Maven Plugin</a> configuration options.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CstaticNativeImage.3E"></a><b><a name="staticNativeImage">&lt;staticNativeImage&gt;</a></b></h4>
         
-<div>Whether to produce a static native image when using
-<code>docker-native</code> packaging.</div>
+<div>Whether to produce a static native image when using <code>docker-native</code> packaging.</div>
         
 <ul>
           
 <li><b>Type</b>: <code>java.lang.Boolean</code></li>
-          
-<li><b>Since</b>: <code>1.1</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
           

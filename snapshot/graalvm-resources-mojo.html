@@ -133,11 +133,9 @@
 <p><b>Description</b>:</p>
       
 <div>
-<p>Generate GraalVM <code>resources-config.json</code> with all the
-resources included in the application</p>
+<p>Generate GraalVM <code>resources-config.json</code> with all the resources included in the application</p>
 
-<p><b>WARNING</b>: this goal is not intended to be
-executed directly.</p></div>
+<p><b>WARNING</b>: this goal is not intended to be executed directly.</p></div>
       
 <p><b>Attributes</b>:</p>
       
@@ -171,7 +169,7 @@ executed directly.</p></div>
             
 <td><code>File</code></td>
             
-<td><code>2.0</code></td>
+<td><code>-</code></td>
             
 <td>The output directory into which to copy the resources.<br /><b>Default value is</b>: <code>${project.build.outputDirectory}</code>.<br /></td>
           </tr>
@@ -201,47 +199,41 @@ executed directly.</p></div>
             
 <td><code>3.0.0</code></td>
             
-<td>By default files like <code>.gitignore</code>,
-<code>.cvsignore</code> etc. are excluded which means they will not
-being copied. If you need them for a particular reason you can do
-that by settings this to <code>false</code>. This means all files
-like the following will be copied. 
+<td>By default files like <code>.gitignore</code>, <code>.cvsignore</code> etc. are excluded which means they will not being copied. If you need them for a particular reason you can do that by settings this to <code>false</code>. This means all files like the following will be copied. 
 
 <ul>
-
+ 
 <li>Misc: **/*~, **/#*#, **/.#*, **/%*%, **/._*</li>
-
+ 
 <li>CVS: **/CVS, **/CVS/**, **/.cvsignore</li>
-
+ 
 <li>RCS: **/RCS, **/RCS/**</li>
-
+ 
 <li>SCCS: **/SCCS, **/SCCS/**</li>
-
+ 
 <li>VSSercer: **/vssver.scc</li>
-
+ 
 <li>MKS: **/project.pj</li>
-
+ 
 <li>SVN: **/.svn, **/.svn/**</li>
-
+ 
 <li>GNU: **/.arch-ids, **/.arch-ids/**</li>
-
+ 
 <li>Bazaar: **/.bzr, **/.bzr/**</li>
-
+ 
 <li>SurroundSCM: **/.MySCMServerInfo</li>
-
+ 
 <li>Mac: **/.DS_Store</li>
-
+ 
 <li>Serena Dimension: **/.metadata, **/.metadata/**</li>
-
+ 
 <li>Mercurial: **/.hg, **/.hg/**</li>
-
+ 
 <li>GIT: **/.git, **/.gitignore, **/.gitattributes, **/.git/**</li>
-
-<li>Bitkeeper: **/BitKeeper, **/BitKeeper/**, **/ChangeSet,
-**/ChangeSet/**</li>
-
-<li>Darcs: **/_darcs, **/_darcs/**, **/.darcsrepo,
-**/.darcsrepo/****/-darcs-backup*, **/.darcs-temp-mail</li>
+ 
+<li>Bitkeeper: **/BitKeeper, **/BitKeeper/**, **/ChangeSet, **/ChangeSet/**</li>
+ 
+<li>Darcs: **/_darcs, **/_darcs/**, **/.darcsrepo, **/.darcsrepo/****/-darcs-backup*, **/.darcs-temp-mail</li>
 </ul><br /><b>Default value is</b>: <code>true</code>.<br /></td>
           </tr>
           
@@ -249,15 +241,12 @@ like the following will be copied.
             
 <td align="left"><code><a href="#delimiters">&lt;delimiters&gt;</a></code></td>
             
-<td><code>LinkedHashSet</code></td>
+<td><code>LinkedHashSet&lt;String&gt;</code></td>
             
 <td><code>2.4</code></td>
             
 <td>
-<p>Set of delimiters for expressions to filter within the
-resources. These delimiters are specified in the form
-<code>beginToken*endToken</code>. If no <code>*</code> is given,
-the delimiter is assumed to be the same for start and end.</p>
+<p>Set of delimiters for expressions to filter within the resources. These delimiters are specified in the form <code>beginToken*endToken</code>. If no <code>*</code> is given, the delimiter is assumed to be the same for start and end.</p>
 
 <p>So, the default filtering delimiters might be specified as:</p>
 
@@ -269,9 +258,7 @@ the delimiter is assumed to be the same for start and end.</p>
 &lt;/delimiters&gt;
 </pre></div>
 
-
-<p>Since the <code>@</code> delimiter is the same on both ends, we
-don't need to specify <code>@*@</code> (though we can).</p><br /></td>
+<p>Since the <code>@</code> delimiter is the same on both ends, we don't need to specify <code>@*@</code> (though we can).</p><br /></td>
           </tr>
           
 <tr class="b">
@@ -280,10 +267,9 @@ don't need to specify <code>@*@</code> (though we can).</p><br /></td>
             
 <td><code>String</code></td>
             
-<td><code>2.0</code></td>
+<td><code>-</code></td>
             
-<td>The character encoding to use when reading and writing filtered
-resources.<br /><b>Default value is</b>: <code>${project.build.sourceEncoding}</code>.<br /></td>
+<td>The character encoding to use when reading and writing filtered resources.<br /><b>Default value is</b>: <code>${project.build.sourceEncoding}</code>.<br /></td>
           </tr>
           
 <tr class="a">
@@ -294,12 +280,7 @@ resources.<br /><b>Default value is</b>: <code>${project.build.sourceEncoding}</
             
 <td><code>2.3</code></td>
             
-<td>Expressions preceded with this string won't be interpolated.
-Anything else preceded with this string will be passed through
-unchanged. For example <code>\${foo</code>} will be replaced with
-<code>${foo</code>} but <code>\\${foo</code>} will be replaced with
-<code>\\value of foo</code>, if this parameter has been set to the
-backslash.<br /></td>
+<td>Expressions preceded with this string won't be interpolated. Anything else preceded with this string will be passed through unchanged. For example <code>\${foo</code>} will be replaced with <code>${foo</code>} but <code>\\${foo</code>} will be replaced with <code>\\value of foo</code>, if this parameter has been set to the backslash.<br /></td>
           </tr>
           
 <tr class="b">
@@ -328,25 +309,14 @@ backslash.<br /></td>
             
 <td align="left"><code><a href="#filters">&lt;filters&gt;</a></code></td>
             
-<td><code>List</code></td>
+<td><code>List&lt;String&gt;</code></td>
             
-<td><code>2.0</code></td>
+<td><code>-</code></td>
             
 <td>
-<p>The list of extra filter properties files to be used along with
-System properties, project properties, and filter properties files
-specified in the POM build/filters section, which should be used
-for the filtering during the current mojo execution.</p>
+<p>The list of extra filter properties files to be used along with System properties, project properties, and filter properties files specified in the POM build/filters section, which should be used for the filtering during the current mojo execution.</p>
 
-<p>Normally, these will be configured from a plugin's execution
-section, to provide a different set of filters for a particular
-execution. For instance, starting in Maven 2.2.0, you have the
-option of configuring executions with the id's
-<code>default-resources</code> and
-<code>default-testResources</code> to supply different
-configurations for the two different types of resources. By
-supplying <code>extraFilters</code> configurations, you can
-separate which filters are used for which type of resource.</p><br /></td>
+<p>Normally, these will be configured from a plugin's execution section, to provide a different set of filters for a particular execution. For instance, starting in Maven 2.2.0, you have the option of configuring executions with the id's <code>default-resources</code> and <code>default-testResources</code> to supply different configurations for the two different types of resources. By supplying <code>extraFilters</code> configurations, you can separate which filters are used for which type of resource.</p><br /></td>
           </tr>
           
 <tr class="a">
@@ -364,14 +334,12 @@ separate which filters are used for which type of resource.</p><br /></td>
             
 <td align="left"><code><a href="#mavenFilteringHints">&lt;mavenFilteringHints&gt;</a></code></td>
             
-<td><code>List</code></td>
+<td><code>List&lt;String&gt;</code></td>
             
 <td><code>2.4</code></td>
             
 <td>
-<p>List of plexus components hint which implements
-<code>MavenResourcesFiltering.filterResources()</code>. They will
-be executed after the resources copying/filtering.</p><br /></td>
+<p>List of plexus components hint which implements <code>org.apache.maven.shared.filtering.MavenResourcesFiltering.filterResources(org.apache.maven.shared.filtering.MavenResourcesExecution)</code>. They will be executed after the resources copying/filtering.</p><br /></td>
           </tr>
           
 <tr class="a">
@@ -380,7 +348,7 @@ be executed after the resources copying/filtering.</p><br /></td>
             
 <td><code>Boolean</code></td>
             
-<td><code>2.0</code></td>
+<td><code>-</code></td>
             
 <td>(no description)<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>micronaut.native-image.skip-resources</code>.<br /></td>
           </tr>
@@ -389,12 +357,11 @@ be executed after the resources copying/filtering.</p><br /></td>
             
 <td align="left"><code><a href="#nonFilteredFileExtensions">&lt;nonFilteredFileExtensions&gt;</a></code></td>
             
-<td><code>List</code></td>
+<td><code>List&lt;String&gt;</code></td>
             
 <td><code>2.3</code></td>
             
-<td>Additional file extensions to not apply filtering (already defined
-are : jpg, jpeg, gif, bmp, png)<br /></td>
+<td>Additional file extensions to not apply filtering (already defined are : jpg, jpeg, gif, bmp, png)<br /></td>
           </tr>
           
 <tr class="a">
@@ -416,9 +383,7 @@ are : jpg, jpeg, gif, bmp, png)<br /></td>
             
 <td><code>3.2.0</code></td>
             
-<td>The character encoding to use when reading and writing filtered
-properties files. If not specified, it will default to the value of
-the &quot;encoding&quot; parameter.<br /></td>
+<td>The character encoding to use when reading and writing filtered properties files. If not specified, it will default to the value of the &quot;encoding&quot; parameter.<br /></td>
           </tr>
           
 <tr class="a">
@@ -429,8 +394,7 @@ the &quot;encoding&quot; parameter.<br /></td>
             
 <td><code>3.0.0</code></td>
             
-<td>You can skip the execution of the plugin if you need to. Its use is
-NOT RECOMMENDED, but quite convenient on occasion.<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>maven.resources.skip</code>.<br /></td>
+<td>You can skip the execution of the plugin if you need to. Its use is NOT RECOMMENDED, but quite convenient on occasion.<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>maven.resources.skip</code>.<br /></td>
           </tr>
           
 <tr class="b">
@@ -452,9 +416,7 @@ NOT RECOMMENDED, but quite convenient on occasion.<br /><b>Default value is</b>:
             
 <td><code>2.4</code></td>
             
-<td>If false, don't use the filters specified in the build/filters
-section of the POM when processing resources in this mojo
-execution.<br /><b>Default value is</b>: <code>true</code>.<br /></td>
+<td>If false, don't use the filters specified in the build/filters section of the POM when processing resources in this mojo execution.<br /><b>See also:</b> buildFilters, filters<br /><b>Default value is</b>: <code>true</code>.<br /></td>
           </tr>
           
 <tr class="b">
@@ -474,47 +436,41 @@ execution.<br /><b>Default value is</b>: <code>true</code>.<br /></td>
         <section>
 <h4><a name="a.3CaddDefaultExcludes.3E"></a><b><a name="addDefaultExcludes">&lt;addDefaultExcludes&gt;</a></b></h4>
         
-<div>By default files like <code>.gitignore</code>,
-<code>.cvsignore</code> etc. are excluded which means they will not
-being copied. If you need them for a particular reason you can do
-that by settings this to <code>false</code>. This means all files
-like the following will be copied. 
+<div>By default files like <code>.gitignore</code>, <code>.cvsignore</code> etc. are excluded which means they will not being copied. If you need them for a particular reason you can do that by settings this to <code>false</code>. This means all files like the following will be copied. 
 
 <ul>
-
+ 
 <li>Misc: **/*~, **/#*#, **/.#*, **/%*%, **/._*</li>
-
+ 
 <li>CVS: **/CVS, **/CVS/**, **/.cvsignore</li>
-
+ 
 <li>RCS: **/RCS, **/RCS/**</li>
-
+ 
 <li>SCCS: **/SCCS, **/SCCS/**</li>
-
+ 
 <li>VSSercer: **/vssver.scc</li>
-
+ 
 <li>MKS: **/project.pj</li>
-
+ 
 <li>SVN: **/.svn, **/.svn/**</li>
-
+ 
 <li>GNU: **/.arch-ids, **/.arch-ids/**</li>
-
+ 
 <li>Bazaar: **/.bzr, **/.bzr/**</li>
-
+ 
 <li>SurroundSCM: **/.MySCMServerInfo</li>
-
+ 
 <li>Mac: **/.DS_Store</li>
-
+ 
 <li>Serena Dimension: **/.metadata, **/.metadata/**</li>
-
+ 
 <li>Mercurial: **/.hg, **/.hg/**</li>
-
+ 
 <li>GIT: **/.git, **/.gitignore, **/.gitattributes, **/.git/**</li>
-
-<li>Bitkeeper: **/BitKeeper, **/BitKeeper/**, **/ChangeSet,
-**/ChangeSet/**</li>
-
-<li>Darcs: **/_darcs, **/_darcs/**, **/.darcsrepo,
-**/.darcsrepo/****/-darcs-backup*, **/.darcs-temp-mail</li>
+ 
+<li>Bitkeeper: **/BitKeeper, **/BitKeeper/**, **/ChangeSet, **/ChangeSet/**</li>
+ 
+<li>Darcs: **/_darcs, **/_darcs/**, **/.darcsrepo, **/.darcsrepo/****/-darcs-backup*, **/.darcs-temp-mail</li>
 </ul></div>
         
 <ul>
@@ -530,10 +486,7 @@ like the following will be copied.
 <h4><a name="a.3Cdelimiters.3E"></a><b><a name="delimiters">&lt;delimiters&gt;</a></b></h4>
         
 <div>
-<p>Set of delimiters for expressions to filter within the
-resources. These delimiters are specified in the form
-<code>beginToken*endToken</code>. If no <code>*</code> is given,
-the delimiter is assumed to be the same for start and end.</p>
+<p>Set of delimiters for expressions to filter within the resources. These delimiters are specified in the form <code>beginToken*endToken</code>. If no <code>*</code> is given, the delimiter is assumed to be the same for start and end.</p>
 
 <p>So, the default filtering delimiters might be specified as:</p>
 
@@ -545,13 +498,11 @@ the delimiter is assumed to be the same for start and end.</p>
 &lt;/delimiters&gt;
 </pre></div>
 
-
-<p>Since the <code>@</code> delimiter is the same on both ends, we
-don't need to specify <code>@*@</code> (though we can).</p></div>
+<p>Since the <code>@</code> delimiter is the same on both ends, we don't need to specify <code>@*@</code> (though we can).</p></div>
         
 <ul>
           
-<li><b>Type</b>: <code>java.util.LinkedHashSet</code></li>
+<li><b>Type</b>: <code>java.util.LinkedHashSet&lt;java.lang.String&gt;</code></li>
           
 <li><b>Since</b>: <code>2.4</code></li>
           
@@ -559,14 +510,11 @@ don't need to specify <code>@*@</code> (though we can).</p></div>
         </ul><hr /></section><section>
 <h4><a name="a.3Cencoding.3E"></a><b><a name="encoding">&lt;encoding&gt;</a></b></h4>
         
-<div>The character encoding to use when reading and writing filtered
-resources.</div>
+<div>The character encoding to use when reading and writing filtered resources.</div>
         
 <ul>
           
 <li><b>Type</b>: <code>java.lang.String</code></li>
-          
-<li><b>Since</b>: <code>2.0</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
           
@@ -574,12 +522,7 @@ resources.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CescapeString.3E"></a><b><a name="escapeString">&lt;escapeString&gt;</a></b></h4>
         
-<div>Expressions preceded with this string won't be interpolated.
-Anything else preceded with this string will be passed through
-unchanged. For example <code>\${foo</code>} will be replaced with
-<code>${foo</code>} but <code>\\${foo</code>} will be replaced with
-<code>\\value of foo</code>, if this parameter has been set to the
-backslash.</div>
+<div>Expressions preceded with this string won't be interpolated. Anything else preceded with this string will be passed through unchanged. For example <code>\${foo</code>} will be replaced with <code>${foo</code>} but <code>\\${foo</code>} will be replaced with <code>\\value of foo</code>, if this parameter has been set to the backslash.</div>
         
 <ul>
           
@@ -620,26 +563,13 @@ backslash.</div>
 <h4><a name="a.3Cfilters.3E"></a><b><a name="filters">&lt;filters&gt;</a></b></h4>
         
 <div>
-<p>The list of extra filter properties files to be used along with
-System properties, project properties, and filter properties files
-specified in the POM build/filters section, which should be used
-for the filtering during the current mojo execution.</p>
+<p>The list of extra filter properties files to be used along with System properties, project properties, and filter properties files specified in the POM build/filters section, which should be used for the filtering during the current mojo execution.</p>
 
-<p>Normally, these will be configured from a plugin's execution
-section, to provide a different set of filters for a particular
-execution. For instance, starting in Maven 2.2.0, you have the
-option of configuring executions with the id's
-<code>default-resources</code> and
-<code>default-testResources</code> to supply different
-configurations for the two different types of resources. By
-supplying <code>extraFilters</code> configurations, you can
-separate which filters are used for which type of resource.</p></div>
+<p>Normally, these will be configured from a plugin's execution section, to provide a different set of filters for a particular execution. For instance, starting in Maven 2.2.0, you have the option of configuring executions with the id's <code>default-resources</code> and <code>default-testResources</code> to supply different configurations for the two different types of resources. By supplying <code>extraFilters</code> configurations, you can separate which filters are used for which type of resource.</p></div>
         
 <ul>
           
-<li><b>Type</b>: <code>java.util.List</code></li>
-          
-<li><b>Since</b>: <code>2.0</code></li>
+<li><b>Type</b>: <code>java.util.List&lt;java.lang.String&gt;</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
         </ul><hr /></section><section>
@@ -660,13 +590,11 @@ separate which filters are used for which type of resource.</p></div>
 <h4><a name="a.3CmavenFilteringHints.3E"></a><b><a name="mavenFilteringHints">&lt;mavenFilteringHints&gt;</a></b></h4>
         
 <div>
-<p>List of plexus components hint which implements
-<code>MavenResourcesFiltering.filterResources()</code>. They will
-be executed after the resources copying/filtering.</p></div>
+<p>List of plexus components hint which implements <code>org.apache.maven.shared.filtering.MavenResourcesFiltering.filterResources(org.apache.maven.shared.filtering.MavenResourcesExecution)</code>. They will be executed after the resources copying/filtering.</p></div>
         
 <ul>
           
-<li><b>Type</b>: <code>java.util.List</code></li>
+<li><b>Type</b>: <code>java.util.List&lt;java.lang.String&gt;</code></li>
           
 <li><b>Since</b>: <code>2.4</code></li>
           
@@ -680,8 +608,6 @@ be executed after the resources copying/filtering.</p></div>
           
 <li><b>Type</b>: <code>java.lang.Boolean</code></li>
           
-<li><b>Since</b>: <code>2.0</code></li>
-          
 <li><b>Required</b>: <code>No</code></li>
           
 <li><b>User Property</b>: <code>micronaut.native-image.skip-resources</code></li>
@@ -690,12 +616,11 @@ be executed after the resources copying/filtering.</p></div>
         </ul><hr /></section><section>
 <h4><a name="a.3CnonFilteredFileExtensions.3E"></a><b><a name="nonFilteredFileExtensions">&lt;nonFilteredFileExtensions&gt;</a></b></h4>
         
-<div>Additional file extensions to not apply filtering (already defined
-are : jpg, jpeg, gif, bmp, png)</div>
+<div>Additional file extensions to not apply filtering (already defined are : jpg, jpeg, gif, bmp, png)</div>
         
 <ul>
           
-<li><b>Type</b>: <code>java.util.List</code></li>
+<li><b>Type</b>: <code>java.util.List&lt;java.lang.String&gt;</code></li>
           
 <li><b>Since</b>: <code>2.3</code></li>
           
@@ -708,8 +633,6 @@ are : jpg, jpeg, gif, bmp, png)</div>
 <ul>
           
 <li><b>Type</b>: <code>java.io.File</code></li>
-          
-<li><b>Since</b>: <code>2.0</code></li>
           
 <li><b>Required</b>: <code>Yes</code></li>
           
@@ -731,9 +654,7 @@ are : jpg, jpeg, gif, bmp, png)</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CpropertiesEncoding.3E"></a><b><a name="propertiesEncoding">&lt;propertiesEncoding&gt;</a></b></h4>
         
-<div>The character encoding to use when reading and writing filtered
-properties files. If not specified, it will default to the value of
-the &quot;encoding&quot; parameter.</div>
+<div>The character encoding to use when reading and writing filtered properties files. If not specified, it will default to the value of the &quot;encoding&quot; parameter.</div>
         
 <ul>
           
@@ -745,8 +666,7 @@ the &quot;encoding&quot; parameter.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3Cskip.3E"></a><b><a name="skip">&lt;skip&gt;</a></b></h4>
         
-<div>You can skip the execution of the plugin if you need to. Its use is
-NOT RECOMMENDED, but quite convenient on occasion.</div>
+<div>You can skip the execution of the plugin if you need to. Its use is NOT RECOMMENDED, but quite convenient on occasion.</div>
         
 <ul>
           
@@ -776,9 +696,7 @@ NOT RECOMMENDED, but quite convenient on occasion.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CuseBuildFilters.3E"></a><b><a name="useBuildFilters">&lt;useBuildFilters&gt;</a></b></h4>
         
-<div>If false, don't use the filters specified in the build/filters
-section of the POM when processing resources in this mojo
-execution.</div>
+<div>If false, don't use the filters specified in the build/filters section of the POM when processing resources in this mojo execution.<br /><b>See also:</b> buildFilters, filters</div>
         
 <ul>
           

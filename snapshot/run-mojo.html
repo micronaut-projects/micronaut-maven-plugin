@@ -135,13 +135,9 @@
 <div>
 <p>Executes a Micronaut application in development mode.</p>
 
-<p>It watches for changes in the project tree. If there are changes
-in the <code>pom.xml</code> file, dependencies will be reloaded. If
-the changes are anywhere underneath <code>src/main</code>, it will
-recompile the project and restart the application.</p>
+<p>It watches for changes in the project tree. If there are changes in the <code>pom.xml</code> file, dependencies will be reloaded. If the changes are anywhere underneath <code>src/main</code>, it will recompile the project and restart the application.</p>
 
-<p>The plugin can handle changes in all the languages supported by
-Micronaut: Java, Kotlin and Groovy.</p></div>
+<p>The plugin can handle changes in all the languages supported by Micronaut: Java, Kotlin and Groovy.</p></div>
       
 <p><b>Attributes</b>:</p>
       
@@ -181,10 +177,9 @@ Micronaut: Java, Kotlin and Groovy.</p></div>
             
 <td><code>String</code></td>
             
-<td><code>1.0.0</code></td>
+<td><code>-</code></td>
             
-<td>The main class of the application, as defined in the <a class="externalLink" href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec
-Maven Plugin</a>.<br /><b>Default value is</b>: <code>${exec.mainClass}</code>.<br /></td>
+<td>The main class of the application, as defined in the <a class="externalLink" href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.<br /><b>Default value is</b>: <code>${exec.mainClass}</code>.<br /></td>
           </tr>
           
 <tr class="a">
@@ -193,11 +188,9 @@ Maven Plugin</a>.<br /><b>Default value is</b>: <code>${exec.mainClass}</code>.<
             
 <td><code>String</code></td>
             
-<td><code>1.0.0</code></td>
+<td><code>-</code></td>
             
-<td>Micronaut Test Resources version. Should be defined by the
-Micronaut BOM, but this parameter can be used to define a different
-version.<br /><b>User property is</b>: <code>micronaut.test.resources.version</code>.<br /></td>
+<td>Micronaut Test Resources version. Should be defined by the Micronaut BOM, but this parameter can be used to define a different version.<br /><b>User property is</b>: <code>micronaut.test.resources.version</code>.<br /></td>
           </tr>
         </table>
       </section>
@@ -223,7 +216,7 @@ version.<br /><b>User property is</b>: <code>micronaut.test.resources.version</c
             
 <td><code>boolean</code></td>
             
-<td><code>1.0.0</code></td>
+<td><code>-</code></td>
             
 <td>Whether to enable or disable Micronaut AOT.<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>micronaut.aot.enabled</code>.<br /></td>
           </tr>
@@ -234,10 +227,9 @@ version.<br /><b>User property is</b>: <code>micronaut.test.resources.version</c
             
 <td><code>String</code></td>
             
-<td><code>1.0.0</code></td>
+<td><code>-</code></td>
             
-<td>List of additional arguments that will be passed to the
-application, after the class name.<br /><b>User property is</b>: <code>mn.appArgs</code>.<br /></td>
+<td>List of additional arguments that will be passed to the application, after the class name.<br /><b>User property is</b>: <code>mn.appArgs</code>.<br /></td>
           </tr>
           
 <tr class="b">
@@ -246,7 +238,7 @@ application, after the class name.<br /><b>User property is</b>: <code>mn.appArg
             
 <td><code>boolean</code></td>
             
-<td><code>1.0.0</code></td>
+<td><code>-</code></td>
             
 <td>Whether to start the Micronaut application in debug mode.<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>mn.debug</code>.<br /></td>
           </tr>
@@ -257,7 +249,7 @@ application, after the class name.<br /><b>User property is</b>: <code>mn.appArg
             
 <td><code>String</code></td>
             
-<td><code>1.0.0</code></td>
+<td><code>-</code></td>
             
 <td>The host where remote debuggers can connect.<br /><b>Default value is</b>: <code>127.0.0.1</code>.<br /><b>User property is</b>: <code>mn.debug.host</code>.<br /></td>
           </tr>
@@ -268,7 +260,7 @@ application, after the class name.<br /><b>User property is</b>: <code>mn.appArg
             
 <td><code>int</code></td>
             
-<td><code>1.0.0</code></td>
+<td><code>-</code></td>
             
 <td>The port where remote debuggers can be attached to.<br /><b>Default value is</b>: <code>5005</code>.<br /><b>User property is</b>: <code>mn.debug.port</code>.<br /></td>
           </tr>
@@ -279,10 +271,9 @@ application, after the class name.<br /><b>User property is</b>: <code>mn.appArg
             
 <td><code>boolean</code></td>
             
-<td><code>1.0.0</code></td>
+<td><code>-</code></td>
             
-<td>Whether to suspend the execution of the application when running in
-debug mode.<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>mn.debug.suspend</code>.<br /></td>
+<td>Whether to suspend the execution of the application when running in debug mode.<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>mn.debug.suspend</code>.<br /></td>
           </tr>
           
 <tr class="b">
@@ -291,15 +282,12 @@ debug mode.<br /><b>Default value is</b>: <code>false</code>.<br /><b>User prope
             
 <td><code>String</code></td>
             
-<td><code>1.0.0</code></td>
+<td><code>-</code></td>
             
 <td>
-<p>List of additional arguments that will be passed to the JVM
-process, such as Java agent properties.</p>
+<p>List of additional arguments that will be passed to the JVM process, such as Java agent properties.</p>
 
-<p>When using the command line, user properties will be passed
-through, eg: <code>mnv mn:run
--Dmicronaut.environments=dev</code>.</p><br /><b>User property is</b>: <code>mn.jvmArgs</code>.<br /></td>
+<p>When using the command line, user properties will be passed through, eg: <code>mnv mn:run -Dmicronaut.environments=dev</code>.</p><br /><b>User property is</b>: <code>mn.jvmArgs</code>.<br /></td>
           </tr>
           
 <tr class="a">
@@ -308,11 +296,9 @@ through, eg: <code>mnv mn:run
             
 <td><code>boolean</code></td>
             
-<td><code>1.0.0</code></td>
+<td><code>-</code></td>
             
-<td>Whether the test resources service should be shared between
-independent builds (e.g different projects, even built with
-different build tools).<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>micronaut.test.resources.shared</code>.<br /></td>
+<td>Whether the test resources service should be shared between independent builds (e.g different projects, even built with different build tools).<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>micronaut.test.resources.shared</code>.<br /></td>
           </tr>
           
 <tr class="b">
@@ -321,7 +307,7 @@ different build tools).<br /><b>Default value is</b>: <code>false</code>.<br /><
             
 <td><code>File</code></td>
             
-<td><code>1.0.0</code></td>
+<td><code>-</code></td>
             
 <td>The project's target directory.<br /><b>Default value is</b>: <code>${project.build.directory}</code>.<br /></td>
           </tr>
@@ -332,34 +318,31 @@ different build tools).<br /><b>Default value is</b>: <code>false</code>.<br /><
             
 <td><code>boolean</code></td>
             
-<td><code>1.0.0</code></td>
+<td><code>-</code></td>
             
 <td>Whether to enable or disable Micronaut test resources support.<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>micronaut.test.resources.enabled</code>.<br /></td>
           </tr>
           
 <tr class="b">
             
-<td align="left"><code><a href="#watchForChanges">&lt;watchForChanges&gt;</a></code></td>
+<td align="left"><code><a href="#watches">&lt;watches&gt;</a></code></td>
             
-<td><code>boolean</code></td>
+<td><code>List&lt;FileSet&gt;</code></td>
             
-<td><code>1.0.0</code></td>
+<td><code>-</code></td>
             
-<td>Whether to watch for changes, or finish the execution after the
-first run.<br /><b>Default value is</b>: <code>true</code>.<br /><b>User property is</b>: <code>mn.watch</code>.<br /></td>
+<td>List of inclusion/exclusion paths that should not trigger an application restart. Check the <a class="externalLink" href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a> documentation for more details.<br /><b>See also:</b> <a class="externalLink" href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a><br /></td>
           </tr>
           
 <tr class="a">
             
-<td align="left"><code><a href="#watches">&lt;watches&gt;</a></code></td>
+<td align="left"><code><a href="#watchForChanges">&lt;watchForChanges&gt;</a></code></td>
             
-<td><code>List</code></td>
+<td><code>boolean</code></td>
             
-<td><code>1.0.0</code></td>
+<td><code>-</code></td>
             
-<td>List of inclusion/exclusion paths that should not trigger an
-application restart. Check the <a class="externalLink" href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a>
-documentation for more details.<br /></td>
+<td>Whether to watch for changes, or finish the execution after the first run.<br /><b>Default value is</b>: <code>true</code>.<br /><b>User property is</b>: <code>mn.watch</code>.<br /></td>
           </tr>
         </table>
       </section>
@@ -374,8 +357,6 @@ documentation for more details.<br /></td>
           
 <li><b>Type</b>: <code>boolean</code></li>
           
-<li><b>Since</b>: <code>1.0.0</code></li>
-          
 <li><b>Required</b>: <code>No</code></li>
           
 <li><b>User Property</b>: <code>micronaut.aot.enabled</code></li>
@@ -384,14 +365,11 @@ documentation for more details.<br /></td>
         </ul><hr /></section><section>
 <h4><a name="a.3CappArguments.3E"></a><b><a name="appArguments">&lt;appArguments&gt;</a></b></h4>
         
-<div>List of additional arguments that will be passed to the
-application, after the class name.</div>
+<div>List of additional arguments that will be passed to the application, after the class name.</div>
         
 <ul>
           
 <li><b>Type</b>: <code>java.lang.String</code></li>
-          
-<li><b>Since</b>: <code>1.0.0</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
           
@@ -404,8 +382,6 @@ application, after the class name.</div>
 <ul>
           
 <li><b>Type</b>: <code>boolean</code></li>
-          
-<li><b>Since</b>: <code>1.0.0</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
           
@@ -421,8 +397,6 @@ application, after the class name.</div>
           
 <li><b>Type</b>: <code>java.lang.String</code></li>
           
-<li><b>Since</b>: <code>1.0.0</code></li>
-          
 <li><b>Required</b>: <code>No</code></li>
           
 <li><b>User Property</b>: <code>mn.debug.host</code></li>
@@ -437,8 +411,6 @@ application, after the class name.</div>
           
 <li><b>Type</b>: <code>int</code></li>
           
-<li><b>Since</b>: <code>1.0.0</code></li>
-          
 <li><b>Required</b>: <code>No</code></li>
           
 <li><b>User Property</b>: <code>mn.debug.port</code></li>
@@ -447,14 +419,11 @@ application, after the class name.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CdebugSuspend.3E"></a><b><a name="debugSuspend">&lt;debugSuspend&gt;</a></b></h4>
         
-<div>Whether to suspend the execution of the application when running in
-debug mode.</div>
+<div>Whether to suspend the execution of the application when running in debug mode.</div>
         
 <ul>
           
 <li><b>Type</b>: <code>boolean</code></li>
-          
-<li><b>Since</b>: <code>1.0.0</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
           
@@ -465,18 +434,13 @@ debug mode.</div>
 <h4><a name="a.3CjvmArguments.3E"></a><b><a name="jvmArguments">&lt;jvmArguments&gt;</a></b></h4>
         
 <div>
-<p>List of additional arguments that will be passed to the JVM
-process, such as Java agent properties.</p>
+<p>List of additional arguments that will be passed to the JVM process, such as Java agent properties.</p>
 
-<p>When using the command line, user properties will be passed
-through, eg: <code>mnv mn:run
--Dmicronaut.environments=dev</code>.</p></div>
+<p>When using the command line, user properties will be passed through, eg: <code>mnv mn:run -Dmicronaut.environments=dev</code>.</p></div>
         
 <ul>
           
 <li><b>Type</b>: <code>java.lang.String</code></li>
-          
-<li><b>Since</b>: <code>1.0.0</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
           
@@ -484,14 +448,11 @@ through, eg: <code>mnv mn:run
         </ul><hr /></section><section>
 <h4><a name="a.3CmainClass.3E"></a><b><a name="mainClass">&lt;mainClass&gt;</a></b></h4>
         
-<div>The main class of the application, as defined in the <a class="externalLink" href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec
-Maven Plugin</a>.</div>
+<div>The main class of the application, as defined in the <a class="externalLink" href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.</div>
         
 <ul>
           
 <li><b>Type</b>: <code>java.lang.String</code></li>
-          
-<li><b>Since</b>: <code>1.0.0</code></li>
           
 <li><b>Required</b>: <code>Yes</code></li>
           
@@ -499,15 +460,11 @@ Maven Plugin</a>.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CsharedTestResources.3E"></a><b><a name="sharedTestResources">&lt;sharedTestResources&gt;</a></b></h4>
         
-<div>Whether the test resources service should be shared between
-independent builds (e.g different projects, even built with
-different build tools).</div>
+<div>Whether the test resources service should be shared between independent builds (e.g different projects, even built with different build tools).</div>
         
 <ul>
           
 <li><b>Type</b>: <code>boolean</code></li>
-          
-<li><b>Since</b>: <code>1.0.0</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
           
@@ -523,8 +480,6 @@ different build tools).</div>
           
 <li><b>Type</b>: <code>java.io.File</code></li>
           
-<li><b>Since</b>: <code>1.0.0</code></li>
-          
 <li><b>Required</b>: <code>No</code></li>
           
 <li><b>Default</b>: <code>${project.build.directory}</code></li>
@@ -537,8 +492,6 @@ different build tools).</div>
           
 <li><b>Type</b>: <code>boolean</code></li>
           
-<li><b>Since</b>: <code>1.0.0</code></li>
-          
 <li><b>Required</b>: <code>No</code></li>
           
 <li><b>User Property</b>: <code>micronaut.test.resources.enabled</code></li>
@@ -547,50 +500,39 @@ different build tools).</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CtestResourcesVersion.3E"></a><b><a name="testResourcesVersion">&lt;testResourcesVersion&gt;</a></b></h4>
         
-<div>Micronaut Test Resources version. Should be defined by the
-Micronaut BOM, but this parameter can be used to define a different
-version.</div>
+<div>Micronaut Test Resources version. Should be defined by the Micronaut BOM, but this parameter can be used to define a different version.</div>
         
 <ul>
           
 <li><b>Type</b>: <code>java.lang.String</code></li>
           
-<li><b>Since</b>: <code>1.0.0</code></li>
-          
 <li><b>Required</b>: <code>Yes</code></li>
           
 <li><b>User Property</b>: <code>micronaut.test.resources.version</code></li>
         </ul><hr /></section><section>
+<h4><a name="a.3Cwatches.3E"></a><b><a name="watches">&lt;watches&gt;</a></b></h4>
+        
+<div>List of inclusion/exclusion paths that should not trigger an application restart. Check the <a class="externalLink" href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a> documentation for more details.<br /><b>See also:</b> <a class="externalLink" href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a></div>
+        
+<ul>
+          
+<li><b>Type</b>: <code>java.util.List&lt;org.apache.maven.model.FileSet&gt;</code></li>
+          
+<li><b>Required</b>: <code>No</code></li>
+        </ul><hr /></section><section>
 <h4><a name="a.3CwatchForChanges.3E"></a><b><a name="watchForChanges">&lt;watchForChanges&gt;</a></b></h4>
         
-<div>Whether to watch for changes, or finish the execution after the
-first run.</div>
+<div>Whether to watch for changes, or finish the execution after the first run.</div>
         
 <ul>
           
 <li><b>Type</b>: <code>boolean</code></li>
-          
-<li><b>Since</b>: <code>1.0.0</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
           
 <li><b>User Property</b>: <code>mn.watch</code></li>
           
 <li><b>Default</b>: <code>true</code></li>
-        </ul><hr /></section><section>
-<h4><a name="a.3Cwatches.3E"></a><b><a name="watches">&lt;watches&gt;</a></b></h4>
-        
-<div>List of inclusion/exclusion paths that should not trigger an
-application restart. Check the <a class="externalLink" href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a>
-documentation for more details.</div>
-        
-<ul>
-          
-<li><b>Type</b>: <code>java.util.List</code></li>
-          
-<li><b>Since</b>: <code>1.0.0</code></li>
-          
-<li><b>Required</b>: <code>No</code></li>
         </ul>
       </section></section>
     </section>

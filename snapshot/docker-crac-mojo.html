@@ -135,24 +135,14 @@
 <div>
 <p>Implementation of the <code>docker-crac</code> packaging.</p>
 
-<p><b>WARNING</b>: this goal is not intended to be
-executed directly. Instead, specify the packaging type using the
-<code>packaging</code> property, eg:</p>
+<p><b>WARNING</b>: this goal is not intended to be executed directly. Instead, specify the packaging type using the <code>packaging</code> property, eg:</p>
 
 <div>
-<pre>
-mvn package -Dpackaging=docker-crac
-</pre></div>
+<pre>mvn package -Dpackaging=docker-crac</pre></div>
 
+<p>This is a two stage process. First a docker image is built that runs the application under a CRaC enabled JDK. Then the application is warmed up via a shell script. And then a checkpoint is taken via a signal using jcmd.</p>
 
-<p>This is a two stage process. First a docker image is built that
-runs the application under a CRaC enabled JDK. Then the application
-is warmed up via a shell script. And then a checkpoint is taken via
-a signal using jcmd.</p>
-
-<p>The second stage takes this checkpoint, and creates the final
-image containing it plus a run script which passes the correct
-flags to the CRaC enabled JDK.</p></div>
+<p>The second stage takes this checkpoint, and creates the final image containing it plus a run script which passes the correct flags to the CRaC enabled JDK.</p></div>
       
 <p><b>Attributes</b>:</p>
       
@@ -188,10 +178,9 @@ flags to the CRaC enabled JDK.</p></div>
             
 <td><code>String</code></td>
             
-<td><code>3.5.0</code></td>
+<td><code>-</code></td>
             
-<td>The main class of the application, as defined in the <a class="externalLink" href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec
-Maven Plugin</a>.<br /><b>Default value is</b>: <code>${exec.mainClass}</code>.<br /></td>
+<td>The main class of the application, as defined in the <a class="externalLink" href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.<br /><b>Default value is</b>: <code>${exec.mainClass}</code>.<br /></td>
           </tr>
         </table>
       </section>
@@ -215,12 +204,11 @@ Maven Plugin</a>.<br /><b>Default value is</b>: <code>${exec.mainClass}</code>.<
             
 <td align="left"><code><a href="#appArguments">&lt;appArguments&gt;</a></code></td>
             
-<td><code>List</code></td>
+<td><code>List&lt;String&gt;</code></td>
             
-<td><code>3.5.0</code></td>
+<td><code>-</code></td>
             
-<td>List of additional arguments that will be passed to the
-application.<br /><b>User property is</b>: <code>mn.appArgs</code>.<br /></td>
+<td>List of additional arguments that will be passed to the application.<br /><b>User property is</b>: <code>mn.appArgs</code>.<br /></td>
           </tr>
           
 <tr class="a">
@@ -240,7 +228,7 @@ application.<br /><b>User property is</b>: <code>mn.appArgs</code>.<br /></td>
             
 <td><code>String</code></td>
             
-<td><code>3.5.0</code></td>
+<td><code>-</code></td>
             
 <td>(no description)<br /><b>User property is</b>: <code>crac.checkpoint.network</code>.<br /></td>
           </tr>
@@ -251,7 +239,7 @@ application.<br /><b>User property is</b>: <code>mn.appArgs</code>.<br /></td>
             
 <td><code>Integer</code></td>
             
-<td><code>3.5.0</code></td>
+<td><code>-</code></td>
             
 <td>(no description)<br /><b>Default value is</b>: <code>60</code>.<br /><b>User property is</b>: <code>crac.checkpoint.timeout</code>.<br /></td>
           </tr>
@@ -262,7 +250,7 @@ application.<br /><b>User property is</b>: <code>mn.appArgs</code>.<br /></td>
             
 <td><code>String</code></td>
             
-<td><code>3.5.0</code></td>
+<td><code>-</code></td>
             
 <td>The target runtime of the application.<br /><b>Default value is</b>: <code>NONE</code>.<br /><b>User property is</b>: <code>micronaut.runtime</code>.<br /></td>
           </tr>
@@ -271,15 +259,11 @@ application.<br /><b>User property is</b>: <code>mn.appArgs</code>.<br /></td>
             
 <td align="left"><code><a href="#nativeImageBuildArgs">&lt;nativeImageBuildArgs&gt;</a></code></td>
             
-<td><code>List</code></td>
+<td><code>List&lt;String&gt;</code></td>
             
-<td><code>3.5.0</code></td>
+<td><code>-</code></td>
             
-<td>Additional arguments that will be passed to the
-<code>native-image</code> executable. Note that this will only be
-used when using a packaging of type <code>docker-native</code>. For
-<code>native-image</code> packaging you should use the <a class="externalLink" href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization">Native
-Image Maven Plugin</a> configuration options.<br /><b>User property is</b>: <code>micronaut.native-image.args</code>.<br /></td>
+<td>Additional arguments that will be passed to the <code>native-image</code> executable. Note that this will only be used when using a packaging of type <code>docker-native</code>. For <code>native-image</code> packaging you should use the <a class="externalLink" href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization"> Native Image Maven Plugin </a> configuration options.<br /><b>User property is</b>: <code>micronaut.native-image.args</code>.<br /></td>
           </tr>
           
 <tr class="b">
@@ -288,7 +272,7 @@ Image Maven Plugin</a> configuration options.<br /><b>User property is</b>: <cod
             
 <td><code>String</code></td>
             
-<td><code>3.5.0</code></td>
+<td><code>-</code></td>
             
 <td>(no description)<br /><b>Default value is</b>: <code>curl --output /dev/null --silent --head http://localhost:8080</code>.<br /><b>User property is</b>: <code>crac.readiness</code>.<br /></td>
           </tr>
@@ -299,10 +283,9 @@ Image Maven Plugin</a> configuration options.<br /><b>User property is</b>: <cod
             
 <td><code>Boolean</code></td>
             
-<td><code>3.5.0</code></td>
+<td><code>-</code></td>
             
-<td>Whether to produce a static native image when using
-<code>docker-native</code> packaging.<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>micronaut.native-image.static</code>.<br /></td>
+<td>Whether to produce a static native image when using <code>docker-native</code> packaging.<br /><b>Default value is</b>: <code>false</code>.<br /><b>User property is</b>: <code>micronaut.native-image.static</code>.<br /></td>
           </tr>
         </table>
       </section>
@@ -311,14 +294,11 @@ Image Maven Plugin</a> configuration options.<br /><b>User property is</b>: <cod
         <section>
 <h4><a name="a.3CappArguments.3E"></a><b><a name="appArguments">&lt;appArguments&gt;</a></b></h4>
         
-<div>List of additional arguments that will be passed to the
-application.</div>
+<div>List of additional arguments that will be passed to the application.</div>
         
 <ul>
           
-<li><b>Type</b>: <code>java.util.List</code></li>
-          
-<li><b>Since</b>: <code>3.5.0</code></li>
+<li><b>Type</b>: <code>java.util.List&lt;java.lang.String&gt;</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
           
@@ -348,8 +328,6 @@ application.</div>
           
 <li><b>Type</b>: <code>java.lang.String</code></li>
           
-<li><b>Since</b>: <code>3.5.0</code></li>
-          
 <li><b>Required</b>: <code>No</code></li>
           
 <li><b>User Property</b>: <code>crac.checkpoint.network</code></li>
@@ -362,8 +340,6 @@ application.</div>
           
 <li><b>Type</b>: <code>java.lang.Integer</code></li>
           
-<li><b>Since</b>: <code>3.5.0</code></li>
-          
 <li><b>Required</b>: <code>No</code></li>
           
 <li><b>User Property</b>: <code>crac.checkpoint.timeout</code></li>
@@ -372,14 +348,11 @@ application.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CmainClass.3E"></a><b><a name="mainClass">&lt;mainClass&gt;</a></b></h4>
         
-<div>The main class of the application, as defined in the <a class="externalLink" href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec
-Maven Plugin</a>.</div>
+<div>The main class of the application, as defined in the <a class="externalLink" href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.</div>
         
 <ul>
           
 <li><b>Type</b>: <code>java.lang.String</code></li>
-          
-<li><b>Since</b>: <code>3.5.0</code></li>
           
 <li><b>Required</b>: <code>Yes</code></li>
           
@@ -393,8 +366,6 @@ Maven Plugin</a>.</div>
           
 <li><b>Type</b>: <code>java.lang.String</code></li>
           
-<li><b>Since</b>: <code>3.5.0</code></li>
-          
 <li><b>Required</b>: <code>No</code></li>
           
 <li><b>User Property</b>: <code>micronaut.runtime</code></li>
@@ -403,17 +374,11 @@ Maven Plugin</a>.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CnativeImageBuildArgs.3E"></a><b><a name="nativeImageBuildArgs">&lt;nativeImageBuildArgs&gt;</a></b></h4>
         
-<div>Additional arguments that will be passed to the
-<code>native-image</code> executable. Note that this will only be
-used when using a packaging of type <code>docker-native</code>. For
-<code>native-image</code> packaging you should use the <a class="externalLink" href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization">Native
-Image Maven Plugin</a> configuration options.</div>
+<div>Additional arguments that will be passed to the <code>native-image</code> executable. Note that this will only be used when using a packaging of type <code>docker-native</code>. For <code>native-image</code> packaging you should use the <a class="externalLink" href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization"> Native Image Maven Plugin </a> configuration options.</div>
         
 <ul>
           
-<li><b>Type</b>: <code>java.util.List</code></li>
-          
-<li><b>Since</b>: <code>3.5.0</code></li>
+<li><b>Type</b>: <code>java.util.List&lt;java.lang.String&gt;</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
           
@@ -427,8 +392,6 @@ Image Maven Plugin</a> configuration options.</div>
           
 <li><b>Type</b>: <code>java.lang.String</code></li>
           
-<li><b>Since</b>: <code>3.5.0</code></li>
-          
 <li><b>Required</b>: <code>No</code></li>
           
 <li><b>User Property</b>: <code>crac.readiness</code></li>
@@ -437,14 +400,11 @@ Image Maven Plugin</a> configuration options.</div>
         </ul><hr /></section><section>
 <h4><a name="a.3CstaticNativeImage.3E"></a><b><a name="staticNativeImage">&lt;staticNativeImage&gt;</a></b></h4>
         
-<div>Whether to produce a static native image when using
-<code>docker-native</code> packaging.</div>
+<div>Whether to produce a static native image when using <code>docker-native</code> packaging.</div>
         
 <ul>
           
 <li><b>Type</b>: <code>java.lang.Boolean</code></li>
-          
-<li><b>Since</b>: <code>3.5.0</code></li>
           
 <li><b>Required</b>: <code>No</code></li>
           
