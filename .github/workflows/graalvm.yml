@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: ['11', '17']
+        java: ['17']
         graalvm: ['latest', 'dev']
     steps:
       # https://github.com/actions/virtual-environments/issues/709
@@ -27,8 +27,8 @@ jobs:
       - name: Install Java and Maven and set up Apache Maven Central
         uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
-          java-version: '8'
+          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
           server-password: GH_TOKEN
       - name: Cache Maven packages
         uses: actions/cache@v3
