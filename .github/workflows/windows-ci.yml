@@ -13,7 +13,7 @@ jobs:
     runs-on: windows-2019
     strategy:
       matrix:
-        java: ['11', '17']
+        java: ['17']
         graalvm: ['latest', 'dev']
     steps:
       - uses: actions/checkout@v3
