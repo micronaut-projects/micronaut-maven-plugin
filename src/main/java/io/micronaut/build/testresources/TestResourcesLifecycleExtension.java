@@ -99,11 +99,11 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
                     Log log = new DefaultLog(new ConsoleLogger());
                     File buildDirectory = new File(build.getDirectory());
 
-                    StopTestResourcesHelper helper = new StopTestResourcesHelper(enabled, keepAlive, shared, log, buildDirectory);
+                    TestResourcesHelper helper = new TestResourcesHelper(enabled, keepAlive, shared, buildDirectory);
                     try {
-                        helper.stopTestResources();
+                        helper.stop();
                     } catch (Exception e) {
-                        //no op
+                        log.error(e.getMessage(), e);
                     }
                 });
             });

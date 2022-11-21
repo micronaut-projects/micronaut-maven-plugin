@@ -5,6 +5,7 @@ target/
 .classpath
 .project
 .factorypath
+.micronaut/
 
 # Ignore Gradle GUI config
 gradle-app.setting

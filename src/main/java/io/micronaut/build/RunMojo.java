@@ -22,25 +22,14 @@ import io.micronaut.build.services.CompilerService;
 import io.micronaut.build.services.DependencyResolutionService;
 import io.micronaut.build.services.ExecutorService;
 import io.micronaut.build.testresources.AbstractTestResourcesMojo;
-import io.micronaut.build.testresources.StartTestResourcesServerMojo;
-import io.micronaut.build.testresources.StopTestResourcesServerMojo;
+import io.micronaut.build.testresources.TestResourcesHelper;
 import io.micronaut.testresources.buildtools.ServerUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.Execute;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.ProjectBuilder;
-import org.apache.maven.project.ProjectBuildingException;
-import org.apache.maven.project.ProjectBuildingRequest;
-import org.apache.maven.project.ProjectBuildingResult;
-import org.apache.maven.project.ProjectDependenciesResolver;
+import org.apache.maven.plugins.annotations.*;
+import org.apache.maven.project.*;
 import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.util.AbstractScanner;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
@@ -54,19 +43,11 @@ import javax.inject.Inject;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static io.micronaut.build.MojoUtils.findJavaExecutable;
 import static io.micronaut.build.services.DependencyResolutionService.testResourcesModuleToAetherArtifact;
-import static io.micronaut.build.testresources.AbstractTestResourcesMojo.CONFIG_PROPERTY_PREFIX;
-import static io.micronaut.build.testresources.AbstractTestResourcesMojo.DISABLED;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isReadable;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
@@ -85,7 +66,7 @@ import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 @SuppressWarnings("unused")
 @Mojo(name = "run", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PREPARE_PACKAGE)
 @Execute(phase = LifecyclePhase.PROCESS_CLASSES)
-public class RunMojo extends AbstractMojo {
+public class RunMojo extends AbstractTestResourcesMojo {
 
     public static final String MN_APP_ARGS = "mn.appArgs";
     public static final String EXEC_MAIN_CLASS = "${exec.mainClass}";
@@ -102,7 +83,6 @@ public class RunMojo extends AbstractMojo {
     }
 
     private final MavenSession mavenSession;
-    private final ProjectDependenciesResolver resolver;
     private final ProjectBuilder projectBuilder;
     private final ToolchainManager toolchainManager;
     private final String javaExecutable;
@@ -184,26 +164,6 @@ public class RunMojo extends AbstractMojo {
     @Parameter(property = "micronaut.aot.enabled", defaultValue = "false")
     private boolean aotEnabled;
 
-    /**
-     * Whether to enable or disable Micronaut test resources support.
-     */
-    @Parameter(property = CONFIG_PROPERTY_PREFIX + "enabled", defaultValue = "false")
-    private boolean testResourcesEnabled;
-
-    /**
-     * Whether the test resources service should be shared between independent builds
-     * (e.g different projects, even built with different build tools).
-     */
-    @Parameter(property = CONFIG_PROPERTY_PREFIX + "shared", defaultValue = DISABLED)
-    private boolean sharedTestResources;
-
-    /**
-     * Micronaut Test Resources version. Should be defined by the Micronaut BOM, but this parameter can be used to
-     * define a different version.
-     */
-    @Parameter(property = CONFIG_PROPERTY_PREFIX + "version", required = true)
-    private String testResourcesVersion;
-
     private MavenProject mavenProject;
     private DirectoryWatcher directoryWatcher;
     private Process process;
@@ -211,13 +171,13 @@ public class RunMojo extends AbstractMojo {
     private int classpathHash;
     private long lastCompilation;
     private Map<String, Path> sourceDirectories;
+    private TestResourcesHelper testResourcesHelper;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     public RunMojo(MavenProject mavenProject,
                    MavenSession mavenSession,
                    BuildPluginManager pluginManager,
-                   ProjectDependenciesResolver resolver,
                    ProjectBuilder projectBuilder,
                    ToolchainManager toolchainManager,
                    CompilerService compilerService,
@@ -225,7 +185,6 @@ public class RunMojo extends AbstractMojo {
                    DependencyResolutionService dependencyResolutionService) {
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
-        this.resolver = resolver;
         this.projectBuilder = projectBuilder;
         this.projectRootDirectory = mavenProject.getBasedir().toPath();
         this.toolchainManager = toolchainManager;
@@ -237,48 +196,55 @@ public class RunMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
+        testResourcesHelper = new TestResourcesHelper(testResourcesEnabled, keepAlive, shared, buildDirectory,
+                                                      explicitPort, clientTimeout, mavenProject, mavenSession,
+                                                      dependencyResolutionService, toolchainManager, testResourcesVersion,
+                                                      classpathInference, testResourcesDependencies);
         resolveDependencies();
         this.sourceDirectories = compilerService.resolveSourceDirectories();
 
         try {
+            maybeStartTestResourcesServer();
             runApplication();
             Thread shutdownHook = new Thread(this::killProcess);
             Runtime.getRuntime().addShutdownHook(shutdownHook);
 
-            if (watchForChanges) {
-                List<Path> pathsToWatch = new ArrayList<>(sourceDirectories.values());
-                pathsToWatch.add(projectRootDirectory);
-                pathsToWatch.add(projectRootDirectory.resolve(RESOURCES_DIR));
+            if (process != null && process.isAlive()) {
+                if (watchForChanges) {
+                    List<Path> pathsToWatch = new ArrayList<>(sourceDirectories.values());
+                    pathsToWatch.add(projectRootDirectory);
+                    pathsToWatch.add(projectRootDirectory.resolve(RESOURCES_DIR));
 
-                if (watches != null && !watches.isEmpty()) {
-                    for (FileSet fs : watches) {
-                        File directory = new File(fs.getDirectory());
-                        if (directory.exists()) {
-                            pathsToWatch.add(directory.toPath());
-                            //If neither includes nor excludes, add a default include
-                            if ((fs.getIncludes() == null || fs.getIncludes().isEmpty()) && (fs.getExcludes() == null || fs.getExcludes().isEmpty())) {
-                                fs.addInclude("**/*");
-                            }
-                        } else {
-                            if (getLog().isWarnEnabled()) {
-                                getLog().warn("The specified directory to watch doesn't exist: " + directory.getPath());
+                    if (watches != null && !watches.isEmpty()) {
+                        for (FileSet fs : watches) {
+                            File directory = new File(fs.getDirectory());
+                            if (directory.exists()) {
+                                pathsToWatch.add(directory.toPath());
+                                //If neither includes nor excludes, add a default include
+                                if ((fs.getIncludes() == null || fs.getIncludes().isEmpty()) && (fs.getExcludes() == null || fs.getExcludes().isEmpty())) {
+                                    fs.addInclude("**/*");
+                                }
+                            } else {
+                                if (getLog().isWarnEnabled()) {
+                                    getLog().warn("The specified directory to watch doesn't exist: " + directory.getPath());
+                                }
                             }
                         }
                     }
-                }
 
-                this.directoryWatcher = DirectoryWatcher
-                        .builder()
-                        .paths(pathsToWatch)
-                        .listener(this::handleEvent)
-                        .build();
+                    this.directoryWatcher = DirectoryWatcher
+                            .builder()
+                            .paths(pathsToWatch)
+                            .listener(this::handleEvent)
+                            .build();
 
-                if (getLog().isDebugEnabled()) {
-                    getLog().debug("Watching for changes...");
+                    if (getLog().isDebugEnabled()) {
+                        getLog().debug("Watching for changes...");
+                    }
+                    this.directoryWatcher.watch();
+                } else if (process != null && process.isAlive()) {
+                    process.waitFor();
                 }
-                this.directoryWatcher.watch();
-            } else if (process != null && process.isAlive()) {
-                process.waitFor();
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -481,10 +447,9 @@ public class RunMojo extends AbstractMojo {
 
     private void runApplication() throws Exception {
         runAotIfNeeded();
-        maybeStartTestResourcesServer();
         String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
         if (testResourcesEnabled) {
-            Path testResourcesSettingsDirectory = sharedTestResources ? ServerUtils.getDefaultSharedSettingsPath() :
+            Path testResourcesSettingsDirectory = shared ? ServerUtils.getDefaultSharedSettingsPath() :
                     AbstractTestResourcesMojo.serverSettingsDirectoryOf(targetDirectory.toPath());
             if (Files.isDirectory(testResourcesSettingsDirectory)) {
                 classpathArgument += File.pathSeparator + testResourcesSettingsDirectory.toAbsolutePath();
@@ -539,20 +504,12 @@ public class RunMojo extends AbstractMojo {
         }
     }
 
-    private void maybeStartTestResourcesServer() {
-        try {
-            executorService.executeGoal(THIS_PLUGIN, StartTestResourcesServerMojo.NAME);
-        } catch (MojoExecutionException e) {
-            getLog().error(e);
-        }
+    private void maybeStartTestResourcesServer() throws MojoExecutionException {
+        testResourcesHelper.start();
     }
 
-    private void maybeStopTestResourcesServer() {
-        try {
-            executorService.executeGoal(THIS_PLUGIN, StopTestResourcesServerMojo.NAME);
-        } catch (MojoExecutionException e) {
-            getLog().error(e);
-        }
+    private void maybeStopTestResourcesServer() throws MojoExecutionException {
+        testResourcesHelper.stop();
     }
 
     private boolean compileProject() {
