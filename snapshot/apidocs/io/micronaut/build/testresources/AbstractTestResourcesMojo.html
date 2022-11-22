@@ -118,7 +118,7 @@ var activeTableTab = "activeTableTab";
 </dl>
 <dl>
 <dt>Direct Known Subclasses:</dt>
-<dd><a href="../../../../io/micronaut/build/testresources/StartTestResourcesServerMojo.html" title="class in io.micronaut.build.testresources">StartTestResourcesServerMojo</a>, <a href="../../../../io/micronaut/build/testresources/StopTestResourcesServerMojo.html" title="class in io.micronaut.build.testresources">StopTestResourcesServerMojo</a></dd>
+<dd><a href="../../../../io/micronaut/build/RunMojo.html" title="class in io.micronaut.build">RunMojo</a>, <a href="../../../../io/micronaut/build/testresources/StartTestResourcesServerMojo.html" title="class in io.micronaut.build.testresources">StartTestResourcesServerMojo</a>, <a href="../../../../io/micronaut/build/testresources/StopTestResourcesServerMojo.html" title="class in io.micronaut.build.testresources">StopTestResourcesServerMojo</a></dd>
 </dl>
 <hr>
 <br>
@@ -148,6 +148,19 @@ extends org.apache.maven.plugin.AbstractMojo</pre>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#buildDirectory">buildDirectory</a></span></code>&nbsp;</td>
 </tr>
 <tr class="rowColor">
+<td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Boolean.html?is-external=true" title="class or interface in java.lang">Boolean</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#classpathInference">classpathInference</a></span></code>
+<div class="block">If set to true, Micronaut will attempt to infer which dependencies should be added to the Test Resources server
+ classpath, based on the project dependencies.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html?is-external=true" title="class or interface in java.lang">Integer</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#clientTimeout">clientTimeout</a></span></code>
+<div class="block">Configures the maximum amount of time to wait for the server to start a test resource.</div>
+</td>
+</tr>
+<tr class="rowColor">
 <td class="colFirst"><code>static <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#CONFIG_PROPERTY_PREFIX">CONFIG_PROPERTY_PREFIX</a></span></code>&nbsp;</td>
 </tr>
@@ -156,22 +169,42 @@ extends org.apache.maven.plugin.AbstractMojo</pre>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#DISABLED">DISABLED</a></span></code>&nbsp;</td>
 </tr>
 <tr class="rowColor">
+<td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html?is-external=true" title="class or interface in java.lang">Integer</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#explicitPort">explicitPort</a></span></code>
+<div class="block">By default, the Test Resources server will be started on a random (available) port, but it can be set a fixed port
+ by using this parameter.</div>
+</td>
+</tr>
+<tr class="altColor">
 <td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Boolean.html?is-external=true" title="class or interface in java.lang">Boolean</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#keepAlive">keepAlive</a></span></code>
 <div class="block">Whether the test resources service should be kept alive after the build.</div>
 </td>
 </tr>
-<tr class="altColor">
+<tr class="rowColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#shared">shared</a></span></code>
 <div class="block">Whether the test resources service should be shared between independent builds
  (e.g different projects, even built with different build tools).</div>
 </td>
 </tr>
+<tr class="altColor">
+<td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/util/List.html?is-external=true" title="class or interface in java.util">List</a>&lt;org.apache.maven.model.Dependency&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#testResourcesDependencies">testResourcesDependencies</a></span></code>
+<div class="block">Additional dependencies to add to the Test Resources server classpath when not using classpath inference, or when
+ the inference doesn't produce the desired result.</div>
+</td>
+</tr>
 <tr class="rowColor">
 <td class="colFirst"><code>protected boolean</code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#testResourcesEnabled">testResourcesEnabled</a></span></code>
 <div class="block">Whether to enable or disable Micronaut test resources support.</div>
+</td>
+</tr>
+<tr class="altColor">
+<td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#testResourcesVersion">testResourcesVersion</a></span></code>
+<div class="block">Micronaut Test Resources version.</div>
 </td>
 </tr>
 </table>
@@ -327,12 +360,75 @@ protected&nbsp;boolean shared</pre>
 <a name="buildDirectory">
 <!--   -->
 </a>
-<ul class="blockListLast">
+<ul class="blockList">
 <li class="blockList">
 <h4>buildDirectory</h4>
 <pre>@Parameter(defaultValue="${project.build.directory}",
            required=true)
 protected&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/io/File.html?is-external=true" title="class or interface in java.io">File</a> buildDirectory</pre>
+</li>
+</ul>
+<a name="testResourcesVersion">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>testResourcesVersion</h4>
+<pre>@Parameter(property="micronaut.test.resources.version",
+           required=true)
+protected&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a> testResourcesVersion</pre>
+<div class="block">Micronaut Test Resources version. Should be defined by the Micronaut BOM, but this parameter can be used to
+ define a different version.</div>
+</li>
+</ul>
+<a name="classpathInference">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>classpathInference</h4>
+<pre>@Parameter(defaultValue="true")
+protected&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Boolean.html?is-external=true" title="class or interface in java.lang">Boolean</a> classpathInference</pre>
+<div class="block">If set to true, Micronaut will attempt to infer which dependencies should be added to the Test Resources server
+ classpath, based on the project dependencies. In general the result will consist of modules from the
+ test-resources project, but it may consist of additional entries, for example database drivers.</div>
+</li>
+</ul>
+<a name="testResourcesDependencies">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>testResourcesDependencies</h4>
+<pre>@Parameter
+protected&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/util/List.html?is-external=true" title="class or interface in java.util">List</a>&lt;org.apache.maven.model.Dependency&gt; testResourcesDependencies</pre>
+<div class="block">Additional dependencies to add to the Test Resources server classpath when not using classpath inference, or when
+ the inference doesn't produce the desired result.</div>
+</li>
+</ul>
+<a name="explicitPort">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>explicitPort</h4>
+<pre>@Parameter(property="micronaut.test.resources.port")
+protected&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html?is-external=true" title="class or interface in java.lang">Integer</a> explicitPort</pre>
+<div class="block">By default, the Test Resources server will be started on a random (available) port, but it can be set a fixed port
+ by using this parameter.</div>
+</li>
+</ul>
+<a name="clientTimeout">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>clientTimeout</h4>
+<pre>@Parameter(property="micronaut.test.resources.client-timeout",
+           defaultValue="60")
+protected&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html?is-external=true" title="class or interface in java.lang">Integer</a> clientTimeout</pre>
+<div class="block">Configures the maximum amount of time to wait for the server to start a test resource. Some containeres may take
+ a long amount of time to start with slow internet connections.</div>
 </li>
 </ul>
 </li>

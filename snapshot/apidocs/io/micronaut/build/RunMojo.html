@@ -103,7 +103,12 @@ var activeTableTab = "activeTableTab";
 <li>org.apache.maven.plugin.AbstractMojo</li>
 <li>
 <ul class="inheritance">
+<li><a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">io.micronaut.build.testresources.AbstractTestResourcesMojo</a></li>
+<li>
+<ul class="inheritance">
 <li>io.micronaut.build.RunMojo</li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -123,7 +128,7 @@ var activeTableTab = "activeTableTab";
       defaultPhase=PREPARE_PACKAGE)
  @Execute(phase=PROCESS_CLASSES)
 public class <span class="typeNameLabel">RunMojo</span>
-extends org.apache.maven.plugin.AbstractMojo</pre>
+extends <a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></pre>
 <div class="block"><p>Executes a Micronaut application in development mode.</p>
 
  <p>It watches for changes in the project tree. If there are changes in the <code>pom.xml</code> file, dependencies will be reloaded. If
@@ -172,6 +177,13 @@ extends org.apache.maven.plugin.AbstractMojo</pre>
 </tr>
 </table>
 <ul class="blockList">
+<li class="blockList"><a name="fields.inherited.from.class.io.micronaut.build.testresources.AbstractTestResourcesMojo">
+<!--   -->
+</a>
+<h3>Fields inherited from class&nbsp;io.micronaut.build.testresources.<a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></h3>
+<code><a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#buildDirectory">buildDirectory</a>, <a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#classpathInference">classpathInference</a>, <a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#clientTimeout">clientTimeout</a>, <a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#CONFIG_PROPERTY_PREFIX">CONFIG_PROPERTY_PREFIX</a>, <a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#DISABLED">DISABLED</a>, <a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#explicitPort">explicitPort</a>, <a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#keepAlive">keepAlive</a>, <a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#shared">shared</a>, <a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#testResourcesDependencies">testResourcesDependencies</a>, <a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#testResourcesEnabled">testResourcesEnabled</a>, <a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#testResourcesVersion">testResourcesVersion</a></code></li>
+</ul>
+<ul class="blockList">
 <li class="blockList"><a name="fields.inherited.from.class.org.apache.maven.plugin.Mojo">
 <!--   -->
 </a>
@@ -192,10 +204,9 @@ extends org.apache.maven.plugin.AbstractMojo</pre>
 <th class="colOne" scope="col">Constructor and Description</th>
 </tr>
 <tr class="altColor">
-<td class="colOne"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/RunMojo.html#RunMojo-org.apache.maven.project.MavenProject-org.apache.maven.execution.MavenSession-org.apache.maven.plugin.BuildPluginManager-org.apache.maven.project.ProjectDependenciesResolver-org.apache.maven.project.ProjectBuilder-org.apache.maven.toolchain.ToolchainManager-io.micronaut.build.services.CompilerService-io.micronaut.build.services.ExecutorService-io.micronaut.build.services.DependencyResolutionService-">RunMojo</a></span>(org.apache.maven.project.MavenProject&nbsp;mavenProject,
+<td class="colOne"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/RunMojo.html#RunMojo-org.apache.maven.project.MavenProject-org.apache.maven.execution.MavenSession-org.apache.maven.plugin.BuildPluginManager-org.apache.maven.project.ProjectBuilder-org.apache.maven.toolchain.ToolchainManager-io.micronaut.build.services.CompilerService-io.micronaut.build.services.ExecutorService-io.micronaut.build.services.DependencyResolutionService-">RunMojo</a></span>(org.apache.maven.project.MavenProject&nbsp;mavenProject,
        org.apache.maven.execution.MavenSession&nbsp;mavenSession,
        org.apache.maven.plugin.BuildPluginManager&nbsp;pluginManager,
-       org.apache.maven.project.ProjectDependenciesResolver&nbsp;resolver,
        org.apache.maven.project.ProjectBuilder&nbsp;projectBuilder,
        org.apache.maven.toolchain.ToolchainManager&nbsp;toolchainManager,
        <a href="../../../io/micronaut/build/services/CompilerService.html" title="class in io.micronaut.build.services">CompilerService</a>&nbsp;compilerService,
@@ -222,6 +233,13 @@ extends org.apache.maven.plugin.AbstractMojo</pre>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../io/micronaut/build/RunMojo.html#execute--">execute</a></span>()</code>&nbsp;</td>
 </tr>
 </table>
+<ul class="blockList">
+<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.build.testresources.AbstractTestResourcesMojo">
+<!--   -->
+</a>
+<h3>Methods inherited from class&nbsp;io.micronaut.build.testresources.<a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></h3>
+<code><a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#getKeepAliveFile--">getKeepAliveFile</a>, <a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#getServerSettingsDirectory--">getServerSettingsDirectory</a>, <a href="../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#serverSettingsDirectoryOf-java.nio.file.Path-">serverSettingsDirectoryOf</a></code></li>
+</ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.org.apache.maven.plugin.AbstractMojo">
 <!--   -->
@@ -310,7 +328,7 @@ extends org.apache.maven.plugin.AbstractMojo</pre>
 <!--   -->
 </a>
 <h3>Constructor Detail</h3>
-<a name="RunMojo-org.apache.maven.project.MavenProject-org.apache.maven.execution.MavenSession-org.apache.maven.plugin.BuildPluginManager-org.apache.maven.project.ProjectDependenciesResolver-org.apache.maven.project.ProjectBuilder-org.apache.maven.toolchain.ToolchainManager-io.micronaut.build.services.CompilerService-io.micronaut.build.services.ExecutorService-io.micronaut.build.services.DependencyResolutionService-">
+<a name="RunMojo-org.apache.maven.project.MavenProject-org.apache.maven.execution.MavenSession-org.apache.maven.plugin.BuildPluginManager-org.apache.maven.project.ProjectBuilder-org.apache.maven.toolchain.ToolchainManager-io.micronaut.build.services.CompilerService-io.micronaut.build.services.ExecutorService-io.micronaut.build.services.DependencyResolutionService-">
 <!--   -->
 </a>
 <ul class="blockListLast">
@@ -320,7 +338,6 @@ extends org.apache.maven.plugin.AbstractMojo</pre>
 public&nbsp;RunMojo(org.apache.maven.project.MavenProject&nbsp;mavenProject,
                        org.apache.maven.execution.MavenSession&nbsp;mavenSession,
                        org.apache.maven.plugin.BuildPluginManager&nbsp;pluginManager,
-                       org.apache.maven.project.ProjectDependenciesResolver&nbsp;resolver,
                        org.apache.maven.project.ProjectBuilder&nbsp;projectBuilder,
                        org.apache.maven.toolchain.ToolchainManager&nbsp;toolchainManager,
                        <a href="../../../io/micronaut/build/services/CompilerService.html" title="class in io.micronaut.build.services">CompilerService</a>&nbsp;compilerService,

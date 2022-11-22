@@ -107,11 +107,11 @@
 <a class="jxr_linenumber" name="L99" href="#L99">99</a>                      Log log = <strong class="jxr_keyword">new</strong> DefaultLog(<strong class="jxr_keyword">new</strong> ConsoleLogger());
 <a class="jxr_linenumber" name="L100" href="#L100">100</a>                     File buildDirectory = <strong class="jxr_keyword">new</strong> File(build.getDirectory());
 <a class="jxr_linenumber" name="L101" href="#L101">101</a> 
-<a class="jxr_linenumber" name="L102" href="#L102">102</a>                     <a name="StopTestResourcesHelper" href="../../../../io/micronaut/build/testresources/StopTestResourcesHelper.html#StopTestResourcesHelper">StopTestResourcesHelper</a> helper = <strong class="jxr_keyword">new</strong> <a name="StopTestResourcesHelper" href="../../../../io/micronaut/build/testresources/StopTestResourcesHelper.html#StopTestResourcesHelper">StopTestResourcesHelper</a>(enabled, keepAlive, shared, log, buildDirectory);
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>                     <a name="TestResourcesHelper" href="../../../../io/micronaut/build/testresources/TestResourcesHelper.html#TestResourcesHelper">TestResourcesHelper</a> helper = <strong class="jxr_keyword">new</strong> <a name="TestResourcesHelper" href="../../../../io/micronaut/build/testresources/TestResourcesHelper.html#TestResourcesHelper">TestResourcesHelper</a>(enabled, keepAlive, shared, buildDirectory);
 <a class="jxr_linenumber" name="L103" href="#L103">103</a>                     <strong class="jxr_keyword">try</strong> {
-<a class="jxr_linenumber" name="L104" href="#L104">104</a>                         helper.stopTestResources();
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>                         helper.stop();
 <a class="jxr_linenumber" name="L105" href="#L105">105</a>                     } <strong class="jxr_keyword">catch</strong> (Exception e) {
-<a class="jxr_linenumber" name="L106" href="#L106">106</a>                         <em class="jxr_comment">//no op</em>
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>                         log.error(e.getMessage(), e);
 <a class="jxr_linenumber" name="L107" href="#L107">107</a>                     }
 <a class="jxr_linenumber" name="L108" href="#L108">108</a>                 });
 <a class="jxr_linenumber" name="L109" href="#L109">109</a>             });
