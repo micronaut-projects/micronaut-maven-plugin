@@ -23,6 +23,7 @@
     <micronaut.aot.enabled>true</micronaut.aot.enabled>
     <micronaut.aot.packageName>io.micronaut.build.examples</micronaut.aot.packageName>
     <micronaut.test.resources.enabled>true</micronaut.test.resources.enabled>
+    <maven.native.plugin.version>0.9.18</maven.native.plugin.version>
   </properties>
 
   <repositories>

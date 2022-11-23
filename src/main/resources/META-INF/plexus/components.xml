@@ -74,7 +74,7 @@
                                 org.apache.maven.plugins:maven-jar-plugin:jar
                             </prepare-package>
                             <package>
-                                org.graalvm.buildtools:native-maven-plugin:build
+                                org.graalvm.buildtools:native-maven-plugin:compile
                             </package>
                         </phases>
                     </lifecycle>
