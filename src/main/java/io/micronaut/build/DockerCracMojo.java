@@ -142,11 +142,13 @@ public class DockerCracMojo extends AbstractDockerMojo {
     private void buildDockerCrac() throws IOException, InvalidImageReferenceException, MavenFilteringException {
         String checkpointImage = buildCheckpointDockerfile();
         getLog().info("CRaC Checkpoint image: " + checkpointImage);
+        File checkpointDir = new File(mavenProject.getBuild().getDirectory(), "cr");
+        checkpointDir.mkdirs();
         dockerService.runPrivilegedImageAndWait(
                 checkpointImage,
                 checkpointTimeoutSeconds,
                 checkpointNetworkName,
-                new File(mavenProject.getBuild().getDirectory(), "cr").getAbsolutePath() + ":/home/app/cr"
+                checkpointDir.getAbsolutePath() + ":/home/app/cr"
         );
         buildFinalDockerfile(checkpointImage);
     }
