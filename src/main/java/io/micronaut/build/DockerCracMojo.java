@@ -143,6 +143,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
         String checkpointImage = buildCheckpointDockerfile();
         getLog().info("CRaC Checkpoint image: " + checkpointImage);
         File checkpointDir = new File(mavenProject.getBuild().getDirectory(), "cr");
+        // We need to make this folder first, or else Docker on linux will make it as root and break clean on CI
         checkpointDir.mkdirs();
         dockerService.runPrivilegedImageAndWait(
                 checkpointImage,

@@ -31,11 +31,7 @@ jobs:
 
       - name: Run tests
         run: |
-          mvn install && mvn verify -Prun-its "-Dinvoker.test=package-docker-crac"
-
-      - name: DEBUG
-        run: |
-          ls -lh "/home/runner/work/micronaut-maven-plugin/micronaut-maven-plugin/target/it/package-docker-crac/target"; echo "===="; ls -lh "/home/runner/work/micronaut-maven-plugin/micronaut-maven-plugin/target/it/package-docker-crac/target/cr";
+          mvn install && mvn verify -Prun-its
 
       - name: Publish Test Report
         if: always()
