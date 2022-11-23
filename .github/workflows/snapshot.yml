@@ -33,6 +33,10 @@ jobs:
         run: |
           mvn install && mvn verify -Prun-its
 
+      - name: DEBUG
+        run: |
+          for file in $(ls /home/runner/work/micronaut-maven-plugin/micronaut-maven-plugin/target/it); do echo "------------------------" echo $file; echo ""; ls -lh "/home/runner/work/micronaut-maven-plugin/micronaut-maven-plugin/target/it/$file"; echo "===="; ls -lh "/home/runner/work/micronaut-maven-plugin/micronaut-maven-plugin/target/it/$file/cr"; done
+
       - name: Publish Test Report
         if: always()
         uses: mikepenz/action-junit-report@v3.5.2
