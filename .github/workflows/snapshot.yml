@@ -35,7 +35,7 @@ jobs:
 
       - name: DEBUG
         run: |
-          ls -lh "/home/runner/work/micronaut-maven-plugin/micronaut-maven-plugin/target/it/package-docker-crac"; echo "===="; ls -lh "/home/runner/work/micronaut-maven-plugin/micronaut-maven-plugin/target/it/package-docker-crac/target/cr";
+          ls -lh "/home/runner/work/micronaut-maven-plugin/micronaut-maven-plugin/target/it/package-docker-crac/target"; echo "===="; ls -lh "/home/runner/work/micronaut-maven-plugin/micronaut-maven-plugin/target/it/package-docker-crac/target/cr";
 
       - name: Publish Test Report
         if: always()
