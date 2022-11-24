@@ -35,7 +35,7 @@ jobs:
 
       - name: Publish Test Report
         if: always()
-        uses: mikepenz/action-junit-report@v3.6.0
+        uses: mikepenz/action-junit-report@v3.6.1
         with:
           check_name: Java CI / Test Report
           report_paths: '**/target/invoker-reports/TEST-*.xml'
