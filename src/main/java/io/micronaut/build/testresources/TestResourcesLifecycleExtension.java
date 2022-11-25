@@ -117,6 +117,10 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
                     File buildDirectory = new File(build.getDirectory());
 
                     TestResourcesHelper helper = new TestResourcesHelper(enabled, keepAlive, shared, buildDirectory);
+                    if (shared) {
+                        String sharedServerNamespace = findSharedServerNamespace(evaluator, configuration);
+                        helper.setSharedServerNamespace(sharedServerNamespace);
+                    }
                     try {
                         helper.stop();
                     } catch (Exception e) {
@@ -125,6 +129,20 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
                 });
             });
         }
+    }
+
+    private String findSharedServerNamespace(ExpressionEvaluator evaluator, TestResourcesConfiguration configuration) {
+        try {
+            String result = (String) evaluator.evaluate("${" + CONFIG_PROPERTY_PREFIX + "namespace" + "}");
+            if (result != null) {
+                return result;
+            } else if (configuration != null) {
+                return configuration.getSharedServerNamespace();
+            }
+        } catch (ExpressionEvaluationException e) {
+            return null;
+        }
+        return null;
     }
 
     private boolean isShared(ExpressionEvaluator evaluator, TestResourcesConfiguration configuration) {

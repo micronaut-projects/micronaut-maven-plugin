@@ -279,4 +279,11 @@ public class TestResourcesHelper {
     private Path serverSettingsDirectoryOf(Path buildDir) {
         return buildDir.resolve("../.micronaut/test-resources");
     }
+
+    /**
+     * @param sharedServerNamespace The shared server namespace (if any).
+     */
+    public void setSharedServerNamespace(String sharedServerNamespace) {
+        this.sharedServerNamespace = sharedServerNamespace;
+    }
 }

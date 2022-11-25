@@ -84,15 +84,6 @@ public abstract class AbstractTestResourcesMojo extends TestResourcesConfigurati
     @Parameter(property = CONFIG_PROPERTY_PREFIX + "client-timeout", defaultValue = DEFAULT_CLIENT_TIMEOUT)
     protected Integer clientTimeout = Integer.valueOf(DEFAULT_CLIENT_TIMEOUT);
 
-    /**
-     * Allows configuring a namespace for the shared test resources server. This can be used in case it makes sense to
-     * have different instances of shared services, for example when independent builds sets share different services.
-     *
-     * @since 3.5.1
-     */
-    @Parameter(property = CONFIG_PROPERTY_PREFIX + "namespace")
-    protected String sharedServerNamespace;
-
     public static Path serverSettingsDirectoryOf(Path buildDir) {
         return buildDir.resolve("../.micronaut/test-resources");
     }

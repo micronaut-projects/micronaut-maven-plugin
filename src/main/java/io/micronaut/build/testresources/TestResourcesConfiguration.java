@@ -58,6 +58,15 @@ public class TestResourcesConfiguration {
     protected boolean keepAlive;
 
     /**
+     * Allows configuring a namespace for the shared test resources server. This can be used in case it makes sense to
+     * have different instances of shared services, for example when independent builds sets share different services.
+     *
+     * @since 3.5.1
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + "namespace")
+    protected String sharedServerNamespace;
+
+    /**
      * @return Whether to enable or disable Micronaut test resources support.
      */
     public boolean isTestResourcesEnabled() {
@@ -76,5 +85,12 @@ public class TestResourcesConfiguration {
      */
     public boolean isKeepAlive() {
         return keepAlive;
+    }
+
+    /**
+     * @return The shared server namespace (if any).
+     */
+    public String getSharedServerNamespace() {
+        return sharedServerNamespace;
     }
 }
