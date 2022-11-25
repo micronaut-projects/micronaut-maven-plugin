@@ -59,6 +59,8 @@ public class TestResourcesHelper {
 
     private final File buildDirectory;
 
+    private final Log log;
+
     private Integer explicitPort;
 
     private Integer clientTimeout;
@@ -77,9 +79,14 @@ public class TestResourcesHelper {
 
     private List<Dependency> testResourcesDependencies;
 
-    private Log log;
+    private String sharedServerNamespace;
 
-    public TestResourcesHelper(boolean enabled, boolean keepAlive, boolean shared, File buildDirectory, Integer explicitPort, Integer clientTimeout, MavenProject mavenProject, MavenSession mavenSession, DependencyResolutionService dependencyResolutionService, ToolchainManager toolchainManager, String testResourcesVersion, boolean classpathInference, List<Dependency> testResourcesDependencies) {
+    public TestResourcesHelper(boolean enabled, boolean keepAlive, boolean shared, File buildDirectory,
+                               Integer explicitPort, Integer clientTimeout, MavenProject mavenProject,
+                               MavenSession mavenSession, DependencyResolutionService dependencyResolutionService,
+                               ToolchainManager toolchainManager, String testResourcesVersion,
+                               boolean classpathInference, List<Dependency> testResourcesDependencies,
+                               String sharedServerNamespace) {
         this(enabled, keepAlive, shared, buildDirectory);
         this.explicitPort = explicitPort;
         this.clientTimeout = clientTimeout;
@@ -90,6 +97,7 @@ public class TestResourcesHelper {
         this.testResourcesVersion = testResourcesVersion;
         this.classpathInference = classpathInference;
         this.testResourcesDependencies = testResourcesDependencies;
+        this.sharedServerNamespace = sharedServerNamespace;
     }
 
     public TestResourcesHelper(boolean enabled, boolean keepAlive, boolean shared, File buildDirectory) {
@@ -115,6 +123,13 @@ public class TestResourcesHelper {
     }
 
     private void doStart() throws DependencyResolutionException, IOException {
+        if (shared) {
+            if (sharedServerNamespace != null) {
+                log.info("Test Resources is configured in shared mode with the namespace: " + sharedServerNamespace);
+            } else {
+                log.info("Test Resources is configured in shared mode");
+            }
+        }
         String accessToken = UUID.randomUUID().toString();
         Path buildDir = buildDirectory.toPath();
         Path serverSettingsDirectory = getServerSettingsDirectory();
@@ -252,7 +267,7 @@ public class TestResourcesHelper {
 
     private Path getServerSettingsDirectory() {
         if (shared) {
-            return ServerUtils.getDefaultSharedSettingsPath();
+            return ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace);
         }
         return serverSettingsDirectoryOf(buildDirectory.toPath());
     }

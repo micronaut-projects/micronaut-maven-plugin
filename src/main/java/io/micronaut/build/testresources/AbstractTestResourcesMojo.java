@@ -15,45 +15,35 @@
  */
 package io.micronaut.build.testresources;
 
-import io.micronaut.testresources.buildtools.ServerUtils;
 import org.apache.maven.model.Dependency;
-import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.ContextEnabled;
+import org.apache.maven.plugin.Mojo;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
-
-import static io.micronaut.build.testresources.StopTestResourcesServerMojo.MICRONAUT_TEST_RESOURCES_KEEPALIVE;
+import java.util.Map;
 
 /**
  * Base mojo for Micronaut test resources service handling.
  */
-public abstract class AbstractTestResourcesMojo extends AbstractMojo {
-    public static final String DISABLED = "false";
-    public static final String CONFIG_PROPERTY_PREFIX = "micronaut.test.resources.";
+public abstract class AbstractTestResourcesMojo extends TestResourcesConfiguration implements Mojo, ContextEnabled {
 
     private static final String DEFAULT_CLASSPATH_INFERENCE = "true";
     private static final String DEFAULT_CLIENT_TIMEOUT = "60";
 
     /**
-     * Whether to enable or disable Micronaut test resources support.
+     * Instance logger.
      */
-    @Parameter(property =  CONFIG_PROPERTY_PREFIX + "enabled", defaultValue = DISABLED)
-    protected boolean testResourcesEnabled;
+    protected Log log;
 
     /**
-     * Whether the test resources service should be kept alive after the build.
+     * Plugin container context.
      */
-    @Parameter(property = MICRONAUT_TEST_RESOURCES_KEEPALIVE, defaultValue = DISABLED)
-    protected Boolean keepAlive = Boolean.valueOf(DISABLED);
-
-    /**
-     * Whether the test resources service should be shared between independent builds
-     * (e.g different projects, even built with different build tools).
-     */
-    @Parameter(property = CONFIG_PROPERTY_PREFIX + "shared", defaultValue = DISABLED)
-    protected boolean shared;
+    protected Map pluginContext;
 
     @Parameter(defaultValue = "${project.build.directory}", required = true)
     protected File buildDirectory;
@@ -94,19 +84,57 @@ public abstract class AbstractTestResourcesMojo extends AbstractMojo {
     @Parameter(property = CONFIG_PROPERTY_PREFIX + "client-timeout", defaultValue = DEFAULT_CLIENT_TIMEOUT)
     protected Integer clientTimeout = Integer.valueOf(DEFAULT_CLIENT_TIMEOUT);
 
-    protected final Path getServerSettingsDirectory() {
-        if (shared) {
-            return ServerUtils.getDefaultSharedSettingsPath();
-        }
-        return serverSettingsDirectoryOf(buildDirectory.toPath());
-    }
-
-    protected final Path getKeepAliveFile() {
-        return getServerSettingsDirectory().resolve("keepalive");
-    }
+    /**
+     * Allows configuring a namespace for the shared test resources server. This can be used in case it makes sense to
+     * have different instances of shared services, for example when independent builds sets share different services.
+     *
+     * @since 3.5.1
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + "namespace")
+    protected String sharedServerNamespace;
 
     public static Path serverSettingsDirectoryOf(Path buildDir) {
         return buildDir.resolve("../.micronaut/test-resources");
+    }
+
+    /**
+     * @see org.apache.maven.plugin.Mojo#setLog(org.apache.maven.plugin.logging.Log)
+     */
+    public void setLog(Log log) {
+        this.log = log;
+    }
+
+    /**
+     * Returns the logger that has been injected into this mojo. If no logger has been setup yet, a
+     * <code>SystemStreamLog</code> logger will be created and returned.
+     * <br/><br/>
+     * <strong>Note:</strong>
+     * The logger returned by this method must not be cached in an instance field during the construction of the mojo.
+     * This would cause the mojo to use a wrongly configured default logger when being run by Maven. The proper logger
+     * gets injected by the Plexus container <em>after</em> the mojo has been constructed. Therefore, simply call this
+     * method directly whenever you need the logger, it is fast enough and needs no caching.
+     *
+     * @see org.apache.maven.plugin.Mojo#getLog()
+     */
+    public Log getLog() {
+        if (log == null) {
+            log = new SystemStreamLog();
+        }
+        return log;
+    }
+
+    /**
+     * @see org.apache.maven.plugin.ContextEnabled#getPluginContext()
+     */
+    public Map getPluginContext() {
+        return pluginContext;
+    }
+
+    /**
+     * @see org.apache.maven.plugin.ContextEnabled#setPluginContext(java.util.Map)
+     */
+    public void setPluginContext(Map pluginContext) {
+        this.pluginContext = pluginContext;
     }
 
 }

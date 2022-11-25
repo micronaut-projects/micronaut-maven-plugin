@@ -58,7 +58,7 @@ public class StartTestResourcesServerMojo extends AbstractTestResourcesMojo {
         TestResourcesHelper helper = new TestResourcesHelper(testResourcesEnabled, keepAlive, shared, buildDirectory,
                 explicitPort, clientTimeout, mavenProject, mavenSession,
                 dependencyResolutionService, toolchainManager, testResourcesVersion,
-                classpathInference, testResourcesDependencies);
+                classpathInference, testResourcesDependencies, sharedServerNamespace);
         helper.start();
 
     }
