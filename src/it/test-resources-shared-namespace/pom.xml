@@ -109,10 +109,6 @@
             <plugin>
                 <groupId>io.micronaut.build</groupId>
                 <artifactId>micronaut-maven-plugin</artifactId>
-                <configuration>
-                    <shared>true</shared>
-                    <sharedServerNamespace>my-namespace</sharedServerNamespace>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -155,4 +151,21 @@
             </plugin>
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>pomProperties</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.micronaut.build</groupId>
+                        <artifactId>micronaut-maven-plugin</artifactId>
+                        <configuration>
+                            <shared>true</shared>
+                            <sharedServerNamespace>my-namespace</sharedServerNamespace>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
