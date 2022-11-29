@@ -1,3 +1,3 @@
 File log = new File(basedir, 'build.log')
 assert log.exists()
-assert log.text.contains("Pushing image: alvarosanchez/demo:0.1")
+assert log.text.contains("Pushing image: us-phoenix-1.ocir.io/oraclelabs/micronaut-maven-plugin:0.1")
