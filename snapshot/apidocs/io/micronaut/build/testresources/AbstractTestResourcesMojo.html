@@ -18,7 +18,7 @@
     catch(err) {
     }
 //-->
-var methods = {"i0":10,"i1":10,"i2":9};
+var methods = {"i0":10,"i1":10,"i2":9,"i3":10,"i4":10};
 var tabs = {65535:["t0","All Methods"],1:["t1","Static Methods"],2:["t2","Instance Methods"],8:["t4","Concrete Methods"]};
 var altColor = "altColor";
 var rowColor = "rowColor";
@@ -100,7 +100,7 @@ var activeTableTab = "activeTableTab";
 <li><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Object.html?is-external=true" title="class or interface in java.lang">java.lang.Object</a></li>
 <li>
 <ul class="inheritance">
-<li>org.apache.maven.plugin.AbstractMojo</li>
+<li><a href="../../../../io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources">io.micronaut.build.testresources.TestResourcesConfiguration</a></li>
 <li>
 <ul class="inheritance">
 <li>io.micronaut.build.testresources.AbstractTestResourcesMojo</li>
@@ -123,7 +123,8 @@ var activeTableTab = "activeTableTab";
 <hr>
 <br>
 <pre>public abstract class <span class="typeNameLabel">AbstractTestResourcesMojo</span>
-extends org.apache.maven.plugin.AbstractMojo</pre>
+extends <a href="../../../../io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources">TestResourcesConfiguration</a>
+implements org.apache.maven.plugin.Mojo, org.apache.maven.plugin.ContextEnabled</pre>
 <div class="block">Base mojo for Micronaut test resources service handling.</div>
 </li>
 </ul>
@@ -161,14 +162,6 @@ extends org.apache.maven.plugin.AbstractMojo</pre>
 </td>
 </tr>
 <tr class="rowColor">
-<td class="colFirst"><code>static <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#CONFIG_PROPERTY_PREFIX">CONFIG_PROPERTY_PREFIX</a></span></code>&nbsp;</td>
-</tr>
-<tr class="altColor">
-<td class="colFirst"><code>static <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#DISABLED">DISABLED</a></span></code>&nbsp;</td>
-</tr>
-<tr class="rowColor">
 <td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html?is-external=true" title="class or interface in java.lang">Integer</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#explicitPort">explicitPort</a></span></code>
 <div class="block">By default, the Test Resources server will be started on a random (available) port, but it can be set a fixed port
@@ -176,16 +169,15 @@ extends org.apache.maven.plugin.AbstractMojo</pre>
 </td>
 </tr>
 <tr class="altColor">
-<td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Boolean.html?is-external=true" title="class or interface in java.lang">Boolean</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#keepAlive">keepAlive</a></span></code>
-<div class="block">Whether the test resources service should be kept alive after the build.</div>
+<td class="colFirst"><code>protected org.apache.maven.plugin.logging.Log</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#log">log</a></span></code>
+<div class="block">Instance logger.</div>
 </td>
 </tr>
 <tr class="rowColor">
-<td class="colFirst"><code>protected boolean</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#shared">shared</a></span></code>
-<div class="block">Whether the test resources service should be shared between independent builds
- (e.g different projects, even built with different build tools).</div>
+<td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/util/Map.html?is-external=true" title="class or interface in java.util">Map</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#pluginContext">pluginContext</a></span></code>
+<div class="block">Plugin container context.</div>
 </td>
 </tr>
 <tr class="altColor">
@@ -196,18 +188,19 @@ extends org.apache.maven.plugin.AbstractMojo</pre>
 </td>
 </tr>
 <tr class="rowColor">
-<td class="colFirst"><code>protected boolean</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#testResourcesEnabled">testResourcesEnabled</a></span></code>
-<div class="block">Whether to enable or disable Micronaut test resources support.</div>
-</td>
-</tr>
-<tr class="altColor">
 <td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#testResourcesVersion">testResourcesVersion</a></span></code>
 <div class="block">Micronaut Test Resources version.</div>
 </td>
 </tr>
 </table>
+<ul class="blockList">
+<li class="blockList"><a name="fields.inherited.from.class.io.micronaut.build.testresources.TestResourcesConfiguration">
+<!--   -->
+</a>
+<h3>Fields inherited from class&nbsp;io.micronaut.build.testresources.<a href="../../../../io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources">TestResourcesConfiguration</a></h3>
+<code><a href="../../../../io/micronaut/build/testresources/TestResourcesConfiguration.html#CONFIG_PROPERTY_PREFIX">CONFIG_PROPERTY_PREFIX</a>, <a href="../../../../io/micronaut/build/testresources/TestResourcesConfiguration.html#DISABLED">DISABLED</a>, <a href="../../../../io/micronaut/build/testresources/TestResourcesConfiguration.html#keepAlive">keepAlive</a>, <a href="../../../../io/micronaut/build/testresources/TestResourcesConfiguration.html#shared">shared</a>, <a href="../../../../io/micronaut/build/testresources/TestResourcesConfiguration.html#sharedServerNamespace">sharedServerNamespace</a>, <a href="../../../../io/micronaut/build/testresources/TestResourcesConfiguration.html#testResourcesEnabled">testResourcesEnabled</a></code></li>
+</ul>
 <ul class="blockList">
 <li class="blockList"><a name="fields.inherited.from.class.org.apache.maven.plugin.Mojo">
 <!--   -->
@@ -247,24 +240,34 @@ extends org.apache.maven.plugin.AbstractMojo</pre>
 <th class="colLast" scope="col">Method and Description</th>
 </tr>
 <tr id="i0" class="altColor">
-<td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/nio/file/Path.html?is-external=true" title="class or interface in java.nio.file">Path</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#getKeepAliveFile--">getKeepAliveFile</a></span>()</code>&nbsp;</td>
+<td class="colFirst"><code>org.apache.maven.plugin.logging.Log</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#getLog--">getLog</a></span>()</code>
+<div class="block">Returns the logger that has been injected into this mojo.</div>
+</td>
 </tr>
 <tr id="i1" class="rowColor">
-<td class="colFirst"><code>protected <a href="https://docs.oracle.com/javase/8/docs/api/java/nio/file/Path.html?is-external=true" title="class or interface in java.nio.file">Path</a></code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#getServerSettingsDirectory--">getServerSettingsDirectory</a></span>()</code>&nbsp;</td>
+<td class="colFirst"><code><a href="https://docs.oracle.com/javase/8/docs/api/java/util/Map.html?is-external=true" title="class or interface in java.util">Map</a></code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#getPluginContext--">getPluginContext</a></span>()</code>&nbsp;</td>
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>static <a href="https://docs.oracle.com/javase/8/docs/api/java/nio/file/Path.html?is-external=true" title="class or interface in java.nio.file">Path</a></code></td>
 <td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#serverSettingsDirectoryOf-java.nio.file.Path-">serverSettingsDirectoryOf</a></span>(<a href="https://docs.oracle.com/javase/8/docs/api/java/nio/file/Path.html?is-external=true" title="class or interface in java.nio.file">Path</a>&nbsp;buildDir)</code>&nbsp;</td>
 </tr>
+<tr id="i3" class="rowColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#setLog-org.apache.maven.plugin.logging.Log-">setLog</a></span>(org.apache.maven.plugin.logging.Log&nbsp;log)</code>&nbsp;</td>
+</tr>
+<tr id="i4" class="altColor">
+<td class="colFirst"><code>void</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../io/micronaut/build/testresources/AbstractTestResourcesMojo.html#setPluginContext-java.util.Map-">setPluginContext</a></span>(<a href="https://docs.oracle.com/javase/8/docs/api/java/util/Map.html?is-external=true" title="class or interface in java.util">Map</a>&nbsp;pluginContext)</code>&nbsp;</td>
+</tr>
 </table>
 <ul class="blockList">
-<li class="blockList"><a name="methods.inherited.from.class.org.apache.maven.plugin.AbstractMojo">
+<li class="blockList"><a name="methods.inherited.from.class.io.micronaut.build.testresources.TestResourcesConfiguration">
 <!--   -->
 </a>
-<h3>Methods inherited from class&nbsp;org.apache.maven.plugin.AbstractMojo</h3>
-<code>getLog, getPluginContext, setLog, setPluginContext</code></li>
+<h3>Methods inherited from class&nbsp;io.micronaut.build.testresources.<a href="../../../../io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources">TestResourcesConfiguration</a></h3>
+<code><a href="../../../../io/micronaut/build/testresources/TestResourcesConfiguration.html#getSharedServerNamespace--">getSharedServerNamespace</a>, <a href="../../../../io/micronaut/build/testresources/TestResourcesConfiguration.html#isKeepAlive--">isKeepAlive</a>, <a href="../../../../io/micronaut/build/testresources/TestResourcesConfiguration.html#isShared--">isShared</a>, <a href="../../../../io/micronaut/build/testresources/TestResourcesConfiguration.html#isTestResourcesEnabled--">isTestResourcesEnabled</a></code></li>
 </ul>
 <ul class="blockList">
 <li class="blockList"><a name="methods.inherited.from.class.java.lang.Object">
@@ -294,67 +297,24 @@ extends org.apache.maven.plugin.AbstractMojo</pre>
 <!--   -->
 </a>
 <h3>Field Detail</h3>
-<a name="DISABLED">
+<a name="log">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>DISABLED</h4>
-<pre>public static final&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a> DISABLED</pre>
-<dl>
-<dt><span class="seeLabel">See Also:</span></dt>
-<dd><a href="../../../../constant-values.html#io.micronaut.build.testresources.AbstractTestResourcesMojo.DISABLED">Constant Field Values</a></dd>
-</dl>
+<h4>log</h4>
+<pre>protected&nbsp;org.apache.maven.plugin.logging.Log log</pre>
+<div class="block">Instance logger.</div>
 </li>
 </ul>
-<a name="CONFIG_PROPERTY_PREFIX">
+<a name="pluginContext">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>CONFIG_PROPERTY_PREFIX</h4>
-<pre>public static final&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html?is-external=true" title="class or interface in java.lang">String</a> CONFIG_PROPERTY_PREFIX</pre>
-<dl>
-<dt><span class="seeLabel">See Also:</span></dt>
-<dd><a href="../../../../constant-values.html#io.micronaut.build.testresources.AbstractTestResourcesMojo.CONFIG_PROPERTY_PREFIX">Constant Field Values</a></dd>
-</dl>
-</li>
-</ul>
-<a name="testResourcesEnabled">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>testResourcesEnabled</h4>
-<pre>@Parameter(property="micronaut.test.resources.enabled",
-           defaultValue="false")
-protected&nbsp;boolean testResourcesEnabled</pre>
-<div class="block">Whether to enable or disable Micronaut test resources support.</div>
-</li>
-</ul>
-<a name="keepAlive">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>keepAlive</h4>
-<pre>@Parameter(property="keepAlive",
-           defaultValue="false")
-protected&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Boolean.html?is-external=true" title="class or interface in java.lang">Boolean</a> keepAlive</pre>
-<div class="block">Whether the test resources service should be kept alive after the build.</div>
-</li>
-</ul>
-<a name="shared">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>shared</h4>
-<pre>@Parameter(property="micronaut.test.resources.shared",
-           defaultValue="false")
-protected&nbsp;boolean shared</pre>
-<div class="block">Whether the test resources service should be shared between independent builds
- (e.g different projects, even built with different build tools).</div>
+<h4>pluginContext</h4>
+<pre>protected&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/util/Map.html?is-external=true" title="class or interface in java.util">Map</a> pluginContext</pre>
+<div class="block">Plugin container context.</div>
 </li>
 </ul>
 <a name="buildDirectory">
@@ -456,31 +416,80 @@ protected&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Inte
 <!--   -->
 </a>
 <h3>Method Detail</h3>
-<a name="getServerSettingsDirectory--">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>getServerSettingsDirectory</h4>
-<pre>protected final&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/nio/file/Path.html?is-external=true" title="class or interface in java.nio.file">Path</a>&nbsp;getServerSettingsDirectory()</pre>
-</li>
-</ul>
-<a name="getKeepAliveFile--">
-<!--   -->
-</a>
-<ul class="blockList">
-<li class="blockList">
-<h4>getKeepAliveFile</h4>
-<pre>protected final&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/nio/file/Path.html?is-external=true" title="class or interface in java.nio.file">Path</a>&nbsp;getKeepAliveFile()</pre>
-</li>
-</ul>
 <a name="serverSettingsDirectoryOf-java.nio.file.Path-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>serverSettingsDirectoryOf</h4>
+<pre>public static&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/nio/file/Path.html?is-external=true" title="class or interface in java.nio.file">Path</a>&nbsp;serverSettingsDirectoryOf(<a href="https://docs.oracle.com/javase/8/docs/api/java/nio/file/Path.html?is-external=true" title="class or interface in java.nio.file">Path</a>&nbsp;buildDir)</pre>
+</li>
+</ul>
+<a name="setLog-org.apache.maven.plugin.logging.Log-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>setLog</h4>
+<pre>public&nbsp;void&nbsp;setLog(org.apache.maven.plugin.logging.Log&nbsp;log)</pre>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code>setLog</code>&nbsp;in interface&nbsp;<code>org.apache.maven.plugin.Mojo</code></dd>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><code>Mojo.setLog(org.apache.maven.plugin.logging.Log)</code></dd>
+</dl>
+</li>
+</ul>
+<a name="getLog--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getLog</h4>
+<pre>public&nbsp;org.apache.maven.plugin.logging.Log&nbsp;getLog()</pre>
+<div class="block">Returns the logger that has been injected into this mojo. If no logger has been setup yet, a
+ <code>SystemStreamLog</code> logger will be created and returned.
+ <strong>Note:</strong>
+ The logger returned by this method must not be cached in an instance field during the construction of the mojo.
+ This would cause the mojo to use a wrongly configured default logger when being run by Maven. The proper logger
+ gets injected by the Plexus container <em>after</em> the mojo has been constructed. Therefore, simply call this
+ method directly whenever you need the logger, it is fast enough and needs no caching.</div>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code>getLog</code>&nbsp;in interface&nbsp;<code>org.apache.maven.plugin.Mojo</code></dd>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><code>Mojo.getLog()</code></dd>
+</dl>
+</li>
+</ul>
+<a name="getPluginContext--">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getPluginContext</h4>
+<pre>public&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/util/Map.html?is-external=true" title="class or interface in java.util">Map</a>&nbsp;getPluginContext()</pre>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code>getPluginContext</code>&nbsp;in interface&nbsp;<code>org.apache.maven.plugin.ContextEnabled</code></dd>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><code>ContextEnabled.getPluginContext()</code></dd>
+</dl>
+</li>
+</ul>
+<a name="setPluginContext-java.util.Map-">
 <!--   -->
 </a>
 <ul class="blockListLast">
 <li class="blockList">
-<h4>serverSettingsDirectoryOf</h4>
-<pre>public static&nbsp;<a href="https://docs.oracle.com/javase/8/docs/api/java/nio/file/Path.html?is-external=true" title="class or interface in java.nio.file">Path</a>&nbsp;serverSettingsDirectoryOf(<a href="https://docs.oracle.com/javase/8/docs/api/java/nio/file/Path.html?is-external=true" title="class or interface in java.nio.file">Path</a>&nbsp;buildDir)</pre>
+<h4>setPluginContext</h4>
+<pre>public&nbsp;void&nbsp;setPluginContext(<a href="https://docs.oracle.com/javase/8/docs/api/java/util/Map.html?is-external=true" title="class or interface in java.util">Map</a>&nbsp;pluginContext)</pre>
+<dl>
+<dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
+<dd><code>setPluginContext</code>&nbsp;in interface&nbsp;<code>org.apache.maven.plugin.ContextEnabled</code></dd>
+<dt><span class="seeLabel">See Also:</span></dt>
+<dd><code>ContextEnabled.setPluginContext(java.util.Map)</code></dd>
+</dl>
 </li>
 </ul>
 </li>

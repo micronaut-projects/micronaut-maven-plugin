@@ -207,7 +207,7 @@
 <a class="jxr_linenumber" name="L199" href="#L199">199</a>         testResourcesHelper = <strong class="jxr_keyword">new</strong> <a name="TestResourcesHelper" href="../../../io/micronaut/build/testresources/TestResourcesHelper.html#TestResourcesHelper">TestResourcesHelper</a>(testResourcesEnabled, keepAlive, shared, buildDirectory,
 <a class="jxr_linenumber" name="L200" href="#L200">200</a>                                                       explicitPort, clientTimeout, mavenProject, mavenSession,
 <a class="jxr_linenumber" name="L201" href="#L201">201</a>                                                       dependencyResolutionService, toolchainManager, testResourcesVersion,
-<a class="jxr_linenumber" name="L202" href="#L202">202</a>                                                       classpathInference, testResourcesDependencies);
+<a class="jxr_linenumber" name="L202" href="#L202">202</a>                                                       classpathInference, testResourcesDependencies, sharedServerNamespace);
 <a class="jxr_linenumber" name="L203" href="#L203">203</a>         resolveDependencies();
 <a class="jxr_linenumber" name="L204" href="#L204">204</a>         <strong class="jxr_keyword">this</strong>.sourceDirectories = compilerService.resolveSourceDirectories();
 <a class="jxr_linenumber" name="L205" href="#L205">205</a> 
@@ -457,7 +457,7 @@
 <a class="jxr_linenumber" name="L449" href="#L449">449</a>         runAotIfNeeded();
 <a class="jxr_linenumber" name="L450" href="#L450">450</a>         String classpathArgument = <strong class="jxr_keyword">new</strong> File(targetDirectory, <span class="jxr_string">"classes"</span> + File.pathSeparator).getAbsolutePath() + <strong class="jxr_keyword">this</strong>.classpath;
 <a class="jxr_linenumber" name="L451" href="#L451">451</a>         <strong class="jxr_keyword">if</strong> (testResourcesEnabled) {
-<a class="jxr_linenumber" name="L452" href="#L452">452</a>             Path testResourcesSettingsDirectory = shared ? ServerUtils.getDefaultSharedSettingsPath() :
+<a class="jxr_linenumber" name="L452" href="#L452">452</a>             Path testResourcesSettingsDirectory = shared ? ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace) :
 <a class="jxr_linenumber" name="L453" href="#L453">453</a>                     AbstractTestResourcesMojo.serverSettingsDirectoryOf(targetDirectory.toPath());
 <a class="jxr_linenumber" name="L454" href="#L454">454</a>             <strong class="jxr_keyword">if</strong> (Files.isDirectory(testResourcesSettingsDirectory)) {
 <a class="jxr_linenumber" name="L455" href="#L455">455</a>                 classpathArgument += File.pathSeparator + testResourcesSettingsDirectory.toAbsolutePath();

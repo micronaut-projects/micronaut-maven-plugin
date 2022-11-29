@@ -198,7 +198,7 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/build/services/CompilerService.html#CompilerService-org.apache.maven.project.MavenProject-org.apache.maven.execution.MavenSession-io.micronaut.build.services.ExecutorService-org.apache.maven.project.ProjectDependenciesResolver-">CompilerService(MavenProject, MavenSession, ExecutorService, ProjectDependenciesResolver)</a></span> - Constructor for class io.micronaut.build.services.<a href="io/micronaut/build/services/CompilerService.html" title="class in io.micronaut.build.services">CompilerService</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html#CONFIG_PROPERTY_PREFIX">CONFIG_PROPERTY_PREFIX</a></span> - Static variable in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesConfiguration.html#CONFIG_PROPERTY_PREFIX">CONFIG_PROPERTY_PREFIX</a></span> - Static variable in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources">TestResourcesConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/build/AbstractDockerMojo.html#copyDependencies--">copyDependencies()</a></span> - Method in class io.micronaut.build.<a href="io/micronaut/build/AbstractDockerMojo.html" title="class in io.micronaut.build">AbstractDockerMojo</a></dt>
 <dd>
@@ -242,7 +242,7 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/build/jib/JibMicronautExtension.html#determineProjectFnVersion--">determineProjectFnVersion()</a></span> - Static method in class io.micronaut.build.jib.<a href="io/micronaut/build/jib/JibMicronautExtension.html" title="class in io.micronaut.build.jib">JibMicronautExtension</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html#DISABLED">DISABLED</a></span> - Static variable in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesConfiguration.html#DISABLED">DISABLED</a></span> - Static variable in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources">TestResourcesConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/build/DockerCracMojo.html#DOCKER_CRAC_PACKAGING">DOCKER_CRAC_PACKAGING</a></span> - Static variable in class io.micronaut.build.<a href="io/micronaut/build/DockerCracMojo.html" title="class in io.micronaut.build">DockerCracMojo</a></dt>
 <dd>&nbsp;</dd>
@@ -429,7 +429,11 @@
 <dd>
 <div class="block">Returns any additional GraalVM arguments.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html#getKeepAliveFile--">getKeepAliveFile()</a></span> - Method in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html#getLog--">getLog()</a></span> - Method in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></dt>
+<dd>
+<div class="block">Returns the logger that has been injected into this mojo.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html#getPluginContext--">getPluginContext()</a></span> - Method in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/build/AbstractDockerMojo.html#getPort--">getPort()</a></span> - Method in class io.micronaut.build.<a href="io/micronaut/build/AbstractDockerMojo.html" title="class in io.micronaut.build">AbstractDockerMojo</a></dt>
 <dd>
@@ -440,7 +444,7 @@
 <div class="block">Determines the application port by looking at the <code>MICRONAUT_SERVER_PORT</code> environment variable, the
  <code>micronaut.server.port</code> configuration property, or falls back to a default port.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html#getServerSettingsDirectory--">getServerSettingsDirectory()</a></span> - Method in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesConfiguration.html#getSharedServerNamespace--">getSharedServerNamespace()</a></span> - Method in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources">TestResourcesConfiguration</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/build/AbstractDockerMojo.html#getTags--">getTags()</a></span> - Method in class io.micronaut.build.<a href="io/micronaut/build/AbstractDockerMojo.html" title="class in io.micronaut.build">AbstractDockerMojo</a></dt>
 <dd>
@@ -516,6 +520,12 @@
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/build/testresources/package-summary.html">io.micronaut.build.testresources</a> - package io.micronaut.build.testresources</dt>
 <dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesConfiguration.html#isKeepAlive--">isKeepAlive()</a></span> - Method in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources">TestResourcesConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesConfiguration.html#isShared--">isShared()</a></span> - Method in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources">TestResourcesConfiguration</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesConfiguration.html#isTestResourcesEnabled--">isTestResourcesEnabled()</a></span> - Method in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources">TestResourcesConfiguration</a></dt>
+<dd>&nbsp;</dd>
 </dl>
 <a name="I:J">
 <!--   -->
@@ -546,7 +556,7 @@
 </a>
 <h2 class="title">K</h2>
 <dl>
-<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html#keepAlive">keepAlive</a></span> - Variable in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesConfiguration.html#keepAlive">keepAlive</a></span> - Variable in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources">TestResourcesConfiguration</a></dt>
 <dd>
 <div class="block">Whether the test resources service should be kept alive after the build.</div>
 </dd>
@@ -567,6 +577,10 @@
 <dt><span class="memberNameLink"><a href="io/micronaut/build/services/DockerService.html#loadDockerfileAsResource-java.lang.String-java.lang.String-">loadDockerfileAsResource(String, String)</a></span> - Method in class io.micronaut.build.services.<a href="io/micronaut/build/services/DockerService.html" title="class in io.micronaut.build.services">DockerService</a></dt>
 <dd>
 <div class="block">Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html#log">log</a></span> - Variable in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></dt>
+<dd>
+<div class="block">Instance logger.</div>
 </dd>
 </dl>
 <a name="I:M">
@@ -677,6 +691,10 @@
 <dd>
 <div class="block">Packaging types supported by this plugin.</div>
 </dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html#pluginContext">pluginContext</a></span> - Variable in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></dt>
+<dd>
+<div class="block">Plugin container context.</div>
+</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/build/MicronautRuntime.html#PROPERTY">PROPERTY</a></span> - Static variable in enum io.micronaut.build.<a href="io/micronaut/build/MicronautRuntime.html" title="enum in io.micronaut.build">MicronautRuntime</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/build/services/DockerService.html#pushImageCmd-java.lang.String-">pushImageCmd(String)</a></span> - Method in class io.micronaut.build.services.<a href="io/micronaut/build/services/DockerService.html" title="class in io.micronaut.build.services">DockerService</a></dt>
@@ -727,10 +745,20 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html#serverSettingsDirectoryOf-java.nio.file.Path-">serverSettingsDirectoryOf(Path)</a></span> - Static method in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html#shared">shared</a></span> - Variable in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html#setLog-org.apache.maven.plugin.logging.Log-">setLog(Log)</a></span> - Method in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html#setPluginContext-java.util.Map-">setPluginContext(Map)</a></span> - Method in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesHelper.html#setSharedServerNamespace-java.lang.String-">setSharedServerNamespace(String)</a></span> - Method in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesHelper.html" title="class in io.micronaut.build.testresources">TestResourcesHelper</a></dt>
+<dd>&nbsp;</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesConfiguration.html#shared">shared</a></span> - Variable in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources">TestResourcesConfiguration</a></dt>
 <dd>
 <div class="block">Whether the test resources service should be shared between independent builds
  (e.g different projects, even built with different build tools).</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesConfiguration.html#sharedServerNamespace">sharedServerNamespace</a></span> - Variable in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources">TestResourcesConfiguration</a></dt>
+<dd>
+<div class="block">Allows configuring a namespace for the shared test resources server.</div>
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesHelper.html#start--">start()</a></span> - Method in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesHelper.html" title="class in io.micronaut.build.testresources">TestResourcesHelper</a></dt>
 <dd>
@@ -754,7 +782,7 @@
 <dd>
 <div class="block">Stops the Micronaut test resources server.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/StopTestResourcesServerMojo.html#StopTestResourcesServerMojo--">StopTestResourcesServerMojo()</a></span> - Constructor for class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/StopTestResourcesServerMojo.html" title="class in io.micronaut.build.testresources">StopTestResourcesServerMojo</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/StopTestResourcesServerMojo.html#StopTestResourcesServerMojo-org.apache.maven.project.MavenProject-org.apache.maven.execution.MavenSession-io.micronaut.build.services.DependencyResolutionService-org.apache.maven.toolchain.ToolchainManager-">StopTestResourcesServerMojo(MavenProject, MavenSession, DependencyResolutionService, ToolchainManager)</a></span> - Constructor for class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/StopTestResourcesServerMojo.html" title="class in io.micronaut.build.testresources">StopTestResourcesServerMojo</a></dt>
 <dd>&nbsp;</dd>
 </dl>
 <a name="I:T">
@@ -766,6 +794,12 @@
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/build/services/DependencyResolutionService.html#TEST_RESOURCES_GROUP">TEST_RESOURCES_GROUP</a></span> - Static variable in class io.micronaut.build.services.<a href="io/micronaut/build/services/DependencyResolutionService.html" title="class in io.micronaut.build.services">DependencyResolutionService</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources"><span class="typeNameLink">TestResourcesConfiguration</span></a> - Class in <a href="io/micronaut/build/testresources/package-summary.html">io.micronaut.build.testresources</a></dt>
+<dd>
+<div class="block">Base configuration class for Test Resources.</div>
+</dd>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesConfiguration.html#TestResourcesConfiguration--">TestResourcesConfiguration()</a></span> - Constructor for class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources">TestResourcesConfiguration</a></dt>
+<dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html#testResourcesDependencies">testResourcesDependencies</a></span> - Variable in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></dt>
 <dd>
 <div class="block">Additional dependencies to add to the Test Resources server classpath when not using classpath inference, or when
@@ -773,7 +807,7 @@
 </dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/build/services/DependencyResolutionService.html#testResourcesDependencyToAetherArtifact-io.micronaut.testresources.buildtools.MavenDependency-">testResourcesDependencyToAetherArtifact(MavenDependency)</a></span> - Static method in class io.micronaut.build.services.<a href="io/micronaut/build/services/DependencyResolutionService.html" title="class in io.micronaut.build.services">DependencyResolutionService</a></dt>
 <dd>&nbsp;</dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html#testResourcesEnabled">testResourcesEnabled</a></span> - Variable in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.build.testresources">AbstractTestResourcesMojo</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesConfiguration.html#testResourcesEnabled">testResourcesEnabled</a></span> - Variable in class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.build.testresources">TestResourcesConfiguration</a></dt>
 <dd>
 <div class="block">Whether to enable or disable Micronaut test resources support.</div>
 </dd>
@@ -781,7 +815,7 @@
 <dd>
 <div class="block">Utility class to stop Test Resources service.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesHelper.html#TestResourcesHelper-boolean-boolean-boolean-java.io.File-java.lang.Integer-java.lang.Integer-org.apache.maven.project.MavenProject-org.apache.maven.execution.MavenSession-io.micronaut.build.services.DependencyResolutionService-org.apache.maven.toolchain.ToolchainManager-java.lang.String-boolean-java.util.List-">TestResourcesHelper(boolean, boolean, boolean, File, Integer, Integer, MavenProject, MavenSession, DependencyResolutionService, ToolchainManager, String, boolean, List&lt;Dependency&gt;)</a></span> - Constructor for class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesHelper.html" title="class in io.micronaut.build.testresources">TestResourcesHelper</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesHelper.html#TestResourcesHelper-boolean-boolean-boolean-java.io.File-java.lang.Integer-java.lang.Integer-org.apache.maven.project.MavenProject-org.apache.maven.execution.MavenSession-io.micronaut.build.services.DependencyResolutionService-org.apache.maven.toolchain.ToolchainManager-java.lang.String-boolean-java.util.List-java.lang.String-">TestResourcesHelper(boolean, boolean, boolean, File, Integer, Integer, MavenProject, MavenSession, DependencyResolutionService, ToolchainManager, String, boolean, List&lt;Dependency&gt;, String)</a></span> - Constructor for class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesHelper.html" title="class in io.micronaut.build.testresources">TestResourcesHelper</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesHelper.html#TestResourcesHelper-boolean-boolean-boolean-java.io.File-">TestResourcesHelper(boolean, boolean, boolean, File)</a></span> - Constructor for class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesHelper.html" title="class in io.micronaut.build.testresources">TestResourcesHelper</a></dt>
 <dd>&nbsp;</dd>
@@ -790,7 +824,7 @@
 <div class="block">A lifecycle extension which determines if the test resources server should
  be stopped when the build is complete.</div>
 </dd>
-<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesLifecycleExtension.html#TestResourcesLifecycleExtension--">TestResourcesLifecycleExtension()</a></span> - Constructor for class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesLifecycleExtension.html" title="class in io.micronaut.build.testresources">TestResourcesLifecycleExtension</a></dt>
+<dt><span class="memberNameLink"><a href="io/micronaut/build/testresources/TestResourcesLifecycleExtension.html#TestResourcesLifecycleExtension-org.codehaus.plexus.logging.Logger-com.fasterxml.jackson.dataformat.xml.XmlMapper-">TestResourcesLifecycleExtension(Logger, XmlMapper)</a></span> - Constructor for class io.micronaut.build.testresources.<a href="io/micronaut/build/testresources/TestResourcesLifecycleExtension.html" title="class in io.micronaut.build.testresources">TestResourcesLifecycleExtension</a></dt>
 <dd>&nbsp;</dd>
 <dt><span class="memberNameLink"><a href="io/micronaut/build/services/DependencyResolutionService.html#testResourcesModuleToAetherArtifact-java.lang.String-java.lang.String-">testResourcesModuleToAetherArtifact(String, String)</a></span> - Static method in class io.micronaut.build.services.<a href="io/micronaut/build/services/DependencyResolutionService.html" title="class in io.micronaut.build.services">DependencyResolutionService</a></dt>
 <dd>&nbsp;</dd>
