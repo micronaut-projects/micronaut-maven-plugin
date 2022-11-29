@@ -98,7 +98,6 @@ public abstract class AbstractTestResourcesMojo extends TestResourcesConfigurati
     /**
      * Returns the logger that has been injected into this mojo. If no logger has been setup yet, a
      * <code>SystemStreamLog</code> logger will be created and returned.
-     * <br/><br/>
      * <strong>Note:</strong>
      * The logger returned by this method must not be cached in an instance field during the construction of the mojo.
      * This would cause the mojo to use a wrongly configured default logger when being run by Maven. The proper logger

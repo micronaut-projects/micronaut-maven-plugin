@@ -2,7 +2,7 @@
   "extends": [
     "config:base"
   ],
-  "addLabels": ["dependency-upgrade"],
+  "addLabels": ["type: dependency-upgrade"],
   "schedule": [
     "every weekend"
   ],
@@ -14,7 +14,7 @@
       "matchPackagePatterns": ["actions.*"],
       "dependencyDashboardApproval": true
     },{
-      "matchPaths": ["**/package-docker-native-different-parent-version/pom.xml"],
+      "matchPaths": ["src/it/package-docker-native-different-parent-version/pom.xml"],
       "matchPackageNames": ["io.micronaut:micronaut-parent"],
       "enabled": false
     },{
