@@ -199,7 +199,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         testResourcesHelper = new TestResourcesHelper(testResourcesEnabled, keepAlive, shared, buildDirectory,
                                                       explicitPort, clientTimeout, mavenProject, mavenSession,
                                                       dependencyResolutionService, toolchainManager, testResourcesVersion,
-                                                      classpathInference, testResourcesDependencies);
+                                                      classpathInference, testResourcesDependencies, sharedServerNamespace);
         resolveDependencies();
         this.sourceDirectories = compilerService.resolveSourceDirectories();
 
@@ -449,7 +449,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         runAotIfNeeded();
         String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
         if (testResourcesEnabled) {
-            Path testResourcesSettingsDirectory = shared ? ServerUtils.getDefaultSharedSettingsPath() :
+            Path testResourcesSettingsDirectory = shared ? ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace) :
                     AbstractTestResourcesMojo.serverSettingsDirectoryOf(targetDirectory.toPath());
             if (Files.isDirectory(testResourcesSettingsDirectory)) {
                 classpathArgument += File.pathSeparator + testResourcesSettingsDirectory.toAbsolutePath();

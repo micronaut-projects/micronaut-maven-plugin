@@ -15,10 +15,16 @@
  */
 package io.micronaut.build.testresources;
 
+import io.micronaut.build.services.DependencyResolutionService;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.toolchain.ToolchainManager;
+
+import javax.inject.Inject;
 
 /**
  * Stops the Micronaut test resources server.
@@ -28,9 +34,30 @@ public class StopTestResourcesServerMojo extends AbstractTestResourcesMojo {
     public static final String NAME = "stop-testresources-service";
     public static final String MICRONAUT_TEST_RESOURCES_KEEPALIVE = "keepAlive";
 
+    private final MavenProject mavenProject;
+
+    private final MavenSession mavenSession;
+
+    private final DependencyResolutionService dependencyResolutionService;
+
+    private final ToolchainManager toolchainManager;
+
+    @Inject
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    public StopTestResourcesServerMojo(MavenProject mavenProject, MavenSession mavenSession,
+                                       DependencyResolutionService dependencyResolutionService, ToolchainManager toolchainManager) {
+        this.mavenProject = mavenProject;
+        this.mavenSession = mavenSession;
+        this.dependencyResolutionService = dependencyResolutionService;
+        this.toolchainManager = toolchainManager;
+    }
+
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException {
-        TestResourcesHelper helper = new TestResourcesHelper(testResourcesEnabled, keepAlive, shared, buildDirectory);
+        TestResourcesHelper helper = new TestResourcesHelper(testResourcesEnabled, keepAlive, shared, buildDirectory,
+                explicitPort, clientTimeout, mavenProject, mavenSession,
+                dependencyResolutionService, toolchainManager, testResourcesVersion,
+                classpathInference, testResourcesDependencies, sharedServerNamespace);
         helper.stop();
     }
 
