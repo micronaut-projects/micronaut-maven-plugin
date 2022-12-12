@@ -80,7 +80,7 @@
         <native-maven-plugin.version>0.9.19</native-maven-plugin.version>
         <micronaut.version>3.7.4</micronaut.version>
         <micronaut.aot.version>1.1.1</micronaut.aot.version>
-        <micronaut.test.resources.version>1.2.0</micronaut.test.resources.version>
+        <micronaut.test.resources.version>1.2.1</micronaut.test.resources.version>
         <it.micronaut.version>3.7.5-SNAPSHOT</it.micronaut.version>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.organization>micronaut-projects</sonar.organization>
