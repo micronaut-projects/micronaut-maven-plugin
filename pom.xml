@@ -77,7 +77,7 @@
         <site.description>${project.description}</site.description>
         <site.version>${project.version}</site.version>
         <project.build.outputTimestamp>2022-11-29T11:48:26Z</project.build.outputTimestamp>
-        <native-maven-plugin.version>0.9.18</native-maven-plugin.version>
+        <native-maven-plugin.version>0.9.19</native-maven-plugin.version>
         <micronaut.version>3.7.4</micronaut.version>
         <micronaut.aot.version>1.1.1</micronaut.aot.version>
         <micronaut.test.resources.version>1.2.0</micronaut.test.resources.version>
