@@ -46,10 +46,6 @@ jobs:
           [INFO] 
           " > /tmp/maven.out
           cat /tmp/maven.out
-        env:
-          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
-          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
-          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
 
       - name: "Add build scan URL as PR comment"
         uses: actions/github-script@v5
@@ -60,8 +56,10 @@ jobs:
           script: |
             const fs = require('fs')
             const mavenOutput = fs.readFileSync('/tmp/maven.out', 'utf8')
-            const regex = /^\[INFO\] (https:\/\/ge\.micronaut\.io.*)$/m;
-            const buildScanUrl = mavenOutput.match(regex).at(-1)
+            const regex = /^\[INFO\] (https:\/\/ge\.micronaut\.io.*)$/m
+            let buildScanUrl = mavenOutput.match(regex)
+            buildScanUrl = buildScanUrl[buildScanUrl.length - 1]
+            core.info(buildScanUrl)
             
             github.rest.issues.createComment({
               issue_number: context.issue.number,
