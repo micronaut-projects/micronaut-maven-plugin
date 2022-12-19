@@ -52,7 +52,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '❌ ${{ github.workflow }} failed (not really, just testing): ' + buildScanUrl
+              body: '❌ ${{ github.workflow }} failed: ' + buildScanUrl
             })
 
       - name: Publish Test Report
