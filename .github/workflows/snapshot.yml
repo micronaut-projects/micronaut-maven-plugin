@@ -18,7 +18,7 @@ jobs:
       - name: Install Java and Maven and set up Apache Maven Central
         uses: actions/setup-java@v3
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
           java-version: '8'
           server-password: GH_TOKEN
 
@@ -31,7 +31,28 @@ jobs:
 
       - name: Run tests
         run: |
-          mvn install && mvn verify -Prun-its
+          (mvn install && mvn verify -Prun-its 2>&1) | tee /tmp/maven.out
+        env:
+          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
+          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
+          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+
+      - name: "Add build scan URL as PR comment"
+        uses: actions/github-script@v5
+        if: github.event_name == 'pull_request'
+#        if: github.event_name == 'pull_request' && failure()
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            let mavenOutput = await fs.readFile('/tmp/maven.out', 'utf8')
+            let buildScanUrl = mavenOutput.find(/https:\/\/ge\.micronaut\.io.*/g)[0]
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ ${{ github.workflow }} failed (not really, just testing): ' + buildScanUrl
+            })
 
       - name: Publish Test Report
         if: always()
