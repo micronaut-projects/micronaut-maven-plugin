@@ -29,9 +29,22 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+#      - name: Run tests
+#        run: |
+#          (mvn install && mvn verify -Prun-its 2>&1) | tee /tmp/maven.out
+#        env:
+#          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
+#          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
+#          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+
       - name: Run tests
         run: |
-          (mvn install && mvn verify -Prun-its 2>&1) | tee /tmp/maven.out
+          echo "[INFO] [INFO] Publishing build scan...
+          [INFO] [INFO] https://ge.micronaut.io/s/xgxnjfqux57aa
+          [INFO] Publishing build scan...
+          [INFO] https://ge.micronaut.io/s/fkk3sdozbenwc
+          [INFO] 
+          " > /tmp/maven.out
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
@@ -44,8 +57,10 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            let mavenOutput = await fs.readFile('/tmp/maven.out', 'utf8')
-            let buildScanUrl = mavenOutput.find(/https:\/\/ge\.micronaut\.io.*/g)[0]
+            const fs = require('fs')
+            const mavenOutput = await fs.readFile('/tmp/maven.out', 'utf8')
+            const regex = /^\[INFO\] (https:\/\/ge\.micronaut\.io.*)$/m;
+            const buildScanUrl = mavenOutput.match(regex).at(-1)
             
             github.rest.issues.createComment({
               issue_number: context.issue.number,
