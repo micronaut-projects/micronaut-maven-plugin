@@ -45,6 +45,7 @@ jobs:
           [INFO] https://ge.micronaut.io/s/fkk3sdozbenwc
           [INFO] 
           " > /tmp/maven.out
+          cat /tmp/maven.out
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
@@ -58,7 +59,7 @@ jobs:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const fs = require('fs')
-            const mavenOutput = await fs.readFile('/tmp/maven.out', 'utf8')
+            const mavenOutput = fs.readFileSync('/tmp/maven.out', 'utf8')
             const regex = /^\[INFO\] (https:\/\/ge\.micronaut\.io.*)$/m;
             const buildScanUrl = mavenOutput.match(regex).at(-1)
             
