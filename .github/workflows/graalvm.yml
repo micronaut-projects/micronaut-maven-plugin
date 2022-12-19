@@ -42,6 +42,7 @@ jobs:
           version: ${{ matrix.graalvm }}
           java-version: ${{ matrix.java }}
           components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Run tests
         run: |
           mvn install && mvn verify -Prun-its
