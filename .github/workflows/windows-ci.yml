@@ -13,8 +13,14 @@ jobs:
     runs-on: windows-2019
     strategy:
       matrix:
-        java: ['17']
         graalvm: ['latest', 'dev']
+        java: ['17']
+        include:
+          - graalvm: 'dev'
+            java: '19'
+        exclude:
+          - graalvm: 'dev'
+            java: '17'
     steps:
       - uses: actions/checkout@v3
       - name: Cache Maven packages
