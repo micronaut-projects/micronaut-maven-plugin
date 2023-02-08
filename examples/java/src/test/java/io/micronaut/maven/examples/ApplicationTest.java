@@ -1,4 +1,4 @@
-package io.micronaut.build.examples;
+package io.micronaut.maven.examples;
 
 import io.micronaut.runtime.EmbeddedApplication;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;

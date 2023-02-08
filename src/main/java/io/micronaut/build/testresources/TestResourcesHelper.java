@@ -157,8 +157,12 @@ public class TestResourcesHelper {
                         cli.add(processParameters.getMainClass());
                         cli.addAll(processParameters.getArguments());
                         ProcessBuilder builder = new ProcessBuilder(cli);
-                        process = builder.inheritIO().start();
-                        serverStarted.set(true);
+                        try {
+                            process = builder.inheritIO().start();
+                            serverStarted.set(true);
+                        } catch (Exception e) {
+                            serverStarted.set(false);
+                        }
                     }
 
                     @Override

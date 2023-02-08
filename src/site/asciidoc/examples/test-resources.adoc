@@ -119,7 +119,7 @@ it like this:
 <build>
     <plugins>
         <plugin>
-            <groupId>io.micronaut.build</groupId>
+            <groupId>io.micronaut.maven</groupId>
             <artifactId>micronaut-maven-plugin</artifactId>
             <configuration>
                 <classpathInference>false</classpathInference>

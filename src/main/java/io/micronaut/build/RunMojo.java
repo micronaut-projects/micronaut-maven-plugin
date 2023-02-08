@@ -71,7 +71,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
     public static final String MN_APP_ARGS = "mn.appArgs";
     public static final String EXEC_MAIN_CLASS = "${exec.mainClass}";
     public static final String RESOURCES_DIR = "src/main/resources";
-    public static final String THIS_PLUGIN = "io.micronaut.build:micronaut-maven-plugin";
+    public static final String THIS_PLUGIN = "io.micronaut.maven:micronaut-maven-plugin";
 
     private static final int LAST_COMPILATION_THRESHOLD = 500;
     private static final List<String> DEFAULT_EXCLUDES;

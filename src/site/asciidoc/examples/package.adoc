@@ -223,7 +223,7 @@ You can pass additional arguments to the executable in the following way:
 [source,xml]
 ----
 <plugin>
-  <groupId>io.micronaut.build</groupId>
+  <groupId>io.micronaut.maven</groupId>
   <artifactId>micronaut-maven-plugin</artifactId>
   <configuration>
     <appArguments>
@@ -245,7 +245,7 @@ Also, to pass additional arguments to the `native-image` process:
 [source,xml]
 ----
 <plugin>
-  <groupId>io.micronaut.build</groupId>
+  <groupId>io.micronaut.maven</groupId>
   <artifactId>micronaut-maven-plugin</artifactId>
   <configuration>
     <nativeImageBuildArgs>

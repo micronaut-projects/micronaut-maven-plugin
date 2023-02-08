@@ -1,4 +1,4 @@
-package io.micronaut.build.examples.greeter;
+package io.micronaut.maven.examples.greeter;
 
 public class Greeter {
 

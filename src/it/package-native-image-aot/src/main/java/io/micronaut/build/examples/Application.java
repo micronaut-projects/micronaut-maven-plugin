@@ -1,7 +1,7 @@
 package io.micronaut.build.examples;
 
 import io.micronaut.runtime.Micronaut;
-import io.micronaut.build.examples.greeter.Greeter;
+import io.micronaut.maven.examples.greeter.Greeter;
 
 import io.swagger.v3.oas.annotations.*;
 import io.swagger.v3.oas.annotations.info.*;

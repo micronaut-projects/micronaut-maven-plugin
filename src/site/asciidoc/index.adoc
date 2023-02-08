@@ -31,7 +31,7 @@ Add the plugin to your `build/plugins` section:
             <!-- ... -->
 
             <plugin>
-                <groupId>io.micronaut.build</groupId>
+                <groupId>io.micronaut.maven</groupId>
                 <artifactId>micronaut-maven-plugin</artifactId>
             </plugin>
         </plugins>

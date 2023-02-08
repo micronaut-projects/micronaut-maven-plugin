@@ -18,7 +18,7 @@
         <micronaut.version>@it.micronaut.version@</micronaut.version>
         <micronaut.runtime>netty</micronaut.runtime>
         <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
-        <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
+        <exec.mainClass>io.micronaut.maven.examples.Application</exec.mainClass>
         <micronaut.test.resources.enabled>true</micronaut.test.resources.enabled>
     </properties>
     <repositories>
@@ -107,7 +107,7 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>io.micronaut.build</groupId>
+                <groupId>io.micronaut.maven</groupId>
                 <artifactId>micronaut-maven-plugin</artifactId>
             </plugin>
             <plugin>
