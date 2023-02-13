@@ -1,6 +1,6 @@
 # Micronaut Maven Plugin
 
-[![Maven Central](https://img.shields.io/maven-central/v/io.micronaut.maven/micronaut-maven-plugin.svg?label=Maven%20Central)](https://search.maven.org/artifact/io.micronaut.build/micronaut-maven-plugin)
+[![Maven Central](https://img.shields.io/maven-central/v/io.micronaut.maven/micronaut-maven-plugin.svg?label=Maven%20Central)](https://search.maven.org/artifact/io.micronaut.maven/micronaut-maven-plugin)
 [![Build Status](https://github.com/micronaut-projects/micronaut-maven-plugin/workflows/Snapshot/badge.svg)](https://github.com/micronaut-projects/micronaut-maven-plugin/actions)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=micronaut-projects_micronaut-maven-plugin&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=micronaut-projects_micronaut-maven-plugin)
 

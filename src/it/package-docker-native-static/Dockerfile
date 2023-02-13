@@ -1,4 +1,4 @@
-FROM ghcr.io/graalvm/graalvm-ce:ol7-java11-22.2.0 AS builder
+FROM ghcr.io/graalvm/graalvm-ce:ol7-java17-22.2.0 AS builder
 RUN gu install native-image
 WORKDIR /home/app
 
@@ -22,7 +22,7 @@ RUN curl -L -o zlib.tar.gz https://zlib.net/zlib-1.2.12.tar.gz && \
 
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
-RUN native-image --static --libc=musl -H:Class=io.micronaut.maven.examples.Application -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
+RUN native-image --static --libc=musl -H:Class=io.micronaut.build.examples.Application -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM scratch
 COPY --from=builder /home/app/application /app/application

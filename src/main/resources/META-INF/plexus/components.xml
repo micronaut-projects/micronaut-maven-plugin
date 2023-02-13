@@ -187,7 +187,7 @@
         <component>
             <role>org.apache.maven.AbstractMavenLifecycleParticipant</role>
             <role-hint>test-resources</role-hint>
-            <implementation>io.micronaut.build.testresources.TestResourcesLifecycleExtension</implementation>
+            <implementation>io.micronaut.maven.testresources.TestResourcesLifecycleExtension</implementation>
             <description>Micronaut Test Resources Extension</description>
             <isolated-realm>false</isolated-realm>
         </component>

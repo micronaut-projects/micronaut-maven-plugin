@@ -14,11 +14,9 @@
 
   <properties>
     <packaging>jar</packaging>
-    <jdk.version>8</jdk.version>
-    <release.version>8</release.version>
     <micronaut.version>@it.micronaut.version@</micronaut.version>
     <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
-    <exec.mainClass>io.micronaut.maven.examples.Application</exec.mainClass>
+    <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     <micronaut.runtime>netty</micronaut.runtime>
     <micronaut.aot.enabled>true</micronaut.aot.enabled>
     <micronaut.aot.packageName>io.micronaut.build.examples.generated</micronaut.aot.packageName>

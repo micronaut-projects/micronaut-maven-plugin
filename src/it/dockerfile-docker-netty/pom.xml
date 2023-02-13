@@ -13,11 +13,9 @@
   </parent>
 
   <properties>
-    <jdk.version>8</jdk.version>
-    <release.version>8</release.version>
     <micronaut.version>@it.micronaut.version@</micronaut.version>
     <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
-    <exec.mainClass>io.micronaut.maven.examples.Application</exec.mainClass>
+    <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
   </properties>
@@ -90,39 +88,6 @@
       <artifactId>micronaut-test-junit5</artifactId>
       <scope>test</scope>
     </dependency>
-
-    <!-- For native-image -->
-    <dependency>
-      <groupId>org.graalvm.sdk</groupId>
-      <artifactId>graal-sdk</artifactId>
-      <version>${graal.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <!-- For aws-custom-runtime -->
-    <dependency>
-      <groupId>io.micronaut.aws</groupId>
-      <artifactId>micronaut-function-aws-api-proxy</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.micronaut.aws</groupId>
-      <artifactId>micronaut-function-aws-custom-runtime</artifactId>
-      <scope>compile</scope>
-    </dependency>
-
-    <!-- For oracle-cloud -->
-<!--    <dependency>-->
-<!--      <groupId>io.micronaut.oraclecloud</groupId>-->
-<!--      <artifactId>micronaut-oraclecloud-function-http</artifactId>-->
-<!--    </dependency>-->
-<!--    <dependency>-->
-<!--      <groupId>com.fnproject.fn</groupId>-->
-<!--      <artifactId>runtime</artifactId>-->
-<!--      <version>1.0.110</version>-->
-<!--      <scope>runtime</scope>-->
-<!--    </dependency>-->
-
   </dependencies>
 
   <build>

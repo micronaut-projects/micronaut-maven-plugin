@@ -90,7 +90,7 @@ $ mvn mn:start-testresources-service
 [INFO] Building demo 0.1
 [INFO] --------------------------------[ jar ]---------------------------------
 [INFO]
-[INFO] --- micronaut-maven-plugin:3.4.0:start-testresources-service (default-cli) @ demo ---
+[INFO] --- mn:4.0.0:start-testresources-service (default-cli) @ demo ---
 [INFO] Server settings found in /private/tmp/demo/target/../.micronaut/test-resources
 [INFO] Starting Micronaut Test Resources server
 18:37:31.043 [ForkJoinPool.commonPool-worker-13] INFO  i.m.t.e.TestResourcesResolverLoader - Loaded 2 test resources resolvers: io.micronaut.testresources.mysql.MySQLTestResourceProvider, io.micronaut.testresources.testcontainers.GenericTestContainerProvider

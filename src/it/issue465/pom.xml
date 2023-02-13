@@ -15,16 +15,15 @@
 
   <properties>
     <packaging>jar</packaging>
-    <jdk.version>8</jdk.version>
-    <release.version>8</release.version>
     <micronaut.version>@it.micronaut.version@</micronaut.version>
     <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
     <micronaut.runtime>netty</micronaut.runtime>
     <micronaut.aot.enabled>true</micronaut.aot.enabled>
     <micronaut.aot.packageName>io.micronaut.build.examples.aot.generated</micronaut.aot.packageName>
     <micronaut.aot.version>@micronaut.aot.version@</micronaut.aot.version>
+    <micronaut.test.resources.version>@micronaut.test.resources.version@</micronaut.test.resources.version>
     <micronaut.test.resources.enabled>true</micronaut.test.resources.enabled>
-    <exec.mainClass>io.micronaut.maven.examples.Application</exec.mainClass>
+    <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
   </properties>
 
   <repositories>
@@ -78,6 +77,11 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
       <scope>runtime</scope>
     </dependency>
     <dependency>
