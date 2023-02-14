@@ -1,3 +1,0 @@
-micronaut:
-  application:
-    name: package-docker-native-different-parent-version

@@ -62,18 +62,23 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>io.micronaut</groupId>
-      <artifactId>micronaut-runtime</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
       <groupId>javax.annotation</groupId>
       <artifactId>javax.annotation-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>io.micronaut.serde</groupId>
+      <artifactId>micronaut-serde-jackson</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
       <scope>runtime</scope>
     </dependency>
     <dependency>
@@ -104,7 +109,7 @@
             <dependency>
               <groupId>ch.qos.logback</groupId>
               <artifactId>logback-classic</artifactId>
-              <version>1.3.0-alpha14</version>
+              <version>1.4.5</version>
             </dependency>
             <dependency>
               <groupId>org.fusesource.jansi</groupId>
