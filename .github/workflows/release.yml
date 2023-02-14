@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '8'
+          java-version: '17'
           settings-path: /tmp
 
       - name: Setup Maven settings.xml
@@ -65,7 +65,7 @@ jobs:
           echo ::set-output name=next_version::${NV}-SNAPSHOT
 
       - name: Prepare release
-        run: mvn --batch-mode release:prepare -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }}
+        run: ./mvnw --batch-mode release:prepare -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }}
 
       - name: Publish to Github Pages
         uses: micronaut-projects/github-pages-deploy-action@master
@@ -80,7 +80,7 @@ jobs:
       - name: Perform release
         env:
           GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
-        run: mvn --batch-mode release:perform
+        run: ./mvnw --batch-mode release:perform
 
       - name: Close release
         if: success()
@@ -94,7 +94,7 @@ jobs:
         with:
           token: ${{ secrets.GH_TOKEN }}
           repository: micronaut-projects/micronaut-core
-          ref: 3.8.x
+          ref: 4.0.x
           path: micronaut-core # Must be micronaut-core
         continue-on-error: true
 
@@ -105,13 +105,13 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
         env:
           MICRONAUT_BUILD_EMAIL: ${{ secrets.MICRONAUT_BUILD_EMAIL }}
-          githubCoreBranch: 3.8.x
+          githubCoreBranch: 4.0.x
           projectVersion: ${{ steps.release_version.outputs.release_version }}
           bomProperty: micronautMavenPluginVersion
 
       - name: Rollback release
         if: failure()
-        run: mvn release:rollback
+        run: ./mvnw release:rollback
 
       - name: Close milestone ${{ steps.release_version.outputs.release_version }}
         if: success()

@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: 11
+          java-version: 17
           server-password: GH_TOKEN
 
       - name: Cache Maven packages
@@ -33,7 +33,7 @@ jobs:
 
       - name: Analyse with Maven
         run: |
-          mvn install && mvn verify -Prun-its jacoco:report org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar
+          ./mvnw install && ./mvnw verify -Prun-its jacoco:report sonar:sonar
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}

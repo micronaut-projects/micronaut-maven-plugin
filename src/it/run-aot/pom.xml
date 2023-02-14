@@ -15,8 +15,6 @@
 
     <properties>
         <packaging>jar</packaging>
-        <jdk.version>8</jdk.version>
-        <release.version>8</release.version>
         <micronaut.version>@it.micronaut.version@</micronaut.version>
         <exec.mainClass>io.micronaut.build.examples.RunCommand</exec.mainClass>
         <picocli.version>4.6.3</picocli.version>
@@ -60,11 +58,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>io.micronaut</groupId>
-            <artifactId>micronaut-runtime</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
             <scope>compile</scope>
@@ -82,6 +75,11 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -104,7 +102,7 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>io.micronaut.build</groupId>
+                <groupId>io.micronaut.maven</groupId>
                 <artifactId>micronaut-maven-plugin</artifactId>
                 <version>${micronaut-maven-plugin.version}</version>
             </plugin>

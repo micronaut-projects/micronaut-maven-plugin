@@ -27,7 +27,7 @@ $ mvn clean mn:run
 [INFO] --- maven-clean-plugin:2.5:clean (default-clean) @ java-maven-junit ---
 [INFO] Deleting /Users/alvarosanchez/Micronaut/micronaut-maven-plugin/examples/java/target
 [INFO]
-[INFO] --- micronaut-maven-plugin:1.0.0.BUILD-SNAPSHOT:run (default-cli) @ java-maven-junit ---
+[INFO] --- mn:4.0.0:run (default-cli) @ java-maven-junit ---
 [INFO] Using 'UTF-8' encoding to copy filtered resources.
 [INFO] Copying 2 resources
 [INFO] Changes detected - recompiling the module!
@@ -59,7 +59,7 @@ You can further include or exclude some other locations:
             <!-- ... -->
 
             <plugin>
-                <groupId>io.micronaut.build</groupId>
+                <groupId>io.micronaut.maven</groupId>
                 <artifactId>micronaut-maven-plugin</artifactId>
                 <version>{site-version}</version>
                 <configuration>

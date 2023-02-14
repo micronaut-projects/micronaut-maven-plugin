@@ -2,8 +2,8 @@ import java.util.jar.JarFile
 
 File log = new File(basedir, 'build.log')
 assert log.exists()
-assert log.text.contains("native-maven-plugin:${nativeMavenPluginVersion}:compile")
-assert log.text.contains("micronaut-maven-plugin:${pluginVersion}:graalvm-resources")
+assert log.text.contains("native:${nativeMavenPluginVersion}:compile")
+assert log.text.contains("mn:${pluginVersion}:graalvm-resources")
 
 File resourceConfigFile = new File(basedir, 'target/classes/META-INF/native-image/io.micronaut.build.examples/package-native-image-aot-spaces/resource-config.json')
 def resourceConfigJson = new groovy.json.JsonSlurper().parse(resourceConfigFile)
