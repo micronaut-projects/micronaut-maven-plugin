@@ -11,6 +11,9 @@ on:
 jobs:
   snapshot:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: ['17']
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v3
@@ -19,7 +22,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '8'
+          java-version: ${{ matrix.java }}
           server-password: GH_TOKEN
 
       - name: Cache Maven packages
