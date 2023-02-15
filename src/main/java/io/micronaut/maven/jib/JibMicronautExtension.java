@@ -117,7 +117,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
             entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");
             entrypoint.add("com.fnproject.fn.runtime.EntryPoint");
         } else {
-            entrypoint.add("/usr/java/openjdk-11/bin/java");
+            entrypoint.add("/usr/java/latest/bin/java");
             entrypoint.add("-XX:-UsePerfData");
             entrypoint.add("-XX:+UseSerialGC");
             entrypoint.add("-Xshare:on");
@@ -132,8 +132,8 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
     public static String determineProjectFnVersion() {
         ArtifactVersion javaVersion = new DefaultArtifactVersion(System.getProperty("java.version"));
-        if (javaVersion.getMajorVersion() >= 11) {
-            return "jre11-latest";
+        if (javaVersion.getMajorVersion() >= 17) {
+            return "jre17-latest";
         } else {
             return AbstractDockerMojo.LATEST_TAG;
         }
