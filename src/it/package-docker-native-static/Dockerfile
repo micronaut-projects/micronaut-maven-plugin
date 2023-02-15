@@ -1,4 +1,4 @@
-FROM ghcr.io/graalvm/graalvm-ce:ol7-java17-22.2.0 AS builder
+FROM ghcr.io/graalvm/graalvm-ce:ol7-java17-22.3.0 AS builder
 RUN gu install native-image
 WORKDIR /home/app
 
