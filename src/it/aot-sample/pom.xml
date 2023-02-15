@@ -17,7 +17,7 @@
         <packaging>jar</packaging>
         <micronaut.version>@it.micronaut.version@</micronaut.version>
         <exec.mainClass>io.micronaut.build.examples.RunCommand</exec.mainClass>
-        <picocli.version>4.6.3</picocli.version>
+        <picocli.version>4.7.1</picocli.version>
         <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
         <micronaut.aot.enabled>true</micronaut.aot.enabled>
         <micronaut.aot.packageName>io.micronaut.build.examples</micronaut.aot.packageName>
