@@ -1,4 +1,4 @@
-FROM amazonlinux:2 AS graalvm
+FROM amazonlinux:2022 AS graalvm
 ENV LANG=en_US.UTF-8
 RUN yum update -y && yum install -y gcc gcc-c++ zlib-devel zip tar gzip && yum clean all
 RUN curl -4 -L https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-22.3.0/graalvm-ce-java17-linux-amd64-22.3.0.tar.gz -o /tmp/graalvm.tar.gz \
@@ -13,7 +13,7 @@ COPY dependency/* /home/app/libs/
 ENV USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM=false
 RUN native-image -Ob -H:Class=io.micronaut.function.aws.runtime.MicronautLambdaRuntime -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
 
-FROM amazonlinux:2
+FROM amazonlinux:2022
 WORKDIR /function
 RUN yum install -y zip && yum clean all
 COPY --from=graalvm /home/app/application /function/func
