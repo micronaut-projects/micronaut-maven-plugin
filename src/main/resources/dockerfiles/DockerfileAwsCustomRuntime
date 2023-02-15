@@ -1,9 +1,9 @@
-FROM amazonlinux:2 AS graalvm
+FROM amazonlinux:latest AS graalvm
 ENV LANG=en_US.UTF-8
 ARG GRAALVM_VERSION
 ARG GRAALVM_JVM_VERSION
 ARG GRAALVM_ARCH
-RUN yum update -y && yum install -y gcc gcc-c++ zlib-devel zip tar gzip && yum clean all
+RUN yum update -y && yum install -y gcc gcc-c++ libc6-dev zlib1g-dev curl bash zlib zlib-devel zlib-static zip tar gzip && yum clean all
 RUN curl -4 -L https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-${GRAALVM_VERSION}/graalvm-ce-${GRAALVM_JVM_VERSION}-linux-${GRAALVM_ARCH}-${GRAALVM_VERSION}.tar.gz -o /tmp/graalvm.tar.gz \
     && tar -zxf /tmp/graalvm.tar.gz -C /tmp \
     && mv /tmp/graalvm-ce-${GRAALVM_JVM_VERSION}-${GRAALVM_VERSION} /usr/lib/graalvm \
@@ -18,11 +18,12 @@ ARG CLASS_NAME
 ENV USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM=false
 RUN native-image ${GRAALVM_ARGS} -H:Class=${CLASS_NAME} -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
 
-FROM amazonlinux:2
+FROM amazonlinux:latest
 WORKDIR /function
-RUN yum install -y zip && yum clean all
+RUN yum update -y && yum install -y zip && yum clean all
 COPY --from=graalvm /home/app/application /function/func
-RUN echo "#!/bin/sh" >> bootstrap && echo "set -euo pipefail" >> bootstrap && echo "./func -Djava.library.path=$(pwd)" >> bootstrap
+RUN echo "#!/bin/sh" >> bootstrap && echo "set -euo pipefail" >> bootstrap && echo "./func -XX:MaximumHeapSizePercent=80 -Dio.netty.allocator.numDirectArenas=0 -Dio.netty.noPreferDirect=true -Djava.library.path=$(pwd)" >> bootstrap
 RUN chmod 777 bootstrap
 RUN chmod 777 func
 RUN zip -j function.zip bootstrap func
+ENTRYPOINT ["/function/func"]
