@@ -1,6 +1,6 @@
 FROM ${CHECKPOINT_IMAGE} AS crac-checkpoint
 
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 
 WORKDIR /home/app
 
