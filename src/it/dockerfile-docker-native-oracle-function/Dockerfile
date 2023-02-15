@@ -6,7 +6,7 @@ COPY dependency/* /home/app/libs/
 ENV USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM=false
 RUN native-image -Ob --report-unsupported-elements-at-runtime -H:Class=com.fnproject.fn.runtime.EntryPoint -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
 
-FROM fnproject/fn-java-fdk:jre11-latest AS fnfdk
+FROM fnproject/fn-java-fdk:jre17-latest AS fnfdk
 
 FROM frolvlad/alpine-glibc:alpine-3.12
 WORKDIR /function
