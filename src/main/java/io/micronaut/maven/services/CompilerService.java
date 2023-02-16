@@ -126,6 +126,8 @@ public class CompilerService {
 
     /**
      * Resolves the source directories by checking the existence of Java, Groovy or Kotlin sources.
+     *
+     * @return a map with the language as key and the source directory as value.
      */
     public Map<String, Path> resolveSourceDirectories() {
         if (log.isDebugEnabled()) {
@@ -151,6 +153,9 @@ public class CompilerService {
 
     /**
      * Resolves project dependencies for the given scopes.
+     *
+     * @param scopes the scopes to resolve dependencies for.
+     * @return the list of dependencies.
      */
     public List<Dependency> resolveDependencies(String... scopes) {
         try {
@@ -170,6 +175,9 @@ public class CompilerService {
 
     /**
      * Builds a classpath string for the given dependencies.
+     *
+     * @param dependencies the dependencies to build the classpath for.
+     * @return the classpath string.
      */
     public String buildClasspath(List<Dependency> dependencies) {
         Comparator<Dependency> byGroupId = Comparator.comparing(d -> d.getArtifact().getGroupId());
@@ -182,6 +190,8 @@ public class CompilerService {
 
     /**
      * Packages the project by invoking the Jar plugin.
+     *
+     * @return the invocation result.
      */
     public InvocationResult packageProject() throws MavenInvocationException {
         InvocationRequest request = new DefaultInvocationRequest();

@@ -114,6 +114,10 @@ public class DependencyResolutionService {
 
     /**
      * Performs a dependency request to compute the transitive dependencies of the given artifacts.
+     *
+     * @param artifacts The artifacts to resolve
+     * @param applyManagedDependencies Whether to apply the managed dependencies of the project
+     * @return The resolution result
      */
     public List<ArtifactResult> artifactResultsFor(Stream<Artifact> artifacts, boolean applyManagedDependencies) throws DependencyResolutionException {
         RepositorySystemSession repositorySession = mavenSession.getRepositorySession();

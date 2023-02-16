@@ -88,24 +88,12 @@ public abstract class AbstractTestResourcesMojo extends TestResourcesConfigurati
         return buildDir.resolve("../.micronaut/test-resources");
     }
 
-    /**
-     * @see org.apache.maven.plugin.Mojo#setLog(org.apache.maven.plugin.logging.Log)
-     */
+    @Override
     public void setLog(Log log) {
         this.log = log;
     }
 
-    /**
-     * Returns the logger that has been injected into this mojo. If no logger has been setup yet, a
-     * <code>SystemStreamLog</code> logger will be created and returned.
-     * <strong>Note:</strong>
-     * The logger returned by this method must not be cached in an instance field during the construction of the mojo.
-     * This would cause the mojo to use a wrongly configured default logger when being run by Maven. The proper logger
-     * gets injected by the Plexus container <em>after</em> the mojo has been constructed. Therefore, simply call this
-     * method directly whenever you need the logger, it is fast enough and needs no caching.
-     *
-     * @see org.apache.maven.plugin.Mojo#getLog()
-     */
+    @Override
     public Log getLog() {
         if (log == null) {
             log = new SystemStreamLog();
@@ -113,16 +101,12 @@ public abstract class AbstractTestResourcesMojo extends TestResourcesConfigurati
         return log;
     }
 
-    /**
-     * @see org.apache.maven.plugin.ContextEnabled#getPluginContext()
-     */
+    @Override
     public Map getPluginContext() {
         return pluginContext;
     }
 
-    /**
-     * @see org.apache.maven.plugin.ContextEnabled#setPluginContext(java.util.Map)
-     */
+    @Override
     public void setPluginContext(Map pluginContext) {
         this.pluginContext = pluginContext;
     }

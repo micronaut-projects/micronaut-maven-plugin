@@ -55,7 +55,7 @@ public class JibConfigurationService {
     }
 
     /**
-     * Returns the <code>to.image</code> configuration.
+     * @return the <code>to.image</code> configuration.
      */
     public Optional<String> getToImage() {
         Optional<String> result;
@@ -71,7 +71,7 @@ public class JibConfigurationService {
     }
 
     /**
-     * Returns the <code>from.image</code> configuration.
+     * @return the <code>from.image</code> configuration.
      */
     public Optional<String> getFromImage() {
         Optional<String> result;
@@ -87,7 +87,7 @@ public class JibConfigurationService {
     }
 
     /**
-     * Returns the <code>to.tags</code> configuration.
+     * @return the <code>to.tags</code> configuration.
      */
     public Set<String> getTags() {
         Set<String> result = null;
@@ -111,7 +111,7 @@ public class JibConfigurationService {
     }
 
     /**
-     * Returns the <code>to.auth.username</code> and <code>to.auth.password</code> configuration.
+     * @return the <code>to.auth.username</code> and <code>to.auth.password</code> configuration.
      */
     public Optional<Credential> getCredentials() {
         Optional<Credential> result = Optional.empty();
@@ -135,7 +135,7 @@ public class JibConfigurationService {
     }
 
     /**
-     * Returns the <code>container.workingDirectory</code> configuration.
+     * @return the <code>container.workingDirectory</code> configuration.
      */
     public Optional<String> getWorkingDirectory() {
         if (configuration != null) {
@@ -148,7 +148,7 @@ public class JibConfigurationService {
     }
 
     /**
-     * Returns the <code>container.args</code> configuration.
+     * @return the <code>container.args</code> configuration.
      */
     public List<String> getArgs() {
         List<String> result = new ArrayList<>();
