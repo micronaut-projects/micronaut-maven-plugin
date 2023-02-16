@@ -12,5 +12,5 @@ FROM frolvlad/alpine-glibc:alpine-3.12
 WORKDIR /function
 COPY --from=builder /home/app/application /function/func
 COPY --from=fnfdk /function/runtime/lib/* .
-ENTRYPOINT ["./func", "-XX:MaximumHeapSizePercent=80", "-Djava.library.path=/function"]
+ENTRYPOINT ["./func", "-XX:MaximumHeapSizePercent=80", "-Dio.netty.allocator.numDirectArenas=0", "-Dio.netty.noPreferDirect=true", "-Djava.library.path=/function"]
 CMD ["io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest"]
