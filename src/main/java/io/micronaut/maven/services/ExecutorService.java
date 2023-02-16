@@ -52,6 +52,10 @@ public class ExecutorService {
 
     /**
      * Executes the given goal from the given plugin coordinates.
+     *
+     * @param pluginKey The plugin coordinates in the format groupId:artifactId:version
+     * @param goal The goal to execute
+     * @throws MojoExecutionException If the goal execution fails
      */
     public void executeGoal(String pluginKey, String goal) throws MojoExecutionException {
         final Plugin plugin = mavenProject.getPlugin(pluginKey);
@@ -83,6 +87,13 @@ public class ExecutorService {
 
     /**
      * Executes a goal using the given arguments.
+     *
+     * @param pluginGroup plugin group id
+     * @param pluginArtifact plugin artifact id
+     * @param pluginVersion plugin version
+     * @param goal goal to execute
+     * @param configuration configuration for the goal
+     * @throws MojoExecutionException if the goal execution fails
      */
     public void executeGoal(String pluginGroup, String pluginArtifact, String pluginVersion, String goal, Xpp3Dom configuration) throws MojoExecutionException {
         final Plugin plugin = plugin(pluginGroup, pluginArtifact, pluginVersion);

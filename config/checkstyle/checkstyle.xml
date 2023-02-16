@@ -49,7 +49,7 @@
     <!-- Checks whether files end with a new line.                        -->
     <!-- See https://checkstyle.org/config_misc.html#NewlineAtEndOfFile -->
     <module name="NewlineAtEndOfFile">
-        <property name="lineSeparator" value="lf_cr_crlf"/>
+        <property name="lineSeparator" value="lf"/>
     </module>
 
     <!-- Checks that property files contain the same keys.         -->
@@ -96,13 +96,13 @@
         <!-- Checks for Javadoc comments.                     -->
         <!-- See https://checkstyle.org/config_javadoc.html -->
         <module name="JavadocMethod">
-            <property name="excludeScope" value="private"/>
-            <property name="allowMissingParamTags" value="true"/>
-            <property name="allowMissingReturnTag" value="true"/>
+            <property name="accessModifiers" value="public, protected"/>
         </module>
         <module name="JavadocType"/>
         <module name="JavadocStyle"/>
-        <module name="MissingJavadocType"/>
+        <module name="MissingJavadocType">
+            <property name="severity" value="warning"/>
+        </module>
 
         <!-- Checks for Naming Conventions.                  -->
         <!-- See https://checkstyle.org/config_naming.html -->
@@ -120,7 +120,7 @@
         <module name="IllegalImport"/> <!-- defaults to sun.* packages -->
         <module name="RedundantImport"/>
         <module name="UnusedImports">
-            <property name="processJavadoc" value="false"/>
+            <property name="processJavadoc" value="true"/>
         </module>
 
         <!-- Checks for Size Violations.                    -->
@@ -171,8 +171,8 @@
         <module name="IllegalInstantiation"/>
         <module name="InnerAssignment"/>
         <!--<module name="MagicNumber">-->
-            <!--<property name="ignoreFieldDeclaration" value="true"/>-->
-            <!--<property name="ignoreHashCodeMethod" value="true"/>-->
+        <!--<property name="ignoreFieldDeclaration" value="true"/>-->
+        <!--<property name="ignoreHashCodeMethod" value="true"/>-->
         <!--</module>-->
         <module name="MissingSwitchDefault"/>
         <module name="SimplifyBooleanExpression"/>

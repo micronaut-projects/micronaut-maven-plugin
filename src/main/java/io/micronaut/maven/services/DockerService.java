@@ -78,14 +78,15 @@ public class DockerService {
     }
 
     /**
-     * Creates the {@link BuildImageCmd} by loading the given Dockerfile as classpath resource.
+     * @param dockerfileName the name of the Dockerfile to load
+     * @return the {@link BuildImageCmd} by loading the given Dockerfile as classpath resource.
      */
     public BuildImageCmd buildImageCmd(String dockerfileName) throws IOException {
         return dockerClient.buildImageCmd(loadDockerfileAsResource(dockerfileName));
     }
 
     /**
-     * Creates a default {@link BuildImageCmd}.
+     * @return a default {@link BuildImageCmd}.
      */
     public BuildImageCmd buildImageCmd() {
         return dockerClient.buildImageCmd();
@@ -94,6 +95,7 @@ public class DockerService {
     /**
      * Builds the Docker image from the given {@link BuildImageCmd} builder.
      *
+     * @param builder The builder to use.
      * @return The resulting image ID.
      */
     public String buildImage(BuildImageCmd builder) {
@@ -117,8 +119,10 @@ public class DockerService {
 
     /**
      * Creates a container based on a given image, and runs it.
+     *
      * @param imageId the image to use
      * @param timeoutSeconds the timeout in seconds for the container to finish execution
+     * @param checkpointNetworkName the name of the network to use for the container
      * @param binds the bind mounts to use
      */
     public void runPrivilegedImageAndWait(String imageId, Integer timeoutSeconds, String checkpointNetworkName, String... binds) throws IOException {
@@ -152,6 +156,10 @@ public class DockerService {
 
     /**
      * Copies a file from the specified container path in the given image ID, into a temporal location.
+     *
+     * @param imageId The image ID.
+     * @param containerPath The container path.
+     * @return The temporal file.
      */
     public File copyFromContainer(String imageId, String containerPath) {
         CreateContainerCmd containerCmd = dockerClient.createContainerCmd(imageId);
@@ -179,6 +187,9 @@ public class DockerService {
 
     /**
      * Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.
+     *
+     * @param name the name of the Dockerfile.
+     * @return the file where the Dockerfile was copied to.
      */
     public File loadDockerfileAsResource(String name) throws IOException {
         return loadDockerfileAsResource(name, DockerfileMojo.DOCKERFILE);
@@ -186,6 +197,10 @@ public class DockerService {
 
     /**
      * Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.
+     *
+     * @param name the name of the Dockerfile.
+     * @param targetFileName the name of the file to copy the Dockerfile to.
+     * @return the file where the Dockerfile was copied to.
      */
     public File loadDockerfileAsResource(String name, String targetFileName) throws IOException {
         String path = "/dockerfiles/" + name;
@@ -199,7 +214,8 @@ public class DockerService {
     }
 
     /**
-     * Creates a {@link PushImageCmd} from the given image name.
+     * @param imageName the image name
+     * @return a {@link PushImageCmd} from the given image name.
      */
     public PushImageCmd pushImageCmd(String imageName) {
         return dockerClient.pushImageCmd(imageName);

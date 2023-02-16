@@ -107,14 +107,14 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     }
 
     /**
-     * Returns the Java version from either the <code>maven.compiler.target</code> property or the <code>java.version</code> property.
+     * @return the Java version from either the <code>maven.compiler.target</code> property or the <code>java.version</code> property.
      */
     protected ArtifactVersion javaVersion() {
         return new DefaultArtifactVersion(Optional.ofNullable(mavenProject.getProperties().getProperty("maven.compiler.target")).orElse(System.getProperty("java.version")));
     }
 
     /**
-     * Returns the GraalVM version from the <code>graalvm.version</code> property, which is expected to come from the
+     * @return the GraalVM version from the <code>graalvm.version</code> property, which is expected to come from the
      * Micronaut Parent POM.
      */
     protected String graalVmVersion() {
@@ -122,14 +122,14 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     }
 
     /**
-     * Calculates the JVM version to use for GraalVM.
+     * @return the JVM version to use for GraalVM.
      */
     protected String graalVmJvmVersion() {
         return JAVA_17;
     }
 
     /**
-     * Detects the OS architecture to use for GraalVM depending on the <code>os.arch</code> system property.
+     * @return the OS architecture to use for GraalVM depending on the <code>os.arch</code> system property.
      */
     protected String graalVmArch() {
         String osArch = System.getProperty("os.arch");
@@ -141,7 +141,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     }
 
     /**
-     * Determines the base FROM image for the native image.
+     * @return the base FROM image for the native image.
      */
     protected String getFrom() {
         if (Boolean.TRUE.equals(staticNativeImage)) {
@@ -153,14 +153,14 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     }
 
     /**
-     * Returns the base image from the jib configuration (if any).
+     * @return the base image from the jib configuration (if any).
      */
     protected Optional<String> getFromImage() {
         return jibConfigurationService.getFromImage();
     }
 
     /**
-     * Calculates the Docker image tags by looking at the Jib plugin configuration.
+     * @return the Docker image tags by looking at the Jib plugin configuration.
      */
     protected Set<String> getTags() {
         Set<String> tags = new HashSet<>();
@@ -188,7 +188,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     }
 
     /**
-     * Determines the application port to expose by looking at the application configuration.
+     * @return the application port to expose by looking at the application configuration.
      */
     protected String getPort() {
         String port = applicationConfigurationService.getServerPort();
@@ -212,7 +212,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     }
 
     /**
-     * Returns the Docker CMD command.
+     * @return the Docker CMD command.
      */
     protected String getCmd() {
         return "CMD [" +
@@ -223,7 +223,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     }
 
     /**
-     * Returns any additional GraalVM arguments.
+     * @return any additional GraalVM arguments.
      */
     protected String getGraalVmBuildArgs() {
         if (nativeImageBuildArgs != null && !nativeImageBuildArgs.isEmpty()) {
