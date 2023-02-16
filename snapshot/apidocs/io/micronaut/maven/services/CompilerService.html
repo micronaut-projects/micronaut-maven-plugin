@@ -299,6 +299,10 @@ loadScripts(document, 'script');</script>
 <h3>resolveSourceDirectories</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&gt;</span>&nbsp;<span class="element-name">resolveSourceDirectories</span>()</div>
 <div class="block">Resolves the source directories by checking the existence of Java, Groovy or Kotlin sources.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>a map with the language as key and the source directory as value.</dd>
+</dl>
 </section>
 </li>
 <li>
@@ -306,6 +310,12 @@ loadScripts(document, 'script');</script>
 <h3>resolveDependencies</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.eclipse.aether.graph.Dependency&gt;</span>&nbsp;<span class="element-name">resolveDependencies</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>...&nbsp;scopes)</span></div>
 <div class="block">Resolves project dependencies for the given scopes.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>scopes</code> - the scopes to resolve dependencies for.</dd>
+<dt>Returns:</dt>
+<dd>the list of dependencies.</dd>
+</dl>
 </section>
 </li>
 <li>
@@ -313,6 +323,12 @@ loadScripts(document, 'script');</script>
 <h3>buildClasspath</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">buildClasspath</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.eclipse.aether.graph.Dependency&gt;&nbsp;dependencies)</span></div>
 <div class="block">Builds a classpath string for the given dependencies.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>dependencies</code> - the dependencies to build the classpath for.</dd>
+<dt>Returns:</dt>
+<dd>the classpath string.</dd>
+</dl>
 </section>
 </li>
 <li>
@@ -322,6 +338,8 @@ loadScripts(document, 'script');</script>
                                                                 throws <span class="exceptions">org.apache.maven.shared.invoker.MavenInvocationException</span></div>
 <div class="block">Packages the project by invoking the Jar plugin.</div>
 <dl class="notes">
+<dt>Returns:</dt>
+<dd>the invocation result.</dd>
 <dt>Throws:</dt>
 <dd><code>org.apache.maven.shared.invoker.MavenInvocationException</code></dd>
 </dl>

@@ -178,9 +178,7 @@ implements org.apache.maven.plugin.Mojo, org.apache.maven.plugin.ContextEnabled<
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.apache.maven.plugin.logging.Log</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getLog()" class="member-name-link">getLog</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Returns the logger that has been injected into this mojo.</div>
-</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPluginContext()" class="member-name-link">getPluginContext</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
@@ -321,12 +319,6 @@ implements org.apache.maven.plugin.Mojo, org.apache.maven.plugin.ContextEnabled<
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>setLog</code>&nbsp;in interface&nbsp;<code>org.apache.maven.plugin.Mojo</code></dd>
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list-long">
-<li><code>Mojo.setLog(org.apache.maven.plugin.logging.Log)</code></li>
-</ul>
-</dd>
 </dl>
 </section>
 </li>
@@ -334,22 +326,9 @@ implements org.apache.maven.plugin.Mojo, org.apache.maven.plugin.ContextEnabled<
 <section class="detail" id="getLog()">
 <h3>getLog</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.apache.maven.plugin.logging.Log</span>&nbsp;<span class="element-name">getLog</span>()</div>
-<div class="block">Returns the logger that has been injected into this mojo. If no logger has been setup yet, a
- <code>SystemStreamLog</code> logger will be created and returned.
- <strong>Note:</strong>
- The logger returned by this method must not be cached in an instance field during the construction of the mojo.
- This would cause the mojo to use a wrongly configured default logger when being run by Maven. The proper logger
- gets injected by the Plexus container <em>after</em> the mojo has been constructed. Therefore, simply call this
- method directly whenever you need the logger, it is fast enough and needs no caching.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getLog</code>&nbsp;in interface&nbsp;<code>org.apache.maven.plugin.Mojo</code></dd>
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list">
-<li><code>Mojo.getLog()</code></li>
-</ul>
-</dd>
 </dl>
 </section>
 </li>
@@ -360,12 +339,6 @@ implements org.apache.maven.plugin.Mojo, org.apache.maven.plugin.ContextEnabled<
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getPluginContext</code>&nbsp;in interface&nbsp;<code>org.apache.maven.plugin.ContextEnabled</code></dd>
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list-long">
-<li><code>ContextEnabled.getPluginContext()</code></li>
-</ul>
-</dd>
 </dl>
 </section>
 </li>
@@ -376,12 +349,6 @@ implements org.apache.maven.plugin.Mojo, org.apache.maven.plugin.ContextEnabled<
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>setPluginContext</code>&nbsp;in interface&nbsp;<code>org.apache.maven.plugin.ContextEnabled</code></dd>
-<dt>See Also:</dt>
-<dd>
-<ul class="see-list-long">
-<li><code>ContextEnabled.setPluginContext(java.util.Map)</code></li>
-</ul>
-</dd>
 </dl>
 </section>
 </li>

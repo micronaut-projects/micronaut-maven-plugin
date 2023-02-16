@@ -120,14 +120,10 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>com.github.dockerjava.api.command.BuildImageCmd</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildImageCmd()" class="member-name-link">buildImageCmd</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Creates a default <code>BuildImageCmd</code>.</div>
-</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>com.github.dockerjava.api.command.BuildImageCmd</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#buildImageCmd(java.lang.String)" class="member-name-link">buildImageCmd</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dockerfileName)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Creates the <code>BuildImageCmd</code> by loading the given Dockerfile as classpath resource.</div>
-</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#copyFromContainer(java.lang.String,java.lang.String)" class="member-name-link">copyFromContainer</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;imageId,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;containerPath)</code></div>
@@ -147,9 +143,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>com.github.dockerjava.api.command.PushImageCmd</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#pushImageCmd(java.lang.String)" class="member-name-link">pushImageCmd</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;imageName)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Creates a <code>PushImageCmd</code> from the given image name.</div>
-</div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#runPrivilegedImageAndWait(java.lang.String,java.lang.Integer,java.lang.String,java.lang.String...)" class="member-name-link">runPrivilegedImageAndWait</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;imageId,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;timeoutSeconds,
@@ -195,8 +189,11 @@ loadScripts(document, 'script');</script>
 <h3>buildImageCmd</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">com.github.dockerjava.api.command.BuildImageCmd</span>&nbsp;<span class="element-name">buildImageCmd</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dockerfileName)</span>
                                                               throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
-<div class="block">Creates the <code>BuildImageCmd</code> by loading the given Dockerfile as classpath resource.</div>
 <dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>dockerfileName</code> - the name of the Dockerfile to load</dd>
+<dt>Returns:</dt>
+<dd>the <code>BuildImageCmd</code> by loading the given Dockerfile as classpath resource.</dd>
 <dt>Throws:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></code></dd>
 </dl>
@@ -206,7 +203,10 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="buildImageCmd()">
 <h3>buildImageCmd</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">com.github.dockerjava.api.command.BuildImageCmd</span>&nbsp;<span class="element-name">buildImageCmd</span>()</div>
-<div class="block">Creates a default <code>BuildImageCmd</code>.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>a default <code>BuildImageCmd</code>.</dd>
+</dl>
 </section>
 </li>
 <li>
@@ -215,6 +215,8 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">buildImage</span><wbr><span class="parameters">(com.github.dockerjava.api.command.BuildImageCmd&nbsp;builder)</span></div>
 <div class="block">Builds the Docker image from the given <code>BuildImageCmd</code> builder.</div>
 <dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>builder</code> - The builder to use.</dd>
 <dt>Returns:</dt>
 <dd>The resulting image ID.</dd>
 </dl>
@@ -233,6 +235,7 @@ loadScripts(document, 'script');</script>
 <dt>Parameters:</dt>
 <dd><code>imageId</code> - the image to use</dd>
 <dd><code>timeoutSeconds</code> - the timeout in seconds for the container to finish execution</dd>
+<dd><code>checkpointNetworkName</code> - the name of the network to use for the container</dd>
 <dd><code>binds</code> - the bind mounts to use</dd>
 <dt>Throws:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></code></dd>
@@ -245,6 +248,13 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name">copyFromContainer</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;imageId,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;containerPath)</span></div>
 <div class="block">Copies a file from the specified container path in the given image ID, into a temporal location.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>imageId</code> - The image ID.</dd>
+<dd><code>containerPath</code> - The container path.</dd>
+<dt>Returns:</dt>
+<dd>The temporal file.</dd>
+</dl>
 </section>
 </li>
 <li>
@@ -254,6 +264,10 @@ loadScripts(document, 'script');</script>
                               throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
 <div class="block">Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.</div>
 <dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>name</code> - the name of the Dockerfile.</dd>
+<dt>Returns:</dt>
+<dd>the file where the Dockerfile was copied to.</dd>
 <dt>Throws:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></code></dd>
 </dl>
@@ -267,6 +281,11 @@ loadScripts(document, 'script');</script>
                               throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
 <div class="block">Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.</div>
 <dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>name</code> - the name of the Dockerfile.</dd>
+<dd><code>targetFileName</code> - the name of the file to copy the Dockerfile to.</dd>
+<dt>Returns:</dt>
+<dd>the file where the Dockerfile was copied to.</dd>
 <dt>Throws:</dt>
 <dd><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></code></dd>
 </dl>
@@ -276,7 +295,12 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="pushImageCmd(java.lang.String)">
 <h3>pushImageCmd</h3>
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">com.github.dockerjava.api.command.PushImageCmd</span>&nbsp;<span class="element-name">pushImageCmd</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;imageName)</span></div>
-<div class="block">Creates a <code>PushImageCmd</code> from the given image name.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>imageName</code> - the image name</dd>
+<dt>Returns:</dt>
+<dd>a <code>PushImageCmd</code> from the given image name.</dd>
+</dl>
 </section>
 </li>
 </ul>

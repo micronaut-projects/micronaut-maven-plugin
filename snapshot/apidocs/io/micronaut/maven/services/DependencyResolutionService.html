@@ -276,6 +276,11 @@ loadScripts(document, 'script');</script>
                                                                       throws <span class="exceptions">org.eclipse.aether.resolution.DependencyResolutionException</span></div>
 <div class="block">Performs a dependency request to compute the transitive dependencies of the given artifacts.</div>
 <dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>artifacts</code> - The artifacts to resolve</dd>
+<dd><code>applyManagedDependencies</code> - Whether to apply the managed dependencies of the project</dd>
+<dt>Returns:</dt>
+<dd>The resolution result</dd>
 <dt>Throws:</dt>
 <dd><code>org.eclipse.aether.resolution.DependencyResolutionException</code></dd>
 </dl>

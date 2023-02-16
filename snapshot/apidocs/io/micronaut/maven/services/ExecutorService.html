@@ -172,8 +172,11 @@ loadScripts(document, 'script');</script>
                  throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <div class="block">Executes the given goal from the given plugin coordinates.</div>
 <dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>pluginKey</code> - The plugin coordinates in the format groupId:artifactId:version</dd>
+<dd><code>goal</code> - The goal to execute</dd>
 <dt>Throws:</dt>
-<dd><code>org.apache.maven.plugin.MojoExecutionException</code></dd>
+<dd><code>org.apache.maven.plugin.MojoExecutionException</code> - If the goal execution fails</dd>
 </dl>
 </section>
 </li>
@@ -188,8 +191,14 @@ loadScripts(document, 'script');</script>
                  throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <div class="block">Executes a goal using the given arguments.</div>
 <dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>pluginGroup</code> - plugin group id</dd>
+<dd><code>pluginArtifact</code> - plugin artifact id</dd>
+<dd><code>pluginVersion</code> - plugin version</dd>
+<dd><code>goal</code> - goal to execute</dd>
+<dd><code>configuration</code> - configuration for the goal</dd>
 <dt>Throws:</dt>
-<dd><code>org.apache.maven.plugin.MojoExecutionException</code></dd>
+<dd><code>org.apache.maven.plugin.MojoExecutionException</code> - if the goal execution fails</dd>
 </dl>
 </section>
 </li>
