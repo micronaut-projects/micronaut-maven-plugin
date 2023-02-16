@@ -18,12 +18,10 @@ package io.micronaut.maven.aot;
 import io.micronaut.maven.Packaging;
 import io.micronaut.maven.services.CompilerService;
 import org.apache.commons.io.FileUtils;
-import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 
 import java.io.File;
@@ -62,7 +60,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.build.outputDirectory}", required = true)
     protected File outputDirectory;
 
-    public AbstractMicronautAotMojo(CompilerService compilerService, MavenProject mavenProject, MavenSession mavenSession, RepositorySystem repositorySystem) {
+    public AbstractMicronautAotMojo(CompilerService compilerService, MavenProject mavenProject) {
         this.compilerService = compilerService;
         this.mavenProject = mavenProject;
     }

@@ -99,30 +99,18 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
     public static List<String> buildProjectFnEntrypoint() {
         List<String> entrypoint = new ArrayList<>(9);
-        String projectFnVersion = determineProjectFnVersion();
-        if (AbstractDockerMojo.LATEST_TAG.equals(projectFnVersion)) {
-            entrypoint.add("java");
-            entrypoint.add("-XX:+UnlockExperimentalVMOptions");
-            entrypoint.add("-XX:+UseCGroupMemoryLimitForHeap");
-            entrypoint.add("-XX:-UsePerfData");
-            entrypoint.add("-XX:MaxRAMFraction=2");
-            entrypoint.add("-XX:+UseSerialGC");
-            entrypoint.add("-Xshare:on");
-            entrypoint.add("-Djava.library.path=/function/runtime/lib");
-            entrypoint.add("-cp");
-            entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");
-            entrypoint.add("com.fnproject.fn.runtime.EntryPoint");
-        } else {
-            entrypoint.add("/usr/java/latest/bin/java");
-            entrypoint.add("-XX:-UsePerfData");
-            entrypoint.add("-XX:+UseSerialGC");
-            entrypoint.add("-Xshare:on");
-            entrypoint.add("-Djava.awt.headless=true");
-            entrypoint.add("-Djava.library.path=/function/runtime/lib");
-            entrypoint.add("-cp");
-            entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");
-            entrypoint.add("com.fnproject.fn.runtime.EntryPoint");
-        }
+        entrypoint.add("/usr/java/latest/bin/java");
+        entrypoint.add("java");
+        entrypoint.add("-XX:+UnlockExperimentalVMOptions");
+        entrypoint.add("-XX:+UseCGroupMemoryLimitForHeap");
+        entrypoint.add("-XX:-UsePerfData");
+        entrypoint.add("-XX:MaxRAMFraction=2");
+        entrypoint.add("-XX:+UseSerialGC");
+        entrypoint.add("-Xshare:on");
+        entrypoint.add("-Djava.library.path=/function/runtime/lib");
+        entrypoint.add("-cp");
+        entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");
+        entrypoint.add("com.fnproject.fn.runtime.EntryPoint");
         return entrypoint;
     }
 

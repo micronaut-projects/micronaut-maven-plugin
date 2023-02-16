@@ -18,7 +18,6 @@ package io.micronaut.maven.aot;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.maven.services.ExecutorService;
-import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
@@ -26,7 +25,6 @@ import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
-import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.resolution.DependencyResolutionException;
@@ -54,7 +52,7 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     public static final String EXEC_MAVEN_PLUGIN_GROUP = "org.codehaus.mojo";
     public static final String EXEC_MAVEN_PLUGIN_ARTIFACT = "exec-maven-plugin";
     public static final String EXEC_MAVEN_PLUGIN_VERSION_PROPERTY = "exec-maven-plugin.version";
-    public static final String DEFAULT_EXEC_MAVEN_PLUGIN_VERSION = "3.0.0";
+    public static final String DEFAULT_EXEC_MAVEN_PLUGIN_VERSION = "3.1.0";
 
     private static final String[] AOT_MODULES = new String[]{
             "api",
@@ -77,9 +75,8 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
 
     @Inject
     public AbstractMicronautAotCliMojo(CompilerService compilerService, ExecutorService executorService,
-                                       MavenProject mavenProject, MavenSession mavenSession,
-                                       RepositorySystem repositorySystem, DependencyResolutionService dependencyResolutionService) {
-        super(compilerService, mavenProject, mavenSession, repositorySystem);
+                                       MavenProject mavenProject, DependencyResolutionService dependencyResolutionService) {
+        super(compilerService, mavenProject);
         this.executorService = executorService;
         this.dependencyResolutionService = dependencyResolutionService;
     }

@@ -65,7 +65,7 @@ public class CompilerService {
     private final ProjectDependenciesResolver resolver;
     private final Invoker invoker;
 
-    @SuppressWarnings("CdiInjectionPointsInspection")
+    @SuppressWarnings("MnInjectionPoints")
     @Inject
     public CompilerService(MavenProject mavenProject, MavenSession mavenSession, ExecutorService executorService,
                            ProjectDependenciesResolver resolver) {
