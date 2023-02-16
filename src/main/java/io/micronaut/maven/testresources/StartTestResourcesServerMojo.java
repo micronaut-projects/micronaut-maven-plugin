@@ -18,7 +18,6 @@ package io.micronaut.maven.testresources;
 import io.micronaut.maven.services.DependencyResolutionService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
@@ -54,7 +53,7 @@ public class StartTestResourcesServerMojo extends AbstractTestResourcesMojo {
     }
 
     @Override
-    public final void execute() throws MojoExecutionException, MojoFailureException {
+    public final void execute() throws MojoExecutionException {
         TestResourcesHelper helper = new TestResourcesHelper(testResourcesEnabled, keepAlive, shared, buildDirectory,
                 explicitPort, clientTimeout, mavenProject, mavenSession,
                 dependencyResolutionService, toolchainManager, testResourcesVersion,

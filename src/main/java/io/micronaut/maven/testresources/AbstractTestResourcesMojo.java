@@ -43,7 +43,7 @@ public abstract class AbstractTestResourcesMojo extends TestResourcesConfigurati
     /**
      * Plugin container context.
      */
-    protected Map pluginContext;
+    protected Map<?, ?> pluginContext;
 
     @Parameter(defaultValue = "${project.build.directory}", required = true)
     protected File buildDirectory;
@@ -102,7 +102,7 @@ public abstract class AbstractTestResourcesMojo extends TestResourcesConfigurati
     }
 
     @Override
-    public Map getPluginContext() {
+    public Map<?, ?> getPluginContext() {
         return pluginContext;
     }
 

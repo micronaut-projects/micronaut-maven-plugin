@@ -21,7 +21,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
@@ -38,10 +37,6 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
     protected final CompilerService compilerService;
 
     protected final MavenProject mavenProject;
-
-    protected final MavenSession mavenSession;
-
-    protected final RepositorySystem repositorySystem;
 
     /**
      * Micronaut AOT runtime. Possible values: <code>jit</code>, <code>native</code>.
@@ -70,8 +65,6 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
     public AbstractMicronautAotMojo(CompilerService compilerService, MavenProject mavenProject, MavenSession mavenSession, RepositorySystem repositorySystem) {
         this.compilerService = compilerService;
         this.mavenProject = mavenProject;
-        this.mavenSession = mavenSession;
-        this.repositorySystem = repositorySystem;
     }
 
     abstract void onSuccess(File outputDir) throws MojoExecutionException;
@@ -86,7 +79,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
     }
 
     @Override
-    public final void execute() throws MojoExecutionException, MojoFailureException {
+    public final void execute() throws MojoExecutionException {
         if (!enabled) {
             return;
         }
@@ -115,22 +108,17 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
         Packaging packaging = Packaging.of(mavenProject.getPackaging());
         AotRuntime aotRuntime = AotRuntime.valueOf(runtime.toUpperCase());
         switch (packaging) {
-            case JAR:
-            case DOCKER_CRAC:
-            case DOCKER:
+            case JAR, DOCKER_CRAC, DOCKER -> {
                 if (aotRuntime != AotRuntime.JIT) {
                     warnRuntimeMismatchAndSetCorrectValue(AotRuntime.JIT);
                 }
-                break;
-
-            case NATIVE_IMAGE:
-            case DOCKER_NATIVE:
+            }
+            case NATIVE_IMAGE, DOCKER_NATIVE -> {
                 if (aotRuntime != AotRuntime.NATIVE) {
                     warnRuntimeMismatchAndSetCorrectValue(AotRuntime.NATIVE);
                 }
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported packaging: " + packaging);
+            }
+            default -> throw new IllegalArgumentException("Unsupported packaging: " + packaging);
         }
     }
 

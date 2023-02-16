@@ -70,33 +70,29 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         }
 
         switch (runtime.getBuildStrategy()) {
-            case ORACLE_FUNCTION:
+            case ORACLE_FUNCTION -> {
                 List<? extends LayerObject> originalLayers = buildPlan.getLayers();
                 builder.setLayers(Collections.emptyList());
-
                 for (LayerObject layer : originalLayers) {
                     builder.addLayer(remapLayer(layer));
                 }
-
                 List<String> cmd = jibConfigurationService.getArgs();
                 if (cmd.isEmpty()) {
                     cmd = Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest");
                 }
-
                 builder.setBaseImage("fnproject/fn-java-fdk:" + determineProjectFnVersion())
                         .setWorkingDirectory(AbsoluteUnixPath.get(jibConfigurationService.getWorkingDirectory().orElse("/function")))
                         .setEntrypoint(buildProjectFnEntrypoint())
                         .setCmd(cmd);
-                break;
-
-            case LAMBDA:
+            }
+            case LAMBDA -> {
                 List<String> entrypoint = buildPlan.getEntrypoint();
                 Objects.requireNonNull(entrypoint).set(entrypoint.size() - 1, "io.micronaut.function.aws.runtime.MicronautLambdaRuntime");
                 builder.setEntrypoint(entrypoint);
-                break;
-
-            default:
+            }
+            default -> {
                 //no op
+            }
         }
         return builder.build();
     }
