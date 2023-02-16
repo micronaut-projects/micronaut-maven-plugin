@@ -70,63 +70,47 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         }
 
         switch (runtime.getBuildStrategy()) {
-            case ORACLE_FUNCTION:
+            case ORACLE_FUNCTION -> {
                 List<? extends LayerObject> originalLayers = buildPlan.getLayers();
                 builder.setLayers(Collections.emptyList());
-
                 for (LayerObject layer : originalLayers) {
                     builder.addLayer(remapLayer(layer));
                 }
-
                 List<String> cmd = jibConfigurationService.getArgs();
                 if (cmd.isEmpty()) {
                     cmd = Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest");
                 }
-
                 builder.setBaseImage("fnproject/fn-java-fdk:" + determineProjectFnVersion())
                         .setWorkingDirectory(AbsoluteUnixPath.get(jibConfigurationService.getWorkingDirectory().orElse("/function")))
                         .setEntrypoint(buildProjectFnEntrypoint())
                         .setCmd(cmd);
-                break;
-
-            case LAMBDA:
+            }
+            case LAMBDA -> {
                 List<String> entrypoint = buildPlan.getEntrypoint();
                 Objects.requireNonNull(entrypoint).set(entrypoint.size() - 1, "io.micronaut.function.aws.runtime.MicronautLambdaRuntime");
                 builder.setEntrypoint(entrypoint);
-                break;
-
-            default:
+            }
+            default -> {
                 //no op
+            }
         }
         return builder.build();
     }
 
     public static List<String> buildProjectFnEntrypoint() {
         List<String> entrypoint = new ArrayList<>(9);
-        String projectFnVersion = determineProjectFnVersion();
-        if (AbstractDockerMojo.LATEST_TAG.equals(projectFnVersion)) {
-            entrypoint.add("java");
-            entrypoint.add("-XX:+UnlockExperimentalVMOptions");
-            entrypoint.add("-XX:+UseCGroupMemoryLimitForHeap");
-            entrypoint.add("-XX:-UsePerfData");
-            entrypoint.add("-XX:MaxRAMFraction=2");
-            entrypoint.add("-XX:+UseSerialGC");
-            entrypoint.add("-Xshare:on");
-            entrypoint.add("-Djava.library.path=/function/runtime/lib");
-            entrypoint.add("-cp");
-            entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");
-            entrypoint.add("com.fnproject.fn.runtime.EntryPoint");
-        } else {
-            entrypoint.add("/usr/java/latest/bin/java");
-            entrypoint.add("-XX:-UsePerfData");
-            entrypoint.add("-XX:+UseSerialGC");
-            entrypoint.add("-Xshare:on");
-            entrypoint.add("-Djava.awt.headless=true");
-            entrypoint.add("-Djava.library.path=/function/runtime/lib");
-            entrypoint.add("-cp");
-            entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");
-            entrypoint.add("com.fnproject.fn.runtime.EntryPoint");
-        }
+        entrypoint.add("/usr/java/latest/bin/java");
+        entrypoint.add("java");
+        entrypoint.add("-XX:+UnlockExperimentalVMOptions");
+        entrypoint.add("-XX:+UseCGroupMemoryLimitForHeap");
+        entrypoint.add("-XX:-UsePerfData");
+        entrypoint.add("-XX:MaxRAMFraction=2");
+        entrypoint.add("-XX:+UseSerialGC");
+        entrypoint.add("-Xshare:on");
+        entrypoint.add("-Djava.library.path=/function/runtime/lib");
+        entrypoint.add("-cp");
+        entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");
+        entrypoint.add("com.fnproject.fn.runtime.EntryPoint");
         return entrypoint;
     }
 

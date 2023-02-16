@@ -119,7 +119,7 @@ public class TestResourcesHelper {
         }
     }
 
-    private void doStart() throws DependencyResolutionException, IOException {
+    private void doStart() throws IOException {
         if (shared) {
             if (sharedServerNamespace != null) {
                 log.info("Test Resources is configured in shared mode with the namespace: " + sharedServerNamespace);
@@ -231,7 +231,7 @@ public class TestResourcesHelper {
     private void doStop() throws IOException {
         Path settingsDirectory = getServerSettingsDirectory();
         ServerUtils.stopServer(settingsDirectory);
-        Files.walkFileTree(settingsDirectory, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(settingsDirectory, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);

@@ -18,12 +18,10 @@ package io.micronaut.maven.aot;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.maven.services.ExecutorService;
-import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-import org.eclipse.aether.RepositorySystem;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -41,9 +39,8 @@ public class AotSampleMojo extends AbstractMicronautAotCliMojo {
 
     @Inject
     public AotSampleMojo(CompilerService compilerService, ExecutorService executorService, MavenProject mavenProject,
-                         MavenSession mavenSession, RepositorySystem repositorySystem,
                          DependencyResolutionService dependencyResolutionService) {
-        super(compilerService, executorService, mavenProject, mavenSession, repositorySystem, dependencyResolutionService);
+        super(compilerService, executorService, mavenProject, dependencyResolutionService);
     }
 
     @Override

@@ -116,16 +116,10 @@ public class DockerCracMojo extends AbstractDockerMojo {
             MicronautRuntime runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
 
             switch (runtime.getBuildStrategy()) {
-                case LAMBDA:
-                    throw new MojoExecutionException("Lambda Functions are currently unsupported");
-
-                case ORACLE_FUNCTION:
-                    throw new MojoExecutionException("Oracle Functions are currently unsupported");
-
-                case DEFAULT:
-                default:
-                    buildDockerCrac();
-                    break;
+                case LAMBDA -> throw new MojoExecutionException("Lambda Functions are currently unsupported");
+                case ORACLE_FUNCTION -> throw new MojoExecutionException("Oracle Functions are currently unsupported");
+                case DEFAULT -> buildDockerCrac();
+                default -> throw new IllegalStateException("Unexpected value: " + runtime.getBuildStrategy());
             }
         } catch (InvalidImageReferenceException iire) {
             String message = "Invalid image reference "

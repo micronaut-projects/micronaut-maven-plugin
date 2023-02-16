@@ -72,18 +72,10 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             MicronautRuntime runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
 
             switch (runtime.getBuildStrategy()) {
-                case LAMBDA:
-                    buildDockerNativeLambda();
-                    break;
-
-                case ORACLE_FUNCTION:
-                    buildOracleCloud();
-                    break;
-
-                case DEFAULT:
-                default:
-                    buildDockerNative();
-                    break;
+                case LAMBDA -> buildDockerNativeLambda();
+                case ORACLE_FUNCTION -> buildOracleCloud();
+                case DEFAULT -> buildDockerNative();
+                default -> throw new IllegalStateException("Unexpected value: " + runtime.getBuildStrategy());
             }
 
 

@@ -15,12 +15,10 @@
  */
 package io.micronaut.maven.aot;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 abstract class Constants {
-    static final List<String> TYPES_TO_CHECK = Collections.unmodifiableList(Arrays.asList(
+    static final List<String> TYPES_TO_CHECK = List.of(
             "io.reactivex.Observable",
             "reactor.core.publisher.Flux",
             "kotlinx.coroutines.flow.Flow",
@@ -37,16 +35,16 @@ abstract class Constants {
             "io.micronaut.core.async.publisher.CompletableFuturePublisher",
             "io.micronaut.core.async.publisher.Publishers.JustPublisher",
             "io.micronaut.core.async.subscriber.Completable"
-    ));
+    );
 
-    static final List<String> SERVICE_TYPES = Collections.unmodifiableList(Arrays.asList(
+    static final List<String> SERVICE_TYPES = List.of(
             "io.micronaut.context.env.PropertySourceLoader",
             "io.micronaut.inject.BeanConfiguration",
             "io.micronaut.inject.BeanDefinitionReference",
             "io.micronaut.http.HttpRequestFactory",
             "io.micronaut.http.HttpResponseFactory",
             "io.micronaut.core.beans.BeanIntrospectionReference"
-    ));
+    );
 
     static final String MICRONAUT_AOT_GROUP_ID = "io.micronaut.aot";
     static final String MICRONAUT_AOT_ARTIFACT_ID_PREFIX = "micronaut-aot-";
