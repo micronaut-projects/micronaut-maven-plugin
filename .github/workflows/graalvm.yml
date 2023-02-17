@@ -58,7 +58,7 @@ jobs:
           GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
       - name: Publish Test Report
         if: always()
-        uses: mikepenz/action-junit-report@v3.7.3
+        uses: mikepenz/action-junit-report@v3.7.4
         with:
           check_name: GraalVM CE CI / Test Report (Java ${{ matrix.java }})
           report_paths: '**/target/invoker-reports/TEST-*.xml'
