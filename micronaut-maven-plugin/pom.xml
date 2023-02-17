@@ -3,85 +3,34 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.micronaut.maven</groupId>
-    <artifactId>micronaut-maven-plugin-parent</artifactId>
-    <version>4.0.0-SNAPSHOT</version>
-    <packaging>pom</packaging>
+    <parent>
+        <groupId>io.micronaut.maven</groupId>
+        <artifactId>micronaut-maven-plugin-parent</artifactId>
+        <version>4.0.0-SNAPSHOT</version>
+    </parent>
 
-    <name>Micronaut Maven Plugin - Parent</name>
-    <description>Parent POM of the Micronaut Maven Plugin</description>
-    <url>https://github.com/micronaut-projects/micronaut-maven-plugin</url>
-    <inceptionYear>2020</inceptionYear>
-
-    <modules>
-        <module>micronaut-maven-plugin</module>
-        <module>micronaut-enforcer-rules</module>
-    </modules>
-
-    <prerequisites>
-        <maven>${maven.version}</maven>
-    </prerequisites>
-
-    <issueManagement>
-        <system>GitHub</system>
-        <url>https://github.com/micronaut-projects/micronaut-maven-plugin/issues</url>
-    </issueManagement>
-
-    <ciManagement>
-        <system>GitHub Actions</system>
-        <url>https://github.com/micronaut-projects/micronaut-maven-plugin/actions</url>
-    </ciManagement>
-
-    <distributionManagement>
-        <repository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2</url>
-        </repository>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-    </distributionManagement>
-
-    <scm>
-        <url>https://github.com/micronaut-projects/micronaut-maven-plugin</url>
-        <connection>scm:git:git@github.com:micronaut-projects/micronaut-maven-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:micronaut-projects/micronaut-maven-plugin.git</developerConnection>
-        <tag>HEAD</tag>
-    </scm>
-
-    <licenses>
-        <license>
-            <name>Apache License, Version 2.0</name>
-            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-    <organization>
-        <name>Micronaut</name>
-        <url>https://micronaut.io/</url>
-    </organization>
-
-    <developers>
-        <developer>
-            <name>Álvaro Sánchez-Mariscal</name>
-            <url>https://github.com/alvarosanchez</url>
-        </developer>
-    </developers>
+    <artifactId>micronaut-maven-plugin</artifactId>
+    <packaging>maven-plugin</packaging>
+    <name>Micronaut Maven Plugin</name>
+    <description>Maven plugin to execute and package Micronaut applications</description>
 
     <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.version>3.9.0</maven.version>
-
+        <maven.resources-plugin.version>3.3.0</maven.resources-plugin.version>
+        <maven.archiver-plugin.version>3.6.0</maven.archiver-plugin.version>
         <site.path>${project.artifactId}</site.path>
         <site.name>${project.name}</site.name>
         <site.description>${project.description}</site.description>
         <site.version>${project.version}</site.version>
-
         <project.build.outputTimestamp>2022-12-19T17:35:35Z</project.build.outputTimestamp>
-
+        <native-maven-plugin.version>0.9.20</native-maven-plugin.version>
+        <micronaut.version>4.0.0-SNAPSHOT</micronaut.version>
+        <micronaut.aot.version>2.0.0-SNAPSHOT</micronaut.aot.version>
+        <micronaut.test.resources.version>2.0.0-SNAPSHOT</micronaut.test.resources.version>
+        <it.micronaut.version>4.0.0-SNAPSHOT</it.micronaut.version>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.organization>micronaut-projects</sonar.organization>
         <sonar.projectKey>micronaut-projects_micronaut-maven-plugin</sonar.projectKey>
@@ -92,18 +41,175 @@
         <junit-jupiter.version>5.9.2</junit-jupiter.version>
     </properties>
 
-    <repositories>
-        <repository>
-            <id>sonatype-snapshots</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </repository>
-    </repositories>
+    <dependencies>
+        <!-- Maven -->
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-plugin-api</artifactId>
+            <version>${maven.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-model</artifactId>
+            <version>${maven.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-settings</artifactId>
+            <version>${maven.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-core</artifactId>
+            <version>${maven.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-artifact</artifactId>
+            <version>${maven.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-compat</artifactId>
+            <version>${maven.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.shared</groupId>
+            <artifactId>maven-shared-utils</artifactId>
+            <version>3.3.4</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.shared</groupId>
+            <artifactId>maven-invoker</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.plugin-tools</groupId>
+            <artifactId>maven-plugin-annotations</artifactId>
+            <version>3.7.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <version>${maven.resources-plugin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-archiver</artifactId>
+            <version>${maven.archiver-plugin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.twdata.maven</groupId>
+            <artifactId>mojo-executor</artifactId>
+            <version>2.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.resolver</groupId>
+            <artifactId>maven-resolver-util</artifactId>
+            <version>1.9.4</version>
+        </dependency>
+        <dependency>
+            <groupId>io.methvin</groupId>
+            <artifactId>directory-watcher</artifactId>
+            <version>0.18.0</version>
+        </dependency>
+
+        <!-- Jib -->
+        <dependency>
+            <groupId>com.google.cloud.tools</groupId>
+            <artifactId>jib-maven-plugin</artifactId>
+            <version>3.3.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud.tools</groupId>
+            <artifactId>jib-maven-plugin-extension-api</artifactId>
+            <version>0.4.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud.tools</groupId>
+            <artifactId>jib-native-image-extension-maven</artifactId>
+            <version>0.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud.tools</groupId>
+            <artifactId>jib-core</artifactId>
+            <version>0.23.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java-core</artifactId>
+            <version>3.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.docker-java</groupId>
+            <artifactId>docker-java-transport-zerodep</artifactId>
+            <version>3.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.17.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.buildtools</groupId>
+            <artifactId>native-maven-plugin</artifactId>
+            <version>${native-maven-plugin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.22</version>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut</groupId>
+            <artifactId>micronaut-inject</artifactId>
+            <version>${micronaut.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.33</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-xml</artifactId>
+            <version>2.14.2</version>
+        </dependency>
+
+        <!-- JUnit -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit-jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.plugin-testing</groupId>
+            <artifactId>maven-plugin-testing-harness</artifactId>
+            <version>3.3.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Micronaut AOT -->
+        <dependency>
+            <groupId>io.micronaut.aot</groupId>
+            <artifactId>micronaut-aot-std-optimizers</artifactId>
+            <version>${micronaut.aot.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.testresources</groupId>
+            <artifactId>micronaut-test-resources-build-tools</artifactId>
+            <version>${micronaut.test.resources.version}</version>
+        </dependency>
+    </dependencies>
 
     <build>
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
@@ -359,6 +465,12 @@
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
     </build>
 
     <reporting>
@@ -414,6 +526,62 @@
     </reporting>
 
     <profiles>
+        <profile>
+            <id>run-its</id>
+            <properties>
+                <!-- Enable recording of coverage during execution of maven-invoker-plugin -->
+                <jacoco.propertyName>invoker.mavenOpts</jacoco.propertyName>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-invoker-plugin</artifactId>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.codehaus.groovy</groupId>
+                                <artifactId>groovy</artifactId>
+                                <version>3.0.15</version>
+                            </dependency>
+                        </dependencies>
+                        <configuration>
+                            <streamLogs>true</streamLogs>
+                            <failIfNoProjects>true</failIfNoProjects>
+                            <cloneProjectsTo>../target/it</cloneProjectsTo>
+                            <pomIncludes>
+                                <pomInclude>*/pom.xml</pomInclude>
+                            </pomIncludes>
+                            <postBuildHookScript>verify</postBuildHookScript>
+                            <selectorScript>selector</selectorScript>
+                            <localRepositoryPath>../target/local-repo</localRepositoryPath>
+                            <settingsFile>src/it/settings.xml</settingsFile>
+                            <scriptVariables>
+                                <nativeMavenPluginVersion>${native-maven-plugin.version}</nativeMavenPluginVersion>
+                                <pluginVersion>${project.version}</pluginVersion>
+                            </scriptVariables>
+                            <goals>
+                                <goal>clean</goal>
+                                <goal>test-compile</goal>
+                            </goals>
+                            <extraArtifacts>
+                                <extraArtifact>org.jacoco:org.jacoco.agent:${jacoco.version}:jar:runtime</extraArtifact>
+                            </extraArtifacts>
+                            <writeJunitReport>true</writeJunitReport>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>integration-test</id>
+                                <goals>
+                                    <goal>install</goal>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>release</id>
             <build>
