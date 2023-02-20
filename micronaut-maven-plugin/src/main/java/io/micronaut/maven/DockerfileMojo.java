@@ -15,10 +15,11 @@
  */
 package io.micronaut.maven;
 
+import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.jib.JibMicronautExtension;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
-import io.micronaut.maven.services.JibConfigurationService;
+import io.micronaut.maven.jib.JibConfigurationService;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;

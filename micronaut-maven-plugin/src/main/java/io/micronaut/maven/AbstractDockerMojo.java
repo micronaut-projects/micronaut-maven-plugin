@@ -15,9 +15,10 @@
  */
 package io.micronaut.maven;
 
+import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
-import io.micronaut.maven.services.JibConfigurationService;
+import io.micronaut.maven.jib.JibConfigurationService;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;

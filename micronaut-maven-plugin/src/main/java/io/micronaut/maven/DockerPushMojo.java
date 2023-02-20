@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
-import io.micronaut.maven.services.JibConfigurationService;
+import io.micronaut.maven.jib.JibConfigurationService;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;

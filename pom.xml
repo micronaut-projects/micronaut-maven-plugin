@@ -14,8 +14,10 @@
     <inceptionYear>2020</inceptionYear>
 
     <modules>
+        <module>micronaut-maven-core</module>
+        <module>micronaut-maven-enforcer-rules</module>
+        <module>micronaut-maven-jib-integration</module>
         <module>micronaut-maven-plugin</module>
-        <module>micronaut-enforcer-rules</module>
     </modules>
 
     <prerequisites>
@@ -74,6 +76,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.version>3.9.0</maven.version>
+        <micronaut.version>4.0.0-SNAPSHOT</micronaut.version>
 
         <site.path>${project.artifactId}</site.path>
         <site.name>${project.name}</site.name>
@@ -285,8 +288,8 @@
                     <sourceDirectories>
                         <sourceDirectory>src/main/java</sourceDirectory>
                     </sourceDirectories>
-                    <configLocation>../config/checkstyle/checkstyle.xml</configLocation>
-                    <propertyExpansion>config_loc=${project.basedir}/config/checkstyle</propertyExpansion>
+                    <configLocation>${maven.multiModuleProjectDirectory}/config/checkstyle/checkstyle.xml</configLocation>
+                    <propertyExpansion>config_loc=${maven.multiModuleProjectDirectory}/config/checkstyle</propertyExpansion>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
                     <failOnViolation>true</failOnViolation>
@@ -314,14 +317,14 @@
                                 <include>src/main/**/module-info.java</include>
                             </includes>
                             <licenseHeader>
-                                <file>${project.basedir}/config/spotless.license.java</file>
+                                <file>${maven.multiModuleProjectDirectory}/config/spotless.license.java</file>
                                 <delimiter>/\*\*</delimiter>
                             </licenseHeader>
                         </format>
                     </formats>
                     <java>
                         <licenseHeader>
-                            <file>${project.basedir}/config/spotless.license.java</file>
+                            <file>${maven.multiModuleProjectDirectory}/config/spotless.license.java</file>
                         </licenseHeader>
                     </java>
                 </configuration>

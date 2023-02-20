@@ -20,10 +20,8 @@ import com.google.cloud.tools.jib.buildplan.UnixPathParser;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
-import io.micronaut.maven.AbstractDockerMojo;
-import io.micronaut.maven.MicronautRuntime;
+import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.services.ApplicationConfigurationService;
-import io.micronaut.maven.services.JibConfigurationService;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
@@ -38,6 +36,7 @@ import java.util.*;
 public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
     public static final String DEFAULT_BASE_IMAGE = "openjdk:17-alpine";
+    private static final String LATEST_TAG = "latest";
 
     @Override
     public Optional<Class<Void>> getExtraConfigType() {
@@ -119,7 +118,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         if (javaVersion.getMajorVersion() >= 17) {
             return "jre17-latest";
         } else {
-            return AbstractDockerMojo.LATEST_TAG;
+            return LATEST_TAG;
         }
     }
 

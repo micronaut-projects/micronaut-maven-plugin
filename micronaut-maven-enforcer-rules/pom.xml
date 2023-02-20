@@ -9,10 +9,10 @@
         <version>4.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>micronaut-enforcer-rules</artifactId>
+    <artifactId>micronaut-maven-enforcer-rules</artifactId>
     <packaging>jar</packaging>
 
-    <name>Micronaut Maven Enforcer Rules</name>
+    <name>Micronaut Maven Plugin - Enforcer Rules</name>
     <description>Custom Enforcer rules for Micronaut applications</description>
 
 

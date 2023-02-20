@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.maven.services;
+package io.micronaut.maven.jib;
 
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;

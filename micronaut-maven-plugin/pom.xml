@@ -11,7 +11,7 @@
 
     <artifactId>micronaut-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
-    <name>Micronaut Maven Plugin</name>
+    <name>Micronaut Maven Plugin - Plugin</name>
     <description>Maven plugin to execute and package Micronaut applications</description>
 
     <properties>
@@ -42,6 +42,17 @@
     </properties>
 
     <dependencies>
+        <!-- Internal dependencies -->
+        <dependency>
+            <groupId>io.micronaut.maven</groupId>
+            <artifactId>micronaut-maven-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.maven</groupId>
+            <artifactId>micronaut-maven-jib-integration</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- Maven -->
         <dependency>
             <groupId>org.apache.maven</groupId>
@@ -121,28 +132,17 @@
             <version>0.18.0</version>
         </dependency>
 
-        <!-- Jib -->
         <dependency>
-            <groupId>com.google.cloud.tools</groupId>
-            <artifactId>jib-maven-plugin</artifactId>
-            <version>3.3.1</version>
-            <scope>provided</scope>
+            <groupId>org.graalvm.buildtools</groupId>
+            <artifactId>native-maven-plugin</artifactId>
+            <version>${native-maven-plugin.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.google.cloud.tools</groupId>
-            <artifactId>jib-maven-plugin-extension-api</artifactId>
-            <version>0.4.0</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.22</version>
         </dependency>
-        <dependency>
-            <groupId>com.google.cloud.tools</groupId>
-            <artifactId>jib-native-image-extension-maven</artifactId>
-            <version>0.1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.cloud.tools</groupId>
-            <artifactId>jib-core</artifactId>
-            <version>0.23.0</version>
-        </dependency>
+
         <dependency>
             <groupId>com.github.docker-java</groupId>
             <artifactId>docker-java-core</artifactId>
@@ -156,23 +156,9 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
-            <version>1.17.6</version>
+            <version>1.17.3</version>
         </dependency>
-        <dependency>
-            <groupId>org.graalvm.buildtools</groupId>
-            <artifactId>native-maven-plugin</artifactId>
-            <version>${native-maven-plugin.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>1.22</version>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut</groupId>
-            <artifactId>micronaut-inject</artifactId>
-            <version>${micronaut.version}</version>
-        </dependency>
+
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
@@ -212,102 +198,6 @@
     </dependencies>
 
     <build>
-        <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
-            <plugins>
-                <plugin>
-                    <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.2.0</version>
-                </plugin>
-                <!-- see http://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_maven-plugin_packaging -->
-                <plugin>
-                    <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.3.0</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.10.1</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-plugin-plugin</artifactId>
-                    <version>3.7.1</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.22.2</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.3.0</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-install-plugin</artifactId>
-                    <version>3.1.0</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.1.0</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-invoker-plugin</artifactId>
-                    <version>3.5.0</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.5.0</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-site-plugin</artifactId>
-                    <version>3.12.1</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-project-info-reports-plugin</artifactId>
-                    <version>3.4.2</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-source-plugin</artifactId>
-                    <version>3.2.1</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.sonatype.plugins</groupId>
-                    <artifactId>nexus-staging-maven-plugin</artifactId>
-                    <version>1.6.13</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-jxr-plugin</artifactId>
-                    <version>3.3.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-gpg-plugin</artifactId>
-                    <version>3.0.1</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-release-plugin</artifactId>
-                    <version>3.0.0-M7</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-checkstyle-plugin</artifactId>
-                    <version>3.2.1</version>
-                    <dependencies>
-                        <dependency>
-                            <groupId>com.puppycrawl.tools</groupId>
-                            <artifactId>checkstyle</artifactId>
-                            <version>10.7.0</version>
-                        </dependency>
-                    </dependencies>
-                </plugin>
-                <plugin>
-                    <groupId>com.diffplug.spotless</groupId>
-                    <artifactId>spotless-maven-plugin</artifactId>
-                    <version>2.33.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.jacoco</groupId>
-                    <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>${jacoco.version}</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -327,135 +217,6 @@
                         <id>help-goal</id>
                         <goals>
                             <goal>helpmojo</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-site-plugin</artifactId>
-                <configuration>
-                    <asciidoc>
-                        <attributes>
-                            <icons>font</icons>
-                            <source-highlighter>coderay</source-highlighter>
-                            <coderay-css>style</coderay-css>
-                        </attributes>
-                    </asciidoc>
-                </configuration>
-                <dependencies>
-                    <dependency><!-- add Asciidoctor Doxia Parser Module -->
-                        <groupId>org.asciidoctor</groupId>
-                        <artifactId>asciidoctor-maven-plugin</artifactId>
-                        <version>2.2.2</version>
-                    </dependency>
-                </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                    <detail>true</detail>
-                    <keepStagingRepositoryOnCloseRuleFailure>true</keepStagingRepositoryOnCloseRuleFailure>
-                    <stagingProgressTimeoutMinutes>60</stagingProgressTimeoutMinutes>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <configuration>
-                    <retryFailedDeploymentCount>5</retryFailedDeploymentCount>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <configuration>
-                    <tagNameFormat>v@{project.version}</tagNameFormat>
-                    <releaseProfiles>release</releaseProfiles>
-                    <preparationGoals>clean verify site:site</preparationGoals>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <configuration>
-                    <sourceDirectories>
-                        <sourceDirectory>src/main/java</sourceDirectory>
-                    </sourceDirectories>
-                    <configLocation>../config/checkstyle/checkstyle.xml</configLocation>
-                    <propertyExpansion>config_loc=${project.basedir}/config/checkstyle</propertyExpansion>
-                    <consoleOutput>true</consoleOutput>
-                    <failsOnError>true</failsOnError>
-                    <failOnViolation>true</failOnViolation>
-                    <linkXRef>false</linkXRef>
-                    <maxAllowedViolations>1</maxAllowedViolations>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>checkstyle-check</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>com.diffplug.spotless</groupId>
-                <artifactId>spotless-maven-plugin</artifactId>
-                <configuration>
-                    <formats>
-                        <format>
-                            <includes>
-                                <include>src/main/**/package-info.java</include>
-                                <include>src/main/**/module-info.java</include>
-                            </includes>
-                            <licenseHeader>
-                                <file>${project.basedir}/config/spotless.license.java</file>
-                                <delimiter>/\*\*</delimiter>
-                            </licenseHeader>
-                        </format>
-                    </formats>
-                    <java>
-                        <licenseHeader>
-                            <file>${project.basedir}/config/spotless.license.java</file>
-                        </licenseHeader>
-                    </java>
-                </configuration>
-                <executions>
-                    <execution>
-                        <!-- Runs in compile phase to fail fast in case of formatting issues.-->
-                        <id>spotless-check</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>report</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>report</goal>
                         </goals>
                     </execution>
                 </executions>
