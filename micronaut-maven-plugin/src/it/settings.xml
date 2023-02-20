@@ -10,10 +10,22 @@
           <url>@localRepositoryUrl@</url>
           <releases>
             <enabled>true</enabled>
+            <checksumPolicy>ignore</checksumPolicy>
           </releases>
           <snapshots>
             <enabled>true</enabled>
+            <checksumPolicy>ignore</checksumPolicy>
           </snapshots>
+        </repository>
+        <repository>
+          <id>sonatype-snapshots</id>
+          <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+          <releases>
+            <enabled>false</enabled>
+          </releases>
         </repository>
       </repositories>
       <pluginRepositories>
@@ -22,9 +34,11 @@
           <url>@localRepositoryUrl@</url>
           <releases>
             <enabled>true</enabled>
+            <checksumPolicy>ignore</checksumPolicy>
           </releases>
           <snapshots>
             <enabled>true</enabled>
+            <checksumPolicy>ignore</checksumPolicy>
           </snapshots>
         </pluginRepository>
       </pluginRepositories>
