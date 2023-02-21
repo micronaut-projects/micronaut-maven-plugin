@@ -44,8 +44,6 @@
             <artifactId>jib-core</artifactId>
             <version>0.23.0</version>
         </dependency>
-
-
     </dependencies>
 
 

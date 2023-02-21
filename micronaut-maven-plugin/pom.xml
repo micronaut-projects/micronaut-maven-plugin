@@ -15,30 +15,10 @@
     <description>Maven plugin to execute and package Micronaut applications</description>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <maven.version>3.9.0</maven.version>
-        <maven.resources-plugin.version>3.3.0</maven.resources-plugin.version>
-        <maven.archiver-plugin.version>3.6.0</maven.archiver-plugin.version>
-        <site.path>${project.artifactId}</site.path>
-        <site.name>${project.name}</site.name>
-        <site.description>${project.description}</site.description>
-        <site.version>${project.version}</site.version>
-        <project.build.outputTimestamp>2022-12-19T17:35:35Z</project.build.outputTimestamp>
         <native-maven-plugin.version>0.9.20</native-maven-plugin.version>
-        <micronaut.version>4.0.0-SNAPSHOT</micronaut.version>
         <micronaut.aot.version>2.0.0-SNAPSHOT</micronaut.aot.version>
         <micronaut.test.resources.version>2.0.0-SNAPSHOT</micronaut.test.resources.version>
         <it.micronaut.version>4.0.0-SNAPSHOT</it.micronaut.version>
-        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-        <sonar.organization>micronaut-projects</sonar.organization>
-        <sonar.projectKey>micronaut-projects_micronaut-maven-plugin</sonar.projectKey>
-        <sonar.java.source>8</sonar.java.source>
-        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-        <sonar.java.checkstyle.reportPaths>${project.build.directory}/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
-        <jacoco.version>0.8.8</jacoco.version>
-        <junit-jupiter.version>5.9.2</junit-jupiter.version>
     </properties>
 
     <dependencies>
@@ -53,6 +33,7 @@
             <artifactId>micronaut-maven-jib-integration</artifactId>
             <version>${project.version}</version>
         </dependency>
+
         <!-- Maven -->
         <dependency>
             <groupId>org.apache.maven</groupId>
@@ -62,38 +43,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.maven</groupId>
-            <artifactId>maven-model</artifactId>
-            <version>${maven.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-settings</artifactId>
-            <version>${maven.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
             <artifactId>maven-core</artifactId>
-            <version>${maven.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-artifact</artifactId>
-            <version>${maven.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-compat</artifactId>
-            <version>${maven.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven.shared</groupId>
-            <artifactId>maven-shared-utils</artifactId>
-            <version>3.3.4</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -112,19 +62,9 @@
             <version>${maven.resources-plugin.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-archiver</artifactId>
-            <version>${maven.archiver-plugin.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.twdata.maven</groupId>
             <artifactId>mojo-executor</artifactId>
             <version>2.4.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven.resolver</groupId>
-            <artifactId>maven-resolver-util</artifactId>
-            <version>1.9.4</version>
         </dependency>
         <dependency>
             <groupId>io.methvin</groupId>
