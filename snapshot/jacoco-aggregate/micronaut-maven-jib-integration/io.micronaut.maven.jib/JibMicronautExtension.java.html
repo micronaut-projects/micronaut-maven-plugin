@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>JibMicronautExtension.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="../index.html" class="el_bundle">micronaut-maven-jib-integration</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.jib</a> &gt; <span class="el_source">JibMicronautExtension.java</span></div><h1>JibMicronautExtension.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.jib;
+
+import com.google.cloud.tools.jib.api.buildplan.*;
+import com.google.cloud.tools.jib.buildplan.UnixPathParser;
+import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
+import com.google.cloud.tools.jib.maven.extension.MavenData;
+import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
+import io.micronaut.maven.core.MicronautRuntime;
+import io.micronaut.maven.services.ApplicationConfigurationService;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+
+import java.util.*;
+
+/**
+ * Jib extension to support building Docker images.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 1.1
+ */
+<span class="fc" id="L36">public class JibMicronautExtension implements JibMavenPluginExtension&lt;Void&gt; {</span>
+
+    public static final String DEFAULT_BASE_IMAGE = &quot;openjdk:17-alpine&quot;;
+    private static final String LATEST_TAG = &quot;latest&quot;;
+
+    @Override
+    public Optional&lt;Class&lt;Void&gt;&gt; getExtraConfigType() {
+<span class="fc" id="L43">        return Optional.empty();</span>
+    }
+
+    @Override
+    public ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan buildPlan, Map&lt;String, String&gt; properties,
+                                                       Optional&lt;Void&gt; extraConfig, MavenData mavenData,
+                                                       ExtensionLogger logger) {
+
+<span class="fc" id="L51">        ContainerBuildPlan.Builder builder = buildPlan.toBuilder();</span>
+<span class="fc" id="L52">        MicronautRuntime runtime = MicronautRuntime.valueOf(mavenData.getMavenProject().getProperties().getProperty(MicronautRuntime.PROPERTY, &quot;none&quot;).toUpperCase());</span>
+
+<span class="fc" id="L54">        JibConfigurationService jibConfigurationService = new JibConfigurationService(mavenData.getMavenProject());</span>
+<span class="fc" id="L55">        String from = jibConfigurationService.getFromImage().orElse(DEFAULT_BASE_IMAGE);</span>
+
+<span class="fc" id="L57">        builder.setBaseImage(from);</span>
+
+<span class="fc" id="L59">        ApplicationConfigurationService applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());</span>
+        try {
+<span class="fc" id="L61">            int port = Integer.parseInt(applicationConfigurationService.getServerPort());</span>
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">            if (port &gt; 0) {</span>
+<span class="fc" id="L63">                logger.log(ExtensionLogger.LogLevel.LIFECYCLE, &quot;Exposing port: &quot; + port);</span>
+<span class="fc" id="L64">                builder.addExposedPort(Port.tcp(port));</span>
+            }
+<span class="nc" id="L66">        } catch (NumberFormatException e) {</span>
+            // ignore, can't automatically expose port
+<span class="nc" id="L68">            logger.log(ExtensionLogger.LogLevel.LIFECYCLE, &quot;Dynamically resolved port present. Ensure the port is correctly exposed in the &lt;container&gt; configuration. See https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#example for an example.&quot;);</span>
+<span class="fc" id="L69">        }</span>
+
+<span class="pc bpc" id="L71" title="2 of 3 branches missed.">        switch (runtime.getBuildStrategy()) {</span>
+            case ORACLE_FUNCTION -&gt; {
+<span class="nc" id="L73">                List&lt;? extends LayerObject&gt; originalLayers = buildPlan.getLayers();</span>
+<span class="nc" id="L74">                builder.setLayers(Collections.emptyList());</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">                for (LayerObject layer : originalLayers) {</span>
+<span class="nc" id="L76">                    builder.addLayer(remapLayer(layer));</span>
+<span class="nc" id="L77">                }</span>
+<span class="nc" id="L78">                List&lt;String&gt; cmd = jibConfigurationService.getArgs();</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">                if (cmd.isEmpty()) {</span>
+<span class="nc" id="L80">                    cmd = Collections.singletonList(&quot;io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest&quot;);</span>
+                }
+<span class="nc" id="L82">                builder.setBaseImage(&quot;fnproject/fn-java-fdk:&quot; + determineProjectFnVersion())</span>
+<span class="nc" id="L83">                        .setWorkingDirectory(AbsoluteUnixPath.get(jibConfigurationService.getWorkingDirectory().orElse(&quot;/function&quot;)))</span>
+<span class="nc" id="L84">                        .setEntrypoint(buildProjectFnEntrypoint())</span>
+<span class="nc" id="L85">                        .setCmd(cmd);</span>
+<span class="nc" id="L86">            }</span>
+            case LAMBDA -&gt; {
+<span class="nc" id="L88">                List&lt;String&gt; entrypoint = buildPlan.getEntrypoint();</span>
+<span class="nc" id="L89">                Objects.requireNonNull(entrypoint).set(entrypoint.size() - 1, &quot;io.micronaut.function.aws.runtime.MicronautLambdaRuntime&quot;);</span>
+<span class="nc" id="L90">                builder.setEntrypoint(entrypoint);</span>
+<span class="nc" id="L91">            }</span>
+            default -&gt; {
+                //no op
+            }
+        }
+<span class="fc" id="L96">        return builder.build();</span>
+    }
+
+    public static List&lt;String&gt; buildProjectFnEntrypoint() {
+<span class="fc" id="L100">        List&lt;String&gt; entrypoint = new ArrayList&lt;&gt;(9);</span>
+<span class="fc" id="L101">        entrypoint.add(&quot;/usr/java/latest/bin/java&quot;);</span>
+<span class="fc" id="L102">        entrypoint.add(&quot;java&quot;);</span>
+<span class="fc" id="L103">        entrypoint.add(&quot;-XX:+UnlockExperimentalVMOptions&quot;);</span>
+<span class="fc" id="L104">        entrypoint.add(&quot;-XX:+UseCGroupMemoryLimitForHeap&quot;);</span>
+<span class="fc" id="L105">        entrypoint.add(&quot;-XX:-UsePerfData&quot;);</span>
+<span class="fc" id="L106">        entrypoint.add(&quot;-XX:MaxRAMFraction=2&quot;);</span>
+<span class="fc" id="L107">        entrypoint.add(&quot;-XX:+UseSerialGC&quot;);</span>
+<span class="fc" id="L108">        entrypoint.add(&quot;-Xshare:on&quot;);</span>
+<span class="fc" id="L109">        entrypoint.add(&quot;-Djava.library.path=/function/runtime/lib&quot;);</span>
+<span class="fc" id="L110">        entrypoint.add(&quot;-cp&quot;);</span>
+<span class="fc" id="L111">        entrypoint.add(&quot;/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*&quot;);</span>
+<span class="fc" id="L112">        entrypoint.add(&quot;com.fnproject.fn.runtime.EntryPoint&quot;);</span>
+<span class="fc" id="L113">        return entrypoint;</span>
+    }
+
+    public static String determineProjectFnVersion() {
+<span class="fc" id="L117">        ArtifactVersion javaVersion = new DefaultArtifactVersion(System.getProperty(&quot;java.version&quot;));</span>
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">        if (javaVersion.getMajorVersion() &gt;= 17) {</span>
+<span class="fc" id="L119">            return &quot;jre17-latest&quot;;</span>
+        } else {
+<span class="nc" id="L121">            return LATEST_TAG;</span>
+        }
+    }
+
+    private LayerObject remapLayer(LayerObject layerObject) {
+<span class="nc" id="L126">        FileEntriesLayer originalLayer = (FileEntriesLayer) layerObject;</span>
+<span class="nc" id="L127">        FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(originalLayer.getName());</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        for (FileEntry originalEntry : originalLayer.getEntries()) {</span>
+<span class="nc" id="L129">            builder.addEntry(remapEntry(originalEntry, layerObject.getName()));</span>
+<span class="nc" id="L130">        }</span>
+
+<span class="nc" id="L132">        return builder.build();</span>
+    }
+
+    private FileEntry remapEntry(FileEntry originalEntry, String layerName) {
+<span class="nc" id="L136">        List&lt;String&gt; pathComponents = UnixPathParser.parse(originalEntry.getExtractionPath().toString());</span>
+        AbsoluteUnixPath newPath;
+<span class="nc bnc" id="L138" title="All 2 branches missed.">        if (layerName.contains(&quot;dependencies&quot;)) {</span>
+<span class="nc" id="L139">            newPath = AbsoluteUnixPath.get(&quot;/function/app/libs/&quot; + pathComponents.get(pathComponents.size() - 1));</span>
+        } else {
+            //classes or resources
+<span class="nc" id="L142">            newPath = AbsoluteUnixPath.get(&quot;/function&quot; + originalEntry.getExtractionPath());</span>
+        }
+
+<span class="nc" id="L145">        return new FileEntry(originalEntry.getSourceFile(), newPath, originalEntry.getPermissions(),</span>
+<span class="nc" id="L146">                originalEntry.getModificationTime(), originalEntry.getOwnership());</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

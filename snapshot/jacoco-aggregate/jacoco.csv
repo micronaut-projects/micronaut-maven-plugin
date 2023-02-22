@@ -1,0 +1,6 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Micronaut Maven Plugin - Plugin/micronaut-maven-core,io.micronaut.maven.services,ApplicationConfigurationService,0,118,0,6,0,16,0,6,0,3
+Micronaut Maven Plugin - Plugin/micronaut-maven-core,io.micronaut.maven.core,MicronautRuntime,0,78,0,0,0,17,0,4,0,4
+Micronaut Maven Plugin - Plugin/micronaut-maven-core,io.micronaut.maven.core,DockerBuildStrategy,0,21,0,0,0,4,0,1,0,1
+Micronaut Maven Plugin - Plugin/micronaut-maven-jib-integration,io.micronaut.maven.jib,JibMicronautExtension,144,132,12,3,32,32,10,5,2,5
+Micronaut Maven Plugin - Plugin/micronaut-maven-jib-integration,io.micronaut.maven.jib,JibConfigurationService,186,93,39,11,40,27,28,5,4,4

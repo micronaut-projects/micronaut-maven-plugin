@@ -1,6 +1,7 @@
 io.micronaut.maven
 io.micronaut.maven.aot
+io.micronaut.maven.core
+io.micronaut.maven.enforcer
 io.micronaut.maven.jib
-io.micronaut.maven.micronaut_maven_plugin
 io.micronaut.maven.services
 io.micronaut.maven.testresources

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>JibConfigurationService.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="../index.html" class="el_bundle">micronaut-maven-jib-integration</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.jib</a> &gt; <span class="el_source">JibConfigurationService.java</span></div><h1>JibConfigurationService.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.jib;
+
+import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.maven.MavenProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * Exposes the Jib plugin configuration so that it can be read by other mojos.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 1.1
+ */
+@Singleton
+public class JibConfigurationService {
+
+    private static final String IMAGE = &quot;image&quot;;
+    private static final String CONTAINER = &quot;container&quot;;
+    private static final String WORKING_DIRECTORY = &quot;workingDirectory&quot;;
+
+    private Xpp3Dom configuration;
+    private Xpp3Dom to;
+    private Xpp3Dom from;
+
+    @Inject
+<span class="fc" id="L48">    public JibConfigurationService(MavenProject mavenProject) {</span>
+<span class="fc" id="L49">        final Plugin plugin = mavenProject.getPlugin(MavenProjectProperties.PLUGIN_KEY);</span>
+<span class="pc bpc" id="L50" title="2 of 4 branches missed.">        if (plugin != null &amp;&amp; plugin.getConfiguration() != null) {</span>
+<span class="fc" id="L51">            configuration = (Xpp3Dom) plugin.getConfiguration();</span>
+<span class="fc" id="L52">            to = configuration.getChild(&quot;to&quot;);</span>
+<span class="fc" id="L53">            from = configuration.getChild(&quot;from&quot;);</span>
+        }
+<span class="fc" id="L55">    }</span>
+
+    /**
+     * @return the &lt;code&gt;to.image&lt;/code&gt; configuration.
+     */
+    public Optional&lt;String&gt; getToImage() {
+        Optional&lt;String&gt; result;
+<span class="fc" id="L62">        String propertyValue = System.getProperties().getProperty(PropertyNames.TO_IMAGE);</span>
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if (propertyValue != null) {</span>
+<span class="nc" id="L64">            result = Optional.of(propertyValue);</span>
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">        } else if (to != null) {</span>
+<span class="fc" id="L66">            result = Optional.ofNullable(to.getChild(IMAGE).getValue());</span>
+        } else {
+<span class="nc" id="L68">            result = Optional.empty();</span>
+        }
+<span class="fc" id="L70">        return result;</span>
+    }
+
+    /**
+     * @return the &lt;code&gt;from.image&lt;/code&gt; configuration.
+     */
+    public Optional&lt;String&gt; getFromImage() {
+        Optional&lt;String&gt; result;
+<span class="fc" id="L78">        String propertyValue = System.getProperties().getProperty(PropertyNames.FROM_IMAGE);</span>
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">        if (propertyValue != null) {</span>
+<span class="nc" id="L80">            result = Optional.of(propertyValue);</span>
+<span class="fc bfc" id="L81" title="All 2 branches covered.">        } else if (from != null) {</span>
+<span class="fc" id="L82">            result = Optional.ofNullable(from.getChild(IMAGE).getValue());</span>
+        } else {
+<span class="fc" id="L84">            result = Optional.empty();</span>
+        }
+<span class="fc" id="L86">        return result;</span>
+    }
+
+    /**
+     * @return the &lt;code&gt;to.tags&lt;/code&gt; configuration.
+     */
+    public Set&lt;String&gt; getTags() {
+<span class="fc" id="L93">        Set&lt;String&gt; result = null;</span>
+<span class="fc" id="L94">        String propertyValue = System.getProperties().getProperty(PropertyNames.TO_TAGS);</span>
+<span class="pc bpc" id="L95" title="1 of 2 branches missed.">        if (propertyValue != null) {</span>
+<span class="nc" id="L96">            result = new HashSet&lt;&gt;(parseCommaSeparatedList(propertyValue));</span>
+        } else {
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">            if (to != null) {</span>
+<span class="fc" id="L99">                Xpp3Dom tags = to.getChild(&quot;tags&quot;);</span>
+<span class="pc bpc" id="L100" title="3 of 4 branches missed.">                if (tags != null &amp;&amp; tags.getChildCount() &gt; 0) {</span>
+<span class="nc" id="L101">                    result = Arrays.stream(tags.getChildren())</span>
+<span class="nc" id="L102">                            .map(Xpp3Dom::getValue)</span>
+<span class="nc" id="L103">                            .collect(Collectors.toSet());</span>
+                }
+            }
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">            if (result == null) {</span>
+<span class="fc" id="L107">                result = Collections.emptySet();</span>
+            }
+        }
+<span class="fc" id="L110">        return result;</span>
+    }
+
+    /**
+     * @return the &lt;code&gt;to.auth.username&lt;/code&gt; and &lt;code&gt;to.auth.password&lt;/code&gt; configuration.
+     */
+    public Optional&lt;Credential&gt; getCredentials() {
+<span class="nc" id="L117">        Optional&lt;Credential&gt; result = Optional.empty();</span>
+<span class="nc" id="L118">        String usernameProp = System.getProperties().getProperty(PropertyNames.TO_AUTH_USERNAME);</span>
+<span class="nc" id="L119">        String passwordProp = System.getProperties().getProperty(PropertyNames.TO_AUTH_PASSWORD);</span>
+<span class="nc bnc" id="L120" title="All 4 branches missed.">        if (usernameProp != null &amp;&amp; passwordProp != null) {</span>
+<span class="nc" id="L121">            result = Optional.of(Credential.from(usernameProp, passwordProp));</span>
+        } else {
+<span class="nc bnc" id="L123" title="All 2 branches missed.">            if (to != null) {</span>
+<span class="nc" id="L124">                Xpp3Dom auth = to.getChild(&quot;auth&quot;);</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">                if (auth != null) {</span>
+<span class="nc" id="L126">                    Xpp3Dom username = auth.getChild(&quot;username&quot;);</span>
+<span class="nc" id="L127">                    Xpp3Dom password = auth.getChild(&quot;password&quot;);</span>
+<span class="nc bnc" id="L128" title="All 4 branches missed.">                    if (username != null &amp;&amp; password != null) {</span>
+<span class="nc" id="L129">                        result = Optional.of(Credential.from(username.getValue(), password.getValue()));</span>
+                    }
+                }
+            }
+        }
+<span class="nc" id="L134">        return result;</span>
+    }
+
+    /**
+     * @return the &lt;code&gt;container.workingDirectory&lt;/code&gt; configuration.
+     */
+    public Optional&lt;String&gt; getWorkingDirectory() {
+<span class="nc bnc" id="L141" title="All 2 branches missed.">        if (configuration != null) {</span>
+<span class="nc" id="L142">            Xpp3Dom container = configuration.getChild(CONTAINER);</span>
+<span class="nc bnc" id="L143" title="All 4 branches missed.">            if (container != null &amp;&amp; container.getChild(WORKING_DIRECTORY) != null) {</span>
+<span class="nc" id="L144">                return Optional.ofNullable(container.getChild(WORKING_DIRECTORY).getValue());</span>
+            }
+        }
+<span class="nc" id="L147">        return Optional.empty();</span>
+    }
+
+    /**
+     * @return the &lt;code&gt;container.args&lt;/code&gt; configuration.
+     */
+    public List&lt;String&gt; getArgs() {
+<span class="nc" id="L154">        List&lt;String&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">        if (configuration != null) {</span>
+<span class="nc" id="L156">            Xpp3Dom container = configuration.getChild(CONTAINER);</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">            if (container != null) {</span>
+<span class="nc" id="L158">                Xpp3Dom args = container.getChild(&quot;args&quot;);</span>
+<span class="nc bnc" id="L159" title="All 2 branches missed.">                if (args.getChildCount() &gt; 0) {</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">                    for (Xpp3Dom arg : args.getChildren()) {</span>
+<span class="nc" id="L161">                        result.add(arg.getValue());</span>
+                    }
+                } else {
+<span class="nc" id="L164">                    result.add(args.getValue());</span>
+                }
+            }
+        }
+<span class="nc" id="L168">        return result;</span>
+    }
+
+    private static Set&lt;String&gt; parseCommaSeparatedList(String list) {
+<span class="nc" id="L172">        String[] parts = list.split(&quot;,&quot;);</span>
+<span class="nc" id="L173">        Set&lt;String&gt; items = new HashSet&lt;&gt;(parts.length);</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">        for (String part : parts) {</span>
+<span class="nc" id="L175">            items.add(part.trim());</span>
+        }
+<span class="nc" id="L177">        return items;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>
