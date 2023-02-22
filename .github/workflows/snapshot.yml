@@ -72,7 +72,9 @@ jobs:
 
       - name: Generate site
         if: success() && github.event_name == 'push'
-        run: ./mvnw site:site
+        run: |
+          ./mvnw site:site
+          cp -R target/site/apidocs/* micronaut-maven-plugin/target/site/apidocs
 
       - name: Publish to Github Pages
         if: success() && github.event_name == 'push'
@@ -81,7 +83,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           BASE_BRANCH: master
           BRANCH: gh-pages
-          FOLDER: target/site
+          FOLDER: micronaut-maven-plugin/target/site
 
       - name: Deploy snapshot
         if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT')
