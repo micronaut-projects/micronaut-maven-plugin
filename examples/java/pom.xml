@@ -26,6 +26,7 @@
     <micronaut.test.resources.version>2.0.0-SNAPSHOT</micronaut.test.resources.version>
     <maven.native.plugin.version>0.9.19</maven.native.plugin.version>
     <maven-resources-plugin.version>3.2.0</maven-resources-plugin.version>
+    <maven-enforcer-plugin.version>3.2.1</maven-enforcer-plugin.version>
   </properties>
 
   <repositories>
@@ -82,6 +83,11 @@
       <scope>runtime</scope>
     </dependency>
     <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
       <scope>test</scope>
@@ -126,6 +132,11 @@
         <configuration>
           <quickBuild>true</quickBuild>
         </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
       </plugin>
     </plugins>
   </build>
