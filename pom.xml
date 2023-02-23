@@ -18,6 +18,7 @@
         <module>micronaut-maven-enforcer-rules</module>
         <module>micronaut-maven-jib-integration</module>
         <module>micronaut-maven-plugin</module>
+        <module>micronaut-maven-integration-tests</module>
     </modules>
 
     <prerequisites>
@@ -90,7 +91,7 @@
 
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.organization>micronaut-projects</sonar.organization>
-        <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/micronaut-maven-plugin/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/micronaut-maven-plugin-integration-tests/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <sonar.java.checkstyle.reportPaths>${maven.multiModuleProjectDirectory}/target/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
         <jacoco.version>0.8.8</jacoco.version>
         <junit-jupiter.version>5.9.2</junit-jupiter.version>
