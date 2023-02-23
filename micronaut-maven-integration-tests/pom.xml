@@ -18,13 +18,13 @@
     <properties>
         <maven.deploy.skip>true</maven.deploy.skip>
         <maven.javadoc.skip>true</maven.javadoc.skip>
-        <sonar.skip>true</sonar.skip>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
         <it.micronaut.version>4.0.0-SNAPSHOT</it.micronaut.version>
 
         <!-- Enable recording of coverage during execution of maven-invoker-plugin -->
         <jacoco.propertyName>invoker.mavenOpts</jacoco.propertyName>
-<!--        <jacoco.includes>io.micronaut.maven.*</jacoco.includes>-->
+        <!--        <jacoco.includes>io.micronaut.maven.*</jacoco.includes>-->
     </properties>
 
     <dependencies>
