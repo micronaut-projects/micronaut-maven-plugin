@@ -13,14 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        graalvm: ['latest', 'dev']
+        graalvm: ['latest']
         java: ['17']
-        include:
-          - graalvm: 'dev'
-            java: 'dev'
-        exclude:
-          - graalvm: 'dev'
-            java: '17'
     steps:
       # https://github.com/actions/virtual-environments/issues/709
       - name: Free disk space
@@ -45,7 +39,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Run tests
         run: |
-          ./mvnw install && ./mvnw verify -Prun-its
+          ./mvnw install && ./mvnw verify
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}

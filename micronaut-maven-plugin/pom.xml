@@ -14,12 +14,6 @@
     <name>Micronaut Maven Plugin - Plugin</name>
     <description>Maven plugin to execute and package Micronaut applications</description>
 
-    <properties>
-        <native-maven-plugin.version>0.9.20</native-maven-plugin.version>
-        <micronaut.aot.version>2.0.0-SNAPSHOT</micronaut.aot.version>
-        <micronaut.test.resources.version>2.0.0-SNAPSHOT</micronaut.test.resources.version>
-    </properties>
-
     <dependencies>
         <!-- Internal dependencies -->
         <dependency>

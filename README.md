@@ -30,9 +30,9 @@ A release is performed with the following steps:
 
 ### Running integration tests
 
-You can run integration tests by executing `mvn verify -Prun-its`
+You can run integration tests by executing `mvn verify`
 
-If you want to run individual tests, you can execute `mvn verify -Prun-its "-Dinvoker.test=dockerfile*"`. In this case,
+If you want to run individual tests, you can execute `mvn verify "-Dinvoker.test=dockerfile*"`. In this case,
 `dockerfile*` will match all test projects under `src/it` folder with a name that starts with "dockerfile".
 
 ### Debugging
