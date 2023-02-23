@@ -33,7 +33,7 @@ jobs:
 
       - name: Analyse with Maven
         run: |
-          ./mvnw install && ./mvnw verify -Prun-its sonar:sonar
+          ./mvnw install && ./mvnw verify sonar:sonar
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}

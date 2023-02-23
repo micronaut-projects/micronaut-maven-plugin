@@ -2,7 +2,9 @@
 
 [![Maven Central](https://img.shields.io/maven-central/v/io.micronaut.maven/micronaut-maven-plugin.svg?label=Maven%20Central)](https://search.maven.org/artifact/io.micronaut.maven/micronaut-maven-plugin)
 [![Build Status](https://github.com/micronaut-projects/micronaut-maven-plugin/workflows/Snapshot/badge.svg)](https://github.com/micronaut-projects/micronaut-maven-plugin/actions)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=micronaut-projects_micronaut-maven-plugin&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=micronaut-projects_micronaut-maven-plugin)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=io.micronaut.maven%3Amicronaut-maven-plugin-parent&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=io.micronaut.maven%3Amicronaut-maven-plugin-parent)
+[![Revved up by Gradle Enterprise](https://img.shields.io/badge/Revved%20up%20by-Gradle%20Enterprise-06A0CE?logo=Gradle&labelColor=02303A)](https://ge.micronaut.io/scans)
+
 
 Maven plugin to execute Micronaut applications.
 
@@ -28,9 +30,9 @@ A release is performed with the following steps:
 
 ### Running integration tests
 
-You can run integration tests by executing `mvn verify -Prun-its`
+You can run integration tests by executing `mvn verify`
 
-If you want to run individual tests, you can execute `mvn verify -Prun-its "-Dinvoker.test=dockerfile*"`. In this case,
+If you want to run individual tests, you can execute `mvn verify "-Dinvoker.test=dockerfile*"`. In this case,
 `dockerfile*` will match all test projects under `src/it` folder with a name that starts with "dockerfile".
 
 ### Debugging

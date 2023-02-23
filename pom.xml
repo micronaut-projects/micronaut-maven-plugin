@@ -18,11 +18,8 @@
         <module>micronaut-maven-enforcer-rules</module>
         <module>micronaut-maven-jib-integration</module>
         <module>micronaut-maven-plugin</module>
+        <module>micronaut-maven-integration-tests</module>
     </modules>
-
-    <prerequisites>
-        <maven>${maven.version}</maven>
-    </prerequisites>
 
     <issueManagement>
         <system>GitHub</system>
@@ -77,6 +74,9 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.version>3.9.0</maven.version>
         <micronaut.version>4.0.0-SNAPSHOT</micronaut.version>
+        <native-maven-plugin.version>0.9.20</native-maven-plugin.version>
+        <micronaut.aot.version>2.0.0-SNAPSHOT</micronaut.aot.version>
+        <micronaut.test.resources.version>2.0.0-SNAPSHOT</micronaut.test.resources.version>
 
         <maven.resources-plugin.version>3.3.0</maven.resources-plugin.version>
         <maven.archiver-plugin.version>3.6.0</maven.archiver-plugin.version>
@@ -90,8 +90,7 @@
 
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.organization>micronaut-projects</sonar.organization>
-        <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/micronaut-maven-plugin/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-        <sonar.java.checkstyle.reportPaths>${maven.multiModuleProjectDirectory}/target/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
+        <sonar.java.checkstyle.reportPaths>${project.basedir}/target/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
         <jacoco.version>0.8.8</jacoco.version>
         <junit-jupiter.version>5.9.2</junit-jupiter.version>
     </properties>
