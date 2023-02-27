@@ -113,15 +113,7 @@
         <groupId>org.graalvm.buildtools</groupId>
         <artifactId>native-maven-plugin</artifactId>
         <configuration>
-          <skip>false</skip>
-          <useArgFile>false</useArgFile>
-          <buildArgs>
-            <buildArg>--no-fallback</buildArg>
-          </buildArgs>
           <quickBuild>true</quickBuild>
-          <classpath>
-            <param>${project.build.directory}/${project.artifactId}-${project.version}-shaded.native-image</param>
-          </classpath>
         </configuration>
       </plugin>
 
