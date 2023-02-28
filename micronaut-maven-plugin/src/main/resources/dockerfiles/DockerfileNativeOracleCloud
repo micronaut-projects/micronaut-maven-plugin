@@ -5,9 +5,9 @@ WORKDIR /home/app
 
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
-ARG GRAALVM_ARGS=""
+COPY *.args /home/app/graalvm-native-image.args
 ENV USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM=false
-RUN native-image ${GRAALVM_ARGS} --report-unsupported-elements-at-runtime -H:Class=com.fnproject.fn.runtime.EntryPoint -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
+RUN native-image @/home/app/graalvm-native-image.args --report-unsupported-elements-at-runtime -H:Class=com.fnproject.fn.runtime.EntryPoint -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM fnproject/fn-java-fdk:jre17-latest AS fnfdk
 

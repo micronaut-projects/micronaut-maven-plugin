@@ -24,7 +24,7 @@
     <micronaut.aot.packageName>io.micronaut.maven.examples</micronaut.aot.packageName>
     <micronaut.test.resources.enabled>false</micronaut.test.resources.enabled>
     <micronaut.test.resources.version>2.0.0-SNAPSHOT</micronaut.test.resources.version>
-    <maven.native.plugin.version>0.9.19</maven.native.plugin.version>
+    <maven.native.plugin.version>0.9.20</maven.native.plugin.version>
     <maven-resources-plugin.version>3.2.0</maven-resources-plugin.version>
     <maven-enforcer-plugin.version>3.2.1</maven-enforcer-plugin.version>
   </properties>

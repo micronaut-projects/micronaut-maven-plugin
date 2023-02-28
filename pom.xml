@@ -74,7 +74,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.version>3.9.0</maven.version>
         <micronaut.version>4.0.0-SNAPSHOT</micronaut.version>
-        <native-maven-plugin.version>0.9.20</native-maven-plugin.version>
+        <native-maven-plugin.version>0.9.21-SNAPSHOT</native-maven-plugin.version>
         <micronaut.aot.version>2.0.0-SNAPSHOT</micronaut.aot.version>
         <micronaut.test.resources.version>2.0.0-SNAPSHOT</micronaut.test.resources.version>
 

@@ -16,6 +16,7 @@
     <micronaut.version>@it.micronaut.version@</micronaut.version>
     <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
     <exec.mainClass>io.micronaut.function.aws.runtime.MicronautLambdaRuntime</exec.mainClass>
+    <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
     <micronaut.runtime>lambda</micronaut.runtime>
   </properties>
 

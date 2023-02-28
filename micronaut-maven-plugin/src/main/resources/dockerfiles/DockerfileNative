@@ -5,13 +5,13 @@ WORKDIR /home/app
 
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
+COPY *.args /home/app/graalvm-native-image.args
 ARG CLASS_NAME
-ARG GRAALVM_ARGS=""
 ENV USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM=false
-RUN native-image ${GRAALVM_ARGS} -H:Class=${CLASS_NAME} -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
+RUN native-image @/home/app/graalvm-native-image.args -H:Class=${CLASS_NAME} -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM ${BASE_IMAGE_RUN}
-ARG EXTRA_CMD
+ARG EXTRA_CMD=""
 RUN if [[ -n "${EXTRA_CMD}" ]] ; then eval ${EXTRA_CMD} ; fi
 COPY --from=builder /home/app/application /app/application
 

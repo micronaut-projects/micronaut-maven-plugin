@@ -29,11 +29,18 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.graalvm.buildtools.utils.NativeImageUtils;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -51,9 +58,9 @@ import java.util.Set;
 public class DockerNativeMojo extends AbstractDockerMojo {
 
     public static final String DOCKER_NATIVE_PACKAGING = "docker-native";
-    public static final String GRAALVM_ARGS = "GRAALVM_ARGS";
     public static final String MICRONAUT_PARENT = "io.micronaut:micronaut-parent";
     public static final String MICRONAUT_VERSION = "micronaut.version";
+    public static final String ARGS_FILE_PROPERTY_NAME = "graalvm.native-image.args-file";
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -141,11 +148,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         getLog().info("Using CLASS_NAME: " + mainClass);
         buildImageCmd.withBuildArg("CLASS_NAME", mainClass);
 
-        String graalVmBuildArgs = getGraalVmBuildArgs();
-        if (graalVmBuildArgs != null && !graalVmBuildArgs.isEmpty()) {
-            getLog().info("Using GRAALVM_ARGS: " + graalVmBuildArgs);
-            buildImageCmd = buildImageCmd.withBuildArg(GRAALVM_ARGS, graalVmBuildArgs);
-        }
+        //TODO process GraalVM args file
 
         String imageId = dockerService.buildImage(buildImageCmd);
         File functionZip = dockerService.copyFromContainer(imageId, "/function/function.zip");
@@ -186,40 +189,77 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());
         }
 
-        BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
-                .withDockerfile(dockerfile)
-                .withTags(getTags())
-                .withBuildArg("BASE_IMAGE", from)
-                .withBuildArg("PORT", port);
+        Map<String, String> buildImageCmdArguments = new HashMap<>();
 
         getLog().info("Using BASE_IMAGE: " + from);
         if (StringUtils.isNotEmpty(baseImageRun) && !staticNativeImage) {
-            getLog().info("Using BASE_IMAGE_RUN: " + baseImageRun);
-            buildImageCmd.withBuildArg("BASE_IMAGE_RUN", baseImageRun);
+            buildImageCmdArguments.put("BASE_IMAGE_RUN", baseImageRun);
         }
 
         if (baseImageRun.contains("alpine-glibc")) {
-            buildImageCmd.withBuildArg("EXTRA_CMD", "apk update && apk add libstdc++");
-        } else {
-            buildImageCmd.withBuildArg("EXTRA_CMD", "");
+            buildImageCmdArguments.put("EXTRA_CMD", "apk update && apk add libstdc++");
         }
 
         if (passClassName) {
-            getLog().info("Using CLASS_NAME: " + mainClass);
-            buildImageCmd = buildImageCmd.withBuildArg("CLASS_NAME", mainClass);
+            buildImageCmdArguments.put("CLASS_NAME", mainClass);
         }
 
-        String graalVmBuildArgs = getGraalVmBuildArgs();
-        if (baseImageRun.contains("distroless") && !graalVmBuildArgs.contains(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG)) {
-            graalVmBuildArgs = MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG + " " + graalVmBuildArgs;
+        List<String> allNativeImageBuildArgs = new ArrayList<>();
+        if (nativeImageBuildArgs != null && !nativeImageBuildArgs.isEmpty()) {
+            allNativeImageBuildArgs.addAll(nativeImageBuildArgs);
+        }
+        if (baseImageRun.contains("distroless") && !allNativeImageBuildArgs.contains(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG)) {
+            allNativeImageBuildArgs.add(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG);
         }
 
-        if (graalVmBuildArgs != null && !graalVmBuildArgs.isEmpty()) {
-            getLog().info("Using GRAALVM_ARGS: " + graalVmBuildArgs);
-            buildImageCmd = buildImageCmd.withBuildArg(GRAALVM_ARGS, graalVmBuildArgs);
-        }
+        String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);
+        Path argsFilePath = Paths.get(argsFile);
+        if (argsFilePath.toFile().exists()) {
+            List<String> args = java.nio.file.Files.readAllLines(argsFilePath);
+            int cpPosition = args.indexOf("-cp");
+            args.remove(cpPosition);
+            args.remove(cpPosition);
 
-        dockerService.buildImage(buildImageCmd);
+            List<String> newArgs = args.stream()
+                    .filter(arg -> !arg.startsWith("-H:Name"))
+                    .filter(arg -> !arg.startsWith("-H:Class"))
+                    .filter(arg -> !arg.startsWith("-H:Path"))
+                    .filter(arg -> !arg.startsWith("-H:ConfigurationFileDirectories"))
+                    .map(arg -> {
+                        if (arg.startsWith("\\Q") && arg.endsWith("\\E")) {
+                            return "\\Q/home/app/libs" + arg.substring(arg.lastIndexOf("/"));
+                        } else {
+                            return arg;
+                        }
+                    })
+                    .toList();
+            allNativeImageBuildArgs.addAll(newArgs);
+
+            List<String> conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));
+            if (conversionResult.size() == 1) {
+                argsFilePath.toFile().delete();
+
+                BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
+                        .withDockerfile(dockerfile)
+                        .withTags(getTags())
+                        .withBuildArg("BASE_IMAGE", from)
+                        .withBuildArg("PORT", port);
+
+                for (Map.Entry<String, String> buildArg : buildImageCmdArguments.entrySet()) {
+                    String key = buildArg.getKey();
+                    String value = buildArg.getValue();
+                    getLog().info("Using " + key + ": " + value);
+                    buildImageCmd.withBuildArg(key, value);
+                }
+                getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);
+
+                dockerService.buildImage(buildImageCmd);
+            } else {
+                throw new IOException("Unable to convert native image build args to args file");
+            }
+        } else {
+            throw new IOException("Unable to find args file: " + argsFilePath);
+        }
     }
 
 }

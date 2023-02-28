@@ -3,8 +3,9 @@ WORKDIR /home/app
 
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
+COPY *.args /home/app/graalvm-native-image.args
 ENV USE_NATIVE_IMAGE_JAVA_PLATFORM_MODULE_SYSTEM=false
-RUN native-image -Ob -H:Class=io.micronaut.build.examples.Application -H:Name=application --no-fallback -cp "/home/app/libs/*:/home/app/classes/"
+RUN native-image @/home/app/graalvm-native-image.args -H:Class=io.micronaut.build.examples.Application -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM frolvlad/alpine-glibc:alpine-3.12
 RUN apk update && apk add libstdc++
