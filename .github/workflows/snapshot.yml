@@ -34,7 +34,7 @@ jobs:
 
       - name: Run tests
         run: |
-          (./mvnw install && ./mvnw verify 2>&1) | tee /tmp/maven.out
+          (./mvnw install -Dinvoker.skip=true && ./mvnw verify 2>&1) | tee /tmp/maven.out
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
