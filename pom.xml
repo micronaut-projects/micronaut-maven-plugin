@@ -107,6 +107,17 @@
                 <enabled>false</enabled>
             </releases>
         </repository>
+        <repository>
+            <id>graalvm-native-build-tools-snapshots</id>
+            <name>GraalVM native-build-tools Snapshots</name>
+            <url>https://raw.githubusercontent.com/graalvm/native-build-tools/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
     </repositories>
 
     <dependencyManagement>

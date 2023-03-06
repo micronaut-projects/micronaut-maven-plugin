@@ -196,6 +196,7 @@ public class CompilerService {
     public InvocationResult packageProject() throws MavenInvocationException {
         InvocationRequest request = new DefaultInvocationRequest();
         request.setPomFile(mavenProject.getFile());
+        request.setUserSettingsFile(mavenSession.getRequest().getUserSettingsFile());
         request.setGoals(Collections.singletonList(MAVEN_JAR_PLUGIN + ":jar"));
         request.setBatchMode(true);
         request.setQuiet(true);
