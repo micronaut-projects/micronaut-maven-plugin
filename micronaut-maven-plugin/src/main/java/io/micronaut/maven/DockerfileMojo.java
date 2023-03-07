@@ -207,7 +207,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
                     Path argsFilePath = listStream
                             .map(path -> path.getFileName().toString())
                             .filter(f -> f.startsWith("native-image") && f.endsWith("args"))
-                            .map(f -> targetPath.resolve(f))
+                            .map(targetPath::resolve)
                             .findFirst()
                             .orElse(null);
                     if (argsFilePath != null) {
