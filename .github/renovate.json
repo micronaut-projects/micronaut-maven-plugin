@@ -19,7 +19,7 @@
       "enabled": false
     },{
       "matchPaths": ["src/main/resources/dockerfiles/Dockerfile*"],
-      "matchPackageNames": ["openjdk", "amazonlinux"],
+      "matchPackageNames": ["eclipse-temurin", "amazonlinux"],
       "enabled": false
     }
   ]
