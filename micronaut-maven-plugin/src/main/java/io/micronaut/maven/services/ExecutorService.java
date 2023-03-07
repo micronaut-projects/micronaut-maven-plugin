@@ -21,11 +21,17 @@ import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.invoker.DefaultInvocationRequest;
+import org.apache.maven.shared.invoker.InvocationRequest;
+import org.apache.maven.shared.invoker.InvocationResult;
+import org.apache.maven.shared.invoker.Invoker;
+import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.twdata.maven.mojoexecutor.MojoExecutor;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -42,12 +48,17 @@ public class ExecutorService {
 
     private final MojoExecutor.ExecutionEnvironment executionEnvironment;
     private final MavenProject mavenProject;
+    private final MavenSession mavenSession;
+    private final Invoker invoker;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    public ExecutorService(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager) {
+    public ExecutorService(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager,
+                           Invoker invoker) {
         this.executionEnvironment = executionEnvironment(mavenProject, mavenSession, pluginManager);
         this.mavenProject = mavenProject;
+        this.mavenSession = mavenSession;
+        this.invoker = invoker;
     }
 
     /**
@@ -98,5 +109,22 @@ public class ExecutorService {
     public void executeGoal(String pluginGroup, String pluginArtifact, String pluginVersion, String goal, Xpp3Dom configuration) throws MojoExecutionException {
         final Plugin plugin = plugin(pluginGroup, pluginArtifact, pluginVersion);
         executeMojo(plugin, goal(goal), configuration, executionEnvironment);
+    }
+
+    /**
+     * Executes a goal using the Maven shared invoker.
+     * @param pluginKey The plugin coordinates in the format groupId:artifactId
+     * @param goal The goal to execute
+     * @return The result of the invocation
+     * @throws MavenInvocationException If the goal execution fails
+     */
+    public InvocationResult invokeGoal(String pluginKey, String goal) throws MavenInvocationException {
+        InvocationRequest request = new DefaultInvocationRequest();
+        request.setPomFile(mavenProject.getFile());
+        request.setUserSettingsFile(mavenSession.getRequest().getUserSettingsFile());
+        request.setGoals(Collections.singletonList(pluginKey + ":" + goal));
+        request.setBatchMode(true);
+        request.setQuiet(true);
+        return invoker.execute(request);
     }
 }

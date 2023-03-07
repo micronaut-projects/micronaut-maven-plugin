@@ -161,6 +161,9 @@
                     <lifecycle>
                         <id>default</id>
                         <phases>
+                            <generate-resources>
+                                org.graalvm.buildtools:native-maven-plugin:add-reachability-metadata
+                            </generate-resources>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:resources
                             </process-resources>
@@ -169,7 +172,8 @@
                             </compile>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
-                                ${project.groupId}:${project.artifactId}:${project.version}:graalvm-resources
+                                ${project.groupId}:${project.artifactId}:${project.version}:graalvm-resources,
+                                org.graalvm.buildtools:native-maven-plugin:write-args-file
                             </prepare-package>
                             <package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:docker-native

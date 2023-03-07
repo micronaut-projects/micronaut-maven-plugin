@@ -39,7 +39,7 @@ jobs:
       - name: Build with Maven
         shell: cmd
         run: |
-          .\mvnw install && .\mvnw verify
+          .\mvnw install -Dinvoker.skip=true && .\mvnw verify
         env:
           TESTCONTAINERS_RYUK_DISABLED: true
           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}

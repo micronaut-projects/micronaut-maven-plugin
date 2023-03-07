@@ -71,7 +71,7 @@
 
         <dependency>
             <groupId>org.graalvm.buildtools</groupId>
-            <artifactId>native-maven-plugin</artifactId>
+            <artifactId>utils</artifactId>
             <version>${native-maven-plugin.version}</version>
         </dependency>
         <dependency>

@@ -20,19 +20,26 @@ import io.micronaut.maven.jib.JibMicronautExtension;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
 import io.micronaut.maven.jib.JibConfigurationService;
+import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.invoker.MavenInvocationException;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static io.micronaut.maven.DockerNativeMojo.ARGS_FILE_PROPERTY_NAME;
 
 /**
  * <p>Generates a <code>Dockerfile</code> depending on the <code>packaging</code> and <code>micronaut.runtime</code>
@@ -56,10 +63,13 @@ public class DockerfileMojo extends AbstractDockerMojo {
     public static final String DOCKERFILE_NATIVE_STATIC = "DockerfileNativeStatic";
     public static final String DOCKERFILE_NATIVE_ORACLE_CLOUD = "DockerfileNativeOracleCloud";
 
+    private final ExecutorService executorService;
+
     @Inject
     public DockerfileMojo(MavenProject mavenProject, DockerService dockerService, JibConfigurationService jibConfigurationService,
-                          ApplicationConfigurationService applicationConfigurationService) {
+                          ApplicationConfigurationService applicationConfigurationService, ExecutorService executorService) {
         super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService);
+        this.executorService = executorService;
     }
 
     @Override
@@ -77,7 +87,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
 
             dockerfile.ifPresent(file -> getLog().info("Dockerfile written to: " + file.getAbsolutePath()));
 
-        } catch (IOException e) {
+        } catch (IOException | MavenInvocationException e) {
             throw new MojoExecutionException(e.getMessage(), e);
         }
     }
@@ -129,7 +139,9 @@ public class DockerfileMojo extends AbstractDockerMojo {
         }
     }
 
-    private Optional<File> buildDockerfileNative(MicronautRuntime runtime) throws IOException {
+    private Optional<File> buildDockerfileNative(MicronautRuntime runtime) throws IOException, MavenInvocationException {
+        getLog().info("Generating GraalVM args file");
+        executorService.invokeGoal("org.graalvm.buildtools:native-maven-plugin", "write-args-file");
         File dockerfile;
         switch (runtime.getBuildStrategy()) {
             case LAMBDA -> {
@@ -174,16 +186,10 @@ public class DockerfileMojo extends AbstractDockerMojo {
                             result.add("");
                         }
                     } else if (line.contains("GRAALVM_") || line.contains("CLASS_NAME")) {
-                        String graalVmBuildArgs = getGraalVmBuildArgs();
-                        if (baseImageRun.contains("distroless") && !graalVmBuildArgs.contains(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG)) {
-                            graalVmBuildArgs = MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG + " " + graalVmBuildArgs;
-                        }
-
                         result.add(line
                                 .replace("${GRAALVM_VERSION}", graalVmVersion())
                                 .replace("${GRAALVM_JVM_VERSION}", graalVmJvmVersion())
                                 .replace("${GRAALVM_ARCH}", graalVmArch())
-                                .replace("${GRAALVM_ARGS}", graalVmBuildArgs)
                                 .replace("${CLASS_NAME}", mainClass)
                         );
                     } else if (line.contains("PORT")) {
@@ -192,6 +198,26 @@ public class DockerfileMojo extends AbstractDockerMojo {
                         result.add(line);
                     }
                 }
+            }
+
+            String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);
+            if (argsFile == null) {
+                Path targetPath = Paths.get(mavenProject.getBuild().getDirectory());
+                try (Stream<Path> listStream = Files.list(targetPath)) {
+                    Path argsFilePath = listStream
+                            .map(path -> path.getFileName().toString())
+                            .filter(f -> f.startsWith("native-image") && f.endsWith("args"))
+                            .map(targetPath::resolve)
+                            .findFirst()
+                            .orElse(null);
+                    if (argsFilePath != null) {
+                        argsFile = argsFilePath.toAbsolutePath().toString();
+                    }
+                }
+            }
+            if (argsFile != null) {
+                List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);
+                getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);
             }
 
             if (appArguments != null && !appArguments.isEmpty()) {

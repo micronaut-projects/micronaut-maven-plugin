@@ -74,7 +74,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <maven.version>3.9.0</maven.version>
         <micronaut.version>4.0.0-SNAPSHOT</micronaut.version>
-        <native-maven-plugin.version>0.9.20</native-maven-plugin.version>
+        <native-maven-plugin.version>0.9.21-SNAPSHOT</native-maven-plugin.version>
         <micronaut.aot.version>2.0.0-SNAPSHOT</micronaut.aot.version>
         <micronaut.test.resources.version>2.0.0-SNAPSHOT</micronaut.test.resources.version>
 
@@ -100,6 +100,17 @@
         <repository>
             <id>sonatype-snapshots</id>
             <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>
+        <repository>
+            <id>graalvm-native-build-tools-snapshots</id>
+            <name>GraalVM native-build-tools Snapshots</name>
+            <url>https://raw.githubusercontent.com/graalvm/native-build-tools/snapshots</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
