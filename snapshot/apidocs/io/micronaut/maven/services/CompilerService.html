@@ -77,7 +77,7 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <hr>
 <div class="type-signature"><span class="annotations">@Singleton
-</span><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-45">CompilerService</a></span>
+</span><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-55">CompilerService</a></span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">Provides methods to compile a Maven project.</div>
 <dl class="notes">
@@ -124,10 +124,11 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(org.apache.maven.project.MavenProject,org.apache.maven.execution.MavenSession,io.micronaut.maven.services.ExecutorService,org.apache.maven.project.ProjectDependenciesResolver)" class="member-name-link">CompilerService</a><wbr>(org.apache.maven.project.MavenProject&nbsp;mavenProject,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(org.apache.maven.project.MavenProject,org.apache.maven.execution.MavenSession,io.micronaut.maven.services.ExecutorService,org.apache.maven.project.ProjectDependenciesResolver,org.apache.maven.shared.invoker.Invoker)" class="member-name-link">CompilerService</a><wbr>(org.apache.maven.project.MavenProject&nbsp;mavenProject,
  org.apache.maven.execution.MavenSession&nbsp;mavenSession,
  <a href="ExecutorService.html" title="class in io.micronaut.maven.services">ExecutorService</a>&nbsp;executorService,
- org.apache.maven.project.ProjectDependenciesResolver&nbsp;resolver)</code></div>
+ org.apache.maven.project.ProjectDependenciesResolver&nbsp;resolver,
+ org.apache.maven.shared.invoker.Invoker&nbsp;invoker)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -188,7 +189,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="MAVEN_COMPILER_PLUGIN">
 <h3>MAVEN_COMPILER_PLUGIN</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-48">MAVEN_COMPILER_PLUGIN</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-58">MAVEN_COMPILER_PLUGIN</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -202,7 +203,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="MAVEN_JAR_PLUGIN">
 <h3>MAVEN_JAR_PLUGIN</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-49">MAVEN_JAR_PLUGIN</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-59">MAVEN_JAR_PLUGIN</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -216,7 +217,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="MAVEN_RESOURCES_PLUGIN">
 <h3>MAVEN_RESOURCES_PLUGIN</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-50">MAVEN_RESOURCES_PLUGIN</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-60">MAVEN_RESOURCES_PLUGIN</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -230,7 +231,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="GMAVEN_PLUS_PLUGIN">
 <h3>GMAVEN_PLUS_PLUGIN</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-51">GMAVEN_PLUS_PLUGIN</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-61">GMAVEN_PLUS_PLUGIN</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -244,7 +245,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="KOTLIN_MAVEN_PLUGIN">
 <h3>KOTLIN_MAVEN_PLUGIN</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-52">KOTLIN_MAVEN_PLUGIN</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-62">KOTLIN_MAVEN_PLUGIN</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -264,13 +265,14 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(org.apache.maven.project.MavenProject,org.apache.maven.execution.MavenSession,io.micronaut.maven.services.ExecutorService,org.apache.maven.project.ProjectDependenciesResolver)">
+<section class="detail" id="&lt;init&gt;(org.apache.maven.project.MavenProject,org.apache.maven.execution.MavenSession,io.micronaut.maven.services.ExecutorService,org.apache.maven.project.ProjectDependenciesResolver,org.apache.maven.shared.invoker.Invoker)">
 <h3>CompilerService</h3>
 <div class="member-signature"><span class="annotations">@Inject
-</span><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-68">CompilerService</a></span><wbr><span class="parameters">(org.apache.maven.project.MavenProject&nbsp;mavenProject,
+</span><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-78">CompilerService</a></span><wbr><span class="parameters">(org.apache.maven.project.MavenProject&nbsp;mavenProject,
  org.apache.maven.execution.MavenSession&nbsp;mavenSession,
  <a href="ExecutorService.html" title="class in io.micronaut.maven.services">ExecutorService</a>&nbsp;executorService,
- org.apache.maven.project.ProjectDependenciesResolver&nbsp;resolver)</span></div>
+ org.apache.maven.project.ProjectDependenciesResolver&nbsp;resolver,
+ org.apache.maven.shared.invoker.Invoker&nbsp;invoker)</span></div>
 </section>
 </li>
 </ul>
@@ -284,7 +286,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="compileProject(boolean)">
 <h3>compileProject</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-86">compileProject</a></span><wbr><span class="parameters">(boolean&nbsp;copyResources)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-96">compileProject</a></span><wbr><span class="parameters">(boolean&nbsp;copyResources)</span></div>
 <div class="block">Compiles the project.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -297,7 +299,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="resolveSourceDirectories()">
 <h3>resolveSourceDirectories</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-132">resolveSourceDirectories</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-142">resolveSourceDirectories</a></span>()</div>
 <div class="block">Resolves the source directories by checking the existence of Java, Groovy or Kotlin sources.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -308,7 +310,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="resolveDependencies(java.lang.String...)">
 <h3>resolveDependencies</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.eclipse.aether.graph.Dependency&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-160">resolveDependencies</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>...&nbsp;scopes)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.eclipse.aether.graph.Dependency&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-170">resolveDependencies</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>...&nbsp;scopes)</span></div>
 <div class="block">Resolves project dependencies for the given scopes.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -321,7 +323,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="buildClasspath(java.util.List)">
 <h3>buildClasspath</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-182">buildClasspath</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.eclipse.aether.graph.Dependency&gt;&nbsp;dependencies)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-192">buildClasspath</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.eclipse.aether.graph.Dependency&gt;&nbsp;dependencies)</span></div>
 <div class="block">Builds a classpath string for the given dependencies.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -334,7 +336,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="packageProject()">
 <h3>packageProject</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.apache.maven.shared.invoker.InvocationResult</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-196">packageProject</a></span>()
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.apache.maven.shared.invoker.InvocationResult</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/CompilerService.html#line-206">packageProject</a></span>()
                                                                 throws <span class="exceptions">org.apache.maven.shared.invoker.MavenInvocationException</span></div>
 <div class="block">Packages the project by invoking the Jar plugin.</div>
 <dl class="notes">
