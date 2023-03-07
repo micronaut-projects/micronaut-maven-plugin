@@ -21,6 +21,14 @@ import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.util.Os;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+import static io.micronaut.maven.AbstractDockerMojo.MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG;
 
 /**
  * Utility methods for different mojos.
@@ -48,5 +56,41 @@ public final class MojoUtils {
             }
         }
         return executable;
+    }
+
+    public static List<String> computeNativeImageArgs(List<String> nativeImageBuildArgs, String baseImageRun, String argsFile) throws IOException {
+        List<String> allNativeImageBuildArgs = new ArrayList<>();
+        if (nativeImageBuildArgs != null && !nativeImageBuildArgs.isEmpty()) {
+            allNativeImageBuildArgs.addAll(nativeImageBuildArgs);
+        }
+        if (baseImageRun.contains("distroless") && !allNativeImageBuildArgs.contains(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG)) {
+            allNativeImageBuildArgs.add(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG);
+        }
+
+        Path argsFilePath = Paths.get(argsFile);
+        if (Files.exists(argsFilePath)) {
+            List<String> args = Files.readAllLines(argsFilePath);
+            int cpPosition = args.indexOf("-cp");
+            args.remove(cpPosition);
+            args.remove(cpPosition);
+
+            List<String> newArgs = args.stream()
+                    .filter(arg -> !arg.startsWith("-H:Name"))
+                    .filter(arg -> !arg.startsWith("-H:Class"))
+                    .filter(arg -> !arg.startsWith("-H:Path"))
+                    .filter(arg -> !arg.startsWith("-H:ConfigurationFileDirectories"))
+                    .map(arg -> {
+                        if (arg.startsWith("\\Q") && arg.endsWith("\\E")) {
+                            return "\\Q/home/app/libs" + arg.substring(arg.lastIndexOf("/"));
+                        } else {
+                            return arg;
+                        }
+                    })
+                    .toList();
+            allNativeImageBuildArgs.addAll(newArgs);
+        } else {
+            throw new IOException("Unable to find args file: " + argsFilePath);
+        }
+        return allNativeImageBuildArgs;
     }
 }

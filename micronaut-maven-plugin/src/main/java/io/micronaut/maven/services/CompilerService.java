@@ -19,8 +19,14 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
-import org.apache.maven.project.*;
-import org.apache.maven.shared.invoker.*;
+import org.apache.maven.project.DefaultDependencyResolutionRequest;
+import org.apache.maven.project.DependencyResolutionRequest;
+import org.apache.maven.project.DependencyResolutionResult;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectDependenciesResolver;
+import org.apache.maven.shared.invoker.InvocationResult;
+import org.apache.maven.shared.invoker.Invoker;
+import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyFilter;
@@ -30,7 +36,11 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -68,14 +78,14 @@ public class CompilerService {
     @SuppressWarnings("MnInjectionPoints")
     @Inject
     public CompilerService(MavenProject mavenProject, MavenSession mavenSession, ExecutorService executorService,
-                           ProjectDependenciesResolver resolver) {
+                           ProjectDependenciesResolver resolver, Invoker invoker) {
         this.resolver = resolver;
         this.log = new SystemStreamLog();
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
         this.executorService = executorService;
         this.sourceDirectories = resolveSourceDirectories();
-        this.invoker = new DefaultInvoker();
+        this.invoker = invoker;
     }
 
     /**
@@ -194,12 +204,6 @@ public class CompilerService {
      * @return the invocation result.
      */
     public InvocationResult packageProject() throws MavenInvocationException {
-        InvocationRequest request = new DefaultInvocationRequest();
-        request.setPomFile(mavenProject.getFile());
-        request.setUserSettingsFile(mavenSession.getRequest().getUserSettingsFile());
-        request.setGoals(Collections.singletonList(MAVEN_JAR_PLUGIN + ":jar"));
-        request.setBatchMode(true);
-        request.setQuiet(true);
-        return invoker.execute(request);
+        return executorService.invokeGoal(MAVEN_JAR_PLUGIN, "jar");
     }
 }

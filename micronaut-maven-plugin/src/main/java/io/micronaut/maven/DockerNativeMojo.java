@@ -19,7 +19,6 @@ import com.github.dockerjava.api.command.BuildImageCmd;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.common.io.FileWriteMode;
-import com.google.common.io.Files;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
@@ -35,9 +34,8 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.Path;
+import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -148,8 +146,6 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         getLog().info("Using CLASS_NAME: " + mainClass);
         buildImageCmd.withBuildArg("CLASS_NAME", mainClass);
 
-        //TODO process GraalVM args file
-
         String imageId = dockerService.buildImage(buildImageCmd);
         File functionZip = dockerService.copyFromContainer(imageId, "/function/function.zip");
         getLog().info("AWS Lambda Custom Runtime ZIP: " + functionZip.getPath());
@@ -186,7 +182,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
         if (appArguments != null && !appArguments.isEmpty()) {
             getLog().info("Using application arguments: " + appArguments);
-            Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());
+            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());
         }
 
         Map<String, String> buildImageCmdArguments = new HashMap<>();
@@ -204,61 +200,29 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             buildImageCmdArguments.put("CLASS_NAME", mainClass);
         }
 
-        List<String> allNativeImageBuildArgs = new ArrayList<>();
-        if (nativeImageBuildArgs != null && !nativeImageBuildArgs.isEmpty()) {
-            allNativeImageBuildArgs.addAll(nativeImageBuildArgs);
-        }
-        if (baseImageRun.contains("distroless") && !allNativeImageBuildArgs.contains(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG)) {
-            allNativeImageBuildArgs.add(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG);
-        }
-
         String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);
-        Path argsFilePath = Paths.get(argsFile);
-        if (argsFilePath.toFile().exists()) {
-            List<String> args = java.nio.file.Files.readAllLines(argsFilePath);
-            int cpPosition = args.indexOf("-cp");
-            args.remove(cpPosition);
-            args.remove(cpPosition);
+        List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);
+        getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);
+        List<String> conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));
+        if (conversionResult.size() == 1) {
+            Files.delete(Paths.get(argsFile));
 
-            List<String> newArgs = args.stream()
-                    .filter(arg -> !arg.startsWith("-H:Name"))
-                    .filter(arg -> !arg.startsWith("-H:Class"))
-                    .filter(arg -> !arg.startsWith("-H:Path"))
-                    .filter(arg -> !arg.startsWith("-H:ConfigurationFileDirectories"))
-                    .map(arg -> {
-                        if (arg.startsWith("\\Q") && arg.endsWith("\\E")) {
-                            return "\\Q/home/app/libs" + arg.substring(arg.lastIndexOf("/"));
-                        } else {
-                            return arg;
-                        }
-                    })
-                    .toList();
-            allNativeImageBuildArgs.addAll(newArgs);
+            BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
+                    .withDockerfile(dockerfile)
+                    .withTags(getTags())
+                    .withBuildArg("BASE_IMAGE", from)
+                    .withBuildArg("PORT", port);
 
-            List<String> conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));
-            if (conversionResult.size() == 1) {
-                argsFilePath.toFile().delete();
-
-                BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
-                        .withDockerfile(dockerfile)
-                        .withTags(getTags())
-                        .withBuildArg("BASE_IMAGE", from)
-                        .withBuildArg("PORT", port);
-
-                for (Map.Entry<String, String> buildArg : buildImageCmdArguments.entrySet()) {
-                    String key = buildArg.getKey();
-                    String value = buildArg.getValue();
-                    getLog().info("Using " + key + ": " + value);
-                    buildImageCmd.withBuildArg(key, value);
-                }
-                getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);
-
-                dockerService.buildImage(buildImageCmd);
-            } else {
-                throw new IOException("Unable to convert native image build args to args file");
+            for (Map.Entry<String, String> buildArg : buildImageCmdArguments.entrySet()) {
+                String key = buildArg.getKey();
+                String value = buildArg.getValue();
+                getLog().info("Using " + key + ": " + value);
+                buildImageCmd.withBuildArg(key, value);
             }
+
+            dockerService.buildImage(buildImageCmd);
         } else {
-            throw new IOException("Unable to find args file: " + argsFilePath);
+            throw new IOException("Unable to convert native image build args to args file");
         }
     }
 
