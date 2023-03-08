@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.buildplan.UnixPathParser;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
@@ -52,9 +53,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         MicronautRuntime runtime = MicronautRuntime.valueOf(mavenData.getMavenProject().getProperties().getProperty(MicronautRuntime.PROPERTY, "none").toUpperCase());
 
         JibConfigurationService jibConfigurationService = new JibConfigurationService(mavenData.getMavenProject());
-        String from = jibConfigurationService.getFromImage().orElse(DEFAULT_BASE_IMAGE);
 
-        builder.setBaseImage(from);
+        if (StringUtils.isNotEmpty(buildPlan.getBaseImage())) {
+            builder.setBaseImage(DEFAULT_BASE_IMAGE);
+        }
 
         ApplicationConfigurationService applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());
         try {
