@@ -10,17 +10,11 @@ on:
 jobs:
   build:
     if: github.repository != 'micronaut-projects/micronaut-project-template'
-    runs-on: windows-2019
+    runs-on: windows-latest
     strategy:
       matrix:
-        graalvm: ['latest', 'dev']
+        graalvm: ['latest']
         java: ['17']
-        include:
-          - graalvm: 'dev'
-            java: 'dev'
-        exclude:
-          - graalvm: 'dev'
-            java: '17'
     steps:
       - uses: actions/checkout@v3
       - name: Cache Maven packages
