@@ -22,7 +22,10 @@ import io.micronaut.maven.jib.JibConfigurationService;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
@@ -55,6 +58,7 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     protected final JibConfigurationService jibConfigurationService;
     protected final ApplicationConfigurationService applicationConfigurationService;
     protected final DockerService dockerService;
+    protected final PluginParameterExpressionEvaluator expressionEvaluator;
 
 
     /**
@@ -100,11 +104,14 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     @Parameter(property = "micronaut.native-image.base-image-run", defaultValue = DEFAULT_BASE_IMAGE_GRAALVM_RUN)
     protected String baseImageRun;
 
-    protected AbstractDockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService, ApplicationConfigurationService applicationConfigurationService, DockerService dockerService) {
+    protected AbstractDockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
+                                 ApplicationConfigurationService applicationConfigurationService,
+                                 DockerService dockerService, MavenSession mavenSession, MojoExecution mojoExecution) {
         this.mavenProject = mavenProject;
         this.jibConfigurationService = jibConfigurationService;
         this.applicationConfigurationService = applicationConfigurationService;
         this.dockerService = dockerService;
+        this.expressionEvaluator = new PluginParameterExpressionEvaluator(mavenSession, mojoExecution);
     }
 
     /**
@@ -185,7 +192,17 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
             }
             tags.add(String.format("%s:%s", imageName, tag));
         }
-        return tags;
+        return tags.stream()
+                .map(this::evaluateExpresion)
+                .collect(Collectors.toSet());
+    }
+
+    private String evaluateExpresion(String expression) {
+        try {
+            return expressionEvaluator.evaluate(expression, String.class).toString();
+        } catch (Exception e) {
+            return expression;
+        }
     }
 
     /**

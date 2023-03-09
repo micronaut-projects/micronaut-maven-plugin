@@ -22,6 +22,8 @@ import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
 import io.micronaut.maven.jib.JibConfigurationService;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -47,8 +49,9 @@ public class DockerPushMojo extends AbstractDockerMojo {
 
     @Inject
     public DockerPushMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
-                             ApplicationConfigurationService applicationConfigurationService, DockerService dockerService) {
-        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService);
+                          ApplicationConfigurationService applicationConfigurationService, DockerService dockerService,
+                          MavenSession mavenSession, MojoExecution mojoExecution) {
+        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession, mojoExecution);
     }
 
     @Override
