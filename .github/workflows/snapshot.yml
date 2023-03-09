@@ -43,21 +43,12 @@ jobs:
 
       - name: Run tests
         run: |
-          (./mvnw install -Dinvoker.skip=true && ./mvnw verify 2>&1) | tee /tmp/maven.out
+          ./mvnw -q install -Dinvoker.skip=true && ./mvnw verify -l /tmp/maven.out
+          cat /tmp/maven.out
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
           GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-
-      - name: Run static analysis
-        if: github.repository_owner == 'micronaut-projects'
-        run: ./mvnw sonar:sonar
-        env:
-          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
-          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
-          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "Add build scan URL as PR comment"
         uses: actions/github-script@v6
@@ -84,6 +75,16 @@ jobs:
           check_name: Java CI / Test Report
           report_paths: '**/target/invoker-reports/TEST-*.xml'
           check_retries: 'true'
+
+      - name: Run static analysis
+        if: github.repository_owner == 'micronaut-projects'
+        run: ./mvnw sonar:sonar
+        env:
+          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
+          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
+          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Determine current version
         id: release_version
