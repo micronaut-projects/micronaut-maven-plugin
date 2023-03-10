@@ -24,6 +24,8 @@ import io.micronaut.maven.services.DockerService;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.core.annotation.Experimental;
 import org.apache.commons.io.IOUtils;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -103,9 +105,11 @@ public class DockerCracMojo extends AbstractDockerMojo {
             JibConfigurationService jibConfigurationService,
             ApplicationConfigurationService applicationConfigurationService,
             DockerService dockerService,
-            MavenReaderFilter mavenReaderFilter
+            MavenReaderFilter mavenReaderFilter,
+            MavenSession mavenSession,
+            MojoExecution mojoExecution
     ) {
-        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService);
+        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession, mojoExecution);
         this.mavenReaderFilter = mavenReaderFilter;
     }
 
