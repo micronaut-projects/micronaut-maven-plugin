@@ -68,6 +68,7 @@
                     <pomIncludes>
                         <pomInclude>*/pom.xml</pomInclude>
                     </pomIncludes>
+                    <preBuildHookScript>setup</preBuildHookScript>
                     <postBuildHookScript>verify</postBuildHookScript>
                     <selectorScript>selector</selectorScript>
                     <localRepositoryPath>../target/local-repo</localRepositoryPath>
