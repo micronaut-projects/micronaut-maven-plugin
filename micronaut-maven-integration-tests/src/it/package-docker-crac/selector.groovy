@@ -1,4 +1,4 @@
-return isX86()
+return true
 
 static boolean isX86() {
     String osArch = System.getProperty("os.arch")
