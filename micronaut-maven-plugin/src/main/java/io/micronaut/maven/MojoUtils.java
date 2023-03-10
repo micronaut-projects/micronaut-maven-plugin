@@ -81,10 +81,10 @@ public final class MojoUtils {
                     .filter(arg -> !arg.startsWith("-H:Class"))
                     .filter(arg -> !arg.startsWith("-H:Path"))
                     .filter(arg -> !arg.startsWith("-H:ConfigurationFileDirectories"))
-                    .map(arg -> arg.replaceAll("[/\\\\]+", "/"))
                     .map(arg -> {
                         if (arg.startsWith("\\Q") && arg.endsWith("\\E")) {
-                            return "\\Q/home/app/libs" + arg.substring(arg.lastIndexOf("/"));
+                            int lastIndexOfSlash = arg.contains("/") ? arg.lastIndexOf("/") : arg.lastIndexOf("\\");
+                            return "\\Q/home/app/libs" + arg.substring(lastIndexOfSlash);
                         } else {
                             return arg;
                         }
