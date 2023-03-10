@@ -1,7 +1,3 @@
-println "***********************************"
-println "| Starting test resources service |"
-println "***********************************"
-
 File mvnw = new File(basedir, '../../../mvnw')
 assert mvnw.exists()
 
