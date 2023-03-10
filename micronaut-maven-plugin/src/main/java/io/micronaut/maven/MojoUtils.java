@@ -70,15 +70,18 @@ public final class MojoUtils {
         Path argsFilePath = Paths.get(argsFile);
         if (Files.exists(argsFilePath)) {
             List<String> args = Files.readAllLines(argsFilePath);
-            int cpPosition = args.indexOf("-cp");
-            args.remove(cpPosition);
-            args.remove(cpPosition);
+            if (args.contains("-cp")) {
+                int cpPosition = args.indexOf("-cp");
+                args.remove(cpPosition);
+                args.remove(cpPosition);
+            }
 
             List<String> newArgs = args.stream()
                     .filter(arg -> !arg.startsWith("-H:Name"))
                     .filter(arg -> !arg.startsWith("-H:Class"))
                     .filter(arg -> !arg.startsWith("-H:Path"))
                     .filter(arg -> !arg.startsWith("-H:ConfigurationFileDirectories"))
+                    .map(arg -> arg.replaceAll("[/\\\\]+", "/"))
                     .map(arg -> {
                         if (arg.startsWith("\\Q") && arg.endsWith("\\E")) {
                             return "\\Q/home/app/libs" + arg.substring(arg.lastIndexOf("/"));
