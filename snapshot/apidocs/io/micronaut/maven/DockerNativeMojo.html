@@ -86,7 +86,7 @@ loadScripts(document, 'script');</script>
 <hr>
 <div class="type-signature"><span class="annotations">@Mojo(name="docker-native",
       requiresDependencyResolution=COMPILE_PLUS_RUNTIME)
-</span><span class="modifiers">public class </span><span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerNativeMojo.html#line-55">DockerNativeMojo</a></span>
+</span><span class="modifiers">public class </span><span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerNativeMojo.html#line-57">DockerNativeMojo</a></span>
 <span class="extends-implements">extends <a href="AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></span></div>
 <div class="block"><p>Implementation of the <code>docker-native</code> packaging.</p>
  <p><strong>WARNING</strong>: this goal is not intended to be executed directly. Instead, specify the packaging type
@@ -126,7 +126,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.maven.AbstractDockerMojo">Fields inherited from class&nbsp;io.micronaut.maven.<a href="AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></h3>
-<code><a href="AbstractDockerMojo.html#appArguments">appArguments</a>, <a href="AbstractDockerMojo.html#applicationConfigurationService">applicationConfigurationService</a>, <a href="AbstractDockerMojo.html#ARM_ARCH">ARM_ARCH</a>, <a href="AbstractDockerMojo.html#baseImageRun">baseImageRun</a>, <a href="AbstractDockerMojo.html#DEFAULT_BASE_IMAGE_GRAALVM_RUN">DEFAULT_BASE_IMAGE_GRAALVM_RUN</a>, <a href="AbstractDockerMojo.html#dockerService">dockerService</a>, <a href="AbstractDockerMojo.html#JAVA_17">JAVA_17</a>, <a href="AbstractDockerMojo.html#jibConfigurationService">jibConfigurationService</a>, <a href="AbstractDockerMojo.html#LATEST_TAG">LATEST_TAG</a>, <a href="AbstractDockerMojo.html#mainClass">mainClass</a>, <a href="AbstractDockerMojo.html#mavenProject">mavenProject</a>, <a href="AbstractDockerMojo.html#micronautRuntime">micronautRuntime</a>, <a href="AbstractDockerMojo.html#MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG">MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG</a>, <a href="AbstractDockerMojo.html#nativeImageBuildArgs">nativeImageBuildArgs</a>, <a href="AbstractDockerMojo.html#staticNativeImage">staticNativeImage</a>, <a href="AbstractDockerMojo.html#X86_64_ARCH">X86_64_ARCH</a></code></div>
+<code><a href="AbstractDockerMojo.html#appArguments">appArguments</a>, <a href="AbstractDockerMojo.html#applicationConfigurationService">applicationConfigurationService</a>, <a href="AbstractDockerMojo.html#ARM_ARCH">ARM_ARCH</a>, <a href="AbstractDockerMojo.html#baseImageRun">baseImageRun</a>, <a href="AbstractDockerMojo.html#DEFAULT_BASE_IMAGE_GRAALVM_RUN">DEFAULT_BASE_IMAGE_GRAALVM_RUN</a>, <a href="AbstractDockerMojo.html#dockerService">dockerService</a>, <a href="AbstractDockerMojo.html#expressionEvaluator">expressionEvaluator</a>, <a href="AbstractDockerMojo.html#JAVA_17">JAVA_17</a>, <a href="AbstractDockerMojo.html#jibConfigurationService">jibConfigurationService</a>, <a href="AbstractDockerMojo.html#LATEST_TAG">LATEST_TAG</a>, <a href="AbstractDockerMojo.html#mainClass">mainClass</a>, <a href="AbstractDockerMojo.html#mavenProject">mavenProject</a>, <a href="AbstractDockerMojo.html#micronautRuntime">micronautRuntime</a>, <a href="AbstractDockerMojo.html#MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG">MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG</a>, <a href="AbstractDockerMojo.html#nativeImageBuildArgs">nativeImageBuildArgs</a>, <a href="AbstractDockerMojo.html#staticNativeImage">staticNativeImage</a>, <a href="AbstractDockerMojo.html#X86_64_ARCH">X86_64_ARCH</a></code></div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-org.apache.maven.plugin.Mojo">Fields inherited from interface&nbsp;org.apache.maven.plugin.Mojo</h3>
 <code>ROLE</code></div>
@@ -140,10 +140,12 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(org.apache.maven.project.MavenProject,io.micronaut.maven.jib.JibConfigurationService,io.micronaut.maven.services.ApplicationConfigurationService,io.micronaut.maven.services.DockerService)" class="member-name-link">DockerNativeMojo</a><wbr>(org.apache.maven.project.MavenProject&nbsp;mavenProject,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(org.apache.maven.project.MavenProject,io.micronaut.maven.jib.JibConfigurationService,io.micronaut.maven.services.ApplicationConfigurationService,io.micronaut.maven.services.DockerService,org.apache.maven.execution.MavenSession,org.apache.maven.plugin.MojoExecution)" class="member-name-link">DockerNativeMojo</a><wbr>(org.apache.maven.project.MavenProject&nbsp;mavenProject,
  <a href="jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a>&nbsp;jibConfigurationService,
  <a href="services/ApplicationConfigurationService.html" title="class in io.micronaut.maven.services">ApplicationConfigurationService</a>&nbsp;applicationConfigurationService,
- <a href="services/DockerService.html" title="class in io.micronaut.maven.services">DockerService</a>&nbsp;dockerService)</code></div>
+ <a href="services/DockerService.html" title="class in io.micronaut.maven.services">DockerService</a>&nbsp;dockerService,
+ org.apache.maven.execution.MavenSession&nbsp;mavenSession,
+ org.apache.maven.plugin.MojoExecution&nbsp;mojoExecution)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -188,7 +190,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="DOCKER_NATIVE_PACKAGING">
 <h3>DOCKER_NATIVE_PACKAGING</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerNativeMojo.html#line-58">DOCKER_NATIVE_PACKAGING</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerNativeMojo.html#line-60">DOCKER_NATIVE_PACKAGING</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -202,7 +204,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="MICRONAUT_PARENT">
 <h3>MICRONAUT_PARENT</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerNativeMojo.html#line-59">MICRONAUT_PARENT</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerNativeMojo.html#line-61">MICRONAUT_PARENT</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -216,7 +218,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="MICRONAUT_VERSION">
 <h3>MICRONAUT_VERSION</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerNativeMojo.html#line-60">MICRONAUT_VERSION</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerNativeMojo.html#line-62">MICRONAUT_VERSION</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -230,7 +232,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="ARGS_FILE_PROPERTY_NAME">
 <h3>ARGS_FILE_PROPERTY_NAME</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerNativeMojo.html#line-61">ARGS_FILE_PROPERTY_NAME</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerNativeMojo.html#line-63">ARGS_FILE_PROPERTY_NAME</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -250,13 +252,15 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(org.apache.maven.project.MavenProject,io.micronaut.maven.jib.JibConfigurationService,io.micronaut.maven.services.ApplicationConfigurationService,io.micronaut.maven.services.DockerService)">
+<section class="detail" id="&lt;init&gt;(org.apache.maven.project.MavenProject,io.micronaut.maven.jib.JibConfigurationService,io.micronaut.maven.services.ApplicationConfigurationService,io.micronaut.maven.services.DockerService,org.apache.maven.execution.MavenSession,org.apache.maven.plugin.MojoExecution)">
 <h3>DockerNativeMojo</h3>
 <div class="member-signature"><span class="annotations">@Inject
-</span><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerNativeMojo.html#line-63">DockerNativeMojo</a></span><wbr><span class="parameters">(org.apache.maven.project.MavenProject&nbsp;mavenProject,
+</span><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerNativeMojo.html#line-65">DockerNativeMojo</a></span><wbr><span class="parameters">(org.apache.maven.project.MavenProject&nbsp;mavenProject,
  <a href="jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a>&nbsp;jibConfigurationService,
  <a href="services/ApplicationConfigurationService.html" title="class in io.micronaut.maven.services">ApplicationConfigurationService</a>&nbsp;applicationConfigurationService,
- <a href="services/DockerService.html" title="class in io.micronaut.maven.services">DockerService</a>&nbsp;dockerService)</span></div>
+ <a href="services/DockerService.html" title="class in io.micronaut.maven.services">DockerService</a>&nbsp;dockerService,
+ org.apache.maven.execution.MavenSession&nbsp;mavenSession,
+ org.apache.maven.plugin.MojoExecution&nbsp;mojoExecution)</span></div>
 </section>
 </li>
 </ul>
@@ -270,7 +274,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="execute()">
 <h3>execute</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerNativeMojo.html#line-70">execute</a></span>()
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerNativeMojo.html#line-73">execute</a></span>()
              throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
 <dt>Throws:</dt>
