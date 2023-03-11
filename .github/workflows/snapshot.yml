@@ -43,30 +43,11 @@ jobs:
 
       - name: Run tests
         run: |
-          ./mvnw -q install -Dinvoker.skip=true && ./mvnw verify -l /tmp/maven.out
-          cat /tmp/maven.out
+          ./mvnw -q install -Dinvoker.skip=true && ./mvnw verify
         env:
           GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
           GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-
-      - name: "Add build scan URL as PR comment"
-        uses: actions/github-script@v6
-        if: github.event_name == 'pull_request' && failure()
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            const fs = require('fs')
-            const mavenOutput = fs.readFileSync('/tmp/maven.out', 'utf8')
-            const regex = /^\[INFO\] (https:\/\/ge\.micronaut\.io.*)$/m
-            let buildScanUrl = mavenOutput.match(regex)
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '❌ ${{ github.workflow }} failed: ' + buildScanUrl
-            })
 
       - name: Publish Test Report
         if: always()

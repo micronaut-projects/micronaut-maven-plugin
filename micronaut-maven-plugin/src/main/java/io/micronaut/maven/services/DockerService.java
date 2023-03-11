@@ -42,6 +42,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.project.MavenProject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.output.FrameConsumerResultCallback;
+import org.testcontainers.containers.output.OutputFrame;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -147,6 +150,21 @@ public class DockerService {
                     LOG.info("Waiting {} seconds for completion", timeoutSeconds);
                     Integer exitcode = waitResult.awaitStatusCode(timeoutSeconds, TimeUnit.SECONDS);
                     if (exitcode != 0) {
+                        final Slf4jLogConsumer stdoutConsumer = new Slf4jLogConsumer(LOG);
+                        final Slf4jLogConsumer stderrConsumer = new Slf4jLogConsumer(LOG);
+
+                        try (FrameConsumerResultCallback callback = new FrameConsumerResultCallback()) {
+                            callback.addConsumer(OutputFrame.OutputType.STDOUT, stdoutConsumer);
+                            callback.addConsumer(OutputFrame.OutputType.STDERR, stderrConsumer);
+
+                            dockerClient.logContainerCmd(start.getContainerId())
+                                    .withStdOut(true)
+                                    .withStdErr(true)
+                                    .exec(callback)
+                                    .awaitCompletion();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                        }
                         throw new IOException("Image " + imageId + " exited with code " + exitcode);
                     }
                 }
