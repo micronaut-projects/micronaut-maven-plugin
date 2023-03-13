@@ -66,8 +66,8 @@ jobs:
         with:
           auth_token: ${{ secrets.OCI_AUTH_TOKEN }}
 
-      - name: Display endpoint
-        run: echo ${{ steps.login-ocir.outputs.ocir_endpoint }}
+      - name: Docker pull
+        run: docker pull us-phoenix-1.ocir.io/oraclelabs/micronaut-maven-plugin:0.1
 
       - name: Run tests
         run: |
