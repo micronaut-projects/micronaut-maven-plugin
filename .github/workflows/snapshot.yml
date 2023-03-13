@@ -50,28 +50,15 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Get an OCIR Repository
-        uses: oracle-actions/get-ocir-repository@v1.2
-        id: get-ocir-repository
-        with:
-          name: micronaut-maven-plugin
-          compartment: ${{ secrets.OCI_COMPARTMENT_OCID }}
-
-      - name: Display repo path
-        run: echo ${{ steps.get-ocir-repository.outputs.repo_path }}
-
       - name: Log into OCIR
         uses: oracle-actions/login-ocir@v1.2
         id: login-ocir
         with:
           auth_token: ${{ secrets.OCI_AUTH_TOKEN }}
 
-      - name: Docker pull
-        run: docker pull phx.ocir.io/oraclelabs/micronaut-maven-plugin:0.1
-
       - name: Run tests
         run: |
-          ./mvnw -q install -Dinvoker.skip=true && ./mvnw verify "-Dinvoker.test=deploy"
+          ./mvnw -q install -Dinvoker.skip=true && ./mvnw verify
 
       - name: Publish Test Report
         if: always()
