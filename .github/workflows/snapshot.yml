@@ -57,11 +57,17 @@ jobs:
           name: micronaut-maven-plugin
           compartment: ${{ secrets.OCI_COMPARTMENT_OCID }}
 
+      - name: Display repo path
+        run: echo ${{ steps.get-ocir-repository.outputs.repo_path }}
+
       - name: Log into OCIR
         uses: oracle-actions/login-ocir@v1.2
         id: login-ocir
         with:
           auth_token: ${{ secrets.OCI_AUTH_TOKEN }}
+
+      - name: Display endpoint
+        run: echo ${{ steps.login-ocir.outputs.ocir_endpoint }}
 
       - name: Run tests
         run: |
