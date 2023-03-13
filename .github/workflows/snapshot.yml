@@ -67,7 +67,7 @@ jobs:
           auth_token: ${{ secrets.OCI_AUTH_TOKEN }}
 
       - name: Docker pull
-        run: docker pull us-phoenix-1.ocir.io/oraclelabs/micronaut-maven-plugin:0.1
+        run: docker pull phx.ocir.io/oraclelabs/micronaut-maven-plugin:0.1
 
       - name: Run tests
         run: |
