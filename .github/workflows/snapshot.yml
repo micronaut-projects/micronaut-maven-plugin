@@ -51,7 +51,7 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: Log into OCIR
-        uses: oracle-actions/login-ocir@v1
+        uses: oracle-actions/login-ocir@v1.2
         id: login-ocir
         with:
           auth_token: ${{ secrets.OCI_AUTH_TOKEN }}
