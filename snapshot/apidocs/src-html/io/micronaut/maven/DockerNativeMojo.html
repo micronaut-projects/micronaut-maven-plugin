@@ -161,88 +161,90 @@
 <span class="source-line-no">148</span><span id="line-148">        //   - For function apps: com.example.BookLambdaRuntime</span>
 <span class="source-line-no">149</span><span id="line-149">        getLog().info("Using CLASS_NAME: " + mainClass);</span>
 <span class="source-line-no">150</span><span id="line-150">        buildImageCmd.withBuildArg("CLASS_NAME", mainClass);</span>
-<span class="source-line-no">151</span><span id="line-151"></span>
-<span class="source-line-no">152</span><span id="line-152">        String imageId = dockerService.buildImage(buildImageCmd);</span>
-<span class="source-line-no">153</span><span id="line-153">        File functionZip = dockerService.copyFromContainer(imageId, "/function/function.zip");</span>
-<span class="source-line-no">154</span><span id="line-154">        getLog().info("AWS Lambda Custom Runtime ZIP: " + functionZip.getPath());</span>
-<span class="source-line-no">155</span><span id="line-155">    }</span>
-<span class="source-line-no">156</span><span id="line-156"></span>
-<span class="source-line-no">157</span><span id="line-157">    private void buildDockerNative() throws IOException, InvalidImageReferenceException {</span>
-<span class="source-line-no">158</span><span id="line-158">        String dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE;</span>
-<span class="source-line-no">159</span><span id="line-159">        if (staticNativeImage) {</span>
-<span class="source-line-no">160</span><span id="line-160">            getLog().info("Generating a static native image");</span>
-<span class="source-line-no">161</span><span id="line-161">            dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_STATIC;</span>
-<span class="source-line-no">162</span><span id="line-162">        } else if (baseImageRun.contains("distroless")) {</span>
-<span class="source-line-no">163</span><span id="line-163">            getLog().info("Generating a mostly static native image");</span>
-<span class="source-line-no">164</span><span id="line-164">            dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_DISTROLESS;</span>
-<span class="source-line-no">165</span><span id="line-165">        }</span>
-<span class="source-line-no">166</span><span id="line-166"></span>
-<span class="source-line-no">167</span><span id="line-167">        buildDockerfile(dockerfileName, true);</span>
-<span class="source-line-no">168</span><span id="line-168">    }</span>
-<span class="source-line-no">169</span><span id="line-169"></span>
-<span class="source-line-no">170</span><span id="line-170">    private void buildOracleCloud() throws IOException, InvalidImageReferenceException {</span>
-<span class="source-line-no">171</span><span id="line-171">        buildDockerfile(DockerfileMojo.DOCKERFILE_NATIVE_ORACLE_CLOUD, false);</span>
-<span class="source-line-no">172</span><span id="line-172">    }</span>
-<span class="source-line-no">173</span><span id="line-173"></span>
-<span class="source-line-no">174</span><span id="line-174">    private void buildDockerfile(String dockerfileName, boolean passClassName) throws IOException, InvalidImageReferenceException {</span>
-<span class="source-line-no">175</span><span id="line-175">        Set&lt;String&gt; tags = getTags();</span>
-<span class="source-line-no">176</span><span id="line-176">        for (String tag : tags) {</span>
-<span class="source-line-no">177</span><span id="line-177">            ImageReference.parse(tag);</span>
-<span class="source-line-no">178</span><span id="line-178">        }</span>
-<span class="source-line-no">179</span><span id="line-179"></span>
-<span class="source-line-no">180</span><span id="line-180">        String from = getFrom();</span>
-<span class="source-line-no">181</span><span id="line-181">        String port = getPort();</span>
-<span class="source-line-no">182</span><span id="line-182">        getLog().info("Exposing port: " + port);</span>
-<span class="source-line-no">183</span><span id="line-183"></span>
-<span class="source-line-no">184</span><span id="line-184">        File dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);</span>
-<span class="source-line-no">185</span><span id="line-185"></span>
-<span class="source-line-no">186</span><span id="line-186">        if (appArguments != null &amp;&amp; !appArguments.isEmpty()) {</span>
-<span class="source-line-no">187</span><span id="line-187">            getLog().info("Using application arguments: " + appArguments);</span>
-<span class="source-line-no">188</span><span id="line-188">            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());</span>
-<span class="source-line-no">189</span><span id="line-189">        }</span>
-<span class="source-line-no">190</span><span id="line-190"></span>
-<span class="source-line-no">191</span><span id="line-191">        Map&lt;String, String&gt; buildImageCmdArguments = new HashMap&lt;&gt;();</span>
-<span class="source-line-no">192</span><span id="line-192"></span>
-<span class="source-line-no">193</span><span id="line-193">        getLog().info("Using BASE_IMAGE: " + from);</span>
-<span class="source-line-no">194</span><span id="line-194">        if (StringUtils.isNotEmpty(baseImageRun) &amp;&amp; !staticNativeImage) {</span>
-<span class="source-line-no">195</span><span id="line-195">            buildImageCmdArguments.put("BASE_IMAGE_RUN", baseImageRun);</span>
-<span class="source-line-no">196</span><span id="line-196">        }</span>
-<span class="source-line-no">197</span><span id="line-197"></span>
-<span class="source-line-no">198</span><span id="line-198">        if (baseImageRun.contains("alpine-glibc")) {</span>
-<span class="source-line-no">199</span><span id="line-199">            buildImageCmdArguments.put("EXTRA_CMD", "apk update &amp;&amp; apk add libstdc++");</span>
-<span class="source-line-no">200</span><span id="line-200">        }</span>
-<span class="source-line-no">201</span><span id="line-201"></span>
-<span class="source-line-no">202</span><span id="line-202">        if (passClassName) {</span>
-<span class="source-line-no">203</span><span id="line-203">            buildImageCmdArguments.put("CLASS_NAME", mainClass);</span>
-<span class="source-line-no">204</span><span id="line-204">        }</span>
-<span class="source-line-no">205</span><span id="line-205"></span>
-<span class="source-line-no">206</span><span id="line-206">        String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);</span>
-<span class="source-line-no">207</span><span id="line-207">        List&lt;String&gt; allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);</span>
-<span class="source-line-no">208</span><span id="line-208">        getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);</span>
-<span class="source-line-no">209</span><span id="line-209">        List&lt;String&gt; conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));</span>
-<span class="source-line-no">210</span><span id="line-210">        if (conversionResult.size() == 1) {</span>
-<span class="source-line-no">211</span><span id="line-211">            Files.delete(Paths.get(argsFile));</span>
-<span class="source-line-no">212</span><span id="line-212"></span>
-<span class="source-line-no">213</span><span id="line-213">            BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
-<span class="source-line-no">214</span><span id="line-214">                    .withDockerfile(dockerfile)</span>
-<span class="source-line-no">215</span><span id="line-215">                    .withTags(getTags())</span>
-<span class="source-line-no">216</span><span id="line-216">                    .withBuildArg("BASE_IMAGE", from)</span>
-<span class="source-line-no">217</span><span id="line-217">                    .withBuildArg("PORT", port);</span>
-<span class="source-line-no">218</span><span id="line-218"></span>
-<span class="source-line-no">219</span><span id="line-219">            for (Map.Entry&lt;String, String&gt; buildArg : buildImageCmdArguments.entrySet()) {</span>
-<span class="source-line-no">220</span><span id="line-220">                String key = buildArg.getKey();</span>
-<span class="source-line-no">221</span><span id="line-221">                String value = buildArg.getValue();</span>
-<span class="source-line-no">222</span><span id="line-222">                getLog().info("Using " + key + ": " + value);</span>
-<span class="source-line-no">223</span><span id="line-223">                buildImageCmd.withBuildArg(key, value);</span>
-<span class="source-line-no">224</span><span id="line-224">            }</span>
-<span class="source-line-no">225</span><span id="line-225"></span>
-<span class="source-line-no">226</span><span id="line-226">            dockerService.buildImage(buildImageCmd);</span>
-<span class="source-line-no">227</span><span id="line-227">        } else {</span>
-<span class="source-line-no">228</span><span id="line-228">            throw new IOException("Unable to convert native image build args to args file");</span>
-<span class="source-line-no">229</span><span id="line-229">        }</span>
-<span class="source-line-no">230</span><span id="line-230">    }</span>
-<span class="source-line-no">231</span><span id="line-231"></span>
-<span class="source-line-no">232</span><span id="line-232">}</span>
+<span class="source-line-no">151</span><span id="line-151">        getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
+<span class="source-line-no">152</span><span id="line-152"></span>
+<span class="source-line-no">153</span><span id="line-153">        String imageId = dockerService.buildImage(buildImageCmd);</span>
+<span class="source-line-no">154</span><span id="line-154">        File functionZip = dockerService.copyFromContainer(imageId, "/function/function.zip");</span>
+<span class="source-line-no">155</span><span id="line-155">        getLog().info("AWS Lambda Custom Runtime ZIP: " + functionZip.getPath());</span>
+<span class="source-line-no">156</span><span id="line-156">    }</span>
+<span class="source-line-no">157</span><span id="line-157"></span>
+<span class="source-line-no">158</span><span id="line-158">    private void buildDockerNative() throws IOException, InvalidImageReferenceException {</span>
+<span class="source-line-no">159</span><span id="line-159">        String dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE;</span>
+<span class="source-line-no">160</span><span id="line-160">        if (staticNativeImage) {</span>
+<span class="source-line-no">161</span><span id="line-161">            getLog().info("Generating a static native image");</span>
+<span class="source-line-no">162</span><span id="line-162">            dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_STATIC;</span>
+<span class="source-line-no">163</span><span id="line-163">        } else if (baseImageRun.contains("distroless")) {</span>
+<span class="source-line-no">164</span><span id="line-164">            getLog().info("Generating a mostly static native image");</span>
+<span class="source-line-no">165</span><span id="line-165">            dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_DISTROLESS;</span>
+<span class="source-line-no">166</span><span id="line-166">        }</span>
+<span class="source-line-no">167</span><span id="line-167"></span>
+<span class="source-line-no">168</span><span id="line-168">        buildDockerfile(dockerfileName, true);</span>
+<span class="source-line-no">169</span><span id="line-169">    }</span>
+<span class="source-line-no">170</span><span id="line-170"></span>
+<span class="source-line-no">171</span><span id="line-171">    private void buildOracleCloud() throws IOException, InvalidImageReferenceException {</span>
+<span class="source-line-no">172</span><span id="line-172">        buildDockerfile(DockerfileMojo.DOCKERFILE_NATIVE_ORACLE_CLOUD, false);</span>
+<span class="source-line-no">173</span><span id="line-173">    }</span>
+<span class="source-line-no">174</span><span id="line-174"></span>
+<span class="source-line-no">175</span><span id="line-175">    private void buildDockerfile(String dockerfileName, boolean passClassName) throws IOException, InvalidImageReferenceException {</span>
+<span class="source-line-no">176</span><span id="line-176">        Set&lt;String&gt; tags = getTags();</span>
+<span class="source-line-no">177</span><span id="line-177">        for (String tag : tags) {</span>
+<span class="source-line-no">178</span><span id="line-178">            ImageReference.parse(tag);</span>
+<span class="source-line-no">179</span><span id="line-179">        }</span>
+<span class="source-line-no">180</span><span id="line-180"></span>
+<span class="source-line-no">181</span><span id="line-181">        String from = getFrom();</span>
+<span class="source-line-no">182</span><span id="line-182">        String port = getPort();</span>
+<span class="source-line-no">183</span><span id="line-183">        getLog().info("Exposing port: " + port);</span>
+<span class="source-line-no">184</span><span id="line-184"></span>
+<span class="source-line-no">185</span><span id="line-185">        File dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);</span>
+<span class="source-line-no">186</span><span id="line-186"></span>
+<span class="source-line-no">187</span><span id="line-187">        if (appArguments != null &amp;&amp; !appArguments.isEmpty()) {</span>
+<span class="source-line-no">188</span><span id="line-188">            getLog().info("Using application arguments: " + appArguments);</span>
+<span class="source-line-no">189</span><span id="line-189">            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());</span>
+<span class="source-line-no">190</span><span id="line-190">        }</span>
+<span class="source-line-no">191</span><span id="line-191"></span>
+<span class="source-line-no">192</span><span id="line-192">        Map&lt;String, String&gt; buildImageCmdArguments = new HashMap&lt;&gt;();</span>
+<span class="source-line-no">193</span><span id="line-193"></span>
+<span class="source-line-no">194</span><span id="line-194">        getLog().info("Using BASE_IMAGE: " + from);</span>
+<span class="source-line-no">195</span><span id="line-195">        if (StringUtils.isNotEmpty(baseImageRun) &amp;&amp; !staticNativeImage) {</span>
+<span class="source-line-no">196</span><span id="line-196">            buildImageCmdArguments.put("BASE_IMAGE_RUN", baseImageRun);</span>
+<span class="source-line-no">197</span><span id="line-197">        }</span>
+<span class="source-line-no">198</span><span id="line-198"></span>
+<span class="source-line-no">199</span><span id="line-199">        if (baseImageRun.contains("alpine-glibc")) {</span>
+<span class="source-line-no">200</span><span id="line-200">            buildImageCmdArguments.put("EXTRA_CMD", "apk update &amp;&amp; apk add libstdc++");</span>
+<span class="source-line-no">201</span><span id="line-201">        }</span>
+<span class="source-line-no">202</span><span id="line-202"></span>
+<span class="source-line-no">203</span><span id="line-203">        if (passClassName) {</span>
+<span class="source-line-no">204</span><span id="line-204">            buildImageCmdArguments.put("CLASS_NAME", mainClass);</span>
+<span class="source-line-no">205</span><span id="line-205">        }</span>
+<span class="source-line-no">206</span><span id="line-206"></span>
+<span class="source-line-no">207</span><span id="line-207">        String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);</span>
+<span class="source-line-no">208</span><span id="line-208">        List&lt;String&gt; allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);</span>
+<span class="source-line-no">209</span><span id="line-209">        getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);</span>
+<span class="source-line-no">210</span><span id="line-210">        List&lt;String&gt; conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));</span>
+<span class="source-line-no">211</span><span id="line-211">        if (conversionResult.size() == 1) {</span>
+<span class="source-line-no">212</span><span id="line-212">            Files.delete(Paths.get(argsFile));</span>
+<span class="source-line-no">213</span><span id="line-213"></span>
+<span class="source-line-no">214</span><span id="line-214">            BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
+<span class="source-line-no">215</span><span id="line-215">                    .withDockerfile(dockerfile)</span>
+<span class="source-line-no">216</span><span id="line-216">                    .withTags(getTags())</span>
+<span class="source-line-no">217</span><span id="line-217">                    .withBuildArg("BASE_IMAGE", from)</span>
+<span class="source-line-no">218</span><span id="line-218">                    .withBuildArg("PORT", port);</span>
+<span class="source-line-no">219</span><span id="line-219"></span>
+<span class="source-line-no">220</span><span id="line-220">            for (Map.Entry&lt;String, String&gt; buildArg : buildImageCmdArguments.entrySet()) {</span>
+<span class="source-line-no">221</span><span id="line-221">                String key = buildArg.getKey();</span>
+<span class="source-line-no">222</span><span id="line-222">                String value = buildArg.getValue();</span>
+<span class="source-line-no">223</span><span id="line-223">                getLog().info("Using " + key + ": " + value);</span>
+<span class="source-line-no">224</span><span id="line-224">                buildImageCmd.withBuildArg(key, value);</span>
+<span class="source-line-no">225</span><span id="line-225">            }</span>
+<span class="source-line-no">226</span><span id="line-226"></span>
+<span class="source-line-no">227</span><span id="line-227">            getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
+<span class="source-line-no">228</span><span id="line-228">            dockerService.buildImage(buildImageCmd);</span>
+<span class="source-line-no">229</span><span id="line-229">        } else {</span>
+<span class="source-line-no">230</span><span id="line-230">            throw new IOException("Unable to convert native image build args to args file");</span>
+<span class="source-line-no">231</span><span id="line-231">        }</span>
+<span class="source-line-no">232</span><span id="line-232">    }</span>
+<span class="source-line-no">233</span><span id="line-233"></span>
+<span class="source-line-no">234</span><span id="line-234">}</span>
 
 
 

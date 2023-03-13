@@ -175,62 +175,64 @@
 <span class="source-line-no">162</span><span id="line-162">                .withDockerfile(dockerfile)</span>
 <span class="source-line-no">163</span><span id="line-163">                .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))</span>
 <span class="source-line-no">164</span><span id="line-164">                .withTags(checkpointTags);</span>
-<span class="source-line-no">165</span><span id="line-165">        dockerService.buildImage(buildImageCmd);</span>
-<span class="source-line-no">166</span><span id="line-166">        return name;</span>
-<span class="source-line-no">167</span><span id="line-167">    }</span>
-<span class="source-line-no">168</span><span id="line-168"></span>
-<span class="source-line-no">169</span><span id="line-169">    private void buildFinalDockerfile(String checkpointContainerId) throws IOException, InvalidImageReferenceException, MavenFilteringException {</span>
-<span class="source-line-no">170</span><span id="line-170">        Set&lt;String&gt; tags = getTags();</span>
-<span class="source-line-no">171</span><span id="line-171">        for (String tag : tags) {</span>
-<span class="source-line-no">172</span><span id="line-172">            ImageReference.parse(tag);</span>
-<span class="source-line-no">173</span><span id="line-173">        }</span>
-<span class="source-line-no">174</span><span id="line-174">        copyScripts(RUN_SCRIPT_NAME);</span>
-<span class="source-line-no">175</span><span id="line-175">        File dockerfile = dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_CRAC);</span>
-<span class="source-line-no">176</span><span id="line-176">        BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
-<span class="source-line-no">177</span><span id="line-177">                .withDockerfile(dockerfile)</span>
-<span class="source-line-no">178</span><span id="line-178">                .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))</span>
-<span class="source-line-no">179</span><span id="line-179">                .withBuildArg("CHECKPOINT_IMAGE", checkpointContainerId)</span>
-<span class="source-line-no">180</span><span id="line-180">                .withTags(getTags());</span>
-<span class="source-line-no">181</span><span id="line-181">        dockerService.buildImage(buildImageCmd);</span>
-<span class="source-line-no">182</span><span id="line-182">    }</span>
-<span class="source-line-no">183</span><span id="line-183"></span>
-<span class="source-line-no">184</span><span id="line-184">    private Properties replacementProperties(String readinessCommand, String mainClass) {</span>
-<span class="source-line-no">185</span><span id="line-185">        Properties properties = new Properties();</span>
-<span class="source-line-no">186</span><span id="line-186">        properties.setProperty("READINESS", readinessCommand);</span>
-<span class="source-line-no">187</span><span id="line-187">        properties.setProperty("MAINCLASS", mainClass);</span>
-<span class="source-line-no">188</span><span id="line-188">        return properties;</span>
-<span class="source-line-no">189</span><span id="line-189">    }</span>
-<span class="source-line-no">190</span><span id="line-190"></span>
-<span class="source-line-no">191</span><span id="line-191">    private void copyScripts(String... scriptNames) throws IOException, MavenFilteringException {</span>
-<span class="source-line-no">192</span><span id="line-192">        File target = new File(mavenProject.getBuild().getDirectory(), "scripts");</span>
-<span class="source-line-no">193</span><span id="line-193">        if (!target.exists()) {</span>
-<span class="source-line-no">194</span><span id="line-194">            target.mkdirs();</span>
-<span class="source-line-no">195</span><span id="line-195">        }</span>
-<span class="source-line-no">196</span><span id="line-196">        processScripts(target, replacementProperties(readinessCommand, mainClass), scriptNames);</span>
-<span class="source-line-no">197</span><span id="line-197">    }</span>
-<span class="source-line-no">198</span><span id="line-198"></span>
-<span class="source-line-no">199</span><span id="line-199">    private void processScripts(File target, Properties replacements, String... scriptNames) throws IOException, MavenFilteringException {</span>
-<span class="source-line-no">200</span><span id="line-200">        for (String script : scriptNames) {</span>
-<span class="source-line-no">201</span><span id="line-201">            File localOverride = new File(mavenProject.getBasedir(), script);</span>
-<span class="source-line-no">202</span><span id="line-202">            InputStream resourceStream = DockerCracMojo.class.getResourceAsStream("/cracScripts/" + script);</span>
-<span class="source-line-no">203</span><span id="line-203">            Reader resourceReader = resourceStream == null ? null : new InputStreamReader(resourceStream);</span>
-<span class="source-line-no">204</span><span id="line-204">            try (Reader reader = localOverride.exists() ? Files.newBufferedReader(localOverride.toPath()) : resourceReader) {</span>
-<span class="source-line-no">205</span><span id="line-205">                if (reader == null) {</span>
-<span class="source-line-no">206</span><span id="line-206">                    throw new IOException("Could not find script " + script);</span>
-<span class="source-line-no">207</span><span id="line-207">                }</span>
-<span class="source-line-no">208</span><span id="line-208">                MavenReaderFilterRequest req = new MavenReaderFilterRequest();</span>
-<span class="source-line-no">209</span><span id="line-209">                req.setFrom(reader);</span>
-<span class="source-line-no">210</span><span id="line-210">                req.setFiltering(true);</span>
-<span class="source-line-no">211</span><span id="line-211">                req.setAdditionalProperties(replacements);</span>
-<span class="source-line-no">212</span><span id="line-212">                Path outputPath = target.toPath().resolve(script);</span>
-<span class="source-line-no">213</span><span id="line-213">                try (Writer writer = Files.newBufferedWriter(outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {</span>
-<span class="source-line-no">214</span><span id="line-214">                    IOUtils.copy(mavenReaderFilter.filter(req), writer);</span>
-<span class="source-line-no">215</span><span id="line-215">                }</span>
-<span class="source-line-no">216</span><span id="line-216">                Files.setPosixFilePermissions(outputPath, POSIX_FILE_PERMISSIONS);</span>
-<span class="source-line-no">217</span><span id="line-217">            }</span>
-<span class="source-line-no">218</span><span id="line-218">        }</span>
-<span class="source-line-no">219</span><span id="line-219">    }</span>
-<span class="source-line-no">220</span><span id="line-220">}</span>
+<span class="source-line-no">165</span><span id="line-165">        getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
+<span class="source-line-no">166</span><span id="line-166">        dockerService.buildImage(buildImageCmd);</span>
+<span class="source-line-no">167</span><span id="line-167">        return name;</span>
+<span class="source-line-no">168</span><span id="line-168">    }</span>
+<span class="source-line-no">169</span><span id="line-169"></span>
+<span class="source-line-no">170</span><span id="line-170">    private void buildFinalDockerfile(String checkpointContainerId) throws IOException, InvalidImageReferenceException, MavenFilteringException {</span>
+<span class="source-line-no">171</span><span id="line-171">        Set&lt;String&gt; tags = getTags();</span>
+<span class="source-line-no">172</span><span id="line-172">        for (String tag : tags) {</span>
+<span class="source-line-no">173</span><span id="line-173">            ImageReference.parse(tag);</span>
+<span class="source-line-no">174</span><span id="line-174">        }</span>
+<span class="source-line-no">175</span><span id="line-175">        copyScripts(RUN_SCRIPT_NAME);</span>
+<span class="source-line-no">176</span><span id="line-176">        File dockerfile = dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_CRAC);</span>
+<span class="source-line-no">177</span><span id="line-177">        BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
+<span class="source-line-no">178</span><span id="line-178">                .withDockerfile(dockerfile)</span>
+<span class="source-line-no">179</span><span id="line-179">                .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))</span>
+<span class="source-line-no">180</span><span id="line-180">                .withBuildArg("CHECKPOINT_IMAGE", checkpointContainerId)</span>
+<span class="source-line-no">181</span><span id="line-181">                .withTags(getTags());</span>
+<span class="source-line-no">182</span><span id="line-182">        getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
+<span class="source-line-no">183</span><span id="line-183">        dockerService.buildImage(buildImageCmd);</span>
+<span class="source-line-no">184</span><span id="line-184">    }</span>
+<span class="source-line-no">185</span><span id="line-185"></span>
+<span class="source-line-no">186</span><span id="line-186">    private Properties replacementProperties(String readinessCommand, String mainClass) {</span>
+<span class="source-line-no">187</span><span id="line-187">        Properties properties = new Properties();</span>
+<span class="source-line-no">188</span><span id="line-188">        properties.setProperty("READINESS", readinessCommand);</span>
+<span class="source-line-no">189</span><span id="line-189">        properties.setProperty("MAINCLASS", mainClass);</span>
+<span class="source-line-no">190</span><span id="line-190">        return properties;</span>
+<span class="source-line-no">191</span><span id="line-191">    }</span>
+<span class="source-line-no">192</span><span id="line-192"></span>
+<span class="source-line-no">193</span><span id="line-193">    private void copyScripts(String... scriptNames) throws IOException, MavenFilteringException {</span>
+<span class="source-line-no">194</span><span id="line-194">        File target = new File(mavenProject.getBuild().getDirectory(), "scripts");</span>
+<span class="source-line-no">195</span><span id="line-195">        if (!target.exists()) {</span>
+<span class="source-line-no">196</span><span id="line-196">            target.mkdirs();</span>
+<span class="source-line-no">197</span><span id="line-197">        }</span>
+<span class="source-line-no">198</span><span id="line-198">        processScripts(target, replacementProperties(readinessCommand, mainClass), scriptNames);</span>
+<span class="source-line-no">199</span><span id="line-199">    }</span>
+<span class="source-line-no">200</span><span id="line-200"></span>
+<span class="source-line-no">201</span><span id="line-201">    private void processScripts(File target, Properties replacements, String... scriptNames) throws IOException, MavenFilteringException {</span>
+<span class="source-line-no">202</span><span id="line-202">        for (String script : scriptNames) {</span>
+<span class="source-line-no">203</span><span id="line-203">            File localOverride = new File(mavenProject.getBasedir(), script);</span>
+<span class="source-line-no">204</span><span id="line-204">            InputStream resourceStream = DockerCracMojo.class.getResourceAsStream("/cracScripts/" + script);</span>
+<span class="source-line-no">205</span><span id="line-205">            Reader resourceReader = resourceStream == null ? null : new InputStreamReader(resourceStream);</span>
+<span class="source-line-no">206</span><span id="line-206">            try (Reader reader = localOverride.exists() ? Files.newBufferedReader(localOverride.toPath()) : resourceReader) {</span>
+<span class="source-line-no">207</span><span id="line-207">                if (reader == null) {</span>
+<span class="source-line-no">208</span><span id="line-208">                    throw new IOException("Could not find script " + script);</span>
+<span class="source-line-no">209</span><span id="line-209">                }</span>
+<span class="source-line-no">210</span><span id="line-210">                MavenReaderFilterRequest req = new MavenReaderFilterRequest();</span>
+<span class="source-line-no">211</span><span id="line-211">                req.setFrom(reader);</span>
+<span class="source-line-no">212</span><span id="line-212">                req.setFiltering(true);</span>
+<span class="source-line-no">213</span><span id="line-213">                req.setAdditionalProperties(replacements);</span>
+<span class="source-line-no">214</span><span id="line-214">                Path outputPath = target.toPath().resolve(script);</span>
+<span class="source-line-no">215</span><span id="line-215">                try (Writer writer = Files.newBufferedWriter(outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {</span>
+<span class="source-line-no">216</span><span id="line-216">                    IOUtils.copy(mavenReaderFilter.filter(req), writer);</span>
+<span class="source-line-no">217</span><span id="line-217">                }</span>
+<span class="source-line-no">218</span><span id="line-218">                Files.setPosixFilePermissions(outputPath, POSIX_FILE_PERMISSIONS);</span>
+<span class="source-line-no">219</span><span id="line-219">            }</span>
+<span class="source-line-no">220</span><span id="line-220">        }</span>
+<span class="source-line-no">221</span><span id="line-221">    }</span>
+<span class="source-line-no">222</span><span id="line-222">}</span>
 
 
 
