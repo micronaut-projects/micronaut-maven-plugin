@@ -148,6 +148,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         //   - For function apps: com.example.BookLambdaRuntime
         getLog().info("Using CLASS_NAME: " + mainClass);
         buildImageCmd.withBuildArg("CLASS_NAME", mainClass);
+        getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
 
         String imageId = dockerService.buildImage(buildImageCmd);
         File functionZip = dockerService.copyFromContainer(imageId, "/function/function.zip");
@@ -223,6 +224,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
                 buildImageCmd.withBuildArg(key, value);
             }
 
+            getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
             dockerService.buildImage(buildImageCmd);
         } else {
             throw new IOException("Unable to convert native image build args to args file");

@@ -78,6 +78,7 @@ public class DockerMojo extends AbstractDockerMojo {
                         .withDockerfile(targetDockerfile)
                         .withTags(getTags())
                         .withBaseDirectory(new File(targetDir));
+                getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
                 dockerService.buildImage(buildImageCmd);
             } catch (IOException e) {
                 throw new MojoExecutionException(e.getMessage(), e);

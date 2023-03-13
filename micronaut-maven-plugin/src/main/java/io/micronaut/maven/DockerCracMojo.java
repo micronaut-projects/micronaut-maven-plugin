@@ -162,6 +162,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
                 .withDockerfile(dockerfile)
                 .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))
                 .withTags(checkpointTags);
+        getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
         dockerService.buildImage(buildImageCmd);
         return name;
     }
@@ -178,6 +179,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
                 .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))
                 .withBuildArg("CHECKPOINT_IMAGE", checkpointContainerId)
                 .withTags(getTags());
+        getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
         dockerService.buildImage(buildImageCmd);
     }
 

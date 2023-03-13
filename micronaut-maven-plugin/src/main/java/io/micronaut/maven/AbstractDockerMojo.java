@@ -104,6 +104,14 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     @Parameter(property = "micronaut.native-image.base-image-run", defaultValue = DEFAULT_BASE_IMAGE_GRAALVM_RUN)
     protected String baseImageRun;
 
+    /**
+     * Networking mode for the RUN instructions during build.
+     *
+     * @since 4.0.0
+     */
+    @Parameter(property = "docker.networkMode")
+    protected String networkMode;
+
     protected AbstractDockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
                                  ApplicationConfigurationService applicationConfigurationService,
                                  DockerService dockerService, MavenSession mavenSession, MojoExecution mojoExecution) {
@@ -193,11 +201,11 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
             tags.add(String.format("%s:%s", imageName, tag));
         }
         return tags.stream()
-                .map(this::evaluateExpresion)
+                .map(this::evaluateExpression)
                 .collect(Collectors.toSet());
     }
 
-    private String evaluateExpresion(String expression) {
+    private String evaluateExpression(String expression) {
         try {
             return expressionEvaluator.evaluate(expression, String.class).toString();
         } catch (Exception e) {
@@ -241,14 +249,10 @@ public abstract class AbstractDockerMojo extends AbstractMojo {
     }
 
     /**
-     * @return any additional GraalVM arguments.
+     * @return Networking mode for the RUN instructions during build (if any).
      */
-    protected String getGraalVmBuildArgs() {
-        if (nativeImageBuildArgs != null && !nativeImageBuildArgs.isEmpty()) {
-            return String.join(" ", nativeImageBuildArgs);
-        } else {
-            return "";
-        }
+    protected Optional<String> getNetworkMode() {
+        return Optional.ofNullable(networkMode);
     }
 
 }
