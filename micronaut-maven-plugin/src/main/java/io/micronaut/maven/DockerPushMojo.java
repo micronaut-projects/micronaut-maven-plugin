@@ -28,10 +28,9 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.project.MavenProject;
-import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.utility.RegistryAuthLocator;
 
 import javax.inject.Inject;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -67,21 +66,14 @@ public class DockerPushMojo extends AbstractDockerMojo {
                 for (String taggedImage : images) {
                     getLog().info("Pushing image: " + taggedImage);
                     try (PushImageCmd pushImageCmd = dockerService.pushImageCmd(taggedImage)) {
-                        AuthConfig defaultAuthConfig = new AuthConfig();
-                        if (jibConfigurationService.getCredentials().isPresent()) {
-                            Credential credential = jibConfigurationService.getCredentials().get();
-                            defaultAuthConfig
-                                    .withUsername(credential.getUsername())
-                                    .withPassword(credential.getPassword());
+                        Optional<Credential> toCredentials = jibConfigurationService.getToCredentials();
+                        if (toCredentials.isPresent()) {
+                            Credential credential = toCredentials.get();
+                            AuthConfig authConfig = dockerService.getAuthConfigFor(taggedImage, credential.getUsername(), credential.getPassword());
+                            pushImageCmd.withAuthConfig(authConfig);
                         }
-                        RegistryAuthLocator registryAuthLocator = RegistryAuthLocator.instance();
-                        DockerImageName dockerImageName = DockerImageName.parse(taggedImage);
-                        AuthConfig authConfig = registryAuthLocator.lookupAuthConfig(dockerImageName, defaultAuthConfig);
 
-                        pushImageCmd
-                                .withAuthConfig(authConfig)
-                                .start()
-                                .awaitCompletion();
+                        pushImageCmd.start().awaitCompletion();
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     } catch (Exception e) {

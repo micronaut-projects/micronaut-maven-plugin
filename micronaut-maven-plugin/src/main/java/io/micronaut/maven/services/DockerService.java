@@ -25,6 +25,9 @@ import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.command.WaitContainerCmd;
 import com.github.dockerjava.api.command.WaitContainerResultCallback;
 import com.github.dockerjava.api.exception.DockerClientException;
+import com.github.dockerjava.api.model.AuthConfig;
+import com.github.dockerjava.api.model.AuthConfigurations;
+import com.github.dockerjava.api.model.AuthResponse;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.api.model.HostConfig;
@@ -33,7 +36,9 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
+import com.google.cloud.tools.jib.api.Credential;
 import io.micronaut.maven.DockerfileMojo;
+import io.micronaut.maven.jib.JibConfigurationService;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
@@ -45,6 +50,8 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.output.FrameConsumerResultCallback;
 import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.utility.RegistryAuthLocator;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -52,6 +59,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -67,11 +75,13 @@ public class DockerService {
 
     private final DockerClient dockerClient;
     private final MavenProject mavenProject;
+    private final JibConfigurationService jibConfigurationService;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    public DockerService(MavenProject mavenProject) {
+    public DockerService(MavenProject mavenProject, JibConfigurationService jibConfigurationService) {
         this.mavenProject = mavenProject;
+        this.jibConfigurationService = jibConfigurationService;
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
         DockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder()
                 .dockerHost(config.getDockerHost())
@@ -85,14 +95,29 @@ public class DockerService {
      * @return the {@link BuildImageCmd} by loading the given Dockerfile as classpath resource.
      */
     public BuildImageCmd buildImageCmd(String dockerfileName) throws IOException {
-        return dockerClient.buildImageCmd(loadDockerfileAsResource(dockerfileName));
+        BuildImageCmd buildImageCmd = dockerClient.buildImageCmd(loadDockerfileAsResource(dockerfileName));
+        maybeConfigureBuildAuth(buildImageCmd);
+        return buildImageCmd;
+    }
+
+    private void maybeConfigureBuildAuth(BuildImageCmd buildImageCmd) {
+        Optional<String> fromImage = jibConfigurationService.getFromImage();
+        Optional<Credential> fromCredentials = jibConfigurationService.getFromCredentials();
+        if (fromImage.isPresent() && fromCredentials.isPresent()) {
+            AuthConfig authConfig = getAuthConfigFor(fromImage.get(), fromCredentials.get().getUsername(), fromCredentials.get().getPassword());
+            AuthConfigurations authConfigurations = new AuthConfigurations();
+            authConfigurations.addConfig(authConfig);
+            buildImageCmd.withBuildAuthConfigs(authConfigurations);
+        }
     }
 
     /**
      * @return a default {@link BuildImageCmd}.
      */
     public BuildImageCmd buildImageCmd() {
-        return dockerClient.buildImageCmd();
+        BuildImageCmd buildImageCmd = dockerClient.buildImageCmd();
+        maybeConfigureBuildAuth(buildImageCmd);
+        return buildImageCmd;
     }
 
     /**
@@ -237,5 +262,29 @@ public class DockerService {
      */
     public PushImageCmd pushImageCmd(String imageName) {
         return dockerClient.pushImageCmd(imageName);
+    }
+
+    /**
+     *
+     * @param dockerImage the image name
+     * @param username the username
+     * @param password the password
+     * @return an {@link AuthConfig} object for the given image, username and password.
+     */
+    public AuthConfig getAuthConfigFor(String dockerImage, String username, String password) {
+        DockerImageName dockerImageName = DockerImageName.parse(dockerImage);
+        AuthConfig defaultAuthConfig = new AuthConfig()
+                .withRegistryAddress(dockerImageName.getRegistry())
+                .withUsername(username)
+                .withPassword(password);
+        RegistryAuthLocator registryAuthLocator = RegistryAuthLocator.instance();
+        AuthConfig authConfig = registryAuthLocator.lookupAuthConfig(dockerImageName, defaultAuthConfig);
+        AuthResponse authResponse = dockerClient.authCmd().withAuthConfig(authConfig).exec();
+        if (authResponse.getStatus() != null && authResponse.getStatus().equals("Login Succeeded")) {
+            LOG.info("Successfully logged in to registry {}", dockerImageName.getRegistry());
+        } else {
+            LOG.warn("Failed to login to registry {}", dockerImageName.getRegistry());
+        }
+        return authConfig;
     }
 }
