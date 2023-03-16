@@ -77,7 +77,7 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <hr>
 <div class="type-signature"><span class="annotations">@Singleton
-</span><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-63">DockerService</a></span>
+</span><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-71">DockerService</a></span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">Provides methods to work with Docker images.</div>
 <dl class="notes">
@@ -97,7 +97,8 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(org.apache.maven.project.MavenProject)" class="member-name-link">DockerService</a><wbr>(org.apache.maven.project.MavenProject&nbsp;mavenProject)</code></div>
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(org.apache.maven.project.MavenProject,io.micronaut.maven.jib.JibConfigurationService)" class="member-name-link">DockerService</a><wbr>(org.apache.maven.project.MavenProject&nbsp;mavenProject,
+ <a href="../jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a>&nbsp;jibConfigurationService)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -130,26 +131,31 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Copies a file from the specified container path in the given image ID, into a temporal location.</div>
 </div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>com.github.dockerjava.api.model.AuthConfig</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getAuthConfigFor(java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">getAuthConfigFor</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dockerImage,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;username,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;password)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#loadDockerfileAsResource(java.lang.String)" class="member-name-link">loadDockerfileAsResource</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#loadDockerfileAsResource(java.lang.String)" class="member-name-link">loadDockerfileAsResource</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#loadDockerfileAsResource(java.lang.String,java.lang.String)" class="member-name-link">loadDockerfileAsResource</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;targetFileName)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#loadDockerfileAsResource(java.lang.String,java.lang.String)" class="member-name-link">loadDockerfileAsResource</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;targetFileName)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.</div>
-</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>com.github.dockerjava.api.command.PushImageCmd</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#pushImageCmd(java.lang.String)" class="member-name-link">pushImageCmd</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;imageName)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#runPrivilegedImageAndWait(java.lang.String,java.lang.Integer,java.lang.String,java.lang.String...)" class="member-name-link">runPrivilegedImageAndWait</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;imageId,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>com.github.dockerjava.api.command.PushImageCmd</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#pushImageCmd(java.lang.String)" class="member-name-link">pushImageCmd</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;imageName)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#runPrivilegedImageAndWait(java.lang.String,java.lang.Integer,java.lang.String,java.lang.String...)" class="member-name-link">runPrivilegedImageAndWait</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;imageId,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;timeoutSeconds,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;checkpointNetworkName,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>...&nbsp;binds)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Creates a container based on a given image, and runs it.</div>
 </div>
 </div>
@@ -170,10 +176,11 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(org.apache.maven.project.MavenProject)">
+<section class="detail" id="&lt;init&gt;(org.apache.maven.project.MavenProject,io.micronaut.maven.jib.JibConfigurationService)">
 <h3>DockerService</h3>
 <div class="member-signature"><span class="annotations">@Inject
-</span><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-71">DockerService</a></span><wbr><span class="parameters">(org.apache.maven.project.MavenProject&nbsp;mavenProject)</span></div>
+</span><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-80">DockerService</a></span><wbr><span class="parameters">(org.apache.maven.project.MavenProject&nbsp;mavenProject,
+ <a href="../jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a>&nbsp;jibConfigurationService)</span></div>
 </section>
 </li>
 </ul>
@@ -187,7 +194,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="buildImageCmd(java.lang.String)">
 <h3>buildImageCmd</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">com.github.dockerjava.api.command.BuildImageCmd</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-87">buildImageCmd</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dockerfileName)</span>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">com.github.dockerjava.api.command.BuildImageCmd</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-97">buildImageCmd</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dockerfileName)</span>
                                                               throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -202,7 +209,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="buildImageCmd()">
 <h3>buildImageCmd</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">com.github.dockerjava.api.command.BuildImageCmd</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-94">buildImageCmd</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">com.github.dockerjava.api.command.BuildImageCmd</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-117">buildImageCmd</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>a default <code>BuildImageCmd</code>.</dd>
@@ -212,7 +219,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="buildImage(com.github.dockerjava.api.command.BuildImageCmd)">
 <h3>buildImage</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-104">buildImage</a></span><wbr><span class="parameters">(com.github.dockerjava.api.command.BuildImageCmd&nbsp;builder)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-129">buildImage</a></span><wbr><span class="parameters">(com.github.dockerjava.api.command.BuildImageCmd&nbsp;builder)</span></div>
 <div class="block">Builds the Docker image from the given <code>BuildImageCmd</code> builder.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -225,7 +232,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="runPrivilegedImageAndWait(java.lang.String,java.lang.Integer,java.lang.String,java.lang.String...)">
 <h3>runPrivilegedImageAndWait</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-131">runPrivilegedImageAndWait</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;imageId,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-156">runPrivilegedImageAndWait</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;imageId,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;timeoutSeconds,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;checkpointNetworkName,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>...&nbsp;binds)</span>
@@ -245,7 +252,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="copyFromContainer(java.lang.String,java.lang.String)">
 <h3>copyFromContainer</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-182">copyFromContainer</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;imageId,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-207">copyFromContainer</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;imageId,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;containerPath)</span></div>
 <div class="block">Copies a file from the specified container path in the given image ID, into a temporal location.</div>
 <dl class="notes">
@@ -260,7 +267,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="loadDockerfileAsResource(java.lang.String)">
 <h3>loadDockerfileAsResource</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-212">loadDockerfileAsResource</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-237">loadDockerfileAsResource</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span>
                               throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
 <div class="block">Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.</div>
 <dl class="notes">
@@ -276,7 +283,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="loadDockerfileAsResource(java.lang.String,java.lang.String)">
 <h3>loadDockerfileAsResource</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-223">loadDockerfileAsResource</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-248">loadDockerfileAsResource</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;targetFileName)</span>
                               throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
 <div class="block">Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.</div>
@@ -294,12 +301,28 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="pushImageCmd(java.lang.String)">
 <h3>pushImageCmd</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">com.github.dockerjava.api.command.PushImageCmd</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-238">pushImageCmd</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;imageName)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">com.github.dockerjava.api.command.PushImageCmd</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-263">pushImageCmd</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;imageName)</span></div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>imageName</code> - the image name</dd>
 <dt>Returns:</dt>
 <dd>a <code>PushImageCmd</code> from the given image name.</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="getAuthConfigFor(java.lang.String,java.lang.String,java.lang.String)">
+<h3>getAuthConfigFor</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">com.github.dockerjava.api.model.AuthConfig</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/DockerService.html#line-274">getAuthConfigFor</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;dockerImage,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;username,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;password)</span></div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>dockerImage</code> - the image name</dd>
+<dd><code>username</code> - the username</dd>
+<dd><code>password</code> - the password</dd>
+<dt>Returns:</dt>
+<dd>an <code>AuthConfig</code> object for the given image, username and password.</dd>
 </dl>
 </section>
 </li>

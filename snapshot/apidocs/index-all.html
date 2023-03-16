@@ -305,7 +305,7 @@ loadScripts(document, 'script');</script>
 <dd>
 <div class="block">Provides methods to work with Docker images.</div>
 </dd>
-<dt><a href="io/micronaut/maven/services/DockerService.html#%3Cinit%3E(org.apache.maven.project.MavenProject)" class="member-name-link">DockerService(MavenProject)</a> - Constructor for class io.micronaut.maven.services.<a href="io/micronaut/maven/services/DockerService.html" title="class in io.micronaut.maven.services">DockerService</a></dt>
+<dt><a href="io/micronaut/maven/services/DockerService.html#%3Cinit%3E(org.apache.maven.project.MavenProject,io.micronaut.maven.jib.JibConfigurationService)" class="member-name-link">DockerService(MavenProject, JibConfigurationService)</a> - Constructor for class io.micronaut.maven.services.<a href="io/micronaut/maven/services/DockerService.html" title="class in io.micronaut.maven.services">DockerService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#doExecute()" class="member-name-link">doExecute()</a> - Method in class io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html" title="class in io.micronaut.maven.aot">AbstractMicronautAotCliMojo</a></dt>
 <dd>&nbsp;</dd>
@@ -382,13 +382,13 @@ loadScripts(document, 'script');</script>
 <dl class="index">
 <dt><a href="io/micronaut/maven/jib/JibConfigurationService.html#getArgs()" class="member-name-link">getArgs()</a> - Method in class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/maven/services/DockerService.html#getAuthConfigFor(java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">getAuthConfigFor(String, String, String)</a> - Method in class io.micronaut.maven.services.<a href="io/micronaut/maven/services/DockerService.html" title="class in io.micronaut.maven.services">DockerService</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/aot/AbstractMicronautAotMojo.html#getBaseOutputDirectory()" class="member-name-link">getBaseOutputDirectory()</a> - Method in class io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AbstractMicronautAotMojo.html" title="class in io.micronaut.maven.aot">AbstractMicronautAotMojo</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/core/MicronautRuntime.html#getBuildStrategy()" class="member-name-link">getBuildStrategy()</a> - Method in enum class io.micronaut.maven.core.<a href="io/micronaut/maven/core/MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/AbstractDockerMojo.html#getCmd()" class="member-name-link">getCmd()</a> - Method in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></dt>
-<dd>&nbsp;</dd>
-<dt><a href="io/micronaut/maven/jib/JibConfigurationService.html#getCredentials()" class="member-name-link">getCredentials()</a> - Method in class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#getExtraArgs()" class="member-name-link">getExtraArgs()</a> - Method in class io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html" title="class in io.micronaut.maven.aot">AbstractMicronautAotCliMojo</a></dt>
 <dd>&nbsp;</dd>
@@ -399,6 +399,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/maven/jib/JibMicronautExtension.html#getExtraConfigType()" class="member-name-link">getExtraConfigType()</a> - Method in class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibMicronautExtension.html" title="class in io.micronaut.maven.jib">JibMicronautExtension</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/AbstractDockerMojo.html#getFrom()" class="member-name-link">getFrom()</a> - Method in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfigurationService.html#getFromCredentials()" class="member-name-link">getFromCredentials()</a> - Method in class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/AbstractDockerMojo.html#getFromImage()" class="member-name-link">getFromImage()</a> - Method in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></dt>
 <dd>&nbsp;</dd>
@@ -424,6 +426,8 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/maven/AbstractDockerMojo.html#getTags()" class="member-name-link">getTags()</a> - Method in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/jib/JibConfigurationService.html#getTags()" class="member-name-link">getTags()</a> - Method in class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfigurationService.html#getToCredentials()" class="member-name-link">getToCredentials()</a> - Method in class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/jib/JibConfigurationService.html#getToImage()" class="member-name-link">getToImage()</a> - Method in class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></dt>
 <dd>&nbsp;</dd>

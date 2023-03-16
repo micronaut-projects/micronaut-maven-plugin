@@ -41,74 +41,66 @@
 <span class="source-line-no">028</span><span id="line-28">import org.apache.maven.plugin.MojoFailureException;</span>
 <span class="source-line-no">029</span><span id="line-29">import org.apache.maven.plugins.annotations.Mojo;</span>
 <span class="source-line-no">030</span><span id="line-30">import org.apache.maven.project.MavenProject;</span>
-<span class="source-line-no">031</span><span id="line-31">import org.testcontainers.utility.DockerImageName;</span>
-<span class="source-line-no">032</span><span id="line-32">import org.testcontainers.utility.RegistryAuthLocator;</span>
-<span class="source-line-no">033</span><span id="line-33"></span>
-<span class="source-line-no">034</span><span id="line-34">import javax.inject.Inject;</span>
-<span class="source-line-no">035</span><span id="line-35">import java.util.Set;</span>
-<span class="source-line-no">036</span><span id="line-36"></span>
-<span class="source-line-no">037</span><span id="line-37">/**</span>
-<span class="source-line-no">038</span><span id="line-38"> * &lt;p&gt;Implementation of the &lt;code&gt;deploy&lt;/code&gt; lifecycle for pushing Docker images&lt;/p&gt;</span>
-<span class="source-line-no">039</span><span id="line-39"> * &lt;p&gt;&lt;strong&gt;WARNING&lt;/strong&gt;: this goal is not intended to be executed directly. Instead, Execute the &lt;code&gt;deploy&lt;/code&gt;</span>
-<span class="source-line-no">040</span><span id="line-40"> * phase specifying the packaging type, eg:&lt;/p&gt;</span>
-<span class="source-line-no">041</span><span id="line-41"> *</span>
-<span class="source-line-no">042</span><span id="line-42"> * &lt;pre&gt;mvn deploy -Dpackaging=docker-native&lt;/pre&gt;</span>
-<span class="source-line-no">043</span><span id="line-43"> *</span>
-<span class="source-line-no">044</span><span id="line-44"> * @author Álvaro Sánchez-Mariscal</span>
-<span class="source-line-no">045</span><span id="line-45"> * @since 1.1</span>
-<span class="source-line-no">046</span><span id="line-46"> */</span>
-<span class="source-line-no">047</span><span id="line-47">@Mojo(name = "docker-push")</span>
-<span class="source-line-no">048</span><span id="line-48">public class DockerPushMojo extends AbstractDockerMojo {</span>
-<span class="source-line-no">049</span><span id="line-49"></span>
-<span class="source-line-no">050</span><span id="line-50">    @Inject</span>
-<span class="source-line-no">051</span><span id="line-51">    public DockerPushMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,</span>
-<span class="source-line-no">052</span><span id="line-52">                          ApplicationConfigurationService applicationConfigurationService, DockerService dockerService,</span>
-<span class="source-line-no">053</span><span id="line-53">                          MavenSession mavenSession, MojoExecution mojoExecution) {</span>
-<span class="source-line-no">054</span><span id="line-54">        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession, mojoExecution);</span>
-<span class="source-line-no">055</span><span id="line-55">    }</span>
-<span class="source-line-no">056</span><span id="line-56"></span>
-<span class="source-line-no">057</span><span id="line-57">    @Override</span>
-<span class="source-line-no">058</span><span id="line-58">    public void execute() throws MojoExecutionException, MojoFailureException {</span>
-<span class="source-line-no">059</span><span id="line-59">        Packaging packaging = Packaging.of(mavenProject.getPackaging());</span>
-<span class="source-line-no">060</span><span id="line-60">        if (packaging == Packaging.DOCKER || packaging == Packaging.DOCKER_NATIVE || packaging == Packaging.DOCKER_CRAC) {</span>
-<span class="source-line-no">061</span><span id="line-61">            Set&lt;String&gt; images = getTags();</span>
-<span class="source-line-no">062</span><span id="line-62"></span>
-<span class="source-line-no">063</span><span id="line-63">            // getTags() will automatically generate an image name if none is specified</span>
-<span class="source-line-no">064</span><span id="line-64">            // To maintain error compatibility, check that an image name has been</span>
-<span class="source-line-no">065</span><span id="line-65">            // manually specified.</span>
-<span class="source-line-no">066</span><span id="line-66">            if (jibConfigurationService.getToImage().isPresent()) {</span>
-<span class="source-line-no">067</span><span id="line-67">                for (String taggedImage : images) {</span>
-<span class="source-line-no">068</span><span id="line-68">                    getLog().info("Pushing image: " + taggedImage);</span>
-<span class="source-line-no">069</span><span id="line-69">                    try (PushImageCmd pushImageCmd = dockerService.pushImageCmd(taggedImage)) {</span>
-<span class="source-line-no">070</span><span id="line-70">                        AuthConfig defaultAuthConfig = new AuthConfig();</span>
-<span class="source-line-no">071</span><span id="line-71">                        if (jibConfigurationService.getCredentials().isPresent()) {</span>
-<span class="source-line-no">072</span><span id="line-72">                            Credential credential = jibConfigurationService.getCredentials().get();</span>
-<span class="source-line-no">073</span><span id="line-73">                            defaultAuthConfig</span>
-<span class="source-line-no">074</span><span id="line-74">                                    .withUsername(credential.getUsername())</span>
-<span class="source-line-no">075</span><span id="line-75">                                    .withPassword(credential.getPassword());</span>
-<span class="source-line-no">076</span><span id="line-76">                        }</span>
-<span class="source-line-no">077</span><span id="line-77">                        RegistryAuthLocator registryAuthLocator = RegistryAuthLocator.instance();</span>
-<span class="source-line-no">078</span><span id="line-78">                        DockerImageName dockerImageName = DockerImageName.parse(taggedImage);</span>
-<span class="source-line-no">079</span><span id="line-79">                        AuthConfig authConfig = registryAuthLocator.lookupAuthConfig(dockerImageName, defaultAuthConfig);</span>
-<span class="source-line-no">080</span><span id="line-80"></span>
-<span class="source-line-no">081</span><span id="line-81">                        pushImageCmd</span>
-<span class="source-line-no">082</span><span id="line-82">                                .withAuthConfig(authConfig)</span>
-<span class="source-line-no">083</span><span id="line-83">                                .start()</span>
-<span class="source-line-no">084</span><span id="line-84">                                .awaitCompletion();</span>
-<span class="source-line-no">085</span><span id="line-85">                    } catch (InterruptedException e) {</span>
-<span class="source-line-no">086</span><span id="line-86">                        Thread.currentThread().interrupt();</span>
-<span class="source-line-no">087</span><span id="line-87">                    } catch (Exception e) {</span>
-<span class="source-line-no">088</span><span id="line-88">                        throw new MojoExecutionException(e.getMessage(), e);</span>
-<span class="source-line-no">089</span><span id="line-89">                    }</span>
-<span class="source-line-no">090</span><span id="line-90">                }</span>
-<span class="source-line-no">091</span><span id="line-91">            } else {</span>
-<span class="source-line-no">092</span><span id="line-92">                throw new MojoFailureException("The plugin " + MavenProjectProperties.PLUGIN_KEY + " is misconfigured. Missing &lt;to&gt; tag");</span>
-<span class="source-line-no">093</span><span id="line-93">            }</span>
-<span class="source-line-no">094</span><span id="line-94">        } else {</span>
-<span class="source-line-no">095</span><span id="line-95">            throw new MojoFailureException("The &lt;packaging&gt; must be set to either [" + Packaging.DOCKER.id() + "] or [" + Packaging.DOCKER_NATIVE.id() + "]");</span>
-<span class="source-line-no">096</span><span id="line-96">        }</span>
-<span class="source-line-no">097</span><span id="line-97">    }</span>
-<span class="source-line-no">098</span><span id="line-98">}</span>
+<span class="source-line-no">031</span><span id="line-31"></span>
+<span class="source-line-no">032</span><span id="line-32">import javax.inject.Inject;</span>
+<span class="source-line-no">033</span><span id="line-33">import java.util.Optional;</span>
+<span class="source-line-no">034</span><span id="line-34">import java.util.Set;</span>
+<span class="source-line-no">035</span><span id="line-35"></span>
+<span class="source-line-no">036</span><span id="line-36">/**</span>
+<span class="source-line-no">037</span><span id="line-37"> * &lt;p&gt;Implementation of the &lt;code&gt;deploy&lt;/code&gt; lifecycle for pushing Docker images&lt;/p&gt;</span>
+<span class="source-line-no">038</span><span id="line-38"> * &lt;p&gt;&lt;strong&gt;WARNING&lt;/strong&gt;: this goal is not intended to be executed directly. Instead, Execute the &lt;code&gt;deploy&lt;/code&gt;</span>
+<span class="source-line-no">039</span><span id="line-39"> * phase specifying the packaging type, eg:&lt;/p&gt;</span>
+<span class="source-line-no">040</span><span id="line-40"> *</span>
+<span class="source-line-no">041</span><span id="line-41"> * &lt;pre&gt;mvn deploy -Dpackaging=docker-native&lt;/pre&gt;</span>
+<span class="source-line-no">042</span><span id="line-42"> *</span>
+<span class="source-line-no">043</span><span id="line-43"> * @author Álvaro Sánchez-Mariscal</span>
+<span class="source-line-no">044</span><span id="line-44"> * @since 1.1</span>
+<span class="source-line-no">045</span><span id="line-45"> */</span>
+<span class="source-line-no">046</span><span id="line-46">@Mojo(name = "docker-push")</span>
+<span class="source-line-no">047</span><span id="line-47">public class DockerPushMojo extends AbstractDockerMojo {</span>
+<span class="source-line-no">048</span><span id="line-48"></span>
+<span class="source-line-no">049</span><span id="line-49">    @Inject</span>
+<span class="source-line-no">050</span><span id="line-50">    public DockerPushMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,</span>
+<span class="source-line-no">051</span><span id="line-51">                          ApplicationConfigurationService applicationConfigurationService, DockerService dockerService,</span>
+<span class="source-line-no">052</span><span id="line-52">                          MavenSession mavenSession, MojoExecution mojoExecution) {</span>
+<span class="source-line-no">053</span><span id="line-53">        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession, mojoExecution);</span>
+<span class="source-line-no">054</span><span id="line-54">    }</span>
+<span class="source-line-no">055</span><span id="line-55"></span>
+<span class="source-line-no">056</span><span id="line-56">    @Override</span>
+<span class="source-line-no">057</span><span id="line-57">    public void execute() throws MojoExecutionException, MojoFailureException {</span>
+<span class="source-line-no">058</span><span id="line-58">        Packaging packaging = Packaging.of(mavenProject.getPackaging());</span>
+<span class="source-line-no">059</span><span id="line-59">        if (packaging == Packaging.DOCKER || packaging == Packaging.DOCKER_NATIVE || packaging == Packaging.DOCKER_CRAC) {</span>
+<span class="source-line-no">060</span><span id="line-60">            Set&lt;String&gt; images = getTags();</span>
+<span class="source-line-no">061</span><span id="line-61"></span>
+<span class="source-line-no">062</span><span id="line-62">            // getTags() will automatically generate an image name if none is specified</span>
+<span class="source-line-no">063</span><span id="line-63">            // To maintain error compatibility, check that an image name has been</span>
+<span class="source-line-no">064</span><span id="line-64">            // manually specified.</span>
+<span class="source-line-no">065</span><span id="line-65">            if (jibConfigurationService.getToImage().isPresent()) {</span>
+<span class="source-line-no">066</span><span id="line-66">                for (String taggedImage : images) {</span>
+<span class="source-line-no">067</span><span id="line-67">                    getLog().info("Pushing image: " + taggedImage);</span>
+<span class="source-line-no">068</span><span id="line-68">                    try (PushImageCmd pushImageCmd = dockerService.pushImageCmd(taggedImage)) {</span>
+<span class="source-line-no">069</span><span id="line-69">                        Optional&lt;Credential&gt; toCredentials = jibConfigurationService.getToCredentials();</span>
+<span class="source-line-no">070</span><span id="line-70">                        if (toCredentials.isPresent()) {</span>
+<span class="source-line-no">071</span><span id="line-71">                            Credential credential = toCredentials.get();</span>
+<span class="source-line-no">072</span><span id="line-72">                            AuthConfig authConfig = dockerService.getAuthConfigFor(taggedImage, credential.getUsername(), credential.getPassword());</span>
+<span class="source-line-no">073</span><span id="line-73">                            pushImageCmd.withAuthConfig(authConfig);</span>
+<span class="source-line-no">074</span><span id="line-74">                        }</span>
+<span class="source-line-no">075</span><span id="line-75"></span>
+<span class="source-line-no">076</span><span id="line-76">                        pushImageCmd.start().awaitCompletion();</span>
+<span class="source-line-no">077</span><span id="line-77">                    } catch (InterruptedException e) {</span>
+<span class="source-line-no">078</span><span id="line-78">                        Thread.currentThread().interrupt();</span>
+<span class="source-line-no">079</span><span id="line-79">                    } catch (Exception e) {</span>
+<span class="source-line-no">080</span><span id="line-80">                        throw new MojoExecutionException(e.getMessage(), e);</span>
+<span class="source-line-no">081</span><span id="line-81">                    }</span>
+<span class="source-line-no">082</span><span id="line-82">                }</span>
+<span class="source-line-no">083</span><span id="line-83">            } else {</span>
+<span class="source-line-no">084</span><span id="line-84">                throw new MojoFailureException("The plugin " + MavenProjectProperties.PLUGIN_KEY + " is misconfigured. Missing &lt;to&gt; tag");</span>
+<span class="source-line-no">085</span><span id="line-85">            }</span>
+<span class="source-line-no">086</span><span id="line-86">        } else {</span>
+<span class="source-line-no">087</span><span id="line-87">            throw new MojoFailureException("The &lt;packaging&gt; must be set to either [" + Packaging.DOCKER.id() + "] or [" + Packaging.DOCKER_NATIVE.id() + "]");</span>
+<span class="source-line-no">088</span><span id="line-88">        }</span>
+<span class="source-line-no">089</span><span id="line-89">    }</span>
+<span class="source-line-no">090</span><span id="line-90">}</span>
 
 
 
