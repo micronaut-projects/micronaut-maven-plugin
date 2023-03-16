@@ -113,15 +113,26 @@ public class JibConfigurationService {
     /**
      * @return the <code>to.auth.username</code> and <code>to.auth.password</code> configuration.
      */
-    public Optional<Credential> getCredentials() {
+    public Optional<Credential> getToCredentials() {
+        return getCredentials(PropertyNames.TO_AUTH_USERNAME, PropertyNames.TO_AUTH_PASSWORD, to);
+    }
+
+    /**
+     * @return the <code>from.auth.username</code> and <code>from.auth.password</code> configuration.
+     */
+    public Optional<Credential> getFromCredentials() {
+        return getCredentials(PropertyNames.FROM_AUTH_USERNAME, PropertyNames.FROM_AUTH_PASSWORD, from);
+    }
+
+    private Optional<Credential> getCredentials(String usernamePropName, String passwordPropName, Xpp3Dom node) {
         Optional<Credential> result = Optional.empty();
-        String usernameProp = System.getProperties().getProperty(PropertyNames.TO_AUTH_USERNAME);
-        String passwordProp = System.getProperties().getProperty(PropertyNames.TO_AUTH_PASSWORD);
+        String usernameProp = System.getProperties().getProperty(usernamePropName);
+        String passwordProp = System.getProperties().getProperty(passwordPropName);
         if (usernameProp != null && passwordProp != null) {
             result = Optional.of(Credential.from(usernameProp, passwordProp));
         } else {
-            if (to != null) {
-                Xpp3Dom auth = to.getChild("auth");
+            if (node != null) {
+                Xpp3Dom auth = node.getChild("auth");
                 if (auth != null) {
                     Xpp3Dom username = auth.getChild("username");
                     Xpp3Dom password = auth.getChild("password");

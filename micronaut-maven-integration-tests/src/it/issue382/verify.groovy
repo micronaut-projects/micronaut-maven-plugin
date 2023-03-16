@@ -1,0 +1,5 @@
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains("BUILD SUCCESS")
+assert log.text.contains("Successfully logged in to registry container-registry.oracle.com")
+assert log.text.contains("Successfully tagged phx.ocir.io/oraclelabs/micronaut-maven-plugin:0.1")
