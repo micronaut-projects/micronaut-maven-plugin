@@ -25,6 +25,7 @@ import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.command.WaitContainerCmd;
 import com.github.dockerjava.api.command.WaitContainerResultCallback;
 import com.github.dockerjava.api.exception.DockerClientException;
+import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.AuthConfigurations;
 import com.github.dockerjava.api.model.AuthResponse;
@@ -74,6 +75,7 @@ public class DockerService {
     private static final Logger LOG = LoggerFactory.getLogger(DockerService.class);
 
     private final DockerClient dockerClient;
+    private final DockerClientConfig config;
     private final MavenProject mavenProject;
     private final JibConfigurationService jibConfigurationService;
 
@@ -82,7 +84,7 @@ public class DockerService {
     public DockerService(MavenProject mavenProject, JibConfigurationService jibConfigurationService) {
         this.mavenProject = mavenProject;
         this.jibConfigurationService = jibConfigurationService;
-        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+        this.config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
         DockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder()
                 .dockerHost(config.getDockerHost())
                 .sslConfig(config.getSSLConfig())
@@ -95,6 +97,7 @@ public class DockerService {
      * @return the {@link BuildImageCmd} by loading the given Dockerfile as classpath resource.
      */
     public BuildImageCmd buildImageCmd(String dockerfileName) throws IOException {
+        verifyDockerRunning();
         BuildImageCmd buildImageCmd = dockerClient.buildImageCmd(loadDockerfileAsResource(dockerfileName));
         maybeConfigureBuildAuth(buildImageCmd);
         return buildImageCmd;
@@ -115,6 +118,7 @@ public class DockerService {
      * @return a default {@link BuildImageCmd}.
      */
     public BuildImageCmd buildImageCmd() {
+        verifyDockerRunning();
         BuildImageCmd buildImageCmd = dockerClient.buildImageCmd();
         maybeConfigureBuildAuth(buildImageCmd);
         return buildImageCmd;
@@ -127,6 +131,7 @@ public class DockerService {
      * @return The resulting image ID.
      */
     public String buildImage(BuildImageCmd builder) {
+        verifyDockerRunning();
         BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
             @Override
             public void onNext(BuildResponseItem item) {
@@ -154,6 +159,7 @@ public class DockerService {
      * @param binds the bind mounts to use
      */
     public void runPrivilegedImageAndWait(String imageId, Integer timeoutSeconds, String checkpointNetworkName, String... binds) throws IOException {
+        verifyDockerRunning();
         try (CreateContainerCmd create = dockerClient.createContainerCmd(imageId)) {
             HostConfig hostConfig = create.getHostConfig();
             if (hostConfig == null) {
@@ -261,6 +267,7 @@ public class DockerService {
      * @return a {@link PushImageCmd} from the given image name.
      */
     public PushImageCmd pushImageCmd(String imageName) {
+        verifyDockerRunning();
         return dockerClient.pushImageCmd(imageName);
     }
 
@@ -286,5 +293,15 @@ public class DockerService {
             LOG.warn("Failed to login to registry {}", dockerImageName.getRegistry());
         }
         return authConfig;
+    }
+
+    private void verifyDockerRunning() {
+        try {
+            dockerClient.pingCmd().exec();
+        } catch (DockerException e) {
+            throw new IllegalStateException(e.getMessage());
+        } catch (RuntimeException e) {
+            throw new IllegalStateException("Cannot connect to the Docker daemon at " + config.getDockerHost() + ". Is the docker daemon running?", e);
+        }
     }
 }
