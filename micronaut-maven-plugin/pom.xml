@@ -14,10 +14,6 @@
     <name>Micronaut Maven Plugin - Plugin</name>
     <description>Maven plugin to execute and package Micronaut applications</description>
 
-    <prerequisites>
-        <maven>${maven.version}</maven>
-    </prerequisites>
-
     <dependencies>
         <!-- Internal dependencies -->
         <dependency>
