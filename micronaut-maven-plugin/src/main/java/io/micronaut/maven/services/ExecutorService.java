@@ -27,6 +27,8 @@ import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.twdata.maven.mojoexecutor.MojoExecutor;
 
 import javax.inject.Inject;
@@ -45,6 +47,8 @@ import static org.twdata.maven.mojoexecutor.MojoExecutor.*;
  */
 @Singleton
 public class ExecutorService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ExecutorService.class);
 
     private final MojoExecutor.ExecutionEnvironment executionEnvironment;
     private final MavenProject mavenProject;
@@ -125,6 +129,8 @@ public class ExecutorService {
         request.setGoals(Collections.singletonList(pluginKey + ":" + goal));
         request.setBatchMode(true);
         request.setQuiet(true);
+        request.setErrorHandler(LOG::error);
+        request.setOutputHandler(LOG::info);
         return invoker.execute(request);
     }
 }

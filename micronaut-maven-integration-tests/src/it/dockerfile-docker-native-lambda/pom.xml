@@ -13,6 +13,7 @@
   </parent>
 
   <properties>
+    <packaging>jar</packaging>
     <micronaut.version>@it.micronaut.version@</micronaut.version>
     <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
     <exec.mainClass>io.micronaut.function.aws.runtime.MicronautLambdaRuntime</exec.mainClass>
