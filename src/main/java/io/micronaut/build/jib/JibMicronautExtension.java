@@ -15,7 +15,6 @@
  */
 package io.micronaut.build.jib;
 
-import com.fasterxml.jackson.core.util.VersionUtil;
 import com.google.cloud.tools.jib.api.buildplan.*;
 import com.google.cloud.tools.jib.buildplan.UnixPathParser;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
@@ -25,10 +24,6 @@ import io.micronaut.build.AbstractDockerMojo;
 import io.micronaut.build.MicronautRuntime;
 import io.micronaut.build.services.ApplicationConfigurationService;
 import io.micronaut.build.services.JibConfigurationService;
-import io.micronaut.core.version.VersionUtils;
-import org.apache.commons.lang3.SystemUtils;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import java.util.*;
 
