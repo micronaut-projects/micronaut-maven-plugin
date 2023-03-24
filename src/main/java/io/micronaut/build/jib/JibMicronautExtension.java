@@ -15,6 +15,7 @@
  */
 package io.micronaut.build.jib;
 
+import com.fasterxml.jackson.core.util.VersionUtil;
 import com.google.cloud.tools.jib.api.buildplan.*;
 import com.google.cloud.tools.jib.buildplan.UnixPathParser;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
@@ -24,6 +25,8 @@ import io.micronaut.build.AbstractDockerMojo;
 import io.micronaut.build.MicronautRuntime;
 import io.micronaut.build.services.ApplicationConfigurationService;
 import io.micronaut.build.services.JibConfigurationService;
+import io.micronaut.core.version.VersionUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
@@ -83,7 +86,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
                     cmd = Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest");
                 }
 
-                builder.setBaseImage("fnproject/fn-java-fdk:" + determineProjectFnVersion())
+                builder.setBaseImage("fnproject/fn-java-fdk:" + determineProjectFnVersion(System.getProperty("java.version")))
                         .setWorkingDirectory(AbsoluteUnixPath.get(jibConfigurationService.getWorkingDirectory().orElse("/function")))
                         .setEntrypoint(buildProjectFnEntrypoint())
                         .setCmd(cmd);
@@ -103,7 +106,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
     public static List<String> buildProjectFnEntrypoint() {
         List<String> entrypoint = new ArrayList<>(9);
-        String projectFnVersion = determineProjectFnVersion();
+        String projectFnVersion = determineProjectFnVersion(System.getProperty("java.version"));
         if (AbstractDockerMojo.LATEST_TAG.equals(projectFnVersion)) {
             entrypoint.add("java");
             entrypoint.add("-XX:+UnlockExperimentalVMOptions");
@@ -130,9 +133,14 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         return entrypoint;
     }
 
-    public static String determineProjectFnVersion() {
-        ArtifactVersion javaVersion = new DefaultArtifactVersion(System.getProperty("java.version"));
-        if (javaVersion.getMajorVersion() >= 11) {
+    public static String determineProjectFnVersion(String javaVersion) {
+        int majorVersion = Integer.parseInt(javaVersion.split("\\.")[0]);
+        if (majorVersion == 1) {
+            majorVersion = Integer.parseInt(javaVersion.split("\\.")[1]);
+        }
+        if (majorVersion >= 17) {
+            return "jre17-latest";
+        } else if (majorVersion >= 11 ){
             return "jre11-latest";
         } else {
             return AbstractDockerMojo.LATEST_TAG;

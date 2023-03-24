@@ -131,7 +131,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
     private void processOracleFunctionDockerfile(File dockerfile) throws IOException {
         if (dockerfile != null) {
             List<String> allLines = Files.readAllLines(dockerfile.toPath());
-            allLines.add(0, allLines.remove(0) + JibMicronautExtension.determineProjectFnVersion());
+            allLines.add(0, allLines.remove(0) + JibMicronautExtension.determineProjectFnVersion(System.getProperty("java.version")));
             String entrypoint = JibMicronautExtension.buildProjectFnEntrypoint()
                     .stream()
                     .map(s -> "\"" + s + "\"")
