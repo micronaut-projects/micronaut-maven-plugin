@@ -14,6 +14,7 @@ public class JibMicronautExtensionTest {
             "11.0.6, jre11-latest",
             "14.0.2, jre11-latest",
             "17.0.1, jre17-latest",
+            "17.0.4.1, jre17-latest",
             "19.0.1, jre17-latest",
     })
     void testDetermineJavaVersion(String javaVersion, String expectedFnVersion) {
