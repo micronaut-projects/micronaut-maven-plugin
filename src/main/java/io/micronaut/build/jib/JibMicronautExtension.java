@@ -135,7 +135,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         }
         if (majorVersion >= 17) {
             return "jre17-latest";
-        } else if (majorVersion >= 11 ){
+        } else if (majorVersion >= 11) {
             return "jre11-latest";
         } else {
             return AbstractDockerMojo.LATEST_TAG;
