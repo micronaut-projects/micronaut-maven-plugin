@@ -490,6 +490,9 @@
                         </format>
                     </formats>
                     <java>
+                        <excludes>
+                            <exclude>src/test/java/**/*.java</exclude>
+                        </excludes>
                         <licenseHeader>
                             <file>${project.basedir}/config/spotless.license.java</file>
                         </licenseHeader>
