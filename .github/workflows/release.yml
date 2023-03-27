@@ -47,9 +47,8 @@ jobs:
         run: |
           git config --global user.email "$MICRONAUT_BUILD_EMAIL"
           git config --global user.name "micronaut-build"
-          git fetch
           echo "Checking out v${{ steps.release_version.outputs.release_version }}"
-          git checkout v${{ steps.release_version.outputs.release_version }}
+          git checkout -b release/v${{ steps.release_version.outputs.release_version }} v${{ steps.release_version.outputs.release_version }}
           git tag -d v${{ steps.release_version.outputs.release_version }}
           git push origin :refs/tags/v${{ steps.release_version.outputs.release_version }}
 
