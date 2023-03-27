@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractMicronautAotMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.build.aot</a> &gt; <span class="el_source">AbstractMicronautAotMojo.java</span></div><h1>AbstractMicronautAotMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.build.aot;
+
+import io.micronaut.build.Packaging;
+import io.micronaut.build.services.CompilerService;
+import org.apache.commons.io.FileUtils;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.resolution.DependencyResolutionException;
+
+import java.io.File;
+import java.io.IOException;
+
+/**
+ * Abstract Mojo for Micronaut AOT.
+ */
+public abstract class AbstractMicronautAotMojo extends AbstractMojo {
+
+    protected final CompilerService compilerService;
+
+    protected final MavenProject mavenProject;
+
+    protected final MavenSession mavenSession;
+
+    protected final RepositorySystem repositorySystem;
+
+    /**
+     * Micronaut AOT runtime. Possible values: &lt;code&gt;jit&lt;/code&gt;, &lt;code&gt;native&lt;/code&gt;.
+     */
+    @Parameter(property = &quot;micronaut.aot.runtime&quot;, required = true, defaultValue = &quot;jit&quot;)
+    protected String runtime;
+
+    /**
+     * Micronaut AOT version.
+     */
+    @Parameter(property = &quot;micronaut.aot.version&quot;, required = true)
+    protected String micronautAotVersion;
+
+    /**
+     * Whether to enable or disable Micronaut AOT.
+     */
+    @Parameter(property = &quot;micronaut.aot.enabled&quot;, defaultValue = &quot;false&quot;)
+    protected boolean enabled;
+
+    /**
+     * Directory where compiled application classes are.
+     */
+    @Parameter(defaultValue = &quot;${project.build.outputDirectory}&quot;, required = true)
+    protected File outputDirectory;
+
+<span class="nc" id="L70">    public AbstractMicronautAotMojo(CompilerService compilerService, MavenProject mavenProject, MavenSession mavenSession, RepositorySystem repositorySystem) {</span>
+<span class="nc" id="L71">        this.compilerService = compilerService;</span>
+<span class="nc" id="L72">        this.mavenProject = mavenProject;</span>
+<span class="nc" id="L73">        this.mavenSession = mavenSession;</span>
+<span class="nc" id="L74">        this.repositorySystem = repositorySystem;</span>
+<span class="nc" id="L75">    }</span>
+
+    abstract void onSuccess(File outputDir) throws MojoExecutionException;
+
+    protected final File getBaseOutputDirectory() {
+<span class="nc" id="L80">        File targetDirectory = new File(mavenProject.getBuild().getDirectory(), &quot;aot&quot;);</span>
+<span class="nc" id="L81">        return new File(targetDirectory, runtime);</span>
+    }
+
+    protected final File outputFile(String name) {
+<span class="nc" id="L85">        return new File(getBaseOutputDirectory(), name);</span>
+    }
+
+    @Override
+    public final void execute() throws MojoExecutionException, MojoFailureException {
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        if (!enabled) {</span>
+<span class="nc" id="L91">            return;</span>
+        }
+<span class="nc" id="L93">        validateRuntime();</span>
+<span class="nc" id="L94">        getLog().info(&quot;Running Micronaut AOT &quot; + micronautAotVersion + &quot; &quot; + getName());</span>
+        try {
+<span class="nc" id="L96">            File baseOutputDirectory = getBaseOutputDirectory();</span>
+<span class="nc" id="L97">            clean(baseOutputDirectory);</span>
+<span class="nc" id="L98">            clean(outputDirectory);</span>
+<span class="nc" id="L99">            doExecute();</span>
+<span class="nc" id="L100">            onSuccess(baseOutputDirectory);</span>
+<span class="nc" id="L101">        } catch (DependencyResolutionException | IOException e) {</span>
+<span class="nc" id="L102">            throw new MojoExecutionException(&quot;Unable to generate AOT optimizations&quot;, e);</span>
+<span class="nc" id="L103">        }</span>
+<span class="nc" id="L104">    }</span>
+
+    private void clean(File baseOutputDirectory) throws IOException {
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        if (baseOutputDirectory.exists()) {</span>
+<span class="nc" id="L108">            getLog().debug(&quot;Deleting &quot; + baseOutputDirectory.getAbsolutePath());</span>
+<span class="nc" id="L109">            FileUtils.deleteDirectory(baseOutputDirectory);</span>
+        }
+<span class="nc" id="L111">        baseOutputDirectory.mkdirs();</span>
+<span class="nc" id="L112">    }</span>
+
+    private void validateRuntime() {
+<span class="nc" id="L115">        Packaging packaging = Packaging.of(mavenProject.getPackaging());</span>
+<span class="nc" id="L116">        AotRuntime aotRuntime = AotRuntime.valueOf(runtime.toUpperCase());</span>
+<span class="nc bnc" id="L117" title="All 3 branches missed.">        switch (packaging) {</span>
+            case JAR:
+            case DOCKER_CRAC:
+            case DOCKER:
+<span class="nc bnc" id="L121" title="All 2 branches missed.">                if (aotRuntime != AotRuntime.JIT) {</span>
+<span class="nc" id="L122">                    warnRuntimeMismatchAndSetCorrectValue(AotRuntime.JIT);</span>
+                }
+                break;
+
+            case NATIVE_IMAGE:
+            case DOCKER_NATIVE:
+<span class="nc bnc" id="L128" title="All 2 branches missed.">                if (aotRuntime != AotRuntime.NATIVE) {</span>
+<span class="nc" id="L129">                    warnRuntimeMismatchAndSetCorrectValue(AotRuntime.NATIVE);</span>
+                }
+                break;
+            default:
+<span class="nc" id="L133">                throw new IllegalArgumentException(&quot;Unsupported packaging: &quot; + packaging);</span>
+        }
+<span class="nc" id="L135">    }</span>
+
+    private void warnRuntimeMismatchAndSetCorrectValue(final AotRuntime correctRuntime) {
+<span class="nc" id="L138">        String correctRuntimeString = correctRuntime.name().toLowerCase();</span>
+<span class="nc" id="L139">        getLog().warn(&quot;Packaging is set to [&quot; + mavenProject.getPackaging() + &quot;], but Micronaut AOT runtime is set to [&quot; + runtime + &quot;]. Setting AOT runtime to: [&quot; + correctRuntimeString + &quot;]&quot;);</span>
+<span class="nc" id="L140">        this.runtime = correctRuntimeString;</span>
+<span class="nc" id="L141">    }</span>
+
+    protected abstract void doExecute() throws DependencyResolutionException, MojoExecutionException;
+
+    abstract String getName();
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

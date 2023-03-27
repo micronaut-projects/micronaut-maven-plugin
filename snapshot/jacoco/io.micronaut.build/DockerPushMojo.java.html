@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DockerPushMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.build</a> &gt; <span class="el_source">DockerPushMojo.java</span></div><h1>DockerPushMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.build;
+
+import com.github.dockerjava.api.command.PushImageCmd;
+import com.github.dockerjava.api.model.AuthConfig;
+import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.maven.MavenProjectProperties;
+import io.micronaut.build.services.ApplicationConfigurationService;
+import io.micronaut.build.services.DockerService;
+import io.micronaut.build.services.JibConfigurationService;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.project.MavenProject;
+import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.utility.RegistryAuthLocator;
+
+import javax.inject.Inject;
+import java.util.Set;
+
+/**
+ * &lt;p&gt;Implementation of the &lt;code&gt;deploy&lt;/code&gt; lifecycle for pushing Docker images&lt;/p&gt;
+ * &lt;p&gt;&lt;strong&gt;WARNING&lt;/strong&gt;: this goal is not intended to be executed directly. Instead, Execute the &lt;code&gt;deploy&lt;/code&gt;
+ * phase specifying the packaging type, eg:&lt;/p&gt;
+ *
+ * &lt;pre&gt;mvn deploy -Dpackaging=docker-native&lt;/pre&gt;
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 1.1
+ */
+@Mojo(name = &quot;docker-push&quot;)
+public class DockerPushMojo extends AbstractDockerMojo {
+
+    @Inject
+    public DockerPushMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
+                             ApplicationConfigurationService applicationConfigurationService, DockerService dockerService) {
+<span class="nc" id="L51">        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService);</span>
+<span class="nc" id="L52">    }</span>
+
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+<span class="nc" id="L56">        Packaging packaging = Packaging.of(mavenProject.getPackaging());</span>
+<span class="nc bnc" id="L57" title="All 6 branches missed.">        if (packaging == Packaging.DOCKER || packaging == Packaging.DOCKER_NATIVE || packaging == Packaging.DOCKER_CRAC) {</span>
+<span class="nc" id="L58">            Set&lt;String&gt; images = getTags();</span>
+
+            // getTags() will automatically generate an image name if none is specified
+            // To maintain error compatibility, check that an image name has been
+            // manually specified.
+<span class="nc bnc" id="L63" title="All 2 branches missed.">            if (jibConfigurationService.getToImage().isPresent()) {</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">                for (String taggedImage : images) {</span>
+<span class="nc" id="L65">                    getLog().info(&quot;Pushing image: &quot; + taggedImage);</span>
+<span class="nc" id="L66">                    try (PushImageCmd pushImageCmd = dockerService.pushImageCmd(taggedImage)) {</span>
+<span class="nc" id="L67">                        AuthConfig defaultAuthConfig = new AuthConfig();</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">                        if (jibConfigurationService.getCredentials().isPresent()) {</span>
+<span class="nc" id="L69">                            Credential credential = jibConfigurationService.getCredentials().get();</span>
+<span class="nc" id="L70">                            defaultAuthConfig</span>
+<span class="nc" id="L71">                                    .withUsername(credential.getUsername())</span>
+<span class="nc" id="L72">                                    .withPassword(credential.getPassword());</span>
+                        }
+<span class="nc" id="L74">                        RegistryAuthLocator registryAuthLocator = RegistryAuthLocator.instance();</span>
+<span class="nc" id="L75">                        DockerImageName dockerImageName = DockerImageName.parse(taggedImage);</span>
+<span class="nc" id="L76">                        AuthConfig authConfig = registryAuthLocator.lookupAuthConfig(dockerImageName, defaultAuthConfig);</span>
+
+<span class="nc" id="L78">                        pushImageCmd</span>
+<span class="nc" id="L79">                                .withAuthConfig(authConfig)</span>
+<span class="nc" id="L80">                                .start()</span>
+<span class="nc" id="L81">                                .awaitCompletion();</span>
+<span class="nc" id="L82">                    } catch (InterruptedException e) {</span>
+<span class="nc" id="L83">                        Thread.currentThread().interrupt();</span>
+<span class="nc" id="L84">                    } catch (Exception e) {</span>
+<span class="nc" id="L85">                        throw new MojoExecutionException(e.getMessage(), e);</span>
+<span class="nc" id="L86">                    }</span>
+<span class="nc" id="L87">                }</span>
+            } else {
+<span class="nc" id="L89">                throw new MojoFailureException(&quot;The plugin &quot; + MavenProjectProperties.PLUGIN_KEY + &quot; is misconfigured. Missing &lt;to&gt; tag&quot;);</span>
+            }
+<span class="nc" id="L91">        } else {</span>
+<span class="nc" id="L92">            throw new MojoFailureException(&quot;The &lt;packaging&gt; must be set to either [&quot; + Packaging.DOCKER.id() + &quot;] or [&quot; + Packaging.DOCKER_NATIVE.id() + &quot;]&quot;);</span>
+        }
+<span class="nc" id="L94">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>
