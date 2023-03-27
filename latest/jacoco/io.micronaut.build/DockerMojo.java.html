@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DockerMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.build</a> &gt; <span class="el_source">DockerMojo.java</span></div><h1>DockerMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.build;
+
+import com.github.dockerjava.api.command.BuildImageCmd;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import io.micronaut.build.jib.JibMicronautExtension;
+import io.micronaut.build.services.ApplicationConfigurationService;
+import io.micronaut.build.services.DockerService;
+import io.micronaut.build.services.JibConfigurationService;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+
+import javax.inject.Inject;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.StandardCopyOption;
+
+/**
+ * &lt;p&gt;Allows using a provided Dockerfile.&lt;/p&gt;
+ * &lt;p&gt;&lt;strong&gt;WARNING&lt;/strong&gt;: this goal is not intended to be executed directly. Instead, specify the packaging type
+ * using the &lt;code&gt;packaging&lt;/code&gt; property, eg:&lt;/p&gt;
+ *
+ * &lt;pre&gt;mvn package -Dpackaging=docker&lt;/pre&gt;
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 1.1
+ */
+@Mojo(name = DockerMojo.DOCKER_PACKAGING, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+public class DockerMojo extends AbstractDockerMojo {
+
+    public static final String DOCKER_PACKAGING = &quot;docker&quot;;
+
+    @SuppressWarnings(&quot;CdiInjectionPointsInspection&quot;)
+    @Inject
+    public DockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
+                      ApplicationConfigurationService applicationConfigurationService, DockerService dockerService) {
+<span class="nc" id="L55">        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService);</span>
+<span class="nc" id="L56">    }</span>
+
+    @Override
+    public void execute() throws MojoExecutionException {
+<span class="nc" id="L60">        File dockerfile = new File(mavenProject.getBasedir(), DockerfileMojo.DOCKERFILE);</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">        if (dockerfile.exists()) {</span>
+            try {
+<span class="nc" id="L63">                getLog().info(&quot;Using provided Dockerfile: &quot; + dockerfile.getAbsolutePath());</span>
+<span class="nc" id="L64">                mavenProject.getProperties().put(PropertyNames.SKIP, &quot;true&quot;);</span>
+
+<span class="nc" id="L66">                copyDependencies();</span>
+
+<span class="nc" id="L68">                String targetDir = mavenProject.getBuild().getDirectory();</span>
+<span class="nc" id="L69">                File targetDockerfile = new File(targetDir, dockerfile.getName());</span>
+<span class="nc" id="L70">                Files.copy(dockerfile.toPath(), targetDockerfile.toPath(), LinkOption.NOFOLLOW_LINKS,</span>
+                        StandardCopyOption.REPLACE_EXISTING);
+
+<span class="nc" id="L73">                BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
+<span class="nc" id="L74">                        .withDockerfile(targetDockerfile)</span>
+<span class="nc" id="L75">                        .withTags(getTags())</span>
+<span class="nc" id="L76">                        .withBaseDirectory(new File(targetDir));</span>
+<span class="nc" id="L77">                dockerService.buildImage(buildImageCmd);</span>
+<span class="nc" id="L78">            } catch (IOException e) {</span>
+<span class="nc" id="L79">                throw new MojoExecutionException(e.getMessage(), e);</span>
+<span class="nc" id="L80">            }</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">        } else if (!jibConfigurationService.getFromImage().isPresent()) {</span>
+<span class="nc" id="L82">            mavenProject.getProperties().setProperty(PropertyNames.FROM_IMAGE, JibMicronautExtension.DEFAULT_BASE_IMAGE);</span>
+        }
+<span class="nc" id="L84">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

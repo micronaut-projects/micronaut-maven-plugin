@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractDockerMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.build</a> &gt; <span class="el_source">AbstractDockerMojo.java</span></div><h1>AbstractDockerMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.build;
+
+import io.micronaut.build.services.ApplicationConfigurationService;
+import io.micronaut.build.services.DockerService;
+import io.micronaut.build.services.JibConfigurationService;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static io.micronaut.build.services.ApplicationConfigurationService.DEFAULT_PORT;
+
+/**
+ * Abstract base class for mojos related to Docker files and builds.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @author Iván López
+ * @since 1.1
+ */
+public abstract class AbstractDockerMojo extends AbstractMojo {
+
+    public static final String LATEST_TAG = &quot;latest&quot;;
+    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = &quot;frolvlad/alpine-glibc:alpine-3.12&quot;;
+    public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = &quot;-H:+StaticExecutableWithDynamicLibC&quot;;
+    public static final String ARM_ARCH = &quot;aarch64&quot;;
+    public static final String X86_64_ARCH = &quot;amd64&quot;;
+
+    protected final MavenProject mavenProject;
+    protected final JibConfigurationService jibConfigurationService;
+    protected final ApplicationConfigurationService applicationConfigurationService;
+    protected final DockerService dockerService;
+
+
+    /**
+     * Additional arguments that will be passed to the &lt;code&gt;native-image&lt;/code&gt; executable. Note that this will only
+     * be used when using a packaging of type &lt;code&gt;docker-native&lt;/code&gt;. For &lt;code&gt;native-image&lt;/code&gt; packaging
+     * you should use the
+     * &lt;a href=&quot;https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization&quot;&gt;
+     * Native Image Maven Plugin
+     * &lt;/a&gt; configuration options.
+     */
+    @Parameter(property = &quot;micronaut.native-image.args&quot;)
+    protected List&lt;String&gt; nativeImageBuildArgs;
+
+    /**
+     * List of additional arguments that will be passed to the application.
+     */
+    @Parameter(property = RunMojo.MN_APP_ARGS)
+    protected List&lt;String&gt; appArguments;
+
+    /**
+     * The main class of the application, as defined in the
+     * &lt;a href=&quot;https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass&quot;&gt;Exec Maven Plugin&lt;/a&gt;.
+     */
+    @Parameter(defaultValue = RunMojo.EXEC_MAIN_CLASS, required = true)
+    protected String mainClass;
+
+    /**
+     * Whether to produce a static native image when using &lt;code&gt;docker-native&lt;/code&gt; packaging.
+     */
+    @Parameter(defaultValue = &quot;false&quot;, property = &quot;micronaut.native-image.static&quot;)
+    protected Boolean staticNativeImage;
+
+    /**
+     * The target runtime of the application.
+     */
+    @Parameter(property = MicronautRuntime.PROPERTY, defaultValue = &quot;NONE&quot;)
+    protected String micronautRuntime;
+
+    /**
+     * The Docker image used to run the native image.
+     * @since 1.2
+     */
+    @Parameter(property = &quot;micronaut.native-image.base-image-run&quot;, defaultValue = DEFAULT_BASE_IMAGE_GRAALVM_RUN)
+    protected String baseImageRun;
+
+<span class="nc" id="L101">    protected AbstractDockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService, ApplicationConfigurationService applicationConfigurationService, DockerService dockerService) {</span>
+<span class="nc" id="L102">        this.mavenProject = mavenProject;</span>
+<span class="nc" id="L103">        this.jibConfigurationService = jibConfigurationService;</span>
+<span class="nc" id="L104">        this.applicationConfigurationService = applicationConfigurationService;</span>
+<span class="nc" id="L105">        this.dockerService = dockerService;</span>
+<span class="nc" id="L106">    }</span>
+
+    /**
+     * Returns the Java version from either the &lt;code&gt;maven.compiler.target&lt;/code&gt; property or the &lt;code&gt;java.version&lt;/code&gt; property.
+     */
+    protected ArtifactVersion javaVersion() {
+<span class="nc" id="L112">        return new DefaultArtifactVersion(Optional.ofNullable(mavenProject.getProperties().getProperty(&quot;maven.compiler.target&quot;)).orElse(System.getProperty(&quot;java.version&quot;)));</span>
+    }
+
+    /**
+     * Returns the GraalVM version from the &lt;code&gt;graalvm.version&lt;/code&gt; property, which is expected to come from the
+     * Micronaut Parent POM.
+     */
+    protected String graalVmVersion() {
+<span class="nc" id="L120">        return mavenProject.getProperties().getProperty(&quot;graal.version&quot;);</span>
+    }
+
+    /**
+     * Calculates the JVM version to use for GraalVM.
+     */
+    protected String graalVmJvmVersion() {
+<span class="nc" id="L127">        String graalVmJvmVersion = &quot;java11&quot;;</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        if (javaVersion().getMajorVersion() &gt;= 17) {</span>
+<span class="nc" id="L129">            graalVmJvmVersion = &quot;java17&quot;;</span>
+        }
+<span class="nc" id="L131">        return graalVmJvmVersion;</span>
+    }
+
+    /**
+     * Detects the OS architecture to use for GraalVM depending on the &lt;code&gt;os.arch&lt;/code&gt; system property.
+     */
+    protected String graalVmArch() {
+<span class="nc" id="L138">        String osArch = System.getProperty(&quot;os.arch&quot;);</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">        if (ARM_ARCH.equals(osArch)) {</span>
+<span class="nc" id="L140">            return ARM_ARCH;</span>
+        } else {
+<span class="nc" id="L142">            return X86_64_ARCH;</span>
+        }
+    }
+
+    /**
+     * Determines the base FROM image for the native image.
+     */
+    protected String getFrom() {
+<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (Boolean.TRUE.equals(staticNativeImage)) {</span>
+            // For building a static native image we need a base image with tools (cc, make,...) already installed
+<span class="nc" id="L152">            return getFromImage().orElse(&quot;ghcr.io/graalvm/graalvm-ce:ol7-&quot; + graalVmJvmVersion() + &quot;-&quot; + graalVmVersion());</span>
+        } else {
+<span class="nc" id="L154">            return getFromImage().orElse(&quot;ghcr.io/graalvm/native-image:ol7-&quot; + graalVmJvmVersion() + &quot;-&quot; + graalVmVersion());</span>
+        }
+    }
+
+    /**
+     * Returns the base image from the jib configuration (if any).
+     */
+    protected Optional&lt;String&gt; getFromImage() {
+<span class="nc" id="L162">        return jibConfigurationService.getFromImage();</span>
+    }
+
+    /**
+     * Calculates the Docker image tags by looking at the Jib plugin configuration.
+     */
+    protected Set&lt;String&gt; getTags() {
+<span class="nc" id="L169">        Set&lt;String&gt; tags = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L170">        Optional&lt;String&gt; toImageOptional = jibConfigurationService.getToImage();</span>
+<span class="nc" id="L171">        String imageName = mavenProject.getArtifactId();</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">        if (toImageOptional.isPresent()) {</span>
+<span class="nc" id="L173">            String toImage = toImageOptional.get();</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">            if (toImage.contains(&quot;:&quot;)) {</span>
+<span class="nc" id="L175">                tags.add(toImage);</span>
+<span class="nc" id="L176">                imageName = toImageOptional.get().split(&quot;:&quot;)[0];</span>
+            } else {
+<span class="nc" id="L178">                tags.add(toImage + &quot;:&quot; + LATEST_TAG);</span>
+<span class="nc" id="L179">                imageName = toImage;</span>
+            }
+<span class="nc" id="L181">        } else {</span>
+<span class="nc" id="L182">            tags.add(imageName + &quot;:&quot; + LATEST_TAG);</span>
+        }
+<span class="nc bnc" id="L184" title="All 2 branches missed.">        for (String tag : jibConfigurationService.getTags()) {</span>
+<span class="nc bnc" id="L185" title="All 4 branches missed.">            if (LATEST_TAG.equals(tag) &amp;&amp; tags.stream().anyMatch(t -&gt; t.contains(LATEST_TAG))) {</span>
+<span class="nc" id="L186">                continue;</span>
+            }
+<span class="nc" id="L188">            tags.add(String.format(&quot;%s:%s&quot;, imageName, tag));</span>
+<span class="nc" id="L189">        }</span>
+<span class="nc" id="L190">        return tags;</span>
+    }
+
+    /**
+     * Determines the application port to expose by looking at the application configuration.
+     */
+    protected String getPort() {
+<span class="nc" id="L197">        String port = applicationConfigurationService.getServerPort();</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">        return &quot;-1&quot;.equals(port) ? DEFAULT_PORT : port;</span>
+    }
+
+    /**
+     * Copy project dependencies to a &lt;code&gt;target/dependency&lt;/code&gt; directory.
+     */
+    @SuppressWarnings(&quot;ResultOfMethodCallIgnored&quot;)
+    protected void copyDependencies() throws IOException {
+<span class="nc" id="L206">        List&lt;String&gt; imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);</span>
+<span class="nc" id="L207">        mavenProject.setArtifactFilter(artifact -&gt; imageClasspathScopes.contains(artifact.getScope()));</span>
+<span class="nc" id="L208">        File target = new File(mavenProject.getBuild().getDirectory(), &quot;dependency&quot;);</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">        if (!target.exists()) {</span>
+<span class="nc" id="L210">            target.mkdirs();</span>
+        }
+<span class="nc bnc" id="L212" title="All 2 branches missed.">        for (Artifact dependency : mavenProject.getArtifacts()) {</span>
+<span class="nc" id="L213">            Files.copy(dependency.getFile().toPath(), target.toPath().resolve(dependency.getFile().getName()), StandardCopyOption.REPLACE_EXISTING);</span>
+<span class="nc" id="L214">        }</span>
+<span class="nc" id="L215">    }</span>
+
+    /**
+     * Returns the Docker CMD command.
+     */
+    protected String getCmd() {
+<span class="nc" id="L221">        return &quot;CMD [&quot; +</span>
+<span class="nc" id="L222">                appArguments.stream()</span>
+<span class="nc" id="L223">                        .map(s -&gt; &quot;\&quot;&quot; + s + &quot;\&quot;&quot;)</span>
+<span class="nc" id="L224">                        .collect(Collectors.joining(&quot;, &quot;)) +</span>
+                &quot;]&quot;;
+    }
+
+    /**
+     * Returns any additional GraalVM arguments.
+     */
+    protected String getGraalVmBuildArgs() {
+<span class="nc bnc" id="L232" title="All 4 branches missed.">        if (nativeImageBuildArgs != null &amp;&amp; !nativeImageBuildArgs.isEmpty()) {</span>
+<span class="nc" id="L233">            return String.join(&quot; &quot;, nativeImageBuildArgs);</span>
+        } else {
+<span class="nc" id="L235">            return &quot;&quot;;</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

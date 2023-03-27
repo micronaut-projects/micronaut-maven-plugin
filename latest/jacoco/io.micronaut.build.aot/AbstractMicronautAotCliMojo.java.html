@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractMicronautAotCliMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.build.aot</a> &gt; <span class="el_source">AbstractMicronautAotCliMojo.java</span></div><h1>AbstractMicronautAotCliMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.build.aot;
+
+import io.micronaut.build.services.CompilerService;
+import io.micronaut.build.services.DependencyResolutionService;
+import io.micronaut.build.services.ExecutorService;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.invoker.InvocationResult;
+import org.apache.maven.shared.invoker.MavenInvocationException;
+import org.codehaus.plexus.util.StringUtils;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.resolution.DependencyResolutionException;
+import org.eclipse.aether.util.artifact.JavaScopes;
+import org.twdata.maven.mojoexecutor.MojoExecutor;
+
+import javax.inject.Inject;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static io.micronaut.build.aot.Constants.*;
+import static io.micronaut.build.services.DependencyResolutionService.toClasspath;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.configuration;
+import static org.twdata.maven.mojoexecutor.MojoExecutor.element;
+
+/**
+ * Base class for Micronaut AOT mojos.
+ */
+public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMojo {
+
+    public static final String EXEC_MAVEN_PLUGIN_GROUP = &quot;org.codehaus.mojo&quot;;
+    public static final String EXEC_MAVEN_PLUGIN_ARTIFACT = &quot;exec-maven-plugin&quot;;
+    public static final String EXEC_MAVEN_PLUGIN_VERSION_PROPERTY = &quot;exec-maven-plugin.version&quot;;
+    public static final String DEFAULT_EXEC_MAVEN_PLUGIN_VERSION = &quot;3.0.0&quot;;
+
+<span class="nc" id="L59">    private static final String[] AOT_MODULES = new String[]{</span>
+            &quot;api&quot;,
+            &quot;cli&quot;,
+            &quot;std-optimizers&quot;
+    };
+
+    /**
+     * Package name to use for generated sources.
+     */
+    @Parameter(property = MICRONAUT_AOT_PACKAGE_NAME)
+    protected String packageName;
+
+    private final ExecutorService executorService;
+
+    private final DependencyResolutionService dependencyResolutionService;
+
+    @Parameter
+    private List&lt;org.apache.maven.model.Dependency&gt; aotDependencies;
+
+    @Inject
+    public AbstractMicronautAotCliMojo(CompilerService compilerService, ExecutorService executorService,
+                                       MavenProject mavenProject, MavenSession mavenSession,
+                                       RepositorySystem repositorySystem, DependencyResolutionService dependencyResolutionService) {
+<span class="nc" id="L82">        super(compilerService, mavenProject, mavenSession, repositorySystem);</span>
+<span class="nc" id="L83">        this.executorService = executorService;</span>
+<span class="nc" id="L84">        this.dependencyResolutionService = dependencyResolutionService;</span>
+<span class="nc" id="L85">    }</span>
+
+    protected abstract List&lt;String&gt; getExtraArgs() throws MojoExecutionException;
+
+    @Override
+    protected void doExecute() throws MojoExecutionException, DependencyResolutionException {
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        if (StringUtils.isEmpty(packageName)) {</span>
+<span class="nc" id="L92">            throw new MojoExecutionException(MICRONAUT_AOT_PACKAGE_NAME + &quot; is not set, and is required if AOT is enabled&quot;);</span>
+        }
+        try {
+<span class="nc" id="L95">            getLog().info(&quot;Packaging project&quot;);</span>
+<span class="nc" id="L96">            compilerService.compileProject(true);</span>
+<span class="nc" id="L97">            InvocationResult packagingResult = compilerService.packageProject();</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">            if (packagingResult.getExitCode() != 0) {</span>
+<span class="nc" id="L99">                getLog().error(&quot;Error when packaging the project: &quot;, packagingResult.getExecutionException());</span>
+            } else {
+<span class="nc" id="L101">                executeAot();</span>
+            }
+<span class="nc" id="L103">        } catch (MavenInvocationException e) {</span>
+<span class="nc" id="L104">            getLog().error(&quot;Error when packaging project&quot;, e);</span>
+<span class="nc" id="L105">        }</span>
+<span class="nc" id="L106">    }</span>
+
+    private void executeAot() throws DependencyResolutionException, MojoExecutionException {
+<span class="nc" id="L109">        getLog().info(&quot;Executing Micronaut AOT analysis&quot;);</span>
+<span class="nc" id="L110">        Xpp3Dom config = createExecPluginConfig();</span>
+
+<span class="nc" id="L112">        executorService.executeGoal(</span>
+                EXEC_MAVEN_PLUGIN_GROUP,
+                EXEC_MAVEN_PLUGIN_ARTIFACT,
+<span class="nc" id="L115">                mavenProject.getProperties().getProperty(EXEC_MAVEN_PLUGIN_VERSION_PROPERTY, DEFAULT_EXEC_MAVEN_PLUGIN_VERSION),</span>
+                &quot;exec&quot;,
+                config
+        );
+<span class="nc" id="L119">    }</span>
+
+    private Xpp3Dom createExecPluginConfig() throws DependencyResolutionException, MojoExecutionException {
+<span class="nc" id="L122">        List&lt;String&gt; aotClasspath = resolveAotClasspath();</span>
+<span class="nc" id="L123">        List&lt;String&gt; aotPluginsClasspath = resolveAotPluginsClasspath();</span>
+<span class="nc" id="L124">        List&lt;String&gt; applicationClasspath = resolveApplicationClasspath();</span>
+
+<span class="nc" id="L126">        List&lt;String&gt; classpath = new ArrayList&lt;&gt;(aotPluginsClasspath.size() + applicationClasspath.size());</span>
+<span class="nc" id="L127">        classpath.addAll(aotClasspath);</span>
+<span class="nc" id="L128">        classpath.addAll(aotPluginsClasspath);</span>
+<span class="nc" id="L129">        classpath.addAll(applicationClasspath);</span>
+<span class="nc" id="L130">        MojoExecutor.Element[] runnerArgs = Stream.concat(Stream.of(</span>
+                        &quot;-classpath&quot;,
+<span class="nc" id="L132">                        String.join(File.pathSeparator, aotClasspath),</span>
+                        MICRONAUT_AOT_MAIN_CLASS,
+
+                        // CLI args
+<span class="nc" id="L136">                        &quot;--classpath=&quot; + String.join(File.pathSeparator, classpath),</span>
+                        &quot;--package=&quot; + packageName,
+                        &quot;--runtime=&quot; + runtime
+<span class="nc" id="L139">                ), getExtraArgs().stream())</span>
+<span class="nc" id="L140">                .map(arg -&gt; element(&quot;argument&quot;, arg))</span>
+<span class="nc" id="L141">                .toArray(MojoExecutor.Element[]::new);</span>
+<span class="nc" id="L142">        return configuration(</span>
+<span class="nc" id="L143">                element(&quot;executable&quot;, &quot;java&quot;),</span>
+<span class="nc" id="L144">                element(&quot;arguments&quot;, runnerArgs)</span>
+        );
+    }
+
+    private List&lt;String&gt; resolveApplicationClasspath() {
+<span class="nc" id="L149">        String projectJar = new File(mavenProject.getBuild().getDirectory(), mavenProject.getBuild().getFinalName() + &quot;.jar&quot;).getAbsolutePath();</span>
+<span class="nc" id="L150">        List&lt;String&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L151">        result.add(projectJar);</span>
+<span class="nc" id="L152">        String classpath = compilerService.buildClasspath(compilerService.resolveDependencies(JavaScopes.RUNTIME));</span>
+<span class="nc" id="L153">        result.addAll(Arrays.asList(classpath.split(File.pathSeparator)));</span>
+<span class="nc" id="L154">        return result;</span>
+    }
+
+    private List&lt;String&gt; resolveAotClasspath() throws DependencyResolutionException {
+<span class="nc" id="L158">        Stream&lt;Artifact&gt; aotArtifacts = Arrays.stream(AOT_MODULES)</span>
+<span class="nc" id="L159">                .map(m -&gt; new DefaultArtifact(MICRONAUT_AOT_GROUP_ID + &quot;:&quot; + MICRONAUT_AOT_ARTIFACT_ID_PREFIX + m + &quot;:&quot; + micronautAotVersion));</span>
+<span class="nc" id="L160">        return toClasspath(dependencyResolutionService.artifactResultsFor(aotArtifacts, false));</span>
+    }
+
+    private List&lt;String&gt; resolveAotPluginsClasspath() throws DependencyResolutionException {
+<span class="nc bnc" id="L164" title="All 4 branches missed.">        if (aotDependencies != null &amp;&amp; !aotDependencies.isEmpty()) {</span>
+<span class="nc" id="L165">            Stream&lt;Artifact&gt; aotPlugins = aotDependencies.stream().map(d -&gt; new DefaultArtifact(d.getGroupId(), d.getArtifactId(), d.getType(), d.getVersion()));</span>
+<span class="nc" id="L166">            return toClasspath(dependencyResolutionService.artifactResultsFor(aotPlugins, false));</span>
+        } else {
+<span class="nc" id="L168">            return Collections.emptyList();</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

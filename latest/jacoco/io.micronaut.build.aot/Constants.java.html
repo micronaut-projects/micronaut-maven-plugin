@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Constants.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.build.aot</a> &gt; <span class="el_source">Constants.java</span></div><h1>Constants.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.build.aot;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+abstract class Constants {
+<span class="nc" id="L23">    static final List&lt;String&gt; TYPES_TO_CHECK = Collections.unmodifiableList(Arrays.asList(</span>
+            &quot;io.reactivex.Observable&quot;,
+            &quot;reactor.core.publisher.Flux&quot;,
+            &quot;kotlinx.coroutines.flow.Flow&quot;,
+            &quot;io.reactivex.rxjava3.core.Flowable&quot;,
+            &quot;io.reactivex.rxjava3.core.Observable&quot;,
+            &quot;io.reactivex.Single&quot;,
+            &quot;reactor.core.publisher.Mono&quot;,
+            &quot;io.reactivex.Maybe&quot;,
+            &quot;io.reactivex.rxjava3.core.Single&quot;,
+            &quot;io.reactivex.rxjava3.core.Maybe&quot;,
+            &quot;io.reactivex.Completable&quot;,
+            &quot;io.reactivex.rxjava3.core.Completable&quot;,
+            &quot;io.methvin.watchservice.MacOSXListeningWatchService&quot;,
+            &quot;io.micronaut.core.async.publisher.CompletableFuturePublisher&quot;,
+            &quot;io.micronaut.core.async.publisher.Publishers.JustPublisher&quot;,
+            &quot;io.micronaut.core.async.subscriber.Completable&quot;
+    ));
+
+<span class="nc" id="L42">    static final List&lt;String&gt; SERVICE_TYPES = Collections.unmodifiableList(Arrays.asList(</span>
+            &quot;io.micronaut.context.env.PropertySourceLoader&quot;,
+            &quot;io.micronaut.inject.BeanConfiguration&quot;,
+            &quot;io.micronaut.inject.BeanDefinitionReference&quot;,
+            &quot;io.micronaut.http.HttpRequestFactory&quot;,
+            &quot;io.micronaut.http.HttpResponseFactory&quot;,
+            &quot;io.micronaut.core.beans.BeanIntrospectionReference&quot;
+    ));
+
+    static final String MICRONAUT_AOT_GROUP_ID = &quot;io.micronaut.aot&quot;;
+    static final String MICRONAUT_AOT_ARTIFACT_ID_PREFIX = &quot;micronaut-aot-&quot;;
+    static final String MICRONAUT_AOT_MAIN_CLASS = &quot;io.micronaut.aot.cli.Main&quot;;
+    static final String MICRONAUT_AOT_PACKAGE_NAME = &quot;micronaut.aot.packageName&quot;;
+
+    private Constants() {
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

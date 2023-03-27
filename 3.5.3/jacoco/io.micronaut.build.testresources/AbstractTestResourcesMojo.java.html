@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractTestResourcesMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.build.testresources</a> &gt; <span class="el_source">AbstractTestResourcesMojo.java</span></div><h1>AbstractTestResourcesMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2021 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.build.testresources;
+
+import org.apache.maven.model.Dependency;
+import org.apache.maven.plugin.ContextEnabled;
+import org.apache.maven.plugin.Mojo;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugin.logging.SystemStreamLog;
+import org.apache.maven.plugins.annotations.Parameter;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Base mojo for Micronaut test resources service handling.
+ */
+<span class="nc" id="L33">public abstract class AbstractTestResourcesMojo extends TestResourcesConfiguration implements Mojo, ContextEnabled {</span>
+
+    private static final String DEFAULT_CLASSPATH_INFERENCE = &quot;true&quot;;
+    private static final String DEFAULT_CLIENT_TIMEOUT = &quot;60&quot;;
+
+    /**
+     * Instance logger.
+     */
+    protected Log log;
+
+    /**
+     * Plugin container context.
+     */
+    protected Map pluginContext;
+
+    @Parameter(defaultValue = &quot;${project.build.directory}&quot;, required = true)
+    protected File buildDirectory;
+
+    /**
+     * Micronaut Test Resources version. Should be defined by the Micronaut BOM, but this parameter can be used to
+     * define a different version.
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + &quot;version&quot;, required = true)
+    protected String testResourcesVersion;
+
+    /**
+     * If set to true, Micronaut will attempt to infer which dependencies should be added to the Test Resources server
+     * classpath, based on the project dependencies. In general the result will consist of modules from the
+     * test-resources project, but it may consist of additional entries, for example database drivers.
+     */
+<span class="nc" id="L63">    @Parameter(defaultValue = DEFAULT_CLASSPATH_INFERENCE)</span>
+<span class="nc" id="L64">    protected Boolean classpathInference = Boolean.valueOf(DEFAULT_CLASSPATH_INFERENCE);</span>
+
+    /**
+     * Additional dependencies to add to the Test Resources server classpath when not using classpath inference, or when
+     * the inference doesn't produce the desired result.
+     */
+    @Parameter
+    protected List&lt;Dependency&gt; testResourcesDependencies;
+
+    /**
+     * By default, the Test Resources server will be started on a random (available) port, but it can be set a fixed port
+     * by using this parameter.
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + &quot;port&quot;)
+    protected Integer explicitPort;
+
+    /**
+     * Configures the maximum amount of time to wait for the server to start a test resource. Some containeres may take
+     * a long amount of time to start with slow internet connections.
+     */
+<span class="nc" id="L84">    @Parameter(property = CONFIG_PROPERTY_PREFIX + &quot;client-timeout&quot;, defaultValue = DEFAULT_CLIENT_TIMEOUT)</span>
+<span class="nc" id="L85">    protected Integer clientTimeout = Integer.valueOf(DEFAULT_CLIENT_TIMEOUT);</span>
+
+    public static Path serverSettingsDirectoryOf(Path buildDir) {
+<span class="nc" id="L88">        return buildDir.resolve(&quot;../.micronaut/test-resources&quot;);</span>
+    }
+
+    /**
+     * @see org.apache.maven.plugin.Mojo#setLog(org.apache.maven.plugin.logging.Log)
+     */
+    public void setLog(Log log) {
+<span class="nc" id="L95">        this.log = log;</span>
+<span class="nc" id="L96">    }</span>
+
+    /**
+     * Returns the logger that has been injected into this mojo. If no logger has been setup yet, a
+     * &lt;code&gt;SystemStreamLog&lt;/code&gt; logger will be created and returned.
+     * &lt;strong&gt;Note:&lt;/strong&gt;
+     * The logger returned by this method must not be cached in an instance field during the construction of the mojo.
+     * This would cause the mojo to use a wrongly configured default logger when being run by Maven. The proper logger
+     * gets injected by the Plexus container &lt;em&gt;after&lt;/em&gt; the mojo has been constructed. Therefore, simply call this
+     * method directly whenever you need the logger, it is fast enough and needs no caching.
+     *
+     * @see org.apache.maven.plugin.Mojo#getLog()
+     */
+    public Log getLog() {
+<span class="nc bnc" id="L110" title="All 2 branches missed.">        if (log == null) {</span>
+<span class="nc" id="L111">            log = new SystemStreamLog();</span>
+        }
+<span class="nc" id="L113">        return log;</span>
+    }
+
+    /**
+     * @see org.apache.maven.plugin.ContextEnabled#getPluginContext()
+     */
+    public Map getPluginContext() {
+<span class="nc" id="L120">        return pluginContext;</span>
+    }
+
+    /**
+     * @see org.apache.maven.plugin.ContextEnabled#setPluginContext(java.util.Map)
+     */
+    public void setPluginContext(Map pluginContext) {
+<span class="nc" id="L127">        this.pluginContext = pluginContext;</span>
+<span class="nc" id="L128">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

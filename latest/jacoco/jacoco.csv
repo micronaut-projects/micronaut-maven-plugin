@@ -1,0 +1,36 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Micronaut Maven Plugin,io.micronaut.build.services,CompilerService,337,0,24,0,76,0,24,0,12,0
+Micronaut Maven Plugin,io.micronaut.build.services,DockerService,287,0,12,0,60,0,16,0,10,0
+Micronaut Maven Plugin,io.micronaut.build.services,DependencyResolutionService,272,0,6,0,45,0,16,0,13,0
+Micronaut Maven Plugin,io.micronaut.build.services,ApplicationConfigurationService,118,0,6,0,16,0,6,0,3,0
+Micronaut Maven Plugin,io.micronaut.build.services,DockerService.new BuildImageResultCallback() {...},33,0,6,0,8,0,5,0,2,0
+Micronaut Maven Plugin,io.micronaut.build.services,ExecutorService,117,0,10,0,28,0,9,0,4,0
+Micronaut Maven Plugin,io.micronaut.build.services,JibConfigurationService,279,0,50,0,67,0,33,0,8,0
+Micronaut Maven Plugin,io.micronaut.build.testresources,StopTestResourcesServerMojo,51,0,0,0,10,0,2,0,2,0
+Micronaut Maven Plugin,io.micronaut.build.testresources,TestResourcesConfiguration,15,0,0,0,5,0,5,0,5,0
+Micronaut Maven Plugin,io.micronaut.build.testresources,TestResourcesLifecycleExtension,447,0,38,0,110,0,40,0,21,0
+Micronaut Maven Plugin,io.micronaut.build.testresources,StartTestResourcesServerMojo,51,0,0,0,10,0,2,0,2,0
+Micronaut Maven Plugin,io.micronaut.build.testresources,TestResourcesHelper.new ServerFactory() {...},107,0,2,0,18,0,5,0,4,0
+Micronaut Maven Plugin,io.micronaut.build.testresources,TestResourcesHelper,335,0,28,0,93,0,27,0,13,0
+Micronaut Maven Plugin,io.micronaut.build.testresources,AbstractTestResourcesMojo,37,0,2,0,14,0,7,0,6,0
+Micronaut Maven Plugin,io.micronaut.build.testresources,TestResourcesHelper.new SimpleFileVisitor() {...},20,0,0,0,5,0,3,0,3,0
+Micronaut Maven Plugin,io.micronaut.build.jib,JibMicronautExtension,236,121,13,8,47,31,12,6,5,2
+Micronaut Maven Plugin,io.micronaut.build.aot,AotAnalysisMojo,213,0,8,0,47,0,11,0,7,0
+Micronaut Maven Plugin,io.micronaut.build.aot,Constants,99,0,0,0,2,0,1,0,1,0
+Micronaut Maven Plugin,io.micronaut.build.aot,AotSampleMojo,47,0,2,0,9,0,5,0,4,0
+Micronaut Maven Plugin,io.micronaut.build.aot,AotRuntime,24,0,0,0,2,0,1,0,1,0
+Micronaut Maven Plugin,io.micronaut.build.aot,AbstractMicronautAotCliMojo,323,0,8,0,51,0,16,0,12,0
+Micronaut Maven Plugin,io.micronaut.build.aot,AbstractMicronautAotMojo,180,0,11,0,40,0,13,0,7,0
+Micronaut Maven Plugin,io.micronaut.build.micronaut_maven_plugin,HelpMojo,863,0,110,0,155,0,71,0,16,0
+Micronaut Maven Plugin,io.micronaut.build,MicronautRuntime,115,0,0,0,17,0,4,0,4,0
+Micronaut Maven Plugin,io.micronaut.build,DockerfileMojo,443,0,46,0,91,0,34,0,9,0
+Micronaut Maven Plugin,io.micronaut.build,MojoUtils,48,0,6,0,10,0,4,0,1,0
+Micronaut Maven Plugin,io.micronaut.build,DockerPushMojo,138,0,12,0,32,0,8,0,2,0
+Micronaut Maven Plugin,io.micronaut.build,DockerMojo,108,0,4,0,21,0,4,0,2,0
+Micronaut Maven Plugin,io.micronaut.build,Packaging,77,0,0,0,11,0,4,0,4,0
+Micronaut Maven Plugin,io.micronaut.build,GraalVMResourcesMojo,292,0,22,0,55,0,18,0,7,0
+Micronaut Maven Plugin,io.micronaut.build,DockerNativeMojo,550,0,45,0,103,0,31,0,8,0
+Micronaut Maven Plugin,io.micronaut.build,DockerCracMojo,417,0,15,0,74,0,17,0,9,0
+Micronaut Maven Plugin,io.micronaut.build,RunMojo,1142,0,170,0,225,0,106,0,21,0
+Micronaut Maven Plugin,io.micronaut.build,AbstractDockerMojo,337,0,26,0,56,0,28,0,15,0
+Micronaut Maven Plugin,io.micronaut.build,DockerBuildStrategy,34,0,0,0,4,0,1,0,1,0

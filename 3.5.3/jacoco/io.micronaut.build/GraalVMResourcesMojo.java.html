@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GraalVMResourcesMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.build</a> &gt; <span class="el_source">GraalVMResourcesMojo.java</span></div><h1>GraalVMResourcesMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.build;
+
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import org.apache.maven.model.Resource;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.resources.ResourcesMojo;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * &lt;p&gt;Generate GraalVM &lt;code&gt;resources-config.json&lt;/code&gt; with all the resources included in the application&lt;/p&gt;
+ * &lt;p&gt;&lt;strong&gt;WARNING&lt;/strong&gt;: this goal is not intended to be executed directly.&lt;/p&gt;
+ *
+ * @author Iván López
+ * @since 2.0
+ */
+@Mojo(name = GraalVMResourcesMojo.GRAALVM_RESOURCES)
+<span class="nc" id="L43">public class GraalVMResourcesMojo extends ResourcesMojo {</span>
+
+    public static final String GRAALVM_RESOURCES = &quot;graalvm-resources&quot;;
+
+    private static final String META_INF = &quot;META-INF&quot;;
+    private static final String RESOURCES = &quot;resources&quot;;
+    private static final String PATTERN = &quot;pattern&quot;;
+    private static final String RESOURCE_CONFIG_JSON = &quot;resource-config.json&quot;;
+<span class="nc" id="L51">    private static final List&lt;String&gt; EXCLUDED_META_INF_DIRECTORIES = Arrays.asList(&quot;native-image&quot;, &quot;services&quot;);</span>
+
+<span class="nc" id="L53">    private final ObjectWriter writer = new ObjectMapper().writer(new DefaultPrettyPrinter());</span>
+
+    @Parameter(property = &quot;micronaut.native-image.skip-resources&quot;, defaultValue = &quot;false&quot;)
+    private Boolean nativeImageSkipResources;
+
+    @Override
+    public void execute() throws MojoExecutionException {
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (Boolean.TRUE.equals(nativeImageSkipResources)) {</span>
+<span class="nc" id="L61">            getLog().info(&quot;Skipping generation of resource-config.json&quot;);</span>
+<span class="nc" id="L62">            return;</span>
+        }
+
+<span class="nc" id="L65">        Set&lt;String&gt; resourcesToAdd = new HashSet&lt;&gt;();</span>
+
+        // Application resources (src/main/resources)
+<span class="nc bnc" id="L68" title="All 2 branches missed.">        for (Resource resource : getResources()) {</span>
+<span class="nc" id="L69">            resourcesToAdd.addAll(findResourceFiles(Paths.get(resource.getDirectory()).toFile()));</span>
+<span class="nc" id="L70">        }</span>
+
+        // Generated resources (like openapi)
+<span class="nc" id="L73">        Path metaInfPath = getOutputDirectory().toPath().resolve(META_INF);</span>
+<span class="nc" id="L74">        resourcesToAdd.addAll(findResourceFiles(metaInfPath.toFile(), Collections.singletonList(META_INF)));</span>
+
+<span class="nc" id="L76">        Path nativeImagePath = buildNativeImagePath();</span>
+<span class="nc" id="L77">        Path graalVMResourcesPath = metaInfPath.resolve(nativeImagePath).toAbsolutePath();</span>
+
+<span class="nc" id="L79">        Map&lt;String, Object&gt; json = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L80">        List&lt;Map&lt;String, String&gt;&gt; resourceList = resourcesToAdd.stream()</span>
+<span class="nc" id="L81">                .map(this::mapToGraalResource)</span>
+<span class="nc" id="L82">                .collect(Collectors.toList());</span>
+
+<span class="nc" id="L84">        json.put(RESOURCES, resourceList);</span>
+
+        try {
+<span class="nc" id="L87">            Files.createDirectories(graalVMResourcesPath);</span>
+<span class="nc" id="L88">            File resourceConfigFile = graalVMResourcesPath.resolve(RESOURCE_CONFIG_JSON).toFile();</span>
+<span class="nc" id="L89">            getLog().info(&quot;Generating &quot; + resourceConfigFile.getAbsolutePath());</span>
+<span class="nc" id="L90">            writer.writeValue(resourceConfigFile, json);</span>
+
+<span class="nc" id="L92">        } catch (IOException e) {</span>
+<span class="nc" id="L93">            throw new MojoExecutionException(&quot;There was an error generating GraalVM resource-config.json file&quot;, e);</span>
+<span class="nc" id="L94">        }</span>
+<span class="nc" id="L95">    }</span>
+
+    private Set&lt;String&gt; findResourceFiles(File folder) {
+<span class="nc" id="L98">        return this.findResourceFiles(folder, null);</span>
+    }
+
+    private Set&lt;String&gt; findResourceFiles(File folder, List&lt;String&gt; filePath) {
+<span class="nc" id="L102">        Set&lt;String&gt; resourceFiles = new HashSet&lt;&gt;();</span>
+
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        if (filePath == null) {</span>
+<span class="nc" id="L105">            filePath = new ArrayList&lt;&gt;();</span>
+        }
+
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        if (folder.exists()) {</span>
+<span class="nc" id="L109">            File[] files = folder.listFiles();</span>
+
+<span class="nc bnc" id="L111" title="All 2 branches missed.">            if (files != null) {</span>
+<span class="nc" id="L112">                boolean isMetaInfDirectory = folder.getName().equals(META_INF);</span>
+
+<span class="nc bnc" id="L114" title="All 2 branches missed.">                for (File element : files) {</span>
+<span class="nc" id="L115">                    boolean isExcludedDirectory = EXCLUDED_META_INF_DIRECTORIES.contains(element.getName());</span>
+                    // Exclude some directories in 'META-INF' like 'native-image' and 'services' but process other
+                    // 'META-INF' files and directories, for example, to include swagger-ui.
+<span class="nc bnc" id="L118" title="All 4 branches missed.">                    if (!isMetaInfDirectory || !isExcludedDirectory) {</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">                        if (element.isDirectory()) {</span>
+<span class="nc" id="L120">                            List&lt;String&gt; paths = new ArrayList&lt;&gt;(filePath);</span>
+<span class="nc" id="L121">                            paths.add(element.getName());</span>
+
+<span class="nc" id="L123">                            resourceFiles.addAll(findResourceFiles(element, paths));</span>
+<span class="nc" id="L124">                        } else {</span>
+<span class="nc" id="L125">                            String joinedDirectories = String.join(&quot;/&quot;, filePath);</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">                            String elementName = joinedDirectories.isEmpty() ? element.getName() : joinedDirectories + &quot;/&quot; + element.getName();</span>
+
+<span class="nc" id="L128">                            resourceFiles.add(elementName);</span>
+                        }
+                    }
+                }
+            }
+        }
+
+<span class="nc" id="L135">        return resourceFiles;</span>
+    }
+
+    private Path buildNativeImagePath() {
+<span class="nc" id="L139">        String group = project.getGroupId();</span>
+<span class="nc" id="L140">        String module = project.getArtifactId();</span>
+
+<span class="nc" id="L142">        return Paths.get(&quot;native-image&quot;, group, module);</span>
+    }
+
+    private Map&lt;String, String&gt; mapToGraalResource(String resourceName) {
+<span class="nc" id="L146">        Map&lt;String, String&gt; result = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L148" title="All 2 branches missed.">        if (resourceName.contains(&quot;*&quot;)) {</span>
+<span class="nc" id="L149">            result.put(PATTERN, resourceName);</span>
+        } else {
+<span class="nc" id="L151">            result.put(PATTERN, &quot;\\Q&quot; + resourceName + &quot;\\E&quot;);</span>
+        }
+
+<span class="nc" id="L154">        return result;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

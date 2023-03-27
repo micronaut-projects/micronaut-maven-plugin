@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DockerNativeMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.build</a> &gt; <span class="el_source">DockerNativeMojo.java</span></div><h1>DockerNativeMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.build;
+
+import com.github.dockerjava.api.command.BuildImageCmd;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.common.io.FileWriteMode;
+import com.google.common.io.Files;
+import io.micronaut.build.services.ApplicationConfigurationService;
+import io.micronaut.build.services.DockerService;
+import io.micronaut.build.services.JibConfigurationService;
+import io.micronaut.core.util.StringUtils;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+
+import javax.inject.Inject;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.Set;
+
+/**
+ * &lt;p&gt;Implementation of the &lt;code&gt;docker-native&lt;/code&gt; packaging.&lt;/p&gt;
+ * &lt;p&gt;&lt;strong&gt;WARNING&lt;/strong&gt;: this goal is not intended to be executed directly. Instead, specify the packaging type
+ * using the &lt;code&gt;packaging&lt;/code&gt; property, eg:&lt;/p&gt;
+ *
+ * &lt;pre&gt;mvn package -Dpackaging=docker-native&lt;/pre&gt;
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @author Iván López
+ * @since 1.1
+ */
+@Mojo(name = DockerNativeMojo.DOCKER_NATIVE_PACKAGING, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+public class DockerNativeMojo extends AbstractDockerMojo {
+
+    public static final String DOCKER_NATIVE_PACKAGING = &quot;docker-native&quot;;
+    public static final String GRAALVM_ARGS = &quot;GRAALVM_ARGS&quot;;
+    public static final String MICRONAUT_PARENT = &quot;io.micronaut:micronaut-parent&quot;;
+    public static final String MICRONAUT_VERSION = &quot;micronaut.version&quot;;
+
+    @SuppressWarnings(&quot;CdiInjectionPointsInspection&quot;)
+    @Inject
+    public DockerNativeMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
+                            ApplicationConfigurationService applicationConfigurationService, DockerService dockerService) {
+<span class="nc" id="L61">        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService);</span>
+<span class="nc" id="L62">    }</span>
+
+    @Override
+    public void execute() throws MojoExecutionException {
+<span class="nc" id="L66">        checkJavaVersion();</span>
+<span class="nc" id="L67">        checkGraalVm();</span>
+
+        try {
+<span class="nc" id="L70">            copyDependencies();</span>
+
+<span class="nc" id="L72">            MicronautRuntime runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());</span>
+
+<span class="nc bnc" id="L74" title="All 3 branches missed.">            switch (runtime.getBuildStrategy()) {</span>
+                case LAMBDA:
+<span class="nc" id="L76">                    buildDockerNativeLambda();</span>
+<span class="nc" id="L77">                    break;</span>
+
+                case ORACLE_FUNCTION:
+<span class="nc" id="L80">                    buildOracleCloud();</span>
+<span class="nc" id="L81">                    break;</span>
+
+                case DEFAULT:
+                default:
+<span class="nc" id="L85">                    buildDockerNative();</span>
+                    break;
+            }
+
+
+<span class="nc" id="L90">        } catch (InvalidImageReferenceException iire) {</span>
+<span class="nc" id="L91">            String message = &quot;Invalid image reference &quot;</span>
+<span class="nc" id="L92">                    + iire.getInvalidReference()</span>
+                    + &quot;, perhaps you should check that the reference is formatted correctly according to &quot; +
+                    &quot;https://docs.docker.com/engine/reference/commandline/tag/#extended-description&quot; +
+                    &quot;\nFor example, slash-separated name components cannot have uppercase letters&quot;;
+<span class="nc" id="L96">            throw new MojoExecutionException(message);</span>
+<span class="nc" id="L97">        } catch (IOException | IllegalArgumentException e) {</span>
+<span class="nc" id="L98">            throw new MojoExecutionException(e.getMessage(), e);</span>
+<span class="nc" id="L99">        }</span>
+<span class="nc" id="L100">    }</span>
+
+    private void checkGraalVm() throws MojoExecutionException {
+<span class="nc" id="L103">        String micronautVersion = mavenProject.getProperties().getProperty(MICRONAUT_VERSION);</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        if (mavenProject.hasParent()) {</span>
+<span class="nc" id="L105">            String ga = mavenProject.getParent().getGroupId() + &quot;:&quot; + mavenProject.getParent().getArtifactId();</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">            if (MICRONAUT_PARENT.equals(ga)) {</span>
+<span class="nc" id="L107">                String micronautParentVersion = mavenProject.getModel().getParent().getVersion();</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">                if (micronautVersion.equals(micronautParentVersion)) {</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">                    if (!mavenProject.getInjectedProfileIds().get(&quot;io.micronaut:micronaut-parent:&quot; + micronautParentVersion).contains(&quot;graalvm&quot;)) {</span>
+<span class="nc" id="L110">                        String javaVendor = System.getProperty(&quot;java.vendor&quot;, &quot;&quot;);</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">                        if (javaVendor.toLowerCase().contains(&quot;graalvm&quot;)) {</span>
+<span class="nc" id="L112">                            throw new MojoExecutionException(&quot;The [graalvm] profile was not activated automatically because the native-image component is not installed (or not found in your path). Either activate the profile manually (-Pgraalvm) or install the native-image component (gu install native-image), and try again&quot;);</span>
+                        } else {
+<span class="nc" id="L114">                            throw new MojoExecutionException(&quot;The [graalvm] profile was not activated automatically because you are not using a GraalVM JDK. Activate the profile manually (-Pgraalvm) and try again&quot;);</span>
+                        }
+                    }
+                } else {
+<span class="nc" id="L118">                    String message = String.format(&quot;The %s version (%s) differs from the %s property (%s). Please, make sure both refer to the same version&quot;, MICRONAUT_PARENT, micronautParentVersion, MICRONAUT_VERSION, micronautVersion);</span>
+<span class="nc" id="L119">                    throw new MojoExecutionException(message);</span>
+                }
+<span class="nc" id="L121">            } else {</span>
+<span class="nc" id="L122">                getLog().warn(&quot;The parent POM of this project is not set to &quot; + MICRONAUT_PARENT);</span>
+            }
+<span class="nc" id="L124">        } else {</span>
+<span class="nc" id="L125">            getLog().warn(&quot;This project has no parent POM defined. To avoid build problems, please set the parent to &quot; + MICRONAUT_PARENT);</span>
+        }
+<span class="nc" id="L127">    }</span>
+
+    private void checkJavaVersion() throws MojoExecutionException {
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        if (javaVersion().getMajorVersion() &gt; 17) {</span>
+<span class="nc" id="L131">            throw new MojoExecutionException(&quot;To build native images you must set the Java target byte code level to Java 17 or below&quot;);</span>
+        }
+<span class="nc" id="L133">    }</span>
+
+    private void buildDockerNativeLambda() throws IOException {
+<span class="nc" id="L136">        BuildImageCmd buildImageCmd = dockerService.buildImageCmd(DockerfileMojo.DOCKERFILE_AWS_CUSTOM_RUNTIME)</span>
+<span class="nc" id="L137">                .withBuildArg(&quot;GRAALVM_VERSION&quot;, graalVmVersion())</span>
+<span class="nc" id="L138">                .withBuildArg(&quot;GRAALVM_JVM_VERSION&quot;, graalVmJvmVersion())</span>
+<span class="nc" id="L139">                .withBuildArg(&quot;GRAALVM_ARCH&quot;, graalVmArch());</span>
+
+<span class="nc" id="L141">        getLog().info(&quot;Using GRAALVM_VERSION: &quot; + graalVmVersion());</span>
+<span class="nc" id="L142">        getLog().info(&quot;Using GRAALVM_JVM_VERSION: &quot; + graalVmJvmVersion());</span>
+<span class="nc" id="L143">        getLog().info(&quot;Using GRAALVM_ARCH: &quot; + graalVmArch());</span>
+
+        // Starter sets the right class in pom.xml:
+        //   - For applications: io.micronaut.function.aws.runtime.MicronautLambdaRuntime
+        //   - For function apps: com.example.BookLambdaRuntime
+<span class="nc" id="L148">        getLog().info(&quot;Using CLASS_NAME: &quot; + mainClass);</span>
+<span class="nc" id="L149">        buildImageCmd.withBuildArg(&quot;CLASS_NAME&quot;, mainClass);</span>
+
+<span class="nc" id="L151">        String graalVmBuildArgs = getGraalVmBuildArgs();</span>
+<span class="nc bnc" id="L152" title="All 4 branches missed.">        if (graalVmBuildArgs != null &amp;&amp; !graalVmBuildArgs.isEmpty()) {</span>
+<span class="nc" id="L153">            getLog().info(&quot;Using GRAALVM_ARGS: &quot; + graalVmBuildArgs);</span>
+<span class="nc" id="L154">            buildImageCmd = buildImageCmd.withBuildArg(GRAALVM_ARGS, graalVmBuildArgs);</span>
+        }
+
+<span class="nc" id="L157">        String imageId = dockerService.buildImage(buildImageCmd);</span>
+<span class="nc" id="L158">        File functionZip = dockerService.copyFromContainer(imageId, &quot;/function/function.zip&quot;);</span>
+<span class="nc" id="L159">        getLog().info(&quot;AWS Lambda Custom Runtime ZIP: &quot; + functionZip.getPath());</span>
+<span class="nc" id="L160">    }</span>
+
+    private void buildDockerNative() throws IOException, InvalidImageReferenceException {
+<span class="nc" id="L163">        String dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE;</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        if (staticNativeImage) {</span>
+<span class="nc" id="L165">            getLog().info(&quot;Generating a static native image&quot;);</span>
+<span class="nc" id="L166">            dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_STATIC;</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">        } else if (baseImageRun.contains(&quot;distroless&quot;)) {</span>
+<span class="nc" id="L168">            getLog().info(&quot;Generating a mostly static native image&quot;);</span>
+<span class="nc" id="L169">            dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_DISTROLESS;</span>
+        }
+
+<span class="nc" id="L172">        buildDockerfile(dockerfileName, true);</span>
+<span class="nc" id="L173">    }</span>
+
+    private void buildOracleCloud() throws IOException, InvalidImageReferenceException {
+<span class="nc" id="L176">        buildDockerfile(DockerfileMojo.DOCKERFILE_NATIVE_ORACLE_CLOUD, false);</span>
+<span class="nc" id="L177">    }</span>
+
+    private void buildDockerfile(String dockerfileName, boolean passClassName) throws IOException, InvalidImageReferenceException {
+<span class="nc" id="L180">        Set&lt;String&gt; tags = getTags();</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">        for (String tag : tags) {</span>
+<span class="nc" id="L182">            ImageReference.parse(tag);</span>
+<span class="nc" id="L183">        }</span>
+
+<span class="nc" id="L185">        String from = getFrom();</span>
+<span class="nc" id="L186">        String port = getPort();</span>
+<span class="nc" id="L187">        getLog().info(&quot;Exposing port: &quot; + port);</span>
+
+<span class="nc" id="L189">        File dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);</span>
+
+<span class="nc bnc" id="L191" title="All 4 branches missed.">        if (appArguments != null &amp;&amp; !appArguments.isEmpty()) {</span>
+<span class="nc" id="L192">            getLog().info(&quot;Using application arguments: &quot; + appArguments);</span>
+<span class="nc" id="L193">            Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());</span>
+        }
+
+<span class="nc" id="L196">        BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
+<span class="nc" id="L197">                .withDockerfile(dockerfile)</span>
+<span class="nc" id="L198">                .withTags(getTags())</span>
+<span class="nc" id="L199">                .withBuildArg(&quot;BASE_IMAGE&quot;, from)</span>
+<span class="nc" id="L200">                .withBuildArg(&quot;PORT&quot;, port);</span>
+
+<span class="nc" id="L202">        getLog().info(&quot;Using BASE_IMAGE: &quot; + from);</span>
+<span class="nc bnc" id="L203" title="All 4 branches missed.">        if (StringUtils.isNotEmpty(baseImageRun) &amp;&amp; !staticNativeImage) {</span>
+<span class="nc" id="L204">            getLog().info(&quot;Using BASE_IMAGE_RUN: &quot; + baseImageRun);</span>
+<span class="nc" id="L205">            buildImageCmd.withBuildArg(&quot;BASE_IMAGE_RUN&quot;, baseImageRun);</span>
+        }
+
+<span class="nc bnc" id="L208" title="All 2 branches missed.">        if (baseImageRun.contains(&quot;alpine-glibc&quot;)) {</span>
+<span class="nc" id="L209">            buildImageCmd.withBuildArg(&quot;EXTRA_CMD&quot;, &quot;apk update &amp;&amp; apk add libstdc++&quot;);</span>
+        } else {
+<span class="nc" id="L211">            buildImageCmd.withBuildArg(&quot;EXTRA_CMD&quot;, &quot;&quot;);</span>
+        }
+
+<span class="nc bnc" id="L214" title="All 2 branches missed.">        if (passClassName) {</span>
+<span class="nc" id="L215">            getLog().info(&quot;Using CLASS_NAME: &quot; + mainClass);</span>
+<span class="nc" id="L216">            buildImageCmd = buildImageCmd.withBuildArg(&quot;CLASS_NAME&quot;, mainClass);</span>
+        }
+
+<span class="nc" id="L219">        String graalVmBuildArgs = getGraalVmBuildArgs();</span>
+<span class="nc bnc" id="L220" title="All 4 branches missed.">        if (baseImageRun.contains(&quot;distroless&quot;) &amp;&amp; !graalVmBuildArgs.contains(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG)) {</span>
+<span class="nc" id="L221">            graalVmBuildArgs = MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG + &quot; &quot; + graalVmBuildArgs;</span>
+        }
+
+<span class="nc bnc" id="L224" title="All 4 branches missed.">        if (graalVmBuildArgs != null &amp;&amp; !graalVmBuildArgs.isEmpty()) {</span>
+<span class="nc" id="L225">            getLog().info(&quot;Using GRAALVM_ARGS: &quot; + graalVmBuildArgs);</span>
+<span class="nc" id="L226">            buildImageCmd = buildImageCmd.withBuildArg(GRAALVM_ARGS, graalVmBuildArgs);</span>
+        }
+
+<span class="nc" id="L229">        dockerService.buildImage(buildImageCmd);</span>
+<span class="nc" id="L230">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

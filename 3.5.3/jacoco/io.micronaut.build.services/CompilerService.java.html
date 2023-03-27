@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CompilerService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.build.services</a> &gt; <span class="el_source">CompilerService.java</span></div><h1>CompilerService.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.build.services;
+
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugin.logging.SystemStreamLog;
+import org.apache.maven.project.*;
+import org.apache.maven.shared.invoker.*;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.graph.DependencyFilter;
+import org.eclipse.aether.util.filter.DependencyFilterUtils;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.File;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+/**
+ * Provides methods to compile a Maven project.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 1.1
+ */
+@Singleton
+public class CompilerService {
+
+    public static final String MAVEN_COMPILER_PLUGIN = &quot;org.apache.maven.plugins:maven-compiler-plugin&quot;;
+    public static final String MAVEN_JAR_PLUGIN = &quot;org.apache.maven.plugins:maven-jar-plugin&quot;;
+    public static final String MAVEN_RESOURCES_PLUGIN = &quot;org.apache.maven.plugins:maven-resources-plugin&quot;;
+    public static final String GMAVEN_PLUS_PLUGIN = &quot;org.codehaus.gmavenplus:gmavenplus-plugin&quot;;
+    public static final String KOTLIN_MAVEN_PLUGIN = &quot;org.jetbrains.kotlin:kotlin-maven-plugin&quot;;
+
+    private static final String JAVA = &quot;java&quot;;
+    private static final String GROOVY = &quot;groovy&quot;;
+    private static final String KOTLIN = &quot;kotlin&quot;;
+    private static final String COMPILE_GOAL = &quot;compile&quot;;
+    private static final String RESOURCES_GOAL = &quot;resources&quot;;
+
+    private final Log log;
+    private final Map&lt;String, Path&gt; sourceDirectories;
+    private final MavenProject mavenProject;
+    private final MavenSession mavenSession;
+    private final ExecutorService executorService;
+    private final ProjectDependenciesResolver resolver;
+    private final Invoker invoker;
+
+    @SuppressWarnings(&quot;CdiInjectionPointsInspection&quot;)
+    @Inject
+    public CompilerService(MavenProject mavenProject, MavenSession mavenSession, ExecutorService executorService,
+<span class="nc" id="L71">                           ProjectDependenciesResolver resolver) {</span>
+<span class="nc" id="L72">        this.resolver = resolver;</span>
+<span class="nc" id="L73">        this.log = new SystemStreamLog();</span>
+<span class="nc" id="L74">        this.mavenProject = mavenProject;</span>
+<span class="nc" id="L75">        this.mavenSession = mavenSession;</span>
+<span class="nc" id="L76">        this.executorService = executorService;</span>
+<span class="nc" id="L77">        this.sourceDirectories = resolveSourceDirectories();</span>
+<span class="nc" id="L78">        this.invoker = new DefaultInvoker();</span>
+<span class="nc" id="L79">    }</span>
+
+    /**
+     * Compiles the project.
+     * @param copyResources whether to copy resources to the target directory.
+     * @return the last compilation time millis.
+     */
+    public Optional&lt;Long&gt; compileProject(boolean copyResources) {
+<span class="nc" id="L87">        Long lastCompilation = null;</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">        if (log.isDebugEnabled()) {</span>
+<span class="nc" id="L89">            log.debug(&quot;Compiling the project&quot;);</span>
+        }
+        try {
+<span class="nc bnc" id="L92" title="All 2 branches missed.">            if (sourceDirectories.containsKey(GROOVY)) {</span>
+<span class="nc" id="L93">                executorService.executeGoal(GMAVEN_PLUS_PLUGIN, &quot;addSources&quot;);</span>
+<span class="nc" id="L94">                executorService.executeGoal(GMAVEN_PLUS_PLUGIN, &quot;generateStubs&quot;);</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">                if (copyResources) {</span>
+<span class="nc" id="L96">                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, RESOURCES_GOAL);</span>
+                }
+<span class="nc" id="L98">                executorService.executeGoal(MAVEN_COMPILER_PLUGIN, COMPILE_GOAL);</span>
+<span class="nc" id="L99">                executorService.executeGoal(GMAVEN_PLUS_PLUGIN, COMPILE_GOAL);</span>
+<span class="nc" id="L100">                executorService.executeGoal(GMAVEN_PLUS_PLUGIN, &quot;removeStubs&quot;);</span>
+<span class="nc" id="L101">                lastCompilation = System.currentTimeMillis();</span>
+            }
+<span class="nc bnc" id="L103" title="All 2 branches missed.">            if (sourceDirectories.containsKey(KOTLIN)) {</span>
+<span class="nc" id="L104">                executorService.executeGoal(KOTLIN_MAVEN_PLUGIN, &quot;kapt&quot;);</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">                if (copyResources) {</span>
+<span class="nc" id="L106">                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, RESOURCES_GOAL);</span>
+                }
+<span class="nc" id="L108">                executorService.executeGoal(KOTLIN_MAVEN_PLUGIN, COMPILE_GOAL);</span>
+<span class="nc" id="L109">                executorService.executeGoal(MAVEN_COMPILER_PLUGIN, &quot;compile#java-compile&quot;);</span>
+<span class="nc" id="L110">                lastCompilation = System.currentTimeMillis();</span>
+            }
+<span class="nc bnc" id="L112" title="All 2 branches missed.">            if (sourceDirectories.containsKey(JAVA)) {</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">                if (copyResources) {</span>
+<span class="nc" id="L114">                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, RESOURCES_GOAL);</span>
+                }
+<span class="nc" id="L116">                executorService.executeGoal(MAVEN_COMPILER_PLUGIN, COMPILE_GOAL);</span>
+<span class="nc" id="L117">                lastCompilation = System.currentTimeMillis();</span>
+            }
+<span class="nc" id="L119">        } catch (MojoExecutionException e) {</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">            if (log.isErrorEnabled()) {</span>
+<span class="nc" id="L121">                log.error(&quot;Error while compiling the project: &quot;, e);</span>
+            }
+<span class="nc" id="L123">        }</span>
+<span class="nc" id="L124">        return Optional.ofNullable(lastCompilation);</span>
+    }
+
+    /**
+     * Resolves the source directories by checking the existence of Java, Groovy or Kotlin sources.
+     */
+    public Map&lt;String, Path&gt; resolveSourceDirectories() {
+<span class="nc bnc" id="L131" title="All 2 branches missed.">        if (log.isDebugEnabled()) {</span>
+<span class="nc" id="L132">            log.debug(&quot;Resolving source directories...&quot;);</span>
+        }
+<span class="nc" id="L134">        AtomicReference&lt;String&gt; lang = new AtomicReference&lt;&gt;();</span>
+<span class="nc" id="L135">        Map&lt;String, Path&gt; sourceDirectoriesToResolve = Stream.of(JAVA, GROOVY, KOTLIN)</span>
+<span class="nc" id="L136">                .peek(lang::set)</span>
+<span class="nc" id="L137">                .map(l -&gt; new File(mavenProject.getBasedir(), &quot;src/main/&quot; + l))</span>
+<span class="nc" id="L138">                .filter(File::exists)</span>
+<span class="nc" id="L139">                .peek(f -&gt; {</span>
+<span class="nc bnc" id="L140" title="All 2 branches missed.">                    if (log.isDebugEnabled()) {</span>
+<span class="nc" id="L141">                        log.debug(&quot;Found source: &quot; + f.getPath());</span>
+                    }
+<span class="nc" id="L143">                })</span>
+<span class="nc" id="L144">                .map(File::toPath)</span>
+<span class="nc" id="L145">                .collect(Collectors.toMap(path -&gt; lang.get(), Function.identity()));</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">        if (sourceDirectoriesToResolve.isEmpty()) {</span>
+<span class="nc" id="L147">            throw new IllegalStateException(&quot;Source folders not found for neither Java/Groovy/Kotlin&quot;);</span>
+        }
+<span class="nc" id="L149">        return sourceDirectoriesToResolve;</span>
+    }
+
+    /**
+     * Resolves project dependencies for the given scopes.
+     */
+    public List&lt;Dependency&gt; resolveDependencies(String... scopes) {
+        try {
+<span class="nc" id="L157">            DependencyFilter filter = DependencyFilterUtils.classpathFilter(scopes);</span>
+<span class="nc" id="L158">            RepositorySystemSession session = mavenSession.getRepositorySession();</span>
+<span class="nc" id="L159">            DependencyResolutionRequest dependencyResolutionRequest = new DefaultDependencyResolutionRequest(mavenProject, session);</span>
+<span class="nc" id="L160">            dependencyResolutionRequest.setResolutionFilter(filter);</span>
+<span class="nc" id="L161">            DependencyResolutionResult result = resolver.resolve(dependencyResolutionRequest);</span>
+<span class="nc" id="L162">            return result.getDependencies();</span>
+<span class="nc" id="L163">        } catch (org.apache.maven.project.DependencyResolutionException e) {</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">            if (log.isWarnEnabled()) {</span>
+<span class="nc" id="L165">                log.warn(&quot;Error while trying to resolve dependencies for the current project&quot;, e);</span>
+            }
+<span class="nc" id="L167">            return Collections.emptyList();</span>
+        }
+    }
+
+    /**
+     * Builds a classpath string for the given dependencies.
+     */
+    public String buildClasspath(List&lt;Dependency&gt; dependencies) {
+<span class="nc" id="L175">        Comparator&lt;Dependency&gt; byGroupId = Comparator.comparing(d -&gt; d.getArtifact().getGroupId());</span>
+<span class="nc" id="L176">        Comparator&lt;Dependency&gt; byArtifactId = Comparator.comparing(d -&gt; d.getArtifact().getArtifactId());</span>
+<span class="nc" id="L177">        return dependencies.stream()</span>
+<span class="nc" id="L178">                .sorted(byGroupId.thenComparing(byArtifactId))</span>
+<span class="nc" id="L179">                .map(dependency -&gt; dependency.getArtifact().getFile().getAbsolutePath())</span>
+<span class="nc" id="L180">                .collect(Collectors.joining(File.pathSeparator));</span>
+    }
+
+    /**
+     * Packages the project by invoking the Jar plugin.
+     */
+    public InvocationResult packageProject() throws MavenInvocationException {
+<span class="nc" id="L187">        InvocationRequest request = new DefaultInvocationRequest();</span>
+<span class="nc" id="L188">        request.setPomFile(mavenProject.getFile());</span>
+<span class="nc" id="L189">        request.setGoals(Collections.singletonList(MAVEN_JAR_PLUGIN + &quot;:jar&quot;));</span>
+<span class="nc" id="L190">        request.setBatchMode(true);</span>
+<span class="nc" id="L191">        request.setQuiet(true);</span>
+<span class="nc" id="L192">        return invoker.execute(request);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>
