@@ -24,8 +24,6 @@ import io.micronaut.build.AbstractDockerMojo;
 import io.micronaut.build.MicronautRuntime;
 import io.micronaut.build.services.ApplicationConfigurationService;
 import io.micronaut.build.services.JibConfigurationService;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import java.util.*;
 
@@ -83,9 +81,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
                     cmd = Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest");
                 }
 
-                builder.setBaseImage("fnproject/fn-java-fdk:" + determineProjectFnVersion())
+                String projectFnVersion = determineProjectFnVersion(System.getProperty("java.version"));
+                builder.setBaseImage("fnproject/fn-java-fdk:" + projectFnVersion)
                         .setWorkingDirectory(AbsoluteUnixPath.get(jibConfigurationService.getWorkingDirectory().orElse("/function")))
-                        .setEntrypoint(buildProjectFnEntrypoint())
+                        .setEntrypoint(buildProjectFnEntrypoint(projectFnVersion))
                         .setCmd(cmd);
                 break;
 
@@ -101,11 +100,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         return builder.build();
     }
 
-    public static List<String> buildProjectFnEntrypoint() {
+    public static List<String> buildProjectFnEntrypoint(String projectFnVersion) {
         List<String> entrypoint = new ArrayList<>(9);
-        String projectFnVersion = determineProjectFnVersion();
-        if (AbstractDockerMojo.LATEST_TAG.equals(projectFnVersion)) {
-            entrypoint.add("java");
+        if (AbstractDockerMojo.LATEST_TAG.equals(projectFnVersion)) { // Java 8
+            entrypoint.add("/usr/java/latest/bin/java");
             entrypoint.add("-XX:+UnlockExperimentalVMOptions");
             entrypoint.add("-XX:+UseCGroupMemoryLimitForHeap");
             entrypoint.add("-XX:-UsePerfData");
@@ -116,8 +114,8 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
             entrypoint.add("-cp");
             entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");
             entrypoint.add("com.fnproject.fn.runtime.EntryPoint");
-        } else {
-            entrypoint.add("/usr/java/openjdk-11/bin/java");
+        } else { // Java 11 onwards
+            entrypoint.add("/usr/java/latest/bin/java");
             entrypoint.add("-XX:-UsePerfData");
             entrypoint.add("-XX:+UseSerialGC");
             entrypoint.add("-Xshare:on");
@@ -130,9 +128,14 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         return entrypoint;
     }
 
-    public static String determineProjectFnVersion() {
-        ArtifactVersion javaVersion = new DefaultArtifactVersion(System.getProperty("java.version"));
-        if (javaVersion.getMajorVersion() >= 11) {
+    public static String determineProjectFnVersion(String javaVersion) {
+        int majorVersion = Integer.parseInt(javaVersion.split("\\.")[0]);
+        if (majorVersion == 1) {
+            majorVersion = Integer.parseInt(javaVersion.split("\\.")[1]);
+        }
+        if (majorVersion >= 17) {
+            return "jre17-latest";
+        } else if (majorVersion >= 11) {
             return "jre11-latest";
         } else {
             return AbstractDockerMojo.LATEST_TAG;

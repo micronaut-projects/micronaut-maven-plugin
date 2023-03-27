@@ -363,7 +363,7 @@
                 <plugin>
                     <groupId>com.diffplug.spotless</groupId>
                     <artifactId>spotless-maven-plugin</artifactId>
-                    <version>2.33.0</version>
+                    <version>2.30.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>
@@ -490,6 +490,9 @@
                         </format>
                     </formats>
                     <java>
+                        <excludes>
+                            <exclude>src/test/java/**/*.java</exclude>
+                        </excludes>
                         <licenseHeader>
                             <file>${project.basedir}/config/spotless.license.java</file>
                         </licenseHeader>
