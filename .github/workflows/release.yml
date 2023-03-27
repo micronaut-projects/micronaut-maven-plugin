@@ -45,10 +45,11 @@ jobs:
         env:
           MICRONAUT_BUILD_EMAIL: ${{ secrets.MICRONAUT_BUILD_EMAIL }}
         run: |
+          git config --global --add safe.directory /github/workspace
           git config --global user.email "$MICRONAUT_BUILD_EMAIL"
           git config --global user.name "micronaut-build"
           echo "Checking out v${{ steps.release_version.outputs.release_version }}"
-          git checkout -b release/v${{ steps.release_version.outputs.release_version }} v${{ steps.release_version.outputs.release_version }}
+          git checkout ${{ github.event.release.target_commitish }}
           git tag -d v${{ steps.release_version.outputs.release_version }}
           git push origin :refs/tags/v${{ steps.release_version.outputs.release_version }}
 
