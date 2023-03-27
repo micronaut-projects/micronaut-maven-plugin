@@ -38,7 +38,7 @@ jobs:
 
       - name: Set the current release version
         id: release_version
-        run: echo ::set-output name=release_version::${GITHUB_REF:11}
+        run: echo "name=release_version::${GITHUB_REF:11}" >> $GITHUB_ENV
 
       - name: Setup git
         env:
@@ -47,7 +47,7 @@ jobs:
           git config --global user.email "$MICRONAUT_BUILD_EMAIL"
           git config --global user.name "micronaut-build"
           git fetch
-          git checkout master
+          git checkout ${{ github.ref }}
           git tag -d v${{ steps.release_version.outputs.release_version }}
           git push origin :refs/tags/v${{ steps.release_version.outputs.release_version }}
 
@@ -62,7 +62,7 @@ jobs:
           wget -q https://raw.githubusercontent.com/micronaut-projects/github-actions/master/post-release/increment_version.sh -O /tmp/iv.sh
           chmod +x /tmp/iv.sh
           NV=`/tmp/iv.sh -p ${{ steps.release_version.outputs.release_version }}`
-          echo ::set-output name=next_version::${NV}-SNAPSHOT
+          echo "name=next_version::${NV}-SNAPSHOT" >> $GITHUB_ENV
 
       - name: Prepare release
         run: mvn --batch-mode release:prepare -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }}
@@ -72,10 +72,10 @@ jobs:
         env:
           BETA: ${{ contains(steps.release_version.outputs.release_version, 'M') || contains(steps.release_version.outputs.release_version, 'RC') }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          BASE_BRANCH: master
           BRANCH: gh-pages
           FOLDER: target/site
           VERSION: ${{ steps.release_version.outputs.release_version }}
+          TARGET_REPOSITORY: ${{ github.repository }}
 
       - name: Perform release
         env:
