@@ -8,6 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          fetch-depth: 0
           token: ${{ secrets.GH_TOKEN }}
 
       - name: Cache Maven packages
@@ -67,6 +68,10 @@ jobs:
 
       - name: Prepare release
         run: mvn --batch-mode release:prepare -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }}
+        env:
+          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
+          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
+          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
 
       - name: Publish to Github Pages
         uses: micronaut-projects/github-pages-deploy-action@master
@@ -79,9 +84,12 @@ jobs:
           TARGET_REPOSITORY: ${{ github.repository }}
 
       - name: Perform release
+        run: mvn --batch-mode release:perform
         env:
           GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
-        run: mvn --batch-mode release:perform
+          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
+          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
+          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
 
       - name: Close release
         if: success()
