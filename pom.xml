@@ -333,6 +333,9 @@
                         </format>
                     </formats>
                     <java>
+                        <excludes>
+                            <exclude>src/test/java/**/*.java</exclude>
+                        </excludes>
                         <licenseHeader>
                             <file>${maven.multiModuleProjectDirectory}/config/spotless.license.java</file>
                         </licenseHeader>
