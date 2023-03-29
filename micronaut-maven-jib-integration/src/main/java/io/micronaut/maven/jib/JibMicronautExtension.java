@@ -23,8 +23,6 @@ import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.services.ApplicationConfigurationService;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import java.util.*;
 
@@ -73,15 +71,13 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION -> {
                 List<? extends LayerObject> originalLayers = buildPlan.getLayers();
-                builder.setLayers(Collections.emptyList());
-                for (LayerObject layer : originalLayers) {
-                    builder.addLayer(remapLayer(layer));
-                }
+                builder.setLayers(originalLayers.stream().map(JibMicronautExtension::remapLayer).toList());
                 List<String> cmd = jibConfigurationService.getArgs();
                 if (cmd.isEmpty()) {
                     cmd = Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest");
                 }
-                builder.setBaseImage("fnproject/fn-java-fdk:" + determineProjectFnVersion())
+                String projectFnVersion = determineProjectFnVersion(System.getProperty("java.version"));
+                builder.setBaseImage("fnproject/fn-java-fdk:" + projectFnVersion)
                         .setWorkingDirectory(AbsoluteUnixPath.get(jibConfigurationService.getWorkingDirectory().orElse("/function")))
                         .setEntrypoint(buildProjectFnEntrypoint())
                         .setCmd(cmd);
@@ -101,13 +97,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     public static List<String> buildProjectFnEntrypoint() {
         List<String> entrypoint = new ArrayList<>(9);
         entrypoint.add("/usr/java/latest/bin/java");
-        entrypoint.add("java");
-        entrypoint.add("-XX:+UnlockExperimentalVMOptions");
-        entrypoint.add("-XX:+UseCGroupMemoryLimitForHeap");
         entrypoint.add("-XX:-UsePerfData");
-        entrypoint.add("-XX:MaxRAMFraction=2");
         entrypoint.add("-XX:+UseSerialGC");
         entrypoint.add("-Xshare:on");
+        entrypoint.add("-Djava.awt.headless=true");
         entrypoint.add("-Djava.library.path=/function/runtime/lib");
         entrypoint.add("-cp");
         entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");
@@ -115,16 +108,16 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         return entrypoint;
     }
 
-    public static String determineProjectFnVersion() {
-        ArtifactVersion javaVersion = new DefaultArtifactVersion(System.getProperty("java.version"));
-        if (javaVersion.getMajorVersion() >= 17) {
+    public static String determineProjectFnVersion(String javaVersion) {
+        int majorVersion = Integer.parseInt(javaVersion.split("\\.")[0]);
+        if (majorVersion >= 17) {
             return "jre17-latest";
         } else {
             return LATEST_TAG;
         }
     }
 
-    private LayerObject remapLayer(LayerObject layerObject) {
+    static LayerObject remapLayer(LayerObject layerObject) {
         FileEntriesLayer originalLayer = (FileEntriesLayer) layerObject;
         FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(originalLayer.getName());
         for (FileEntry originalEntry : originalLayer.getEntries()) {
@@ -134,7 +127,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         return builder.build();
     }
 
-    private FileEntry remapEntry(FileEntry originalEntry, String layerName) {
+    static FileEntry remapEntry(FileEntry originalEntry, String layerName) {
         List<String> pathComponents = UnixPathParser.parse(originalEntry.getExtractionPath().toString());
         AbsoluteUnixPath newPath;
         if (layerName.contains("dependencies")) {

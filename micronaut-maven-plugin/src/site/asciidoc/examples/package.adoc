@@ -6,6 +6,7 @@ This plugin supports different `<packaging>` types:
 * `native-image`: generates a GraalVM native image.
 * `docker`: builds a Docker image with the application artifacts (compiled classes, resources, dependencies, etc).
 * `docker-native`: builds a Docker image with a GraalVM native image inside.
+* `docker-crac`: builds a Docker image containing a CRaC checkpointed application.
 
 To package an application, `mvn package` is the one-stop shop to produce the desired artifact. By default, applications
 generated from https://micronaut.io/launch/[Micronaut Launch] have the packaging defined like
