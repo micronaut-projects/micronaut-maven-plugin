@@ -5,9 +5,15 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
+      GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
+      GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+      MICRONAUT_CORE_BRANCH: "4.0.x"
     steps:
       - uses: actions/checkout@v3
         with:
+          fetch-depth: 0
           token: ${{ secrets.GH_TOKEN }}
 
       - name: Cache Maven packages
@@ -38,16 +44,17 @@ jobs:
 
       - name: Set the current release version
         id: release_version
-        run: echo ::set-output name=release_version::${GITHUB_REF:11}
+        run: echo "release_version=${GITHUB_REF:11}" >> $GITHUB_OUTPUT
 
       - name: Setup git
         env:
           MICRONAUT_BUILD_EMAIL: ${{ secrets.MICRONAUT_BUILD_EMAIL }}
         run: |
+          git config --global --add safe.directory /github/workspace
           git config --global user.email "$MICRONAUT_BUILD_EMAIL"
           git config --global user.name "micronaut-build"
-          git fetch
-          git checkout master
+          echo "Checking out ${{ github.event.release.target_commitish }}"
+          git checkout ${{ github.event.release.target_commitish }}
           git tag -d v${{ steps.release_version.outputs.release_version }}
           git push origin :refs/tags/v${{ steps.release_version.outputs.release_version }}
 
@@ -62,7 +69,7 @@ jobs:
           wget -q https://raw.githubusercontent.com/micronaut-projects/github-actions/master/post-release/increment_version.sh -O /tmp/iv.sh
           chmod +x /tmp/iv.sh
           NV=`/tmp/iv.sh -p ${{ steps.release_version.outputs.release_version }}`
-          echo ::set-output name=next_version::${NV}-SNAPSHOT
+          echo "next_version=${NV}-SNAPSHOT" >> $GITHUB_OUTPUT
 
       - name: Prepare release
         run: |
@@ -74,15 +81,15 @@ jobs:
         env:
           BETA: ${{ contains(steps.release_version.outputs.release_version, 'M') || contains(steps.release_version.outputs.release_version, 'RC') }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          BASE_BRANCH: master
           BRANCH: gh-pages
           FOLDER: micronaut-maven-plugin/target/site
           VERSION: ${{ steps.release_version.outputs.release_version }}
+          TARGET_REPOSITORY: ${{ github.repository }}
 
       - name: Perform release
+        run: ./mvnw --batch-mode release:perform
         env:
           GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
-        run: ./mvnw --batch-mode release:perform
 
       - name: Close release
         if: success()
@@ -96,7 +103,7 @@ jobs:
         with:
           token: ${{ secrets.GH_TOKEN }}
           repository: micronaut-projects/micronaut-core
-          ref: 4.0.x
+          ref: ${{ env.MICRONAUT_CORE_BRANCH }}
           path: micronaut-core # Must be micronaut-core
         continue-on-error: true
 
@@ -107,7 +114,7 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
         env:
           MICRONAUT_BUILD_EMAIL: ${{ secrets.MICRONAUT_BUILD_EMAIL }}
-          githubCoreBranch: 4.0.x
+          githubCoreBranch: ${{ env.MICRONAUT_CORE_BRANCH }}
           projectVersion: ${{ steps.release_version.outputs.release_version }}
           bomProperty: micronautMavenPluginVersion
 
