@@ -71,10 +71,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION -> {
                 List<? extends LayerObject> originalLayers = buildPlan.getLayers();
-                builder.setLayers(Collections.emptyList());
-                for (LayerObject layer : originalLayers) {
-                    builder.addLayer(remapLayer(layer));
-                }
+                builder.setLayers(originalLayers.stream().map(JibMicronautExtension::remapLayer).toList());
                 List<String> cmd = jibConfigurationService.getArgs();
                 if (cmd.isEmpty()) {
                     cmd = Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest");
@@ -120,7 +117,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         }
     }
 
-    private LayerObject remapLayer(LayerObject layerObject) {
+    static LayerObject remapLayer(LayerObject layerObject) {
         FileEntriesLayer originalLayer = (FileEntriesLayer) layerObject;
         FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(originalLayer.getName());
         for (FileEntry originalEntry : originalLayer.getEntries()) {
@@ -130,7 +127,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         return builder.build();
     }
 
-    private FileEntry remapEntry(FileEntry originalEntry, String layerName) {
+    static FileEntry remapEntry(FileEntry originalEntry, String layerName) {
         List<String> pathComponents = UnixPathParser.parse(originalEntry.getExtractionPath().toString());
         AbsoluteUnixPath newPath;
         if (layerName.contains("dependencies")) {
