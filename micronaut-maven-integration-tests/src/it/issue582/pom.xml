@@ -21,7 +21,7 @@
         <micronaut.aot.enabled>true</micronaut.aot.enabled>
         <micronaut.aot.packageName>com.project.aot.generated</micronaut.aot.packageName>
         <micronaut.runtime>netty</micronaut.runtime>
-        <micronaut.data.version>3.9.6</micronaut.data.version>
+        <micronaut.data.version>3.9.7</micronaut.data.version>
         <exec.mainClass>com.project.Application</exec.mainClass>
         <maven.build.timestamp.format>yyyyMMdd-HHmmss</maven.build.timestamp.format>
     </properties>
