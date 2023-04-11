@@ -33,6 +33,7 @@ import org.twdata.maven.mojoexecutor.MojoExecutor;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.File;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -125,7 +126,10 @@ public class ExecutorService {
     public InvocationResult invokeGoal(String pluginKey, String goal) throws MavenInvocationException {
         InvocationRequest request = new DefaultInvocationRequest();
         request.setPomFile(mavenProject.getFile());
-        request.setUserSettingsFile(mavenSession.getRequest().getUserSettingsFile());
+        File settingsFile = mavenSession.getRequest().getUserSettingsFile();
+        if (settingsFile.exists()) {
+            request.setUserSettingsFile(settingsFile);
+        }
         request.setGoals(Collections.singletonList(pluginKey + ":" + goal));
         request.setBatchMode(true);
         request.setQuiet(true);
