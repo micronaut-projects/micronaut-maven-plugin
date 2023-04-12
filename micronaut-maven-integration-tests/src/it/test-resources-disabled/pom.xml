@@ -108,7 +108,7 @@
                         <path>
                             <groupId>io.micronaut</groupId>
                             <artifactId>micronaut-inject-java</artifactId>
-                            <version>${micronaut.version}</version>
+                            <version>${micronaut.core.version}</version>
                         </path>
                         <path>
                             <groupId>io.micronaut.data</groupId>
@@ -118,12 +118,12 @@
                         <path>
                             <groupId>io.micronaut</groupId>
                             <artifactId>micronaut-graal</artifactId>
-                            <version>${micronaut.version}</version>
+                            <version>${micronaut.core.version}</version>
                         </path>
                         <path>
                             <groupId>io.micronaut</groupId>
                             <artifactId>micronaut-http-validation</artifactId>
-                            <version>${micronaut.version}</version>
+                            <version>${micronaut.core.version}</version>
                         </path>
                         <path>
                             <groupId>io.micronaut.validation</groupId>
