@@ -94,7 +94,7 @@
             <path>
               <groupId>io.micronaut</groupId>
               <artifactId>micronaut-http-validation</artifactId>
-              <version>${micronaut.version}</version>
+              <version>${micronaut.core.version}</version>
             </path>
           </annotationProcessorPaths>
           <compilerArgs>
