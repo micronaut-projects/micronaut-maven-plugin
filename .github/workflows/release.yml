@@ -73,6 +73,7 @@ jobs:
 
       - name: Prepare release
         run: |
+          ./mvnw -q install -Dinvoker.skip=true
           ./mvnw --batch-mode release:prepare -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }}
           cp -R target/site/apidocs/* micronaut-maven-plugin/target/site/apidocs
 
