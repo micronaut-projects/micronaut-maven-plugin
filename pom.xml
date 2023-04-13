@@ -387,6 +387,7 @@
                     <linksource>true</linksource>
                     <minmemory>128m</minmemory>
                     <maxmemory>512</maxmemory>
+                    <failOnError>false</failOnError>
                 </configuration>
             </plugin>
             <plugin>

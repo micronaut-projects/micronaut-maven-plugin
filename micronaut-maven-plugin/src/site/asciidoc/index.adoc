@@ -39,6 +39,9 @@ Add the plugin to your `build/plugins` section:
 </project>
 ----
 
+WARNING: Since version 4.0.0 of this plugin (which is the version compatible with Micronaut 4.x), the group id is
+`io.micronaut.maven`. Earlier versions compatible with Micronaut 3.x used `io.micronaut.build`.
+
 The `<packaging>` part is important since the plugin support several packaging types. The default is `jar`.
 
 For snapshot versions, you need the Sonatype OSSRH Snapshot repository:
