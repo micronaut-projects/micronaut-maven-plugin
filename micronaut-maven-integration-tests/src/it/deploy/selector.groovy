@@ -1,0 +1,1 @@
+return System.getenv("OCI_CLI_USER") != null
