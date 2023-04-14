@@ -88,7 +88,7 @@ jobs:
           TARGET_REPOSITORY: ${{ github.repository }}
 
       - name: Perform release
-        run: ./mvnw --batch-mode release:perform
+        run: ./mvnw --batch-mode release:perform -Dinvoker.skip=true
         env:
           GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
 
