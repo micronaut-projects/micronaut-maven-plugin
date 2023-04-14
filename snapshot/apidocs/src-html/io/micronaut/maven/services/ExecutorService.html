@@ -143,14 +143,15 @@
 <span class="source-line-no">130</span><span id="line-130">        if (settingsFile.exists()) {</span>
 <span class="source-line-no">131</span><span id="line-131">            request.setUserSettingsFile(settingsFile);</span>
 <span class="source-line-no">132</span><span id="line-132">        }</span>
-<span class="source-line-no">133</span><span id="line-133">        request.setGoals(Collections.singletonList(pluginKey + ":" + goal));</span>
-<span class="source-line-no">134</span><span id="line-134">        request.setBatchMode(true);</span>
-<span class="source-line-no">135</span><span id="line-135">        request.setQuiet(true);</span>
-<span class="source-line-no">136</span><span id="line-136">        request.setErrorHandler(LOG::error);</span>
-<span class="source-line-no">137</span><span id="line-137">        request.setOutputHandler(LOG::info);</span>
-<span class="source-line-no">138</span><span id="line-138">        return invoker.execute(request);</span>
-<span class="source-line-no">139</span><span id="line-139">    }</span>
-<span class="source-line-no">140</span><span id="line-140">}</span>
+<span class="source-line-no">133</span><span id="line-133">        request.setLocalRepositoryDirectory(new File(mavenSession.getLocalRepository().getBasedir()));</span>
+<span class="source-line-no">134</span><span id="line-134">        request.setGoals(Collections.singletonList(pluginKey + ":" + goal));</span>
+<span class="source-line-no">135</span><span id="line-135">        request.setBatchMode(true);</span>
+<span class="source-line-no">136</span><span id="line-136">        request.setQuiet(true);</span>
+<span class="source-line-no">137</span><span id="line-137">        request.setErrorHandler(LOG::error);</span>
+<span class="source-line-no">138</span><span id="line-138">        request.setOutputHandler(LOG::info);</span>
+<span class="source-line-no">139</span><span id="line-139">        return invoker.execute(request);</span>
+<span class="source-line-no">140</span><span id="line-140">    }</span>
+<span class="source-line-no">141</span><span id="line-141">}</span>
 
 
 
