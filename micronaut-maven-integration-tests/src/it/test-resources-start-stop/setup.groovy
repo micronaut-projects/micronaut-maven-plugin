@@ -1,7 +1,9 @@
 File mvnw = new File(basedir, '../../../mvnw')
 assert mvnw.exists()
 
-def processBuilder = new ProcessBuilder(mvnw.absolutePath, "mn:start-testresources-service")
+String localRepo = (basedir as File).toPath().resolve("../../../target/local-repo").toFile().absolutePath
+
+def processBuilder = new ProcessBuilder(mvnw.absolutePath, "-Dmaven.repo.local=${localRepo}", "-Psetup",  "mn:start-testresources-service")
         .directory(basedir as File)
         .inheritIO()
 
