@@ -130,6 +130,7 @@ public class ExecutorService {
         if (settingsFile.exists()) {
             request.setUserSettingsFile(settingsFile);
         }
+        request.setLocalRepositoryDirectory(new File(mavenSession.getLocalRepository().getBasedir()));
         request.setGoals(Collections.singletonList(pluginKey + ":" + goal));
         request.setBatchMode(true);
         request.setQuiet(true);
