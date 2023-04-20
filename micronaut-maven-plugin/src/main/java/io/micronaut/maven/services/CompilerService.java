@@ -16,7 +16,6 @@
 package io.micronaut.maven.services;
 
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.apache.maven.project.DefaultDependencyResolutionRequest;
@@ -25,7 +24,6 @@ import org.apache.maven.project.DependencyResolutionResult;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.maven.shared.invoker.InvocationResult;
-import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
@@ -39,12 +37,8 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Provides methods to compile a Maven project.
@@ -57,76 +51,39 @@ public class CompilerService {
 
     public static final String MAVEN_COMPILER_PLUGIN = "org.apache.maven.plugins:maven-compiler-plugin";
     public static final String MAVEN_JAR_PLUGIN = "org.apache.maven.plugins:maven-jar-plugin";
-    public static final String MAVEN_RESOURCES_PLUGIN = "org.apache.maven.plugins:maven-resources-plugin";
-    public static final String GMAVEN_PLUS_PLUGIN = "org.codehaus.gmavenplus:gmavenplus-plugin";
-    public static final String KOTLIN_MAVEN_PLUGIN = "org.jetbrains.kotlin:kotlin-maven-plugin";
 
-    private static final String JAVA = "java";
-    private static final String GROOVY = "groovy";
-    private static final String KOTLIN = "kotlin";
     private static final String COMPILE_GOAL = "compile";
-    private static final String RESOURCES_GOAL = "resources";
 
     private final Log log;
-    private final Map<String, Path> sourceDirectories;
-    private final MavenProject mavenProject;
+    private final MavenProject runnableProject;
     private final MavenSession mavenSession;
     private final ExecutorService executorService;
     private final ProjectDependenciesResolver resolver;
-    private final Invoker invoker;
 
     @SuppressWarnings("MnInjectionPoints")
     @Inject
-    public CompilerService(MavenProject mavenProject, MavenSession mavenSession, ExecutorService executorService,
-                           ProjectDependenciesResolver resolver, Invoker invoker) {
+    public CompilerService(MavenSession mavenSession, ExecutorService executorService,
+                           ProjectDependenciesResolver resolver) {
+        this.mavenSession = mavenSession;
+        this.runnableProject = findRunnableProject();
         this.resolver = resolver;
         this.log = new SystemStreamLog();
-        this.mavenProject = mavenProject;
-        this.mavenSession = mavenSession;
         this.executorService = executorService;
-        this.sourceDirectories = resolveSourceDirectories();
-        this.invoker = invoker;
     }
 
     /**
      * Compiles the project.
-     * @param copyResources whether to copy resources to the target directory.
      * @return the last compilation time millis.
      */
-    public Optional<Long> compileProject(boolean copyResources) {
+    public Optional<Long> compileProject() {
         Long lastCompilation = null;
         if (log.isDebugEnabled()) {
             log.debug("Compiling the project");
         }
         try {
-            if (sourceDirectories.containsKey(GROOVY)) {
-                executorService.executeGoal(GMAVEN_PLUS_PLUGIN, "addSources");
-                executorService.executeGoal(GMAVEN_PLUS_PLUGIN, "generateStubs");
-                if (copyResources) {
-                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, RESOURCES_GOAL);
-                }
-                executorService.executeGoal(MAVEN_COMPILER_PLUGIN, COMPILE_GOAL);
-                executorService.executeGoal(GMAVEN_PLUS_PLUGIN, COMPILE_GOAL);
-                executorService.executeGoal(GMAVEN_PLUS_PLUGIN, "removeStubs");
-                lastCompilation = System.currentTimeMillis();
-            }
-            if (sourceDirectories.containsKey(KOTLIN)) {
-                executorService.executeGoal(KOTLIN_MAVEN_PLUGIN, "kapt");
-                if (copyResources) {
-                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, RESOURCES_GOAL);
-                }
-                executorService.executeGoal(KOTLIN_MAVEN_PLUGIN, COMPILE_GOAL);
-                executorService.executeGoal(MAVEN_COMPILER_PLUGIN, "compile#java-compile");
-                lastCompilation = System.currentTimeMillis();
-            }
-            if (sourceDirectories.containsKey(JAVA)) {
-                if (copyResources) {
-                    executorService.executeGoal(MAVEN_RESOURCES_PLUGIN, RESOURCES_GOAL);
-                }
-                executorService.executeGoal(MAVEN_COMPILER_PLUGIN, COMPILE_GOAL);
-                lastCompilation = System.currentTimeMillis();
-            }
-        } catch (MojoExecutionException e) {
+            executorService.invokeGoals(COMPILE_GOAL);
+            lastCompilation = System.currentTimeMillis();
+        } catch (MavenInvocationException e) {
             if (log.isErrorEnabled()) {
                 log.error("Error while compiling the project: ", e);
             }
@@ -139,26 +96,40 @@ public class CompilerService {
      *
      * @return a map with the language as key and the source directory as value.
      */
-    public Map<String, Path> resolveSourceDirectories() {
+    public List<Path> resolveSourceDirectories() {
         if (log.isDebugEnabled()) {
             log.debug("Resolving source directories...");
         }
-        AtomicReference<String> lang = new AtomicReference<>();
-        Map<String, Path> sourceDirectoriesToResolve = Stream.of(JAVA, GROOVY, KOTLIN)
-                .peek(lang::set)
-                .map(l -> new File(mavenProject.getBasedir(), "src/main/" + l))
+        return mavenSession.getProjects().stream()
+                .map(mavenProject -> mavenProject.getBuild().getSourceDirectory())
+                .map(File::new)
                 .filter(File::exists)
-                .peek(f -> {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Found source: " + f.getPath());
-                    }
-                })
                 .map(File::toPath)
-                .collect(Collectors.toMap(path -> lang.get(), Function.identity()));
-        if (sourceDirectoriesToResolve.isEmpty()) {
-            throw new IllegalStateException("Source folders not found for neither Java/Groovy/Kotlin");
-        }
-        return sourceDirectoriesToResolve;
+                .toList();
+    }
+
+    /**
+     * Finds the Maven project that has the Micronaut Maven plugin defined.
+     *
+     * @return the Maven project
+     */
+    public MavenProject findRunnableProject() {
+        return mavenSession.getProjects().stream()
+                .filter(this::hasMicronautMavenPlugin)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("There are no projects with the Micronaut Maven plugin defined"));
+    }
+
+    private boolean hasMicronautMavenPlugin(MavenProject project) {
+        return hasPlugin(project, "io.micronaut.maven:micronaut-maven-plugin");
+    }
+
+    private boolean hasPlugin(MavenProject project, String pluginKey) {
+        String[] parts = pluginKey.split(":");
+        String groupId = parts[0];
+        String artifactId = parts[1];
+        return project.getBuildPlugins().stream()
+                .anyMatch(p -> p.getGroupId().equals(groupId) && p.getArtifactId().equals(artifactId));
     }
 
     /**
@@ -171,7 +142,7 @@ public class CompilerService {
         try {
             DependencyFilter filter = DependencyFilterUtils.classpathFilter(scopes);
             RepositorySystemSession session = mavenSession.getRepositorySession();
-            DependencyResolutionRequest dependencyResolutionRequest = new DefaultDependencyResolutionRequest(mavenProject, session);
+            DependencyResolutionRequest dependencyResolutionRequest = new DefaultDependencyResolutionRequest(runnableProject, session);
             dependencyResolutionRequest.setResolutionFilter(filter);
             DependencyResolutionResult result = resolver.resolve(dependencyResolutionRequest);
             return result.getDependencies();

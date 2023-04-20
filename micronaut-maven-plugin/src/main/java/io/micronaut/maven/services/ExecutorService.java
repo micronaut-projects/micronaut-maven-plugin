@@ -34,7 +34,7 @@ import org.twdata.maven.mojoexecutor.MojoExecutor;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -124,6 +124,16 @@ public class ExecutorService {
      * @throws MavenInvocationException If the goal execution fails
      */
     public InvocationResult invokeGoal(String pluginKey, String goal) throws MavenInvocationException {
+        return invokeGoals(pluginKey + ":" + goal);
+    }
+
+    /**
+     * Executes a goal using the Maven shared invoker.
+     * @param goals The goals to execute
+     * @return The result of the invocation
+     * @throws MavenInvocationException If the goal execution fails
+     */
+    public InvocationResult invokeGoals(String... goals) throws MavenInvocationException {
         InvocationRequest request = new DefaultInvocationRequest();
         request.setPomFile(mavenProject.getFile());
         File settingsFile = mavenSession.getRequest().getUserSettingsFile();
@@ -131,7 +141,7 @@ public class ExecutorService {
             request.setUserSettingsFile(settingsFile);
         }
         request.setLocalRepositoryDirectory(new File(mavenSession.getLocalRepository().getBasedir()));
-        request.setGoals(Collections.singletonList(pluginKey + ":" + goal));
+        request.setGoals(Arrays.asList(goals));
         request.setBatchMode(true);
         request.setQuiet(true);
         request.setErrorHandler(LOG::error);

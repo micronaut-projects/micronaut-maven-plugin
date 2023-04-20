@@ -64,7 +64,7 @@ import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
  * @since 1.0.0
  */
 @SuppressWarnings("unused")
-@Mojo(name = "run", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PREPARE_PACKAGE)
+@Mojo(name = "run", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PREPARE_PACKAGE, aggregator = true)
 @Execute(phase = LifecyclePhase.PROCESS_CLASSES)
 public class RunMojo extends AbstractTestResourcesMojo {
 
@@ -89,13 +89,11 @@ public class RunMojo extends AbstractTestResourcesMojo {
     private final DependencyResolutionService dependencyResolutionService;
     private final CompilerService compilerService;
     private final ExecutorService executorService;
-    private final Path projectRootDirectory;
 
     /**
      * The project's target directory.
      */
-    @Parameter(defaultValue = "${project.build.directory}")
-    private File targetDirectory;
+    private final File targetDirectory;
 
     /**
      * The main class of the application, as defined in the
@@ -164,40 +162,39 @@ public class RunMojo extends AbstractTestResourcesMojo {
     @Parameter(property = "micronaut.aot.enabled", defaultValue = "false")
     private boolean aotEnabled;
 
-    private MavenProject mavenProject;
+    private MavenProject runnableProject;
     private DirectoryWatcher directoryWatcher;
     private Process process;
     private String classpath;
     private int classpathHash;
     private long lastCompilation;
-    private Map<String, Path> sourceDirectories;
+    private List<Path> sourceDirectories;
     private TestResourcesHelper testResourcesHelper;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    public RunMojo(MavenProject mavenProject,
-                   MavenSession mavenSession,
+    public RunMojo(MavenSession mavenSession,
                    BuildPluginManager pluginManager,
                    ProjectBuilder projectBuilder,
                    ToolchainManager toolchainManager,
                    CompilerService compilerService,
                    ExecutorService executorService,
                    DependencyResolutionService dependencyResolutionService) {
-        this.mavenProject = mavenProject;
+        this.runnableProject = compilerService.findRunnableProject();
         this.mavenSession = mavenSession;
         this.projectBuilder = projectBuilder;
-        this.projectRootDirectory = mavenProject.getBasedir().toPath();
         this.toolchainManager = toolchainManager;
         this.compilerService = compilerService;
         this.executorService = executorService;
         this.javaExecutable = findJavaExecutable(toolchainManager, mavenSession);
         this.dependencyResolutionService = dependencyResolutionService;
+        this.targetDirectory = new File(runnableProject.getBuild().getDirectory());
     }
 
     @Override
     public void execute() throws MojoExecutionException {
         testResourcesHelper = new TestResourcesHelper(testResourcesEnabled, keepAlive, shared, buildDirectory,
-                                                      explicitPort, clientTimeout, mavenProject, mavenSession,
+                                                      explicitPort, clientTimeout, runnableProject, mavenSession,
                                                       dependencyResolutionService, toolchainManager, testResourcesVersion,
                                                       classpathInference, testResourcesDependencies, sharedServerNamespace);
         resolveDependencies();
@@ -211,10 +208,14 @@ public class RunMojo extends AbstractTestResourcesMojo {
 
             if (process != null && process.isAlive()) {
                 if (watchForChanges) {
-                    List<Path> pathsToWatch = new ArrayList<>(sourceDirectories.values());
-                    pathsToWatch.add(projectRootDirectory);
-                    pathsToWatch.add(projectRootDirectory.resolve(RESOURCES_DIR));
-
+                    List<Path> pathsToWatch = new ArrayList<>(sourceDirectories);
+                    for (MavenProject project : mavenSession.getProjects()) {
+                        Path baseDir = project.getBasedir().toPath();
+                        pathsToWatch.add(baseDir);
+                        if (Files.exists(baseDir.resolve(RESOURCES_DIR))) {
+                            pathsToWatch.add(baseDir.resolve(RESOURCES_DIR));
+                        }
+                    }
                     if (watches != null && !watches.isEmpty()) {
                         for (FileSet fs : watches) {
                             File directory = new File(fs.getDirectory());
@@ -238,9 +239,12 @@ public class RunMojo extends AbstractTestResourcesMojo {
                             .listener(this::handleEvent)
                             .build();
 
-                    if (getLog().isDebugEnabled()) {
-                        getLog().debug("Watching for changes...");
-                    }
+                    Path projectRootDirectory = mavenSession.getTopLevelProject().getBasedir().toPath();
+                    List<Path> pathList = pathsToWatch.stream()
+                            .map(other -> projectRootDirectory.getParent().relativize(other))
+                            .sorted()
+                            .toList();
+                    getLog().info("Watching for changes in " + pathList);
                     this.directoryWatcher.watch();
                 } else if (process != null && process.isAlive()) {
                     process.waitFor();
@@ -263,7 +267,14 @@ public class RunMojo extends AbstractTestResourcesMojo {
         Path path = event.path();
         Path parent = path.getParent();
 
-        if (parent.equals(projectRootDirectory)) {
+        List<Path> projectRoots = mavenSession.getProjects().stream()
+                .map(MavenProject::getBasedir)
+                .map(File::toPath)
+                .toList();
+
+        Path projectRootDirectory = mavenSession.getTopLevelProject().getBasedir().toPath();
+
+        if (projectRoots.contains(parent)) {
             if (path.endsWith("pom.xml") && rebuildMavenProject() && resolveDependencies() && classpathHasChanged()) {
                 if (getLog().isInfoEnabled()) {
                     getLog().info("Detected POM dependencies change. Restarting application");
@@ -296,11 +307,18 @@ public class RunMojo extends AbstractTestResourcesMojo {
         }
 
         // Start by checking whether it's a change in any source directory
-        Collection<Path> values = this.sourceDirectories.values();
+        Collection<Path> values = this.sourceDirectories;
         Collection<Path> pathsToCheck = new ArrayList<>(values.size() + 1);
         pathsToCheck.addAll(values);
-        pathsToCheck.add(projectRootDirectory.resolve(RESOURCES_DIR));
+        for (MavenProject project : mavenSession.getProjects()) {
+            Path baseDir = project.getBasedir().toPath();
+            pathsToCheck.add(baseDir);
+            if (Files.exists(baseDir.resolve(RESOURCES_DIR))) {
+                pathsToCheck.add(baseDir.resolve(RESOURCES_DIR));
+            }
+        }
         boolean matches = pathsToCheck.stream().anyMatch(path.getParent()::startsWith);
+        Path projectRootDirectory = mavenSession.getTopLevelProject().getBasedir().toPath();
 
         String relativePath = projectRootDirectory.relativize(path).toString();
 
@@ -395,9 +413,9 @@ public class RunMojo extends AbstractTestResourcesMojo {
         try {
             ProjectBuildingRequest projectBuildingRequest = mavenSession.getProjectBuildingRequest();
             projectBuildingRequest.setResolveDependencies(true);
-            ProjectBuildingResult build = projectBuilder.build(mavenProject.getArtifact(), projectBuildingRequest);
+            ProjectBuildingResult build = projectBuilder.build(runnableProject.getArtifact(), projectBuildingRequest);
             MavenProject project = build.getProject();
-            mavenProject = project;
+            runnableProject = project;
             mavenSession.setCurrentProject(project);
         } catch (ProjectBuildingException e) {
             success = false;
@@ -513,16 +531,16 @@ public class RunMojo extends AbstractTestResourcesMojo {
     }
 
     private boolean compileProject() {
-        Optional<Long> lastCompilationMillis = compilerService.compileProject(true);
+        Optional<Long> lastCompilationMillis = compilerService.compileProject();
         lastCompilationMillis.ifPresent(lc -> this.lastCompilation = lc);
         return lastCompilationMillis.isPresent();
     }
 
     private void killProcess() {
-        if (getLog().isDebugEnabled()) {
-            getLog().debug("Stopping the background process");
-        }
         if (process != null && process.isAlive()) {
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Stopping the background process");
+            }
             process.destroy();
             try {
                 process.waitFor();
