@@ -15,10 +15,10 @@
  */
 package io.micronaut.maven.aot;
 
+import io.micronaut.maven.AbstractMicronautMojo;
 import io.micronaut.maven.Packaging;
 import io.micronaut.maven.services.CompilerService;
 import org.apache.commons.io.FileUtils;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
@@ -30,7 +30,7 @@ import java.io.IOException;
 /**
  * Abstract Mojo for Micronaut AOT.
  */
-public abstract class AbstractMicronautAotMojo extends AbstractMojo {
+public abstract class AbstractMicronautAotMojo extends AbstractMicronautMojo {
 
     protected final CompilerService compilerService;
 

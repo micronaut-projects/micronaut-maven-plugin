@@ -79,7 +79,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
     static {
         DEFAULT_EXCLUDES = new ArrayList<>();
         Collections.addAll(DEFAULT_EXCLUDES, AbstractScanner.DEFAULTEXCLUDES);
-        Collections.addAll(DEFAULT_EXCLUDES, "**/.idea/**");
+        Collections.addAll(DEFAULT_EXCLUDES, "**/.idea/**", "**/src/test/**");
     }
 
     private final MavenSession mavenSession;
@@ -274,20 +274,9 @@ public class RunMojo extends AbstractTestResourcesMojo {
 
         Path projectRootDirectory = mavenSession.getTopLevelProject().getBasedir().toPath();
 
-        if (projectRoots.contains(parent)) {
-            if (path.endsWith("pom.xml") && rebuildMavenProject() && resolveDependencies() && classpathHasChanged()) {
-                if (getLog().isInfoEnabled()) {
-                    getLog().info("Detected POM dependencies change. Restarting application");
-                }
-                try {
-                    runApplication();
-                } catch (Exception e) {
-                    getLog().error("Unable to run application: " + e.getMessage(), e);
-                }
-            }
-        } else if (matches(path)) {
+        if (matches(path)) {
             if (getLog().isInfoEnabled()) {
-                getLog().info("Detected change in " + projectRootDirectory.relativize(path));
+                getLog().info(String.format("Detected change in %s. Recompiling/restarting...", projectRootDirectory.relativize(path)));
             }
             boolean compiledOk = compileProject();
             if (compiledOk) {
