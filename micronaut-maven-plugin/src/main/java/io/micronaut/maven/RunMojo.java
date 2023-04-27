@@ -51,6 +51,7 @@ import static io.micronaut.maven.services.DependencyResolutionService.testResour
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isReadable;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
+import static org.fusesource.jansi.Ansi.ansi;
 
 /**
  * <p>Executes a Micronaut application in development mode.</p>
@@ -244,7 +245,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
                             .map(other -> projectRootDirectory.getParent().relativize(other))
                             .sorted()
                             .toList();
-                    getLog().info("Watching for changes in " + pathList);
+                    getLog().info("👀 Watching for changes in " + pathList);
                     this.directoryWatcher.watch();
                 } else if (process != null && process.isAlive()) {
                     process.waitFor();
@@ -276,7 +277,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
 
         if (matches(path)) {
             if (getLog().isInfoEnabled()) {
-                getLog().info(String.format("Detected change in %s. Recompiling/restarting...", projectRootDirectory.relativize(path)));
+                getLog().info(String.format("📝 Detected change in %s. Recompiling/restarting...", projectRootDirectory.relativize(path)));
             }
             boolean compiledOk = compileProject();
             if (compiledOk) {
