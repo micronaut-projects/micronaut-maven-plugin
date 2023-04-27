@@ -15,6 +15,7 @@
  */
 package io.micronaut.maven.testresources;
 
+import io.micronaut.maven.JansiLog;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.ContextEnabled;
 import org.apache.maven.plugin.Mojo;
@@ -90,7 +91,7 @@ public abstract class AbstractTestResourcesMojo extends TestResourcesConfigurati
 
     @Override
     public void setLog(Log log) {
-        this.log = log;
+        this.log = new JansiLog(log);
     }
 
     @Override

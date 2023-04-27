@@ -90,7 +90,7 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
         }
         try {
             getLog().info("Packaging project");
-            compilerService.compileProject(true);
+            compilerService.compileProject();
             InvocationResult packagingResult = compilerService.packageProject();
             if (packagingResult.getExitCode() != 0) {
                 getLog().error("Error when packaging the project: ", packagingResult.getExecutionException());

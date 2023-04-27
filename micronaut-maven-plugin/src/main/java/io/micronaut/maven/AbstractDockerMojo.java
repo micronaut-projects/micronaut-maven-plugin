@@ -23,7 +23,6 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -45,7 +44,7 @@ import static io.micronaut.maven.services.ApplicationConfigurationService.DEFAUL
  * @author Iván López
  * @since 1.1
  */
-public abstract class AbstractDockerMojo extends AbstractMojo {
+public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
 
     public static final String LATEST_TAG = "latest";
     public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "frolvlad/alpine-glibc:alpine-3.12";

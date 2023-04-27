@@ -7,7 +7,7 @@
     <version>0.1</version>
     <packaging>${packaging}</packaging>
     <parent>
-        <groupId>io.micronaut</groupId>
+        <groupId>io.micronaut.platform</groupId>
         <artifactId>micronaut-parent</artifactId>
         <version>@it.micronaut.version@</version>
     </parent>

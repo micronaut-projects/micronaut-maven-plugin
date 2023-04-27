@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.resources.ResourcesMojo;
@@ -152,5 +153,10 @@ public class GraalVMResourcesMojo extends ResourcesMojo {
         }
 
         return result;
+    }
+
+    @Override
+    public void setLog(Log log) {
+        super.setLog(new JansiLog(log));
     }
 }
