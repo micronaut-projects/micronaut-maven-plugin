@@ -7,7 +7,7 @@
     <version>0.1</version>
     <packaging>${packaging}</packaging>
     <parent>
-        <groupId>io.micronaut</groupId>
+        <groupId>io.micronaut.platform</groupId>
         <artifactId>micronaut-parent</artifactId>
         <version>@it.micronaut.version@</version>
     </parent>
@@ -118,21 +118,17 @@
                 <configuration>
                     <!-- Uncomment to enable incremental compilation -->
                     <!-- <useIncrementalCompilation>false</useIncrementalCompilation> -->
-                    <annotationProcessorPaths combine.self="override">
-                        <path>
-                            <groupId>io.micronaut</groupId>
-                            <artifactId>micronaut-inject-java</artifactId>
-                            <version>${micronaut.core.version}</version>
-                        </path>
+                    <annotationProcessorPaths combine.self="append">
                         <path>
                             <groupId>io.micronaut.data</groupId>
                             <artifactId>micronaut-data-processor</artifactId>
                             <version>${micronaut.data.version}</version>
-                        </path>
-                        <path>
-                            <groupId>io.micronaut</groupId>
-                            <artifactId>micronaut-graal</artifactId>
-                            <version>${micronaut.core.version}</version>
+                            <exclusions>
+                                <exclusion>
+                                    <groupId>io.micronaut</groupId>
+                                    <artifactId>micronaut-inject</artifactId>
+                                </exclusion>
+                            </exclusions>
                         </path>
                         <path>
                             <groupId>io.micronaut</groupId>
@@ -143,6 +139,12 @@
                             <groupId>io.micronaut.validation</groupId>
                             <artifactId>micronaut-validation-processor</artifactId>
                             <version>${micronaut.validation.version}</version>
+                            <exclusions>
+                                <exclusion>
+                                    <groupId>io.micronaut</groupId>
+                                    <artifactId>micronaut-inject</artifactId>
+                                </exclusion>
+                            </exclusions>
                         </path>
                     </annotationProcessorPaths>
                     <compilerArgs>
