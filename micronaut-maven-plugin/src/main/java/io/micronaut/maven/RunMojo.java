@@ -51,7 +51,6 @@ import static io.micronaut.maven.services.DependencyResolutionService.testResour
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isReadable;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
-import static org.fusesource.jansi.Ansi.ansi;
 
 /**
  * <p>Executes a Micronaut application in development mode.</p>

@@ -25,6 +25,6 @@
 
     <modules>
         <module>lib</module>
-        <module>oci</module>
+        <module>app</module>
     </modules>
 </project>
