@@ -47,7 +47,7 @@
 <span class="source-line-no">034</span><span id="line-34">import javax.inject.Inject;</span>
 <span class="source-line-no">035</span><span id="line-35">import javax.inject.Singleton;</span>
 <span class="source-line-no">036</span><span id="line-36">import java.io.File;</span>
-<span class="source-line-no">037</span><span id="line-37">import java.util.Collections;</span>
+<span class="source-line-no">037</span><span id="line-37">import java.util.Arrays;</span>
 <span class="source-line-no">038</span><span id="line-38">import java.util.Optional;</span>
 <span class="source-line-no">039</span><span id="line-39">import java.util.concurrent.atomic.AtomicReference;</span>
 <span class="source-line-no">040</span><span id="line-40"></span>
@@ -137,21 +137,31 @@
 <span class="source-line-no">124</span><span id="line-124">     * @throws MavenInvocationException If the goal execution fails</span>
 <span class="source-line-no">125</span><span id="line-125">     */</span>
 <span class="source-line-no">126</span><span id="line-126">    public InvocationResult invokeGoal(String pluginKey, String goal) throws MavenInvocationException {</span>
-<span class="source-line-no">127</span><span id="line-127">        InvocationRequest request = new DefaultInvocationRequest();</span>
-<span class="source-line-no">128</span><span id="line-128">        request.setPomFile(mavenProject.getFile());</span>
-<span class="source-line-no">129</span><span id="line-129">        File settingsFile = mavenSession.getRequest().getUserSettingsFile();</span>
-<span class="source-line-no">130</span><span id="line-130">        if (settingsFile.exists()) {</span>
-<span class="source-line-no">131</span><span id="line-131">            request.setUserSettingsFile(settingsFile);</span>
-<span class="source-line-no">132</span><span id="line-132">        }</span>
-<span class="source-line-no">133</span><span id="line-133">        request.setLocalRepositoryDirectory(new File(mavenSession.getLocalRepository().getBasedir()));</span>
-<span class="source-line-no">134</span><span id="line-134">        request.setGoals(Collections.singletonList(pluginKey + ":" + goal));</span>
-<span class="source-line-no">135</span><span id="line-135">        request.setBatchMode(true);</span>
-<span class="source-line-no">136</span><span id="line-136">        request.setQuiet(true);</span>
-<span class="source-line-no">137</span><span id="line-137">        request.setErrorHandler(LOG::error);</span>
-<span class="source-line-no">138</span><span id="line-138">        request.setOutputHandler(LOG::info);</span>
-<span class="source-line-no">139</span><span id="line-139">        return invoker.execute(request);</span>
-<span class="source-line-no">140</span><span id="line-140">    }</span>
-<span class="source-line-no">141</span><span id="line-141">}</span>
+<span class="source-line-no">127</span><span id="line-127">        return invokeGoals(pluginKey + ":" + goal);</span>
+<span class="source-line-no">128</span><span id="line-128">    }</span>
+<span class="source-line-no">129</span><span id="line-129"></span>
+<span class="source-line-no">130</span><span id="line-130">    /**</span>
+<span class="source-line-no">131</span><span id="line-131">     * Executes a goal using the Maven shared invoker.</span>
+<span class="source-line-no">132</span><span id="line-132">     * @param goals The goals to execute</span>
+<span class="source-line-no">133</span><span id="line-133">     * @return The result of the invocation</span>
+<span class="source-line-no">134</span><span id="line-134">     * @throws MavenInvocationException If the goal execution fails</span>
+<span class="source-line-no">135</span><span id="line-135">     */</span>
+<span class="source-line-no">136</span><span id="line-136">    public InvocationResult invokeGoals(String... goals) throws MavenInvocationException {</span>
+<span class="source-line-no">137</span><span id="line-137">        InvocationRequest request = new DefaultInvocationRequest();</span>
+<span class="source-line-no">138</span><span id="line-138">        request.setPomFile(mavenProject.getFile());</span>
+<span class="source-line-no">139</span><span id="line-139">        File settingsFile = mavenSession.getRequest().getUserSettingsFile();</span>
+<span class="source-line-no">140</span><span id="line-140">        if (settingsFile.exists()) {</span>
+<span class="source-line-no">141</span><span id="line-141">            request.setUserSettingsFile(settingsFile);</span>
+<span class="source-line-no">142</span><span id="line-142">        }</span>
+<span class="source-line-no">143</span><span id="line-143">        request.setLocalRepositoryDirectory(new File(mavenSession.getLocalRepository().getBasedir()));</span>
+<span class="source-line-no">144</span><span id="line-144">        request.setGoals(Arrays.asList(goals));</span>
+<span class="source-line-no">145</span><span id="line-145">        request.setBatchMode(true);</span>
+<span class="source-line-no">146</span><span id="line-146">        request.setQuiet(true);</span>
+<span class="source-line-no">147</span><span id="line-147">        request.setErrorHandler(LOG::error);</span>
+<span class="source-line-no">148</span><span id="line-148">        request.setOutputHandler(LOG::info);</span>
+<span class="source-line-no">149</span><span id="line-149">        return invoker.execute(request);</span>
+<span class="source-line-no">150</span><span id="line-150">    }</span>
+<span class="source-line-no">151</span><span id="line-151">}</span>
 
 
 

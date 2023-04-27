@@ -103,7 +103,7 @@
 <span class="source-line-no">090</span><span id="line-90">        }</span>
 <span class="source-line-no">091</span><span id="line-91">        try {</span>
 <span class="source-line-no">092</span><span id="line-92">            getLog().info("Packaging project");</span>
-<span class="source-line-no">093</span><span id="line-93">            compilerService.compileProject(true);</span>
+<span class="source-line-no">093</span><span id="line-93">            compilerService.compileProject();</span>
 <span class="source-line-no">094</span><span id="line-94">            InvocationResult packagingResult = compilerService.packageProject();</span>
 <span class="source-line-no">095</span><span id="line-95">            if (packagingResult.getExitCode() != 0) {</span>
 <span class="source-line-no">096</span><span id="line-96">                getLog().error("Error when packaging the project: ", packagingResult.getExecutionException());</span>

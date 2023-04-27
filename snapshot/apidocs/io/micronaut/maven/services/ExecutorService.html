@@ -11,7 +11,7 @@
 <link rel="stylesheet" type="text/css" href="../../../../script-dir/jquery-ui.min.css" title="Style">
 <link rel="stylesheet" type="text/css" href="../../../../jquery-ui.overrides.css" title="Style">
 <script type="text/javascript" src="../../../../script.js"></script>
-<script type="text/javascript" src="../../../../script-dir/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" src="../../../../script-dir/jquery-3.6.1.min.js"></script>
 <script type="text/javascript" src="../../../../script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="class-declaration-page">
@@ -137,6 +137,11 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Executes a goal using the Maven shared invoker.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>org.apache.maven.shared.invoker.InvocationResult</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#invokeGoals(java.lang.String...)" class="member-name-link">invokeGoals</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>...&nbsp;goals)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Executes a goal using the Maven shared invoker.</div>
+</div>
 </div>
 </div>
 </div>
@@ -221,6 +226,22 @@ loadScripts(document, 'script');</script>
 <dt>Parameters:</dt>
 <dd><code>pluginKey</code> - The plugin coordinates in the format groupId:artifactId</dd>
 <dd><code>goal</code> - The goal to execute</dd>
+<dt>Returns:</dt>
+<dd>The result of the invocation</dd>
+<dt>Throws:</dt>
+<dd><code>org.apache.maven.shared.invoker.MavenInvocationException</code> - If the goal execution fails</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="invokeGoals(java.lang.String...)">
+<h3>invokeGoals</h3>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.apache.maven.shared.invoker.InvocationResult</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/ExecutorService.html#line-136">invokeGoals</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>...&nbsp;goals)</span>
+                                                             throws <span class="exceptions">org.apache.maven.shared.invoker.MavenInvocationException</span></div>
+<div class="block">Executes a goal using the Maven shared invoker.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>goals</code> - The goals to execute</dd>
 <dt>Returns:</dt>
 <dd>The result of the invocation</dd>
 <dt>Throws:</dt>

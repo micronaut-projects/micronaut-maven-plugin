@@ -11,7 +11,7 @@
 <link rel="stylesheet" type="text/css" href="../../../script-dir/jquery-ui.min.css" title="Style">
 <link rel="stylesheet" type="text/css" href="../../../jquery-ui.overrides.css" title="Style">
 <script type="text/javascript" src="../../../script.js"></script>
-<script type="text/javascript" src="../../../script-dir/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" src="../../../script-dir/jquery-3.6.1.min.js"></script>
 <script type="text/javascript" src="../../../script-dir/jquery-ui.min.js"></script>
 </head>
 <body class="class-declaration-page">
@@ -86,7 +86,8 @@ loadScripts(document, 'script');</script>
 <hr>
 <div class="type-signature"><span class="annotations">@Mojo(name="run",
       requiresDependencyResolution=COMPILE_PLUS_RUNTIME,
-      defaultPhase=PREPARE_PACKAGE)
+      defaultPhase=PREPARE_PACKAGE,
+      aggregator=true)
 @Execute(phase=PROCESS_CLASSES)
 </span><span class="modifiers">public class </span><span class="element-name"><a href="../../../src-html/io/micronaut/maven/RunMojo.html#line-66">RunMojo</a></span>
 <span class="extends-implements">extends <a href="testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.maven.testresources">AbstractTestResourcesMojo</a></span></div>
@@ -146,8 +147,7 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(org.apache.maven.project.MavenProject,org.apache.maven.execution.MavenSession,org.apache.maven.plugin.BuildPluginManager,org.apache.maven.project.ProjectBuilder,org.apache.maven.toolchain.ToolchainManager,io.micronaut.maven.services.CompilerService,io.micronaut.maven.services.ExecutorService,io.micronaut.maven.services.DependencyResolutionService)" class="member-name-link">RunMojo</a><wbr>(org.apache.maven.project.MavenProject&nbsp;mavenProject,
- org.apache.maven.execution.MavenSession&nbsp;mavenSession,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(org.apache.maven.execution.MavenSession,org.apache.maven.plugin.BuildPluginManager,org.apache.maven.project.ProjectBuilder,org.apache.maven.toolchain.ToolchainManager,io.micronaut.maven.services.CompilerService,io.micronaut.maven.services.ExecutorService,io.micronaut.maven.services.DependencyResolutionService)" class="member-name-link">RunMojo</a><wbr>(org.apache.maven.execution.MavenSession&nbsp;mavenSession,
  org.apache.maven.plugin.BuildPluginManager&nbsp;pluginManager,
  org.apache.maven.project.ProjectBuilder&nbsp;projectBuilder,
  org.apache.maven.toolchain.ToolchainManager&nbsp;toolchainManager,
@@ -260,11 +260,10 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(org.apache.maven.project.MavenProject,org.apache.maven.execution.MavenSession,org.apache.maven.plugin.BuildPluginManager,org.apache.maven.project.ProjectBuilder,org.apache.maven.toolchain.ToolchainManager,io.micronaut.maven.services.CompilerService,io.micronaut.maven.services.ExecutorService,io.micronaut.maven.services.DependencyResolutionService)">
+<section class="detail" id="&lt;init&gt;(org.apache.maven.execution.MavenSession,org.apache.maven.plugin.BuildPluginManager,org.apache.maven.project.ProjectBuilder,org.apache.maven.toolchain.ToolchainManager,io.micronaut.maven.services.CompilerService,io.micronaut.maven.services.ExecutorService,io.micronaut.maven.services.DependencyResolutionService)">
 <h3>RunMojo</h3>
 <div class="member-signature"><span class="annotations">@Inject
-</span><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/RunMojo.html#line-176">RunMojo</a></span><wbr><span class="parameters">(org.apache.maven.project.MavenProject&nbsp;mavenProject,
- org.apache.maven.execution.MavenSession&nbsp;mavenSession,
+</span><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/RunMojo.html#line-174">RunMojo</a></span><wbr><span class="parameters">(org.apache.maven.execution.MavenSession&nbsp;mavenSession,
  org.apache.maven.plugin.BuildPluginManager&nbsp;pluginManager,
  org.apache.maven.project.ProjectBuilder&nbsp;projectBuilder,
  org.apache.maven.toolchain.ToolchainManager&nbsp;toolchainManager,
@@ -284,7 +283,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="execute()">
 <h3>execute</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/RunMojo.html#line-197">execute</a></span>()
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/RunMojo.html#line-194">execute</a></span>()
              throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
 <dt>Throws:</dt>
