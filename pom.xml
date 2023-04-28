@@ -93,7 +93,7 @@
         <sonar.java.checkstyle.reportPaths>${project.basedir}/target/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
         <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/micronaut-maven-integration-tests/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <jacoco.version>0.8.9</jacoco.version>
-        <junit-jupiter.version>5.9.2</junit-jupiter.version>
+        <junit-jupiter.version>5.9.3</junit-jupiter.version>
     </properties>
 
     <repositories>
@@ -158,7 +158,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-plugin-plugin</artifactId>
-                    <version>3.8.1</version>
+                    <version>3.8.2</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-plugin-report-plugin</artifactId>
@@ -216,12 +216,12 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-checkstyle-plugin</artifactId>
-                    <version>3.2.1</version>
+                    <version>3.2.2</version>
                     <dependencies>
                         <dependency>
                             <groupId>com.puppycrawl.tools</groupId>
                             <artifactId>checkstyle</artifactId>
-                            <version>10.9.3</version>
+                            <version>10.10.0</version>
                         </dependency>
                     </dependencies>
                 </plugin>
