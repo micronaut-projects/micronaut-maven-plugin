@@ -8,5 +8,6 @@
     <!-- <suppress checks="FileLength" -->
     <!-- files="DefaultBeanContext.java|BeanDefinitionWriter.java|DefaultHttpClient.java"/> -->
 
-    <suppress checks="ParameterNumber" files=".*TestResourcesHelper.*" />
+    <suppress checks="ParameterNumber" files="TestResourcesHelper.java" />
+    <suppress checks="InnerAssignment" files="DockerfileMojo.java" />
 </suppressions>
