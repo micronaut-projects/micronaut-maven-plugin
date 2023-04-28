@@ -33,7 +33,6 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.micronaut.maven.services.DependencyResolutionService.testResourcesModuleToAetherArtifact;
