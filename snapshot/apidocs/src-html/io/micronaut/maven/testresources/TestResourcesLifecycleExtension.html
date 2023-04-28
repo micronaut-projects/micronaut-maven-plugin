@@ -207,10 +207,10 @@
 <span class="source-line-no">194</span><span id="line-194">    private Boolean evaluateBooleanProperty(ExpressionEvaluator evaluator, String property) {</span>
 <span class="source-line-no">195</span><span id="line-195">        try {</span>
 <span class="source-line-no">196</span><span id="line-196">            Object result = evaluator.evaluate("${" + property + "}");</span>
-<span class="source-line-no">197</span><span id="line-197">            if (result instanceof Boolean) {</span>
-<span class="source-line-no">198</span><span id="line-198">                return (Boolean) result;</span>
-<span class="source-line-no">199</span><span id="line-199">            } else if (result instanceof String &amp;&amp; (result.equals(Boolean.TRUE.toString()) || result.equals(Boolean.FALSE.toString()))) {</span>
-<span class="source-line-no">200</span><span id="line-200">                return Boolean.parseBoolean((String) result);</span>
+<span class="source-line-no">197</span><span id="line-197">            if (result instanceof Boolean b) {</span>
+<span class="source-line-no">198</span><span id="line-198">                return b;</span>
+<span class="source-line-no">199</span><span id="line-199">            } else if (result instanceof String s &amp;&amp; (s.equals(Boolean.TRUE.toString()) || s.equals(Boolean.FALSE.toString()))) {</span>
+<span class="source-line-no">200</span><span id="line-200">                return Boolean.parseBoolean(s);</span>
 <span class="source-line-no">201</span><span id="line-201">            }</span>
 <span class="source-line-no">202</span><span id="line-202">        } catch (ExpressionEvaluationException e) {</span>
 <span class="source-line-no">203</span><span id="line-203">            return false;</span>

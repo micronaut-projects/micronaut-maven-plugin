@@ -44,135 +44,134 @@
 <span class="source-line-no">031</span><span id="line-31">import java.nio.file.Path;</span>
 <span class="source-line-no">032</span><span id="line-32">import java.nio.file.Paths;</span>
 <span class="source-line-no">033</span><span id="line-33">import java.util.*;</span>
-<span class="source-line-no">034</span><span id="line-34">import java.util.stream.Collectors;</span>
-<span class="source-line-no">035</span><span id="line-35"></span>
-<span class="source-line-no">036</span><span id="line-36">/**</span>
-<span class="source-line-no">037</span><span id="line-37"> * &lt;p&gt;Generate GraalVM &lt;code&gt;resources-config.json&lt;/code&gt; with all the resources included in the application&lt;/p&gt;</span>
-<span class="source-line-no">038</span><span id="line-38"> * &lt;p&gt;&lt;strong&gt;WARNING&lt;/strong&gt;: this goal is not intended to be executed directly.&lt;/p&gt;</span>
-<span class="source-line-no">039</span><span id="line-39"> *</span>
-<span class="source-line-no">040</span><span id="line-40"> * @author Iván López</span>
-<span class="source-line-no">041</span><span id="line-41"> * @since 2.0</span>
-<span class="source-line-no">042</span><span id="line-42"> */</span>
-<span class="source-line-no">043</span><span id="line-43">@Mojo(name = GraalVMResourcesMojo.GRAALVM_RESOURCES)</span>
-<span class="source-line-no">044</span><span id="line-44">public class GraalVMResourcesMojo extends ResourcesMojo {</span>
-<span class="source-line-no">045</span><span id="line-45"></span>
-<span class="source-line-no">046</span><span id="line-46">    public static final String GRAALVM_RESOURCES = "graalvm-resources";</span>
-<span class="source-line-no">047</span><span id="line-47"></span>
-<span class="source-line-no">048</span><span id="line-48">    private static final String META_INF = "META-INF";</span>
-<span class="source-line-no">049</span><span id="line-49">    private static final String RESOURCES = "resources";</span>
-<span class="source-line-no">050</span><span id="line-50">    private static final String PATTERN = "pattern";</span>
-<span class="source-line-no">051</span><span id="line-51">    private static final String RESOURCE_CONFIG_JSON = "resource-config.json";</span>
-<span class="source-line-no">052</span><span id="line-52">    private static final List&lt;String&gt; EXCLUDED_META_INF_DIRECTORIES = Arrays.asList("native-image", "services");</span>
-<span class="source-line-no">053</span><span id="line-53"></span>
-<span class="source-line-no">054</span><span id="line-54">    private final ObjectWriter writer = new ObjectMapper().writer(new DefaultPrettyPrinter());</span>
-<span class="source-line-no">055</span><span id="line-55"></span>
-<span class="source-line-no">056</span><span id="line-56">    @Parameter(property = "micronaut.native-image.skip-resources", defaultValue = "false")</span>
-<span class="source-line-no">057</span><span id="line-57">    private Boolean nativeImageSkipResources;</span>
-<span class="source-line-no">058</span><span id="line-58"></span>
-<span class="source-line-no">059</span><span id="line-59">    @Override</span>
-<span class="source-line-no">060</span><span id="line-60">    public void execute() throws MojoExecutionException {</span>
-<span class="source-line-no">061</span><span id="line-61">        if (Boolean.TRUE.equals(nativeImageSkipResources)) {</span>
-<span class="source-line-no">062</span><span id="line-62">            getLog().info("Skipping generation of resource-config.json");</span>
-<span class="source-line-no">063</span><span id="line-63">            return;</span>
-<span class="source-line-no">064</span><span id="line-64">        }</span>
-<span class="source-line-no">065</span><span id="line-65"></span>
-<span class="source-line-no">066</span><span id="line-66">        Set&lt;String&gt; resourcesToAdd = new HashSet&lt;&gt;();</span>
-<span class="source-line-no">067</span><span id="line-67"></span>
-<span class="source-line-no">068</span><span id="line-68">        // Application resources (src/main/resources)</span>
-<span class="source-line-no">069</span><span id="line-69">        for (Resource resource : getResources()) {</span>
-<span class="source-line-no">070</span><span id="line-70">            resourcesToAdd.addAll(findResourceFiles(Paths.get(resource.getDirectory()).toFile()));</span>
-<span class="source-line-no">071</span><span id="line-71">        }</span>
-<span class="source-line-no">072</span><span id="line-72"></span>
-<span class="source-line-no">073</span><span id="line-73">        // Generated resources (like openapi)</span>
-<span class="source-line-no">074</span><span id="line-74">        Path metaInfPath = getOutputDirectory().toPath().resolve(META_INF);</span>
-<span class="source-line-no">075</span><span id="line-75">        resourcesToAdd.addAll(findResourceFiles(metaInfPath.toFile(), Collections.singletonList(META_INF)));</span>
-<span class="source-line-no">076</span><span id="line-76"></span>
-<span class="source-line-no">077</span><span id="line-77">        Path nativeImagePath = buildNativeImagePath();</span>
-<span class="source-line-no">078</span><span id="line-78">        Path graalVMResourcesPath = metaInfPath.resolve(nativeImagePath).toAbsolutePath();</span>
-<span class="source-line-no">079</span><span id="line-79"></span>
-<span class="source-line-no">080</span><span id="line-80">        Map&lt;String, Object&gt; json = new HashMap&lt;&gt;();</span>
-<span class="source-line-no">081</span><span id="line-81">        List&lt;Map&lt;String, String&gt;&gt; resourceList = resourcesToAdd.stream()</span>
-<span class="source-line-no">082</span><span id="line-82">                .map(this::mapToGraalResource)</span>
-<span class="source-line-no">083</span><span id="line-83">                .collect(Collectors.toList());</span>
-<span class="source-line-no">084</span><span id="line-84"></span>
-<span class="source-line-no">085</span><span id="line-85">        json.put(RESOURCES, resourceList);</span>
-<span class="source-line-no">086</span><span id="line-86"></span>
-<span class="source-line-no">087</span><span id="line-87">        try {</span>
-<span class="source-line-no">088</span><span id="line-88">            Files.createDirectories(graalVMResourcesPath);</span>
-<span class="source-line-no">089</span><span id="line-89">            File resourceConfigFile = graalVMResourcesPath.resolve(RESOURCE_CONFIG_JSON).toFile();</span>
-<span class="source-line-no">090</span><span id="line-90">            getLog().info("Generating " + resourceConfigFile.getAbsolutePath());</span>
-<span class="source-line-no">091</span><span id="line-91">            writer.writeValue(resourceConfigFile, json);</span>
-<span class="source-line-no">092</span><span id="line-92"></span>
-<span class="source-line-no">093</span><span id="line-93">        } catch (IOException e) {</span>
-<span class="source-line-no">094</span><span id="line-94">            throw new MojoExecutionException("There was an error generating GraalVM resource-config.json file", e);</span>
-<span class="source-line-no">095</span><span id="line-95">        }</span>
-<span class="source-line-no">096</span><span id="line-96">    }</span>
-<span class="source-line-no">097</span><span id="line-97"></span>
-<span class="source-line-no">098</span><span id="line-98">    private Set&lt;String&gt; findResourceFiles(File folder) {</span>
-<span class="source-line-no">099</span><span id="line-99">        return this.findResourceFiles(folder, null);</span>
-<span class="source-line-no">100</span><span id="line-100">    }</span>
-<span class="source-line-no">101</span><span id="line-101"></span>
-<span class="source-line-no">102</span><span id="line-102">    private Set&lt;String&gt; findResourceFiles(File folder, List&lt;String&gt; filePath) {</span>
-<span class="source-line-no">103</span><span id="line-103">        Set&lt;String&gt; resourceFiles = new HashSet&lt;&gt;();</span>
-<span class="source-line-no">104</span><span id="line-104"></span>
-<span class="source-line-no">105</span><span id="line-105">        if (filePath == null) {</span>
-<span class="source-line-no">106</span><span id="line-106">            filePath = new ArrayList&lt;&gt;();</span>
-<span class="source-line-no">107</span><span id="line-107">        }</span>
-<span class="source-line-no">108</span><span id="line-108"></span>
-<span class="source-line-no">109</span><span id="line-109">        if (folder.exists()) {</span>
-<span class="source-line-no">110</span><span id="line-110">            File[] files = folder.listFiles();</span>
-<span class="source-line-no">111</span><span id="line-111"></span>
-<span class="source-line-no">112</span><span id="line-112">            if (files != null) {</span>
-<span class="source-line-no">113</span><span id="line-113">                boolean isMetaInfDirectory = folder.getName().equals(META_INF);</span>
-<span class="source-line-no">114</span><span id="line-114"></span>
-<span class="source-line-no">115</span><span id="line-115">                for (File element : files) {</span>
-<span class="source-line-no">116</span><span id="line-116">                    boolean isExcludedDirectory = EXCLUDED_META_INF_DIRECTORIES.contains(element.getName());</span>
-<span class="source-line-no">117</span><span id="line-117">                    // Exclude some directories in 'META-INF' like 'native-image' and 'services' but process other</span>
-<span class="source-line-no">118</span><span id="line-118">                    // 'META-INF' files and directories, for example, to include swagger-ui.</span>
-<span class="source-line-no">119</span><span id="line-119">                    if (!isMetaInfDirectory || !isExcludedDirectory) {</span>
-<span class="source-line-no">120</span><span id="line-120">                        if (element.isDirectory()) {</span>
-<span class="source-line-no">121</span><span id="line-121">                            List&lt;String&gt; paths = new ArrayList&lt;&gt;(filePath);</span>
-<span class="source-line-no">122</span><span id="line-122">                            paths.add(element.getName());</span>
-<span class="source-line-no">123</span><span id="line-123"></span>
-<span class="source-line-no">124</span><span id="line-124">                            resourceFiles.addAll(findResourceFiles(element, paths));</span>
-<span class="source-line-no">125</span><span id="line-125">                        } else {</span>
-<span class="source-line-no">126</span><span id="line-126">                            String joinedDirectories = String.join("/", filePath);</span>
-<span class="source-line-no">127</span><span id="line-127">                            String elementName = joinedDirectories.isEmpty() ? element.getName() : joinedDirectories + "/" + element.getName();</span>
-<span class="source-line-no">128</span><span id="line-128"></span>
-<span class="source-line-no">129</span><span id="line-129">                            resourceFiles.add(elementName);</span>
-<span class="source-line-no">130</span><span id="line-130">                        }</span>
-<span class="source-line-no">131</span><span id="line-131">                    }</span>
-<span class="source-line-no">132</span><span id="line-132">                }</span>
-<span class="source-line-no">133</span><span id="line-133">            }</span>
-<span class="source-line-no">134</span><span id="line-134">        }</span>
-<span class="source-line-no">135</span><span id="line-135"></span>
-<span class="source-line-no">136</span><span id="line-136">        return resourceFiles;</span>
-<span class="source-line-no">137</span><span id="line-137">    }</span>
-<span class="source-line-no">138</span><span id="line-138"></span>
-<span class="source-line-no">139</span><span id="line-139">    private Path buildNativeImagePath() {</span>
-<span class="source-line-no">140</span><span id="line-140">        String group = project.getGroupId();</span>
-<span class="source-line-no">141</span><span id="line-141">        String module = project.getArtifactId();</span>
-<span class="source-line-no">142</span><span id="line-142"></span>
-<span class="source-line-no">143</span><span id="line-143">        return Paths.get("native-image", group, module);</span>
-<span class="source-line-no">144</span><span id="line-144">    }</span>
-<span class="source-line-no">145</span><span id="line-145"></span>
-<span class="source-line-no">146</span><span id="line-146">    private Map&lt;String, String&gt; mapToGraalResource(String resourceName) {</span>
-<span class="source-line-no">147</span><span id="line-147">        Map&lt;String, String&gt; result = new HashMap&lt;&gt;();</span>
-<span class="source-line-no">148</span><span id="line-148"></span>
-<span class="source-line-no">149</span><span id="line-149">        if (resourceName.contains("*")) {</span>
-<span class="source-line-no">150</span><span id="line-150">            result.put(PATTERN, resourceName);</span>
-<span class="source-line-no">151</span><span id="line-151">        } else {</span>
-<span class="source-line-no">152</span><span id="line-152">            result.put(PATTERN, "\\Q" + resourceName + "\\E");</span>
-<span class="source-line-no">153</span><span id="line-153">        }</span>
-<span class="source-line-no">154</span><span id="line-154"></span>
-<span class="source-line-no">155</span><span id="line-155">        return result;</span>
-<span class="source-line-no">156</span><span id="line-156">    }</span>
-<span class="source-line-no">157</span><span id="line-157"></span>
-<span class="source-line-no">158</span><span id="line-158">    @Override</span>
-<span class="source-line-no">159</span><span id="line-159">    public void setLog(Log log) {</span>
-<span class="source-line-no">160</span><span id="line-160">        super.setLog(new JansiLog(log));</span>
-<span class="source-line-no">161</span><span id="line-161">    }</span>
-<span class="source-line-no">162</span><span id="line-162">}</span>
+<span class="source-line-no">034</span><span id="line-34"></span>
+<span class="source-line-no">035</span><span id="line-35">/**</span>
+<span class="source-line-no">036</span><span id="line-36"> * &lt;p&gt;Generate GraalVM &lt;code&gt;resources-config.json&lt;/code&gt; with all the resources included in the application&lt;/p&gt;</span>
+<span class="source-line-no">037</span><span id="line-37"> * &lt;p&gt;&lt;strong&gt;WARNING&lt;/strong&gt;: this goal is not intended to be executed directly.&lt;/p&gt;</span>
+<span class="source-line-no">038</span><span id="line-38"> *</span>
+<span class="source-line-no">039</span><span id="line-39"> * @author Iván López</span>
+<span class="source-line-no">040</span><span id="line-40"> * @since 2.0</span>
+<span class="source-line-no">041</span><span id="line-41"> */</span>
+<span class="source-line-no">042</span><span id="line-42">@Mojo(name = GraalVMResourcesMojo.GRAALVM_RESOURCES)</span>
+<span class="source-line-no">043</span><span id="line-43">public class GraalVMResourcesMojo extends ResourcesMojo {</span>
+<span class="source-line-no">044</span><span id="line-44"></span>
+<span class="source-line-no">045</span><span id="line-45">    public static final String GRAALVM_RESOURCES = "graalvm-resources";</span>
+<span class="source-line-no">046</span><span id="line-46"></span>
+<span class="source-line-no">047</span><span id="line-47">    private static final String META_INF = "META-INF";</span>
+<span class="source-line-no">048</span><span id="line-48">    private static final String RESOURCES = "resources";</span>
+<span class="source-line-no">049</span><span id="line-49">    private static final String PATTERN = "pattern";</span>
+<span class="source-line-no">050</span><span id="line-50">    private static final String RESOURCE_CONFIG_JSON = "resource-config.json";</span>
+<span class="source-line-no">051</span><span id="line-51">    private static final List&lt;String&gt; EXCLUDED_META_INF_DIRECTORIES = Arrays.asList("native-image", "services");</span>
+<span class="source-line-no">052</span><span id="line-52"></span>
+<span class="source-line-no">053</span><span id="line-53">    private final ObjectWriter writer = new ObjectMapper().writer(new DefaultPrettyPrinter());</span>
+<span class="source-line-no">054</span><span id="line-54"></span>
+<span class="source-line-no">055</span><span id="line-55">    @Parameter(property = "micronaut.native-image.skip-resources", defaultValue = "false")</span>
+<span class="source-line-no">056</span><span id="line-56">    private Boolean nativeImageSkipResources;</span>
+<span class="source-line-no">057</span><span id="line-57"></span>
+<span class="source-line-no">058</span><span id="line-58">    @Override</span>
+<span class="source-line-no">059</span><span id="line-59">    public void execute() throws MojoExecutionException {</span>
+<span class="source-line-no">060</span><span id="line-60">        if (Boolean.TRUE.equals(nativeImageSkipResources)) {</span>
+<span class="source-line-no">061</span><span id="line-61">            getLog().info("Skipping generation of resource-config.json");</span>
+<span class="source-line-no">062</span><span id="line-62">            return;</span>
+<span class="source-line-no">063</span><span id="line-63">        }</span>
+<span class="source-line-no">064</span><span id="line-64"></span>
+<span class="source-line-no">065</span><span id="line-65">        Set&lt;String&gt; resourcesToAdd = new HashSet&lt;&gt;();</span>
+<span class="source-line-no">066</span><span id="line-66"></span>
+<span class="source-line-no">067</span><span id="line-67">        // Application resources (src/main/resources)</span>
+<span class="source-line-no">068</span><span id="line-68">        for (Resource resource : getResources()) {</span>
+<span class="source-line-no">069</span><span id="line-69">            resourcesToAdd.addAll(findResourceFiles(Paths.get(resource.getDirectory()).toFile()));</span>
+<span class="source-line-no">070</span><span id="line-70">        }</span>
+<span class="source-line-no">071</span><span id="line-71"></span>
+<span class="source-line-no">072</span><span id="line-72">        // Generated resources (like openapi)</span>
+<span class="source-line-no">073</span><span id="line-73">        Path metaInfPath = getOutputDirectory().toPath().resolve(META_INF);</span>
+<span class="source-line-no">074</span><span id="line-74">        resourcesToAdd.addAll(findResourceFiles(metaInfPath.toFile(), Collections.singletonList(META_INF)));</span>
+<span class="source-line-no">075</span><span id="line-75"></span>
+<span class="source-line-no">076</span><span id="line-76">        Path nativeImagePath = buildNativeImagePath();</span>
+<span class="source-line-no">077</span><span id="line-77">        Path graalVMResourcesPath = metaInfPath.resolve(nativeImagePath).toAbsolutePath();</span>
+<span class="source-line-no">078</span><span id="line-78"></span>
+<span class="source-line-no">079</span><span id="line-79">        Map&lt;String, Object&gt; json = new HashMap&lt;&gt;();</span>
+<span class="source-line-no">080</span><span id="line-80">        List&lt;Map&lt;String, String&gt;&gt; resourceList = resourcesToAdd.stream()</span>
+<span class="source-line-no">081</span><span id="line-81">                .map(this::mapToGraalResource)</span>
+<span class="source-line-no">082</span><span id="line-82">                .toList();</span>
+<span class="source-line-no">083</span><span id="line-83"></span>
+<span class="source-line-no">084</span><span id="line-84">        json.put(RESOURCES, resourceList);</span>
+<span class="source-line-no">085</span><span id="line-85"></span>
+<span class="source-line-no">086</span><span id="line-86">        try {</span>
+<span class="source-line-no">087</span><span id="line-87">            Files.createDirectories(graalVMResourcesPath);</span>
+<span class="source-line-no">088</span><span id="line-88">            File resourceConfigFile = graalVMResourcesPath.resolve(RESOURCE_CONFIG_JSON).toFile();</span>
+<span class="source-line-no">089</span><span id="line-89">            getLog().info("Generating " + resourceConfigFile.getAbsolutePath());</span>
+<span class="source-line-no">090</span><span id="line-90">            writer.writeValue(resourceConfigFile, json);</span>
+<span class="source-line-no">091</span><span id="line-91"></span>
+<span class="source-line-no">092</span><span id="line-92">        } catch (IOException e) {</span>
+<span class="source-line-no">093</span><span id="line-93">            throw new MojoExecutionException("There was an error generating GraalVM resource-config.json file", e);</span>
+<span class="source-line-no">094</span><span id="line-94">        }</span>
+<span class="source-line-no">095</span><span id="line-95">    }</span>
+<span class="source-line-no">096</span><span id="line-96"></span>
+<span class="source-line-no">097</span><span id="line-97">    private Set&lt;String&gt; findResourceFiles(File folder) {</span>
+<span class="source-line-no">098</span><span id="line-98">        return this.findResourceFiles(folder, null);</span>
+<span class="source-line-no">099</span><span id="line-99">    }</span>
+<span class="source-line-no">100</span><span id="line-100"></span>
+<span class="source-line-no">101</span><span id="line-101">    private Set&lt;String&gt; findResourceFiles(File folder, List&lt;String&gt; filePath) {</span>
+<span class="source-line-no">102</span><span id="line-102">        Set&lt;String&gt; resourceFiles = new HashSet&lt;&gt;();</span>
+<span class="source-line-no">103</span><span id="line-103"></span>
+<span class="source-line-no">104</span><span id="line-104">        if (filePath == null) {</span>
+<span class="source-line-no">105</span><span id="line-105">            filePath = new ArrayList&lt;&gt;();</span>
+<span class="source-line-no">106</span><span id="line-106">        }</span>
+<span class="source-line-no">107</span><span id="line-107"></span>
+<span class="source-line-no">108</span><span id="line-108">        if (folder.exists()) {</span>
+<span class="source-line-no">109</span><span id="line-109">            File[] files = folder.listFiles();</span>
+<span class="source-line-no">110</span><span id="line-110"></span>
+<span class="source-line-no">111</span><span id="line-111">            if (files != null) {</span>
+<span class="source-line-no">112</span><span id="line-112">                boolean isMetaInfDirectory = folder.getName().equals(META_INF);</span>
+<span class="source-line-no">113</span><span id="line-113"></span>
+<span class="source-line-no">114</span><span id="line-114">                for (File element : files) {</span>
+<span class="source-line-no">115</span><span id="line-115">                    boolean isExcludedDirectory = EXCLUDED_META_INF_DIRECTORIES.contains(element.getName());</span>
+<span class="source-line-no">116</span><span id="line-116">                    // Exclude some directories in 'META-INF' like 'native-image' and 'services' but process other</span>
+<span class="source-line-no">117</span><span id="line-117">                    // 'META-INF' files and directories, for example, to include swagger-ui.</span>
+<span class="source-line-no">118</span><span id="line-118">                    if (!isMetaInfDirectory || !isExcludedDirectory) {</span>
+<span class="source-line-no">119</span><span id="line-119">                        if (element.isDirectory()) {</span>
+<span class="source-line-no">120</span><span id="line-120">                            List&lt;String&gt; paths = new ArrayList&lt;&gt;(filePath);</span>
+<span class="source-line-no">121</span><span id="line-121">                            paths.add(element.getName());</span>
+<span class="source-line-no">122</span><span id="line-122"></span>
+<span class="source-line-no">123</span><span id="line-123">                            resourceFiles.addAll(findResourceFiles(element, paths));</span>
+<span class="source-line-no">124</span><span id="line-124">                        } else {</span>
+<span class="source-line-no">125</span><span id="line-125">                            String joinedDirectories = String.join("/", filePath);</span>
+<span class="source-line-no">126</span><span id="line-126">                            String elementName = joinedDirectories.isEmpty() ? element.getName() : joinedDirectories + "/" + element.getName();</span>
+<span class="source-line-no">127</span><span id="line-127"></span>
+<span class="source-line-no">128</span><span id="line-128">                            resourceFiles.add(elementName);</span>
+<span class="source-line-no">129</span><span id="line-129">                        }</span>
+<span class="source-line-no">130</span><span id="line-130">                    }</span>
+<span class="source-line-no">131</span><span id="line-131">                }</span>
+<span class="source-line-no">132</span><span id="line-132">            }</span>
+<span class="source-line-no">133</span><span id="line-133">        }</span>
+<span class="source-line-no">134</span><span id="line-134"></span>
+<span class="source-line-no">135</span><span id="line-135">        return resourceFiles;</span>
+<span class="source-line-no">136</span><span id="line-136">    }</span>
+<span class="source-line-no">137</span><span id="line-137"></span>
+<span class="source-line-no">138</span><span id="line-138">    private Path buildNativeImagePath() {</span>
+<span class="source-line-no">139</span><span id="line-139">        String group = project.getGroupId();</span>
+<span class="source-line-no">140</span><span id="line-140">        String module = project.getArtifactId();</span>
+<span class="source-line-no">141</span><span id="line-141"></span>
+<span class="source-line-no">142</span><span id="line-142">        return Paths.get("native-image", group, module);</span>
+<span class="source-line-no">143</span><span id="line-143">    }</span>
+<span class="source-line-no">144</span><span id="line-144"></span>
+<span class="source-line-no">145</span><span id="line-145">    private Map&lt;String, String&gt; mapToGraalResource(String resourceName) {</span>
+<span class="source-line-no">146</span><span id="line-146">        Map&lt;String, String&gt; result = new HashMap&lt;&gt;();</span>
+<span class="source-line-no">147</span><span id="line-147"></span>
+<span class="source-line-no">148</span><span id="line-148">        if (resourceName.contains("*")) {</span>
+<span class="source-line-no">149</span><span id="line-149">            result.put(PATTERN, resourceName);</span>
+<span class="source-line-no">150</span><span id="line-150">        } else {</span>
+<span class="source-line-no">151</span><span id="line-151">            result.put(PATTERN, "\\Q" + resourceName + "\\E");</span>
+<span class="source-line-no">152</span><span id="line-152">        }</span>
+<span class="source-line-no">153</span><span id="line-153"></span>
+<span class="source-line-no">154</span><span id="line-154">        return result;</span>
+<span class="source-line-no">155</span><span id="line-155">    }</span>
+<span class="source-line-no">156</span><span id="line-156"></span>
+<span class="source-line-no">157</span><span id="line-157">    @Override</span>
+<span class="source-line-no">158</span><span id="line-158">    public void setLog(Log log) {</span>
+<span class="source-line-no">159</span><span id="line-159">        super.setLog(new JansiLog(log));</span>
+<span class="source-line-no">160</span><span id="line-160">    }</span>
+<span class="source-line-no">161</span><span id="line-161">}</span>
 
 
 

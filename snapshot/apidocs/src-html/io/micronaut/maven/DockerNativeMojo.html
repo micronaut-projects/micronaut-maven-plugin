@@ -170,7 +170,7 @@
 <span class="source-line-no">157</span><span id="line-157"></span>
 <span class="source-line-no">158</span><span id="line-158">    private void buildDockerNative() throws IOException, InvalidImageReferenceException {</span>
 <span class="source-line-no">159</span><span id="line-159">        String dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE;</span>
-<span class="source-line-no">160</span><span id="line-160">        if (staticNativeImage) {</span>
+<span class="source-line-no">160</span><span id="line-160">        if (Boolean.TRUE.equals(staticNativeImage)) {</span>
 <span class="source-line-no">161</span><span id="line-161">            getLog().info("Generating a static native image");</span>
 <span class="source-line-no">162</span><span id="line-162">            dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_STATIC;</span>
 <span class="source-line-no">163</span><span id="line-163">        } else if (baseImageRun.contains("distroless")) {</span>
@@ -205,7 +205,7 @@
 <span class="source-line-no">192</span><span id="line-192">        Map&lt;String, String&gt; buildImageCmdArguments = new HashMap&lt;&gt;();</span>
 <span class="source-line-no">193</span><span id="line-193"></span>
 <span class="source-line-no">194</span><span id="line-194">        getLog().info("Using BASE_IMAGE: " + from);</span>
-<span class="source-line-no">195</span><span id="line-195">        if (StringUtils.isNotEmpty(baseImageRun) &amp;&amp; !staticNativeImage) {</span>
+<span class="source-line-no">195</span><span id="line-195">        if (StringUtils.isNotEmpty(baseImageRun) &amp;&amp; Boolean.FALSE.equals(staticNativeImage)) {</span>
 <span class="source-line-no">196</span><span id="line-196">            buildImageCmdArguments.put("BASE_IMAGE_RUN", baseImageRun);</span>
 <span class="source-line-no">197</span><span id="line-197">        }</span>
 <span class="source-line-no">198</span><span id="line-198"></span>
