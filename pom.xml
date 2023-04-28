@@ -86,7 +86,7 @@
         <site.description>${project.description}</site.description>
         <site.version>${project.version}</site.version>
 
-        <project.build.outputTimestamp>2023-04-28T12:40:51Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2023-04-14T13:57:16Z</project.build.outputTimestamp>
 
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.organization>micronaut-projects</sonar.organization>
