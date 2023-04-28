@@ -148,15 +148,11 @@ public class DockerfileMojo extends AbstractDockerMojo {
         executorService.invokeGoal("org.graalvm.buildtools:native-maven-plugin", "write-args-file");
         File dockerfile;
         switch (runtime.getBuildStrategy()) {
-            case LAMBDA -> {
-                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS_CUSTOM_RUNTIME);
-            }
-            case ORACLE_FUNCTION -> {
-                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_NATIVE_ORACLE_CLOUD);
-            }
+            case LAMBDA -> dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS_CUSTOM_RUNTIME);
+            case ORACLE_FUNCTION -> dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_NATIVE_ORACLE_CLOUD);
             case DEFAULT -> {
                 String dockerfileName = DOCKERFILE_NATIVE;
-                if (staticNativeImage) {
+                if (Boolean.TRUE.equals(staticNativeImage)) {
                     getLog().info("Generating a static native image");
                     dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_STATIC;
                 } else if (baseImageRun.contains("distroless")) {

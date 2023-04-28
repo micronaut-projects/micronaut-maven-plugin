@@ -194,10 +194,10 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
     private Boolean evaluateBooleanProperty(ExpressionEvaluator evaluator, String property) {
         try {
             Object result = evaluator.evaluate("${" + property + "}");
-            if (result instanceof Boolean) {
-                return (Boolean) result;
-            } else if (result instanceof String && (result.equals(Boolean.TRUE.toString()) || result.equals(Boolean.FALSE.toString()))) {
-                return Boolean.parseBoolean((String) result);
+            if (result instanceof Boolean b) {
+                return b;
+            } else if (result instanceof String s && (s.equals(Boolean.TRUE.toString()) || s.equals(Boolean.FALSE.toString()))) {
+                return Boolean.parseBoolean(s);
             }
         } catch (ExpressionEvaluationException e) {
             return false;

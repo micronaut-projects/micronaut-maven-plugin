@@ -199,7 +199,7 @@ public class TestResourcesHelper {
     private List<MavenDependency> getApplicationDependencies() {
         return this.mavenProject.getDependencies().stream()
                 .map(DependencyResolutionService::mavenDependencyToTestResourcesDependency)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
