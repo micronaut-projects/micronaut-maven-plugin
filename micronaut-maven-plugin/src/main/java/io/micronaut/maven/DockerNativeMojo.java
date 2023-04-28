@@ -157,7 +157,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
     private void buildDockerNative() throws IOException, InvalidImageReferenceException {
         String dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE;
-        if (staticNativeImage) {
+        if (Boolean.TRUE.equals(staticNativeImage)) {
             getLog().info("Generating a static native image");
             dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_STATIC;
         } else if (baseImageRun.contains("distroless")) {
@@ -192,7 +192,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         Map<String, String> buildImageCmdArguments = new HashMap<>();
 
         getLog().info("Using BASE_IMAGE: " + from);
-        if (StringUtils.isNotEmpty(baseImageRun) && !staticNativeImage) {
+        if (StringUtils.isNotEmpty(baseImageRun) && Boolean.FALSE.equals(staticNativeImage)) {
             buildImageCmdArguments.put("BASE_IMAGE_RUN", baseImageRun);
         }
 

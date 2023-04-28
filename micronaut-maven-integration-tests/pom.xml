@@ -23,7 +23,6 @@
 
         <!-- Enable recording of coverage during execution of maven-invoker-plugin -->
         <jacoco.propertyName>invoker.mavenOpts</jacoco.propertyName>
-        <!--        <jacoco.includes>io.micronaut.maven.*</jacoco.includes>-->
     </properties>
 
     <repositories>

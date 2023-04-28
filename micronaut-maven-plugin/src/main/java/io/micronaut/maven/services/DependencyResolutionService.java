@@ -77,12 +77,12 @@ public class DependencyResolutionService {
     public static List<String> toClasspath(List<ArtifactResult> resolutionResult) {
         return streamClasspath(resolutionResult)
                 .map(File::getAbsolutePath)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public static List<File> toClasspathFiles(List<ArtifactResult> resolutionResult) {
         return streamClasspath(resolutionResult)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public static Dependency mavenDependencyToAetherDependency(org.apache.maven.model.Dependency d) {

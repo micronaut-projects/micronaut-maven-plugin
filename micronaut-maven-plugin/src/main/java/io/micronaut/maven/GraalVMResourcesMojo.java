@@ -80,7 +80,7 @@ public class GraalVMResourcesMojo extends ResourcesMojo {
         Map<String, Object> json = new HashMap<>();
         List<Map<String, String>> resourceList = resourcesToAdd.stream()
                 .map(this::mapToGraalResource)
-                .collect(Collectors.toList());
+                .toList();
 
         json.put(RESOURCES, resourceList);
 
