@@ -137,6 +137,9 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
         return mavenProject.getProperties().getProperty("graal.version");
     }
 
+    /**
+     * @return the oracle Linux version to use for the GraalVM base image. Defaults to {@value #ORACLE_LINUX_VERSION}
+     */
     protected String oracleLinuxVersion() {
         String version = mavenProject.getProperties().getProperty("graal.oracle.linux.version");
         return version == null ? ORACLE_LINUX_VERSION : version;
