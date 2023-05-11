@@ -52,6 +52,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     public static final String ARM_ARCH = "aarch64";
     public static final String X86_64_ARCH = "amd64";
     public static final String JAVA_17 = "java17";
+    public static final String ORACLE_LINUX_VERSION = "ol8";
 
     protected final MavenProject mavenProject;
     protected final JibConfigurationService jibConfigurationService;
@@ -136,6 +137,11 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
         return mavenProject.getProperties().getProperty("graal.version");
     }
 
+    protected String oracleLinuxVersion() {
+        String version = mavenProject.getProperties().getProperty("graal.oracle.linux.version");
+        return version == null ? ORACLE_LINUX_VERSION : version;
+    }
+
     /**
      * @return the JVM version to use for GraalVM.
      */
@@ -161,9 +167,9 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     protected String getFrom() {
         if (Boolean.TRUE.equals(staticNativeImage)) {
             // For building a static native image we need a base image with tools (cc, make,...) already installed
-            return getFromImage().orElse("ghcr.io/graalvm/graalvm-ce:ol7-" + graalVmJvmVersion() + "-" + graalVmVersion());
+            return getFromImage().orElse("ghcr.io/graalvm/graalvm-ce:" + oracleLinuxVersion() + "-" + graalVmJvmVersion() + "-" + graalVmVersion());
         } else {
-            return getFromImage().orElse("ghcr.io/graalvm/native-image:ol7-" + graalVmJvmVersion() + "-" + graalVmVersion());
+            return getFromImage().orElse("ghcr.io/graalvm/native-image:" + oracleLinuxVersion() + "-" + graalVmJvmVersion() + "-" + graalVmVersion());
         }
     }
 

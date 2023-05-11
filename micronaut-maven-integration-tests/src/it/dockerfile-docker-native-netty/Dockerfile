@@ -1,4 +1,4 @@
-FROM ghcr.io/graalvm/native-image:ol7-java17-22.3.0 AS builder
+FROM ghcr.io/graalvm/native-image:ol8-java17-22.3.0 AS builder
 WORKDIR /home/app
 
 COPY classes /home/app/classes
