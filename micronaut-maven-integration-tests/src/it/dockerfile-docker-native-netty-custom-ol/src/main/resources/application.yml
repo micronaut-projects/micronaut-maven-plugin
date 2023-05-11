@@ -1,3 +1,3 @@
 micronaut:
   application:
-    name: dockerfile-docker-native-netty
+    name: dockerfile-docker-native-netty-custom-ol
