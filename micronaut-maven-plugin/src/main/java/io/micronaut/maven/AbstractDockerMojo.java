@@ -52,7 +52,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     public static final String ARM_ARCH = "aarch64";
     public static final String X86_64_ARCH = "amd64";
     public static final String JAVA_17 = "java17";
-    public static final String ORACLE_LINUX_VERSION = "ol8";
+    public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol8";
 
     protected final MavenProject mavenProject;
     protected final JibConfigurationService jibConfigurationService;
@@ -105,6 +105,12 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     protected String baseImageRun;
 
     /**
+     * The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.
+     */
+    @Parameter(property = "micronaut.native-image.ol.version", defaultValue = DEFAULT_ORACLE_LINUX_VERSION)
+    protected String oracleLinuxVersion;
+
+    /**
      * Networking mode for the RUN instructions during build.
      *
      * @since 4.0.0
@@ -138,14 +144,6 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     }
 
     /**
-     * @return the oracle Linux version to use for the GraalVM base image. Defaults to {@value #ORACLE_LINUX_VERSION}
-     */
-    protected String oracleLinuxVersion() {
-        String version = mavenProject.getProperties().getProperty("graal.oracle.linux.version");
-        return version == null ? ORACLE_LINUX_VERSION : version;
-    }
-
-    /**
      * @return the JVM version to use for GraalVM.
      */
     protected String graalVmJvmVersion() {
@@ -170,9 +168,9 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     protected String getFrom() {
         if (Boolean.TRUE.equals(staticNativeImage)) {
             // For building a static native image we need a base image with tools (cc, make,...) already installed
-            return getFromImage().orElse("ghcr.io/graalvm/graalvm-ce:" + oracleLinuxVersion() + "-" + graalVmJvmVersion() + "-" + graalVmVersion());
+            return getFromImage().orElse("ghcr.io/graalvm/graalvm-ce:" + oracleLinuxVersion + "-" + graalVmJvmVersion() + "-" + graalVmVersion());
         } else {
-            return getFromImage().orElse("ghcr.io/graalvm/native-image:" + oracleLinuxVersion() + "-" + graalVmJvmVersion() + "-" + graalVmVersion());
+            return getFromImage().orElse("ghcr.io/graalvm/native-image:" + oracleLinuxVersion + "-" + graalVmJvmVersion() + "-" + graalVmVersion());
         }
     }
 
