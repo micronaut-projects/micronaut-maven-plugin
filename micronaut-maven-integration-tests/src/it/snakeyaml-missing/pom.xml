@@ -17,7 +17,6 @@
     <packaging>jar</packaging>
     <micronaut.version>@it.micronaut.version@</micronaut.version>
     <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
-    <micronaut.version>3.9.0-SNAPSHOT</micronaut.version>
     <micronaut.runtime>netty</micronaut.runtime>
     <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
   </properties>

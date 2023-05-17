@@ -35,7 +35,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
-import static io.micronaut.maven.services.DependencyResolutionService.testResourcesModuleToAetherArtifact;
 import static io.micronaut.maven.services.DependencyResolutionService.toClasspathFiles;
 import static java.util.stream.Stream.concat;
 
@@ -173,8 +172,6 @@ public class TestResourcesHelper {
     }
 
     private List<File> resolveServerClasspath() throws DependencyResolutionException {
-        Stream<Artifact> clientDependencies = Stream.of(testResourcesModuleToAetherArtifact("client", testResourcesVersion));
-
         List<MavenDependency> applicationDependencies = Collections.emptyList();
         if (classpathInference) {
             applicationDependencies = getApplicationDependencies();
@@ -190,7 +187,7 @@ public class TestResourcesHelper {
         Stream<Artifact> extraDependenciesStream = extraDependencies.stream()
                 .map(DependencyResolutionService::mavenDependencyToAetherArtifact);
 
-        Stream<Artifact> artifacts = concat(concat(clientDependencies, serverDependencies), extraDependenciesStream);
+        Stream<Artifact> artifacts = concat(serverDependencies, extraDependenciesStream);
 
         return toClasspathFiles(dependencyResolutionService.artifactResultsFor(artifacts, true));
     }
