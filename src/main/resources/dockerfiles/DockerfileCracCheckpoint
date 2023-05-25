@@ -3,7 +3,6 @@ FROM ${BASE_IMAGE}
 
 ARG CRAC_ARCH
 ARG CRAC_JDK_VERSION
-
 WORKDIR /home/app
 
 # Add required libraries
