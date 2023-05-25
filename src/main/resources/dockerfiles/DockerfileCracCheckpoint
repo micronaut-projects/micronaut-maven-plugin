@@ -1,6 +1,9 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
 
+ARG CRAC_ARCH
+ARG CRAC_JDK_VERSION
+
 WORKDIR /home/app
 
 # Add required libraries
@@ -11,11 +14,24 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install latest CRaC OpenJDK
-RUN release="$(curl -sL https://api.github.com/repos/CRaC/openjdk-builds/releases/latest)" \
-    && asset="$(echo $release | sed -e 's/\r//g' | sed -e 's/\x09//g' | tr '\n' ' ' | jq '.assets[] | select(.name | test("openjdk-[0-9]+-crac\\+[0-9]+_linux-x64\\.tar\\.gz"))')" \
-    && id="$(echo $asset | jq .id)" \
-    && name="$(echo $asset | jq -r .name)" \
-    && curl -LJOH 'Accept: application/octet-stream' "https://api.github.com/repos/CRaC/openjdk-builds/releases/assets/$id" >&2 \
+RUN echo Locating latest CRaC OpenJDK $CRAC_JDK_VERSION for $CRAC_ARCH
+RUN release_id=$(curl -s "https://api.azul.com/metadata/v1/zulu/packages/?java_version=${CRAC_JDK_VERSION}&arch=${CRAC_ARCH}&crac_supported=true&latest=true&release_status=ga&certifications=tck&page=1&page_size=100" -H "accept: application/json" | jq -r '.[0] | .package_uuid') \
+    && if [ "$release_id" ]; then \
+           echo "No CRaC OpenJDK $CRAC_JDK_VERSION for $CRAC_ARCH found"; \
+           exit 1; \
+       fi \
+    && details=$(curl -s "https://api.azul.com/metadata/v1/zulu/packages/$release_id" -H "accept: application/json") \
+    && name=$(echo "$details" | jq -r '.name') \
+    && url=$(echo "$details" | jq -r '.download_url') \
+    && hash=$(echo "$details" | jq -r '.sha256_hash') \
+    && echo "Downloading $name from $url" \
+    && curl -LJOH 'Accept: application/octet-stream' "$url" >&2 \
+    && file_sha=$(sha256sum -b "$name" | cut -d' ' -f 1) \
+    && if [ "$file_sha" != "$hash" ]; then \
+           echo "SHA256 hash mismatch: $file_sha != $hash"; \
+           exit 1; \
+       fi \
+    && echo "SHA256 hash matches: $file_sha == $hash" >&2 \
     && tar xzf "$name" \
     && mv ${name%%.tar.gz} /azul-crac-jdk \
     && rm "$name"
