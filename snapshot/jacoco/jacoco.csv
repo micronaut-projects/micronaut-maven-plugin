@@ -26,11 +26,11 @@ Micronaut Maven Plugin,io.micronaut.build,MicronautRuntime,115,0,0,0,17,0,4,0,4,
 Micronaut Maven Plugin,io.micronaut.build,DockerfileMojo,443,0,46,0,91,0,34,0,9,0
 Micronaut Maven Plugin,io.micronaut.build,MojoUtils,48,0,6,0,10,0,4,0,1,0
 Micronaut Maven Plugin,io.micronaut.build,DockerPushMojo,138,0,12,0,32,0,8,0,2,0
-Micronaut Maven Plugin,io.micronaut.build,DockerMojo,108,0,4,0,21,0,4,0,2,0
 Micronaut Maven Plugin,io.micronaut.build,Packaging,77,0,0,0,11,0,4,0,4,0
+Micronaut Maven Plugin,io.micronaut.build,DockerMojo,108,0,4,0,21,0,4,0,2,0
 Micronaut Maven Plugin,io.micronaut.build,GraalVMResourcesMojo,292,0,22,0,55,0,18,0,7,0
 Micronaut Maven Plugin,io.micronaut.build,DockerNativeMojo,550,0,45,0,103,0,31,0,8,0
-Micronaut Maven Plugin,io.micronaut.build,DockerCracMojo,417,0,15,0,74,0,17,0,9,0
+Micronaut Maven Plugin,io.micronaut.build,DockerCracMojo,452,0,21,0,84,0,21,0,10,0
 Micronaut Maven Plugin,io.micronaut.build,RunMojo,1142,0,170,0,225,0,106,0,21,0
 Micronaut Maven Plugin,io.micronaut.build,AbstractDockerMojo,337,0,26,0,56,0,28,0,15,0
 Micronaut Maven Plugin,io.micronaut.build,DockerBuildStrategy,34,0,0,0,4,0,1,0,1,0
