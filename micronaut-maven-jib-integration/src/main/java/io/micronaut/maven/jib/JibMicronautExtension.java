@@ -52,7 +52,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
         JibConfigurationService jibConfigurationService = new JibConfigurationService(mavenData.getMavenProject());
 
-        if (StringUtils.isNotEmpty(buildPlan.getBaseImage())) {
+        if (StringUtils.isEmpty(buildPlan.getBaseImage())) {
             builder.setBaseImage(DEFAULT_BASE_IMAGE);
         }
 
