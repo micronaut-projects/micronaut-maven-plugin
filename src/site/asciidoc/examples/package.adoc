@@ -306,7 +306,6 @@ This is by default done by executing the command `curl --output /dev/null --sile
 </properties>
 ----
 
-
 ==== Customizing warmup
 
 The default warmup script simply makes a request to port 8080 of the application.
@@ -322,3 +321,19 @@ for run in {1..10}; do
   curl --output /dev/null --silent http://localhost:8080
 done
 ----
+
+==== Customizing the JDK
+
+By default, the CRaC JDK used to build the image will be for the current system architecture and Java 17.
+These can be overridden by passing properties to the build:
+
+[source,xml]
+.Example setting the CRaC JDK version and architecture
+----
+<properties>
+    <crac.java.version>21</crac.java.version>
+    <crac.arch>amd64</crac.arch>
+</properties>
+----
+
+NOTE: Currently only Java 17, and `amd64` and `aarch64` architectures are supported.
