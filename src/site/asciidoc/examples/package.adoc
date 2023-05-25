@@ -328,7 +328,7 @@ By default, the CRaC JDK used to build the image will be for the current system 
 These can be overridden by passing properties to the build:
 
 [source,xml]
-.Example checking https
+.Example setting the CRaC JDK version and architecture
 ----
 <properties>
     <crac.java.version>21</crac.java.version>
