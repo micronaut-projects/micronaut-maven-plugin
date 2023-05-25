@@ -212,6 +212,10 @@ public class DockerCracMojo extends AbstractDockerMojo {
                 .withBuildArg("CHECKPOINT_IMAGE", checkpointContainerId)
                 .withTags(getTags());
         dockerService.buildImage(buildImageCmd);
+
+        getLog().warn("**********************************************************");
+        getLog().warn(" CRaC checkpoint files may contain sensitive information.");
+        getLog().warn("**********************************************************");
     }
 
     private Properties replacementProperties(String readinessCommand, String mainClass) {
