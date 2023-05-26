@@ -212,43 +212,47 @@ public class DockerCracMojo extends AbstractDockerMojo {
 <span class="nc" id="L212">                .withBuildArg(&quot;CHECKPOINT_IMAGE&quot;, checkpointContainerId)</span>
 <span class="nc" id="L213">                .withTags(getTags());</span>
 <span class="nc" id="L214">        dockerService.buildImage(buildImageCmd);</span>
-<span class="nc" id="L215">    }</span>
+
+<span class="nc" id="L216">        getLog().warn(&quot;**********************************************************&quot;);</span>
+<span class="nc" id="L217">        getLog().warn(&quot; CRaC checkpoint files may contain sensitive information.&quot;);</span>
+<span class="nc" id="L218">        getLog().warn(&quot;**********************************************************&quot;);</span>
+<span class="nc" id="L219">    }</span>
 
     private Properties replacementProperties(String readinessCommand, String mainClass) {
-<span class="nc" id="L218">        Properties properties = new Properties();</span>
-<span class="nc" id="L219">        properties.setProperty(&quot;READINESS&quot;, readinessCommand);</span>
-<span class="nc" id="L220">        properties.setProperty(&quot;MAINCLASS&quot;, mainClass);</span>
-<span class="nc" id="L221">        return properties;</span>
+<span class="nc" id="L222">        Properties properties = new Properties();</span>
+<span class="nc" id="L223">        properties.setProperty(&quot;READINESS&quot;, readinessCommand);</span>
+<span class="nc" id="L224">        properties.setProperty(&quot;MAINCLASS&quot;, mainClass);</span>
+<span class="nc" id="L225">        return properties;</span>
     }
 
     private void copyScripts(String... scriptNames) throws IOException, MavenFilteringException {
-<span class="nc" id="L225">        File target = new File(mavenProject.getBuild().getDirectory(), &quot;scripts&quot;);</span>
-<span class="nc bnc" id="L226" title="All 2 branches missed.">        if (!target.exists()) {</span>
-<span class="nc" id="L227">            target.mkdirs();</span>
+<span class="nc" id="L229">        File target = new File(mavenProject.getBuild().getDirectory(), &quot;scripts&quot;);</span>
+<span class="nc bnc" id="L230" title="All 2 branches missed.">        if (!target.exists()) {</span>
+<span class="nc" id="L231">            target.mkdirs();</span>
         }
-<span class="nc" id="L229">        processScripts(target, replacementProperties(readinessCommand, mainClass), scriptNames);</span>
-<span class="nc" id="L230">    }</span>
+<span class="nc" id="L233">        processScripts(target, replacementProperties(readinessCommand, mainClass), scriptNames);</span>
+<span class="nc" id="L234">    }</span>
 
     private void processScripts(File target, Properties replacements, String... scriptNames) throws IOException, MavenFilteringException {
-<span class="nc bnc" id="L233" title="All 2 branches missed.">        for (String script : scriptNames) {</span>
-<span class="nc" id="L234">            File localOverride = new File(mavenProject.getBasedir(), script);</span>
-<span class="nc" id="L235">            InputStream resourceStream = DockerCracMojo.class.getResourceAsStream(&quot;/cracScripts/&quot; + script);</span>
-<span class="nc bnc" id="L236" title="All 2 branches missed.">            Reader resourceReader = resourceStream == null ? null : new InputStreamReader(resourceStream);</span>
-<span class="nc bnc" id="L237" title="All 2 branches missed.">            try (Reader reader = localOverride.exists() ? Files.newBufferedReader(localOverride.toPath()) : resourceReader) {</span>
-<span class="nc bnc" id="L238" title="All 2 branches missed.">                if (reader == null) {</span>
-<span class="nc" id="L239">                    throw new IOException(&quot;Could not find script &quot; + script);</span>
+<span class="nc bnc" id="L237" title="All 2 branches missed.">        for (String script : scriptNames) {</span>
+<span class="nc" id="L238">            File localOverride = new File(mavenProject.getBasedir(), script);</span>
+<span class="nc" id="L239">            InputStream resourceStream = DockerCracMojo.class.getResourceAsStream(&quot;/cracScripts/&quot; + script);</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">            Reader resourceReader = resourceStream == null ? null : new InputStreamReader(resourceStream);</span>
+<span class="nc bnc" id="L241" title="All 2 branches missed.">            try (Reader reader = localOverride.exists() ? Files.newBufferedReader(localOverride.toPath()) : resourceReader) {</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">                if (reader == null) {</span>
+<span class="nc" id="L243">                    throw new IOException(&quot;Could not find script &quot; + script);</span>
                 }
-<span class="nc" id="L241">                MavenReaderFilterRequest req = new MavenReaderFilterRequest();</span>
-<span class="nc" id="L242">                req.setFrom(reader);</span>
-<span class="nc" id="L243">                req.setFiltering(true);</span>
-<span class="nc" id="L244">                req.setAdditionalProperties(replacements);</span>
-<span class="nc" id="L245">                Path outputPath = target.toPath().resolve(script);</span>
-<span class="nc" id="L246">                try (Writer writer = Files.newBufferedWriter(outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {</span>
-<span class="nc" id="L247">                    IOUtils.copy(mavenReaderFilter.filter(req), writer);</span>
+<span class="nc" id="L245">                MavenReaderFilterRequest req = new MavenReaderFilterRequest();</span>
+<span class="nc" id="L246">                req.setFrom(reader);</span>
+<span class="nc" id="L247">                req.setFiltering(true);</span>
+<span class="nc" id="L248">                req.setAdditionalProperties(replacements);</span>
+<span class="nc" id="L249">                Path outputPath = target.toPath().resolve(script);</span>
+<span class="nc" id="L250">                try (Writer writer = Files.newBufferedWriter(outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {</span>
+<span class="nc" id="L251">                    IOUtils.copy(mavenReaderFilter.filter(req), writer);</span>
                 }
-<span class="nc" id="L249">                Files.setPosixFilePermissions(outputPath, POSIX_FILE_PERMISSIONS);</span>
+<span class="nc" id="L253">                Files.setPosixFilePermissions(outputPath, POSIX_FILE_PERMISSIONS);</span>
             }
         }
-<span class="nc" id="L252">    }</span>
+<span class="nc" id="L256">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>
