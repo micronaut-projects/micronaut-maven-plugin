@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DockerService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.build.services</a> &gt; <span class="el_source">DockerService.java</span></div><h1>DockerService.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.build.services;
+
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.BuildImageCmd;
+import com.github.dockerjava.api.command.BuildImageResultCallback;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.PushImageCmd;
+import com.github.dockerjava.api.command.StartContainerCmd;
+import com.github.dockerjava.api.command.WaitContainerCmd;
+import com.github.dockerjava.api.command.WaitContainerResultCallback;
+import com.github.dockerjava.api.exception.DockerClientException;
+import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.BuildResponseItem;
+import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DockerClientConfig;
+import com.github.dockerjava.core.DockerClientImpl;
+import com.github.dockerjava.transport.DockerHttpClient;
+import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
+import io.micronaut.build.DockerfileMojo;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.maven.project.MavenProject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Provides methods to work with Docker images.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 1.1
+ */
+@Singleton
+public class DockerService {
+
+<span class="nc" id="L63">    private static final Logger LOG = LoggerFactory.getLogger(DockerService.class);</span>
+
+    private final DockerClient dockerClient;
+    private final MavenProject mavenProject;
+
+    @SuppressWarnings(&quot;CdiInjectionPointsInspection&quot;)
+    @Inject
+<span class="nc" id="L70">    public DockerService(MavenProject mavenProject) {</span>
+<span class="nc" id="L71">        this.mavenProject = mavenProject;</span>
+<span class="nc" id="L72">        DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();</span>
+<span class="nc" id="L73">        DockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder()</span>
+<span class="nc" id="L74">                .dockerHost(config.getDockerHost())</span>
+<span class="nc" id="L75">                .sslConfig(config.getSSLConfig())</span>
+<span class="nc" id="L76">                .build();</span>
+<span class="nc" id="L77">        dockerClient = DockerClientImpl.getInstance(config, httpClient);</span>
+<span class="nc" id="L78">    }</span>
+
+    /**
+     * Creates the {@link BuildImageCmd} by loading the given Dockerfile as classpath resource.
+     */
+    public BuildImageCmd buildImageCmd(String dockerfileName) throws IOException {
+<span class="nc" id="L84">        return dockerClient.buildImageCmd(loadDockerfileAsResource(dockerfileName));</span>
+    }
+
+    /**
+     * Creates a default {@link BuildImageCmd}.
+     */
+    public BuildImageCmd buildImageCmd() {
+<span class="nc" id="L91">        return dockerClient.buildImageCmd();</span>
+    }
+
+    /**
+     * Builds the Docker image from the given {@link BuildImageCmd} builder.
+     *
+     * @return The resulting image ID.
+     */
+    public String buildImage(BuildImageCmd builder) {
+<span class="nc" id="L100">        BuildImageResultCallback resultCallback = new BuildImageResultCallback() {</span>
+            @Override
+            public void onNext(BuildResponseItem item) {
+<span class="nc" id="L103">                super.onNext(item);</span>
+<span class="nc bnc" id="L104" title="All 4 branches missed.">                if (item.isErrorIndicated() &amp;&amp; item.getErrorDetail() != null) {</span>
+<span class="nc" id="L105">                    LOG.error(item.getErrorDetail().getMessage());</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">                } else if (item.getStream() != null) {</span>
+<span class="nc" id="L107">                    String msg = StringUtils.removeEnd(item.getStream(), System.lineSeparator());</span>
+<span class="nc" id="L108">                    LOG.info(msg);</span>
+                }
+<span class="nc" id="L110">            }</span>
+        };
+
+<span class="nc" id="L113">        return builder</span>
+<span class="nc" id="L114">                .exec(resultCallback)</span>
+<span class="nc" id="L115">                .awaitImageId();</span>
+    }
+
+    /**
+     * Creates a container based on a given image, and runs it.
+     * @param imageId the image to use
+     * @param timeoutSeconds the timeout in seconds for the container to finish execution
+     * @param binds the bind mounts to use
+     */
+    public void runPrivilegedImageAndWait(String imageId, Integer timeoutSeconds, String checkpointNetworkName, String... binds) throws IOException {
+<span class="nc" id="L125">        try (CreateContainerCmd create = dockerClient.createContainerCmd(imageId)) {</span>
+<span class="nc" id="L126">            HostConfig hostConfig = create.getHostConfig();</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">            if (hostConfig == null) {</span>
+<span class="nc" id="L128">                throw new DockerClientException(&quot;When setting binds and privileged, hostConfig was null.  Please check your docker installation and try again&quot;);</span>
+            }
+<span class="nc" id="L130">            hostConfig.withPrivileged(true);</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">            if (checkpointNetworkName != null) {</span>
+<span class="nc" id="L132">                hostConfig.withNetworkMode(checkpointNetworkName);</span>
+            }
+<span class="nc bnc" id="L134" title="All 2 branches missed.">            for (String bind : binds) {</span>
+<span class="nc" id="L135">                hostConfig.withBinds(Bind.parse(bind));</span>
+            }
+<span class="nc" id="L137">            CreateContainerResponse createResponse = create.exec();</span>
+<span class="nc" id="L138">            try (StartContainerCmd start = dockerClient.startContainerCmd(createResponse.getId())) {</span>
+<span class="nc" id="L139">                start.exec();</span>
+<span class="nc" id="L140">                LOG.info(&quot;Container started: {} {}&quot;, createResponse.getId(), start.getContainerId());</span>
+<span class="nc" id="L141">                try (WaitContainerCmd wait = dockerClient.waitContainerCmd(createResponse.getId())) {</span>
+<span class="nc" id="L142">                    WaitContainerResultCallback waitResult = wait.start();</span>
+<span class="nc" id="L143">                    LOG.info(&quot;Waiting {} seconds for completion&quot;, timeoutSeconds);</span>
+<span class="nc" id="L144">                    Integer exitcode = waitResult.awaitStatusCode(timeoutSeconds, TimeUnit.SECONDS);</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">                    if (exitcode != 0) {</span>
+<span class="nc" id="L146">                        throw new IOException(&quot;Image &quot; + imageId + &quot; exited with code &quot; + exitcode);</span>
+                    }
+                }
+            }
+        }
+<span class="nc" id="L151">    }</span>
+
+    /**
+     * Copies a file from the specified container path in the given image ID, into a temporal location.
+     */
+    public File copyFromContainer(String imageId, String containerPath) {
+<span class="nc" id="L157">        CreateContainerCmd containerCmd = dockerClient.createContainerCmd(imageId);</span>
+<span class="nc" id="L158">        CreateContainerResponse container = containerCmd.exec();</span>
+<span class="nc" id="L159">        dockerClient.startContainerCmd(container.getId());</span>
+<span class="nc" id="L160">        InputStream nativeImage = dockerClient.copyArchiveFromContainerCmd(container.getId(), containerPath).exec();</span>
+
+<span class="nc" id="L162">        try (TarArchiveInputStream fin = new TarArchiveInputStream(nativeImage)) {</span>
+<span class="nc" id="L163">            TarArchiveEntry tarEntry = fin.getNextTarEntry();</span>
+<span class="nc" id="L164">            File file = new File(mavenProject.getBuild().getDirectory(), tarEntry.getName());</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">            if (!file.getCanonicalFile().toPath().startsWith(mavenProject.getBuild().getDirectory())) {</span>
+<span class="nc" id="L166">                throw new IOException(&quot;Entry is outside of the target directory&quot;);</span>
+            }
+
+<span class="nc" id="L169">            IOUtils.copy(fin, Files.newOutputStream(file.toPath()));</span>
+
+<span class="nc" id="L171">            return file;</span>
+<span class="nc" id="L172">        } catch (IOException e) {</span>
+<span class="nc" id="L173">            LOG.error(&quot;Failed to copy file from container&quot;, e);</span>
+        } finally {
+<span class="nc" id="L175">            containerCmd.close();</span>
+        }
+<span class="nc" id="L177">        return null;</span>
+    }
+
+    /**
+     * Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.
+     */
+    public File loadDockerfileAsResource(String name) throws IOException {
+<span class="nc" id="L184">        return loadDockerfileAsResource(name, DockerfileMojo.DOCKERFILE);</span>
+    }
+
+    /**
+     * Loads the given Dockerfile as classpath resource and copies it into a temporary location in the target directory.
+     */
+    public File loadDockerfileAsResource(String name, String targetFileName) throws IOException {
+<span class="nc" id="L191">        String path = &quot;/dockerfiles/&quot; + name;</span>
+<span class="nc" id="L192">        InputStream stream = getClass().getResourceAsStream(path);</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">        if (stream != null) {</span>
+<span class="nc" id="L194">            File dockerfile = new File(mavenProject.getBuild().getDirectory(), targetFileName);</span>
+<span class="nc" id="L195">            FileUtils.copyInputStreamToFile(stream, dockerfile);</span>
+<span class="nc" id="L196">            return dockerfile;</span>
+        }
+<span class="nc" id="L198">        return null;</span>
+    }
+
+    /**
+     * Creates a {@link PushImageCmd} from the given image name.
+     */
+    public PushImageCmd pushImageCmd(String imageName) {
+<span class="nc" id="L205">        return dockerClient.pushImageCmd(imageName);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

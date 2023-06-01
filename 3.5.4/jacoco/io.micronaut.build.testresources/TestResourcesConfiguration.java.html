@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TestResourcesConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.build.testresources</a> &gt; <span class="el_source">TestResourcesConfiguration.java</span></div><h1>TestResourcesConfiguration.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.build.testresources;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonRootName;
+import org.apache.maven.plugins.annotations.Parameter;
+
+import static io.micronaut.build.testresources.StopTestResourcesServerMojo.MICRONAUT_TEST_RESOURCES_KEEPALIVE;
+
+/**
+ * Base configuration class for Test Resources.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 3.5.1
+ */
+@JsonRootName(&quot;configuration&quot;)
+@JsonIgnoreProperties(ignoreUnknown = true)
+<span class="nc" id="L33">public class TestResourcesConfiguration {</span>
+
+    public static final String DISABLED = &quot;false&quot;;
+    public static final String CONFIG_PROPERTY_PREFIX = &quot;micronaut.test.resources.&quot;;
+
+    private static final String PROPERTY_ENABLED = &quot;enabled&quot;;
+
+    /**
+     * Whether to enable or disable Micronaut test resources support.
+     */
+    @Parameter(property =  CONFIG_PROPERTY_PREFIX + PROPERTY_ENABLED, defaultValue = DISABLED)
+    @JsonProperty(PROPERTY_ENABLED)
+    protected boolean testResourcesEnabled;
+
+    /**
+     * Whether the test resources service should be shared between independent builds
+     * (e.g different projects, even built with different build tools).
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + &quot;shared&quot;, defaultValue = DISABLED)
+    protected boolean shared;
+
+    /**
+     * Whether the test resources service should be kept alive after the build.
+     */
+    @Parameter(property = MICRONAUT_TEST_RESOURCES_KEEPALIVE, defaultValue = DISABLED)
+    protected boolean keepAlive;
+
+    /**
+     * Allows configuring a namespace for the shared test resources server. This can be used in case it makes sense to
+     * have different instances of shared services, for example when independent builds sets share different services.
+     *
+     * @since 3.5.1
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + &quot;namespace&quot;)
+    protected String sharedServerNamespace;
+
+    /**
+     * @return Whether to enable or disable Micronaut test resources support.
+     */
+    public boolean isTestResourcesEnabled() {
+<span class="nc" id="L73">        return testResourcesEnabled;</span>
+    }
+
+    /**
+     * @return Whether the test resources service should be shared between independent builds.
+     */
+    public boolean isShared() {
+<span class="nc" id="L80">        return shared;</span>
+    }
+
+    /**
+     * @return Whether the test resources service should be kept alive after the build.
+     */
+    public boolean isKeepAlive() {
+<span class="nc" id="L87">        return keepAlive;</span>
+    }
+
+    /**
+     * @return The shared server namespace (if any).
+     */
+    public String getSharedServerNamespace() {
+<span class="nc" id="L94">        return sharedServerNamespace;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

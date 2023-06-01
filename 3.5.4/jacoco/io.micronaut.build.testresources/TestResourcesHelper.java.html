@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TestResourcesHelper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.build.testresources</a> &gt; <span class="el_source">TestResourcesHelper.java</span></div><h1>TestResourcesHelper.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.build.testresources;
+
+import io.micronaut.build.services.DependencyResolutionService;
+import io.micronaut.testresources.buildtools.*;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugin.logging.SystemStreamLog;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.toolchain.ToolchainManager;
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.resolution.DependencyResolutionException;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static io.micronaut.build.MojoUtils.findJavaExecutable;
+import static io.micronaut.build.services.DependencyResolutionService.testResourcesModuleToAetherArtifact;
+import static io.micronaut.build.services.DependencyResolutionService.toClasspathFiles;
+import static java.util.stream.Stream.concat;
+
+/**
+ * Utility class to stop Test Resources service.
+ */
+public class TestResourcesHelper {
+
+    private static final String TEST_RESOURCES_PROPERTIES = &quot;test-resources.properties&quot;;
+    private static final String PORT_FILE_NAME = &quot;test-resources-port.txt&quot;;
+
+    private final boolean enabled;
+
+    private final boolean keepAlive;
+
+    private final boolean shared;
+
+    private final File buildDirectory;
+
+    private final Log log;
+
+    private Integer explicitPort;
+
+    private Integer clientTimeout;
+
+    private MavenProject mavenProject;
+
+    private MavenSession mavenSession;
+
+    private DependencyResolutionService dependencyResolutionService;
+
+    private ToolchainManager toolchainManager;
+
+    private String testResourcesVersion;
+
+    private boolean classpathInference;
+
+    private List&lt;Dependency&gt; testResourcesDependencies;
+
+    private String sharedServerNamespace;
+
+    public TestResourcesHelper(boolean enabled, boolean keepAlive, boolean shared, File buildDirectory,
+                               Integer explicitPort, Integer clientTimeout, MavenProject mavenProject,
+                               MavenSession mavenSession, DependencyResolutionService dependencyResolutionService,
+                               ToolchainManager toolchainManager, String testResourcesVersion,
+                               boolean classpathInference, List&lt;Dependency&gt; testResourcesDependencies,
+                               String sharedServerNamespace) {
+<span class="nc" id="L90">        this(enabled, keepAlive, shared, buildDirectory);</span>
+<span class="nc" id="L91">        this.explicitPort = explicitPort;</span>
+<span class="nc" id="L92">        this.clientTimeout = clientTimeout;</span>
+<span class="nc" id="L93">        this.mavenProject = mavenProject;</span>
+<span class="nc" id="L94">        this.mavenSession = mavenSession;</span>
+<span class="nc" id="L95">        this.dependencyResolutionService = dependencyResolutionService;</span>
+<span class="nc" id="L96">        this.toolchainManager = toolchainManager;</span>
+<span class="nc" id="L97">        this.testResourcesVersion = testResourcesVersion;</span>
+<span class="nc" id="L98">        this.classpathInference = classpathInference;</span>
+<span class="nc" id="L99">        this.testResourcesDependencies = testResourcesDependencies;</span>
+<span class="nc" id="L100">        this.sharedServerNamespace = sharedServerNamespace;</span>
+<span class="nc" id="L101">    }</span>
+
+<span class="nc" id="L103">    public TestResourcesHelper(boolean enabled, boolean keepAlive, boolean shared, File buildDirectory) {</span>
+<span class="nc" id="L104">        this.enabled = enabled;</span>
+<span class="nc" id="L105">        this.keepAlive = keepAlive;</span>
+<span class="nc" id="L106">        this.shared = shared;</span>
+<span class="nc" id="L107">        this.buildDirectory = buildDirectory;</span>
+<span class="nc" id="L108">        this.log = new SystemStreamLog();</span>
+<span class="nc" id="L109">    }</span>
+
+    /**
+     * Starts the Test Resources Service.
+     */
+    public void start() throws MojoExecutionException {
+<span class="nc bnc" id="L115" title="All 2 branches missed.">        if (!enabled) {</span>
+<span class="nc" id="L116">            return;</span>
+        }
+        try {
+<span class="nc" id="L119">            doStart();</span>
+<span class="nc" id="L120">        } catch (Exception e) {</span>
+<span class="nc" id="L121">            throw new MojoExecutionException(&quot;Unable to start test resources server&quot;, e);</span>
+<span class="nc" id="L122">        }</span>
+<span class="nc" id="L123">    }</span>
+
+    private void doStart() throws DependencyResolutionException, IOException {
+<span class="nc bnc" id="L126" title="All 2 branches missed.">        if (shared) {</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">            if (sharedServerNamespace != null) {</span>
+<span class="nc" id="L128">                log.info(&quot;Test Resources is configured in shared mode with the namespace: &quot; + sharedServerNamespace);</span>
+            } else {
+<span class="nc" id="L130">                log.info(&quot;Test Resources is configured in shared mode&quot;);</span>
+            }
+        }
+<span class="nc" id="L133">        String accessToken = UUID.randomUUID().toString();</span>
+<span class="nc" id="L134">        Path buildDir = buildDirectory.toPath();</span>
+<span class="nc" id="L135">        Path serverSettingsDirectory = getServerSettingsDirectory();</span>
+<span class="nc" id="L136">        AtomicBoolean serverStarted = new AtomicBoolean(false);</span>
+<span class="nc" id="L137">        ServerUtils.startOrConnectToExistingServer(</span>
+                explicitPort,
+<span class="nc" id="L139">                buildDir.resolve(PORT_FILE_NAME),</span>
+                serverSettingsDirectory,
+                accessToken,
+<span class="nc" id="L142">                resolveServerClasspath(),</span>
+                clientTimeout,
+<span class="nc" id="L144">                new ServerFactory() {</span>
+                    Process process;
+
+                    @Override
+                    public void startServer(ServerUtils.ProcessParameters processParameters) throws IOException {
+<span class="nc" id="L149">                        log.info(&quot;Starting Micronaut Test Resources service&quot;);</span>
+<span class="nc" id="L150">                        String javaBin = findJavaExecutable(toolchainManager, mavenSession);</span>
+<span class="nc" id="L151">                        List&lt;String&gt; cli = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L152">                        cli.add(javaBin);</span>
+<span class="nc" id="L153">                        cli.addAll(processParameters.getJvmArguments());</span>
+<span class="nc" id="L154">                        processParameters.getSystemProperties().forEach((key, value) -&gt; cli.add(&quot;-D&quot; + key + &quot;=&quot; + value));</span>
+<span class="nc" id="L155">                        cli.add(&quot;-cp&quot;);</span>
+<span class="nc" id="L156">                        cli.add(processParameters.getClasspath().stream().map(File::getAbsolutePath).collect(Collectors.joining(File.pathSeparator)));</span>
+<span class="nc" id="L157">                        cli.add(processParameters.getMainClass());</span>
+<span class="nc" id="L158">                        cli.addAll(processParameters.getArguments());</span>
+<span class="nc" id="L159">                        ProcessBuilder builder = new ProcessBuilder(cli);</span>
+<span class="nc" id="L160">                        process = builder.inheritIO().start();</span>
+<span class="nc" id="L161">                        serverStarted.set(true);</span>
+<span class="nc" id="L162">                    }</span>
+
+                    @Override
+                    public void waitFor(Duration duration) throws InterruptedException {
+<span class="nc bnc" id="L166" title="All 2 branches missed.">                        if (process != null) {</span>
+<span class="nc" id="L167">                            process.waitFor(duration.toMillis(), TimeUnit.MILLISECONDS);</span>
+                        }
+<span class="nc" id="L169">                    }</span>
+                }
+        );
+<span class="nc bnc" id="L172" title="All 2 branches missed.">        if (keepAlive) {</span>
+<span class="nc" id="L173">            log.info(&quot;Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:&quot; + StopTestResourcesServerMojo.NAME + &quot;'&quot;);</span>
+        }
+<span class="nc bnc" id="L175" title="All 2 branches missed.">        if (!serverStarted.get()) {</span>
+            // A server was already listening, which means it was running before
+            // the build was started, so we put a file to indicate to the stop
+            // mojo that it should not stop the server.
+<span class="nc" id="L179">            Path keepalive = getKeepAliveFile();</span>
+<span class="nc" id="L180">            Files.write(keepalive, &quot;true&quot;.getBytes());</span>
+        }
+        // In order for the test resources client to connect, we need
+        // to copy the test resources file to the test classes directory
+<span class="nc" id="L184">        copyServerSettingsToClasspath(buildDir, serverSettingsDirectory);</span>
+<span class="nc" id="L185">    }</span>
+
+    private void copyServerSettingsToClasspath(Path buildDir, Path serverSettingsDirectory) throws IOException {
+<span class="nc" id="L188">        Path testClassesDir = buildDir.resolve(&quot;test-classes&quot;);</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">        if (!Files.exists(testClassesDir)) {</span>
+<span class="nc" id="L190">            Files.createDirectories(testClassesDir);</span>
+        }
+<span class="nc" id="L192">        Files.copy(serverSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES), testClassesDir.resolve(TEST_RESOURCES_PROPERTIES), StandardCopyOption.REPLACE_EXISTING);</span>
+<span class="nc" id="L193">    }</span>
+
+    private List&lt;File&gt; resolveServerClasspath() throws DependencyResolutionException {
+<span class="nc" id="L196">        Stream&lt;Artifact&gt; clientDependencies = Stream.of(testResourcesModuleToAetherArtifact(&quot;client&quot;, testResourcesVersion));</span>
+
+<span class="nc" id="L198">        List&lt;MavenDependency&gt; applicationDependencies = Collections.emptyList();</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">        if (classpathInference) {</span>
+<span class="nc" id="L200">            applicationDependencies = getApplicationDependencies();</span>
+        }
+<span class="nc" id="L202">        Stream&lt;Artifact&gt; serverDependencies =</span>
+<span class="nc" id="L203">                TestResourcesClasspath.inferTestResourcesClasspath(applicationDependencies, testResourcesVersion)</span>
+<span class="nc" id="L204">                        .stream()</span>
+<span class="nc" id="L205">                        .map(DependencyResolutionService::testResourcesDependencyToAetherArtifact);</span>
+
+<span class="nc bnc" id="L207" title="All 2 branches missed.">        List&lt;org.apache.maven.model.Dependency&gt; extraDependencies =</span>
+<span class="nc" id="L208">                testResourcesDependencies != null ? testResourcesDependencies : Collections.emptyList();</span>
+
+<span class="nc" id="L210">        Stream&lt;Artifact&gt; extraDependenciesStream = extraDependencies.stream()</span>
+<span class="nc" id="L211">                .map(DependencyResolutionService::mavenDependencyToAetherArtifact);</span>
+
+<span class="nc" id="L213">        Stream&lt;Artifact&gt; artifacts = concat(concat(clientDependencies, serverDependencies), extraDependenciesStream);</span>
+
+<span class="nc" id="L215">        return toClasspathFiles(dependencyResolutionService.artifactResultsFor(artifacts, true));</span>
+    }
+
+    private List&lt;MavenDependency&gt; getApplicationDependencies() {
+<span class="nc" id="L219">        return this.mavenProject.getDependencies().stream()</span>
+<span class="nc" id="L220">                .map(DependencyResolutionService::mavenDependencyToTestResourcesDependency)</span>
+<span class="nc" id="L221">                .collect(Collectors.toList());</span>
+    }
+
+    /**
+     * Contains the logic to stop the Test Resources Service.
+     */
+    public void stop() throws MojoExecutionException {
+<span class="nc bnc" id="L228" title="All 4 branches missed.">        if (!enabled || Boolean.TRUE.equals(keepAlive)) {</span>
+<span class="nc" id="L229">            return;</span>
+        }
+<span class="nc bnc" id="L231" title="All 2 branches missed.">        if (Files.exists(getKeepAliveFile())) {</span>
+            try {
+<span class="nc" id="L233">                Files.delete(getKeepAliveFile());</span>
+<span class="nc" id="L234">            } catch (IOException e) {</span>
+<span class="nc" id="L235">                throw new MojoExecutionException(&quot;Failed to delete keepalive file&quot;, e);</span>
+<span class="nc" id="L236">            }</span>
+<span class="nc" id="L237">            return;</span>
+        }
+        try {
+<span class="nc" id="L240">            Optional&lt;ServerSettings&gt; optionalServerSettings = ServerUtils.readServerSettings(getServerSettingsDirectory());</span>
+<span class="nc bnc" id="L241" title="All 4 branches missed.">            if (optionalServerSettings.isPresent() &amp;&amp; ServerUtils.isServerStarted(optionalServerSettings.get().getPort())) {</span>
+<span class="nc" id="L242">                log.info(&quot;Shutting down Micronaut Test Resources service&quot;);</span>
+<span class="nc" id="L243">                doStop();</span>
+            }
+<span class="nc" id="L245">        } catch (Exception e) {</span>
+<span class="nc" id="L246">            throw new MojoExecutionException(&quot;Unable to stop test resources server&quot;, e);</span>
+<span class="nc" id="L247">        }</span>
+<span class="nc" id="L248">    }</span>
+
+    private void doStop() throws IOException {
+<span class="nc" id="L251">        Path settingsDirectory = getServerSettingsDirectory();</span>
+<span class="nc" id="L252">        ServerUtils.stopServer(settingsDirectory);</span>
+<span class="nc" id="L253">        Files.walkFileTree(settingsDirectory, new SimpleFileVisitor&lt;Path&gt;() {</span>
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+<span class="nc" id="L256">                Files.delete(file);</span>
+<span class="nc" id="L257">                return super.visitFile(file, attrs);</span>
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+<span class="nc" id="L262">                Files.delete(dir);</span>
+<span class="nc" id="L263">                return super.postVisitDirectory(dir, exc);</span>
+            }
+        });
+<span class="nc" id="L266">    }</span>
+
+    private Path getServerSettingsDirectory() {
+<span class="nc bnc" id="L269" title="All 2 branches missed.">        if (shared) {</span>
+<span class="nc" id="L270">            return ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace);</span>
+        }
+<span class="nc" id="L272">        return serverSettingsDirectoryOf(buildDirectory.toPath());</span>
+    }
+
+    private Path getKeepAliveFile() {
+<span class="nc" id="L276">        return getServerSettingsDirectory().resolve(&quot;keepalive&quot;);</span>
+    }
+
+    private Path serverSettingsDirectoryOf(Path buildDir) {
+<span class="nc" id="L280">        return buildDir.resolve(&quot;../.micronaut/test-resources&quot;);</span>
+    }
+
+    /**
+     * @param sharedServerNamespace The shared server namespace (if any).
+     */
+    public void setSharedServerNamespace(String sharedServerNamespace) {
+<span class="nc" id="L287">        this.sharedServerNamespace = sharedServerNamespace;</span>
+<span class="nc" id="L288">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

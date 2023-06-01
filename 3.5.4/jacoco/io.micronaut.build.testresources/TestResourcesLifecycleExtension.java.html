@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TestResourcesLifecycleExtension.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.build.testresources</a> &gt; <span class="el_source">TestResourcesLifecycleExtension.java</span></div><h1>TestResourcesLifecycleExtension.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2021 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.build.testresources;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import io.micronaut.build.RunMojo;
+import org.apache.maven.AbstractMavenLifecycleParticipant;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Build;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.component.annotations.Component;
+import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluationException;
+import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluator;
+import org.codehaus.plexus.logging.Logger;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.codehaus.plexus.util.xml.Xpp3DomWriter;
+import org.eclipse.aether.util.artifact.JavaScopes;
+import org.twdata.maven.mojoexecutor.MojoExecutor;
+
+import javax.inject.Inject;
+import java.io.File;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+
+import static io.micronaut.build.RunMojo.THIS_PLUGIN;
+import static io.micronaut.build.services.DependencyResolutionService.TEST_RESOURCES_ARTIFACT_ID_PREFIX;
+import static io.micronaut.build.services.DependencyResolutionService.TEST_RESOURCES_GROUP;
+import static io.micronaut.build.testresources.AbstractTestResourcesMojo.CONFIG_PROPERTY_PREFIX;
+import static io.micronaut.build.testresources.StopTestResourcesServerMojo.MICRONAUT_TEST_RESOURCES_KEEPALIVE;
+
+/**
+ * A lifecycle extension which determines if the test resources server should
+ * be stopped when the build is complete.
+ */
+@Component(role = AbstractMavenLifecycleParticipant.class, hint = &quot;test-resources&quot;)
+public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParticipant  {
+
+    private static final String EXPLICIT_START_SERVICE_GOAL_NAME = &quot;mn:&quot; + StartTestResourcesServerMojo.NAME;
+    private static final String EXPLICIT_STOP_SERVICE_GOAL_NAME = &quot;mn:&quot; + StopTestResourcesServerMojo.NAME;
+
+<span class="nc" id="L63">    private final Map&lt;MavenProject, ExpressionEvaluator&gt; perProjectEvaluator = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="nc" id="L64">    private final Map&lt;MavenProject, TestResourcesConfiguration&gt; perProjectConfiguration = new ConcurrentHashMap&lt;&gt;();</span>
+
+    private final Logger logger;
+    private final XmlMapper mapper;
+
+    @Inject
+    @SuppressWarnings(&quot;CdiInjectionPointsInspection&quot;)
+<span class="nc" id="L71">    public TestResourcesLifecycleExtension(Logger logger, XmlMapper mapper) {</span>
+<span class="nc" id="L72">        this.logger = logger;</span>
+<span class="nc" id="L73">        this.mapper = mapper;</span>
+<span class="nc" id="L74">    }</span>
+
+    @Override
+    public void afterProjectsRead(MavenSession session) {
+<span class="nc" id="L78">        session.getAllProjects().forEach(currentProject -&gt; {</span>
+<span class="nc" id="L79">            Build build = currentProject.getBuild();</span>
+<span class="nc" id="L80">            withPlugin(build, plugin -&gt; {</span>
+<span class="nc" id="L81">                ExpressionEvaluator evaluator = perProjectEvaluator.computeIfAbsent(currentProject, p -&gt; initEvaluator(p, session));</span>
+<span class="nc" id="L82">                TestResourcesConfiguration configuration = perProjectConfiguration.computeIfAbsent(currentProject, mavenProject -&gt; initConfiguration(plugin));</span>
+
+<span class="nc" id="L84">                boolean enabled = isEnabled(evaluator, configuration);</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">                if (enabled) {</span>
+<span class="nc" id="L86">                    List&lt;String&gt; goals = session.getGoals();</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">                    if (goals.stream().anyMatch(EXPLICIT_START_SERVICE_GOAL_NAME::equals)) {</span>
+                        // we need to keep the server alive at the end of the build
+
+<span class="nc" id="L90">                        Xpp3Dom flag = new Xpp3Dom(MICRONAUT_TEST_RESOURCES_KEEPALIVE);</span>
+<span class="nc" id="L91">                        Xpp3Dom pluginConfiguration = (Xpp3Dom) plugin.getConfiguration();</span>
+<span class="nc" id="L92">                        pluginConfiguration.addChild(flag);</span>
+<span class="nc" id="L93">                        flag.setValue(&quot;true&quot;);</span>
+                    }
+<span class="nc" id="L95">                    Dependency clientDependency = new Dependency();</span>
+<span class="nc" id="L96">                    clientDependency.setGroupId(TEST_RESOURCES_GROUP);</span>
+<span class="nc" id="L97">                    clientDependency.setArtifactId(TEST_RESOURCES_ARTIFACT_ID_PREFIX + &quot;client&quot;);</span>
+<span class="nc" id="L98">                    clientDependency.setVersion(String.valueOf(currentProject.getProperties().get(CONFIG_PROPERTY_PREFIX + &quot;version&quot;)));</span>
+<span class="nc" id="L99">                    clientDependency.setScope(JavaScopes.TEST);</span>
+<span class="nc" id="L100">                    currentProject.getDependencies().add(clientDependency);</span>
+                }
+<span class="nc" id="L102">            });</span>
+<span class="nc" id="L103">        });</span>
+<span class="nc" id="L104">    }</span>
+
+    @Override
+    public void afterSessionEnd(MavenSession session) {
+<span class="nc bnc" id="L108" title="All 6 branches missed.">        if (session.getGoals().stream().noneMatch(s -&gt; s.equals(EXPLICIT_START_SERVICE_GOAL_NAME) || s.equals(EXPLICIT_STOP_SERVICE_GOAL_NAME))) {</span>
+<span class="nc" id="L109">            session.getAllProjects().forEach(currentProject -&gt; {</span>
+<span class="nc" id="L110">                Build build = currentProject.getBuild();</span>
+<span class="nc" id="L111">                withPlugin(build, plugin -&gt; {</span>
+<span class="nc" id="L112">                    ExpressionEvaluator evaluator = perProjectEvaluator.computeIfAbsent(currentProject, p -&gt; initEvaluator(p, session));</span>
+<span class="nc" id="L113">                    TestResourcesConfiguration configuration = perProjectConfiguration.computeIfAbsent(currentProject, mavenProject -&gt; initConfiguration(plugin));</span>
+<span class="nc" id="L114">                    boolean enabled = isEnabled(evaluator, configuration);</span>
+<span class="nc" id="L115">                    boolean keepAlive = isKeepAlive(evaluator, configuration);</span>
+<span class="nc" id="L116">                    boolean shared = isShared(evaluator, configuration);</span>
+<span class="nc" id="L117">                    File buildDirectory = new File(build.getDirectory());</span>
+
+<span class="nc" id="L119">                    TestResourcesHelper helper = new TestResourcesHelper(enabled, keepAlive, shared, buildDirectory);</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">                    if (shared) {</span>
+<span class="nc" id="L121">                        String sharedServerNamespace = findSharedServerNamespace(evaluator, configuration);</span>
+<span class="nc" id="L122">                        helper.setSharedServerNamespace(sharedServerNamespace);</span>
+                    }
+                    try {
+<span class="nc" id="L125">                        helper.stop();</span>
+<span class="nc" id="L126">                    } catch (Exception e) {</span>
+<span class="nc" id="L127">                        logger.error(e.getMessage(), e);</span>
+<span class="nc" id="L128">                    }</span>
+<span class="nc" id="L129">                });</span>
+<span class="nc" id="L130">            });</span>
+        }
+<span class="nc" id="L132">    }</span>
+
+    private String findSharedServerNamespace(ExpressionEvaluator evaluator, TestResourcesConfiguration configuration) {
+        try {
+<span class="nc" id="L136">            String result = (String) evaluator.evaluate(&quot;${&quot; + CONFIG_PROPERTY_PREFIX + &quot;namespace&quot; + &quot;}&quot;);</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">            if (result != null) {</span>
+<span class="nc" id="L138">                return result;</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">            } else if (configuration != null) {</span>
+<span class="nc" id="L140">                return configuration.getSharedServerNamespace();</span>
+            }
+<span class="nc" id="L142">        } catch (ExpressionEvaluationException e) {</span>
+<span class="nc" id="L143">            return null;</span>
+<span class="nc" id="L144">        }</span>
+<span class="nc" id="L145">        return null;</span>
+    }
+
+    private boolean isShared(ExpressionEvaluator evaluator, TestResourcesConfiguration configuration) {
+<span class="nc" id="L149">        Boolean result = evaluateBooleanProperty(evaluator, CONFIG_PROPERTY_PREFIX + &quot;shared&quot;);</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">        if (result != null) {</span>
+<span class="nc" id="L151">            return result;</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">        } else if (configuration != null) {</span>
+<span class="nc" id="L153">            return configuration.isShared();</span>
+        }
+<span class="nc" id="L155">        return false;</span>
+    }
+
+    private boolean isKeepAlive(ExpressionEvaluator evaluator, TestResourcesConfiguration configuration) {
+<span class="nc" id="L159">        Boolean result = evaluateBooleanProperty(evaluator, MICRONAUT_TEST_RESOURCES_KEEPALIVE);</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">        if (result != null) {</span>
+<span class="nc" id="L161">            return result;</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        } else if (configuration != null) {</span>
+<span class="nc" id="L163">            return configuration.isKeepAlive();</span>
+        }
+<span class="nc" id="L165">        return false;</span>
+    }
+
+    private boolean isEnabled(ExpressionEvaluator evaluator, TestResourcesConfiguration configuration) {
+<span class="nc" id="L169">        Boolean result = evaluateBooleanProperty(evaluator, CONFIG_PROPERTY_PREFIX + &quot;enabled&quot;);</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">        if (result != null) {</span>
+<span class="nc" id="L171">            return result;</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">        } else if (configuration != null) {</span>
+<span class="nc" id="L173">            return configuration.isTestResourcesEnabled();</span>
+        }
+<span class="nc" id="L175">        return false;</span>
+    }
+
+    private TestResourcesConfiguration initConfiguration(Plugin plugin) {
+<span class="nc" id="L179">        Xpp3Dom configuration = (Xpp3Dom) plugin.getConfiguration();</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">        if (configuration == null) {</span>
+<span class="nc" id="L181">            configuration = MojoExecutor.configuration();</span>
+<span class="nc" id="L182">            plugin.setConfiguration(configuration);</span>
+        }
+<span class="nc" id="L184">        Writer writer = new StringWriter();</span>
+<span class="nc" id="L185">        Xpp3DomWriter.write(writer, configuration);</span>
+        try {
+<span class="nc" id="L187">            return mapper.readValue(writer.toString(), TestResourcesConfiguration.class);</span>
+<span class="nc" id="L188">        } catch (JsonProcessingException e) {</span>
+<span class="nc" id="L189">            logger.error(e.getMessage(), e);</span>
+<span class="nc" id="L190">            return new TestResourcesConfiguration();</span>
+        }
+    }
+
+    private Boolean evaluateBooleanProperty(ExpressionEvaluator evaluator, String property) {
+        try {
+<span class="nc" id="L196">            Object result = evaluator.evaluate(&quot;${&quot; + property + &quot;}&quot;);</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">            if (result instanceof Boolean) {</span>
+<span class="nc" id="L198">                return (Boolean) result;</span>
+<span class="nc bnc" id="L199" title="All 6 branches missed.">            } else if (result instanceof String &amp;&amp; (result.equals(Boolean.TRUE.toString()) || result.equals(Boolean.FALSE.toString()))) {</span>
+<span class="nc" id="L200">                return Boolean.parseBoolean((String) result);</span>
+            }
+<span class="nc" id="L202">        } catch (ExpressionEvaluationException e) {</span>
+<span class="nc" id="L203">            return false;</span>
+<span class="nc" id="L204">        }</span>
+<span class="nc" id="L205">        return null;</span>
+    }
+
+    private ExpressionEvaluator initEvaluator(MavenProject currentProject, MavenSession session) {
+<span class="nc" id="L209">        Plugin thisPlugin = currentProject.getPlugin(THIS_PLUGIN);</span>
+<span class="nc" id="L210">        MojoExecution execution = new MojoExecution(thisPlugin, null, null);</span>
+<span class="nc" id="L211">        MavenProject actualCurrentProject = session.getCurrentProject();</span>
+        ExpressionEvaluator evaluator;
+
+        // Maven 3: PluginParameterExpressionEvaluator gets the current project from the session:
+        // synchronize in case another thread wants to fetch the real current project in between
+<span class="nc" id="L216">        synchronized (perProjectEvaluator) {</span>
+<span class="nc" id="L217">            session.setCurrentProject(currentProject);</span>
+<span class="nc" id="L218">            evaluator = new PluginParameterExpressionEvaluator(session, execution);</span>
+<span class="nc" id="L219">            session.setCurrentProject(actualCurrentProject);</span>
+<span class="nc" id="L220">        }</span>
+
+<span class="nc" id="L222">        return evaluator;</span>
+    }
+
+    private static void withPlugin(Build build, Consumer&lt;? super Plugin&gt; consumer) {
+<span class="nc" id="L226">        build.getPlugins()</span>
+<span class="nc" id="L227">                .stream()</span>
+<span class="nc" id="L228">                .filter(p -&gt; RunMojo.THIS_PLUGIN.equals(p.getGroupId() + &quot;:&quot; + p.getArtifactId()))</span>
+<span class="nc" id="L229">                .findFirst()</span>
+<span class="nc" id="L230">                .ifPresent(consumer);</span>
+<span class="nc" id="L231">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>
