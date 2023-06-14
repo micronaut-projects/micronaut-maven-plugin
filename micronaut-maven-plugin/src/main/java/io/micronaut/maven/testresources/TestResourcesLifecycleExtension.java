@@ -21,7 +21,6 @@ import io.micronaut.maven.RunMojo;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
-import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
@@ -32,7 +31,6 @@ import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluator
 import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.codehaus.plexus.util.xml.Xpp3DomWriter;
-import org.eclipse.aether.util.artifact.JavaScopes;
 import org.twdata.maven.mojoexecutor.MojoExecutor;
 
 import javax.inject.Inject;
@@ -45,8 +43,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import static io.micronaut.maven.RunMojo.THIS_PLUGIN;
-import static io.micronaut.maven.services.DependencyResolutionService.TEST_RESOURCES_ARTIFACT_ID_PREFIX;
-import static io.micronaut.maven.services.DependencyResolutionService.TEST_RESOURCES_GROUP;
 import static io.micronaut.maven.testresources.AbstractTestResourcesMojo.CONFIG_PROPERTY_PREFIX;
 import static io.micronaut.maven.testresources.StopTestResourcesServerMojo.MICRONAUT_TEST_RESOURCES_KEEPALIVE;
 
@@ -92,12 +88,6 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
                         pluginConfiguration.addChild(flag);
                         flag.setValue("true");
                     }
-                    Dependency clientDependency = new Dependency();
-                    clientDependency.setGroupId(TEST_RESOURCES_GROUP);
-                    clientDependency.setArtifactId(TEST_RESOURCES_ARTIFACT_ID_PREFIX + "client");
-                    clientDependency.setVersion(String.valueOf(currentProject.getProperties().get(CONFIG_PROPERTY_PREFIX + "version")));
-                    clientDependency.setScope(JavaScopes.TEST);
-                    currentProject.getDependencies().add(clientDependency);
                 }
             });
         });

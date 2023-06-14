@@ -68,11 +68,15 @@ public class DefaultServerFactory implements ServerFactory {
         ProcessBuilder builder = new ProcessBuilder(cli);
         try {
             process = builder.inheritIO().start();
-            if (process.isAlive()) {
-                serverStarted.set(true);
-            }
         } catch (Exception e) {
             serverStarted.set(false);
+            process.destroyForcibly();
+        } finally {
+            if (process.isAlive()) {
+                serverStarted.set(true);
+            } else {
+                process.destroyForcibly();
+            }
         }
     }
 

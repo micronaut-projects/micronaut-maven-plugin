@@ -43,8 +43,13 @@ import static java.util.stream.Stream.concat;
  */
 public class TestResourcesHelper {
 
-    private static final String TEST_RESOURCES_PROPERTIES = "test-resources.properties";
     private static final String PORT_FILE_NAME = "test-resources-port.txt";
+
+    private static final String TEST_RESOURCES_CLIENT_SYSTEM_PROP_PREFIX = "micronaut.test.resources.";
+
+    private static final String TEST_RESOURCES_PROP_SERVER_URI = TEST_RESOURCES_CLIENT_SYSTEM_PROP_PREFIX + "server.uri";
+    private static final String TEST_RESOURCES_PROP_ACCESS_TOKEN = TEST_RESOURCES_CLIENT_SYSTEM_PROP_PREFIX + "server.access.token";
+    private static final String TEST_RESOURCES_PROP_CLIENT_READ_TIMEOUT = TEST_RESOURCES_CLIENT_SYSTEM_PROP_PREFIX + "server.client.read.timeout";
 
     private final boolean enabled;
 
@@ -130,45 +135,47 @@ public class TestResourcesHelper {
         Path serverSettingsDirectory = getServerSettingsDirectory();
         AtomicBoolean serverStarted = new AtomicBoolean(false);
         ServerFactory serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted);
-        startOrConnectToExistingServer(accessToken, buildDir, serverSettingsDirectory, serverFactory);
-        if (serverStarted.get()) {
-            if (keepAlive) {
-                log.info("Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:" + StopTestResourcesServerMojo.NAME + "'");
+        Optional<ServerSettings> serverSettings = startOrConnectToExistingServer(accessToken, buildDir, serverSettingsDirectory, serverFactory);
+        if (serverSettings.isPresent()) {
+            setSystemProperties(serverSettings.get());
+            if (serverStarted.get()) {
+                if (keepAlive) {
+                    log.info("Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:" + StopTestResourcesServerMojo.NAME + "'");
+                }
+            } else {
+                // A server was already listening, which means it was running before
+                // the build was started, so we put a file to indicate to the stop
+                // mojo that it should not stop the server.
+                Path keepalive = getKeepAliveFile();
+                Files.write(keepalive, "true".getBytes());
             }
-        } else {
-            // A server was already listening, which means it was running before
-            // the build was started, so we put a file to indicate to the stop
-            // mojo that it should not stop the server.
-            Path keepalive = getKeepAliveFile();
-            Files.write(keepalive, "true".getBytes());
         }
-        // In order for the test resources client to connect, we need
-        // to copy the test resources file to the test classes directory
-        copyServerSettingsToClasspath(buildDir, serverSettingsDirectory);
     }
 
-    private void startOrConnectToExistingServer(String accessToken, Path buildDir, Path serverSettingsDirectory, ServerFactory serverFactory) {
+    private void setSystemProperties(ServerSettings serverSettings) {
+        String uri = String.format("http://localhost:%d", serverSettings.getPort());
+        System.setProperty(TEST_RESOURCES_PROP_SERVER_URI, uri);
+        serverSettings.getAccessToken().ifPresent(accessToken -> System.setProperty(TEST_RESOURCES_PROP_ACCESS_TOKEN, accessToken));
+        serverSettings.getClientTimeout().ifPresent(timeout -> System.setProperty(TEST_RESOURCES_PROP_CLIENT_READ_TIMEOUT, String.valueOf(timeout)));
+    }
+
+    private Optional<ServerSettings> startOrConnectToExistingServer(String accessToken, Path buildDir, Path serverSettingsDirectory, ServerFactory serverFactory) {
         try {
-            ServerUtils.startOrConnectToExistingServer(
-                    explicitPort,
-                    buildDir.resolve(PORT_FILE_NAME),
-                    serverSettingsDirectory,
-                    accessToken,
-                    resolveServerClasspath(),
-                    clientTimeout,
-                    serverFactory
+            return Optional.ofNullable(
+                    ServerUtils.startOrConnectToExistingServer(
+                        explicitPort,
+                        buildDir.resolve(PORT_FILE_NAME),
+                        serverSettingsDirectory,
+                        accessToken,
+                        resolveServerClasspath(),
+                        clientTimeout,
+                        serverFactory
+                    )
             );
         } catch (Exception e) {
             log.error("Error starting Micronaut Test Resources service", e);
+            return Optional.empty();
         }
-    }
-
-    private void copyServerSettingsToClasspath(Path buildDir, Path serverSettingsDirectory) throws IOException {
-        Path testClassesDir = buildDir.resolve("test-classes");
-        if (!Files.exists(testClassesDir)) {
-            Files.createDirectories(testClassesDir);
-        }
-        Files.copy(serverSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES), testClassesDir.resolve(TEST_RESOURCES_PROPERTIES), StandardCopyOption.REPLACE_EXISTING);
     }
 
     private List<File> resolveServerClasspath() throws DependencyResolutionException {
