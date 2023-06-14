@@ -43,6 +43,7 @@ import static java.util.stream.Stream.concat;
  */
 public class TestResourcesHelper {
 
+    private static final String TEST_RESOURCES_PROPERTIES = "test-resources.properties";
     private static final String PORT_FILE_NAME = "test-resources-port.txt";
 
     private static final String TEST_RESOURCES_CLIENT_SYSTEM_PROP_PREFIX = "micronaut.test.resources.";
@@ -123,21 +124,29 @@ public class TestResourcesHelper {
     }
 
     private void doStart() throws IOException {
-        if (shared) {
-            if (sharedServerNamespace != null) {
-                log.info("Test Resources is configured in shared mode with the namespace: " + sharedServerNamespace);
-            } else {
-                log.info("Test Resources is configured in shared mode");
-            }
-        }
         String accessToken = UUID.randomUUID().toString();
         Path buildDir = buildDirectory.toPath();
         Path serverSettingsDirectory = getServerSettingsDirectory();
         AtomicBoolean serverStarted = new AtomicBoolean(false);
         ServerFactory serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion);
-        Optional<ServerSettings> serverSettings = startOrConnectToExistingServer(accessToken, buildDir, serverSettingsDirectory, serverFactory);
-        if (serverSettings.isPresent()) {
-            setSystemProperties(serverSettings.get());
+        Optional<ServerSettings> optionalServerSettings = startOrConnectToExistingServer(accessToken, buildDir, serverSettingsDirectory, serverFactory);
+        if (optionalServerSettings.isPresent()) {
+            ServerSettings serverSettings = optionalServerSettings.get();
+            if (shared) {
+                if (sharedServerNamespace != null) {
+                    log.info("Test Resources is configured in shared mode with the namespace: " + sharedServerNamespace);
+                    //Copy the server settings to the default location so that TR Client can find it
+                    Path projectSettingsDirectory = serverSettingsDirectoryOf(buildDirectory.toPath());
+                    Files.createDirectories(projectSettingsDirectory);
+
+                    Path source = serverSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES);
+                    Path target = projectSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES);
+                    Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+                } else {
+                    log.info("Test Resources is configured in shared mode");
+                }
+            }
+            setSystemProperties(serverSettings);
             if (serverStarted.get()) {
                 if (keepAlive) {
                     log.info("Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:" + StopTestResourcesServerMojo.NAME + "'");
