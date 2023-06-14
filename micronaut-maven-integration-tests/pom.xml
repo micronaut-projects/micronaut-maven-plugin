@@ -78,7 +78,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <streamLogsOnFailures>false</streamLogsOnFailures>
+                    <streamLogsOnFailures>true</streamLogsOnFailures>
                     <failIfNoProjects>true</failIfNoProjects>
                     <cloneProjectsTo>../target/it</cloneProjectsTo>
                     <pomIncludes>

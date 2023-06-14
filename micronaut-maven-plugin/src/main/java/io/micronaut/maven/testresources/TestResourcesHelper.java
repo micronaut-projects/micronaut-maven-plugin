@@ -134,7 +134,7 @@ public class TestResourcesHelper {
         Path buildDir = buildDirectory.toPath();
         Path serverSettingsDirectory = getServerSettingsDirectory();
         AtomicBoolean serverStarted = new AtomicBoolean(false);
-        ServerFactory serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted);
+        ServerFactory serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion);
         Optional<ServerSettings> serverSettings = startOrConnectToExistingServer(accessToken, buildDir, serverSettingsDirectory, serverFactory);
         if (serverSettings.isPresent()) {
             setSystemProperties(serverSettings.get());
