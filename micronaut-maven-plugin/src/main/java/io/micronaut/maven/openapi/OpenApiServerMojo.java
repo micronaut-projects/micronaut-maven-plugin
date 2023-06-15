@@ -15,7 +15,7 @@
  */
 package io.micronaut.maven.openapi;
 
-import io.micronaut.openapi.generator.MicronautCodeGeneratorEntryPoint;
+import io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -26,15 +26,15 @@ import org.apache.maven.plugins.annotations.Parameter;
  */
 @Mojo(name = OpenApiServerMojo.MOJO_NAME, defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class OpenApiServerMojo extends AbstractOpenApiMojo {
-    public static final String MOJO_NAME = "openapi-server";
+    public static final String MOJO_NAME = "generate-openapi-server";
 
-    @Parameter(property = "micronaut.openapi.server.controller.package.name", defaultValue = "io.micronaut.openapi.controller.package.name", required = true)
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".server.controller.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".controller.package.name", required = true)
     protected String controllerPackageName;
 
-    @Parameter(property = "micronaut.openapi.server.use.auth", defaultValue = "false")
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".server.use.auth", defaultValue = "false")
     protected boolean useAuth;
 
-    @Parameter(property = "micronaut.openapi.generate.server")
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generate.server")
     protected boolean enabled;
 
     @Override
@@ -43,7 +43,7 @@ public class OpenApiServerMojo extends AbstractOpenApiMojo {
     }
 
     @Override
-    protected void configureBuilder(MicronautCodeGeneratorEntryPoint.Builder builder) {
+    protected void configureBuilder(MicronautCodeGeneratorBuilder builder) {
         builder.forServer(spec -> {
             spec.withControllerPackage(controllerPackageName);
             spec.withAuthentication(useAuth);

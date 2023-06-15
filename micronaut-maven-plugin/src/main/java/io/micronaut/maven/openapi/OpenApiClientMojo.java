@@ -15,7 +15,7 @@
  */
 package io.micronaut.maven.openapi;
 
-import io.micronaut.openapi.generator.MicronautCodeGeneratorEntryPoint;
+import io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -28,24 +28,24 @@ import java.util.List;
  */
 @Mojo(name = OpenApiClientMojo.MOJO_NAME, defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class OpenApiClientMojo extends AbstractOpenApiMojo {
-    public static final String MOJO_NAME = "openapi-client";
+    public static final String MOJO_NAME = "generate-openapi-client";
 
-    @Parameter(property = "micronaut.openapi.client.id", defaultValue = "")
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.id", defaultValue = "")
     protected String clientId;
 
-    @Parameter(property = "micronaut.openapi.client.use.auth", defaultValue = "false")
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.use.auth", defaultValue = "false")
     protected boolean useAuth;
 
-    @Parameter(property = "micronaut.openapi.client.additional.type.annotations")
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.additional.type.annotations")
     protected List<String> additionalTypeAnnotations;
 
-    @Parameter(property = "micronaut.openapi.client.base.path.separator")
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.base.path.separator")
     protected String basePathSeparator;
 
-    @Parameter(property = "micronaut.openapi.client.authorization.filter.pattern")
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.authorization.filter.pattern")
     protected String authorizationFilterPattern;
 
-    @Parameter(property = "micronaut.openapi.generate.client")
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generate.client")
     protected boolean enabled;
 
     @Override
@@ -54,7 +54,7 @@ public class OpenApiClientMojo extends AbstractOpenApiMojo {
     }
 
     @Override
-    protected void configureBuilder(MicronautCodeGeneratorEntryPoint.Builder builder) {
+    protected void configureBuilder(MicronautCodeGeneratorBuilder builder) {
         builder.forClient(spec -> {
             spec.withAuthorization(useAuth);
             if (clientId != null && !clientId.isEmpty()) {

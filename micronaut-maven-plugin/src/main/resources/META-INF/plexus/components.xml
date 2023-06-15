@@ -15,8 +15,8 @@
                         <id>default</id>
                         <phases>
                             <generate-sources>
-                                ${project.groupId}:${project.artifactId}:${project.version}:openapi-client,
-                                ${project.groupId}:${project.artifactId}:${project.version}:openapi-server
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-client,
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server
                             </generate-sources>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:resources
@@ -67,8 +67,8 @@
                         <id>default</id>
                         <phases>
                             <generate-sources>
-                                ${project.groupId}:${project.artifactId}:${project.version}:openapi-client,
-                                ${project.groupId}:${project.artifactId}:${project.version}:openapi-server
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-client,
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server
                             </generate-sources>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:resources
@@ -103,8 +103,8 @@
                         <id>default</id>
                         <phases>
                             <generate-sources>
-                                ${project.groupId}:${project.artifactId}:${project.version}:openapi-client,
-                                ${project.groupId}:${project.artifactId}:${project.version}:openapi-server
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-client,
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server
                             </generate-sources>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:resources
@@ -141,8 +141,8 @@
                         <id>default</id>
                         <phases>
                             <generate-sources>
-                                ${project.groupId}:${project.artifactId}:${project.version}:openapi-client,
-                                ${project.groupId}:${project.artifactId}:${project.version}:openapi-server
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-client,
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server
                             </generate-sources>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:resources

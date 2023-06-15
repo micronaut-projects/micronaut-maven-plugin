@@ -16,7 +16,9 @@
 package io.micronaut.maven.openapi;
 
 import io.micronaut.maven.AbstractMicronautMojo;
+import io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder;
 import io.micronaut.openapi.generator.MicronautCodeGeneratorEntryPoint;
+import io.micronaut.openapi.generator.SerializationLibraryKind;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -28,32 +30,35 @@ import java.util.List;
 /**
  * Base class for OpenAPI generator mojos. This provides the common
  * parameters for all generators and the invoker logic. Subclasses
- * must implement the {@link #isEnabled()} and {@link #configureBuilder(MicronautCodeGeneratorEntryPoint.Builder)}
+ * must implement the {@link #isEnabled()} and {@link #configureBuilder(MicronautCodeGeneratorBuilder)}
  * methods.
  */
 public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
-    @Parameter(property = "micronaut.openapi.definition", defaultValue = "io.micronaut.openapi.invoker", required = true)
+    static final String MICRONAUT_OPENAPI_PREFIX = "micronaut.openapi";
+    static final String IO_MICRONAUT_OPENAPI_PREFIX = "io.micronaut.openapi";
+
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".definition", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".invoker", required = true)
     protected File definitionFile;
 
-    @Parameter(property = "micronaut.openapi.invoker.package.name", defaultValue = "io.micronaut.openapi.invoker", required = true)
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".invoker.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".invoker", required = true)
     protected String invokerPackageName;
 
-    @Parameter(property = "micronaut.openapi.api.package.name", defaultValue = "io.micronaut.openapi.api", required = true)
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".api.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".api", required = true)
     protected String apiPackageName;
 
-    @Parameter(property = "micronaut.openapi.model.package.name", defaultValue = "io.micronaut.openapi.model", required = true)
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".model.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".model", required = true)
     protected String modelPackageName;
 
-    @Parameter(property = "micronaut.openapi.use.bean.validation", defaultValue = "true", required = true)
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.bean.validation", defaultValue = "true", required = true)
     protected boolean useBeanValidation;
 
-    @Parameter(property = "micronaut.openapi.use.optional", defaultValue = "false", required = true)
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.optional", defaultValue = "false", required = true)
     protected boolean useOptional;
 
-    @Parameter(property = "micronaut.openapi.use.reactive", defaultValue = "true", required = true)
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.reactive", defaultValue = "true", required = true)
     protected boolean useReactive;
 
-    @Parameter(property = "micronaut.openapi.outputs", required = true, defaultValue = "apis,models")
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".outputs", required = true, defaultValue = "apis,models")
     protected List<String> outputKinds;
 
     @Parameter(defaultValue = "${project.build.directory}/generated-sources/openapi", required = true)
@@ -75,7 +80,7 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
      * the generator specific parameters.
      * @param builder the generator configuration builder
      */
-    protected abstract void configureBuilder(MicronautCodeGeneratorEntryPoint.Builder builder);
+    protected abstract void configureBuilder(MicronautCodeGeneratorBuilder builder);
 
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException {
@@ -97,6 +102,7 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
                     options.withBeanValidation(useBeanValidation);
                     options.withOptional(useOptional);
                     options.withReactive(useReactive);
+                    options.withSerializationLibrary(SerializationLibraryKind.MICRONAUT_SERDE_JACKSON);
                 });
         configureBuilder(builder);
         builder.build().generate();
