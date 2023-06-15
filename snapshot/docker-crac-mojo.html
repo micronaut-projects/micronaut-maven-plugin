@@ -10,7 +10,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content="Apache Maven Doxia Site Renderer 1.11.1" />
-    <title>Micronaut Maven Plugin &#x2013; mn:docker-crac</title>
+    <title>Micronaut Maven Plugin - Plugin &#x2013; mn:docker-crac</title>
     <link rel="stylesheet" href="./css/apache-maven-fluido-1.11.1.min.css" />
     <link rel="stylesheet" href="./css/site.css" />
     <link rel="stylesheet" href="./css/print.css" media="print" />
@@ -73,9 +73,6 @@
               <ul class="dropdown-menu">
                   <li><a href="plugin-info.html" title="Plugin Documentation">Plugin Documentation</a></li>
                   <li><a href="apidocs/index.html" title="Javadoc">Javadoc</a></li>
-                  <li><a href="testapidocs/index.html" title="Test Javadoc">Test Javadoc</a></li>
-                  <li><a href="xref/index.html" title="Source Xref">Source Xref</a></li>
-                  <li><a href="xref-test/index.html" title="Test Source Xref">Test Source Xref</a></li>
                   <li><a href="checkstyle.html" title="Checkstyle">Checkstyle</a></li>
               </ul>
             </li>
@@ -85,7 +82,7 @@
           </nav>
           <div class="nav-collapse">
 <form id="search-form" action="https://www.google.com/search" method="get"  class="navbar-search pull-right" >
-  <input value="github.com/micronaut-projects/micronaut-maven-plugin" name="sitesearch" type="hidden"/>
+  <input value="github.com/micronaut-projects/micronaut-maven-plugin/micronaut-maven-plugin" name="sitesearch" type="hidden"/>
   <input class="search-query" name="q" id="query" type="text" placeholder="Search with Google..." />
 </form>
     <ul class="nav pull-right" style="border:none; margin-top: 7px"><li>
@@ -107,7 +104,7 @@
     <div class="container">
       <header>
         <div id="banner">
-          <div class="pull-left"><div id="bannerLeft"><h1>Micronaut Maven Plugin</h1>
+          <div class="pull-left"><div id="bannerLeft"><h1>Micronaut Maven Plugin - Plugin</h1>
 </div>
 </div>
           <div class="pull-right"></div>
@@ -118,7 +115,7 @@
           <ul class="breadcrumb">
         <li id="publishDate">Last Published: 2023-06-15<span class="divider">|</span>
 </li>
-          <li id="projectVersion">Version: 3.5.5-SNAPSHOT</li>
+          <li id="projectVersion">Version: 4.0.0-SNAPSHOT</li>
           </ul>
         </div>
       </header>
@@ -130,7 +127,7 @@
       
 <p><b>Full name</b>:</p>
       
-<p>io.micronaut.build:micronaut-maven-plugin:3.5.5-SNAPSHOT:docker-crac</p>
+<p>io.micronaut.maven:micronaut-maven-plugin:4.0.0-SNAPSHOT:docker-crac</p>
       
 <p><b>Description</b>:</p>
       
@@ -161,7 +158,7 @@
       <section>
 <h3><a name="Required_Parameters"></a>Required Parameters</h3>
         
-<table class="table table-striped" border="0">
+<table border="0" class="table table-striped">
           
 <tr class="a">
             
@@ -189,7 +186,7 @@
       <section>
 <h3><a name="Optional_Parameters"></a>Optional Parameters</h3>
         
-<table class="table table-striped" border="0">
+<table border="0" class="table table-striped">
           
 <tr class="a">
             
@@ -248,28 +245,6 @@
           
 <tr class="b">
             
-<td align="left"><code><a href="#cracArchitecture">&lt;cracArchitecture&gt;</a></code></td>
-            
-<td><code>String</code></td>
-            
-<td><code>-</code></td>
-            
-<td>(no description)<br /><b>User property is</b>: <code>crac.arch</code>.<br /></td>
-          </tr>
-          
-<tr class="a">
-            
-<td align="left"><code><a href="#cracJavaVersion">&lt;cracJavaVersion&gt;</a></code></td>
-            
-<td><code>String</code></td>
-            
-<td><code>-</code></td>
-            
-<td>(no description)<br /><b>Default value is</b>: <code>17</code>.<br /><b>User property is</b>: <code>crac.java.version</code>.<br /></td>
-          </tr>
-          
-<tr class="b">
-            
 <td align="left"><code><a href="#micronautRuntime">&lt;micronautRuntime&gt;</a></code></td>
             
 <td><code>String</code></td>
@@ -288,6 +263,28 @@
 <td><code>-</code></td>
             
 <td>Additional arguments that will be passed to the <code>native-image</code> executable. Note that this will only be used when using a packaging of type <code>docker-native</code>. For <code>native-image</code> packaging you should use the <a class="externalLink" href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization"> Native Image Maven Plugin </a> configuration options.<br /><b>User property is</b>: <code>micronaut.native-image.args</code>.<br /></td>
+          </tr>
+          
+<tr class="b">
+            
+<td align="left"><code><a href="#networkMode">&lt;networkMode&gt;</a></code></td>
+            
+<td><code>String</code></td>
+            
+<td><code>4.0.0</code></td>
+            
+<td>Networking mode for the RUN instructions during build.<br /><b>User property is</b>: <code>docker.networkMode</code>.<br /></td>
+          </tr>
+          
+<tr class="a">
+            
+<td align="left"><code><a href="#oracleLinuxVersion">&lt;oracleLinuxVersion&gt;</a></code></td>
+            
+<td><code>String</code></td>
+            
+<td><code>-</code></td>
+            
+<td>The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.<br /><b>Default value is</b>: <code>ol8</code>.<br /><b>User property is</b>: <code>micronaut.native-image.ol.version</code>.<br /></td>
           </tr>
           
 <tr class="b">
@@ -370,32 +367,6 @@
           
 <li><b>Default</b>: <code>60</code></li>
         </ul><hr /></section><section>
-<h4><a name="a.3CcracArchitecture.3E"></a><b><a name="cracArchitecture">&lt;cracArchitecture&gt;</a></b></h4>
-        
-<div>(no description)</div>
-        
-<ul>
-          
-<li><b>Type</b>: <code>java.lang.String</code></li>
-          
-<li><b>Required</b>: <code>No</code></li>
-          
-<li><b>User Property</b>: <code>crac.arch</code></li>
-        </ul><hr /></section><section>
-<h4><a name="a.3CcracJavaVersion.3E"></a><b><a name="cracJavaVersion">&lt;cracJavaVersion&gt;</a></b></h4>
-        
-<div>(no description)</div>
-        
-<ul>
-          
-<li><b>Type</b>: <code>java.lang.String</code></li>
-          
-<li><b>Required</b>: <code>No</code></li>
-          
-<li><b>User Property</b>: <code>crac.java.version</code></li>
-          
-<li><b>Default</b>: <code>17</code></li>
-        </ul><hr /></section><section>
 <h4><a name="a.3CmainClass.3E"></a><b><a name="mainClass">&lt;mainClass&gt;</a></b></h4>
         
 <div>The main class of the application, as defined in the <a class="externalLink" href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.</div>
@@ -433,6 +404,34 @@
 <li><b>Required</b>: <code>No</code></li>
           
 <li><b>User Property</b>: <code>micronaut.native-image.args</code></li>
+        </ul><hr /></section><section>
+<h4><a name="a.3CnetworkMode.3E"></a><b><a name="networkMode">&lt;networkMode&gt;</a></b></h4>
+        
+<div>Networking mode for the RUN instructions during build.</div>
+        
+<ul>
+          
+<li><b>Type</b>: <code>java.lang.String</code></li>
+          
+<li><b>Since</b>: <code>4.0.0</code></li>
+          
+<li><b>Required</b>: <code>No</code></li>
+          
+<li><b>User Property</b>: <code>docker.networkMode</code></li>
+        </ul><hr /></section><section>
+<h4><a name="a.3CoracleLinuxVersion.3E"></a><b><a name="oracleLinuxVersion">&lt;oracleLinuxVersion&gt;</a></b></h4>
+        
+<div>The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.</div>
+        
+<ul>
+          
+<li><b>Type</b>: <code>java.lang.String</code></li>
+          
+<li><b>Required</b>: <code>No</code></li>
+          
+<li><b>User Property</b>: <code>micronaut.native-image.ol.version</code></li>
+          
+<li><b>Default</b>: <code>ol8</code></li>
         </ul><hr /></section><section>
 <h4><a name="a.3CreadinessCommand.3E"></a><b><a name="readinessCommand">&lt;readinessCommand&gt;</a></b></h4>
         
