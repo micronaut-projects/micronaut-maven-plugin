@@ -80,7 +80,16 @@ public class DockerCracMojo extends AbstractDockerMojo {
     public static final String DEFAULT_CRAC_CHECKPOINT_TIMEOUT = "60";
     public static final String CRAC_CHECKPOINT_NETWORK_PROPERTY = "crac.checkpoint.network";
     public static final String CRAC_CHECKPOINT_TIMEOUT_PROPERTY = "crac.checkpoint.timeout";
+
+    public static final String CRAC_JAVA_VERSION = "crac.java.version";
+    public static final String DEFAULT_CRAC_JAVA_VERSION = "17";
+
+    public static final String CRAC_ARCHITECTURE = "crac.arch";
+
     public static final String DEFAULT_BASE_IMAGE = "ubuntu:22.04";
+
+    public static final String ARM_ARCH = "aarch64";
+    public static final String X86_64_ARCH = "amd64";
 
     private static final EnumSet<PosixFilePermission> POSIX_FILE_PERMISSIONS = EnumSet.of(
             PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
@@ -97,6 +106,12 @@ public class DockerCracMojo extends AbstractDockerMojo {
 
     @Parameter(property = DockerCracMojo.CRAC_CHECKPOINT_NETWORK_PROPERTY)
     private String checkpointNetworkName;
+
+    @Parameter(property = DockerCracMojo.CRAC_JAVA_VERSION, defaultValue = DockerCracMojo.DEFAULT_CRAC_JAVA_VERSION)
+    private String cracJavaVersion;
+
+    @Parameter(property = DockerCracMojo.CRAC_ARCHITECTURE)
+    private String cracArchitecture;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -153,14 +168,31 @@ public class DockerCracMojo extends AbstractDockerMojo {
         buildFinalDockerfile(checkpointImage);
     }
 
+    private String limitArchitecture(String architecture) {
+        if (architecture == null) {
+            return null;
+        }
+        if (ARM_ARCH.equals(architecture)) {
+            return architecture;
+        }
+        return X86_64_ARCH;
+    }
+
     private String buildCheckpointDockerfile() throws IOException, MavenFilteringException {
         String name = mavenProject.getArtifactId() + "-crac-checkpoint";
         Set<String> checkpointTags = Collections.singleton(name);
         copyScripts(CHECKPOINT_SCRIPT_NAME, WARMUP_SCRIPT_NAME, RUN_SCRIPT_NAME);
         File dockerfile = dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_CRAC_CHECKPOINT);
+
+        String systemArchitecture = limitArchitecture(System.getProperty("os.arch"));
+        String filteredCracArchitecture = limitArchitecture(cracArchitecture);
+        String finalArchitecture = filteredCracArchitecture == null ? systemArchitecture : filteredCracArchitecture;
+
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
                 .withDockerfile(dockerfile)
                 .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))
+                .withBuildArg("CRAC_ARCH", finalArchitecture)
+                .withBuildArg("CRAC_JDK_VERSION", cracJavaVersion)
                 .withTags(checkpointTags);
         getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
         dockerService.buildImage(buildImageCmd);
@@ -181,6 +213,10 @@ public class DockerCracMojo extends AbstractDockerMojo {
                 .withTags(getTags());
         getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
         dockerService.buildImage(buildImageCmd);
+
+        getLog().warn("**********************************************************");
+        getLog().warn(" CRaC checkpoint files may contain sensitive information.");
+        getLog().warn("**********************************************************");
     }
 
     private Properties replacementProperties(String readinessCommand, String mainClass) {
