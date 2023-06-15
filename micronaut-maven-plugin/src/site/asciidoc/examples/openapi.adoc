@@ -31,9 +31,9 @@ It is however recommended to define the packages which will be used for code gen
    ...
    <micronaut.openapi.generate.client>true</micronaut.openapi.generate.client>
    <micronaut.openapi.definition>src/openapi/petstore.json</micronaut.openapi.definition>
-    <micronaut.openapi.invoker.package.name>com.mycompany.invoker</micronaut.openapi.invoker.package.name>
-    <micronaut.openapi.api.package.name>com.mycompany.api</micronaut.openapi.api.package.name>
-    <micronaut.openapi.model.package.name>com.mycompany.api</micronaut.openapi.model.package.name>
+   <micronaut.openapi.invoker.package.name>com.mycompany.invoker</micronaut.openapi.invoker.package.name>
+   <micronaut.openapi.api.package.name>com.mycompany.api</micronaut.openapi.api.package.name>
+   <micronaut.openapi.model.package.name>com.mycompany.api</micronaut.openapi.model.package.name>
 </properties>
 ----
 
@@ -60,10 +60,10 @@ We also recommended to define the packages which will be used for code generatio
    ...
    <micronaut.openapi.generate.server>true</micronaut.openapi.generate.server>
    <micronaut.openapi.definition>src/openapi/petstore.json</micronaut.openapi.definition>
-    <micronaut.openapi.controller.package.name>com.mycompany.controller</micronaut.openapi.controller.package.name>
-    <micronaut.openapi.invoker.package.name>com.mycompany.invoker</micronaut.openapi.invoker.package.name>
-    <micronaut.openapi.api.package.name>com.mycompany.api</micronaut.openapi.api.package.name>
-    <micronaut.openapi.model.package.name>com.mycompany.api</micronaut.openapi.model.package.name>
+   <micronaut.openapi.controller.package.name>com.mycompany.controller</micronaut.openapi.controller.package.name>
+   <micronaut.openapi.invoker.package.name>com.mycompany.invoker</micronaut.openapi.invoker.package.name>
+   <micronaut.openapi.api.package.name>com.mycompany.api</micronaut.openapi.api.package.name>
+   <micronaut.openapi.model.package.name>com.mycompany.api</micronaut.openapi.model.package.name>
 </properties>
 ----
 
