@@ -43,19 +43,22 @@ public class DefaultServerFactory implements ServerFactory {
     private final ToolchainManager toolchainManager;
     private final MavenSession mavenSession;
     private final AtomicBoolean serverStarted;
+    private final String testResourcesVersion;
 
     private Process process;
 
-    public DefaultServerFactory(Log log, ToolchainManager toolchainManager, MavenSession mavenSession, AtomicBoolean serverStarted) {
+    public DefaultServerFactory(Log log, ToolchainManager toolchainManager, MavenSession mavenSession,
+                                AtomicBoolean serverStarted, String testResourcesVersion) {
         this.log = log;
         this.toolchainManager = toolchainManager;
         this.mavenSession = mavenSession;
         this.serverStarted = serverStarted;
+        this.testResourcesVersion = testResourcesVersion;
     }
 
     @Override
     public void startServer(ServerUtils.ProcessParameters processParameters) {
-        log.info("Starting Micronaut Test Resources service");
+        log.info("Starting Micronaut Test Resources service, version " + testResourcesVersion);
         String javaBin = findJavaExecutable(toolchainManager, mavenSession);
         List<String> cli = new ArrayList<>();
         cli.add(javaBin);
@@ -68,11 +71,15 @@ public class DefaultServerFactory implements ServerFactory {
         ProcessBuilder builder = new ProcessBuilder(cli);
         try {
             process = builder.inheritIO().start();
-            if (process.isAlive()) {
-                serverStarted.set(true);
-            }
         } catch (Exception e) {
             serverStarted.set(false);
+            process.destroyForcibly();
+        } finally {
+            if (process.isAlive()) {
+                serverStarted.set(true);
+            } else {
+                process.destroyForcibly();
+            }
         }
     }
 

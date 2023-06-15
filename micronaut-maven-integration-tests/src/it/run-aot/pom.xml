@@ -27,18 +27,14 @@
     <dependencies>
         <dependency>
             <groupId>io.micronaut</groupId>
-            <artifactId>micronaut-inject</artifactId>
+            <artifactId>micronaut-runtime</artifactId>
             <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut.validation</groupId>
-            <artifactId>micronaut-validation</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.micronaut</groupId>
-            <artifactId>micronaut-http-client</artifactId>
-            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.micronaut</groupId>
+                    <artifactId>micronaut-jackson-databind</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>info.picocli</groupId>
@@ -48,11 +44,6 @@
         <dependency>
             <groupId>io.micronaut.picocli</groupId>
             <artifactId>micronaut-picocli</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
             <scope>compile</scope>
         </dependency>
         <dependency>
