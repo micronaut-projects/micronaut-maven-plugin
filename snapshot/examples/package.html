@@ -582,6 +582,34 @@ done</code></pre>
 </div>
 </div>
 </div>
+<div class="sect3">
+<h4 id="customizing_the_jdk">Customizing the JDK</h4>
+<div class="paragraph">
+<p>By default, the CRaC JDK used to build the image will be for the current system architecture and Java 17.
+These can be overridden by passing properties to the build:</p>
+</div>
+<div class="listingblock">
+<div class="title">Example setting the CRaC JDK version and architecture</div>
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;properties&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;crac.java.version&gt;</span>21<span style="color:#070;font-weight:bold">&lt;/crac.java.version&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;crac.arch&gt;</span>amd64<span style="color:#070;font-weight:bold">&lt;/crac.arch&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/properties&gt;</span></code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Currently only Java 17, and <code>amd64</code> and <code>aarch64</code> architectures are supported.
+</td>
+</tr>
+</table>
+</div>
+</div>
 </div>
         </main>
     </div>
