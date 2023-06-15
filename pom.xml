@@ -73,10 +73,10 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.version>3.9.2</maven.version>
-        <micronaut.version>4.0.0-M3</micronaut.version>
+        <micronaut.version>4.0.0-M4</micronaut.version>
         <native-maven-plugin.version>0.9.22</native-maven-plugin.version>
         <micronaut.aot.version>2.0.0-M3</micronaut.aot.version>
-        <micronaut.test.resources.version>2.0.0-M7</micronaut.test.resources.version>
+        <micronaut.test.resources.version>2.0.0-M10</micronaut.test.resources.version>
 
         <maven.resources-plugin.version>3.3.1</maven.resources-plugin.version>
         <maven.archiver-plugin.version>3.6.0</maven.archiver-plugin.version>
@@ -86,6 +86,8 @@
         <site.description>${project.description}</site.description>
         <site.version>${project.version}</site.version>
 
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <project.build.outputTimestamp>2023-05-18T10:01:11Z</project.build.outputTimestamp>
 
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -94,6 +96,10 @@
         <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/micronaut-maven-integration-tests/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <jacoco.version>0.8.10</jacoco.version>
         <junit-jupiter.version>5.9.3</junit-jupiter.version>
+        <directory-watcher.version>0.18.0</directory-watcher.version>
+        <testcontainers.version>1.18.3</testcontainers.version>
+        <snakeyaml.version>2.0</snakeyaml.version>
+        <jackson.version>2.15.2</jackson.version>
     </properties>
 
     <repositories>
@@ -122,20 +128,45 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Maven -->
             <dependency>
                 <groupId>org.apache.maven</groupId>
                 <artifactId>maven-core</artifactId>
                 <version>${maven.version}</version>
             </dependency>
-
-            <!-- Micronaut -->
             <dependency>
-                <groupId>io.micronaut.platform</groupId>
-                <artifactId>micronaut-platform</artifactId>
+                <groupId>io.methvin</groupId>
+                <artifactId>directory-watcher</artifactId>
+                <version>${directory-watcher.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers</artifactId>
+                <version>${testcontainers.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.micronaut</groupId>
+                <artifactId>micronaut-inject</artifactId>
                 <version>${micronaut.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.yaml</groupId>
+                <artifactId>snakeyaml</artifactId>
+                <version>${snakeyaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit-jupiter.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-params</artifactId>
+                <version>${junit-jupiter.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-xml</artifactId>
+                <version>${jackson.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

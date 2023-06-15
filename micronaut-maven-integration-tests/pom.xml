@@ -19,7 +19,7 @@
         <maven.deploy.skip>true</maven.deploy.skip>
         <maven.javadoc.skip>true</maven.javadoc.skip>
 
-        <it.micronaut.version>4.0.0-M2</it.micronaut.version>
+        <it.micronaut.version>4.0.0-M4</it.micronaut.version>
 
         <!-- Enable recording of coverage during execution of maven-invoker-plugin -->
         <jacoco.propertyName>invoker.mavenOpts</jacoco.propertyName>
@@ -78,7 +78,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
-                    <streamLogs>true</streamLogs>
+                    <streamLogsOnFailures>true</streamLogsOnFailures>
                     <failIfNoProjects>true</failIfNoProjects>
                     <cloneProjectsTo>../target/it</cloneProjectsTo>
                     <pomIncludes>
