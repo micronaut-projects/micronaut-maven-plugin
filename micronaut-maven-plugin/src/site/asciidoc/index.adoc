@@ -7,7 +7,8 @@ This plugin has the following features:
 3. link:dockerfile-mojo.html[Generating `Dockerfile`]s.
 4. link:examples/deploy.html[Deploying] Docker images to different registries.
 5. link:examples/aot.html[Using Micronaut AOT].
-5. link:examples/test-resources.html[Integration with Micronaut Test Resources].
+6. link:examples/test-resources.html[Integration with Micronaut Test Resources].
+7. link:examples/openapi.html[Integration with Micronaut OpenAPI].
 
 === Usage
 
