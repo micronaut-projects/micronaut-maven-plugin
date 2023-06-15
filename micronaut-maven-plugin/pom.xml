@@ -128,6 +128,11 @@
             <artifactId>micronaut-test-resources-build-tools</artifactId>
             <version>${micronaut.test.resources.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.micronaut.openapi</groupId>
+            <artifactId>micronaut-openapi-generator</artifactId>
+            <version>${micronaut.openapi.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

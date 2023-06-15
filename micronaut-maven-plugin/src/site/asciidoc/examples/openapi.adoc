@@ -1,0 +1,70 @@
+=== Integration with Micronaut OpenAPI
+
+This plugins integrates with https://micronaut-projects.github.io/micronaut-openapi/latest/guide/index.html[Micronaut OpenAPI] in order to provide support for generating https://www.openapis.org/[OpenAPI] clients or servers.
+
+The plugin adds a couple goals which can be used to generate code:
+
+- the link:../generate-openapi-client-mojo.html[mn:generate-openapi-client] goal can be used to generate a client from an OpenAPI definition
+- the link:../generate-openapi-generator-mojo.html[mn:generate-openapi-server] goal can be used to generate server skeleton from an OpenAPI definition
+
+In both cases, the code is generated in your `target` directory and integrated into the build lifecycle.
+In particular, in case you are generating a server, the generated code will be interfaces that you will have to implement in your main sources.
+
+==== Generating a client
+
+In order to generate a client, the minimal thing to do is to configure a couple properties:
+
+[source,xml]
+----
+<properties>
+   ...
+   <micronaut.openapi.generate.client>true</micronaut.openapi.generate.client>
+   <micronaut.openapi.definition>src/openapi/petstore.json</micronaut.openapi.definition>
+</properties>
+----
+
+It is however recommended to define the packages which will be used for code generation:
+
+[source,xml]
+----
+<properties>
+   ...
+   <micronaut.openapi.generate.client>true</micronaut.openapi.generate.client>
+   <micronaut.openapi.definition>src/openapi/petstore.json</micronaut.openapi.definition>
+   <micronaut.openapi.invoker.package.name>com.mycompany.invoker</micronaut.openapi.invoker.package.name>
+   <micronaut.openapi.api.package.name>com.mycompany.api</micronaut.openapi.api.package.name>
+   <micronaut.openapi.model.package.name>com.mycompany.api</micronaut.openapi.model.package.name>
+</properties>
+----
+
+The full list of configuration properties can be found link:../generate-openapi-client-mojo.html[here].
+
+==== Generating a server
+
+Generating a server can be done in a similar way to generating a client, except that the code which is generated for the server (not the model) is simply interfaces that you will have to implement:
+
+[source,xml]
+----
+<properties>
+   ...
+   <micronaut.openapi.generate.server>true</micronaut.openapi.generate.server>
+   <micronaut.openapi.definition>src/openapi/petstore.json</micronaut.openapi.definition>
+</properties>
+----
+
+We also recommended to define the packages which will be used for code generation:
+
+[source,xml]
+----
+<properties>
+   ...
+   <micronaut.openapi.generate.server>true</micronaut.openapi.generate.server>
+   <micronaut.openapi.definition>src/openapi/petstore.json</micronaut.openapi.definition>
+   <micronaut.openapi.controller.package.name>com.mycompany.controller</micronaut.openapi.controller.package.name>
+   <micronaut.openapi.invoker.package.name>com.mycompany.invoker</micronaut.openapi.invoker.package.name>
+   <micronaut.openapi.api.package.name>com.mycompany.api</micronaut.openapi.api.package.name>
+   <micronaut.openapi.model.package.name>com.mycompany.api</micronaut.openapi.model.package.name>
+</properties>
+----
+
+The full list of configuration properties can be found link:../generate-openapi-server-mojo.html[here].
