@@ -3,5 +3,6 @@ io.micronaut.maven.aot
 io.micronaut.maven.core
 io.micronaut.maven.enforcer
 io.micronaut.maven.jib
+io.micronaut.maven.openapi
 io.micronaut.maven.services
 io.micronaut.maven.testresources
