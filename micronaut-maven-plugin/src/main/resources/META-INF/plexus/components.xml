@@ -15,6 +15,7 @@
                         <id>default</id>
                         <phases>
                             <generate-sources>
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-sources,
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-client,
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server
                             </generate-sources>
@@ -67,6 +68,7 @@
                         <id>default</id>
                         <phases>
                             <generate-sources>
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-sources,
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-client,
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server
                             </generate-sources>
@@ -103,6 +105,7 @@
                         <id>default</id>
                         <phases>
                             <generate-sources>
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-sources,
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-client,
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server
                             </generate-sources>
@@ -141,6 +144,7 @@
                         <id>default</id>
                         <phases>
                             <generate-sources>
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-sources,
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-client,
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server
                             </generate-sources>

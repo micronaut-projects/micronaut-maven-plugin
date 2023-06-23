@@ -63,6 +63,11 @@
             <artifactId>micronaut-maven-plugin</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.micronaut.maven</groupId>
+            <artifactId>micronaut-maven-fixtures-openapi-extension</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

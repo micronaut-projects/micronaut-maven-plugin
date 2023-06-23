@@ -48,7 +48,7 @@ public class OpenApiServerMojo extends AbstractOpenApiMojo {
             spec.withControllerPackage(controllerPackageName);
             spec.withAuthentication(useAuth);
             // we don't want these to be configurable in the plugin for now
-            spec.withGenerateAbstractClasses(true);
+            spec.withGenerateImplementationFiles(false);
             spec.withGenerateControllerFromExamples(false);
             spec.withGenerateOperationsToReturnNotImplemented(false);
         });

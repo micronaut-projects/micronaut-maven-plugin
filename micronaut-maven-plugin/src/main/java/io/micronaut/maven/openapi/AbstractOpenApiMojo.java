@@ -58,7 +58,7 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.reactive", defaultValue = "true", required = true)
     protected boolean useReactive;
 
-    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".outputs", required = true, defaultValue = "apis,models")
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".outputs", required = true, defaultValue = "apis,models,supporting_files")
     protected List<String> outputKinds;
 
     @Parameter(defaultValue = "${project.build.directory}/generated-sources/openapi", required = true)
