@@ -8,7 +8,7 @@ assert log.text.contains("BUILD SUCCESS")
 
 def petApi = new File(basedir, "target/generated-sources/openapi/src/main/java/io/micronaut/openapi/api/PetApi.java")
 assert petApi.exists()
-assert petApi.text.contains("""
+assert petApi.text.replaceAll(System.lineSeparator(), "\n").contains("""
 public interface PetApi {
      String GREETING = "Hello, world!";
      boolean JOY = true;
