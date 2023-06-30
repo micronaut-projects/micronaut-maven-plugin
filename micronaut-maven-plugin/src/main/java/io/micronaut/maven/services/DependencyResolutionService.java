@@ -101,16 +101,6 @@ public class DependencyResolutionService {
         return new DefaultArtifact(d.getGroup(), d.getArtifact(), JAR_EXTENSION, d.getVersion());
     }
 
-    public static Artifact testResourcesModuleToAetherArtifact(String module, String testResourcesVersion) {
-        String coords = String.format(
-                "%s:%s:%s",
-                TEST_RESOURCES_GROUP,
-                TEST_RESOURCES_ARTIFACT_ID_PREFIX + module,
-                testResourcesVersion
-        );
-        return new DefaultArtifact(coords);
-    }
-
     /**
      * Performs a dependency request to compute the transitive dependencies of the given artifacts.
      *
