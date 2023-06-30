@@ -161,11 +161,23 @@ public class TestResourcesHelper {
         }
     }
 
-    private void setSystemProperties(ServerSettings serverSettings) {
+    /**
+     * Computes the system properties to set for the test resources client to be able to connect to the server.
+     *
+     * @param serverSettings The server settings
+     * @return The system properties
+     */
+    public Map<String, String> computeSystemProperties(ServerSettings serverSettings) {
+        Map<String, String> systemProperties = new HashMap<>(3);
         String uri = String.format("http://localhost:%d", serverSettings.getPort());
-        System.setProperty(TEST_RESOURCES_PROP_SERVER_URI, uri);
-        serverSettings.getAccessToken().ifPresent(accessToken -> System.setProperty(TEST_RESOURCES_PROP_ACCESS_TOKEN, accessToken));
-        serverSettings.getClientTimeout().ifPresent(timeout -> System.setProperty(TEST_RESOURCES_PROP_CLIENT_READ_TIMEOUT, String.valueOf(timeout)));
+        systemProperties.put(TEST_RESOURCES_PROP_SERVER_URI, uri);
+        serverSettings.getAccessToken().ifPresent(accessToken -> systemProperties.put(TEST_RESOURCES_PROP_ACCESS_TOKEN, accessToken));
+        serverSettings.getClientTimeout().ifPresent(timeout -> systemProperties.put(TEST_RESOURCES_PROP_CLIENT_READ_TIMEOUT, String.valueOf(timeout)));
+        return systemProperties;
+    }
+
+    private void setSystemProperties(ServerSettings serverSettings) {
+        computeSystemProperties(serverSettings).forEach(System::setProperty);
     }
 
     private Optional<ServerSettings> startOrConnectToExistingServer(String accessToken, Path buildDir, Path serverSettingsDirectory, ServerFactory serverFactory) {

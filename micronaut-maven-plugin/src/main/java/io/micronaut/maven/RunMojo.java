@@ -23,6 +23,7 @@ import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.maven.services.ExecutorService;
 import io.micronaut.maven.testresources.AbstractTestResourcesMojo;
 import io.micronaut.maven.testresources.TestResourcesHelper;
+import io.micronaut.testresources.buildtools.ServerSettings;
 import io.micronaut.testresources.buildtools.ServerUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
@@ -33,10 +34,7 @@ import org.apache.maven.project.*;
 import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.util.AbstractScanner;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
-import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.graph.Dependency;
-import org.eclipse.aether.resolution.ArtifactResult;
-import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.artifact.JavaScopes;
 
 import javax.inject.Inject;
@@ -44,10 +42,8 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static io.micronaut.maven.MojoUtils.findJavaExecutable;
-import static io.micronaut.maven.services.DependencyResolutionService.testResourcesModuleToAetherArtifact;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isReadable;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
@@ -417,21 +413,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
 
     private boolean resolveDependencies() {
         try {
-            List<Dependency> dependencies = compilerService.resolveDependencies(JavaScopes.COMPILE, JavaScopes.RUNTIME);
-            if (testResourcesEnabled) {
-                Artifact clientArtifact = testResourcesModuleToAetherArtifact("client", testResourcesVersion);
-                Dependency dependency = new Dependency(clientArtifact, JavaScopes.RUNTIME);
-                try {
-                    List<ArtifactResult> results = dependencyResolutionService.artifactResultsFor(Stream.of(clientArtifact), true);
-                    results.forEach(r -> {
-                        if (r.isResolved()) {
-                            dependencies.add(new Dependency(r.getArtifact(), JavaScopes.RUNTIME));
-                        }
-                    });
-                } catch (DependencyResolutionException e) {
-                    getLog().warn("Unable to resolve test resources client dependencies", e);
-                }
-            }
+            List<Dependency> dependencies = compilerService.resolveDependencies(JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME);
             if (dependencies.isEmpty()) {
                 return false;
             } else {
@@ -455,19 +437,21 @@ public class RunMojo extends AbstractTestResourcesMojo {
     private void runApplication() throws Exception {
         runAotIfNeeded();
         String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
-        if (testResourcesEnabled) {
-            Path testResourcesSettingsDirectory = shared ? ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace) :
-                    AbstractTestResourcesMojo.serverSettingsDirectoryOf(targetDirectory.toPath());
-            if (Files.isDirectory(testResourcesSettingsDirectory)) {
-                classpathArgument += File.pathSeparator + testResourcesSettingsDirectory.toAbsolutePath();
-            }
-        }
+
         List<String> args = new ArrayList<>();
         args.add(javaExecutable);
 
         if (debug) {
             String suspend = debugSuspend ? "y" : "n";
             args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=" + suspend + ",address=" + debugHost + ":" + debugPort);
+        }
+
+        if (testResourcesEnabled) {
+            Path testResourcesSettingsDirectory = shared ? ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace) :
+                    AbstractTestResourcesMojo.serverSettingsDirectoryOf(targetDirectory.toPath());
+            Optional<ServerSettings> serverSettings = ServerUtils.readServerSettings(testResourcesSettingsDirectory);
+            serverSettings.ifPresent(settings -> testResourcesHelper.computeSystemProperties(settings)
+                    .forEach((k, v) -> args.add("-D" + k + "=" + v)));
         }
 
         if (jvmArguments != null && !jvmArguments.isEmpty()) {
