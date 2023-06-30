@@ -215,7 +215,7 @@ command line:
 * `jib.to.credHelper`.
 
 Note that changing the base image to a totally different one than the default might break image building, since the rest
-of the build steps expect a certain base image. By default, the native images are built from an `ghcr.io/graalvm/native-image` image.
+of the build steps expect a certain base image. By default, the native images are built from an `ghcr.io/graalvm/native-image-community` image.
 
 In the case of AWS custom runtime, it starts from `amazonlinux:latest`, and this cannot be changed. Also, in this case the
 result is not a tagged Docker image, but a `function.zip` archive that contains the launch script and the native binary.

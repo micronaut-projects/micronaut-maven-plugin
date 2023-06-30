@@ -1,11 +1,10 @@
 FROM amazonlinux:latest AS graalvm
 ENV LANG=en_US.UTF-8
 RUN yum update -y && yum install -y gcc gcc-c++ libc6-dev zlib1g-dev curl bash zlib zlib-devel zlib-static zip tar gzip && yum clean all
-RUN curl -4 -L https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-22.3.0/graalvm-ce-java17-linux-aarch64-22.3.0.tar.gz -o /tmp/graalvm.tar.gz \
+RUN curl -4 -L https://download.oracle.com/graalvm/17/latest/graalvm-jdk-17_linux-aarch64_bin.tar.gz -o /tmp/graalvm.tar.gz \
     && tar -zxf /tmp/graalvm.tar.gz -C /tmp \
-    && mv /tmp/graalvm-ce-java17-22.3.0 /usr/lib/graalvm \
+    && mv /tmp/graalvm* /usr/lib/graalvm \
     && rm -rf /tmp/*
-RUN /usr/lib/graalvm/bin/gu install native-image
 ENV PATH=/usr/lib/graalvm/bin:${PATH}
 WORKDIR /home/app
 COPY classes /home/app/classes

@@ -1,5 +1,4 @@
-FROM ghcr.io/graalvm/graalvm-ce:ol8-java17-22.3.0 AS builder
-RUN gu install native-image
+FROM ghcr.io/graalvm/graalvm-community:17-ol9 AS builder
 
 WORKDIR /
 RUN curl -L -o musl.tar.gz https://more.musl.cc/10/x86_64-linux-musl/x86_64-linux-musl-native.tgz && \
@@ -20,7 +19,7 @@ WORKDIR /home/app
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
 COPY *.args /home/app/graalvm-native-image.args
-RUN native-image @/home/app/graalvm-native-image.args --static --libc=musl -H:Class=io.micronaut.build.examples.Application -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
+RUN native-image @/home/app/graalvm-native-image.args --static --target=linux-amd64 --libc=musl -H:Class=io.micronaut.build.examples.Application -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM scratch
 COPY --from=builder /home/app/application /app/application

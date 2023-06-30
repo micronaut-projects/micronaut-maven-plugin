@@ -1,6 +1,5 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE} AS builder
-RUN gu install native-image
 
 WORKDIR /
 RUN curl -L -o musl.tar.gz https://more.musl.cc/10/x86_64-linux-musl/x86_64-linux-musl-native.tgz && \
@@ -22,7 +21,7 @@ COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
 COPY *.args /home/app/graalvm-native-image.args
 ARG CLASS_NAME
-RUN native-image @/home/app/graalvm-native-image.args --static --libc=musl -H:Class=${CLASS_NAME} -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
+RUN native-image @/home/app/graalvm-native-image.args --static --target=linux-amd64 --libc=musl -H:Class=${CLASS_NAME} -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM scratch
 COPY --from=builder /home/app/application /app/application
