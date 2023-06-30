@@ -19,7 +19,6 @@
         <module>micronaut-maven-jib-integration</module>
         <module>micronaut-maven-plugin</module>
         <module>micronaut-maven-integration-tests</module>
-        <module>micronaut-maven-fixtures-openapi-extension</module>
     </modules>
 
     <issueManagement>

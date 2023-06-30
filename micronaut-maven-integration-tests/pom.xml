@@ -63,11 +63,6 @@
             <artifactId>micronaut-maven-plugin</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>io.micronaut.maven</groupId>
-            <artifactId>micronaut-maven-fixtures-openapi-extension</artifactId>
-            <version>${project.version}</version>
-        </dependency>
     </dependencies>
 
     <build>
@@ -89,6 +84,9 @@
                     <pomIncludes>
                         <pomInclude>*/pom.xml</pomInclude>
                     </pomIncludes>
+                    <setupIncludes>
+                        <setupInclude>openapi-setup/pom.xml</setupInclude>
+                    </setupIncludes>
                     <preBuildHookScript>setup</preBuildHookScript>
                     <postBuildHookScript>verify</postBuildHookScript>
                     <selectorScript>selector</selectorScript>

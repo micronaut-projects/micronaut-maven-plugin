@@ -101,9 +101,9 @@
                 <version>${micronaut-maven-plugin.version}</version>
                 <dependencies>
                     <dependency>
-                        <groupId>io.micronaut.maven</groupId>
-                        <artifactId>micronaut-maven-fixtures-openapi-extension</artifactId>
-                        <version>${micronaut-maven-plugin.version}</version>
+                        <groupId>io.micronaut.build.examples</groupId>
+                        <artifactId>openapi-setup</artifactId>
+                        <version>0.1</version>
                     </dependency>
                 </dependencies>
                 <configuration>
