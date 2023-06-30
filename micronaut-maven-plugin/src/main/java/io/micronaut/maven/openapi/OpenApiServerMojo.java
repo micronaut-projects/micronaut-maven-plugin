@@ -28,12 +28,21 @@ import org.apache.maven.plugins.annotations.Parameter;
 public class OpenApiServerMojo extends AbstractOpenApiMojo {
     public static final String MOJO_NAME = "generate-openapi-server";
 
+    /**
+     * The package name of the controller if controller implementation files are generated.
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".server.controller.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".controller.package.name", required = true)
     protected String controllerPackageName;
 
+    /**
+     * Whether to generate authentication annotations for APIs.
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".server.use.auth", defaultValue = "false")
     protected boolean useAuth;
 
+    /**
+     * The property that defines if this mojo should be used in configuration.
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generate.server")
     protected boolean enabled;
 
