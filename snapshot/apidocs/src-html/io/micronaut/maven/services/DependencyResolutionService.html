@@ -114,58 +114,48 @@
 <span class="source-line-no">101</span><span id="line-101">        return new DefaultArtifact(d.getGroup(), d.getArtifact(), JAR_EXTENSION, d.getVersion());</span>
 <span class="source-line-no">102</span><span id="line-102">    }</span>
 <span class="source-line-no">103</span><span id="line-103"></span>
-<span class="source-line-no">104</span><span id="line-104">    public static Artifact testResourcesModuleToAetherArtifact(String module, String testResourcesVersion) {</span>
-<span class="source-line-no">105</span><span id="line-105">        String coords = String.format(</span>
-<span class="source-line-no">106</span><span id="line-106">                "%s:%s:%s",</span>
-<span class="source-line-no">107</span><span id="line-107">                TEST_RESOURCES_GROUP,</span>
-<span class="source-line-no">108</span><span id="line-108">                TEST_RESOURCES_ARTIFACT_ID_PREFIX + module,</span>
-<span class="source-line-no">109</span><span id="line-109">                testResourcesVersion</span>
-<span class="source-line-no">110</span><span id="line-110">        );</span>
-<span class="source-line-no">111</span><span id="line-111">        return new DefaultArtifact(coords);</span>
-<span class="source-line-no">112</span><span id="line-112">    }</span>
-<span class="source-line-no">113</span><span id="line-113"></span>
-<span class="source-line-no">114</span><span id="line-114">    /**</span>
-<span class="source-line-no">115</span><span id="line-115">     * Performs a dependency request to compute the transitive dependencies of the given artifacts.</span>
-<span class="source-line-no">116</span><span id="line-116">     *</span>
-<span class="source-line-no">117</span><span id="line-117">     * @param artifacts The artifacts to resolve</span>
-<span class="source-line-no">118</span><span id="line-118">     * @param applyManagedDependencies Whether to apply the managed dependencies of the project</span>
-<span class="source-line-no">119</span><span id="line-119">     * @return The resolution result</span>
-<span class="source-line-no">120</span><span id="line-120">     */</span>
-<span class="source-line-no">121</span><span id="line-121">    public List&lt;ArtifactResult&gt; artifactResultsFor(Stream&lt;Artifact&gt; artifacts, boolean applyManagedDependencies) throws DependencyResolutionException {</span>
-<span class="source-line-no">122</span><span id="line-122">        RepositorySystemSession repositorySession = mavenSession.getRepositorySession();</span>
-<span class="source-line-no">123</span><span id="line-123">        DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.RUNTIME);</span>
-<span class="source-line-no">124</span><span id="line-124">        CollectRequest collectRequest = new CollectRequest();</span>
-<span class="source-line-no">125</span><span id="line-125">        collectRequest.setRepositories(mavenProject.getRemoteProjectRepositories());</span>
-<span class="source-line-no">126</span><span id="line-126"></span>
-<span class="source-line-no">127</span><span id="line-127">        if (applyManagedDependencies) {</span>
-<span class="source-line-no">128</span><span id="line-128">            List&lt;org.apache.maven.model.Dependency&gt; dependencies = mavenProject.getDependencyManagement().getDependencies();</span>
-<span class="source-line-no">129</span><span id="line-129">            Map&lt;String, Dependency&gt; dependencyMap = new HashMap&lt;&gt;(dependencies.size());</span>
-<span class="source-line-no">130</span><span id="line-130">            for (org.apache.maven.model.Dependency dependency : dependencies) {</span>
-<span class="source-line-no">131</span><span id="line-131">                String ga = dependency.getGroupId() + ":" + dependency.getArtifactId();</span>
-<span class="source-line-no">132</span><span id="line-132">                dependencyMap.putIfAbsent(ga, DependencyResolutionService.mavenDependencyToAetherDependency(dependency));</span>
-<span class="source-line-no">133</span><span id="line-133">            }</span>
-<span class="source-line-no">134</span><span id="line-134">            collectRequest.setManagedDependencies(new ArrayList&lt;&gt;(dependencyMap.values()));</span>
-<span class="source-line-no">135</span><span id="line-135"></span>
-<span class="source-line-no">136</span><span id="line-136">            artifacts.forEach(a -&gt; {</span>
-<span class="source-line-no">137</span><span id="line-137">                if (StringUtils.isEmpty(a.getVersion())) {</span>
-<span class="source-line-no">138</span><span id="line-138">                    dependencyMap.computeIfPresent(a.getGroupId() + ":" + a.getArtifactId(), (coord, d) -&gt; {</span>
-<span class="source-line-no">139</span><span id="line-139">                        collectRequest.addDependency(new Dependency(new DefaultArtifact(a.getGroupId(), a.getArtifactId(), a.getExtension(), d.getArtifact().getVersion()), JavaScopes.RUNTIME));</span>
-<span class="source-line-no">140</span><span id="line-140">                        return d;</span>
-<span class="source-line-no">141</span><span id="line-141">                    });</span>
-<span class="source-line-no">142</span><span id="line-142">                } else {</span>
-<span class="source-line-no">143</span><span id="line-143">                    collectRequest.addDependency(new Dependency(a, JavaScopes.RUNTIME));</span>
-<span class="source-line-no">144</span><span id="line-144">                }</span>
-<span class="source-line-no">145</span><span id="line-145">            });</span>
-<span class="source-line-no">146</span><span id="line-146">        } else {</span>
-<span class="source-line-no">147</span><span id="line-147">            artifacts.map(a -&gt; new Dependency(a, JavaScopes.RUNTIME)).forEach(collectRequest::addDependency);</span>
-<span class="source-line-no">148</span><span id="line-148">        }</span>
-<span class="source-line-no">149</span><span id="line-149"></span>
-<span class="source-line-no">150</span><span id="line-150">        DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, classpathFilter);</span>
-<span class="source-line-no">151</span><span id="line-151"></span>
-<span class="source-line-no">152</span><span id="line-152">        DependencyResult dependencyResult = repositorySystem.resolveDependencies(repositorySession, dependencyRequest);</span>
-<span class="source-line-no">153</span><span id="line-153">        return dependencyResult.getArtifactResults();</span>
-<span class="source-line-no">154</span><span id="line-154">    }</span>
-<span class="source-line-no">155</span><span id="line-155">}</span>
+<span class="source-line-no">104</span><span id="line-104">    /**</span>
+<span class="source-line-no">105</span><span id="line-105">     * Performs a dependency request to compute the transitive dependencies of the given artifacts.</span>
+<span class="source-line-no">106</span><span id="line-106">     *</span>
+<span class="source-line-no">107</span><span id="line-107">     * @param artifacts The artifacts to resolve</span>
+<span class="source-line-no">108</span><span id="line-108">     * @param applyManagedDependencies Whether to apply the managed dependencies of the project</span>
+<span class="source-line-no">109</span><span id="line-109">     * @return The resolution result</span>
+<span class="source-line-no">110</span><span id="line-110">     */</span>
+<span class="source-line-no">111</span><span id="line-111">    public List&lt;ArtifactResult&gt; artifactResultsFor(Stream&lt;Artifact&gt; artifacts, boolean applyManagedDependencies) throws DependencyResolutionException {</span>
+<span class="source-line-no">112</span><span id="line-112">        RepositorySystemSession repositorySession = mavenSession.getRepositorySession();</span>
+<span class="source-line-no">113</span><span id="line-113">        DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.RUNTIME);</span>
+<span class="source-line-no">114</span><span id="line-114">        CollectRequest collectRequest = new CollectRequest();</span>
+<span class="source-line-no">115</span><span id="line-115">        collectRequest.setRepositories(mavenProject.getRemoteProjectRepositories());</span>
+<span class="source-line-no">116</span><span id="line-116"></span>
+<span class="source-line-no">117</span><span id="line-117">        if (applyManagedDependencies) {</span>
+<span class="source-line-no">118</span><span id="line-118">            List&lt;org.apache.maven.model.Dependency&gt; dependencies = mavenProject.getDependencyManagement().getDependencies();</span>
+<span class="source-line-no">119</span><span id="line-119">            Map&lt;String, Dependency&gt; dependencyMap = new HashMap&lt;&gt;(dependencies.size());</span>
+<span class="source-line-no">120</span><span id="line-120">            for (org.apache.maven.model.Dependency dependency : dependencies) {</span>
+<span class="source-line-no">121</span><span id="line-121">                String ga = dependency.getGroupId() + ":" + dependency.getArtifactId();</span>
+<span class="source-line-no">122</span><span id="line-122">                dependencyMap.putIfAbsent(ga, DependencyResolutionService.mavenDependencyToAetherDependency(dependency));</span>
+<span class="source-line-no">123</span><span id="line-123">            }</span>
+<span class="source-line-no">124</span><span id="line-124">            collectRequest.setManagedDependencies(new ArrayList&lt;&gt;(dependencyMap.values()));</span>
+<span class="source-line-no">125</span><span id="line-125"></span>
+<span class="source-line-no">126</span><span id="line-126">            artifacts.forEach(a -&gt; {</span>
+<span class="source-line-no">127</span><span id="line-127">                if (StringUtils.isEmpty(a.getVersion())) {</span>
+<span class="source-line-no">128</span><span id="line-128">                    dependencyMap.computeIfPresent(a.getGroupId() + ":" + a.getArtifactId(), (coord, d) -&gt; {</span>
+<span class="source-line-no">129</span><span id="line-129">                        collectRequest.addDependency(new Dependency(new DefaultArtifact(a.getGroupId(), a.getArtifactId(), a.getExtension(), d.getArtifact().getVersion()), JavaScopes.RUNTIME));</span>
+<span class="source-line-no">130</span><span id="line-130">                        return d;</span>
+<span class="source-line-no">131</span><span id="line-131">                    });</span>
+<span class="source-line-no">132</span><span id="line-132">                } else {</span>
+<span class="source-line-no">133</span><span id="line-133">                    collectRequest.addDependency(new Dependency(a, JavaScopes.RUNTIME));</span>
+<span class="source-line-no">134</span><span id="line-134">                }</span>
+<span class="source-line-no">135</span><span id="line-135">            });</span>
+<span class="source-line-no">136</span><span id="line-136">        } else {</span>
+<span class="source-line-no">137</span><span id="line-137">            artifacts.map(a -&gt; new Dependency(a, JavaScopes.RUNTIME)).forEach(collectRequest::addDependency);</span>
+<span class="source-line-no">138</span><span id="line-138">        }</span>
+<span class="source-line-no">139</span><span id="line-139"></span>
+<span class="source-line-no">140</span><span id="line-140">        DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, classpathFilter);</span>
+<span class="source-line-no">141</span><span id="line-141"></span>
+<span class="source-line-no">142</span><span id="line-142">        DependencyResult dependencyResult = repositorySystem.resolveDependencies(repositorySession, dependencyRequest);</span>
+<span class="source-line-no">143</span><span id="line-143">        return dependencyResult.getArtifactResults();</span>
+<span class="source-line-no">144</span><span id="line-144">    }</span>
+<span class="source-line-no">145</span><span id="line-145">}</span>
 
 
 
