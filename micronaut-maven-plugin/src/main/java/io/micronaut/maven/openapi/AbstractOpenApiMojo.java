@@ -16,6 +16,7 @@
 package io.micronaut.maven.openapi;
 
 import io.micronaut.maven.AbstractMicronautMojo;
+import io.micronaut.openapi.generator.AbstractMicronautJavaCodegen;
 import io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder;
 import io.micronaut.openapi.generator.MicronautCodeGeneratorEntryPoint;
 import io.micronaut.openapi.generator.SerializationLibraryKind;
@@ -26,6 +27,7 @@ import org.apache.maven.project.MavenProject;
 
 import java.io.File;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Base class for OpenAPI generator mojos. This provides the common
@@ -92,6 +94,20 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
     @Parameter(defaultValue = "${project.build.directory}/generated-sources/openapi", required = true)
     protected File outputDirectory;
 
+    /**
+     * Define parameter mappings that allow using custom types for parameter binding.
+     * See {@link ParameterMapping} for details.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".parameterMappings")
+    protected List<ParameterMapping> parameterMappings;
+
+    /**
+     * Define parameter mappings that allow using custom types for parameter binding.
+     * See {@link ResponseBodyMapping} for details.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".responseBodyMappings")
+    protected List<ResponseBodyMapping> responseBodyMappings;
+
     @Parameter(defaultValue = "${project}", readonly = true)
     private MavenProject project;
 
@@ -131,6 +147,25 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
                     options.withOptional(useOptional);
                     options.withReactive(useReactive);
                     options.withSerializationLibrary(SerializationLibraryKind.MICRONAUT_SERDE_JACKSON);
+                    options.withParameterMappings(parameterMappings.stream()
+                            .map(mapping -> new AbstractMicronautJavaCodegen.ParameterMapping(
+                                    mapping.getName(),
+                                    AbstractMicronautJavaCodegen.ParameterMapping.ParameterLocation.valueOf(mapping.getLocation().name()),
+                                    mapping.getMappedType(),
+                                    mapping.getMappedName(),
+                                    mapping.isValidated()
+                            ))
+                            .collect(Collectors.toList())
+                    );
+                    options.withResponseBodyMappings(responseBodyMappings.stream()
+                            .map(mapping -> new AbstractMicronautJavaCodegen.ResponseBodyMapping(
+                                    mapping.getHeaderName(),
+                                    mapping.getMappedBodyType(),
+                                    mapping.isListWrapper(),
+                                    mapping.isValidated()
+                            ))
+                            .collect(Collectors.toList())
+                    );
                 });
         configureBuilder(builder);
         builder.build().generate();
