@@ -63,9 +63,9 @@
 <span class="source-line-no">050</span><span id="line-50">    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "frolvlad/alpine-glibc:alpine-3.12";</span>
 <span class="source-line-no">051</span><span id="line-51">    public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";</span>
 <span class="source-line-no">052</span><span id="line-52">    public static final String ARM_ARCH = "aarch64";</span>
-<span class="source-line-no">053</span><span id="line-53">    public static final String X86_64_ARCH = "amd64";</span>
-<span class="source-line-no">054</span><span id="line-54">    public static final String JAVA_17 = "java17";</span>
-<span class="source-line-no">055</span><span id="line-55">    public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol8";</span>
+<span class="source-line-no">053</span><span id="line-53">    public static final String X86_64_ARCH = "x64";</span>
+<span class="source-line-no">054</span><span id="line-54">    public static final String JAVA_17 = "17";</span>
+<span class="source-line-no">055</span><span id="line-55">    public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol9";</span>
 <span class="source-line-no">056</span><span id="line-56"></span>
 <span class="source-line-no">057</span><span id="line-57">    protected final MavenProject mavenProject;</span>
 <span class="source-line-no">058</span><span id="line-58">    protected final JibConfigurationService jibConfigurationService;</span>
@@ -181,9 +181,9 @@
 <span class="source-line-no">168</span><span id="line-168">    protected String getFrom() {</span>
 <span class="source-line-no">169</span><span id="line-169">        if (Boolean.TRUE.equals(staticNativeImage)) {</span>
 <span class="source-line-no">170</span><span id="line-170">            // For building a static native image we need a base image with tools (cc, make,...) already installed</span>
-<span class="source-line-no">171</span><span id="line-171">            return getFromImage().orElse("ghcr.io/graalvm/graalvm-ce:" + oracleLinuxVersion + "-" + graalVmJvmVersion() + "-" + graalVmVersion());</span>
+<span class="source-line-no">171</span><span id="line-171">            return getFromImage().orElse("ghcr.io/graalvm/graalvm-community:" + graalVmJvmVersion() + "-" + oracleLinuxVersion);</span>
 <span class="source-line-no">172</span><span id="line-172">        } else {</span>
-<span class="source-line-no">173</span><span id="line-173">            return getFromImage().orElse("ghcr.io/graalvm/native-image:" + oracleLinuxVersion + "-" + graalVmJvmVersion() + "-" + graalVmVersion());</span>
+<span class="source-line-no">173</span><span id="line-173">            return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmJvmVersion() + "-" + oracleLinuxVersion);</span>
 <span class="source-line-no">174</span><span id="line-174">        }</span>
 <span class="source-line-no">175</span><span id="line-175">    }</span>
 <span class="source-line-no">176</span><span id="line-176"></span>
