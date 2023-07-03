@@ -50,7 +50,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "frolvlad/alpine-glibc:alpine-3.12";
     public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
     public static final String ARM_ARCH = "aarch64";
-    public static final String X86_64_ARCH = "amd64";
+    public static final String X86_64_ARCH = "x64";
     public static final String JAVA_17 = "17";
     public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol9";
 
