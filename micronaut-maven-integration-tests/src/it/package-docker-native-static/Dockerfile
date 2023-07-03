@@ -1,5 +1,4 @@
-FROM ghcr.io/graalvm/graalvm-ce:ol8-java17-22.3.0 AS builder
-RUN gu install native-image
+FROM ghcr.io/graalvm/graalvm-community:17-ol9 AS builder
 WORKDIR /home/app
 
 ENV RESULT_LIB="/staticlibs"
