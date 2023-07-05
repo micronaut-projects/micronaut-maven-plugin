@@ -1,0 +1,159 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Mapped API
+  description: A mapped API
+servers:
+  - url: localhost:8000/api
+    description: The api server
+
+paths:
+  /sendIgnoredHeader:
+    get:
+      operationId: sendIgnoredHeader
+      tags: [ mapped ]
+      description: |
+        A method that sends a header that should be ignored.
+        It will be ignored, this behavior is most likely used when it will be consumed in a filter.
+      parameters:
+        - name: ignored-header
+          in: header
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+  /sendPageQuery:
+    get:
+      operationId: sendPageQuery
+      tags: [ mapped ]
+      description: A method that takes page query as its argument
+      parameters:
+        - $ref: '#/components/parameters/PageQueryParam'
+        - $ref: '#/components/parameters/PageSizeQueryParam'
+        - $ref: '#/components/parameters/PageSortQueryParam'
+      responses:
+        200:
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+  /sendMappedParameter:
+    get:
+      operationId: sendMappedParameter
+      tags: [ mapped ]
+      description: A method that has a header that is mapped to a custom type
+      parameters:
+        - $ref: '#/components/parameters/FilterHeader'
+      responses:
+        200:
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+  /getPaginatedStrings:
+    get:
+      operationId: getPaginatedSimpleModel
+      parameters:
+        - $ref: '#/components/parameters/PageQueryParam'
+      tags: [ mapped ]
+      description: A method to get a simple model list as a paginated response
+      responses:
+        200:
+          description: Success
+          headers:
+            X-Page-Number:
+              $ref: '#/components/headers/X-Page-Number'
+            X-Page-Size:
+              $ref: '#/components/headers/X-Page-Size'
+            X-Total-Count:
+              $ref: '#/components/headers/X-Total-Count'
+            X-Page-Count:
+              $ref: '#/components/headers/X-Page-Count'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+  /getDatedString:
+    get:
+      operationId: getDatedSimpleModel
+      tags: [ mapped ]
+      description: A method to get a simple model with last-modified header
+      responses:
+        200:
+          description: Success
+          headers:
+            Last-Modified:
+              $ref: '#/components/headers/Last-Modified'
+          content:
+            application/json:
+              schema:
+                type: string
+
+components:
+  parameters:
+    PageQueryParam:
+      name: page
+      in: query
+      description: The page number to retrieve starting from 0.
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    PageSizeQueryParam:
+      name: size
+      in: query
+      description: The number of items per page.
+      schema:
+        type: integer
+        minimum: 1
+        default: 10
+    PageSortQueryParam:
+      name: sortOrder
+      in: query
+      description: |
+        Parameter describing the sort. Allows specifying the sorting direction using the keywords {@code asc} and
+        {@code desc} after each property. For example, {@code "sort=name desc,age"} will sort by name in descending
+        order and age in ascending.
+      schema:
+        type: string
+    FilterHeader:
+      name: Filter
+      in: header
+      description: |
+        A filter parameter that allows filtering the response. The conditions are comma separated and
+        must be of type [property][comparator][value] where comparator is one of =, < and >.
+      schema:
+        type: string
+
+  headers:
+    X-Page-Number:
+      description: The page number of the current page
+      schema:
+        type: string
+    X-Page-Size:
+      description: The number of items per page
+      schema:
+        type: string
+    X-Total-Count:
+      description: |
+        The total number of items available in the entire collections, not just the items returned in the current page
+      schema:
+        type: string
+    X-Page-Count:
+      description: The total number of pages based on the page size and total count
+      schema:
+        type: string
+    Last-Modified:
+      description: The last time an entity returned with the response was modified.
+      schema:
+        type: string
+        format: date-time

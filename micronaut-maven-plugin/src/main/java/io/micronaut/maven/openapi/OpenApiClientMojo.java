@@ -30,21 +30,39 @@ import java.util.List;
 public class OpenApiClientMojo extends AbstractOpenApiMojo {
     public static final String MOJO_NAME = "generate-openapi-client";
 
+    /**
+     * Client id.
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.id", defaultValue = "")
     protected String clientId;
 
+    /**
+     * Whether to configure authentication for client.
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.use.auth", defaultValue = "false")
     protected boolean useAuth;
 
+    /**
+     * Additional annotations to be used on the generated client API classes.
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.additional.type.annotations")
     protected List<String> additionalTypeAnnotations;
 
+    /**
+     * The base path separator.
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.base.path.separator")
     protected String basePathSeparator;
 
+    /**
+     * The pattern for authorization filter.
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.authorization.filter.pattern")
     protected String authorizationFilterPattern;
 
+    /**
+     * The property that defines if this mojo is used.
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generate.client")
     protected boolean enabled;
 

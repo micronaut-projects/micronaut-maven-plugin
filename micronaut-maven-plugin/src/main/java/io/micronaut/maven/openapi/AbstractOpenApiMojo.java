@@ -16,6 +16,7 @@
 package io.micronaut.maven.openapi;
 
 import io.micronaut.maven.AbstractMicronautMojo;
+import io.micronaut.openapi.generator.AbstractMicronautJavaCodegen;
 import io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder;
 import io.micronaut.openapi.generator.MicronautCodeGeneratorEntryPoint;
 import io.micronaut.openapi.generator.SerializationLibraryKind;
@@ -26,6 +27,7 @@ import org.apache.maven.project.MavenProject;
 
 import java.io.File;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Base class for OpenAPI generator mojos. This provides the common
@@ -37,32 +39,74 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
     static final String MICRONAUT_OPENAPI_PREFIX = "micronaut.openapi";
     static final String IO_MICRONAUT_OPENAPI_PREFIX = "io.micronaut.openapi";
 
+    /**
+     * The OpenAPI specification file path relative to the project's root path.
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".definition", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".invoker", required = true)
     protected File definitionFile;
 
+    /**
+     * The name of the package that can be used for various classes required for invocation.
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".invoker.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".invoker", required = true)
     protected String invokerPackageName;
 
+    /**
+     * The package name for the APIs (controller interfaces).
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".api.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".api", required = true)
     protected String apiPackageName;
 
+    /**
+     * The package name for the model classes.
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".model.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".model", required = true)
     protected String modelPackageName;
 
+    /**
+     * Whether to generate validation annotations for models and APIs.
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.bean.validation", defaultValue = "true", required = true)
     protected boolean useBeanValidation;
 
+    /**
+     * Whether to use {@link java.util.Optional} for non-required model properties and API parameters.
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.optional", defaultValue = "false", required = true)
     protected boolean useOptional;
 
+    /**
+     * Whether to use reactor types for operation responses.
+     */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.reactive", defaultValue = "true", required = true)
     protected boolean useReactive;
 
-    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".outputs", required = true, defaultValue = "apis,models")
+    /**
+     * Comma-separated values of output kinds to generate. The values are defined by the
+     * {@link MicronautCodeGeneratorEntryPoint.OutputKind} enum.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".outputs", required = true, defaultValue = "apis,models,supporting_files")
     protected List<String> outputKinds;
 
+    /**
+     * The output directory to which all the sources will be generated.
+     */
     @Parameter(defaultValue = "${project.build.directory}/generated-sources/openapi", required = true)
     protected File outputDirectory;
+
+    /**
+     * Define parameter mappings that allow using custom types for parameter binding.
+     * See {@link ParameterMapping} for details.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".parameterMappings")
+    protected List<ParameterMapping> parameterMappings;
+
+    /**
+     * Define parameter mappings that allow using custom types for parameter binding.
+     * See {@link ResponseBodyMapping} for details.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".responseBodyMappings")
+    protected List<ResponseBodyMapping> responseBodyMappings;
 
     @Parameter(defaultValue = "${project}", readonly = true)
     private MavenProject project;
@@ -80,7 +124,7 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
      * the generator specific parameters.
      * @param builder the generator configuration builder
      */
-    protected abstract void configureBuilder(MicronautCodeGeneratorBuilder builder);
+    protected abstract void configureBuilder(MicronautCodeGeneratorBuilder builder) throws MojoExecutionException;
 
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException {
@@ -103,6 +147,25 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
                     options.withOptional(useOptional);
                     options.withReactive(useReactive);
                     options.withSerializationLibrary(SerializationLibraryKind.MICRONAUT_SERDE_JACKSON);
+                    options.withParameterMappings(parameterMappings.stream()
+                            .map(mapping -> new AbstractMicronautJavaCodegen.ParameterMapping(
+                                    mapping.getName(),
+                                    AbstractMicronautJavaCodegen.ParameterMapping.ParameterLocation.valueOf(mapping.getLocation().name()),
+                                    mapping.getMappedType(),
+                                    mapping.getMappedName(),
+                                    mapping.isValidated()
+                            ))
+                            .collect(Collectors.toList())
+                    );
+                    options.withResponseBodyMappings(responseBodyMappings.stream()
+                            .map(mapping -> new AbstractMicronautJavaCodegen.ResponseBodyMapping(
+                                    mapping.getHeaderName(),
+                                    mapping.getMappedBodyType(),
+                                    mapping.isListWrapper(),
+                                    mapping.isValidated()
+                            ))
+                            .collect(Collectors.toList())
+                    );
                 });
         configureBuilder(builder);
         builder.build().generate();

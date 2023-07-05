@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.micronaut.maven</groupId>
+        <artifactId>micronaut-maven-plugin-parent</artifactId>
+        <version>@it.micronaut.version@</version>
+    </parent>
+
+    <groupId>io.micronaut.build.examples</groupId>
+    <artifactId>openapi-setup</artifactId>
+    <version>0.1</version>
+    <packaging>jar</packaging>
+    <name>Test fixtures for OpenAPI</name>
+    <description>An OpenAPI extension added to the plugin classpath in tests</description>
+
+
+    <dependencies>
+        <dependency>
+            <groupId>io.micronaut.openapi</groupId>
+            <artifactId>micronaut-openapi-generator</artifactId>
+            <version>@micronaut.openapi.version@</version>
+        </dependency>
+    </dependencies>
+
+</project>

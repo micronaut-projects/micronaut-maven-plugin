@@ -84,6 +84,9 @@
                     <pomIncludes>
                         <pomInclude>*/pom.xml</pomInclude>
                     </pomIncludes>
+                    <setupIncludes>
+                        <setupInclude>openapi-setup/pom.xml</setupInclude>
+                    </setupIncludes>
                     <preBuildHookScript>setup</preBuildHookScript>
                     <postBuildHookScript>verify</postBuildHookScript>
                     <selectorScript>selector</selectorScript>
