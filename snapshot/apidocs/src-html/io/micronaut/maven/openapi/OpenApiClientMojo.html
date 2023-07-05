@@ -43,48 +43,66 @@
 <span class="source-line-no">030</span><span id="line-30">public class OpenApiClientMojo extends AbstractOpenApiMojo {</span>
 <span class="source-line-no">031</span><span id="line-31">    public static final String MOJO_NAME = "generate-openapi-client";</span>
 <span class="source-line-no">032</span><span id="line-32"></span>
-<span class="source-line-no">033</span><span id="line-33">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.id", defaultValue = "")</span>
-<span class="source-line-no">034</span><span id="line-34">    protected String clientId;</span>
-<span class="source-line-no">035</span><span id="line-35"></span>
-<span class="source-line-no">036</span><span id="line-36">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.use.auth", defaultValue = "false")</span>
-<span class="source-line-no">037</span><span id="line-37">    protected boolean useAuth;</span>
+<span class="source-line-no">033</span><span id="line-33">    /**</span>
+<span class="source-line-no">034</span><span id="line-34">     * Client id.</span>
+<span class="source-line-no">035</span><span id="line-35">     */</span>
+<span class="source-line-no">036</span><span id="line-36">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.id", defaultValue = "")</span>
+<span class="source-line-no">037</span><span id="line-37">    protected String clientId;</span>
 <span class="source-line-no">038</span><span id="line-38"></span>
-<span class="source-line-no">039</span><span id="line-39">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.additional.type.annotations")</span>
-<span class="source-line-no">040</span><span id="line-40">    protected List&lt;String&gt; additionalTypeAnnotations;</span>
-<span class="source-line-no">041</span><span id="line-41"></span>
-<span class="source-line-no">042</span><span id="line-42">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.base.path.separator")</span>
-<span class="source-line-no">043</span><span id="line-43">    protected String basePathSeparator;</span>
+<span class="source-line-no">039</span><span id="line-39">    /**</span>
+<span class="source-line-no">040</span><span id="line-40">     * Whether to configure authentication for client.</span>
+<span class="source-line-no">041</span><span id="line-41">     */</span>
+<span class="source-line-no">042</span><span id="line-42">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.use.auth", defaultValue = "false")</span>
+<span class="source-line-no">043</span><span id="line-43">    protected boolean useAuth;</span>
 <span class="source-line-no">044</span><span id="line-44"></span>
-<span class="source-line-no">045</span><span id="line-45">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.authorization.filter.pattern")</span>
-<span class="source-line-no">046</span><span id="line-46">    protected String authorizationFilterPattern;</span>
-<span class="source-line-no">047</span><span id="line-47"></span>
-<span class="source-line-no">048</span><span id="line-48">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generate.client")</span>
-<span class="source-line-no">049</span><span id="line-49">    protected boolean enabled;</span>
+<span class="source-line-no">045</span><span id="line-45">    /**</span>
+<span class="source-line-no">046</span><span id="line-46">     * Additional annotations to be used on the generated client API classes.</span>
+<span class="source-line-no">047</span><span id="line-47">     */</span>
+<span class="source-line-no">048</span><span id="line-48">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.additional.type.annotations")</span>
+<span class="source-line-no">049</span><span id="line-49">    protected List&lt;String&gt; additionalTypeAnnotations;</span>
 <span class="source-line-no">050</span><span id="line-50"></span>
-<span class="source-line-no">051</span><span id="line-51">    @Override</span>
-<span class="source-line-no">052</span><span id="line-52">    protected boolean isEnabled() {</span>
-<span class="source-line-no">053</span><span id="line-53">        return enabled;</span>
-<span class="source-line-no">054</span><span id="line-54">    }</span>
-<span class="source-line-no">055</span><span id="line-55"></span>
-<span class="source-line-no">056</span><span id="line-56">    @Override</span>
-<span class="source-line-no">057</span><span id="line-57">    protected void configureBuilder(MicronautCodeGeneratorBuilder builder) {</span>
-<span class="source-line-no">058</span><span id="line-58">        builder.forClient(spec -&gt; {</span>
-<span class="source-line-no">059</span><span id="line-59">            spec.withAuthorization(useAuth);</span>
-<span class="source-line-no">060</span><span id="line-60">            if (clientId != null &amp;&amp; !clientId.isEmpty()) {</span>
-<span class="source-line-no">061</span><span id="line-61">                spec.withClientId(clientId);</span>
-<span class="source-line-no">062</span><span id="line-62">            }</span>
-<span class="source-line-no">063</span><span id="line-63">            if (additionalTypeAnnotations != null) {</span>
-<span class="source-line-no">064</span><span id="line-64">                spec.withAdditionalClientTypeAnnotations(additionalTypeAnnotations);</span>
-<span class="source-line-no">065</span><span id="line-65">            }</span>
-<span class="source-line-no">066</span><span id="line-66">            if (basePathSeparator != null) {</span>
-<span class="source-line-no">067</span><span id="line-67">                spec.withBasePathSeparator(basePathSeparator);</span>
-<span class="source-line-no">068</span><span id="line-68">            }</span>
-<span class="source-line-no">069</span><span id="line-69">            if (authorizationFilterPattern != null) {</span>
-<span class="source-line-no">070</span><span id="line-70">                spec.withAuthorizationFilterPattern(authorizationFilterPattern);</span>
-<span class="source-line-no">071</span><span id="line-71">            }</span>
-<span class="source-line-no">072</span><span id="line-72">        });</span>
-<span class="source-line-no">073</span><span id="line-73">    }</span>
-<span class="source-line-no">074</span><span id="line-74">}</span>
+<span class="source-line-no">051</span><span id="line-51">    /**</span>
+<span class="source-line-no">052</span><span id="line-52">     * The base path separator.</span>
+<span class="source-line-no">053</span><span id="line-53">     */</span>
+<span class="source-line-no">054</span><span id="line-54">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.base.path.separator")</span>
+<span class="source-line-no">055</span><span id="line-55">    protected String basePathSeparator;</span>
+<span class="source-line-no">056</span><span id="line-56"></span>
+<span class="source-line-no">057</span><span id="line-57">    /**</span>
+<span class="source-line-no">058</span><span id="line-58">     * The pattern for authorization filter.</span>
+<span class="source-line-no">059</span><span id="line-59">     */</span>
+<span class="source-line-no">060</span><span id="line-60">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.authorization.filter.pattern")</span>
+<span class="source-line-no">061</span><span id="line-61">    protected String authorizationFilterPattern;</span>
+<span class="source-line-no">062</span><span id="line-62"></span>
+<span class="source-line-no">063</span><span id="line-63">    /**</span>
+<span class="source-line-no">064</span><span id="line-64">     * The property that defines if this mojo is used.</span>
+<span class="source-line-no">065</span><span id="line-65">     */</span>
+<span class="source-line-no">066</span><span id="line-66">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generate.client")</span>
+<span class="source-line-no">067</span><span id="line-67">    protected boolean enabled;</span>
+<span class="source-line-no">068</span><span id="line-68"></span>
+<span class="source-line-no">069</span><span id="line-69">    @Override</span>
+<span class="source-line-no">070</span><span id="line-70">    protected boolean isEnabled() {</span>
+<span class="source-line-no">071</span><span id="line-71">        return enabled;</span>
+<span class="source-line-no">072</span><span id="line-72">    }</span>
+<span class="source-line-no">073</span><span id="line-73"></span>
+<span class="source-line-no">074</span><span id="line-74">    @Override</span>
+<span class="source-line-no">075</span><span id="line-75">    protected void configureBuilder(MicronautCodeGeneratorBuilder builder) {</span>
+<span class="source-line-no">076</span><span id="line-76">        builder.forClient(spec -&gt; {</span>
+<span class="source-line-no">077</span><span id="line-77">            spec.withAuthorization(useAuth);</span>
+<span class="source-line-no">078</span><span id="line-78">            if (clientId != null &amp;&amp; !clientId.isEmpty()) {</span>
+<span class="source-line-no">079</span><span id="line-79">                spec.withClientId(clientId);</span>
+<span class="source-line-no">080</span><span id="line-80">            }</span>
+<span class="source-line-no">081</span><span id="line-81">            if (additionalTypeAnnotations != null) {</span>
+<span class="source-line-no">082</span><span id="line-82">                spec.withAdditionalClientTypeAnnotations(additionalTypeAnnotations);</span>
+<span class="source-line-no">083</span><span id="line-83">            }</span>
+<span class="source-line-no">084</span><span id="line-84">            if (basePathSeparator != null) {</span>
+<span class="source-line-no">085</span><span id="line-85">                spec.withBasePathSeparator(basePathSeparator);</span>
+<span class="source-line-no">086</span><span id="line-86">            }</span>
+<span class="source-line-no">087</span><span id="line-87">            if (authorizationFilterPattern != null) {</span>
+<span class="source-line-no">088</span><span id="line-88">                spec.withAuthorizationFilterPattern(authorizationFilterPattern);</span>
+<span class="source-line-no">089</span><span id="line-89">            }</span>
+<span class="source-line-no">090</span><span id="line-90">        });</span>
+<span class="source-line-no">091</span><span id="line-91">    }</span>
+<span class="source-line-no">092</span><span id="line-92">}</span>
 
 
 
