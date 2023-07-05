@@ -31,7 +31,7 @@ public class OpenApiClientMojo extends AbstractOpenApiMojo {
     public static final String MOJO_NAME = "generate-openapi-client";
 
     /**
-     *
+     * Client id.
      */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.id", defaultValue = "")
     protected String clientId;
