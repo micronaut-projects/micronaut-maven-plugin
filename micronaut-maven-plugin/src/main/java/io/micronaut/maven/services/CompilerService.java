@@ -33,11 +33,15 @@ import org.eclipse.aether.util.filter.DependencyFilterUtils;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -49,10 +53,12 @@ import java.util.stream.Collectors;
 @Singleton
 public class CompilerService {
 
-    public static final String MAVEN_COMPILER_PLUGIN = "org.apache.maven.plugins:maven-compiler-plugin";
     public static final String MAVEN_JAR_PLUGIN = "org.apache.maven.plugins:maven-jar-plugin";
 
     private static final String COMPILE_GOAL = "compile";
+    private static final String JAVA = "java";
+    private static final String GROOVY = "groovy";
+    private static final String KOTLIN = "kotlin";
 
     private final Log log;
     private final MavenProject runnableProject;
@@ -101,11 +107,25 @@ public class CompilerService {
             log.debug("Resolving source directories...");
         }
         return mavenSession.getProjects().stream()
-                .map(mavenProject -> mavenProject.getBuild().getSourceDirectory())
-                .map(File::new)
-                .filter(File::exists)
-                .map(File::toPath)
+                .map(this::resolveSourceDirectories)
+                .flatMap(Set::stream)
                 .toList();
+    }
+
+    private Set<Path> resolveSourceDirectories(MavenProject project) {
+        Set<Path> sourceDirectoriesToResolve = new HashSet<>(3);
+        for (String lang : Arrays.asList(JAVA, GROOVY, KOTLIN)) {
+            Path sourceDir = project.getBasedir().toPath().resolve("src/main/" + lang);
+            if (Files.exists(sourceDir)) {
+                sourceDirectoriesToResolve.add(sourceDir);
+            }
+        }
+        sourceDirectoriesToResolve.addAll(project.getCompileSourceRoots().stream()
+                .map(File::new)
+                .map(File::toPath)
+                .filter(Files::exists)
+                .collect(Collectors.toSet()));
+        return sourceDirectoriesToResolve;
     }
 
     /**
