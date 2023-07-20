@@ -58,7 +58,7 @@ import java.util.Set;
 public class DockerNativeMojo extends AbstractDockerMojo {
 
     public static final String DOCKER_NATIVE_PACKAGING = "docker-native";
-    public static final String MICRONAUT_PARENT = "io.micronaut:micronaut-parent";
+    public static final String MICRONAUT_PARENT = "io.micronaut.platform:micronaut-parent";
     public static final String MICRONAUT_VERSION = "micronaut.version";
     public static final String ARGS_FILE_PROPERTY_NAME = "graalvm.native-image.args-file";
 
