@@ -503,7 +503,7 @@
 <span class="source-line-no">490</span><span id="line-490">            try {</span>
 <span class="source-line-no">491</span><span id="line-491">                executorService.executeGoal(THIS_PLUGIN, AotAnalysisMojo.NAME);</span>
 <span class="source-line-no">492</span><span id="line-492">            } catch (MojoExecutionException e) {</span>
-<span class="source-line-no">493</span><span id="line-493">                getLog().error(e);</span>
+<span class="source-line-no">493</span><span id="line-493">                getLog().error(e.getMessage());</span>
 <span class="source-line-no">494</span><span id="line-494">            }</span>
 <span class="source-line-no">495</span><span id="line-495">        }</span>
 <span class="source-line-no">496</span><span id="line-496">    }</span>
