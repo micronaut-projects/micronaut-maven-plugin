@@ -1,0 +1,7 @@
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains("BUILD SUCCESS")
+assert log.text.contains("Running Micronaut AOT")
+assert log.text.contains("Command line was: java -XX:ThisDoesNotExist")
+assert log.text.contains("Unrecognized VM option 'ThisDoesNotExist'")
+assert !log.text.contains("Running with AOT optimizations")
