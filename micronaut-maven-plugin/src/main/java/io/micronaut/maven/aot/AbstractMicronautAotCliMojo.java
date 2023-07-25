@@ -37,6 +37,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.micronaut.maven.aot.Constants.*;
@@ -73,6 +75,14 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     @Parameter
     private List<org.apache.maven.model.Dependency> aotDependencies;
 
+    /**
+     * Additional JVM arguments to pass to the AOT compiler (eg: <code>--enable-preview</code>).
+     *
+     * @since 4.0.2
+     */
+    @Parameter(property = "micronaut.aot.jvmArgs")
+    private List<String> aotJvmArgs;
+
     @Inject
     public AbstractMicronautAotCliMojo(CompilerService compilerService, ExecutorService executorService,
                                        MavenProject mavenProject, DependencyResolutionService dependencyResolutionService) {
@@ -106,13 +116,23 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
         getLog().info("Executing Micronaut AOT analysis");
         Xpp3Dom config = createExecPluginConfig();
 
-        executorService.executeGoal(
-                EXEC_MAVEN_PLUGIN_GROUP,
-                EXEC_MAVEN_PLUGIN_ARTIFACT,
-                mavenProject.getProperties().getProperty(EXEC_MAVEN_PLUGIN_VERSION_PROPERTY, DEFAULT_EXEC_MAVEN_PLUGIN_VERSION),
-                "exec",
-                config
-        );
+        try {
+            executorService.executeGoal(
+                    EXEC_MAVEN_PLUGIN_GROUP,
+                    EXEC_MAVEN_PLUGIN_ARTIFACT,
+                    mavenProject.getProperties().getProperty(EXEC_MAVEN_PLUGIN_VERSION_PROPERTY, DEFAULT_EXEC_MAVEN_PLUGIN_VERSION),
+                    "exec",
+                    config
+            );
+        } catch (MojoExecutionException e) {
+            getLog().error("Error when executing Micronaut AOT: " + e.getMessage());
+            String commandLine = Arrays.stream(config.getChild("arguments").getChildren())
+                    .map(Xpp3Dom::getValue)
+                    .collect(Collectors.joining(" "));
+            getLog().error("Command line was: java " + commandLine);
+            throw e;
+        }
+
     }
 
     private Xpp3Dom createExecPluginConfig() throws DependencyResolutionException, MojoExecutionException {
@@ -124,16 +144,18 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
         classpath.addAll(aotClasspath);
         classpath.addAll(aotPluginsClasspath);
         classpath.addAll(applicationClasspath);
-        MojoExecutor.Element[] runnerArgs = Stream.concat(Stream.of(
-                        "-classpath",
-                        String.join(File.pathSeparator, aotClasspath),
-                        MICRONAUT_AOT_MAIN_CLASS,
+        Stream<String> jvmArgs = Optional.ofNullable(aotJvmArgs).orElse(List.of()).stream();
+        Stream<String> mainArgs = Stream.of(
+                "-classpath",
+                String.join(File.pathSeparator, aotClasspath),
+                MICRONAUT_AOT_MAIN_CLASS,
 
-                        // CLI args
-                        "--classpath=" + String.join(File.pathSeparator, classpath),
-                        "--package=" + packageName,
-                        "--runtime=" + runtime
-                ), getExtraArgs().stream())
+                // CLI args
+                "--classpath=" + String.join(File.pathSeparator, classpath),
+                "--package=" + packageName,
+                "--runtime=" + runtime
+        );
+        MojoExecutor.Element[] runnerArgs = Stream.concat(Stream.concat(jvmArgs, mainArgs), getExtraArgs().stream())
                 .map(arg -> element("argument", arg))
                 .toArray(MojoExecutor.Element[]::new);
         return configuration(

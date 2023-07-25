@@ -490,7 +490,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
             try {
                 executorService.executeGoal(THIS_PLUGIN, AotAnalysisMojo.NAME);
             } catch (MojoExecutionException e) {
-                getLog().error(e);
+                getLog().error(e.getMessage());
             }
         }
     }
