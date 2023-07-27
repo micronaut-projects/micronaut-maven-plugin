@@ -1,4 +1,4 @@
-FROM amazonlinux:latest AS graalvm
+FROM amazonlinux:2 AS graalvm
 ENV LANG=en_US.UTF-8
 ARG GRAALVM_VERSION
 ARG GRAALVM_JVM_VERSION
@@ -16,7 +16,7 @@ COPY *.args /home/app/graalvm-native-image.args
 ARG CLASS_NAME
 RUN native-image @/home/app/graalvm-native-image.args -H:Class=${CLASS_NAME} -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
 
-FROM amazonlinux:latest
+FROM amazonlinux:2
 WORKDIR /function
 RUN yum update -y && yum install -y zip && yum clean all
 COPY --from=graalvm /home/app/application /function/func
