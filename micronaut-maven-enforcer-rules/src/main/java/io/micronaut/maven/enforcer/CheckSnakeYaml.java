@@ -56,8 +56,10 @@ public class CheckSnakeYaml extends AbstractEnforcerRule {
     public void execute() throws EnforcerRuleException {
         if (hasYamlConfiguration() && !hasSnakeYaml()) {
             String message = "YAML configuration file detected, but SnakeYAML is not on the runtime classpath. Make sure to add the following dependency:" +
-                    System.lineSeparator() +
-                    toXml(snakeYaml);
+                    System.lineSeparator();
+
+            //Purposely use System.out to ease copy/pasting
+            System.out.println(toXml(snakeYaml));
             throw new EnforcerRuleException(message);
         }
     }

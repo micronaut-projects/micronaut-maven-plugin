@@ -1,12 +1,11 @@
 FROM amazonlinux:2 AS graalvm
 ENV LANG=en_US.UTF-8
-ARG GRAALVM_VERSION
 ARG GRAALVM_JVM_VERSION
 ARG GRAALVM_ARCH
-RUN yum update -y && yum install -y gcc gcc-c++ libc6-dev zlib1g-dev curl bash zlib zlib-devel zlib-static zip tar gzip && yum clean all
+RUN yum update -y && yum install -y gcc gcc-c++ libc6-dev zlib1g-dev curl bash zlib zlib-devel zlib-static zip tar gzip && yum clean all && rm -rf /var/cache/yum
 RUN curl -4 -L https://download.oracle.com/graalvm/${GRAALVM_JVM_VERSION}/latest/graalvm-jdk-${GRAALVM_JVM_VERSION}_linux-${GRAALVM_ARCH}_bin.tar.gz -o /tmp/graalvm.tar.gz \
-    && tar -zxf /tmp/graalvm.tar.gz -C /tmp \
-    && mv /tmp/graalvm* /usr/lib/graalvm \
+    && mkdir -p /usr/lib/graalvm \
+    && tar -zxf /tmp/graalvm.tar.gz -C /usr/lib/graalvm --strip-components 1 \
     && rm -rf /tmp/*
 ENV PATH=/usr/lib/graalvm/bin:${PATH}
 WORKDIR /home/app

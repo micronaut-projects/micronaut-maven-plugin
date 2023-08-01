@@ -16,6 +16,7 @@
 package io.micronaut.maven;
 
 import com.github.dockerjava.api.command.BuildImageCmd;
+import com.github.dockerjava.api.exception.DockerClientException;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.common.io.FileWriteMode;
@@ -42,6 +43,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * <p>Implementation of the <code>docker-native</code> packaging.</p>
@@ -134,12 +136,8 @@ public class DockerNativeMojo extends AbstractDockerMojo {
     }
 
     private void buildDockerNativeLambda() throws IOException {
-        BuildImageCmd buildImageCmd = dockerService.buildImageCmd(DockerfileMojo.DOCKERFILE_AWS_CUSTOM_RUNTIME)
-                .withBuildArg("GRAALVM_VERSION", graalVmVersion())
-                .withBuildArg("GRAALVM_JVM_VERSION", graalVmJvmVersion())
-                .withBuildArg("GRAALVM_ARCH", graalVmArch());
+        Map<String, String> buildImageCmdArguments = new HashMap<>();
 
-        getLog().info("Using GRAALVM_VERSION: " + graalVmVersion());
         getLog().info("Using GRAALVM_JVM_VERSION: " + graalVmJvmVersion());
         getLog().info("Using GRAALVM_ARCH: " + graalVmArch());
 
@@ -147,9 +145,17 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         //   - For applications: io.micronaut.function.aws.runtime.MicronautLambdaRuntime
         //   - For function apps: com.example.BookLambdaRuntime
         getLog().info("Using CLASS_NAME: " + mainClass);
+        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, () -> {
+            try {
+                return dockerService.buildImageCmd(DockerfileMojo.DOCKERFILE_AWS_CUSTOM_RUNTIME)
+                        .withBuildArg("GRAALVM_VERSION", graalVmVersion())
+                        .withBuildArg("GRAALVM_JVM_VERSION", graalVmJvmVersion())
+                        .withBuildArg("GRAALVM_ARCH", graalVmArch());
+            } catch (IOException e) {
+                throw new DockerClientException(e.getMessage(), e);
+            }
+        });
         buildImageCmd.withBuildArg("CLASS_NAME", mainClass);
-        getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
-
         String imageId = dockerService.buildImage(buildImageCmd);
         File functionZip = dockerService.copyFromContainer(imageId, "/function/function.zip");
         getLog().info("AWS Lambda Custom Runtime ZIP: " + functionZip.getPath());
@@ -204,6 +210,16 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             buildImageCmdArguments.put("CLASS_NAME", mainClass);
         }
 
+        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, () -> dockerService.buildImageCmd()
+                .withDockerfile(dockerfile)
+                .withTags(getTags())
+                .withBuildArg("BASE_IMAGE", from)
+                .withBuildArg("PORT", port));
+
+        dockerService.buildImage(buildImageCmd);
+    }
+
+    private BuildImageCmd addNativeImageBuildArgs(Map<String, String> buildImageCmdArguments, Supplier<BuildImageCmd> buildImageCmdSupplier) throws IOException {
         String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);
         List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);
         getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);
@@ -211,11 +227,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         if (conversionResult.size() == 1) {
             Files.delete(Paths.get(argsFile));
 
-            BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
-                    .withDockerfile(dockerfile)
-                    .withTags(getTags())
-                    .withBuildArg("BASE_IMAGE", from)
-                    .withBuildArg("PORT", port);
+            BuildImageCmd buildImageCmd = buildImageCmdSupplier.get();
 
             for (Map.Entry<String, String> buildArg : buildImageCmdArguments.entrySet()) {
                 String key = buildArg.getKey();
@@ -225,7 +237,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             }
 
             getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
-            dockerService.buildImage(buildImageCmd);
+            return buildImageCmd;
         } else {
             throw new IOException("Unable to convert native image build args to args file");
         }
