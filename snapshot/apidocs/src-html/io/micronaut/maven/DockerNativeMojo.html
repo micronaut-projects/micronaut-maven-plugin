@@ -29,222 +29,234 @@
 <span class="source-line-no">016</span><span id="line-16">package io.micronaut.maven;</span>
 <span class="source-line-no">017</span><span id="line-17"></span>
 <span class="source-line-no">018</span><span id="line-18">import com.github.dockerjava.api.command.BuildImageCmd;</span>
-<span class="source-line-no">019</span><span id="line-19">import com.google.cloud.tools.jib.api.ImageReference;</span>
-<span class="source-line-no">020</span><span id="line-20">import com.google.cloud.tools.jib.api.InvalidImageReferenceException;</span>
-<span class="source-line-no">021</span><span id="line-21">import com.google.common.io.FileWriteMode;</span>
-<span class="source-line-no">022</span><span id="line-22">import io.micronaut.maven.core.MicronautRuntime;</span>
-<span class="source-line-no">023</span><span id="line-23">import io.micronaut.maven.services.ApplicationConfigurationService;</span>
-<span class="source-line-no">024</span><span id="line-24">import io.micronaut.maven.services.DockerService;</span>
-<span class="source-line-no">025</span><span id="line-25">import io.micronaut.maven.jib.JibConfigurationService;</span>
-<span class="source-line-no">026</span><span id="line-26">import io.micronaut.core.util.StringUtils;</span>
-<span class="source-line-no">027</span><span id="line-27">import org.apache.maven.execution.MavenSession;</span>
-<span class="source-line-no">028</span><span id="line-28">import org.apache.maven.plugin.MojoExecution;</span>
-<span class="source-line-no">029</span><span id="line-29">import org.apache.maven.plugin.MojoExecutionException;</span>
-<span class="source-line-no">030</span><span id="line-30">import org.apache.maven.plugins.annotations.Mojo;</span>
-<span class="source-line-no">031</span><span id="line-31">import org.apache.maven.plugins.annotations.ResolutionScope;</span>
-<span class="source-line-no">032</span><span id="line-32">import org.apache.maven.project.MavenProject;</span>
-<span class="source-line-no">033</span><span id="line-33">import org.graalvm.buildtools.utils.NativeImageUtils;</span>
-<span class="source-line-no">034</span><span id="line-34"></span>
-<span class="source-line-no">035</span><span id="line-35">import javax.inject.Inject;</span>
-<span class="source-line-no">036</span><span id="line-36">import java.io.File;</span>
-<span class="source-line-no">037</span><span id="line-37">import java.io.IOException;</span>
-<span class="source-line-no">038</span><span id="line-38">import java.nio.charset.Charset;</span>
-<span class="source-line-no">039</span><span id="line-39">import java.nio.file.Files;</span>
-<span class="source-line-no">040</span><span id="line-40">import java.nio.file.Paths;</span>
-<span class="source-line-no">041</span><span id="line-41">import java.util.HashMap;</span>
-<span class="source-line-no">042</span><span id="line-42">import java.util.List;</span>
-<span class="source-line-no">043</span><span id="line-43">import java.util.Map;</span>
-<span class="source-line-no">044</span><span id="line-44">import java.util.Set;</span>
-<span class="source-line-no">045</span><span id="line-45"></span>
-<span class="source-line-no">046</span><span id="line-46">/**</span>
-<span class="source-line-no">047</span><span id="line-47"> * &lt;p&gt;Implementation of the &lt;code&gt;docker-native&lt;/code&gt; packaging.&lt;/p&gt;</span>
-<span class="source-line-no">048</span><span id="line-48"> * &lt;p&gt;&lt;strong&gt;WARNING&lt;/strong&gt;: this goal is not intended to be executed directly. Instead, specify the packaging type</span>
-<span class="source-line-no">049</span><span id="line-49"> * using the &lt;code&gt;packaging&lt;/code&gt; property, eg:&lt;/p&gt;</span>
-<span class="source-line-no">050</span><span id="line-50"> *</span>
-<span class="source-line-no">051</span><span id="line-51"> * &lt;pre&gt;mvn package -Dpackaging=docker-native&lt;/pre&gt;</span>
+<span class="source-line-no">019</span><span id="line-19">import com.github.dockerjava.api.exception.DockerClientException;</span>
+<span class="source-line-no">020</span><span id="line-20">import com.google.cloud.tools.jib.api.ImageReference;</span>
+<span class="source-line-no">021</span><span id="line-21">import com.google.cloud.tools.jib.api.InvalidImageReferenceException;</span>
+<span class="source-line-no">022</span><span id="line-22">import com.google.common.io.FileWriteMode;</span>
+<span class="source-line-no">023</span><span id="line-23">import io.micronaut.maven.core.MicronautRuntime;</span>
+<span class="source-line-no">024</span><span id="line-24">import io.micronaut.maven.services.ApplicationConfigurationService;</span>
+<span class="source-line-no">025</span><span id="line-25">import io.micronaut.maven.services.DockerService;</span>
+<span class="source-line-no">026</span><span id="line-26">import io.micronaut.maven.jib.JibConfigurationService;</span>
+<span class="source-line-no">027</span><span id="line-27">import io.micronaut.core.util.StringUtils;</span>
+<span class="source-line-no">028</span><span id="line-28">import org.apache.maven.execution.MavenSession;</span>
+<span class="source-line-no">029</span><span id="line-29">import org.apache.maven.plugin.MojoExecution;</span>
+<span class="source-line-no">030</span><span id="line-30">import org.apache.maven.plugin.MojoExecutionException;</span>
+<span class="source-line-no">031</span><span id="line-31">import org.apache.maven.plugins.annotations.Mojo;</span>
+<span class="source-line-no">032</span><span id="line-32">import org.apache.maven.plugins.annotations.ResolutionScope;</span>
+<span class="source-line-no">033</span><span id="line-33">import org.apache.maven.project.MavenProject;</span>
+<span class="source-line-no">034</span><span id="line-34">import org.graalvm.buildtools.utils.NativeImageUtils;</span>
+<span class="source-line-no">035</span><span id="line-35"></span>
+<span class="source-line-no">036</span><span id="line-36">import javax.inject.Inject;</span>
+<span class="source-line-no">037</span><span id="line-37">import java.io.File;</span>
+<span class="source-line-no">038</span><span id="line-38">import java.io.IOException;</span>
+<span class="source-line-no">039</span><span id="line-39">import java.nio.charset.Charset;</span>
+<span class="source-line-no">040</span><span id="line-40">import java.nio.file.Files;</span>
+<span class="source-line-no">041</span><span id="line-41">import java.nio.file.Paths;</span>
+<span class="source-line-no">042</span><span id="line-42">import java.util.HashMap;</span>
+<span class="source-line-no">043</span><span id="line-43">import java.util.List;</span>
+<span class="source-line-no">044</span><span id="line-44">import java.util.Map;</span>
+<span class="source-line-no">045</span><span id="line-45">import java.util.Set;</span>
+<span class="source-line-no">046</span><span id="line-46">import java.util.function.Supplier;</span>
+<span class="source-line-no">047</span><span id="line-47"></span>
+<span class="source-line-no">048</span><span id="line-48">/**</span>
+<span class="source-line-no">049</span><span id="line-49"> * &lt;p&gt;Implementation of the &lt;code&gt;docker-native&lt;/code&gt; packaging.&lt;/p&gt;</span>
+<span class="source-line-no">050</span><span id="line-50"> * &lt;p&gt;&lt;strong&gt;WARNING&lt;/strong&gt;: this goal is not intended to be executed directly. Instead, specify the packaging type</span>
+<span class="source-line-no">051</span><span id="line-51"> * using the &lt;code&gt;packaging&lt;/code&gt; property, eg:&lt;/p&gt;</span>
 <span class="source-line-no">052</span><span id="line-52"> *</span>
-<span class="source-line-no">053</span><span id="line-53"> * @author Álvaro Sánchez-Mariscal</span>
-<span class="source-line-no">054</span><span id="line-54"> * @author Iván López</span>
-<span class="source-line-no">055</span><span id="line-55"> * @since 1.1</span>
-<span class="source-line-no">056</span><span id="line-56"> */</span>
-<span class="source-line-no">057</span><span id="line-57">@Mojo(name = DockerNativeMojo.DOCKER_NATIVE_PACKAGING, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)</span>
-<span class="source-line-no">058</span><span id="line-58">public class DockerNativeMojo extends AbstractDockerMojo {</span>
-<span class="source-line-no">059</span><span id="line-59"></span>
-<span class="source-line-no">060</span><span id="line-60">    public static final String DOCKER_NATIVE_PACKAGING = "docker-native";</span>
-<span class="source-line-no">061</span><span id="line-61">    public static final String MICRONAUT_PARENT = "io.micronaut.platform:micronaut-parent";</span>
-<span class="source-line-no">062</span><span id="line-62">    public static final String MICRONAUT_VERSION = "micronaut.version";</span>
-<span class="source-line-no">063</span><span id="line-63">    public static final String ARGS_FILE_PROPERTY_NAME = "graalvm.native-image.args-file";</span>
-<span class="source-line-no">064</span><span id="line-64"></span>
-<span class="source-line-no">065</span><span id="line-65">    @SuppressWarnings("CdiInjectionPointsInspection")</span>
-<span class="source-line-no">066</span><span id="line-66">    @Inject</span>
-<span class="source-line-no">067</span><span id="line-67">    public DockerNativeMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,</span>
-<span class="source-line-no">068</span><span id="line-68">                            ApplicationConfigurationService applicationConfigurationService, DockerService dockerService,</span>
-<span class="source-line-no">069</span><span id="line-69">                            MavenSession mavenSession, MojoExecution mojoExecution) {</span>
-<span class="source-line-no">070</span><span id="line-70">        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession, mojoExecution);</span>
-<span class="source-line-no">071</span><span id="line-71">    }</span>
-<span class="source-line-no">072</span><span id="line-72"></span>
-<span class="source-line-no">073</span><span id="line-73">    @Override</span>
-<span class="source-line-no">074</span><span id="line-74">    public void execute() throws MojoExecutionException {</span>
-<span class="source-line-no">075</span><span id="line-75">        checkJavaVersion();</span>
-<span class="source-line-no">076</span><span id="line-76">        checkGraalVm();</span>
-<span class="source-line-no">077</span><span id="line-77"></span>
-<span class="source-line-no">078</span><span id="line-78">        try {</span>
-<span class="source-line-no">079</span><span id="line-79">            copyDependencies();</span>
-<span class="source-line-no">080</span><span id="line-80"></span>
-<span class="source-line-no">081</span><span id="line-81">            MicronautRuntime runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());</span>
+<span class="source-line-no">053</span><span id="line-53"> * &lt;pre&gt;mvn package -Dpackaging=docker-native&lt;/pre&gt;</span>
+<span class="source-line-no">054</span><span id="line-54"> *</span>
+<span class="source-line-no">055</span><span id="line-55"> * @author Álvaro Sánchez-Mariscal</span>
+<span class="source-line-no">056</span><span id="line-56"> * @author Iván López</span>
+<span class="source-line-no">057</span><span id="line-57"> * @since 1.1</span>
+<span class="source-line-no">058</span><span id="line-58"> */</span>
+<span class="source-line-no">059</span><span id="line-59">@Mojo(name = DockerNativeMojo.DOCKER_NATIVE_PACKAGING, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)</span>
+<span class="source-line-no">060</span><span id="line-60">public class DockerNativeMojo extends AbstractDockerMojo {</span>
+<span class="source-line-no">061</span><span id="line-61"></span>
+<span class="source-line-no">062</span><span id="line-62">    public static final String DOCKER_NATIVE_PACKAGING = "docker-native";</span>
+<span class="source-line-no">063</span><span id="line-63">    public static final String MICRONAUT_PARENT = "io.micronaut.platform:micronaut-parent";</span>
+<span class="source-line-no">064</span><span id="line-64">    public static final String MICRONAUT_VERSION = "micronaut.version";</span>
+<span class="source-line-no">065</span><span id="line-65">    public static final String ARGS_FILE_PROPERTY_NAME = "graalvm.native-image.args-file";</span>
+<span class="source-line-no">066</span><span id="line-66"></span>
+<span class="source-line-no">067</span><span id="line-67">    @SuppressWarnings("CdiInjectionPointsInspection")</span>
+<span class="source-line-no">068</span><span id="line-68">    @Inject</span>
+<span class="source-line-no">069</span><span id="line-69">    public DockerNativeMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,</span>
+<span class="source-line-no">070</span><span id="line-70">                            ApplicationConfigurationService applicationConfigurationService, DockerService dockerService,</span>
+<span class="source-line-no">071</span><span id="line-71">                            MavenSession mavenSession, MojoExecution mojoExecution) {</span>
+<span class="source-line-no">072</span><span id="line-72">        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession, mojoExecution);</span>
+<span class="source-line-no">073</span><span id="line-73">    }</span>
+<span class="source-line-no">074</span><span id="line-74"></span>
+<span class="source-line-no">075</span><span id="line-75">    @Override</span>
+<span class="source-line-no">076</span><span id="line-76">    public void execute() throws MojoExecutionException {</span>
+<span class="source-line-no">077</span><span id="line-77">        checkJavaVersion();</span>
+<span class="source-line-no">078</span><span id="line-78">        checkGraalVm();</span>
+<span class="source-line-no">079</span><span id="line-79"></span>
+<span class="source-line-no">080</span><span id="line-80">        try {</span>
+<span class="source-line-no">081</span><span id="line-81">            copyDependencies();</span>
 <span class="source-line-no">082</span><span id="line-82"></span>
-<span class="source-line-no">083</span><span id="line-83">            switch (runtime.getBuildStrategy()) {</span>
-<span class="source-line-no">084</span><span id="line-84">                case LAMBDA -&gt; buildDockerNativeLambda();</span>
-<span class="source-line-no">085</span><span id="line-85">                case ORACLE_FUNCTION -&gt; buildOracleCloud();</span>
-<span class="source-line-no">086</span><span id="line-86">                case DEFAULT -&gt; buildDockerNative();</span>
-<span class="source-line-no">087</span><span id="line-87">                default -&gt; throw new IllegalStateException("Unexpected value: " + runtime.getBuildStrategy());</span>
-<span class="source-line-no">088</span><span id="line-88">            }</span>
-<span class="source-line-no">089</span><span id="line-89"></span>
-<span class="source-line-no">090</span><span id="line-90"></span>
-<span class="source-line-no">091</span><span id="line-91">        } catch (InvalidImageReferenceException iire) {</span>
-<span class="source-line-no">092</span><span id="line-92">            String message = "Invalid image reference "</span>
-<span class="source-line-no">093</span><span id="line-93">                    + iire.getInvalidReference()</span>
-<span class="source-line-no">094</span><span id="line-94">                    + ", perhaps you should check that the reference is formatted correctly according to " +</span>
-<span class="source-line-no">095</span><span id="line-95">                    "https://docs.docker.com/engine/reference/commandline/tag/#extended-description" +</span>
-<span class="source-line-no">096</span><span id="line-96">                    "\nFor example, slash-separated name components cannot have uppercase letters";</span>
-<span class="source-line-no">097</span><span id="line-97">            throw new MojoExecutionException(message);</span>
-<span class="source-line-no">098</span><span id="line-98">        } catch (IOException | IllegalArgumentException e) {</span>
-<span class="source-line-no">099</span><span id="line-99">            throw new MojoExecutionException(e.getMessage(), e);</span>
-<span class="source-line-no">100</span><span id="line-100">        }</span>
-<span class="source-line-no">101</span><span id="line-101">    }</span>
-<span class="source-line-no">102</span><span id="line-102"></span>
-<span class="source-line-no">103</span><span id="line-103">    private void checkGraalVm() throws MojoExecutionException {</span>
-<span class="source-line-no">104</span><span id="line-104">        String micronautVersion = mavenProject.getProperties().getProperty(MICRONAUT_VERSION);</span>
-<span class="source-line-no">105</span><span id="line-105">        if (mavenProject.hasParent()) {</span>
-<span class="source-line-no">106</span><span id="line-106">            String ga = mavenProject.getParent().getGroupId() + ":" + mavenProject.getParent().getArtifactId();</span>
-<span class="source-line-no">107</span><span id="line-107">            if (MICRONAUT_PARENT.equals(ga)) {</span>
-<span class="source-line-no">108</span><span id="line-108">                String micronautParentVersion = mavenProject.getModel().getParent().getVersion();</span>
-<span class="source-line-no">109</span><span id="line-109">                if (micronautVersion.equals(micronautParentVersion)) {</span>
-<span class="source-line-no">110</span><span id="line-110">                    if (!mavenProject.getInjectedProfileIds().get(MICRONAUT_PARENT + ":" + micronautParentVersion).contains("graalvm")) {</span>
-<span class="source-line-no">111</span><span id="line-111">                        String javaVendor = System.getProperty("java.vendor", "");</span>
-<span class="source-line-no">112</span><span id="line-112">                        if (javaVendor.toLowerCase().contains("graalvm")) {</span>
-<span class="source-line-no">113</span><span id="line-113">                            throw new MojoExecutionException("The [graalvm] profile was not activated automatically because the native-image component is not installed (or not found in your path). Either activate the profile manually (-Pgraalvm) or install the native-image component (gu install native-image), and try again");</span>
-<span class="source-line-no">114</span><span id="line-114">                        } else {</span>
-<span class="source-line-no">115</span><span id="line-115">                            throw new MojoExecutionException("The [graalvm] profile was not activated automatically because you are not using a GraalVM JDK. Activate the profile manually (-Pgraalvm) and try again");</span>
-<span class="source-line-no">116</span><span id="line-116">                        }</span>
-<span class="source-line-no">117</span><span id="line-117">                    }</span>
-<span class="source-line-no">118</span><span id="line-118">                } else {</span>
-<span class="source-line-no">119</span><span id="line-119">                    String message = String.format("The %s version (%s) differs from the %s property (%s). Please, make sure both refer to the same version", MICRONAUT_PARENT, micronautParentVersion, MICRONAUT_VERSION, micronautVersion);</span>
-<span class="source-line-no">120</span><span id="line-120">                    throw new MojoExecutionException(message);</span>
-<span class="source-line-no">121</span><span id="line-121">                }</span>
-<span class="source-line-no">122</span><span id="line-122">            } else {</span>
-<span class="source-line-no">123</span><span id="line-123">                getLog().warn("The parent POM of this project is not set to " + MICRONAUT_PARENT);</span>
-<span class="source-line-no">124</span><span id="line-124">            }</span>
-<span class="source-line-no">125</span><span id="line-125">        } else {</span>
-<span class="source-line-no">126</span><span id="line-126">            getLog().warn("This project has no parent POM defined. To avoid build problems, please set the parent to " + MICRONAUT_PARENT);</span>
-<span class="source-line-no">127</span><span id="line-127">        }</span>
-<span class="source-line-no">128</span><span id="line-128">    }</span>
-<span class="source-line-no">129</span><span id="line-129"></span>
-<span class="source-line-no">130</span><span id="line-130">    private void checkJavaVersion() throws MojoExecutionException {</span>
-<span class="source-line-no">131</span><span id="line-131">        if (javaVersion().getMajorVersion() &gt; 17) {</span>
-<span class="source-line-no">132</span><span id="line-132">            throw new MojoExecutionException("To build native images you must set the Java target byte code level to Java 17 or below");</span>
-<span class="source-line-no">133</span><span id="line-133">        }</span>
-<span class="source-line-no">134</span><span id="line-134">    }</span>
-<span class="source-line-no">135</span><span id="line-135"></span>
-<span class="source-line-no">136</span><span id="line-136">    private void buildDockerNativeLambda() throws IOException {</span>
-<span class="source-line-no">137</span><span id="line-137">        BuildImageCmd buildImageCmd = dockerService.buildImageCmd(DockerfileMojo.DOCKERFILE_AWS_CUSTOM_RUNTIME)</span>
-<span class="source-line-no">138</span><span id="line-138">                .withBuildArg("GRAALVM_VERSION", graalVmVersion())</span>
-<span class="source-line-no">139</span><span id="line-139">                .withBuildArg("GRAALVM_JVM_VERSION", graalVmJvmVersion())</span>
-<span class="source-line-no">140</span><span id="line-140">                .withBuildArg("GRAALVM_ARCH", graalVmArch());</span>
-<span class="source-line-no">141</span><span id="line-141"></span>
-<span class="source-line-no">142</span><span id="line-142">        getLog().info("Using GRAALVM_VERSION: " + graalVmVersion());</span>
-<span class="source-line-no">143</span><span id="line-143">        getLog().info("Using GRAALVM_JVM_VERSION: " + graalVmJvmVersion());</span>
-<span class="source-line-no">144</span><span id="line-144">        getLog().info("Using GRAALVM_ARCH: " + graalVmArch());</span>
-<span class="source-line-no">145</span><span id="line-145"></span>
-<span class="source-line-no">146</span><span id="line-146">        // Starter sets the right class in pom.xml:</span>
-<span class="source-line-no">147</span><span id="line-147">        //   - For applications: io.micronaut.function.aws.runtime.MicronautLambdaRuntime</span>
-<span class="source-line-no">148</span><span id="line-148">        //   - For function apps: com.example.BookLambdaRuntime</span>
-<span class="source-line-no">149</span><span id="line-149">        getLog().info("Using CLASS_NAME: " + mainClass);</span>
-<span class="source-line-no">150</span><span id="line-150">        buildImageCmd.withBuildArg("CLASS_NAME", mainClass);</span>
-<span class="source-line-no">151</span><span id="line-151">        getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
-<span class="source-line-no">152</span><span id="line-152"></span>
-<span class="source-line-no">153</span><span id="line-153">        String imageId = dockerService.buildImage(buildImageCmd);</span>
-<span class="source-line-no">154</span><span id="line-154">        File functionZip = dockerService.copyFromContainer(imageId, "/function/function.zip");</span>
-<span class="source-line-no">155</span><span id="line-155">        getLog().info("AWS Lambda Custom Runtime ZIP: " + functionZip.getPath());</span>
-<span class="source-line-no">156</span><span id="line-156">    }</span>
-<span class="source-line-no">157</span><span id="line-157"></span>
-<span class="source-line-no">158</span><span id="line-158">    private void buildDockerNative() throws IOException, InvalidImageReferenceException {</span>
-<span class="source-line-no">159</span><span id="line-159">        String dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE;</span>
-<span class="source-line-no">160</span><span id="line-160">        if (Boolean.TRUE.equals(staticNativeImage)) {</span>
-<span class="source-line-no">161</span><span id="line-161">            getLog().info("Generating a static native image");</span>
-<span class="source-line-no">162</span><span id="line-162">            dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_STATIC;</span>
-<span class="source-line-no">163</span><span id="line-163">        } else if (baseImageRun.contains("distroless")) {</span>
-<span class="source-line-no">164</span><span id="line-164">            getLog().info("Generating a mostly static native image");</span>
-<span class="source-line-no">165</span><span id="line-165">            dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_DISTROLESS;</span>
-<span class="source-line-no">166</span><span id="line-166">        }</span>
-<span class="source-line-no">167</span><span id="line-167"></span>
-<span class="source-line-no">168</span><span id="line-168">        buildDockerfile(dockerfileName, true);</span>
-<span class="source-line-no">169</span><span id="line-169">    }</span>
-<span class="source-line-no">170</span><span id="line-170"></span>
-<span class="source-line-no">171</span><span id="line-171">    private void buildOracleCloud() throws IOException, InvalidImageReferenceException {</span>
-<span class="source-line-no">172</span><span id="line-172">        buildDockerfile(DockerfileMojo.DOCKERFILE_NATIVE_ORACLE_CLOUD, false);</span>
-<span class="source-line-no">173</span><span id="line-173">    }</span>
-<span class="source-line-no">174</span><span id="line-174"></span>
-<span class="source-line-no">175</span><span id="line-175">    private void buildDockerfile(String dockerfileName, boolean passClassName) throws IOException, InvalidImageReferenceException {</span>
-<span class="source-line-no">176</span><span id="line-176">        Set&lt;String&gt; tags = getTags();</span>
-<span class="source-line-no">177</span><span id="line-177">        for (String tag : tags) {</span>
-<span class="source-line-no">178</span><span id="line-178">            ImageReference.parse(tag);</span>
-<span class="source-line-no">179</span><span id="line-179">        }</span>
+<span class="source-line-no">083</span><span id="line-83">            MicronautRuntime runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());</span>
+<span class="source-line-no">084</span><span id="line-84"></span>
+<span class="source-line-no">085</span><span id="line-85">            switch (runtime.getBuildStrategy()) {</span>
+<span class="source-line-no">086</span><span id="line-86">                case LAMBDA -&gt; buildDockerNativeLambda();</span>
+<span class="source-line-no">087</span><span id="line-87">                case ORACLE_FUNCTION -&gt; buildOracleCloud();</span>
+<span class="source-line-no">088</span><span id="line-88">                case DEFAULT -&gt; buildDockerNative();</span>
+<span class="source-line-no">089</span><span id="line-89">                default -&gt; throw new IllegalStateException("Unexpected value: " + runtime.getBuildStrategy());</span>
+<span class="source-line-no">090</span><span id="line-90">            }</span>
+<span class="source-line-no">091</span><span id="line-91"></span>
+<span class="source-line-no">092</span><span id="line-92"></span>
+<span class="source-line-no">093</span><span id="line-93">        } catch (InvalidImageReferenceException iire) {</span>
+<span class="source-line-no">094</span><span id="line-94">            String message = "Invalid image reference "</span>
+<span class="source-line-no">095</span><span id="line-95">                    + iire.getInvalidReference()</span>
+<span class="source-line-no">096</span><span id="line-96">                    + ", perhaps you should check that the reference is formatted correctly according to " +</span>
+<span class="source-line-no">097</span><span id="line-97">                    "https://docs.docker.com/engine/reference/commandline/tag/#extended-description" +</span>
+<span class="source-line-no">098</span><span id="line-98">                    "\nFor example, slash-separated name components cannot have uppercase letters";</span>
+<span class="source-line-no">099</span><span id="line-99">            throw new MojoExecutionException(message);</span>
+<span class="source-line-no">100</span><span id="line-100">        } catch (IOException | IllegalArgumentException e) {</span>
+<span class="source-line-no">101</span><span id="line-101">            throw new MojoExecutionException(e.getMessage(), e);</span>
+<span class="source-line-no">102</span><span id="line-102">        }</span>
+<span class="source-line-no">103</span><span id="line-103">    }</span>
+<span class="source-line-no">104</span><span id="line-104"></span>
+<span class="source-line-no">105</span><span id="line-105">    private void checkGraalVm() throws MojoExecutionException {</span>
+<span class="source-line-no">106</span><span id="line-106">        String micronautVersion = mavenProject.getProperties().getProperty(MICRONAUT_VERSION);</span>
+<span class="source-line-no">107</span><span id="line-107">        if (mavenProject.hasParent()) {</span>
+<span class="source-line-no">108</span><span id="line-108">            String ga = mavenProject.getParent().getGroupId() + ":" + mavenProject.getParent().getArtifactId();</span>
+<span class="source-line-no">109</span><span id="line-109">            if (MICRONAUT_PARENT.equals(ga)) {</span>
+<span class="source-line-no">110</span><span id="line-110">                String micronautParentVersion = mavenProject.getModel().getParent().getVersion();</span>
+<span class="source-line-no">111</span><span id="line-111">                if (micronautVersion.equals(micronautParentVersion)) {</span>
+<span class="source-line-no">112</span><span id="line-112">                    if (!mavenProject.getInjectedProfileIds().get(MICRONAUT_PARENT + ":" + micronautParentVersion).contains("graalvm")) {</span>
+<span class="source-line-no">113</span><span id="line-113">                        String javaVendor = System.getProperty("java.vendor", "");</span>
+<span class="source-line-no">114</span><span id="line-114">                        if (javaVendor.toLowerCase().contains("graalvm")) {</span>
+<span class="source-line-no">115</span><span id="line-115">                            throw new MojoExecutionException("The [graalvm] profile was not activated automatically because the native-image component is not installed (or not found in your path). Either activate the profile manually (-Pgraalvm) or install the native-image component (gu install native-image), and try again");</span>
+<span class="source-line-no">116</span><span id="line-116">                        } else {</span>
+<span class="source-line-no">117</span><span id="line-117">                            throw new MojoExecutionException("The [graalvm] profile was not activated automatically because you are not using a GraalVM JDK. Activate the profile manually (-Pgraalvm) and try again");</span>
+<span class="source-line-no">118</span><span id="line-118">                        }</span>
+<span class="source-line-no">119</span><span id="line-119">                    }</span>
+<span class="source-line-no">120</span><span id="line-120">                } else {</span>
+<span class="source-line-no">121</span><span id="line-121">                    String message = String.format("The %s version (%s) differs from the %s property (%s). Please, make sure both refer to the same version", MICRONAUT_PARENT, micronautParentVersion, MICRONAUT_VERSION, micronautVersion);</span>
+<span class="source-line-no">122</span><span id="line-122">                    throw new MojoExecutionException(message);</span>
+<span class="source-line-no">123</span><span id="line-123">                }</span>
+<span class="source-line-no">124</span><span id="line-124">            } else {</span>
+<span class="source-line-no">125</span><span id="line-125">                getLog().warn("The parent POM of this project is not set to " + MICRONAUT_PARENT);</span>
+<span class="source-line-no">126</span><span id="line-126">            }</span>
+<span class="source-line-no">127</span><span id="line-127">        } else {</span>
+<span class="source-line-no">128</span><span id="line-128">            getLog().warn("This project has no parent POM defined. To avoid build problems, please set the parent to " + MICRONAUT_PARENT);</span>
+<span class="source-line-no">129</span><span id="line-129">        }</span>
+<span class="source-line-no">130</span><span id="line-130">    }</span>
+<span class="source-line-no">131</span><span id="line-131"></span>
+<span class="source-line-no">132</span><span id="line-132">    private void checkJavaVersion() throws MojoExecutionException {</span>
+<span class="source-line-no">133</span><span id="line-133">        if (javaVersion().getMajorVersion() &gt; 17) {</span>
+<span class="source-line-no">134</span><span id="line-134">            throw new MojoExecutionException("To build native images you must set the Java target byte code level to Java 17 or below");</span>
+<span class="source-line-no">135</span><span id="line-135">        }</span>
+<span class="source-line-no">136</span><span id="line-136">    }</span>
+<span class="source-line-no">137</span><span id="line-137"></span>
+<span class="source-line-no">138</span><span id="line-138">    private void buildDockerNativeLambda() throws IOException {</span>
+<span class="source-line-no">139</span><span id="line-139">        Map&lt;String, String&gt; buildImageCmdArguments = new HashMap&lt;&gt;();</span>
+<span class="source-line-no">140</span><span id="line-140"></span>
+<span class="source-line-no">141</span><span id="line-141">        getLog().info("Using GRAALVM_JVM_VERSION: " + graalVmJvmVersion());</span>
+<span class="source-line-no">142</span><span id="line-142">        getLog().info("Using GRAALVM_ARCH: " + graalVmArch());</span>
+<span class="source-line-no">143</span><span id="line-143"></span>
+<span class="source-line-no">144</span><span id="line-144">        // Starter sets the right class in pom.xml:</span>
+<span class="source-line-no">145</span><span id="line-145">        //   - For applications: io.micronaut.function.aws.runtime.MicronautLambdaRuntime</span>
+<span class="source-line-no">146</span><span id="line-146">        //   - For function apps: com.example.BookLambdaRuntime</span>
+<span class="source-line-no">147</span><span id="line-147">        getLog().info("Using CLASS_NAME: " + mainClass);</span>
+<span class="source-line-no">148</span><span id="line-148">        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, () -&gt; {</span>
+<span class="source-line-no">149</span><span id="line-149">            try {</span>
+<span class="source-line-no">150</span><span id="line-150">                return dockerService.buildImageCmd(DockerfileMojo.DOCKERFILE_AWS_CUSTOM_RUNTIME)</span>
+<span class="source-line-no">151</span><span id="line-151">                        .withBuildArg("GRAALVM_VERSION", graalVmVersion())</span>
+<span class="source-line-no">152</span><span id="line-152">                        .withBuildArg("GRAALVM_JVM_VERSION", graalVmJvmVersion())</span>
+<span class="source-line-no">153</span><span id="line-153">                        .withBuildArg("GRAALVM_ARCH", graalVmArch());</span>
+<span class="source-line-no">154</span><span id="line-154">            } catch (IOException e) {</span>
+<span class="source-line-no">155</span><span id="line-155">                throw new DockerClientException(e.getMessage(), e);</span>
+<span class="source-line-no">156</span><span id="line-156">            }</span>
+<span class="source-line-no">157</span><span id="line-157">        });</span>
+<span class="source-line-no">158</span><span id="line-158">        buildImageCmd.withBuildArg("CLASS_NAME", mainClass);</span>
+<span class="source-line-no">159</span><span id="line-159">        String imageId = dockerService.buildImage(buildImageCmd);</span>
+<span class="source-line-no">160</span><span id="line-160">        File functionZip = dockerService.copyFromContainer(imageId, "/function/function.zip");</span>
+<span class="source-line-no">161</span><span id="line-161">        getLog().info("AWS Lambda Custom Runtime ZIP: " + functionZip.getPath());</span>
+<span class="source-line-no">162</span><span id="line-162">    }</span>
+<span class="source-line-no">163</span><span id="line-163"></span>
+<span class="source-line-no">164</span><span id="line-164">    private void buildDockerNative() throws IOException, InvalidImageReferenceException {</span>
+<span class="source-line-no">165</span><span id="line-165">        String dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE;</span>
+<span class="source-line-no">166</span><span id="line-166">        if (Boolean.TRUE.equals(staticNativeImage)) {</span>
+<span class="source-line-no">167</span><span id="line-167">            getLog().info("Generating a static native image");</span>
+<span class="source-line-no">168</span><span id="line-168">            dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_STATIC;</span>
+<span class="source-line-no">169</span><span id="line-169">        } else if (baseImageRun.contains("distroless")) {</span>
+<span class="source-line-no">170</span><span id="line-170">            getLog().info("Generating a mostly static native image");</span>
+<span class="source-line-no">171</span><span id="line-171">            dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_DISTROLESS;</span>
+<span class="source-line-no">172</span><span id="line-172">        }</span>
+<span class="source-line-no">173</span><span id="line-173"></span>
+<span class="source-line-no">174</span><span id="line-174">        buildDockerfile(dockerfileName, true);</span>
+<span class="source-line-no">175</span><span id="line-175">    }</span>
+<span class="source-line-no">176</span><span id="line-176"></span>
+<span class="source-line-no">177</span><span id="line-177">    private void buildOracleCloud() throws IOException, InvalidImageReferenceException {</span>
+<span class="source-line-no">178</span><span id="line-178">        buildDockerfile(DockerfileMojo.DOCKERFILE_NATIVE_ORACLE_CLOUD, false);</span>
+<span class="source-line-no">179</span><span id="line-179">    }</span>
 <span class="source-line-no">180</span><span id="line-180"></span>
-<span class="source-line-no">181</span><span id="line-181">        String from = getFrom();</span>
-<span class="source-line-no">182</span><span id="line-182">        String port = getPort();</span>
-<span class="source-line-no">183</span><span id="line-183">        getLog().info("Exposing port: " + port);</span>
-<span class="source-line-no">184</span><span id="line-184"></span>
-<span class="source-line-no">185</span><span id="line-185">        File dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);</span>
+<span class="source-line-no">181</span><span id="line-181">    private void buildDockerfile(String dockerfileName, boolean passClassName) throws IOException, InvalidImageReferenceException {</span>
+<span class="source-line-no">182</span><span id="line-182">        Set&lt;String&gt; tags = getTags();</span>
+<span class="source-line-no">183</span><span id="line-183">        for (String tag : tags) {</span>
+<span class="source-line-no">184</span><span id="line-184">            ImageReference.parse(tag);</span>
+<span class="source-line-no">185</span><span id="line-185">        }</span>
 <span class="source-line-no">186</span><span id="line-186"></span>
-<span class="source-line-no">187</span><span id="line-187">        if (appArguments != null &amp;&amp; !appArguments.isEmpty()) {</span>
-<span class="source-line-no">188</span><span id="line-188">            getLog().info("Using application arguments: " + appArguments);</span>
-<span class="source-line-no">189</span><span id="line-189">            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());</span>
-<span class="source-line-no">190</span><span id="line-190">        }</span>
-<span class="source-line-no">191</span><span id="line-191"></span>
-<span class="source-line-no">192</span><span id="line-192">        Map&lt;String, String&gt; buildImageCmdArguments = new HashMap&lt;&gt;();</span>
-<span class="source-line-no">193</span><span id="line-193"></span>
-<span class="source-line-no">194</span><span id="line-194">        getLog().info("Using BASE_IMAGE: " + from);</span>
-<span class="source-line-no">195</span><span id="line-195">        if (StringUtils.isNotEmpty(baseImageRun) &amp;&amp; Boolean.FALSE.equals(staticNativeImage)) {</span>
-<span class="source-line-no">196</span><span id="line-196">            buildImageCmdArguments.put("BASE_IMAGE_RUN", baseImageRun);</span>
-<span class="source-line-no">197</span><span id="line-197">        }</span>
-<span class="source-line-no">198</span><span id="line-198"></span>
-<span class="source-line-no">199</span><span id="line-199">        if (baseImageRun.contains("alpine-glibc")) {</span>
-<span class="source-line-no">200</span><span id="line-200">            buildImageCmdArguments.put("EXTRA_CMD", "apk update &amp;&amp; apk add libstdc++");</span>
-<span class="source-line-no">201</span><span id="line-201">        }</span>
-<span class="source-line-no">202</span><span id="line-202"></span>
-<span class="source-line-no">203</span><span id="line-203">        if (passClassName) {</span>
-<span class="source-line-no">204</span><span id="line-204">            buildImageCmdArguments.put("CLASS_NAME", mainClass);</span>
-<span class="source-line-no">205</span><span id="line-205">        }</span>
-<span class="source-line-no">206</span><span id="line-206"></span>
-<span class="source-line-no">207</span><span id="line-207">        String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);</span>
-<span class="source-line-no">208</span><span id="line-208">        List&lt;String&gt; allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);</span>
-<span class="source-line-no">209</span><span id="line-209">        getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);</span>
-<span class="source-line-no">210</span><span id="line-210">        List&lt;String&gt; conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));</span>
-<span class="source-line-no">211</span><span id="line-211">        if (conversionResult.size() == 1) {</span>
-<span class="source-line-no">212</span><span id="line-212">            Files.delete(Paths.get(argsFile));</span>
-<span class="source-line-no">213</span><span id="line-213"></span>
-<span class="source-line-no">214</span><span id="line-214">            BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
-<span class="source-line-no">215</span><span id="line-215">                    .withDockerfile(dockerfile)</span>
-<span class="source-line-no">216</span><span id="line-216">                    .withTags(getTags())</span>
-<span class="source-line-no">217</span><span id="line-217">                    .withBuildArg("BASE_IMAGE", from)</span>
-<span class="source-line-no">218</span><span id="line-218">                    .withBuildArg("PORT", port);</span>
-<span class="source-line-no">219</span><span id="line-219"></span>
-<span class="source-line-no">220</span><span id="line-220">            for (Map.Entry&lt;String, String&gt; buildArg : buildImageCmdArguments.entrySet()) {</span>
-<span class="source-line-no">221</span><span id="line-221">                String key = buildArg.getKey();</span>
-<span class="source-line-no">222</span><span id="line-222">                String value = buildArg.getValue();</span>
-<span class="source-line-no">223</span><span id="line-223">                getLog().info("Using " + key + ": " + value);</span>
-<span class="source-line-no">224</span><span id="line-224">                buildImageCmd.withBuildArg(key, value);</span>
-<span class="source-line-no">225</span><span id="line-225">            }</span>
-<span class="source-line-no">226</span><span id="line-226"></span>
-<span class="source-line-no">227</span><span id="line-227">            getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
-<span class="source-line-no">228</span><span id="line-228">            dockerService.buildImage(buildImageCmd);</span>
-<span class="source-line-no">229</span><span id="line-229">        } else {</span>
-<span class="source-line-no">230</span><span id="line-230">            throw new IOException("Unable to convert native image build args to args file");</span>
-<span class="source-line-no">231</span><span id="line-231">        }</span>
-<span class="source-line-no">232</span><span id="line-232">    }</span>
-<span class="source-line-no">233</span><span id="line-233"></span>
-<span class="source-line-no">234</span><span id="line-234">}</span>
+<span class="source-line-no">187</span><span id="line-187">        String from = getFrom();</span>
+<span class="source-line-no">188</span><span id="line-188">        String port = getPort();</span>
+<span class="source-line-no">189</span><span id="line-189">        getLog().info("Exposing port: " + port);</span>
+<span class="source-line-no">190</span><span id="line-190"></span>
+<span class="source-line-no">191</span><span id="line-191">        File dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);</span>
+<span class="source-line-no">192</span><span id="line-192"></span>
+<span class="source-line-no">193</span><span id="line-193">        if (appArguments != null &amp;&amp; !appArguments.isEmpty()) {</span>
+<span class="source-line-no">194</span><span id="line-194">            getLog().info("Using application arguments: " + appArguments);</span>
+<span class="source-line-no">195</span><span id="line-195">            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());</span>
+<span class="source-line-no">196</span><span id="line-196">        }</span>
+<span class="source-line-no">197</span><span id="line-197"></span>
+<span class="source-line-no">198</span><span id="line-198">        Map&lt;String, String&gt; buildImageCmdArguments = new HashMap&lt;&gt;();</span>
+<span class="source-line-no">199</span><span id="line-199"></span>
+<span class="source-line-no">200</span><span id="line-200">        getLog().info("Using BASE_IMAGE: " + from);</span>
+<span class="source-line-no">201</span><span id="line-201">        if (StringUtils.isNotEmpty(baseImageRun) &amp;&amp; Boolean.FALSE.equals(staticNativeImage)) {</span>
+<span class="source-line-no">202</span><span id="line-202">            buildImageCmdArguments.put("BASE_IMAGE_RUN", baseImageRun);</span>
+<span class="source-line-no">203</span><span id="line-203">        }</span>
+<span class="source-line-no">204</span><span id="line-204"></span>
+<span class="source-line-no">205</span><span id="line-205">        if (baseImageRun.contains("alpine-glibc")) {</span>
+<span class="source-line-no">206</span><span id="line-206">            buildImageCmdArguments.put("EXTRA_CMD", "apk update &amp;&amp; apk add libstdc++");</span>
+<span class="source-line-no">207</span><span id="line-207">        }</span>
+<span class="source-line-no">208</span><span id="line-208"></span>
+<span class="source-line-no">209</span><span id="line-209">        if (passClassName) {</span>
+<span class="source-line-no">210</span><span id="line-210">            buildImageCmdArguments.put("CLASS_NAME", mainClass);</span>
+<span class="source-line-no">211</span><span id="line-211">        }</span>
+<span class="source-line-no">212</span><span id="line-212"></span>
+<span class="source-line-no">213</span><span id="line-213">        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, () -&gt; dockerService.buildImageCmd()</span>
+<span class="source-line-no">214</span><span id="line-214">                .withDockerfile(dockerfile)</span>
+<span class="source-line-no">215</span><span id="line-215">                .withTags(getTags())</span>
+<span class="source-line-no">216</span><span id="line-216">                .withBuildArg("BASE_IMAGE", from)</span>
+<span class="source-line-no">217</span><span id="line-217">                .withBuildArg("PORT", port));</span>
+<span class="source-line-no">218</span><span id="line-218"></span>
+<span class="source-line-no">219</span><span id="line-219">        dockerService.buildImage(buildImageCmd);</span>
+<span class="source-line-no">220</span><span id="line-220">    }</span>
+<span class="source-line-no">221</span><span id="line-221"></span>
+<span class="source-line-no">222</span><span id="line-222">    private BuildImageCmd addNativeImageBuildArgs(Map&lt;String, String&gt; buildImageCmdArguments, Supplier&lt;BuildImageCmd&gt; buildImageCmdSupplier) throws IOException {</span>
+<span class="source-line-no">223</span><span id="line-223">        String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);</span>
+<span class="source-line-no">224</span><span id="line-224">        List&lt;String&gt; allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);</span>
+<span class="source-line-no">225</span><span id="line-225">        getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);</span>
+<span class="source-line-no">226</span><span id="line-226">        List&lt;String&gt; conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));</span>
+<span class="source-line-no">227</span><span id="line-227">        if (conversionResult.size() == 1) {</span>
+<span class="source-line-no">228</span><span id="line-228">            Files.delete(Paths.get(argsFile));</span>
+<span class="source-line-no">229</span><span id="line-229"></span>
+<span class="source-line-no">230</span><span id="line-230">            BuildImageCmd buildImageCmd = buildImageCmdSupplier.get();</span>
+<span class="source-line-no">231</span><span id="line-231"></span>
+<span class="source-line-no">232</span><span id="line-232">            for (Map.Entry&lt;String, String&gt; buildArg : buildImageCmdArguments.entrySet()) {</span>
+<span class="source-line-no">233</span><span id="line-233">                String key = buildArg.getKey();</span>
+<span class="source-line-no">234</span><span id="line-234">                String value = buildArg.getValue();</span>
+<span class="source-line-no">235</span><span id="line-235">                getLog().info("Using " + key + ": " + value);</span>
+<span class="source-line-no">236</span><span id="line-236">                buildImageCmd.withBuildArg(key, value);</span>
+<span class="source-line-no">237</span><span id="line-237">            }</span>
+<span class="source-line-no">238</span><span id="line-238"></span>
+<span class="source-line-no">239</span><span id="line-239">            getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
+<span class="source-line-no">240</span><span id="line-240">            return buildImageCmd;</span>
+<span class="source-line-no">241</span><span id="line-241">        } else {</span>
+<span class="source-line-no">242</span><span id="line-242">            throw new IOException("Unable to convert native image build args to args file");</span>
+<span class="source-line-no">243</span><span id="line-243">        }</span>
+<span class="source-line-no">244</span><span id="line-244">    }</span>
+<span class="source-line-no">245</span><span id="line-245"></span>
+<span class="source-line-no">246</span><span id="line-246">}</span>
 
 
 
