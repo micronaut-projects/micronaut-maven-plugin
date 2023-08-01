@@ -200,48 +200,47 @@
 <span class="source-line-no">187</span><span id="line-187">                        }</span>
 <span class="source-line-no">188</span><span id="line-188">                    } else if (line.contains("GRAALVM_") || line.contains("CLASS_NAME")) {</span>
 <span class="source-line-no">189</span><span id="line-189">                        result.add(line</span>
-<span class="source-line-no">190</span><span id="line-190">                                .replace("${GRAALVM_VERSION}", graalVmVersion())</span>
-<span class="source-line-no">191</span><span id="line-191">                                .replace("${GRAALVM_JVM_VERSION}", graalVmJvmVersion())</span>
-<span class="source-line-no">192</span><span id="line-192">                                .replace("${GRAALVM_ARCH}", graalVmArch())</span>
-<span class="source-line-no">193</span><span id="line-193">                                .replace("${CLASS_NAME}", mainClass)</span>
-<span class="source-line-no">194</span><span id="line-194">                        );</span>
-<span class="source-line-no">195</span><span id="line-195">                    } else if (line.contains("PORT")) {</span>
-<span class="source-line-no">196</span><span id="line-196">                        result.add(line.replace("${PORT}", getPort()));</span>
-<span class="source-line-no">197</span><span id="line-197">                    } else {</span>
-<span class="source-line-no">198</span><span id="line-198">                        result.add(line);</span>
-<span class="source-line-no">199</span><span id="line-199">                    }</span>
-<span class="source-line-no">200</span><span id="line-200">                }</span>
-<span class="source-line-no">201</span><span id="line-201">            }</span>
-<span class="source-line-no">202</span><span id="line-202"></span>
-<span class="source-line-no">203</span><span id="line-203">            String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);</span>
-<span class="source-line-no">204</span><span id="line-204">            if (argsFile == null) {</span>
-<span class="source-line-no">205</span><span id="line-205">                Path targetPath = Paths.get(mavenProject.getBuild().getDirectory());</span>
-<span class="source-line-no">206</span><span id="line-206">                try (Stream&lt;Path&gt; listStream = Files.list(targetPath)) {</span>
-<span class="source-line-no">207</span><span id="line-207">                    Path argsFilePath = listStream</span>
-<span class="source-line-no">208</span><span id="line-208">                            .map(path -&gt; path.getFileName().toString())</span>
-<span class="source-line-no">209</span><span id="line-209">                            .filter(f -&gt; f.startsWith("native-image") &amp;&amp; f.endsWith("args"))</span>
-<span class="source-line-no">210</span><span id="line-210">                            .map(targetPath::resolve)</span>
-<span class="source-line-no">211</span><span id="line-211">                            .findFirst()</span>
-<span class="source-line-no">212</span><span id="line-212">                            .orElse(null);</span>
-<span class="source-line-no">213</span><span id="line-213">                    if (argsFilePath != null) {</span>
-<span class="source-line-no">214</span><span id="line-214">                        argsFile = argsFilePath.toAbsolutePath().toString();</span>
-<span class="source-line-no">215</span><span id="line-215">                    }</span>
-<span class="source-line-no">216</span><span id="line-216">                }</span>
-<span class="source-line-no">217</span><span id="line-217">            }</span>
-<span class="source-line-no">218</span><span id="line-218">            if (argsFile != null) {</span>
-<span class="source-line-no">219</span><span id="line-219">                List&lt;String&gt; allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);</span>
-<span class="source-line-no">220</span><span id="line-220">                getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);</span>
-<span class="source-line-no">221</span><span id="line-221">            }</span>
-<span class="source-line-no">222</span><span id="line-222"></span>
-<span class="source-line-no">223</span><span id="line-223">            if (appArguments != null &amp;&amp; !appArguments.isEmpty()) {</span>
-<span class="source-line-no">224</span><span id="line-224">                getLog().info("Using application arguments: " + appArguments);</span>
-<span class="source-line-no">225</span><span id="line-225">                result.add(getCmd());</span>
-<span class="source-line-no">226</span><span id="line-226">            }</span>
-<span class="source-line-no">227</span><span id="line-227"></span>
-<span class="source-line-no">228</span><span id="line-228">            Files.write(dockerfile.toPath(), result);</span>
-<span class="source-line-no">229</span><span id="line-229">        }</span>
-<span class="source-line-no">230</span><span id="line-230">    }</span>
-<span class="source-line-no">231</span><span id="line-231">}</span>
+<span class="source-line-no">190</span><span id="line-190">                                .replace("${GRAALVM_JVM_VERSION}", graalVmJvmVersion())</span>
+<span class="source-line-no">191</span><span id="line-191">                                .replace("${GRAALVM_ARCH}", graalVmArch())</span>
+<span class="source-line-no">192</span><span id="line-192">                                .replace("${CLASS_NAME}", mainClass)</span>
+<span class="source-line-no">193</span><span id="line-193">                        );</span>
+<span class="source-line-no">194</span><span id="line-194">                    } else if (line.contains("PORT")) {</span>
+<span class="source-line-no">195</span><span id="line-195">                        result.add(line.replace("${PORT}", getPort()));</span>
+<span class="source-line-no">196</span><span id="line-196">                    } else {</span>
+<span class="source-line-no">197</span><span id="line-197">                        result.add(line);</span>
+<span class="source-line-no">198</span><span id="line-198">                    }</span>
+<span class="source-line-no">199</span><span id="line-199">                }</span>
+<span class="source-line-no">200</span><span id="line-200">            }</span>
+<span class="source-line-no">201</span><span id="line-201"></span>
+<span class="source-line-no">202</span><span id="line-202">            String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);</span>
+<span class="source-line-no">203</span><span id="line-203">            if (argsFile == null) {</span>
+<span class="source-line-no">204</span><span id="line-204">                Path targetPath = Paths.get(mavenProject.getBuild().getDirectory());</span>
+<span class="source-line-no">205</span><span id="line-205">                try (Stream&lt;Path&gt; listStream = Files.list(targetPath)) {</span>
+<span class="source-line-no">206</span><span id="line-206">                    Path argsFilePath = listStream</span>
+<span class="source-line-no">207</span><span id="line-207">                            .map(path -&gt; path.getFileName().toString())</span>
+<span class="source-line-no">208</span><span id="line-208">                            .filter(f -&gt; f.startsWith("native-image") &amp;&amp; f.endsWith("args"))</span>
+<span class="source-line-no">209</span><span id="line-209">                            .map(targetPath::resolve)</span>
+<span class="source-line-no">210</span><span id="line-210">                            .findFirst()</span>
+<span class="source-line-no">211</span><span id="line-211">                            .orElse(null);</span>
+<span class="source-line-no">212</span><span id="line-212">                    if (argsFilePath != null) {</span>
+<span class="source-line-no">213</span><span id="line-213">                        argsFile = argsFilePath.toAbsolutePath().toString();</span>
+<span class="source-line-no">214</span><span id="line-214">                    }</span>
+<span class="source-line-no">215</span><span id="line-215">                }</span>
+<span class="source-line-no">216</span><span id="line-216">            }</span>
+<span class="source-line-no">217</span><span id="line-217">            if (argsFile != null) {</span>
+<span class="source-line-no">218</span><span id="line-218">                List&lt;String&gt; allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);</span>
+<span class="source-line-no">219</span><span id="line-219">                getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);</span>
+<span class="source-line-no">220</span><span id="line-220">            }</span>
+<span class="source-line-no">221</span><span id="line-221"></span>
+<span class="source-line-no">222</span><span id="line-222">            if (appArguments != null &amp;&amp; !appArguments.isEmpty()) {</span>
+<span class="source-line-no">223</span><span id="line-223">                getLog().info("Using application arguments: " + appArguments);</span>
+<span class="source-line-no">224</span><span id="line-224">                result.add(getCmd());</span>
+<span class="source-line-no">225</span><span id="line-225">            }</span>
+<span class="source-line-no">226</span><span id="line-226"></span>
+<span class="source-line-no">227</span><span id="line-227">            Files.write(dockerfile.toPath(), result);</span>
+<span class="source-line-no">228</span><span id="line-228">        }</span>
+<span class="source-line-no">229</span><span id="line-229">    }</span>
+<span class="source-line-no">230</span><span id="line-230">}</span>
 
 
 
