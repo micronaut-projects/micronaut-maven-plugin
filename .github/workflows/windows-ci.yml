@@ -13,32 +13,58 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        graalvm: ['latest']
         java: ['17']
+    env:
+      GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
+      GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
+      GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+      OCI_CLI_USER: ${{ secrets.OCI_CLI_USER }}
+      OCI_CLI_TENANCY: ${{ secrets.OCI_CLI_TENANCY }}
+      OCI_CLI_FINGERPRINT: ${{ secrets.OCI_CLI_FINGERPRINT }}
+      OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_CLI_KEY_CONTENT }}
+      OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
+      GRAALVM_QUICK_BUILD: true
     steps:
       - uses: actions/checkout@v3
+
+      - name: Install Java and Maven and set up Apache Maven Central
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
+          server-password: GH_TOKEN
+
+      - name: Setup GraalVM CE
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'graalvm-community'
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Cache Maven packages
         uses: actions/cache@v3
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Setup GraalVM CE
-        uses: graalvm/setup-graalvm@v1
+
+      - name: Log into OCIR
+        uses: oracle-actions/login-ocir@v1.2
+        id: login-ocir
         with:
-          version: ${{ matrix.graalvm }}
-          java-version: ${{ matrix.java }}
-          components: 'native-image'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auth_token: ${{ secrets.OCI_AUTH_TOKEN }}
+
       - name: Build with Maven
         shell: cmd
         run: |
-          .\mvnw install -Dinvoker.skip=true && .\mvnw verify
-        env:
-          TESTCONTAINERS_RYUK_DISABLED: true
-          GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
-          GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
-          GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+          .\mvnw -q install -Dinvoker.skip=true && .\mvnw verify
 
-
+      - name: Publish Test Report
+        if: always()
+        uses: mikepenz/action-junit-report@v3.8.0
+        with:
+          check_name: Windows CI / Test Report
+          report_paths: '**/target/invoker-reports/TEST-*.xml'
+          check_retries: 'true'
 
