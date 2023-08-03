@@ -127,7 +127,7 @@
             <artifactId>jib-maven-plugin</artifactId>
             <configuration>
               <from>
-                <image>eclipse-temurin:17-windowsservercore</image>
+                <image>eclipse-temurin:17-windowsservercore-ltsc2022</image>
               </from>
             </configuration>
           </plugin>
