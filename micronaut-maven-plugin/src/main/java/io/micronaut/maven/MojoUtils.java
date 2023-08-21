@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static io.micronaut.maven.AbstractDockerMojo.MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG;
 
@@ -58,7 +59,7 @@ public final class MojoUtils {
         return executable;
     }
 
-    public static List<String> computeNativeImageArgs(List<String> nativeImageBuildArgs, String baseImageRun, String argsFile) throws IOException {
+    public static List<String> computeNativeImageArgs(List<String> nativeImageBuildArgs, String baseImageRun, String argsFile) {
         List<String> allNativeImageBuildArgs = new ArrayList<>();
         if (nativeImageBuildArgs != null && !nativeImageBuildArgs.isEmpty()) {
             allNativeImageBuildArgs.addAll(nativeImageBuildArgs);
@@ -67,33 +68,44 @@ public final class MojoUtils {
             allNativeImageBuildArgs.add(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG);
         }
 
+        List<String> argsFileContent = parseNativeImageArgsFile(argsFile).toList();
+        allNativeImageBuildArgs.addAll(argsFileContent);
+        return allNativeImageBuildArgs;
+    }
+
+    private static Stream<String> parseNativeImageArgsFile(String argsFile) {
         Path argsFilePath = Paths.get(argsFile);
         if (Files.exists(argsFilePath)) {
-            List<String> args = Files.readAllLines(argsFilePath);
+            List<String> args;
+            try {
+                args = Files.readAllLines(argsFilePath);
+            } catch (IOException e) {
+                throw new RuntimeException("Could not read the args file: " + argsFilePath, e);
+            }
             if (args.contains("-cp")) {
                 int cpPosition = args.indexOf("-cp");
                 args.remove(cpPosition);
                 args.remove(cpPosition);
             }
 
-            List<String> newArgs = args.stream()
+            return args.stream()
                     .filter(arg -> !arg.startsWith("-H:Name"))
                     .filter(arg -> !arg.startsWith("-H:Class"))
                     .filter(arg -> !arg.startsWith("-H:Path"))
                     .filter(arg -> !arg.startsWith("-H:ConfigurationFileDirectories"))
-                    .map(arg -> {
-                        if (arg.startsWith("\\Q") && arg.endsWith("\\E")) {
+                    .flatMap(arg -> {
+                        if (arg.startsWith("@")) {
+                            String fileName = arg.substring(1);
+                            return parseNativeImageArgsFile(fileName);
+                        } else if (arg.startsWith("\\Q") && arg.endsWith("\\E")) {
                             int lastIndexOfSlash = arg.contains("/") ? arg.lastIndexOf("/") : arg.lastIndexOf("\\");
-                            return "\\Q/home/app/libs" + arg.substring(lastIndexOfSlash);
+                            return Stream.of("\\Q/home/app/libs" + arg.substring(lastIndexOfSlash));
                         } else {
-                            return arg;
+                            return Stream.of(arg);
                         }
-                    })
-                    .toList();
-            allNativeImageBuildArgs.addAll(newArgs);
+                    });
         } else {
-            throw new IOException("Unable to find args file: " + argsFilePath);
+            throw new RuntimeException("Unable to find args file: " + argsFilePath);
         }
-        return allNativeImageBuildArgs;
     }
 }

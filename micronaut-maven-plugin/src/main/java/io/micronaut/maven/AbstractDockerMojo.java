@@ -47,7 +47,8 @@ import static io.micronaut.maven.services.ApplicationConfigurationService.DEFAUL
 public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
 
     public static final String LATEST_TAG = "latest";
-    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "frolvlad/alpine-glibc:alpine-3.12";
+    // GlibC 2.34 is used by native image 17
+    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "frolvlad/alpine-glibc:glibc-2.34";
     public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
     public static final String ARM_ARCH = "aarch64";
     public static final String X86_64_ARCH = "x64";
