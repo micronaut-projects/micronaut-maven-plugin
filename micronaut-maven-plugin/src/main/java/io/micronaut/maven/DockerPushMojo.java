@@ -18,6 +18,9 @@ package io.micronaut.maven;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
@@ -28,9 +31,10 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.project.MavenProject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -45,6 +49,8 @@ import java.util.Set;
  */
 @Mojo(name = "docker-push")
 public class DockerPushMojo extends AbstractDockerMojo {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DockerPushMojo.class);
 
     @Inject
     public DockerPushMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
@@ -66,9 +72,14 @@ public class DockerPushMojo extends AbstractDockerMojo {
                 for (String taggedImage : images) {
                     getLog().info("Pushing image: " + taggedImage);
                     try (PushImageCmd pushImageCmd = dockerService.pushImageCmd(taggedImage)) {
-                        Optional<Credential> toCredentials = jibConfigurationService.getToCredentials();
-                        if (toCredentials.isPresent()) {
-                            Credential credential = toCredentials.get();
+                        ImageReference imageReference = ImageReference.parse(taggedImage);
+                        CredentialRetrieverFactory factory = CredentialRetrieverFactory.forImage(imageReference, this::logEvent);
+                        Credential wellKnown = factory
+                                .wellKnownCredentialHelpers()
+                                .retrieve()
+                                .orElse(factory.dockerConfig().retrieve().orElse(null));
+                        Credential credential = jibConfigurationService.getToCredentials().orElse(wellKnown);
+                        if (credential != null) {
                             AuthConfig authConfig = dockerService.getAuthConfigFor(taggedImage, credential.getUsername(), credential.getPassword());
                             pushImageCmd.withAuthConfig(authConfig);
                         }
@@ -85,6 +96,14 @@ public class DockerPushMojo extends AbstractDockerMojo {
             }
         } else {
             throw new MojoFailureException("The <packaging> must be set to either [" + Packaging.DOCKER.id() + "] or [" + Packaging.DOCKER_NATIVE.id() + "]");
+        }
+    }
+
+    private void logEvent(LogEvent logEvent) {
+        if (logEvent.getLevel().equals(LogEvent.Level.DEBUG)) {
+            LOG.debug(logEvent.getMessage());
+        } else {
+            LOG.info(logEvent.getMessage());
         }
     }
 }
