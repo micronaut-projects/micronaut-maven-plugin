@@ -98,8 +98,9 @@ public final class MojoUtils {
                             String fileName = arg.substring(1);
                             return parseNativeImageArgsFile(fileName);
                         } else if (arg.startsWith("\\Q") && arg.endsWith("\\E")) {
-                            int lastIndexOfSlash = arg.contains("/") ? arg.lastIndexOf("/") : arg.lastIndexOf("\\");
-                            return Stream.of("\\Q/home/app/libs" + arg.substring(lastIndexOfSlash));
+                            // start the search at length - 3 to skip \Q or \E at the end
+                            int lastIndexOfSlash = arg.lastIndexOf(File.separator, arg.length() - 3);
+                            return Stream.of("\\Q/home/app/libs/" + arg.substring(lastIndexOfSlash + 1));
                         } else {
                             return Stream.of(arg);
                         }
