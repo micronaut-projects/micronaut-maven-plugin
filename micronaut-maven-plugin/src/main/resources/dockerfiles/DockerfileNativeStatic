@@ -10,7 +10,7 @@ ENV TOOLCHAIN_DIR="/musl"
 ENV PATH="$PATH:${TOOLCHAIN_DIR}/bin"
 ENV CC="${TOOLCHAIN_DIR}/bin/gcc"
 
-RUN curl -L -o zlib.tar.gz https://zlib.net/zlib-1.2.13.tar.gz && \
+RUN curl -L -o zlib.tar.gz https://zlib.net/current/zlib-1.3.tar.gz && \
     mkdir zlib && tar -xzf zlib.tar.gz -C zlib --strip-components 1 && cd zlib && \
     ./configure --static --prefix=${TOOLCHAIN_DIR} && \
     make && make install && \
