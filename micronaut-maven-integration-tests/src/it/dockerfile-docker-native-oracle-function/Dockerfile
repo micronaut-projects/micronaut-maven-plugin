@@ -8,7 +8,7 @@ RUN native-image @/home/app/graalvm-native-image.args --report-unsupported-eleme
 
 FROM fnproject/fn-java-fdk:jre17-latest AS fnfdk
 
-FROM frolvlad/alpine-glibc:alpine-3.12
+FROM frolvlad/alpine-glibc:glibc-2.34
 WORKDIR /function
 COPY --from=builder /home/app/application /function/func
 COPY --from=fnfdk /function/runtime/lib/* .
