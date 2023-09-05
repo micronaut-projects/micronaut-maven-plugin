@@ -43,7 +43,9 @@ abstract class Constants {
             "io.micronaut.inject.BeanDefinitionReference",
             "io.micronaut.http.HttpRequestFactory",
             "io.micronaut.http.HttpResponseFactory",
-            "io.micronaut.core.beans.BeanIntrospectionReference"
+            "io.micronaut.core.beans.BeanIntrospectionReference",
+            "io.micronaut.core.convert.TypeConverterRegistrar",
+            "io.micronaut.context.env.PropertyExpressionResolver"
     );
 
     static final String MICRONAUT_AOT_GROUP_ID = "io.micronaut.aot";
