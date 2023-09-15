@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.micronaut.build.examples</groupId>
-  <artifactId>dockerfile-docker-native-netty</artifactId>
+  <artifactId>dockerfile-docker-native-netty-custom-base</artifactId>
   <version>0.1</version>
   <packaging>${packaging}</packaging>
 
