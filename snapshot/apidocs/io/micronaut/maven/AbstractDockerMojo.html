@@ -88,7 +88,7 @@ loadScripts(document, 'script');</script>
 <dd><code><a href="DockerCracMojo.html" title="class in io.micronaut.maven">DockerCracMojo</a></code>, <code><a href="DockerfileMojo.html" title="class in io.micronaut.maven">DockerfileMojo</a></code>, <code><a href="DockerMojo.html" title="class in io.micronaut.maven">DockerMojo</a></code>, <code><a href="DockerNativeMojo.html" title="class in io.micronaut.maven">DockerNativeMojo</a></code>, <code><a href="DockerPushMojo.html" title="class in io.micronaut.maven">DockerPushMojo</a></code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-47">AbstractDockerMojo</a></span>
+<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-48">AbstractDockerMojo</a></span>
 <span class="extends-implements">extends <a href="AbstractMicronautMojo.html" title="class in io.micronaut.maven">AbstractMicronautMojo</a></span></div>
 <div class="block">Abstract base class for mojos related to Docker files and builds.</div>
 <dl class="notes">
@@ -118,15 +118,21 @@ loadScripts(document, 'script');</script>
 <div class="col-second odd-row-color"><code><a href="#applicationConfigurationService" class="member-name-link">applicationConfigurationService</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#ARM_ARCH" class="member-name-link">ARM_ARCH</a></code></div>
+<div class="col-second even-row-color"><code><a href="#ARCH_DEFAULT_PLACEHOLDER" class="member-name-link">ARCH_DEFAULT_PLACEHOLDER</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#baseImageRun" class="member-name-link">baseImageRun</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#ARM_ARCH" class="member-name-link">ARM_ARCH</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#baseImageRun" class="member-name-link">baseImageRun</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">The Docker image used to run the native image.</div>
 </div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#DEFAULT_BASE_IMAGE_GRAALVM_RUN_ARM" class="member-name-link">DEFAULT_BASE_IMAGE_GRAALVM_RUN_ARM</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#DEFAULT_BASE_IMAGE_GRAALVM_RUN" class="member-name-link">DEFAULT_BASE_IMAGE_GRAALVM_RUN</a></code></div>
+<div class="col-second even-row-color"><code><a href="#DEFAULT_BASE_IMAGE_GRAALVM_RUN_X86" class="member-name-link">DEFAULT_BASE_IMAGE_GRAALVM_RUN_X86</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#DEFAULT_ORACLE_LINUX_VERSION" class="member-name-link">DEFAULT_ORACLE_LINUX_VERSION</a></code></div>
@@ -255,9 +261,19 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#graalVmVersion()" class="member-name-link">graalVmVersion</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected org.apache.maven.artifact.versioning.ArtifactVersion</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#javaVersion()" class="member-name-link">javaVersion</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isArm()" class="member-name-link">isArm</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Check os.arch against known ARM architecture identifiers.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected org.apache.maven.artifact.versioning.ArtifactVersion</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#javaVersion()" class="member-name-link">javaVersion</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#maybeUpdateBaseImageBasedOnArchitecture(io.micronaut.maven.core.MicronautRuntime)" class="member-name-link">maybeUpdateBaseImageBasedOnArchitecture</a><wbr>(<a href="core/MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a>&nbsp;runtime)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">If we are building a default runtime image on arm, we need to use a different base image.</div>
+</div>
 </div>
 </div>
 </div>
@@ -287,7 +303,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="LATEST_TAG">
 <h3>LATEST_TAG</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-49">LATEST_TAG</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-50">LATEST_TAG</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -299,14 +315,28 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="DEFAULT_BASE_IMAGE_GRAALVM_RUN">
-<h3>DEFAULT_BASE_IMAGE_GRAALVM_RUN</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-51">DEFAULT_BASE_IMAGE_GRAALVM_RUN</a></span></div>
+<section class="detail" id="DEFAULT_BASE_IMAGE_GRAALVM_RUN_X86">
+<h3>DEFAULT_BASE_IMAGE_GRAALVM_RUN_X86</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-52">DEFAULT_BASE_IMAGE_GRAALVM_RUN_X86</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
 <ul class="see-list">
-<li><a href="../../../constant-values.html#io.micronaut.maven.AbstractDockerMojo.DEFAULT_BASE_IMAGE_GRAALVM_RUN">Constant Field Values</a></li>
+<li><a href="../../../constant-values.html#io.micronaut.maven.AbstractDockerMojo.DEFAULT_BASE_IMAGE_GRAALVM_RUN_X86">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="DEFAULT_BASE_IMAGE_GRAALVM_RUN_ARM">
+<h3>DEFAULT_BASE_IMAGE_GRAALVM_RUN_ARM</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-53">DEFAULT_BASE_IMAGE_GRAALVM_RUN_ARM</a></span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="see-list">
+<li><a href="../../../constant-values.html#io.micronaut.maven.AbstractDockerMojo.DEFAULT_BASE_IMAGE_GRAALVM_RUN_ARM">Constant Field Values</a></li>
 </ul>
 </dd>
 </dl>
@@ -315,7 +345,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG">
 <h3>MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-52">MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-54">MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -329,7 +359,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="ARM_ARCH">
 <h3>ARM_ARCH</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-53">ARM_ARCH</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-55">ARM_ARCH</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -343,7 +373,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="X86_64_ARCH">
 <h3>X86_64_ARCH</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-54">X86_64_ARCH</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-56">X86_64_ARCH</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -357,7 +387,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="JAVA_17">
 <h3>JAVA_17</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-55">JAVA_17</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-57">JAVA_17</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -371,7 +401,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="DEFAULT_ORACLE_LINUX_VERSION">
 <h3>DEFAULT_ORACLE_LINUX_VERSION</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-56">DEFAULT_ORACLE_LINUX_VERSION</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-58">DEFAULT_ORACLE_LINUX_VERSION</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -383,40 +413,54 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
+<section class="detail" id="ARCH_DEFAULT_PLACEHOLDER">
+<h3>ARCH_DEFAULT_PLACEHOLDER</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-59">ARCH_DEFAULT_PLACEHOLDER</a></span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="see-list">
+<li><a href="../../../constant-values.html#io.micronaut.maven.AbstractDockerMojo.ARCH_DEFAULT_PLACEHOLDER">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="mavenProject">
 <h3>mavenProject</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">org.apache.maven.project.MavenProject</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-58">mavenProject</a></span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">org.apache.maven.project.MavenProject</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-61">mavenProject</a></span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="jibConfigurationService">
 <h3>jibConfigurationService</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-59">jibConfigurationService</a></span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-62">jibConfigurationService</a></span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="applicationConfigurationService">
 <h3>applicationConfigurationService</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="services/ApplicationConfigurationService.html" title="class in io.micronaut.maven.services">ApplicationConfigurationService</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-60">applicationConfigurationService</a></span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="services/ApplicationConfigurationService.html" title="class in io.micronaut.maven.services">ApplicationConfigurationService</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-63">applicationConfigurationService</a></span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="dockerService">
 <h3>dockerService</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="services/DockerService.html" title="class in io.micronaut.maven.services">DockerService</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-61">dockerService</a></span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="services/DockerService.html" title="class in io.micronaut.maven.services">DockerService</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-64">dockerService</a></span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="expressionEvaluator">
 <h3>expressionEvaluator</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">org.apache.maven.plugin.PluginParameterExpressionEvaluator</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-62">expressionEvaluator</a></span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">org.apache.maven.plugin.PluginParameterExpressionEvaluator</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-65">expressionEvaluator</a></span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="nativeImageBuildArgs">
 <h3>nativeImageBuildArgs</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.native-image.args")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-73">nativeImageBuildArgs</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-76">nativeImageBuildArgs</a></span></div>
 <div class="block">Additional arguments that will be passed to the <code>native-image</code> executable. Note that this will only
  be used when using a packaging of type <code>docker-native</code>. For <code>native-image</code> packaging
  you should use the
@@ -429,7 +473,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="appArguments">
 <h3>appArguments</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="mn.appArgs")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-79">appArguments</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-82">appArguments</a></span></div>
 <div class="block">List of additional arguments that will be passed to the application.</div>
 </section>
 </li>
@@ -438,7 +482,7 @@ loadScripts(document, 'script');</script>
 <h3>mainClass</h3>
 <div class="member-signature"><span class="annotations">@Parameter(defaultValue="${exec.mainClass}",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-86">mainClass</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-89">mainClass</a></span></div>
 <div class="block">The main class of the application, as defined in the
  <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.</div>
 </section>
@@ -448,7 +492,7 @@ loadScripts(document, 'script');</script>
 <h3>staticNativeImage</h3>
 <div class="member-signature"><span class="annotations">@Parameter(defaultValue="false",
            property="micronaut.native-image.static")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-92">staticNativeImage</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-95">staticNativeImage</a></span></div>
 <div class="block">Whether to produce a static native image when using <code>docker-native</code> packaging.</div>
 </section>
 </li>
@@ -457,7 +501,7 @@ loadScripts(document, 'script');</script>
 <h3>micronautRuntime</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.runtime",
            defaultValue="NONE")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-98">micronautRuntime</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-101">micronautRuntime</a></span></div>
 <div class="block">The target runtime of the application.</div>
 </section>
 </li>
@@ -465,8 +509,8 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="baseImageRun">
 <h3>baseImageRun</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.native-image.base-image-run",
-           defaultValue="frolvlad/alpine-glibc:glibc-2.34")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-105">baseImageRun</a></span></div>
+           defaultValue="ARCH_DEFAULT")
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-108">baseImageRun</a></span></div>
 <div class="block">The Docker image used to run the native image.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -479,7 +523,7 @@ loadScripts(document, 'script');</script>
 <h3>oracleLinuxVersion</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.native-image.ol.version",
            defaultValue="ol9")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-111">oracleLinuxVersion</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-114">oracleLinuxVersion</a></span></div>
 <div class="block">The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.</div>
 </section>
 </li>
@@ -487,7 +531,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="networkMode">
 <h3>networkMode</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="docker.networkMode")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-119">networkMode</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-122">networkMode</a></span></div>
 <div class="block">Networking mode for the RUN instructions during build.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -506,7 +550,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="&lt;init&gt;(org.apache.maven.project.MavenProject,io.micronaut.maven.jib.JibConfigurationService,io.micronaut.maven.services.ApplicationConfigurationService,io.micronaut.maven.services.DockerService,org.apache.maven.execution.MavenSession,org.apache.maven.plugin.MojoExecution)">
 <h3>AbstractDockerMojo</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-122">AbstractDockerMojo</a></span><wbr><span class="parameters">(org.apache.maven.project.MavenProject&nbsp;mavenProject,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-125">AbstractDockerMojo</a></span><wbr><span class="parameters">(org.apache.maven.project.MavenProject&nbsp;mavenProject,
  <a href="jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a>&nbsp;jibConfigurationService,
  <a href="services/ApplicationConfigurationService.html" title="class in io.micronaut.maven.services">ApplicationConfigurationService</a>&nbsp;applicationConfigurationService,
  <a href="services/DockerService.html" title="class in io.micronaut.maven.services">DockerService</a>&nbsp;dockerService,
@@ -525,7 +569,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="javaVersion()">
 <h3>javaVersion</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">org.apache.maven.artifact.versioning.ArtifactVersion</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-135">javaVersion</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">org.apache.maven.artifact.versioning.ArtifactVersion</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-138">javaVersion</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the Java version from either the <code>maven.compiler.target</code> property or the <code>java.version</code> property.</dd>
@@ -535,7 +579,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="graalVmVersion()">
 <h3>graalVmVersion</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-143">graalVmVersion</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-146">graalVmVersion</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the GraalVM version from the <code>graalvm.version</code> property, which is expected to come from the
@@ -546,7 +590,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="graalVmJvmVersion()">
 <h3>graalVmJvmVersion</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-150">graalVmJvmVersion</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-153">graalVmJvmVersion</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the JVM version to use for GraalVM.</dd>
@@ -556,7 +600,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="graalVmArch()">
 <h3>graalVmArch</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-157">graalVmArch</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-160">graalVmArch</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the OS architecture to use for GraalVM depending on the <code>os.arch</code> system property.</dd>
@@ -566,7 +610,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getFrom()">
 <h3>getFrom</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-169">getFrom</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-167">getFrom</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the base FROM image for the native image.</dd>
@@ -574,9 +618,31 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
+<section class="detail" id="isArm()">
+<h3>isArm</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-181">isArm</a></span>()</div>
+<div class="block">Check os.arch against known ARM architecture identifiers.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>true if we think we're running on an arm JDK</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="maybeUpdateBaseImageBasedOnArchitecture(io.micronaut.maven.core.MicronautRuntime)">
+<h3>maybeUpdateBaseImageBasedOnArchitecture</h3>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-193">maybeUpdateBaseImageBasedOnArchitecture</a></span><wbr><span class="parameters">(<a href="core/MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a>&nbsp;runtime)</span></div>
+<div class="block">If we are building a default runtime image on arm, we need to use a different base image.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>runtime</code> - the runtime to check</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="getFromImage()">
 <h3>getFromImage</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-181">getFromImage</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-206">getFromImage</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the base image from the jib configuration (if any).</dd>
@@ -586,7 +652,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getTags()">
 <h3>getTags</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-188">getTags</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-213">getTags</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the Docker image tags by looking at the Jib plugin configuration.</dd>
@@ -596,7 +662,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getPort()">
 <h3>getPort</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-226">getPort</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-251">getPort</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the application port to expose by looking at the application configuration.</dd>
@@ -606,7 +672,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="copyDependencies()">
 <h3>copyDependencies</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-234">copyDependencies</a></span>()
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-259">copyDependencies</a></span>()
                          throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
 <div class="block">Copy project dependencies to a <code>target/dependency</code> directory.</div>
 <dl class="notes">
@@ -618,7 +684,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getCmd()">
 <h3>getCmd</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-250">getCmd</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-275">getCmd</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the Docker CMD command.</dd>
@@ -628,7 +694,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getNetworkMode()">
 <h3>getNetworkMode</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-261">getNetworkMode</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-286">getNetworkMode</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Networking mode for the RUN instructions during build (if any).</dd>
