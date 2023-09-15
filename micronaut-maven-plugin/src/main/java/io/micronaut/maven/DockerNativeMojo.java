@@ -63,6 +63,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
     public static final String MICRONAUT_PARENT = "io.micronaut.platform:micronaut-parent";
     public static final String MICRONAUT_VERSION = "micronaut.version";
     public static final String ARGS_FILE_PROPERTY_NAME = "graalvm.native-image.args-file";
+    private MicronautRuntime runtime;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -80,7 +81,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         try {
             copyDependencies();
 
-            MicronautRuntime runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
+            this.runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
 
             switch (runtime.getBuildStrategy()) {
                 case LAMBDA -> buildDockerNativeLambda();
@@ -170,6 +171,8 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             getLog().info("Generating a mostly static native image");
             dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_DISTROLESS;
         }
+
+        maybeUpdateBaseImageBasedOnArchitecture(runtime);
 
         buildDockerfile(dockerfileName, true);
     }

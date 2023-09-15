@@ -15,6 +15,7 @@
  */
 package io.micronaut.maven;
 
+import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
@@ -48,12 +49,14 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
 
     public static final String LATEST_TAG = "latest";
     // GlibC 2.34 is used by native image 17
-    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "frolvlad/alpine-glibc:glibc-2.34";
+    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN_X86 = "frolvlad/alpine-glibc:glibc-2.34";
+    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN_ARM = "cgr.dev/chainguard/wolfi-base:latest";
     public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
     public static final String ARM_ARCH = "aarch64";
     public static final String X86_64_ARCH = "x64";
     public static final String JAVA_17 = "17";
     public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol9";
+    public static final String ARCH_DEFAULT_PLACEHOLDER = "ARCH_DEFAULT";
 
     protected final MavenProject mavenProject;
     protected final JibConfigurationService jibConfigurationService;
@@ -102,7 +105,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * The Docker image used to run the native image.
      * @since 1.2
      */
-    @Parameter(property = "micronaut.native-image.base-image-run", defaultValue = DEFAULT_BASE_IMAGE_GRAALVM_RUN)
+    @Parameter(property = "micronaut.native-image.base-image-run", defaultValue = ARCH_DEFAULT_PLACEHOLDER)
     protected String baseImageRun;
 
     /**
@@ -155,12 +158,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @return the OS architecture to use for GraalVM depending on the <code>os.arch</code> system property.
      */
     protected String graalVmArch() {
-        String osArch = System.getProperty("os.arch");
-        if (ARM_ARCH.equals(osArch)) {
-            return ARM_ARCH;
-        } else {
-            return X86_64_ARCH;
-        }
+        return isArm() ? ARM_ARCH : X86_64_ARCH;
     }
 
     /**
@@ -172,6 +170,33 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
             return getFromImage().orElse("ghcr.io/graalvm/graalvm-community:" + graalVmJvmVersion() + "-" + oracleLinuxVersion);
         } else {
             return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmJvmVersion() + "-" + oracleLinuxVersion);
+        }
+    }
+
+    /**
+     * Check os.arch against known ARM architecture identifiers.
+     *
+     * @return true if we think we're running on an arm JDK
+     */
+    protected boolean isArm() {
+        return switch (System.getProperty("os.arch")) {
+            case ARM_ARCH, "arm64" -> true;
+            default -> false;
+        };
+    }
+
+    /**
+     * If we are building a default runtime image on arm, we need to use a different base image.
+     *
+     * @param runtime the runtime to check
+     */
+    protected void maybeUpdateBaseImageBasedOnArchitecture(MicronautRuntime runtime) {
+        if (ARCH_DEFAULT_PLACEHOLDER.equals(baseImageRun)) {
+            if (isArm() && runtime.getBuildStrategy() == DockerBuildStrategy.DEFAULT) {
+                baseImageRun = DEFAULT_BASE_IMAGE_GRAALVM_RUN_ARM;
+            } else {
+                baseImageRun = DEFAULT_BASE_IMAGE_GRAALVM_RUN_X86;
+            }
         }
     }
 
