@@ -197,7 +197,6 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
             } else {
                 baseImageRun = DEFAULT_BASE_IMAGE_GRAALVM_RUN_X86;
             }
-            getLog().info("Base image set to " + baseImageRun + " based on detected architecture");
         }
     }
 
