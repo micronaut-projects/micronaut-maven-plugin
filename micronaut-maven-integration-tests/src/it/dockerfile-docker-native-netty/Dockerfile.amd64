@@ -1,4 +1,4 @@
-FROM ghcr.io/graalvm/native-image-community:17-ol9 AS builder
+FROM ghcr.io/graalvm/native-image-community:21-ol9 AS builder
 WORKDIR /home/app
 
 COPY classes /home/app/classes
