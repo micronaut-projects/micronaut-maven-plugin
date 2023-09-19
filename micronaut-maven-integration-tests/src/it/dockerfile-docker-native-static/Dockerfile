@@ -1,4 +1,4 @@
-FROM ghcr.io/graalvm/graalvm-community:17-ol9 AS builder
+FROM ghcr.io/graalvm/graalvm-community:21-ol9 AS builder
 
 WORKDIR /
 RUN curl -L -o musl.tar.gz https://more.musl.cc/10/x86_64-linux-musl/x86_64-linux-musl-native.tgz && \

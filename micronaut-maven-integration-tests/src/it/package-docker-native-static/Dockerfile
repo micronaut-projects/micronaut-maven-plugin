@@ -1,4 +1,4 @@
-FROM ghcr.io/graalvm/graalvm-community:17-ol9 AS builder
+FROM ghcr.io/graalvm/graalvm-community:21-ol9 AS builder
 WORKDIR /home/app
 
 ENV RESULT_LIB="/staticlibs"
