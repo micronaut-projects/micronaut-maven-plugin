@@ -72,7 +72,7 @@
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <maven.version>3.9.4</maven.version>
+        <maven.version>3.9.5</maven.version>
         <micronaut.version>4.1.9</micronaut.version>
         <native-maven-plugin.version>0.9.27</native-maven-plugin.version>
         <micronaut.aot.version>2.1.1</micronaut.aot.version>
