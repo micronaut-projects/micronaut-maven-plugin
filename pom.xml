@@ -95,7 +95,7 @@
         <sonar.organization>micronaut-projects</sonar.organization>
         <sonar.java.checkstyle.reportPaths>${project.basedir}/target/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
         <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/micronaut-maven-integration-tests/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-        <jacoco.version>0.8.10</jacoco.version>
+        <jacoco.version>0.8.11</jacoco.version>
         <junit-jupiter.version>5.10.0</junit-jupiter.version>
         <directory-watcher.version>0.18.0</directory-watcher.version>
         <testcontainers.version>1.19.1</testcontainers.version>
