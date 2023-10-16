@@ -100,7 +100,7 @@
         <directory-watcher.version>0.18.0</directory-watcher.version>
         <testcontainers.version>1.19.1</testcontainers.version>
         <snakeyaml.version>2.2</snakeyaml.version>
-        <jackson.version>2.15.2</jackson.version>
+        <jackson.version>2.15.3</jackson.version>
     </properties>
 
     <repositories>
