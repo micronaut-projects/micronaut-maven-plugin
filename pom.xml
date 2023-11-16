@@ -98,7 +98,7 @@
         <jacoco.version>0.8.11</jacoco.version>
         <junit-jupiter.version>5.10.0</junit-jupiter.version>
         <directory-watcher.version>0.18.0</directory-watcher.version>
-        <testcontainers.version>1.19.1</testcontainers.version>
+        <testcontainers.version>1.19.2</testcontainers.version>
         <snakeyaml.version>2.2</snakeyaml.version>
         <jackson.version>2.16.0</jackson.version>
     </properties>
