@@ -170,6 +170,11 @@
                 <version>${jackson.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>io.swagger.parser</groupId>
                 <artifactId>swagger-parser</artifactId>
                 <version>1.0.67</version>
