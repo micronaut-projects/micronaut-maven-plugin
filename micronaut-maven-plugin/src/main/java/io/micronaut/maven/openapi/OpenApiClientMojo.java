@@ -73,7 +73,7 @@ public class OpenApiClientMojo extends AbstractOpenApiMojo {
 
     @Override
     protected void configureBuilder(MicronautCodeGeneratorBuilder builder) {
-        builder.forClient(spec -> {
+        builder.forJavaClient(spec -> {
             spec.withAuthorization(useAuth);
             if (clientId != null && !clientId.isEmpty()) {
                 spec.withClientId(clientId);

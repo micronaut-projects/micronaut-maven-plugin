@@ -32,6 +32,11 @@ public final class DummyOpenApiGenerator extends AbstractMicronautJavaCodegen<Du
     }
 
     @Override
+    public boolean isServer() {
+        return false;
+    }
+
+    @Override
     public CodegenType getTag() {
         return CodegenType.OTHER;
     }

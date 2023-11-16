@@ -53,7 +53,7 @@ public class OpenApiServerMojo extends AbstractOpenApiMojo {
 
     @Override
     protected void configureBuilder(MicronautCodeGeneratorBuilder builder) {
-        builder.forServer(spec -> {
+        builder.forJavaServer(spec -> {
             spec.withControllerPackage(controllerPackageName);
             spec.withAuthentication(useAuth);
             // we don't want these to be configurable in the plugin for now
