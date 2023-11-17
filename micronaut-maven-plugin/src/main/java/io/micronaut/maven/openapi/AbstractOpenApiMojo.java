@@ -16,7 +16,6 @@
 package io.micronaut.maven.openapi;
 
 import io.micronaut.maven.AbstractMicronautMojo;
-import io.micronaut.openapi.generator.AbstractMicronautJavaCodegen;
 import io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder;
 import io.micronaut.openapi.generator.MicronautCodeGeneratorEntryPoint;
 import io.micronaut.openapi.generator.SerializationLibraryKind;
@@ -148,9 +147,11 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
                     options.withReactive(useReactive);
                     options.withSerializationLibrary(SerializationLibraryKind.MICRONAUT_SERDE_JACKSON);
                     options.withParameterMappings(parameterMappings.stream()
-                            .map(mapping -> new AbstractMicronautJavaCodegen.ParameterMapping(
+                            .map(mapping -> new io.micronaut.openapi.generator.ParameterMapping(
                                     mapping.getName(),
-                                    AbstractMicronautJavaCodegen.ParameterMapping.ParameterLocation.valueOf(mapping.getLocation().name()),
+                                    io.micronaut.openapi.generator.ParameterMapping.ParameterLocation.valueOf(
+                                            mapping.getLocation().name()
+                                    ),
                                     mapping.getMappedType(),
                                     mapping.getMappedName(),
                                     mapping.isValidated()
@@ -158,7 +159,7 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
                             .collect(Collectors.toList())
                     );
                     options.withResponseBodyMappings(responseBodyMappings.stream()
-                            .map(mapping -> new AbstractMicronautJavaCodegen.ResponseBodyMapping(
+                            .map(mapping -> new io.micronaut.openapi.generator.ResponseBodyMapping(
                                     mapping.getHeaderName(),
                                     mapping.getMappedBodyType(),
                                     mapping.isListWrapper(),
