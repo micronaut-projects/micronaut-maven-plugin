@@ -5,7 +5,7 @@
 
     <groupId>io.micronaut.maven</groupId>
     <artifactId>micronaut-maven-plugin-parent</artifactId>
-    <version>4.0.8-SNAPSHOT</version>
+    <version>4.0.8</version>
     <packaging>pom</packaging>
 
     <name>Micronaut Maven Plugin - Parent</name>
@@ -46,7 +46,7 @@
         <url>https://github.com/micronaut-projects/micronaut-maven-plugin</url>
         <connection>scm:git:git@github.com:micronaut-projects/micronaut-maven-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:micronaut-projects/micronaut-maven-plugin.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>v4.0.8</tag>
     </scm>
 
     <licenses>
@@ -89,7 +89,7 @@
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <project.build.outputTimestamp>2023-10-06T09:34:22Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2023-11-17T12:52:28Z</project.build.outputTimestamp>
 
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.organization>micronaut-projects</sonar.organization>
