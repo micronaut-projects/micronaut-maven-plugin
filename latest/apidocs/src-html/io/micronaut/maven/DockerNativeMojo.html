@@ -235,28 +235,30 @@
 <span class="source-line-no">222</span><span id="line-222">    private BuildImageCmd addNativeImageBuildArgs(Map&lt;String, String&gt; buildImageCmdArguments, Supplier&lt;BuildImageCmd&gt; buildImageCmdSupplier) throws IOException {</span>
 <span class="source-line-no">223</span><span id="line-223">        String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);</span>
 <span class="source-line-no">224</span><span id="line-224">        List&lt;String&gt; allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);</span>
-<span class="source-line-no">225</span><span id="line-225">        getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);</span>
-<span class="source-line-no">226</span><span id="line-226">        List&lt;String&gt; conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));</span>
-<span class="source-line-no">227</span><span id="line-227">        if (conversionResult.size() == 1) {</span>
-<span class="source-line-no">228</span><span id="line-228">            Files.delete(Paths.get(argsFile));</span>
-<span class="source-line-no">229</span><span id="line-229"></span>
-<span class="source-line-no">230</span><span id="line-230">            BuildImageCmd buildImageCmd = buildImageCmdSupplier.get();</span>
+<span class="source-line-no">225</span><span id="line-225">        //Remove extra main class argument</span>
+<span class="source-line-no">226</span><span id="line-226">        allNativeImageBuildArgs.remove(mainClass);</span>
+<span class="source-line-no">227</span><span id="line-227">        getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);</span>
+<span class="source-line-no">228</span><span id="line-228">        List&lt;String&gt; conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));</span>
+<span class="source-line-no">229</span><span id="line-229">        if (conversionResult.size() == 1) {</span>
+<span class="source-line-no">230</span><span id="line-230">            Files.delete(Paths.get(argsFile));</span>
 <span class="source-line-no">231</span><span id="line-231"></span>
-<span class="source-line-no">232</span><span id="line-232">            for (Map.Entry&lt;String, String&gt; buildArg : buildImageCmdArguments.entrySet()) {</span>
-<span class="source-line-no">233</span><span id="line-233">                String key = buildArg.getKey();</span>
-<span class="source-line-no">234</span><span id="line-234">                String value = buildArg.getValue();</span>
-<span class="source-line-no">235</span><span id="line-235">                getLog().info("Using " + key + ": " + value);</span>
-<span class="source-line-no">236</span><span id="line-236">                buildImageCmd.withBuildArg(key, value);</span>
-<span class="source-line-no">237</span><span id="line-237">            }</span>
-<span class="source-line-no">238</span><span id="line-238"></span>
-<span class="source-line-no">239</span><span id="line-239">            getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
-<span class="source-line-no">240</span><span id="line-240">            return buildImageCmd;</span>
-<span class="source-line-no">241</span><span id="line-241">        } else {</span>
-<span class="source-line-no">242</span><span id="line-242">            throw new IOException("Unable to convert native image build args to args file");</span>
-<span class="source-line-no">243</span><span id="line-243">        }</span>
-<span class="source-line-no">244</span><span id="line-244">    }</span>
-<span class="source-line-no">245</span><span id="line-245"></span>
-<span class="source-line-no">246</span><span id="line-246">}</span>
+<span class="source-line-no">232</span><span id="line-232">            BuildImageCmd buildImageCmd = buildImageCmdSupplier.get();</span>
+<span class="source-line-no">233</span><span id="line-233"></span>
+<span class="source-line-no">234</span><span id="line-234">            for (Map.Entry&lt;String, String&gt; buildArg : buildImageCmdArguments.entrySet()) {</span>
+<span class="source-line-no">235</span><span id="line-235">                String key = buildArg.getKey();</span>
+<span class="source-line-no">236</span><span id="line-236">                String value = buildArg.getValue();</span>
+<span class="source-line-no">237</span><span id="line-237">                getLog().info("Using " + key + ": " + value);</span>
+<span class="source-line-no">238</span><span id="line-238">                buildImageCmd.withBuildArg(key, value);</span>
+<span class="source-line-no">239</span><span id="line-239">            }</span>
+<span class="source-line-no">240</span><span id="line-240"></span>
+<span class="source-line-no">241</span><span id="line-241">            getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
+<span class="source-line-no">242</span><span id="line-242">            return buildImageCmd;</span>
+<span class="source-line-no">243</span><span id="line-243">        } else {</span>
+<span class="source-line-no">244</span><span id="line-244">            throw new IOException("Unable to convert native image build args to args file");</span>
+<span class="source-line-no">245</span><span id="line-245">        }</span>
+<span class="source-line-no">246</span><span id="line-246">    }</span>
+<span class="source-line-no">247</span><span id="line-247"></span>
+<span class="source-line-no">248</span><span id="line-248">}</span>
 
 
 
