@@ -29,162 +29,161 @@
 <span class="source-line-no">016</span><span id="line-16">package io.micronaut.maven.openapi;</span>
 <span class="source-line-no">017</span><span id="line-17"></span>
 <span class="source-line-no">018</span><span id="line-18">import io.micronaut.maven.AbstractMicronautMojo;</span>
-<span class="source-line-no">019</span><span id="line-19">import io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder;</span>
-<span class="source-line-no">020</span><span id="line-20">import io.micronaut.openapi.generator.MicronautCodeGeneratorEntryPoint;</span>
-<span class="source-line-no">021</span><span id="line-21">import io.micronaut.openapi.generator.SerializationLibraryKind;</span>
-<span class="source-line-no">022</span><span id="line-22">import org.apache.maven.plugin.MojoExecutionException;</span>
-<span class="source-line-no">023</span><span id="line-23">import org.apache.maven.plugin.MojoFailureException;</span>
-<span class="source-line-no">024</span><span id="line-24">import org.apache.maven.plugins.annotations.Parameter;</span>
-<span class="source-line-no">025</span><span id="line-25">import org.apache.maven.project.MavenProject;</span>
-<span class="source-line-no">026</span><span id="line-26"></span>
-<span class="source-line-no">027</span><span id="line-27">import java.io.File;</span>
-<span class="source-line-no">028</span><span id="line-28">import java.util.List;</span>
-<span class="source-line-no">029</span><span id="line-29">import java.util.stream.Collectors;</span>
-<span class="source-line-no">030</span><span id="line-30"></span>
-<span class="source-line-no">031</span><span id="line-31">/**</span>
-<span class="source-line-no">032</span><span id="line-32"> * Base class for OpenAPI generator mojos. This provides the common</span>
-<span class="source-line-no">033</span><span id="line-33"> * parameters for all generators and the invoker logic. Subclasses</span>
-<span class="source-line-no">034</span><span id="line-34"> * must implement the {@link #isEnabled()} and {@link #configureBuilder(MicronautCodeGeneratorBuilder)}</span>
-<span class="source-line-no">035</span><span id="line-35"> * methods.</span>
-<span class="source-line-no">036</span><span id="line-36"> */</span>
-<span class="source-line-no">037</span><span id="line-37">public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {</span>
-<span class="source-line-no">038</span><span id="line-38">    static final String MICRONAUT_OPENAPI_PREFIX = "micronaut.openapi";</span>
-<span class="source-line-no">039</span><span id="line-39">    static final String IO_MICRONAUT_OPENAPI_PREFIX = "io.micronaut.openapi";</span>
-<span class="source-line-no">040</span><span id="line-40"></span>
-<span class="source-line-no">041</span><span id="line-41">    /**</span>
-<span class="source-line-no">042</span><span id="line-42">     * The OpenAPI specification file path relative to the project's root path.</span>
-<span class="source-line-no">043</span><span id="line-43">     */</span>
-<span class="source-line-no">044</span><span id="line-44">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".definition", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".invoker", required = true)</span>
-<span class="source-line-no">045</span><span id="line-45">    protected File definitionFile;</span>
-<span class="source-line-no">046</span><span id="line-46"></span>
-<span class="source-line-no">047</span><span id="line-47">    /**</span>
-<span class="source-line-no">048</span><span id="line-48">     * The name of the package that can be used for various classes required for invocation.</span>
-<span class="source-line-no">049</span><span id="line-49">     */</span>
-<span class="source-line-no">050</span><span id="line-50">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".invoker.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".invoker", required = true)</span>
-<span class="source-line-no">051</span><span id="line-51">    protected String invokerPackageName;</span>
-<span class="source-line-no">052</span><span id="line-52"></span>
-<span class="source-line-no">053</span><span id="line-53">    /**</span>
-<span class="source-line-no">054</span><span id="line-54">     * The package name for the APIs (controller interfaces).</span>
-<span class="source-line-no">055</span><span id="line-55">     */</span>
-<span class="source-line-no">056</span><span id="line-56">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".api.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".api", required = true)</span>
-<span class="source-line-no">057</span><span id="line-57">    protected String apiPackageName;</span>
-<span class="source-line-no">058</span><span id="line-58"></span>
-<span class="source-line-no">059</span><span id="line-59">    /**</span>
-<span class="source-line-no">060</span><span id="line-60">     * The package name for the model classes.</span>
-<span class="source-line-no">061</span><span id="line-61">     */</span>
-<span class="source-line-no">062</span><span id="line-62">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".model.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".model", required = true)</span>
-<span class="source-line-no">063</span><span id="line-63">    protected String modelPackageName;</span>
-<span class="source-line-no">064</span><span id="line-64"></span>
-<span class="source-line-no">065</span><span id="line-65">    /**</span>
-<span class="source-line-no">066</span><span id="line-66">     * Whether to generate validation annotations for models and APIs.</span>
-<span class="source-line-no">067</span><span id="line-67">     */</span>
-<span class="source-line-no">068</span><span id="line-68">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.bean.validation", defaultValue = "true", required = true)</span>
-<span class="source-line-no">069</span><span id="line-69">    protected boolean useBeanValidation;</span>
-<span class="source-line-no">070</span><span id="line-70"></span>
-<span class="source-line-no">071</span><span id="line-71">    /**</span>
-<span class="source-line-no">072</span><span id="line-72">     * Whether to use {@link java.util.Optional} for non-required model properties and API parameters.</span>
-<span class="source-line-no">073</span><span id="line-73">     */</span>
-<span class="source-line-no">074</span><span id="line-74">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.optional", defaultValue = "false", required = true)</span>
-<span class="source-line-no">075</span><span id="line-75">    protected boolean useOptional;</span>
-<span class="source-line-no">076</span><span id="line-76"></span>
-<span class="source-line-no">077</span><span id="line-77">    /**</span>
-<span class="source-line-no">078</span><span id="line-78">     * Whether to use reactor types for operation responses.</span>
-<span class="source-line-no">079</span><span id="line-79">     */</span>
-<span class="source-line-no">080</span><span id="line-80">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.reactive", defaultValue = "true", required = true)</span>
-<span class="source-line-no">081</span><span id="line-81">    protected boolean useReactive;</span>
-<span class="source-line-no">082</span><span id="line-82"></span>
-<span class="source-line-no">083</span><span id="line-83">    /**</span>
-<span class="source-line-no">084</span><span id="line-84">     * Comma-separated values of output kinds to generate. The values are defined by the</span>
-<span class="source-line-no">085</span><span id="line-85">     * {@link MicronautCodeGeneratorEntryPoint.OutputKind} enum.</span>
-<span class="source-line-no">086</span><span id="line-86">     */</span>
-<span class="source-line-no">087</span><span id="line-87">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".outputs", required = true, defaultValue = "apis,models,supporting_files")</span>
-<span class="source-line-no">088</span><span id="line-88">    protected List&lt;String&gt; outputKinds;</span>
-<span class="source-line-no">089</span><span id="line-89"></span>
-<span class="source-line-no">090</span><span id="line-90">    /**</span>
-<span class="source-line-no">091</span><span id="line-91">     * The output directory to which all the sources will be generated.</span>
-<span class="source-line-no">092</span><span id="line-92">     */</span>
-<span class="source-line-no">093</span><span id="line-93">    @Parameter(defaultValue = "${project.build.directory}/generated-sources/openapi", required = true)</span>
-<span class="source-line-no">094</span><span id="line-94">    protected File outputDirectory;</span>
-<span class="source-line-no">095</span><span id="line-95"></span>
-<span class="source-line-no">096</span><span id="line-96">    /**</span>
-<span class="source-line-no">097</span><span id="line-97">     * Define parameter mappings that allow using custom types for parameter binding.</span>
-<span class="source-line-no">098</span><span id="line-98">     * See {@link ParameterMapping} for details.</span>
-<span class="source-line-no">099</span><span id="line-99">     */</span>
-<span class="source-line-no">100</span><span id="line-100">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".parameterMappings")</span>
-<span class="source-line-no">101</span><span id="line-101">    protected List&lt;ParameterMapping&gt; parameterMappings;</span>
-<span class="source-line-no">102</span><span id="line-102"></span>
-<span class="source-line-no">103</span><span id="line-103">    /**</span>
-<span class="source-line-no">104</span><span id="line-104">     * Define parameter mappings that allow using custom types for parameter binding.</span>
-<span class="source-line-no">105</span><span id="line-105">     * See {@link ResponseBodyMapping} for details.</span>
-<span class="source-line-no">106</span><span id="line-106">     */</span>
-<span class="source-line-no">107</span><span id="line-107">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".responseBodyMappings")</span>
-<span class="source-line-no">108</span><span id="line-108">    protected List&lt;ResponseBodyMapping&gt; responseBodyMappings;</span>
-<span class="source-line-no">109</span><span id="line-109"></span>
-<span class="source-line-no">110</span><span id="line-110">    @Parameter(defaultValue = "${project}", readonly = true)</span>
-<span class="source-line-no">111</span><span id="line-111">    private MavenProject project;</span>
-<span class="source-line-no">112</span><span id="line-112"></span>
-<span class="source-line-no">113</span><span id="line-113">    /**</span>
-<span class="source-line-no">114</span><span id="line-114">     * Determines if this mojo must be executed.</span>
-<span class="source-line-no">115</span><span id="line-115">     * @return true if the mojo is enabled</span>
-<span class="source-line-no">116</span><span id="line-116">     */</span>
-<span class="source-line-no">117</span><span id="line-117">    protected abstract boolean isEnabled();</span>
-<span class="source-line-no">118</span><span id="line-118"></span>
-<span class="source-line-no">119</span><span id="line-119">    /**</span>
-<span class="source-line-no">120</span><span id="line-120">     * Configures the OpenAPI generator. When this method is called,</span>
-<span class="source-line-no">121</span><span id="line-121">     * common properties shared by all generators have already been</span>
-<span class="source-line-no">122</span><span id="line-122">     * configured, so this method should only take care of configuring</span>
-<span class="source-line-no">123</span><span id="line-123">     * the generator specific parameters.</span>
-<span class="source-line-no">124</span><span id="line-124">     * @param builder the generator configuration builder</span>
-<span class="source-line-no">125</span><span id="line-125">     */</span>
-<span class="source-line-no">126</span><span id="line-126">    protected abstract void configureBuilder(MicronautCodeGeneratorBuilder builder) throws MojoExecutionException;</span>
-<span class="source-line-no">127</span><span id="line-127"></span>
-<span class="source-line-no">128</span><span id="line-128">    @Override</span>
-<span class="source-line-no">129</span><span id="line-129">    public final void execute() throws MojoExecutionException, MojoFailureException {</span>
-<span class="source-line-no">130</span><span id="line-130">        if (!isEnabled()) {</span>
-<span class="source-line-no">131</span><span id="line-131">            getLog().debug(this.getClass().getSimpleName() + " is disabled");</span>
-<span class="source-line-no">132</span><span id="line-132">            return;</span>
-<span class="source-line-no">133</span><span id="line-133">        }</span>
-<span class="source-line-no">134</span><span id="line-134">        project.addCompileSourceRoot(outputDirectory.getAbsolutePath());</span>
-<span class="source-line-no">135</span><span id="line-135">        var builder = MicronautCodeGeneratorEntryPoint.builder()</span>
-<span class="source-line-no">136</span><span id="line-136">                .withDefinitionFile(definitionFile.toURI())</span>
-<span class="source-line-no">137</span><span id="line-137">                .withOutputDirectory(outputDirectory)</span>
-<span class="source-line-no">138</span><span id="line-138">                .withOutputs(</span>
-<span class="source-line-no">139</span><span id="line-139">                        outputKinds.stream().map(String::toUpperCase).map(MicronautCodeGeneratorEntryPoint.OutputKind::valueOf).toList().toArray(new MicronautCodeGeneratorEntryPoint.OutputKind[0])</span>
-<span class="source-line-no">140</span><span id="line-140">                )</span>
-<span class="source-line-no">141</span><span id="line-141">                .withOptions(options -&gt; {</span>
-<span class="source-line-no">142</span><span id="line-142">                    options.withInvokerPackage(invokerPackageName);</span>
-<span class="source-line-no">143</span><span id="line-143">                    options.withApiPackage(apiPackageName);</span>
-<span class="source-line-no">144</span><span id="line-144">                    options.withModelPackage(modelPackageName);</span>
-<span class="source-line-no">145</span><span id="line-145">                    options.withBeanValidation(useBeanValidation);</span>
-<span class="source-line-no">146</span><span id="line-146">                    options.withOptional(useOptional);</span>
-<span class="source-line-no">147</span><span id="line-147">                    options.withReactive(useReactive);</span>
-<span class="source-line-no">148</span><span id="line-148">                    options.withSerializationLibrary(SerializationLibraryKind.MICRONAUT_SERDE_JACKSON);</span>
-<span class="source-line-no">149</span><span id="line-149">                    options.withParameterMappings(parameterMappings.stream()</span>
-<span class="source-line-no">150</span><span id="line-150">                            .map(mapping -&gt; new io.micronaut.openapi.generator.ParameterMapping(</span>
-<span class="source-line-no">151</span><span id="line-151">                                    mapping.getName(),</span>
-<span class="source-line-no">152</span><span id="line-152">                                    io.micronaut.openapi.generator.ParameterMapping.ParameterLocation.valueOf(</span>
-<span class="source-line-no">153</span><span id="line-153">                                            mapping.getLocation().name()</span>
-<span class="source-line-no">154</span><span id="line-154">                                    ),</span>
-<span class="source-line-no">155</span><span id="line-155">                                    mapping.getMappedType(),</span>
-<span class="source-line-no">156</span><span id="line-156">                                    mapping.getMappedName(),</span>
-<span class="source-line-no">157</span><span id="line-157">                                    mapping.isValidated()</span>
-<span class="source-line-no">158</span><span id="line-158">                            ))</span>
-<span class="source-line-no">159</span><span id="line-159">                            .collect(Collectors.toList())</span>
-<span class="source-line-no">160</span><span id="line-160">                    );</span>
-<span class="source-line-no">161</span><span id="line-161">                    options.withResponseBodyMappings(responseBodyMappings.stream()</span>
-<span class="source-line-no">162</span><span id="line-162">                            .map(mapping -&gt; new io.micronaut.openapi.generator.ResponseBodyMapping(</span>
-<span class="source-line-no">163</span><span id="line-163">                                    mapping.getHeaderName(),</span>
-<span class="source-line-no">164</span><span id="line-164">                                    mapping.getMappedBodyType(),</span>
-<span class="source-line-no">165</span><span id="line-165">                                    mapping.isListWrapper(),</span>
-<span class="source-line-no">166</span><span id="line-166">                                    mapping.isValidated()</span>
-<span class="source-line-no">167</span><span id="line-167">                            ))</span>
-<span class="source-line-no">168</span><span id="line-168">                            .collect(Collectors.toList())</span>
-<span class="source-line-no">169</span><span id="line-169">                    );</span>
-<span class="source-line-no">170</span><span id="line-170">                });</span>
-<span class="source-line-no">171</span><span id="line-171">        configureBuilder(builder);</span>
-<span class="source-line-no">172</span><span id="line-172">        builder.build().generate();</span>
-<span class="source-line-no">173</span><span id="line-173">    }</span>
-<span class="source-line-no">174</span><span id="line-174">}</span>
+<span class="source-line-no">019</span><span id="line-19">import io.micronaut.openapi.generator.AbstractMicronautJavaCodegen;</span>
+<span class="source-line-no">020</span><span id="line-20">import io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder;</span>
+<span class="source-line-no">021</span><span id="line-21">import io.micronaut.openapi.generator.MicronautCodeGeneratorEntryPoint;</span>
+<span class="source-line-no">022</span><span id="line-22">import io.micronaut.openapi.generator.SerializationLibraryKind;</span>
+<span class="source-line-no">023</span><span id="line-23">import org.apache.maven.plugin.MojoExecutionException;</span>
+<span class="source-line-no">024</span><span id="line-24">import org.apache.maven.plugin.MojoFailureException;</span>
+<span class="source-line-no">025</span><span id="line-25">import org.apache.maven.plugins.annotations.Parameter;</span>
+<span class="source-line-no">026</span><span id="line-26">import org.apache.maven.project.MavenProject;</span>
+<span class="source-line-no">027</span><span id="line-27"></span>
+<span class="source-line-no">028</span><span id="line-28">import java.io.File;</span>
+<span class="source-line-no">029</span><span id="line-29">import java.util.List;</span>
+<span class="source-line-no">030</span><span id="line-30">import java.util.stream.Collectors;</span>
+<span class="source-line-no">031</span><span id="line-31"></span>
+<span class="source-line-no">032</span><span id="line-32">/**</span>
+<span class="source-line-no">033</span><span id="line-33"> * Base class for OpenAPI generator mojos. This provides the common</span>
+<span class="source-line-no">034</span><span id="line-34"> * parameters for all generators and the invoker logic. Subclasses</span>
+<span class="source-line-no">035</span><span id="line-35"> * must implement the {@link #isEnabled()} and {@link #configureBuilder(MicronautCodeGeneratorBuilder)}</span>
+<span class="source-line-no">036</span><span id="line-36"> * methods.</span>
+<span class="source-line-no">037</span><span id="line-37"> */</span>
+<span class="source-line-no">038</span><span id="line-38">public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {</span>
+<span class="source-line-no">039</span><span id="line-39">    static final String MICRONAUT_OPENAPI_PREFIX = "micronaut.openapi";</span>
+<span class="source-line-no">040</span><span id="line-40">    static final String IO_MICRONAUT_OPENAPI_PREFIX = "io.micronaut.openapi";</span>
+<span class="source-line-no">041</span><span id="line-41"></span>
+<span class="source-line-no">042</span><span id="line-42">    /**</span>
+<span class="source-line-no">043</span><span id="line-43">     * The OpenAPI specification file path relative to the project's root path.</span>
+<span class="source-line-no">044</span><span id="line-44">     */</span>
+<span class="source-line-no">045</span><span id="line-45">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".definition", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".invoker", required = true)</span>
+<span class="source-line-no">046</span><span id="line-46">    protected File definitionFile;</span>
+<span class="source-line-no">047</span><span id="line-47"></span>
+<span class="source-line-no">048</span><span id="line-48">    /**</span>
+<span class="source-line-no">049</span><span id="line-49">     * The name of the package that can be used for various classes required for invocation.</span>
+<span class="source-line-no">050</span><span id="line-50">     */</span>
+<span class="source-line-no">051</span><span id="line-51">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".invoker.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".invoker", required = true)</span>
+<span class="source-line-no">052</span><span id="line-52">    protected String invokerPackageName;</span>
+<span class="source-line-no">053</span><span id="line-53"></span>
+<span class="source-line-no">054</span><span id="line-54">    /**</span>
+<span class="source-line-no">055</span><span id="line-55">     * The package name for the APIs (controller interfaces).</span>
+<span class="source-line-no">056</span><span id="line-56">     */</span>
+<span class="source-line-no">057</span><span id="line-57">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".api.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".api", required = true)</span>
+<span class="source-line-no">058</span><span id="line-58">    protected String apiPackageName;</span>
+<span class="source-line-no">059</span><span id="line-59"></span>
+<span class="source-line-no">060</span><span id="line-60">    /**</span>
+<span class="source-line-no">061</span><span id="line-61">     * The package name for the model classes.</span>
+<span class="source-line-no">062</span><span id="line-62">     */</span>
+<span class="source-line-no">063</span><span id="line-63">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".model.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".model", required = true)</span>
+<span class="source-line-no">064</span><span id="line-64">    protected String modelPackageName;</span>
+<span class="source-line-no">065</span><span id="line-65"></span>
+<span class="source-line-no">066</span><span id="line-66">    /**</span>
+<span class="source-line-no">067</span><span id="line-67">     * Whether to generate validation annotations for models and APIs.</span>
+<span class="source-line-no">068</span><span id="line-68">     */</span>
+<span class="source-line-no">069</span><span id="line-69">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.bean.validation", defaultValue = "true", required = true)</span>
+<span class="source-line-no">070</span><span id="line-70">    protected boolean useBeanValidation;</span>
+<span class="source-line-no">071</span><span id="line-71"></span>
+<span class="source-line-no">072</span><span id="line-72">    /**</span>
+<span class="source-line-no">073</span><span id="line-73">     * Whether to use {@link java.util.Optional} for non-required model properties and API parameters.</span>
+<span class="source-line-no">074</span><span id="line-74">     */</span>
+<span class="source-line-no">075</span><span id="line-75">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.optional", defaultValue = "false", required = true)</span>
+<span class="source-line-no">076</span><span id="line-76">    protected boolean useOptional;</span>
+<span class="source-line-no">077</span><span id="line-77"></span>
+<span class="source-line-no">078</span><span id="line-78">    /**</span>
+<span class="source-line-no">079</span><span id="line-79">     * Whether to use reactor types for operation responses.</span>
+<span class="source-line-no">080</span><span id="line-80">     */</span>
+<span class="source-line-no">081</span><span id="line-81">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.reactive", defaultValue = "true", required = true)</span>
+<span class="source-line-no">082</span><span id="line-82">    protected boolean useReactive;</span>
+<span class="source-line-no">083</span><span id="line-83"></span>
+<span class="source-line-no">084</span><span id="line-84">    /**</span>
+<span class="source-line-no">085</span><span id="line-85">     * Comma-separated values of output kinds to generate. The values are defined by the</span>
+<span class="source-line-no">086</span><span id="line-86">     * {@link MicronautCodeGeneratorEntryPoint.OutputKind} enum.</span>
+<span class="source-line-no">087</span><span id="line-87">     */</span>
+<span class="source-line-no">088</span><span id="line-88">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".outputs", required = true, defaultValue = "apis,models,supporting_files")</span>
+<span class="source-line-no">089</span><span id="line-89">    protected List&lt;String&gt; outputKinds;</span>
+<span class="source-line-no">090</span><span id="line-90"></span>
+<span class="source-line-no">091</span><span id="line-91">    /**</span>
+<span class="source-line-no">092</span><span id="line-92">     * The output directory to which all the sources will be generated.</span>
+<span class="source-line-no">093</span><span id="line-93">     */</span>
+<span class="source-line-no">094</span><span id="line-94">    @Parameter(defaultValue = "${project.build.directory}/generated-sources/openapi", required = true)</span>
+<span class="source-line-no">095</span><span id="line-95">    protected File outputDirectory;</span>
+<span class="source-line-no">096</span><span id="line-96"></span>
+<span class="source-line-no">097</span><span id="line-97">    /**</span>
+<span class="source-line-no">098</span><span id="line-98">     * Define parameter mappings that allow using custom types for parameter binding.</span>
+<span class="source-line-no">099</span><span id="line-99">     * See {@link ParameterMapping} for details.</span>
+<span class="source-line-no">100</span><span id="line-100">     */</span>
+<span class="source-line-no">101</span><span id="line-101">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".parameterMappings")</span>
+<span class="source-line-no">102</span><span id="line-102">    protected List&lt;ParameterMapping&gt; parameterMappings;</span>
+<span class="source-line-no">103</span><span id="line-103"></span>
+<span class="source-line-no">104</span><span id="line-104">    /**</span>
+<span class="source-line-no">105</span><span id="line-105">     * Define parameter mappings that allow using custom types for parameter binding.</span>
+<span class="source-line-no">106</span><span id="line-106">     * See {@link ResponseBodyMapping} for details.</span>
+<span class="source-line-no">107</span><span id="line-107">     */</span>
+<span class="source-line-no">108</span><span id="line-108">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".responseBodyMappings")</span>
+<span class="source-line-no">109</span><span id="line-109">    protected List&lt;ResponseBodyMapping&gt; responseBodyMappings;</span>
+<span class="source-line-no">110</span><span id="line-110"></span>
+<span class="source-line-no">111</span><span id="line-111">    @Parameter(defaultValue = "${project}", readonly = true)</span>
+<span class="source-line-no">112</span><span id="line-112">    private MavenProject project;</span>
+<span class="source-line-no">113</span><span id="line-113"></span>
+<span class="source-line-no">114</span><span id="line-114">    /**</span>
+<span class="source-line-no">115</span><span id="line-115">     * Determines if this mojo must be executed.</span>
+<span class="source-line-no">116</span><span id="line-116">     * @return true if the mojo is enabled</span>
+<span class="source-line-no">117</span><span id="line-117">     */</span>
+<span class="source-line-no">118</span><span id="line-118">    protected abstract boolean isEnabled();</span>
+<span class="source-line-no">119</span><span id="line-119"></span>
+<span class="source-line-no">120</span><span id="line-120">    /**</span>
+<span class="source-line-no">121</span><span id="line-121">     * Configures the OpenAPI generator. When this method is called,</span>
+<span class="source-line-no">122</span><span id="line-122">     * common properties shared by all generators have already been</span>
+<span class="source-line-no">123</span><span id="line-123">     * configured, so this method should only take care of configuring</span>
+<span class="source-line-no">124</span><span id="line-124">     * the generator specific parameters.</span>
+<span class="source-line-no">125</span><span id="line-125">     * @param builder the generator configuration builder</span>
+<span class="source-line-no">126</span><span id="line-126">     */</span>
+<span class="source-line-no">127</span><span id="line-127">    protected abstract void configureBuilder(MicronautCodeGeneratorBuilder builder) throws MojoExecutionException;</span>
+<span class="source-line-no">128</span><span id="line-128"></span>
+<span class="source-line-no">129</span><span id="line-129">    @Override</span>
+<span class="source-line-no">130</span><span id="line-130">    public final void execute() throws MojoExecutionException, MojoFailureException {</span>
+<span class="source-line-no">131</span><span id="line-131">        if (!isEnabled()) {</span>
+<span class="source-line-no">132</span><span id="line-132">            getLog().debug(this.getClass().getSimpleName() + " is disabled");</span>
+<span class="source-line-no">133</span><span id="line-133">            return;</span>
+<span class="source-line-no">134</span><span id="line-134">        }</span>
+<span class="source-line-no">135</span><span id="line-135">        project.addCompileSourceRoot(outputDirectory.getAbsolutePath());</span>
+<span class="source-line-no">136</span><span id="line-136">        var builder = MicronautCodeGeneratorEntryPoint.builder()</span>
+<span class="source-line-no">137</span><span id="line-137">                .withDefinitionFile(definitionFile.toURI())</span>
+<span class="source-line-no">138</span><span id="line-138">                .withOutputDirectory(outputDirectory)</span>
+<span class="source-line-no">139</span><span id="line-139">                .withOutputs(</span>
+<span class="source-line-no">140</span><span id="line-140">                        outputKinds.stream().map(String::toUpperCase).map(MicronautCodeGeneratorEntryPoint.OutputKind::valueOf).toList().toArray(new MicronautCodeGeneratorEntryPoint.OutputKind[0])</span>
+<span class="source-line-no">141</span><span id="line-141">                )</span>
+<span class="source-line-no">142</span><span id="line-142">                .withOptions(options -&gt; {</span>
+<span class="source-line-no">143</span><span id="line-143">                    options.withInvokerPackage(invokerPackageName);</span>
+<span class="source-line-no">144</span><span id="line-144">                    options.withApiPackage(apiPackageName);</span>
+<span class="source-line-no">145</span><span id="line-145">                    options.withModelPackage(modelPackageName);</span>
+<span class="source-line-no">146</span><span id="line-146">                    options.withBeanValidation(useBeanValidation);</span>
+<span class="source-line-no">147</span><span id="line-147">                    options.withOptional(useOptional);</span>
+<span class="source-line-no">148</span><span id="line-148">                    options.withReactive(useReactive);</span>
+<span class="source-line-no">149</span><span id="line-149">                    options.withSerializationLibrary(SerializationLibraryKind.MICRONAUT_SERDE_JACKSON);</span>
+<span class="source-line-no">150</span><span id="line-150">                    options.withParameterMappings(parameterMappings.stream()</span>
+<span class="source-line-no">151</span><span id="line-151">                            .map(mapping -&gt; new AbstractMicronautJavaCodegen.ParameterMapping(</span>
+<span class="source-line-no">152</span><span id="line-152">                                    mapping.getName(),</span>
+<span class="source-line-no">153</span><span id="line-153">                                    AbstractMicronautJavaCodegen.ParameterMapping.ParameterLocation.valueOf(mapping.getLocation().name()),</span>
+<span class="source-line-no">154</span><span id="line-154">                                    mapping.getMappedType(),</span>
+<span class="source-line-no">155</span><span id="line-155">                                    mapping.getMappedName(),</span>
+<span class="source-line-no">156</span><span id="line-156">                                    mapping.isValidated()</span>
+<span class="source-line-no">157</span><span id="line-157">                            ))</span>
+<span class="source-line-no">158</span><span id="line-158">                            .collect(Collectors.toList())</span>
+<span class="source-line-no">159</span><span id="line-159">                    );</span>
+<span class="source-line-no">160</span><span id="line-160">                    options.withResponseBodyMappings(responseBodyMappings.stream()</span>
+<span class="source-line-no">161</span><span id="line-161">                            .map(mapping -&gt; new AbstractMicronautJavaCodegen.ResponseBodyMapping(</span>
+<span class="source-line-no">162</span><span id="line-162">                                    mapping.getHeaderName(),</span>
+<span class="source-line-no">163</span><span id="line-163">                                    mapping.getMappedBodyType(),</span>
+<span class="source-line-no">164</span><span id="line-164">                                    mapping.isListWrapper(),</span>
+<span class="source-line-no">165</span><span id="line-165">                                    mapping.isValidated()</span>
+<span class="source-line-no">166</span><span id="line-166">                            ))</span>
+<span class="source-line-no">167</span><span id="line-167">                            .collect(Collectors.toList())</span>
+<span class="source-line-no">168</span><span id="line-168">                    );</span>
+<span class="source-line-no">169</span><span id="line-169">                });</span>
+<span class="source-line-no">170</span><span id="line-170">        configureBuilder(builder);</span>
+<span class="source-line-no">171</span><span id="line-171">        builder.build().generate();</span>
+<span class="source-line-no">172</span><span id="line-172">    }</span>
+<span class="source-line-no">173</span><span id="line-173">}</span>
 
 
 
