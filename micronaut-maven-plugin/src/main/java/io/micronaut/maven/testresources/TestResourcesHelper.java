@@ -157,6 +157,14 @@ public class TestResourcesHelper {
                 // mojo that it should not stop the server.
                 Path keepalive = getKeepAliveFile();
                 Files.write(keepalive, "true".getBytes());
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                    // Make sure that if the build is interrupted, e.g using CTRL+C, the keepalive file is deleted
+                    try {
+                        Files.delete(keepalive);
+                    } catch (IOException e) {
+                        // ignore
+                    }
+                }));
             }
         }
     }
@@ -234,6 +242,7 @@ public class TestResourcesHelper {
             return;
         }
         if (Files.exists(getKeepAliveFile())) {
+            log.info("Keeping Micronaut Test Resources service alive");
             try {
                 Files.delete(getKeepAliveFile());
             } catch (IOException e) {
@@ -246,6 +255,8 @@ public class TestResourcesHelper {
             if (optionalServerSettings.isPresent() && ServerUtils.isServerStarted(optionalServerSettings.get().getPort())) {
                 log.info("Shutting down Micronaut Test Resources service");
                 doStop();
+            } else {
+                log.info("Cannot find Micronaut Test Resources service settings, server may already be shutdown.");
             }
         } catch (Exception e) {
             throw new MojoExecutionException("Unable to stop test resources server", e);

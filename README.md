@@ -43,6 +43,8 @@ To debug the plugin, you first need to publish a snapshot to your Maven local:
 $ mvn install
 ```
 
+You can skip execution of integration tests by adding `-Dinvoker.skip=true` to the command line.
+
 Then you need a sample application. The one at `examples/java` is the most up-to-date, but you can in principle generate
 a new one from Micronaut Starter. Then, change its `pom.xml` to set the following property:
 
