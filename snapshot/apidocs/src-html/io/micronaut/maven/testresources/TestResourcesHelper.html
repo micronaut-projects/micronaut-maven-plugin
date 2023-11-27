@@ -170,141 +170,152 @@
 <span class="source-line-no">157</span><span id="line-157">                // mojo that it should not stop the server.</span>
 <span class="source-line-no">158</span><span id="line-158">                Path keepalive = getKeepAliveFile();</span>
 <span class="source-line-no">159</span><span id="line-159">                Files.write(keepalive, "true".getBytes());</span>
-<span class="source-line-no">160</span><span id="line-160">            }</span>
-<span class="source-line-no">161</span><span id="line-161">        }</span>
-<span class="source-line-no">162</span><span id="line-162">    }</span>
-<span class="source-line-no">163</span><span id="line-163"></span>
-<span class="source-line-no">164</span><span id="line-164">    /**</span>
-<span class="source-line-no">165</span><span id="line-165">     * Computes the system properties to set for the test resources client to be able to connect to the server.</span>
-<span class="source-line-no">166</span><span id="line-166">     *</span>
-<span class="source-line-no">167</span><span id="line-167">     * @param serverSettings The server settings</span>
-<span class="source-line-no">168</span><span id="line-168">     * @return The system properties</span>
-<span class="source-line-no">169</span><span id="line-169">     */</span>
-<span class="source-line-no">170</span><span id="line-170">    public Map&lt;String, String&gt; computeSystemProperties(ServerSettings serverSettings) {</span>
-<span class="source-line-no">171</span><span id="line-171">        Map&lt;String, String&gt; systemProperties = new HashMap&lt;&gt;(3);</span>
-<span class="source-line-no">172</span><span id="line-172">        String uri = String.format("http://localhost:%d", serverSettings.getPort());</span>
-<span class="source-line-no">173</span><span id="line-173">        systemProperties.put(TEST_RESOURCES_PROP_SERVER_URI, uri);</span>
-<span class="source-line-no">174</span><span id="line-174">        serverSettings.getAccessToken().ifPresent(accessToken -&gt; systemProperties.put(TEST_RESOURCES_PROP_ACCESS_TOKEN, accessToken));</span>
-<span class="source-line-no">175</span><span id="line-175">        serverSettings.getClientTimeout().ifPresent(timeout -&gt; systemProperties.put(TEST_RESOURCES_PROP_CLIENT_READ_TIMEOUT, String.valueOf(timeout)));</span>
-<span class="source-line-no">176</span><span id="line-176">        return systemProperties;</span>
-<span class="source-line-no">177</span><span id="line-177">    }</span>
-<span class="source-line-no">178</span><span id="line-178"></span>
-<span class="source-line-no">179</span><span id="line-179">    private void setSystemProperties(ServerSettings serverSettings) {</span>
-<span class="source-line-no">180</span><span id="line-180">        computeSystemProperties(serverSettings).forEach(System::setProperty);</span>
-<span class="source-line-no">181</span><span id="line-181">    }</span>
-<span class="source-line-no">182</span><span id="line-182"></span>
-<span class="source-line-no">183</span><span id="line-183">    private Optional&lt;ServerSettings&gt; startOrConnectToExistingServer(String accessToken, Path buildDir, Path serverSettingsDirectory, ServerFactory serverFactory) {</span>
-<span class="source-line-no">184</span><span id="line-184">        try {</span>
-<span class="source-line-no">185</span><span id="line-185">            return Optional.ofNullable(</span>
-<span class="source-line-no">186</span><span id="line-186">                    ServerUtils.startOrConnectToExistingServer(</span>
-<span class="source-line-no">187</span><span id="line-187">                        explicitPort,</span>
-<span class="source-line-no">188</span><span id="line-188">                        buildDir.resolve(PORT_FILE_NAME),</span>
-<span class="source-line-no">189</span><span id="line-189">                        serverSettingsDirectory,</span>
-<span class="source-line-no">190</span><span id="line-190">                        accessToken,</span>
-<span class="source-line-no">191</span><span id="line-191">                        resolveServerClasspath(),</span>
-<span class="source-line-no">192</span><span id="line-192">                        clientTimeout,</span>
-<span class="source-line-no">193</span><span id="line-193">                        serverFactory</span>
-<span class="source-line-no">194</span><span id="line-194">                    )</span>
-<span class="source-line-no">195</span><span id="line-195">            );</span>
-<span class="source-line-no">196</span><span id="line-196">        } catch (Exception e) {</span>
-<span class="source-line-no">197</span><span id="line-197">            log.error("Error starting Micronaut Test Resources service", e);</span>
-<span class="source-line-no">198</span><span id="line-198">            return Optional.empty();</span>
-<span class="source-line-no">199</span><span id="line-199">        }</span>
-<span class="source-line-no">200</span><span id="line-200">    }</span>
-<span class="source-line-no">201</span><span id="line-201"></span>
-<span class="source-line-no">202</span><span id="line-202">    private List&lt;File&gt; resolveServerClasspath() throws DependencyResolutionException {</span>
-<span class="source-line-no">203</span><span id="line-203">        List&lt;MavenDependency&gt; applicationDependencies = Collections.emptyList();</span>
-<span class="source-line-no">204</span><span id="line-204">        if (classpathInference) {</span>
-<span class="source-line-no">205</span><span id="line-205">            applicationDependencies = getApplicationDependencies();</span>
-<span class="source-line-no">206</span><span id="line-206">        }</span>
-<span class="source-line-no">207</span><span id="line-207">        Stream&lt;Artifact&gt; serverDependencies =</span>
-<span class="source-line-no">208</span><span id="line-208">                TestResourcesClasspath.inferTestResourcesClasspath(applicationDependencies, testResourcesVersion)</span>
-<span class="source-line-no">209</span><span id="line-209">                        .stream()</span>
-<span class="source-line-no">210</span><span id="line-210">                        .map(DependencyResolutionService::testResourcesDependencyToAetherArtifact);</span>
-<span class="source-line-no">211</span><span id="line-211"></span>
-<span class="source-line-no">212</span><span id="line-212">        List&lt;org.apache.maven.model.Dependency&gt; extraDependencies =</span>
-<span class="source-line-no">213</span><span id="line-213">                testResourcesDependencies != null ? testResourcesDependencies : Collections.emptyList();</span>
-<span class="source-line-no">214</span><span id="line-214"></span>
-<span class="source-line-no">215</span><span id="line-215">        Stream&lt;Artifact&gt; extraDependenciesStream = extraDependencies.stream()</span>
-<span class="source-line-no">216</span><span id="line-216">                .map(DependencyResolutionService::mavenDependencyToAetherArtifact);</span>
-<span class="source-line-no">217</span><span id="line-217"></span>
-<span class="source-line-no">218</span><span id="line-218">        Stream&lt;Artifact&gt; artifacts = concat(serverDependencies, extraDependenciesStream);</span>
+<span class="source-line-no">160</span><span id="line-160">                Runtime.getRuntime().addShutdownHook(new Thread(() -&gt; {</span>
+<span class="source-line-no">161</span><span id="line-161">                    // Make sure that if the build is interrupted, e.g using CTRL+C, the keepalive file is deleted</span>
+<span class="source-line-no">162</span><span id="line-162">                    try {</span>
+<span class="source-line-no">163</span><span id="line-163">                        Files.delete(keepalive);</span>
+<span class="source-line-no">164</span><span id="line-164">                    } catch (IOException e) {</span>
+<span class="source-line-no">165</span><span id="line-165">                        // ignore</span>
+<span class="source-line-no">166</span><span id="line-166">                    }</span>
+<span class="source-line-no">167</span><span id="line-167">                }));</span>
+<span class="source-line-no">168</span><span id="line-168">            }</span>
+<span class="source-line-no">169</span><span id="line-169">        }</span>
+<span class="source-line-no">170</span><span id="line-170">    }</span>
+<span class="source-line-no">171</span><span id="line-171"></span>
+<span class="source-line-no">172</span><span id="line-172">    /**</span>
+<span class="source-line-no">173</span><span id="line-173">     * Computes the system properties to set for the test resources client to be able to connect to the server.</span>
+<span class="source-line-no">174</span><span id="line-174">     *</span>
+<span class="source-line-no">175</span><span id="line-175">     * @param serverSettings The server settings</span>
+<span class="source-line-no">176</span><span id="line-176">     * @return The system properties</span>
+<span class="source-line-no">177</span><span id="line-177">     */</span>
+<span class="source-line-no">178</span><span id="line-178">    public Map&lt;String, String&gt; computeSystemProperties(ServerSettings serverSettings) {</span>
+<span class="source-line-no">179</span><span id="line-179">        Map&lt;String, String&gt; systemProperties = new HashMap&lt;&gt;(3);</span>
+<span class="source-line-no">180</span><span id="line-180">        String uri = String.format("http://localhost:%d", serverSettings.getPort());</span>
+<span class="source-line-no">181</span><span id="line-181">        systemProperties.put(TEST_RESOURCES_PROP_SERVER_URI, uri);</span>
+<span class="source-line-no">182</span><span id="line-182">        serverSettings.getAccessToken().ifPresent(accessToken -&gt; systemProperties.put(TEST_RESOURCES_PROP_ACCESS_TOKEN, accessToken));</span>
+<span class="source-line-no">183</span><span id="line-183">        serverSettings.getClientTimeout().ifPresent(timeout -&gt; systemProperties.put(TEST_RESOURCES_PROP_CLIENT_READ_TIMEOUT, String.valueOf(timeout)));</span>
+<span class="source-line-no">184</span><span id="line-184">        return systemProperties;</span>
+<span class="source-line-no">185</span><span id="line-185">    }</span>
+<span class="source-line-no">186</span><span id="line-186"></span>
+<span class="source-line-no">187</span><span id="line-187">    private void setSystemProperties(ServerSettings serverSettings) {</span>
+<span class="source-line-no">188</span><span id="line-188">        computeSystemProperties(serverSettings).forEach(System::setProperty);</span>
+<span class="source-line-no">189</span><span id="line-189">    }</span>
+<span class="source-line-no">190</span><span id="line-190"></span>
+<span class="source-line-no">191</span><span id="line-191">    private Optional&lt;ServerSettings&gt; startOrConnectToExistingServer(String accessToken, Path buildDir, Path serverSettingsDirectory, ServerFactory serverFactory) {</span>
+<span class="source-line-no">192</span><span id="line-192">        try {</span>
+<span class="source-line-no">193</span><span id="line-193">            return Optional.ofNullable(</span>
+<span class="source-line-no">194</span><span id="line-194">                    ServerUtils.startOrConnectToExistingServer(</span>
+<span class="source-line-no">195</span><span id="line-195">                        explicitPort,</span>
+<span class="source-line-no">196</span><span id="line-196">                        buildDir.resolve(PORT_FILE_NAME),</span>
+<span class="source-line-no">197</span><span id="line-197">                        serverSettingsDirectory,</span>
+<span class="source-line-no">198</span><span id="line-198">                        accessToken,</span>
+<span class="source-line-no">199</span><span id="line-199">                        resolveServerClasspath(),</span>
+<span class="source-line-no">200</span><span id="line-200">                        clientTimeout,</span>
+<span class="source-line-no">201</span><span id="line-201">                        serverFactory</span>
+<span class="source-line-no">202</span><span id="line-202">                    )</span>
+<span class="source-line-no">203</span><span id="line-203">            );</span>
+<span class="source-line-no">204</span><span id="line-204">        } catch (Exception e) {</span>
+<span class="source-line-no">205</span><span id="line-205">            log.error("Error starting Micronaut Test Resources service", e);</span>
+<span class="source-line-no">206</span><span id="line-206">            return Optional.empty();</span>
+<span class="source-line-no">207</span><span id="line-207">        }</span>
+<span class="source-line-no">208</span><span id="line-208">    }</span>
+<span class="source-line-no">209</span><span id="line-209"></span>
+<span class="source-line-no">210</span><span id="line-210">    private List&lt;File&gt; resolveServerClasspath() throws DependencyResolutionException {</span>
+<span class="source-line-no">211</span><span id="line-211">        List&lt;MavenDependency&gt; applicationDependencies = Collections.emptyList();</span>
+<span class="source-line-no">212</span><span id="line-212">        if (classpathInference) {</span>
+<span class="source-line-no">213</span><span id="line-213">            applicationDependencies = getApplicationDependencies();</span>
+<span class="source-line-no">214</span><span id="line-214">        }</span>
+<span class="source-line-no">215</span><span id="line-215">        Stream&lt;Artifact&gt; serverDependencies =</span>
+<span class="source-line-no">216</span><span id="line-216">                TestResourcesClasspath.inferTestResourcesClasspath(applicationDependencies, testResourcesVersion)</span>
+<span class="source-line-no">217</span><span id="line-217">                        .stream()</span>
+<span class="source-line-no">218</span><span id="line-218">                        .map(DependencyResolutionService::testResourcesDependencyToAetherArtifact);</span>
 <span class="source-line-no">219</span><span id="line-219"></span>
-<span class="source-line-no">220</span><span id="line-220">        return toClasspathFiles(dependencyResolutionService.artifactResultsFor(artifacts, true));</span>
-<span class="source-line-no">221</span><span id="line-221">    }</span>
+<span class="source-line-no">220</span><span id="line-220">        List&lt;org.apache.maven.model.Dependency&gt; extraDependencies =</span>
+<span class="source-line-no">221</span><span id="line-221">                testResourcesDependencies != null ? testResourcesDependencies : Collections.emptyList();</span>
 <span class="source-line-no">222</span><span id="line-222"></span>
-<span class="source-line-no">223</span><span id="line-223">    private List&lt;MavenDependency&gt; getApplicationDependencies() {</span>
-<span class="source-line-no">224</span><span id="line-224">        return this.mavenProject.getDependencies().stream()</span>
-<span class="source-line-no">225</span><span id="line-225">                .map(DependencyResolutionService::mavenDependencyToTestResourcesDependency)</span>
-<span class="source-line-no">226</span><span id="line-226">                .toList();</span>
-<span class="source-line-no">227</span><span id="line-227">    }</span>
-<span class="source-line-no">228</span><span id="line-228"></span>
-<span class="source-line-no">229</span><span id="line-229">    /**</span>
-<span class="source-line-no">230</span><span id="line-230">     * Contains the logic to stop the Test Resources Service.</span>
-<span class="source-line-no">231</span><span id="line-231">     */</span>
-<span class="source-line-no">232</span><span id="line-232">    public void stop() throws MojoExecutionException {</span>
-<span class="source-line-no">233</span><span id="line-233">        if (!enabled || Boolean.TRUE.equals(keepAlive)) {</span>
-<span class="source-line-no">234</span><span id="line-234">            return;</span>
-<span class="source-line-no">235</span><span id="line-235">        }</span>
-<span class="source-line-no">236</span><span id="line-236">        if (Files.exists(getKeepAliveFile())) {</span>
-<span class="source-line-no">237</span><span id="line-237">            try {</span>
-<span class="source-line-no">238</span><span id="line-238">                Files.delete(getKeepAliveFile());</span>
-<span class="source-line-no">239</span><span id="line-239">            } catch (IOException e) {</span>
-<span class="source-line-no">240</span><span id="line-240">                throw new MojoExecutionException("Failed to delete keepalive file", e);</span>
-<span class="source-line-no">241</span><span id="line-241">            }</span>
+<span class="source-line-no">223</span><span id="line-223">        Stream&lt;Artifact&gt; extraDependenciesStream = extraDependencies.stream()</span>
+<span class="source-line-no">224</span><span id="line-224">                .map(DependencyResolutionService::mavenDependencyToAetherArtifact);</span>
+<span class="source-line-no">225</span><span id="line-225"></span>
+<span class="source-line-no">226</span><span id="line-226">        Stream&lt;Artifact&gt; artifacts = concat(serverDependencies, extraDependenciesStream);</span>
+<span class="source-line-no">227</span><span id="line-227"></span>
+<span class="source-line-no">228</span><span id="line-228">        return toClasspathFiles(dependencyResolutionService.artifactResultsFor(artifacts, true));</span>
+<span class="source-line-no">229</span><span id="line-229">    }</span>
+<span class="source-line-no">230</span><span id="line-230"></span>
+<span class="source-line-no">231</span><span id="line-231">    private List&lt;MavenDependency&gt; getApplicationDependencies() {</span>
+<span class="source-line-no">232</span><span id="line-232">        return this.mavenProject.getDependencies().stream()</span>
+<span class="source-line-no">233</span><span id="line-233">                .map(DependencyResolutionService::mavenDependencyToTestResourcesDependency)</span>
+<span class="source-line-no">234</span><span id="line-234">                .toList();</span>
+<span class="source-line-no">235</span><span id="line-235">    }</span>
+<span class="source-line-no">236</span><span id="line-236"></span>
+<span class="source-line-no">237</span><span id="line-237">    /**</span>
+<span class="source-line-no">238</span><span id="line-238">     * Contains the logic to stop the Test Resources Service.</span>
+<span class="source-line-no">239</span><span id="line-239">     */</span>
+<span class="source-line-no">240</span><span id="line-240">    public void stop() throws MojoExecutionException {</span>
+<span class="source-line-no">241</span><span id="line-241">        if (!enabled || Boolean.TRUE.equals(keepAlive)) {</span>
 <span class="source-line-no">242</span><span id="line-242">            return;</span>
 <span class="source-line-no">243</span><span id="line-243">        }</span>
-<span class="source-line-no">244</span><span id="line-244">        try {</span>
-<span class="source-line-no">245</span><span id="line-245">            Optional&lt;ServerSettings&gt; optionalServerSettings = ServerUtils.readServerSettings(getServerSettingsDirectory());</span>
-<span class="source-line-no">246</span><span id="line-246">            if (optionalServerSettings.isPresent() &amp;&amp; ServerUtils.isServerStarted(optionalServerSettings.get().getPort())) {</span>
-<span class="source-line-no">247</span><span id="line-247">                log.info("Shutting down Micronaut Test Resources service");</span>
-<span class="source-line-no">248</span><span id="line-248">                doStop();</span>
-<span class="source-line-no">249</span><span id="line-249">            }</span>
-<span class="source-line-no">250</span><span id="line-250">        } catch (Exception e) {</span>
-<span class="source-line-no">251</span><span id="line-251">            throw new MojoExecutionException("Unable to stop test resources server", e);</span>
+<span class="source-line-no">244</span><span id="line-244">        if (Files.exists(getKeepAliveFile())) {</span>
+<span class="source-line-no">245</span><span id="line-245">            log.info("Keeping Micronaut Test Resources service alive");</span>
+<span class="source-line-no">246</span><span id="line-246">            try {</span>
+<span class="source-line-no">247</span><span id="line-247">                Files.delete(getKeepAliveFile());</span>
+<span class="source-line-no">248</span><span id="line-248">            } catch (IOException e) {</span>
+<span class="source-line-no">249</span><span id="line-249">                throw new MojoExecutionException("Failed to delete keepalive file", e);</span>
+<span class="source-line-no">250</span><span id="line-250">            }</span>
+<span class="source-line-no">251</span><span id="line-251">            return;</span>
 <span class="source-line-no">252</span><span id="line-252">        }</span>
-<span class="source-line-no">253</span><span id="line-253">    }</span>
-<span class="source-line-no">254</span><span id="line-254"></span>
-<span class="source-line-no">255</span><span id="line-255">    private void doStop() throws IOException {</span>
-<span class="source-line-no">256</span><span id="line-256">        Path settingsDirectory = getServerSettingsDirectory();</span>
-<span class="source-line-no">257</span><span id="line-257">        ServerUtils.stopServer(settingsDirectory);</span>
-<span class="source-line-no">258</span><span id="line-258">        Files.walkFileTree(settingsDirectory, new SimpleFileVisitor&lt;&gt;() {</span>
-<span class="source-line-no">259</span><span id="line-259">            @Override</span>
-<span class="source-line-no">260</span><span id="line-260">            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {</span>
-<span class="source-line-no">261</span><span id="line-261">                Files.delete(file);</span>
-<span class="source-line-no">262</span><span id="line-262">                return super.visitFile(file, attrs);</span>
-<span class="source-line-no">263</span><span id="line-263">            }</span>
-<span class="source-line-no">264</span><span id="line-264"></span>
-<span class="source-line-no">265</span><span id="line-265">            @Override</span>
-<span class="source-line-no">266</span><span id="line-266">            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {</span>
-<span class="source-line-no">267</span><span id="line-267">                Files.delete(dir);</span>
-<span class="source-line-no">268</span><span id="line-268">                return super.postVisitDirectory(dir, exc);</span>
-<span class="source-line-no">269</span><span id="line-269">            }</span>
-<span class="source-line-no">270</span><span id="line-270">        });</span>
-<span class="source-line-no">271</span><span id="line-271">    }</span>
-<span class="source-line-no">272</span><span id="line-272"></span>
-<span class="source-line-no">273</span><span id="line-273">    private Path getServerSettingsDirectory() {</span>
-<span class="source-line-no">274</span><span id="line-274">        if (shared) {</span>
-<span class="source-line-no">275</span><span id="line-275">            return ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace);</span>
-<span class="source-line-no">276</span><span id="line-276">        }</span>
-<span class="source-line-no">277</span><span id="line-277">        return serverSettingsDirectoryOf(buildDirectory.toPath());</span>
-<span class="source-line-no">278</span><span id="line-278">    }</span>
-<span class="source-line-no">279</span><span id="line-279"></span>
-<span class="source-line-no">280</span><span id="line-280">    private Path getKeepAliveFile() {</span>
-<span class="source-line-no">281</span><span id="line-281">        return getServerSettingsDirectory().resolve("keepalive");</span>
+<span class="source-line-no">253</span><span id="line-253">        try {</span>
+<span class="source-line-no">254</span><span id="line-254">            Optional&lt;ServerSettings&gt; optionalServerSettings = ServerUtils.readServerSettings(getServerSettingsDirectory());</span>
+<span class="source-line-no">255</span><span id="line-255">            if (optionalServerSettings.isPresent() &amp;&amp; ServerUtils.isServerStarted(optionalServerSettings.get().getPort())) {</span>
+<span class="source-line-no">256</span><span id="line-256">                log.info("Shutting down Micronaut Test Resources service");</span>
+<span class="source-line-no">257</span><span id="line-257">                doStop();</span>
+<span class="source-line-no">258</span><span id="line-258">            } else {</span>
+<span class="source-line-no">259</span><span id="line-259">                log.info("Cannot find Micronaut Test Resources service settings, server may already be shutdown.");</span>
+<span class="source-line-no">260</span><span id="line-260">            }</span>
+<span class="source-line-no">261</span><span id="line-261">        } catch (Exception e) {</span>
+<span class="source-line-no">262</span><span id="line-262">            throw new MojoExecutionException("Unable to stop test resources server", e);</span>
+<span class="source-line-no">263</span><span id="line-263">        }</span>
+<span class="source-line-no">264</span><span id="line-264">    }</span>
+<span class="source-line-no">265</span><span id="line-265"></span>
+<span class="source-line-no">266</span><span id="line-266">    private void doStop() throws IOException {</span>
+<span class="source-line-no">267</span><span id="line-267">        Path settingsDirectory = getServerSettingsDirectory();</span>
+<span class="source-line-no">268</span><span id="line-268">        ServerUtils.stopServer(settingsDirectory);</span>
+<span class="source-line-no">269</span><span id="line-269">        Files.walkFileTree(settingsDirectory, new SimpleFileVisitor&lt;&gt;() {</span>
+<span class="source-line-no">270</span><span id="line-270">            @Override</span>
+<span class="source-line-no">271</span><span id="line-271">            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {</span>
+<span class="source-line-no">272</span><span id="line-272">                Files.delete(file);</span>
+<span class="source-line-no">273</span><span id="line-273">                return super.visitFile(file, attrs);</span>
+<span class="source-line-no">274</span><span id="line-274">            }</span>
+<span class="source-line-no">275</span><span id="line-275"></span>
+<span class="source-line-no">276</span><span id="line-276">            @Override</span>
+<span class="source-line-no">277</span><span id="line-277">            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {</span>
+<span class="source-line-no">278</span><span id="line-278">                Files.delete(dir);</span>
+<span class="source-line-no">279</span><span id="line-279">                return super.postVisitDirectory(dir, exc);</span>
+<span class="source-line-no">280</span><span id="line-280">            }</span>
+<span class="source-line-no">281</span><span id="line-281">        });</span>
 <span class="source-line-no">282</span><span id="line-282">    }</span>
 <span class="source-line-no">283</span><span id="line-283"></span>
-<span class="source-line-no">284</span><span id="line-284">    private Path serverSettingsDirectoryOf(Path buildDir) {</span>
-<span class="source-line-no">285</span><span id="line-285">        return buildDir.resolve("../.micronaut/test-resources");</span>
-<span class="source-line-no">286</span><span id="line-286">    }</span>
-<span class="source-line-no">287</span><span id="line-287"></span>
-<span class="source-line-no">288</span><span id="line-288">    /**</span>
-<span class="source-line-no">289</span><span id="line-289">     * @param sharedServerNamespace The shared server namespace (if any).</span>
-<span class="source-line-no">290</span><span id="line-290">     */</span>
-<span class="source-line-no">291</span><span id="line-291">    public void setSharedServerNamespace(String sharedServerNamespace) {</span>
-<span class="source-line-no">292</span><span id="line-292">        this.sharedServerNamespace = sharedServerNamespace;</span>
+<span class="source-line-no">284</span><span id="line-284">    private Path getServerSettingsDirectory() {</span>
+<span class="source-line-no">285</span><span id="line-285">        if (shared) {</span>
+<span class="source-line-no">286</span><span id="line-286">            return ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace);</span>
+<span class="source-line-no">287</span><span id="line-287">        }</span>
+<span class="source-line-no">288</span><span id="line-288">        return serverSettingsDirectoryOf(buildDirectory.toPath());</span>
+<span class="source-line-no">289</span><span id="line-289">    }</span>
+<span class="source-line-no">290</span><span id="line-290"></span>
+<span class="source-line-no">291</span><span id="line-291">    private Path getKeepAliveFile() {</span>
+<span class="source-line-no">292</span><span id="line-292">        return getServerSettingsDirectory().resolve("keepalive");</span>
 <span class="source-line-no">293</span><span id="line-293">    }</span>
-<span class="source-line-no">294</span><span id="line-294">}</span>
+<span class="source-line-no">294</span><span id="line-294"></span>
+<span class="source-line-no">295</span><span id="line-295">    private Path serverSettingsDirectoryOf(Path buildDir) {</span>
+<span class="source-line-no">296</span><span id="line-296">        return buildDir.resolve("../.micronaut/test-resources");</span>
+<span class="source-line-no">297</span><span id="line-297">    }</span>
+<span class="source-line-no">298</span><span id="line-298"></span>
+<span class="source-line-no">299</span><span id="line-299">    /**</span>
+<span class="source-line-no">300</span><span id="line-300">     * @param sharedServerNamespace The shared server namespace (if any).</span>
+<span class="source-line-no">301</span><span id="line-301">     */</span>
+<span class="source-line-no">302</span><span id="line-302">    public void setSharedServerNamespace(String sharedServerNamespace) {</span>
+<span class="source-line-no">303</span><span id="line-303">        this.sharedServerNamespace = sharedServerNamespace;</span>
+<span class="source-line-no">304</span><span id="line-304">    }</span>
+<span class="source-line-no">305</span><span id="line-305">}</span>
 
 
 
