@@ -67,15 +67,17 @@
 <span class="source-line-no">054</span><span id="line-54"></span>
 <span class="source-line-no">055</span><span id="line-55">    @Override</span>
 <span class="source-line-no">056</span><span id="line-56">    public final void execute() throws MojoExecutionException {</span>
-<span class="source-line-no">057</span><span id="line-57">        TestResourcesHelper helper = new TestResourcesHelper(testResourcesEnabled, keepAlive, shared, buildDirectory,</span>
-<span class="source-line-no">058</span><span id="line-58">                explicitPort, clientTimeout, mavenProject, mavenSession,</span>
-<span class="source-line-no">059</span><span id="line-59">                dependencyResolutionService, toolchainManager, testResourcesVersion,</span>
-<span class="source-line-no">060</span><span id="line-60">                classpathInference, testResourcesDependencies, sharedServerNamespace);</span>
-<span class="source-line-no">061</span><span id="line-61">        helper.start();</span>
-<span class="source-line-no">062</span><span id="line-62"></span>
-<span class="source-line-no">063</span><span id="line-63">    }</span>
+<span class="source-line-no">057</span><span id="line-57">        TestResourcesHelper helper = new TestResourcesHelper(</span>
+<span class="source-line-no">058</span><span id="line-58">            testResourcesEnabled, shared, buildDirectory,</span>
+<span class="source-line-no">059</span><span id="line-59">            explicitPort, clientTimeout, mavenProject, mavenSession,</span>
+<span class="source-line-no">060</span><span id="line-60">            dependencyResolutionService, toolchainManager, testResourcesVersion,</span>
+<span class="source-line-no">061</span><span id="line-61">            classpathInference, testResourcesDependencies, sharedServerNamespace,</span>
+<span class="source-line-no">062</span><span id="line-62">            debugServer);</span>
+<span class="source-line-no">063</span><span id="line-63">        helper.start();</span>
 <span class="source-line-no">064</span><span id="line-64"></span>
-<span class="source-line-no">065</span><span id="line-65">}</span>
+<span class="source-line-no">065</span><span id="line-65">    }</span>
+<span class="source-line-no">066</span><span id="line-66"></span>
+<span class="source-line-no">067</span><span id="line-67">}</span>
 
 
 

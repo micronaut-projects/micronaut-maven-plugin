@@ -76,7 +76,7 @@ loadScripts(document, 'script');</script>
 </div>
 <section class="class-description" id="class-description">
 <hr>
-<div class="type-signature"><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesHelper.html#line-44">TestResourcesHelper</a></span>
+<div class="type-signature"><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesHelper.html#line-54">TestResourcesHelper</a></span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">Utility class to stop Test Resources service.</div>
 </section>
@@ -90,13 +90,7 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(boolean,boolean,boolean,java.io.File)" class="member-name-link">TestResourcesHelper</a><wbr>(boolean&nbsp;enabled,
- boolean&nbsp;keepAlive,
- boolean&nbsp;shared,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;buildDirectory)</code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(boolean,boolean,boolean,java.io.File,java.lang.Integer,java.lang.Integer,org.apache.maven.project.MavenProject,org.apache.maven.execution.MavenSession,io.micronaut.maven.services.DependencyResolutionService,org.apache.maven.toolchain.ToolchainManager,java.lang.String,boolean,java.util.List,java.lang.String)" class="member-name-link">TestResourcesHelper</a><wbr>(boolean&nbsp;enabled,
- boolean&nbsp;keepAlive,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(boolean,boolean,java.io.File,java.lang.Integer,java.lang.Integer,org.apache.maven.project.MavenProject,org.apache.maven.execution.MavenSession,io.micronaut.maven.services.DependencyResolutionService,org.apache.maven.toolchain.ToolchainManager,java.lang.String,boolean,java.util.List,java.lang.String,boolean)" class="member-name-link">TestResourcesHelper</a><wbr>(boolean&nbsp;enabled,
  boolean&nbsp;shared,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;buildDirectory,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;explicitPort,
@@ -108,7 +102,13 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;testResourcesVersion,
  boolean&nbsp;classpathInference,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.apache.maven.model.Dependency&gt;&nbsp;testResourcesDependencies,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;sharedServerNamespace)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;sharedServerNamespace,
+ boolean&nbsp;debugServer)</code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(org.apache.maven.execution.MavenSession,boolean,boolean,java.io.File)" class="member-name-link">TestResourcesHelper</a><wbr>(org.apache.maven.execution.MavenSession&nbsp;mavenSession,
+ boolean&nbsp;enabled,
+ boolean&nbsp;shared,
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;buildDirectory)</code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </section>
@@ -160,10 +160,9 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(boolean,boolean,boolean,java.io.File,java.lang.Integer,java.lang.Integer,org.apache.maven.project.MavenProject,org.apache.maven.execution.MavenSession,io.micronaut.maven.services.DependencyResolutionService,org.apache.maven.toolchain.ToolchainManager,java.lang.String,boolean,java.util.List,java.lang.String)">
+<section class="detail" id="&lt;init&gt;(boolean,boolean,java.io.File,java.lang.Integer,java.lang.Integer,org.apache.maven.project.MavenProject,org.apache.maven.execution.MavenSession,io.micronaut.maven.services.DependencyResolutionService,org.apache.maven.toolchain.ToolchainManager,java.lang.String,boolean,java.util.List,java.lang.String,boolean)">
 <h3>TestResourcesHelper</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesHelper.html#line-85">TestResourcesHelper</a></span><wbr><span class="parameters">(boolean&nbsp;enabled,
- boolean&nbsp;keepAlive,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesHelper.html#line-95">TestResourcesHelper</a></span><wbr><span class="parameters">(boolean&nbsp;enabled,
  boolean&nbsp;shared,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;buildDirectory,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;explicitPort,
@@ -175,14 +174,15 @@ loadScripts(document, 'script');</script>
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;testResourcesVersion,
  boolean&nbsp;classpathInference,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.apache.maven.model.Dependency&gt;&nbsp;testResourcesDependencies,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;sharedServerNamespace)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;sharedServerNamespace,
+ boolean&nbsp;debugServer)</span></div>
 </section>
 </li>
 <li>
-<section class="detail" id="&lt;init&gt;(boolean,boolean,boolean,java.io.File)">
+<section class="detail" id="&lt;init&gt;(org.apache.maven.execution.MavenSession,boolean,boolean,java.io.File)">
 <h3>TestResourcesHelper</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesHelper.html#line-104">TestResourcesHelper</a></span><wbr><span class="parameters">(boolean&nbsp;enabled,
- boolean&nbsp;keepAlive,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesHelper.html#line-122">TestResourcesHelper</a></span><wbr><span class="parameters">(org.apache.maven.execution.MavenSession&nbsp;mavenSession,
+ boolean&nbsp;enabled,
  boolean&nbsp;shared,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;buildDirectory)</span></div>
 </section>
@@ -198,7 +198,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="start()">
 <h3>start</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesHelper.html#line-115">start</a></span>()
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesHelper.html#line-144">start</a></span>()
            throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <div class="block">Starts the Test Resources Service.</div>
 <dl class="notes">
@@ -210,7 +210,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="computeSystemProperties(io.micronaut.testresources.buildtools.ServerSettings)">
 <h3>computeSystemProperties</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesHelper.html#line-178">computeSystemProperties</a></span><wbr><span class="parameters">(io.micronaut.testresources.buildtools.ServerSettings&nbsp;serverSettings)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesHelper.html#line-207">computeSystemProperties</a></span><wbr><span class="parameters">(io.micronaut.testresources.buildtools.ServerSettings&nbsp;serverSettings)</span></div>
 <div class="block">Computes the system properties to set for the test resources client to be able to connect to the server.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -223,7 +223,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="stop()">
 <h3>stop</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesHelper.html#line-240">stop</a></span>()
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesHelper.html#line-269">stop</a></span>()
           throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <div class="block">Contains the logic to stop the Test Resources Service.</div>
 <dl class="notes">
@@ -235,7 +235,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="setSharedServerNamespace(java.lang.String)">
 <h3>setSharedServerNamespace</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesHelper.html#line-302">setSharedServerNamespace</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;sharedServerNamespace)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesHelper.html#line-319">setSharedServerNamespace</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;sharedServerNamespace)</span></div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>sharedServerNamespace</code> - The shared server namespace (if any).</dd>

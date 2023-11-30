@@ -202,10 +202,10 @@
 <span class="source-line-no">189</span><span id="line-189"></span>
 <span class="source-line-no">190</span><span id="line-190">    @Override</span>
 <span class="source-line-no">191</span><span id="line-191">    public void execute() throws MojoExecutionException {</span>
-<span class="source-line-no">192</span><span id="line-192">        testResourcesHelper = new TestResourcesHelper(testResourcesEnabled, keepAlive, shared, buildDirectory,</span>
+<span class="source-line-no">192</span><span id="line-192">        testResourcesHelper = new TestResourcesHelper(testResourcesEnabled, shared, buildDirectory,</span>
 <span class="source-line-no">193</span><span id="line-193">                                                      explicitPort, clientTimeout, runnableProject, mavenSession,</span>
 <span class="source-line-no">194</span><span id="line-194">                                                      dependencyResolutionService, toolchainManager, testResourcesVersion,</span>
-<span class="source-line-no">195</span><span id="line-195">                                                      classpathInference, testResourcesDependencies, sharedServerNamespace);</span>
+<span class="source-line-no">195</span><span id="line-195">                                                      classpathInference, testResourcesDependencies, sharedServerNamespace, debugServer);</span>
 <span class="source-line-no">196</span><span id="line-196">        resolveDependencies();</span>
 <span class="source-line-no">197</span><span id="line-197">        this.sourceDirectories = compilerService.resolveSourceDirectories();</span>
 <span class="source-line-no">198</span><span id="line-198"></span>

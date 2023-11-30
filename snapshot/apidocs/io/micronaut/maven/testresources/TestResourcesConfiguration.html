@@ -80,7 +80,7 @@ loadScripts(document, 'script');</script>
 <dd><code><a href="AbstractTestResourcesMojo.html" title="class in io.micronaut.maven.testresources">AbstractTestResourcesMojo</a></code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-31">TestResourcesConfiguration</a></span>
+<div class="type-signature"><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-29">TestResourcesConfiguration</a></span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">Base configuration class for Test Resources.</div>
 <dl class="notes">
@@ -104,14 +104,14 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color"><code><a href="#CONFIG_PROPERTY_PREFIX" class="member-name-link">CONFIG_PROPERTY_PREFIX</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#DISABLED" class="member-name-link">DISABLED</a></code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected boolean</code></div>
-<div class="col-second even-row-color"><code><a href="#keepAlive" class="member-name-link">keepAlive</a></code></div>
-<div class="col-last even-row-color">
-<div class="block">Whether the test resources service should be kept alive after the build.</div>
+<div class="col-first odd-row-color"><code>protected boolean</code></div>
+<div class="col-second odd-row-color"><code><a href="#debugServer" class="member-name-link">debugServer</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">Allows starting the test resources server in debug mode.</div>
 </div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#DISABLED" class="member-name-link">DISABLED</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>protected boolean</code></div>
 <div class="col-second odd-row-color"><code><a href="#shared" class="member-name-link">shared</a></code></div>
 <div class="col-last odd-row-color">
@@ -159,14 +159,11 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSharedServerNamespace()" class="member-name-link">getSharedServerNamespace</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isKeepAlive()" class="member-name-link">isKeepAlive</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isShared()" class="member-name-link">isShared</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isShared()" class="member-name-link">isShared</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isTestResourcesEnabled()" class="member-name-link">isTestResourcesEnabled</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isTestResourcesEnabled()" class="member-name-link">isTestResourcesEnabled</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -187,7 +184,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="DISABLED">
 <h3>DISABLED</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-35">DISABLED</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-33">DISABLED</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -201,7 +198,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="CONFIG_PROPERTY_PREFIX">
 <h3>CONFIG_PROPERTY_PREFIX</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-36">CONFIG_PROPERTY_PREFIX</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-34">CONFIG_PROPERTY_PREFIX</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -217,7 +214,7 @@ loadScripts(document, 'script');</script>
 <h3>testResourcesEnabled</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.test.resources.enabled",
            defaultValue="false")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-43">testResourcesEnabled</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-41">testResourcesEnabled</a></span></div>
 <div class="block">Whether to enable or disable Micronaut test resources support.</div>
 </section>
 </li>
@@ -226,30 +223,35 @@ loadScripts(document, 'script');</script>
 <h3>shared</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.test.resources.shared",
            defaultValue="false")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-51">shared</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-49">shared</a></span></div>
 <div class="block">Whether the test resources service should be shared between independent builds
  (e.g different projects, even built with different build tools).</div>
-</section>
-</li>
-<li>
-<section class="detail" id="keepAlive">
-<h3>keepAlive</h3>
-<div class="member-signature"><span class="annotations">@Parameter(property="keepAlive",
-           defaultValue="false")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-57">keepAlive</a></span></div>
-<div class="block">Whether the test resources service should be kept alive after the build.</div>
 </section>
 </li>
 <li>
 <section class="detail" id="sharedServerNamespace">
 <h3>sharedServerNamespace</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.test.resources.namespace")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-66">sharedServerNamespace</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-58">sharedServerNamespace</a></span></div>
 <div class="block">Allows configuring a namespace for the shared test resources server. This can be used in case it makes sense to
  have different instances of shared services, for example when independent builds sets share different services.</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>3.5.1</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="debugServer">
+<h3>debugServer</h3>
+<div class="member-signature"><span class="annotations">@Parameter(property="micronaut.test.resources.debug-server",
+           defaultValue="false")
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-67">debugServer</a></span></div>
+<div class="block">Allows starting the test resources server in debug mode. The server will be started with the ability
+ to attach a remote debugger on port 8000.</div>
+<dl class="notes">
+<dt>Since:</dt>
+<dd>4.1.1</dd>
 </dl>
 </section>
 </li>
@@ -264,7 +266,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="&lt;init&gt;()">
 <h3>TestResourcesConfiguration</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-33">TestResourcesConfiguration</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-31">TestResourcesConfiguration</a></span>()</div>
 </section>
 </li>
 </ul>
@@ -278,7 +280,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="isTestResourcesEnabled()">
 <h3>isTestResourcesEnabled</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-72">isTestResourcesEnabled</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-73">isTestResourcesEnabled</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Whether to enable or disable Micronaut test resources support.</dd>
@@ -288,7 +290,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="isShared()">
 <h3>isShared</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-79">isShared</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-80">isShared</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Whether the test resources service should be shared between independent builds.</dd>
@@ -296,19 +298,9 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
-<section class="detail" id="isKeepAlive()">
-<h3>isKeepAlive</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-86">isKeepAlive</a></span>()</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>Whether the test resources service should be kept alive after the build.</dd>
-</dl>
-</section>
-</li>
-<li>
 <section class="detail" id="getSharedServerNamespace()">
 <h3>getSharedServerNamespace</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-93">getSharedServerNamespace</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-87">getSharedServerNamespace</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The shared server namespace (if any).</dd>

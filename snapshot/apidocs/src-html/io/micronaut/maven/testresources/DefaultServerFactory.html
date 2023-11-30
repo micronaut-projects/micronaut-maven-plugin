@@ -57,52 +57,61 @@
 <span class="source-line-no">044</span><span id="line-44">    private final MavenSession mavenSession;</span>
 <span class="source-line-no">045</span><span id="line-45">    private final AtomicBoolean serverStarted;</span>
 <span class="source-line-no">046</span><span id="line-46">    private final String testResourcesVersion;</span>
-<span class="source-line-no">047</span><span id="line-47"></span>
-<span class="source-line-no">048</span><span id="line-48">    private Process process;</span>
-<span class="source-line-no">049</span><span id="line-49"></span>
-<span class="source-line-no">050</span><span id="line-50">    public DefaultServerFactory(Log log, ToolchainManager toolchainManager, MavenSession mavenSession,</span>
-<span class="source-line-no">051</span><span id="line-51">                                AtomicBoolean serverStarted, String testResourcesVersion) {</span>
-<span class="source-line-no">052</span><span id="line-52">        this.log = log;</span>
-<span class="source-line-no">053</span><span id="line-53">        this.toolchainManager = toolchainManager;</span>
-<span class="source-line-no">054</span><span id="line-54">        this.mavenSession = mavenSession;</span>
-<span class="source-line-no">055</span><span id="line-55">        this.serverStarted = serverStarted;</span>
-<span class="source-line-no">056</span><span id="line-56">        this.testResourcesVersion = testResourcesVersion;</span>
-<span class="source-line-no">057</span><span id="line-57">    }</span>
-<span class="source-line-no">058</span><span id="line-58"></span>
-<span class="source-line-no">059</span><span id="line-59">    @Override</span>
-<span class="source-line-no">060</span><span id="line-60">    public void startServer(ServerUtils.ProcessParameters processParameters) {</span>
-<span class="source-line-no">061</span><span id="line-61">        log.info("Starting Micronaut Test Resources service, version " + testResourcesVersion);</span>
-<span class="source-line-no">062</span><span id="line-62">        String javaBin = findJavaExecutable(toolchainManager, mavenSession);</span>
-<span class="source-line-no">063</span><span id="line-63">        List&lt;String&gt; cli = new ArrayList&lt;&gt;();</span>
-<span class="source-line-no">064</span><span id="line-64">        cli.add(javaBin);</span>
-<span class="source-line-no">065</span><span id="line-65">        cli.addAll(processParameters.getJvmArguments());</span>
-<span class="source-line-no">066</span><span id="line-66">        processParameters.getSystemProperties().forEach((key, value) -&gt; cli.add("-D" + key + "=" + value));</span>
-<span class="source-line-no">067</span><span id="line-67">        cli.add("-cp");</span>
-<span class="source-line-no">068</span><span id="line-68">        cli.add(processParameters.getClasspath().stream().map(File::getAbsolutePath).collect(Collectors.joining(File.pathSeparator)));</span>
-<span class="source-line-no">069</span><span id="line-69">        cli.add(processParameters.getMainClass());</span>
-<span class="source-line-no">070</span><span id="line-70">        cli.addAll(processParameters.getArguments());</span>
-<span class="source-line-no">071</span><span id="line-71">        ProcessBuilder builder = new ProcessBuilder(cli);</span>
-<span class="source-line-no">072</span><span id="line-72">        try {</span>
-<span class="source-line-no">073</span><span id="line-73">            process = builder.inheritIO().start();</span>
-<span class="source-line-no">074</span><span id="line-74">        } catch (Exception e) {</span>
-<span class="source-line-no">075</span><span id="line-75">            serverStarted.set(false);</span>
-<span class="source-line-no">076</span><span id="line-76">            process.destroyForcibly();</span>
-<span class="source-line-no">077</span><span id="line-77">        } finally {</span>
-<span class="source-line-no">078</span><span id="line-78">            if (process.isAlive()) {</span>
-<span class="source-line-no">079</span><span id="line-79">                serverStarted.set(true);</span>
-<span class="source-line-no">080</span><span id="line-80">            } else {</span>
-<span class="source-line-no">081</span><span id="line-81">                process.destroyForcibly();</span>
-<span class="source-line-no">082</span><span id="line-82">            }</span>
-<span class="source-line-no">083</span><span id="line-83">        }</span>
-<span class="source-line-no">084</span><span id="line-84">    }</span>
-<span class="source-line-no">085</span><span id="line-85"></span>
-<span class="source-line-no">086</span><span id="line-86">    @Override</span>
-<span class="source-line-no">087</span><span id="line-87">    public void waitFor(Duration duration) throws InterruptedException {</span>
-<span class="source-line-no">088</span><span id="line-88">        if (process != null) {</span>
-<span class="source-line-no">089</span><span id="line-89">            process.waitFor(duration.toMillis(), TimeUnit.MILLISECONDS);</span>
-<span class="source-line-no">090</span><span id="line-90">        }</span>
-<span class="source-line-no">091</span><span id="line-91">    }</span>
-<span class="source-line-no">092</span><span id="line-92">}</span>
+<span class="source-line-no">047</span><span id="line-47">    private final boolean debugServer;</span>
+<span class="source-line-no">048</span><span id="line-48"></span>
+<span class="source-line-no">049</span><span id="line-49">    private Process process;</span>
+<span class="source-line-no">050</span><span id="line-50"></span>
+<span class="source-line-no">051</span><span id="line-51">    public DefaultServerFactory(Log log,</span>
+<span class="source-line-no">052</span><span id="line-52">                                ToolchainManager toolchainManager,</span>
+<span class="source-line-no">053</span><span id="line-53">                                MavenSession mavenSession,</span>
+<span class="source-line-no">054</span><span id="line-54">                                AtomicBoolean serverStarted,</span>
+<span class="source-line-no">055</span><span id="line-55">                                String testResourcesVersion,</span>
+<span class="source-line-no">056</span><span id="line-56">                                boolean debugServer) {</span>
+<span class="source-line-no">057</span><span id="line-57">        this.log = log;</span>
+<span class="source-line-no">058</span><span id="line-58">        this.toolchainManager = toolchainManager;</span>
+<span class="source-line-no">059</span><span id="line-59">        this.mavenSession = mavenSession;</span>
+<span class="source-line-no">060</span><span id="line-60">        this.serverStarted = serverStarted;</span>
+<span class="source-line-no">061</span><span id="line-61">        this.testResourcesVersion = testResourcesVersion;</span>
+<span class="source-line-no">062</span><span id="line-62">        this.debugServer = debugServer;</span>
+<span class="source-line-no">063</span><span id="line-63">    }</span>
+<span class="source-line-no">064</span><span id="line-64"></span>
+<span class="source-line-no">065</span><span id="line-65">    @Override</span>
+<span class="source-line-no">066</span><span id="line-66">    public void startServer(ServerUtils.ProcessParameters processParameters) {</span>
+<span class="source-line-no">067</span><span id="line-67">        log.info("Starting Micronaut Test Resources service, version " + testResourcesVersion);</span>
+<span class="source-line-no">068</span><span id="line-68">        String javaBin = findJavaExecutable(toolchainManager, mavenSession);</span>
+<span class="source-line-no">069</span><span id="line-69">        List&lt;String&gt; cli = new ArrayList&lt;&gt;();</span>
+<span class="source-line-no">070</span><span id="line-70">        cli.add(javaBin);</span>
+<span class="source-line-no">071</span><span id="line-71">        cli.addAll(processParameters.getJvmArguments());</span>
+<span class="source-line-no">072</span><span id="line-72">        if (debugServer) {</span>
+<span class="source-line-no">073</span><span id="line-73">            cli.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000");</span>
+<span class="source-line-no">074</span><span id="line-74">        }</span>
+<span class="source-line-no">075</span><span id="line-75">        processParameters.getSystemProperties().forEach((key, value) -&gt; cli.add("-D" + key + "=" + value));</span>
+<span class="source-line-no">076</span><span id="line-76">        cli.add("-cp");</span>
+<span class="source-line-no">077</span><span id="line-77">        cli.add(processParameters.getClasspath().stream().map(File::getAbsolutePath).collect(Collectors.joining(File.pathSeparator)));</span>
+<span class="source-line-no">078</span><span id="line-78">        cli.add(processParameters.getMainClass());</span>
+<span class="source-line-no">079</span><span id="line-79">        cli.addAll(processParameters.getArguments());</span>
+<span class="source-line-no">080</span><span id="line-80">        ProcessBuilder builder = new ProcessBuilder(cli);</span>
+<span class="source-line-no">081</span><span id="line-81">        try {</span>
+<span class="source-line-no">082</span><span id="line-82">            process = builder.inheritIO().start();</span>
+<span class="source-line-no">083</span><span id="line-83">        } catch (Exception e) {</span>
+<span class="source-line-no">084</span><span id="line-84">            serverStarted.set(false);</span>
+<span class="source-line-no">085</span><span id="line-85">            process.destroyForcibly();</span>
+<span class="source-line-no">086</span><span id="line-86">        } finally {</span>
+<span class="source-line-no">087</span><span id="line-87">            if (process.isAlive()) {</span>
+<span class="source-line-no">088</span><span id="line-88">                serverStarted.set(true);</span>
+<span class="source-line-no">089</span><span id="line-89">            } else {</span>
+<span class="source-line-no">090</span><span id="line-90">                process.destroyForcibly();</span>
+<span class="source-line-no">091</span><span id="line-91">            }</span>
+<span class="source-line-no">092</span><span id="line-92">        }</span>
+<span class="source-line-no">093</span><span id="line-93">    }</span>
+<span class="source-line-no">094</span><span id="line-94"></span>
+<span class="source-line-no">095</span><span id="line-95">    @Override</span>
+<span class="source-line-no">096</span><span id="line-96">    public void waitFor(Duration duration) throws InterruptedException {</span>
+<span class="source-line-no">097</span><span id="line-97">        if (process != null) {</span>
+<span class="source-line-no">098</span><span id="line-98">            process.waitFor(duration.toMillis(), TimeUnit.MILLISECONDS);</span>
+<span class="source-line-no">099</span><span id="line-99">        }</span>
+<span class="source-line-no">100</span><span id="line-100">    }</span>
+<span class="source-line-no">101</span><span id="line-101">}</span>
 
 
 

@@ -101,11 +101,12 @@ implements io.micronaut.testresources.buildtools.ServerFactory</span></div>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(org.apache.maven.plugin.logging.Log,org.apache.maven.toolchain.ToolchainManager,org.apache.maven.execution.MavenSession,java.util.concurrent.atomic.AtomicBoolean,java.lang.String)" class="member-name-link">DefaultServerFactory</a><wbr>(org.apache.maven.plugin.logging.Log&nbsp;log,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(org.apache.maven.plugin.logging.Log,org.apache.maven.toolchain.ToolchainManager,org.apache.maven.execution.MavenSession,java.util.concurrent.atomic.AtomicBoolean,java.lang.String,boolean)" class="member-name-link">DefaultServerFactory</a><wbr>(org.apache.maven.plugin.logging.Log&nbsp;log,
  org.apache.maven.toolchain.ToolchainManager&nbsp;toolchainManager,
  org.apache.maven.execution.MavenSession&nbsp;mavenSession,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/atomic/AtomicBoolean.html" title="class or interface in java.util.concurrent.atomic" class="external-link">AtomicBoolean</a>&nbsp;serverStarted,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;testResourcesVersion)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;testResourcesVersion,
+ boolean&nbsp;debugServer)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -145,13 +146,14 @@ implements io.micronaut.testresources.buildtools.ServerFactory</span></div>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(org.apache.maven.plugin.logging.Log,org.apache.maven.toolchain.ToolchainManager,org.apache.maven.execution.MavenSession,java.util.concurrent.atomic.AtomicBoolean,java.lang.String)">
+<section class="detail" id="&lt;init&gt;(org.apache.maven.plugin.logging.Log,org.apache.maven.toolchain.ToolchainManager,org.apache.maven.execution.MavenSession,java.util.concurrent.atomic.AtomicBoolean,java.lang.String,boolean)">
 <h3>DefaultServerFactory</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/DefaultServerFactory.html#line-50">DefaultServerFactory</a></span><wbr><span class="parameters">(org.apache.maven.plugin.logging.Log&nbsp;log,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/DefaultServerFactory.html#line-51">DefaultServerFactory</a></span><wbr><span class="parameters">(org.apache.maven.plugin.logging.Log&nbsp;log,
  org.apache.maven.toolchain.ToolchainManager&nbsp;toolchainManager,
  org.apache.maven.execution.MavenSession&nbsp;mavenSession,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/concurrent/atomic/AtomicBoolean.html" title="class or interface in java.util.concurrent.atomic" class="external-link">AtomicBoolean</a>&nbsp;serverStarted,
- <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;testResourcesVersion)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;testResourcesVersion,
+ boolean&nbsp;debugServer)</span></div>
 </section>
 </li>
 </ul>
@@ -165,7 +167,7 @@ implements io.micronaut.testresources.buildtools.ServerFactory</span></div>
 <li>
 <section class="detail" id="startServer(io.micronaut.testresources.buildtools.ServerUtils.ProcessParameters)">
 <h3>startServer</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/DefaultServerFactory.html#line-59">startServer</a></span><wbr><span class="parameters">(io.micronaut.testresources.buildtools.ServerUtils.ProcessParameters&nbsp;processParameters)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/DefaultServerFactory.html#line-65">startServer</a></span><wbr><span class="parameters">(io.micronaut.testresources.buildtools.ServerUtils.ProcessParameters&nbsp;processParameters)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>startServer</code>&nbsp;in interface&nbsp;<code>io.micronaut.testresources.buildtools.ServerFactory</code></dd>
@@ -175,7 +177,7 @@ implements io.micronaut.testresources.buildtools.ServerFactory</span></div>
 <li>
 <section class="detail" id="waitFor(java.time.Duration)">
 <h3>waitFor</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/DefaultServerFactory.html#line-86">waitFor</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;duration)</span>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/DefaultServerFactory.html#line-95">waitFor</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;duration)</span>
              throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/InterruptedException.html" title="class or interface in java.lang" class="external-link">InterruptedException</a></span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
