@@ -20,8 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import org.apache.maven.plugins.annotations.Parameter;
 
-import static io.micronaut.maven.testresources.StopTestResourcesServerMojo.MICRONAUT_TEST_RESOURCES_KEEPALIVE;
-
 /**
  * Base configuration class for Test Resources.
  *
@@ -52,12 +50,6 @@ public class TestResourcesConfiguration {
     protected boolean shared;
 
     /**
-     * Whether the test resources service should be kept alive after the build.
-     */
-    @Parameter(property = MICRONAUT_TEST_RESOURCES_KEEPALIVE, defaultValue = DISABLED)
-    protected boolean keepAlive;
-
-    /**
      * Allows configuring a namespace for the shared test resources server. This can be used in case it makes sense to
      * have different instances of shared services, for example when independent builds sets share different services.
      *
@@ -65,6 +57,15 @@ public class TestResourcesConfiguration {
      */
     @Parameter(property = CONFIG_PROPERTY_PREFIX + "namespace")
     protected String sharedServerNamespace;
+
+    /**
+     * Allows starting the test resources server in debug mode. The server will be started with the ability
+     * to attach a remote debugger on port 8000.
+     *
+     * @since 4.1.1
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + "debug-server", defaultValue = DISABLED)
+    protected boolean debugServer;
 
     /**
      * @return Whether to enable or disable Micronaut test resources support.
@@ -78,13 +79,6 @@ public class TestResourcesConfiguration {
      */
     public boolean isShared() {
         return shared;
-    }
-
-    /**
-     * @return Whether the test resources service should be kept alive after the build.
-     */
-    public boolean isKeepAlive() {
-        return keepAlive;
     }
 
     /**
