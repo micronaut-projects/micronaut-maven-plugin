@@ -29,8 +29,16 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.*;
-import org.apache.maven.project.*;
+import org.apache.maven.plugins.annotations.Execute;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuilder;
+import org.apache.maven.project.ProjectBuildingException;
+import org.apache.maven.project.ProjectBuildingRequest;
+import org.apache.maven.project.ProjectBuildingResult;
 import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.util.AbstractScanner;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
@@ -41,7 +49,14 @@ import javax.inject.Inject;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static io.micronaut.maven.MojoUtils.findJavaExecutable;
 import static java.nio.file.Files.isDirectory;
@@ -158,9 +173,16 @@ public class RunMojo extends AbstractTestResourcesMojo {
     @Parameter(property = "micronaut.aot.enabled", defaultValue = "false")
     private boolean aotEnabled;
 
+    // These 2 flags are used in the context of watching for changes
+    // the first one makes sure that only one recompilation is processed at a time
+    private final AtomicBoolean recompileRequested = new AtomicBoolean();
+    // the second one makes sure that we wait for the server to be started before we restart it
+    // otherwise a process may be kept alive
+    private final ReentrantLock restartLock = new ReentrantLock();
+
     private MavenProject runnableProject;
     private DirectoryWatcher directoryWatcher;
-    private Process process;
+    private volatile Process process;
     private String classpath;
     private int classpathHash;
     private long lastCompilation;
@@ -435,54 +457,63 @@ public class RunMojo extends AbstractTestResourcesMojo {
     }
 
     private void runApplication() throws Exception {
-        runAotIfNeeded();
-        String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
-
-        List<String> args = new ArrayList<>();
-        args.add(javaExecutable);
-
-        if (debug) {
-            String suspend = debugSuspend ? "y" : "n";
-            args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=" + suspend + ",address=" + debugHost + ":" + debugPort);
+        if (restartLock.getQueueLength() >= 1) {
+            // if there's more than one restart request, we'll handle them all at once
+            return;
         }
+        restartLock.lock();
+        try {
+            runAotIfNeeded();
+            String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
 
-        if (testResourcesEnabled) {
-            Path testResourcesSettingsDirectory = shared ? ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace) :
+            List<String> args = new ArrayList<>();
+            args.add(javaExecutable);
+
+            if (debug) {
+                String suspend = debugSuspend ? "y" : "n";
+                args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=" + suspend + ",address=" + debugHost + ":" + debugPort);
+            }
+
+            if (testResourcesEnabled) {
+                Path testResourcesSettingsDirectory = shared ? ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace) :
                     AbstractTestResourcesMojo.serverSettingsDirectoryOf(targetDirectory.toPath());
-            Optional<ServerSettings> serverSettings = ServerUtils.readServerSettings(testResourcesSettingsDirectory);
-            serverSettings.ifPresent(settings -> testResourcesHelper.computeSystemProperties(settings)
+                Optional<ServerSettings> serverSettings = ServerUtils.readServerSettings(testResourcesSettingsDirectory);
+                serverSettings.ifPresent(settings -> testResourcesHelper.computeSystemProperties(settings)
                     .forEach((k, v) -> args.add("-D" + k + "=" + v)));
-        }
+            }
 
-        if (jvmArguments != null && !jvmArguments.isEmpty()) {
-            final String[] strings = CommandLineUtils.translateCommandline(jvmArguments);
-            args.addAll(Arrays.asList(strings));
-        }
+            if (jvmArguments != null && !jvmArguments.isEmpty()) {
+                final String[] strings = CommandLineUtils.translateCommandline(jvmArguments);
+                args.addAll(Arrays.asList(strings));
+            }
 
-        if (!mavenSession.getUserProperties().isEmpty()) {
-            mavenSession.getUserProperties().forEach((k, v) -> args.add("-D" + k + "=" + v));
-        }
+            if (!mavenSession.getUserProperties().isEmpty()) {
+                mavenSession.getUserProperties().forEach((k, v) -> args.add("-D" + k + "=" + v));
+            }
 
-        args.add("-classpath");
-        args.add(classpathArgument);
-        args.add("-XX:TieredStopAtLevel=1");
-        args.add("-Dcom.sun.management.jmxremote");
-        args.add(mainClass);
+            args.add("-classpath");
+            args.add(classpathArgument);
+            args.add("-XX:TieredStopAtLevel=1");
+            args.add("-Dcom.sun.management.jmxremote");
+            args.add(mainClass);
 
-        if (appArguments != null && !appArguments.isEmpty()) {
-            final String[] strings = CommandLineUtils.translateCommandline(appArguments);
-            args.addAll(Arrays.asList(strings));
-        }
+            if (appArguments != null && !appArguments.isEmpty()) {
+                final String[] strings = CommandLineUtils.translateCommandline(appArguments);
+                args.addAll(Arrays.asList(strings));
+            }
 
-        if (getLog().isDebugEnabled()) {
-            getLog().debug("Running " + String.join(" ", args));
-        }
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Running " + String.join(" ", args));
+            }
 
-        killProcess();
-        process = new ProcessBuilder(args)
+            killProcess();
+            process = new ProcessBuilder(args)
                 .inheritIO()
                 .directory(targetDirectory)
                 .start();
+        } finally {
+            restartLock.unlock();
+        }
     }
 
     private void runAotIfNeeded() {
@@ -504,6 +535,20 @@ public class RunMojo extends AbstractTestResourcesMojo {
     }
 
     private boolean compileProject() {
+        // There can be multiple changes detected at the same time, so we want
+        // to keep only one compilation request
+        if (recompileRequested.get()) {
+            return false;
+        }
+        recompileRequested.set(true);
+        try {
+            return doCompile();
+        } finally {
+            recompileRequested.set(false);
+        }
+    }
+
+    private boolean doCompile() {
         Optional<Long> lastCompilationMillis = compilerService.compileProject();
         lastCompilationMillis.ifPresent(lc -> this.lastCompilation = lc);
         return lastCompilationMillis.isPresent();
