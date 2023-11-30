@@ -16,7 +16,11 @@
 package io.micronaut.maven.testresources;
 
 import io.micronaut.maven.services.DependencyResolutionService;
-import io.micronaut.testresources.buildtools.*;
+import io.micronaut.testresources.buildtools.MavenDependency;
+import io.micronaut.testresources.buildtools.ServerFactory;
+import io.micronaut.testresources.buildtools.ServerSettings;
+import io.micronaut.testresources.buildtools.ServerUtils;
+import io.micronaut.testresources.buildtools.TestResourcesClasspath;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -29,9 +33,15 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -54,7 +64,7 @@ public class TestResourcesHelper {
 
     private final boolean enabled;
 
-    private final boolean keepAlive;
+    private final MavenSession mavenSession;
 
     private final boolean shared;
 
@@ -68,8 +78,6 @@ public class TestResourcesHelper {
 
     private MavenProject mavenProject;
 
-    private MavenSession mavenSession;
-
     private DependencyResolutionService dependencyResolutionService;
 
     private ToolchainManager toolchainManager;
@@ -82,31 +90,52 @@ public class TestResourcesHelper {
 
     private String sharedServerNamespace;
 
-    public TestResourcesHelper(boolean enabled, boolean keepAlive, boolean shared, File buildDirectory,
-                               Integer explicitPort, Integer clientTimeout, MavenProject mavenProject,
-                               MavenSession mavenSession, DependencyResolutionService dependencyResolutionService,
-                               ToolchainManager toolchainManager, String testResourcesVersion,
-                               boolean classpathInference, List<Dependency> testResourcesDependencies,
-                               String sharedServerNamespace) {
-        this(enabled, keepAlive, shared, buildDirectory);
+    private boolean debugServer;
+
+    public TestResourcesHelper(boolean enabled,
+                               boolean shared,
+                               File buildDirectory,
+                               Integer explicitPort,
+                               Integer clientTimeout,
+                               MavenProject mavenProject,
+                               MavenSession mavenSession,
+                               DependencyResolutionService dependencyResolutionService,
+                               ToolchainManager toolchainManager,
+                               String testResourcesVersion,
+                               boolean classpathInference,
+                               List<Dependency> testResourcesDependencies,
+                               String sharedServerNamespace,
+                               boolean debugServer) {
+        this(mavenSession, enabled, shared, buildDirectory);
         this.explicitPort = explicitPort;
         this.clientTimeout = clientTimeout;
         this.mavenProject = mavenProject;
-        this.mavenSession = mavenSession;
         this.dependencyResolutionService = dependencyResolutionService;
         this.toolchainManager = toolchainManager;
         this.testResourcesVersion = testResourcesVersion;
         this.classpathInference = classpathInference;
         this.testResourcesDependencies = testResourcesDependencies;
         this.sharedServerNamespace = sharedServerNamespace;
+        this.debugServer = debugServer;
     }
 
-    public TestResourcesHelper(boolean enabled, boolean keepAlive, boolean shared, File buildDirectory) {
+    public TestResourcesHelper(MavenSession mavenSession, boolean enabled, boolean shared, File buildDirectory) {
+        this.mavenSession = mavenSession;
         this.enabled = enabled;
-        this.keepAlive = keepAlive;
         this.shared = shared;
         this.buildDirectory = buildDirectory;
         this.log = new SystemStreamLog();
+    }
+
+    private boolean isKeepAlive() {
+        boolean hasKeepAliveFile = Files.exists(getKeepAliveFile());
+        return hasKeepAliveFile || isStartExplicitlyInvoked();
+    }
+
+    private boolean isStartExplicitlyInvoked() {
+        return mavenSession.getGoals()
+            .stream()
+            .anyMatch(goal -> goal.equals("mn:" + StartTestResourcesServerMojo.NAME));
     }
 
     /**
@@ -128,7 +157,7 @@ public class TestResourcesHelper {
         Path buildDir = buildDirectory.toPath();
         Path serverSettingsDirectory = getServerSettingsDirectory();
         AtomicBoolean serverStarted = new AtomicBoolean(false);
-        ServerFactory serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion);
+        ServerFactory serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion, debugServer);
         Optional<ServerSettings> optionalServerSettings = startOrConnectToExistingServer(accessToken, buildDir, serverSettingsDirectory, serverFactory);
         if (optionalServerSettings.isPresent()) {
             ServerSettings serverSettings = optionalServerSettings.get();
@@ -148,7 +177,7 @@ public class TestResourcesHelper {
             }
             setSystemProperties(serverSettings);
             if (serverStarted.get()) {
-                if (keepAlive) {
+                if (isKeepAlive()) {
                     log.info("Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:" + StopTestResourcesServerMojo.NAME + "'");
                 }
             } else {
@@ -238,7 +267,7 @@ public class TestResourcesHelper {
      * Contains the logic to stop the Test Resources Service.
      */
     public void stop() throws MojoExecutionException {
-        if (!enabled || Boolean.TRUE.equals(keepAlive)) {
+        if (!enabled) {
             return;
         }
         if (Files.exists(getKeepAliveFile())) {
@@ -266,19 +295,6 @@ public class TestResourcesHelper {
     private void doStop() throws IOException {
         Path settingsDirectory = getServerSettingsDirectory();
         ServerUtils.stopServer(settingsDirectory);
-        Files.walkFileTree(settingsDirectory, new SimpleFileVisitor<>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.delete(file);
-                return super.visitFile(file, attrs);
-            }
-
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                Files.delete(dir);
-                return super.postVisitDirectory(dir, exc);
-            }
-        });
     }
 
     private Path getServerSettingsDirectory() {
@@ -289,7 +305,8 @@ public class TestResourcesHelper {
     }
 
     private Path getKeepAliveFile() {
-        return getServerSettingsDirectory().resolve("keepalive");
+        Path tmpDir = Path.of(System.getProperty("java.io.tmpdir"));
+        return tmpDir.resolve("keepalive-" + mavenSession.getStartTime().getTime());
     }
 
     private Path serverSettingsDirectoryOf(Path buildDir) {

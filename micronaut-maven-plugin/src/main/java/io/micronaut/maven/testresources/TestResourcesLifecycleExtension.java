@@ -102,11 +102,10 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
                     ExpressionEvaluator evaluator = perProjectEvaluator.computeIfAbsent(currentProject, p -> initEvaluator(p, session));
                     TestResourcesConfiguration configuration = perProjectConfiguration.computeIfAbsent(currentProject, mavenProject -> initConfiguration(plugin));
                     boolean enabled = isEnabled(evaluator, configuration);
-                    boolean keepAlive = isKeepAlive(evaluator, configuration);
                     boolean shared = isShared(evaluator, configuration);
                     File buildDirectory = new File(build.getDirectory());
 
-                    TestResourcesHelper helper = new TestResourcesHelper(enabled, keepAlive, shared, buildDirectory);
+                    TestResourcesHelper helper = new TestResourcesHelper(session, enabled, shared, buildDirectory);
                     if (shared) {
                         String sharedServerNamespace = findSharedServerNamespace(evaluator, configuration);
                         helper.setSharedServerNamespace(sharedServerNamespace);
@@ -141,16 +140,6 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
             return result;
         } else if (configuration != null) {
             return configuration.isShared();
-        }
-        return false;
-    }
-
-    private boolean isKeepAlive(ExpressionEvaluator evaluator, TestResourcesConfiguration configuration) {
-        Boolean result = evaluateBooleanProperty(evaluator, MICRONAUT_TEST_RESOURCES_KEEPALIVE);
-        if (result != null) {
-            return result;
-        } else if (configuration != null) {
-            return configuration.isKeepAlive();
         }
         return false;
     }

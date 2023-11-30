@@ -44,16 +44,22 @@ public class DefaultServerFactory implements ServerFactory {
     private final MavenSession mavenSession;
     private final AtomicBoolean serverStarted;
     private final String testResourcesVersion;
+    private final boolean debugServer;
 
     private Process process;
 
-    public DefaultServerFactory(Log log, ToolchainManager toolchainManager, MavenSession mavenSession,
-                                AtomicBoolean serverStarted, String testResourcesVersion) {
+    public DefaultServerFactory(Log log,
+                                ToolchainManager toolchainManager,
+                                MavenSession mavenSession,
+                                AtomicBoolean serverStarted,
+                                String testResourcesVersion,
+                                boolean debugServer) {
         this.log = log;
         this.toolchainManager = toolchainManager;
         this.mavenSession = mavenSession;
         this.serverStarted = serverStarted;
         this.testResourcesVersion = testResourcesVersion;
+        this.debugServer = debugServer;
     }
 
     @Override
@@ -63,6 +69,9 @@ public class DefaultServerFactory implements ServerFactory {
         List<String> cli = new ArrayList<>();
         cli.add(javaBin);
         cli.addAll(processParameters.getJvmArguments());
+        if (debugServer) {
+            cli.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000");
+        }
         processParameters.getSystemProperties().forEach((key, value) -> cli.add("-D" + key + "=" + value));
         cli.add("-cp");
         cli.add(processParameters.getClasspath().stream().map(File::getAbsolutePath).collect(Collectors.joining(File.pathSeparator)));

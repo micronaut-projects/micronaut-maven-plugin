@@ -53,10 +53,11 @@ public class StopTestResourcesServerMojo extends AbstractTestResourcesMojo {
 
     @Override
     public final void execute() throws MojoExecutionException {
-        TestResourcesHelper helper = new TestResourcesHelper(testResourcesEnabled, keepAlive, shared, buildDirectory,
+        TestResourcesHelper helper = new TestResourcesHelper(testResourcesEnabled, shared, buildDirectory,
                 explicitPort, clientTimeout, mavenProject, mavenSession,
                 dependencyResolutionService, toolchainManager, testResourcesVersion,
-                classpathInference, testResourcesDependencies, sharedServerNamespace);
+                classpathInference, testResourcesDependencies, sharedServerNamespace,
+                debugServer);
         helper.stop();
     }
 
