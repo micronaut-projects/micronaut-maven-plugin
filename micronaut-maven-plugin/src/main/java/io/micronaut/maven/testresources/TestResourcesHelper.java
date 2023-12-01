@@ -76,6 +76,8 @@ public class TestResourcesHelper {
 
     private Integer clientTimeout;
 
+    private Integer serverIdleTimeoutMinutes;
+
     private MavenProject mavenProject;
 
     private DependencyResolutionService dependencyResolutionService;
@@ -97,6 +99,7 @@ public class TestResourcesHelper {
                                File buildDirectory,
                                Integer explicitPort,
                                Integer clientTimeout,
+                               Integer serverIdleTimeoutMinutes,
                                MavenProject mavenProject,
                                MavenSession mavenSession,
                                DependencyResolutionService dependencyResolutionService,
@@ -109,6 +112,7 @@ public class TestResourcesHelper {
         this(mavenSession, enabled, shared, buildDirectory);
         this.explicitPort = explicitPort;
         this.clientTimeout = clientTimeout;
+        this.serverIdleTimeoutMinutes = serverIdleTimeoutMinutes;
         this.mavenProject = mavenProject;
         this.dependencyResolutionService = dependencyResolutionService;
         this.toolchainManager = toolchainManager;
@@ -227,6 +231,7 @@ public class TestResourcesHelper {
                         accessToken,
                         resolveServerClasspath(),
                         clientTimeout,
+                        serverIdleTimeoutMinutes,
                         serverFactory
                     )
             );

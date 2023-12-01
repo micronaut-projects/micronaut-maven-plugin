@@ -189,10 +189,21 @@ public class RunMojo extends AbstractTestResourcesMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        testResourcesHelper = new TestResourcesHelper(testResourcesEnabled, shared, buildDirectory,
-                                                      explicitPort, clientTimeout, runnableProject, mavenSession,
-                                                      dependencyResolutionService, toolchainManager, testResourcesVersion,
-                                                      classpathInference, testResourcesDependencies, sharedServerNamespace, debugServer);
+        testResourcesHelper = new TestResourcesHelper(testResourcesEnabled,
+            shared,
+            buildDirectory,
+            explicitPort,
+            clientTimeout,
+            serverIdleTimeoutMinutes,
+            runnableProject,
+            mavenSession,
+            dependencyResolutionService,
+            toolchainManager,
+            testResourcesVersion,
+            classpathInference,
+            testResourcesDependencies,
+            sharedServerNamespace,
+            debugServer);
         resolveDependencies();
         this.sourceDirectories = compilerService.resolveSourceDirectories();
 
