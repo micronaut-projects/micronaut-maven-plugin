@@ -88,7 +88,7 @@ public abstract class AbstractTestResourcesMojo extends TestResourcesConfigurati
     /**
      * Configures the duration after which the test resources service will automatically shut down if it doesn't
      * get any request.
-     * @since 4.1.1
+     * @since 4.2.0
      */
     @Parameter(property = CONFIG_PROPERTY_PREFIX + "server-idle-timeout-minutes")
     protected Integer serverIdleTimeoutMinutes = Integer.valueOf(DEFAULT_CLIENT_TIMEOUT);

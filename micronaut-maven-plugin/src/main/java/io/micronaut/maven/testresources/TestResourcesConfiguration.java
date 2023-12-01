@@ -62,7 +62,7 @@ public class TestResourcesConfiguration {
      * Allows starting the test resources server in debug mode. The server will be started with the ability
      * to attach a remote debugger on port 8000.
      *
-     * @since 4.1.1
+     * @since 4.2.0
      */
     @Parameter(property = CONFIG_PROPERTY_PREFIX + "debug-server", defaultValue = DISABLED)
     protected boolean debugServer;
