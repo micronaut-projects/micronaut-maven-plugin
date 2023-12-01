@@ -185,15 +185,18 @@ public class TestResourcesHelper {
                 // the build was started, so we put a file to indicate to the stop
                 // mojo that it should not stop the server.
                 Path keepalive = getKeepAliveFile();
-                Files.write(keepalive, "true".getBytes());
-                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                    // Make sure that if the build is interrupted, e.g using CTRL+C, the keepalive file is deleted
-                    try {
-                        Files.delete(keepalive);
-                    } catch (IOException e) {
-                        // ignore
-                    }
-                }));
+                // Test is because we may be running in watch mode
+                if (!Files.exists(keepalive)) {
+                    Files.write(keepalive, "true".getBytes());
+                    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                        // Make sure that if the build is interrupted, e.g using CTRL+C, the keepalive file is deleted
+                        try {
+                            deleteKeepAliveFile();
+                        } catch (MojoExecutionException e) {
+                            // ignore, we're in a shutdown hook
+                        }
+                    }));
+                }
             }
         }
     }
@@ -270,13 +273,8 @@ public class TestResourcesHelper {
         if (!enabled) {
             return;
         }
-        if (Files.exists(getKeepAliveFile())) {
+        if (isKeepAlive()) {
             log.info("Keeping Micronaut Test Resources service alive");
-            try {
-                Files.delete(getKeepAliveFile());
-            } catch (IOException e) {
-                throw new MojoExecutionException("Failed to delete keepalive file", e);
-            }
             return;
         }
         try {
@@ -292,9 +290,23 @@ public class TestResourcesHelper {
         }
     }
 
-    private void doStop() throws IOException {
-        Path settingsDirectory = getServerSettingsDirectory();
-        ServerUtils.stopServer(settingsDirectory);
+    private void doStop() throws IOException, MojoExecutionException {
+        try {
+            Path settingsDirectory = getServerSettingsDirectory();
+            ServerUtils.stopServer(settingsDirectory);
+        } finally {
+            deleteKeepAliveFile();
+        }
+    }
+
+    private void deleteKeepAliveFile() throws MojoExecutionException {
+        if (Files.exists(getKeepAliveFile())) {
+            try {
+                Files.delete(getKeepAliveFile());
+            } catch (IOException e) {
+                throw new MojoExecutionException("Failed to delete keepalive file", e);
+            }
+        }
     }
 
     private Path getServerSettingsDirectory() {
@@ -306,7 +318,7 @@ public class TestResourcesHelper {
 
     private Path getKeepAliveFile() {
         Path tmpDir = Path.of(System.getProperty("java.io.tmpdir"));
-        return tmpDir.resolve("keepalive-" + mavenSession.getStartTime().getTime());
+        return tmpDir.resolve("keepalive-" + mavenSession.getRequest().getBuilderId());
     }
 
     private Path serverSettingsDirectoryOf(Path buildDir) {
