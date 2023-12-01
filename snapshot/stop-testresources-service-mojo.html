@@ -178,21 +178,26 @@
 <td><code>-</code></td>
 <td>By default, the Test Resources server will be started on a random (available) port, but it can be set a fixed port by using this parameter.<br /><strong>User Property</strong>: <code>micronaut.test.resources.port</code></td></tr>
 <tr class="b">
+<td align="left"><a href="#serverIdleTimeoutMinutes"><code>&lt;serverIdleTimeoutMinutes&gt;</code></a></td>
+<td><code>Integer</code></td>
+<td><code>4.1.1</code></td>
+<td>Configures the duration after which the test resources service will automatically shut down if it doesn't get any request.<br /><strong>User Property</strong>: <code>micronaut.test.resources.server-idle-timeout-minutes</code></td></tr>
+<tr class="a">
 <td align="left"><a href="#shared"><code>&lt;shared&gt;</code></a></td>
 <td><code>boolean</code></td>
 <td><code>-</code></td>
 <td>Whether the test resources service should be shared between independent builds (e.g different projects, even built with different build tools).<br /><strong>Default</strong>: <code>false</code><br /><strong>User Property</strong>: <code>micronaut.test.resources.shared</code></td></tr>
-<tr class="a">
+<tr class="b">
 <td align="left"><a href="#sharedServerNamespace"><code>&lt;sharedServerNamespace&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>3.5.1</code></td>
 <td>Allows configuring a namespace for the shared test resources server. This can be used in case it makes sense to have different instances of shared services, for example when independent builds sets share different services.<br /><strong>User Property</strong>: <code>micronaut.test.resources.namespace</code></td></tr>
-<tr class="b">
+<tr class="a">
 <td align="left"><a href="#testResourcesDependencies"><code>&lt;testResourcesDependencies&gt;</code></a></td>
 <td><code>List&lt;Dependency&gt;</code></td>
 <td><code>-</code></td>
 <td>Additional dependencies to add to the Test Resources server classpath when not using classpath inference, or when the inference doesn't produce the desired result.</td></tr>
-<tr class="a">
+<tr class="b">
 <td align="left"><a href="#testResourcesEnabled"><code>&lt;testResourcesEnabled&gt;</code></a></td>
 <td><code>boolean</code></td>
 <td><code>-</code></td>
@@ -230,7 +235,14 @@
 <ul>
 <li><strong>Type</strong>: <code>java.lang.Integer</code></li>
 <li><strong>Required</strong>: <code>report.plugin.goal.no</code></li>
-<li><strong>User Property</strong>: <code>micronaut.test.resources.port</code></li></ul><hr /></section><a name="shared"><section>
+<li><strong>User Property</strong>: <code>micronaut.test.resources.port</code></li></ul><hr /></section><a name="serverIdleTimeoutMinutes"><section>
+<h4><a name="a.3CserverIdleTimeoutMinutes.3E"></a>&lt;serverIdleTimeoutMinutes&gt;</h4><a name="a.3CserverIdleTimeoutMinutes.3E"></a></a>
+<div>Configures the duration after which the test resources service will automatically shut down if it doesn't get any request.</div>
+<ul>
+<li><strong>Type</strong>: <code>java.lang.Integer</code></li>
+<li><strong>Since</strong>: <code>4.1.1</code></li>
+<li><strong>Required</strong>: <code>report.plugin.goal.no</code></li>
+<li><strong>User Property</strong>: <code>micronaut.test.resources.server-idle-timeout-minutes</code></li></ul><hr /></section><a name="shared"><section>
 <h4><a name="a.3Cshared.3E"></a>&lt;shared&gt;</h4><a name="a.3Cshared.3E"></a></a>
 <div>Whether the test resources service should be shared between independent builds (e.g different projects, even built with different build tools).</div>
 <ul>

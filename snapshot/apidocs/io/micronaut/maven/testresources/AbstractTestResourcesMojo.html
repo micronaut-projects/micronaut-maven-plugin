@@ -132,15 +132,21 @@ implements org.apache.maven.plugin.Mojo, org.apache.maven.plugin.ContextEnabled<
 <div class="col-last odd-row-color">
 <div class="block">Plugin container context.</div>
 </div>
-<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.apache.maven.model.Dependency&gt;</code></div>
-<div class="col-second even-row-color"><code><a href="#testResourcesDependencies" class="member-name-link">testResourcesDependencies</a></code></div>
+<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a></code></div>
+<div class="col-second even-row-color"><code><a href="#serverIdleTimeoutMinutes" class="member-name-link">serverIdleTimeoutMinutes</a></code></div>
 <div class="col-last even-row-color">
+<div class="block">Configures the duration after which the test resources service will automatically shut down if it doesn't
+ get any request.</div>
+</div>
+<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.apache.maven.model.Dependency&gt;</code></div>
+<div class="col-second odd-row-color"><code><a href="#testResourcesDependencies" class="member-name-link">testResourcesDependencies</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">Additional dependencies to add to the Test Resources server classpath when not using classpath inference, or when
  the inference doesn't produce the desired result.</div>
 </div>
-<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#testResourcesVersion" class="member-name-link">testResourcesVersion</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#testResourcesVersion" class="member-name-link">testResourcesVersion</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Micronaut Test Resources version.</div>
 </div>
 </div>
@@ -284,6 +290,19 @@ implements org.apache.maven.plugin.Mojo, org.apache.maven.plugin.ContextEnabled<
  a long amount of time to start with slow internet connections.</div>
 </section>
 </li>
+<li>
+<section class="detail" id="serverIdleTimeoutMinutes">
+<h3>serverIdleTimeoutMinutes</h3>
+<div class="member-signature"><span class="annotations">@Parameter(property="micronaut.test.resources.server-idle-timeout-minutes")
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/AbstractTestResourcesMojo.html#line-93">serverIdleTimeoutMinutes</a></span></div>
+<div class="block">Configures the duration after which the test resources service will automatically shut down if it doesn't
+ get any request.</div>
+<dl class="notes">
+<dt>Since:</dt>
+<dd>4.1.1</dd>
+</dl>
+</section>
+</li>
 </ul>
 </section>
 </li>
@@ -309,13 +328,13 @@ implements org.apache.maven.plugin.Mojo, org.apache.maven.plugin.ContextEnabled<
 <li>
 <section class="detail" id="serverSettingsDirectoryOf(java.nio.file.Path)">
 <h3>serverSettingsDirectoryOf</h3>
-<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/AbstractTestResourcesMojo.html#line-88">serverSettingsDirectoryOf</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;buildDir)</span></div>
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/AbstractTestResourcesMojo.html#line-96">serverSettingsDirectoryOf</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/nio/file/Path.html" title="class or interface in java.nio.file" class="external-link">Path</a>&nbsp;buildDir)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="setLog(org.apache.maven.plugin.logging.Log)">
 <h3>setLog</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/AbstractTestResourcesMojo.html#line-92">setLog</a></span><wbr><span class="parameters">(org.apache.maven.plugin.logging.Log&nbsp;log)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/AbstractTestResourcesMojo.html#line-100">setLog</a></span><wbr><span class="parameters">(org.apache.maven.plugin.logging.Log&nbsp;log)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>setLog</code>&nbsp;in interface&nbsp;<code>org.apache.maven.plugin.Mojo</code></dd>
@@ -325,7 +344,7 @@ implements org.apache.maven.plugin.Mojo, org.apache.maven.plugin.ContextEnabled<
 <li>
 <section class="detail" id="getLog()">
 <h3>getLog</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.apache.maven.plugin.logging.Log</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/AbstractTestResourcesMojo.html#line-97">getLog</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.apache.maven.plugin.logging.Log</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/AbstractTestResourcesMojo.html#line-105">getLog</a></span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getLog</code>&nbsp;in interface&nbsp;<code>org.apache.maven.plugin.Mojo</code></dd>
@@ -335,7 +354,7 @@ implements org.apache.maven.plugin.Mojo, org.apache.maven.plugin.ContextEnabled<
 <li>
 <section class="detail" id="getPluginContext()">
 <h3>getPluginContext</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;?,<wbr>?&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/AbstractTestResourcesMojo.html#line-105">getPluginContext</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;?,<wbr>?&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/AbstractTestResourcesMojo.html#line-113">getPluginContext</a></span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>getPluginContext</code>&nbsp;in interface&nbsp;<code>org.apache.maven.plugin.ContextEnabled</code></dd>
@@ -345,7 +364,7 @@ implements org.apache.maven.plugin.Mojo, org.apache.maven.plugin.ContextEnabled<
 <li>
 <section class="detail" id="setPluginContext(java.util.Map)">
 <h3>setPluginContext</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/AbstractTestResourcesMojo.html#line-110">setPluginContext</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&nbsp;pluginContext)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/AbstractTestResourcesMojo.html#line-118">setPluginContext</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&nbsp;pluginContext)</span></div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code>setPluginContext</code>&nbsp;in interface&nbsp;<code>org.apache.maven.plugin.ContextEnabled</code></dd>
