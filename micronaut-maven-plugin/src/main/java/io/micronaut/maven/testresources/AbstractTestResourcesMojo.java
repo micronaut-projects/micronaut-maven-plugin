@@ -85,6 +85,14 @@ public abstract class AbstractTestResourcesMojo extends TestResourcesConfigurati
     @Parameter(property = CONFIG_PROPERTY_PREFIX + "client-timeout", defaultValue = DEFAULT_CLIENT_TIMEOUT)
     protected Integer clientTimeout = Integer.valueOf(DEFAULT_CLIENT_TIMEOUT);
 
+    /**
+     * Configures the duration after which the test resources service will automatically shut down if it doesn't
+     * get any request.
+     * @since 4.1.1
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + "server-idle-timeout-minutes")
+    protected Integer serverIdleTimeoutMinutes = Integer.valueOf(DEFAULT_CLIENT_TIMEOUT);
+
     public static Path serverSettingsDirectoryOf(Path buildDir) {
         return buildDir.resolve("../.micronaut/test-resources");
     }
