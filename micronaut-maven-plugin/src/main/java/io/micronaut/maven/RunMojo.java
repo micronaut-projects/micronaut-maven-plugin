@@ -138,7 +138,20 @@ public class RunMojo extends AbstractTestResourcesMojo {
     private String debugHost;
 
     /**
-     * List of inclusion/exclusion paths that should not trigger an application restart. Check the
+     * List of inclusion/exclusion paths that should not trigger an application restart. 
+     * For example, you can exclude a particular directory from being watched by adding the following
+     * configuration:
+     * <pre>
+     *     &lt;watches&gt;
+     *         &lt;watch&gt;
+     *             &lt;directory&gt;.some-dir&lt;/directory&gt;
+     *             &lt;excludes&gt;
+     *                 &lt;exclude&gt;**&#47;*&lt;/exclude&gt;
+     *             &lt;/excludes&gt;
+     *         &lt;/watch&gt;
+     *     &lt;/watches&gt;
+     * </pre>
+     * Check the
      * <a href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a>
      * documentation for more details.
      *
@@ -247,7 +260,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
                     }
                     if (watches != null && !watches.isEmpty()) {
                         for (FileSet fs : watches) {
-                            File directory = new File(fs.getDirectory());
+                            File directory = new File(fs.getDirectory()).getAbsoluteFile();
                             if (directory.exists()) {
                                 pathsToWatch.add(directory.toPath());
                                 //If neither includes nor excludes, add a default include
