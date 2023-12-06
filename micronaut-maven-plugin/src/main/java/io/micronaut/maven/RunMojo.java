@@ -48,10 +48,10 @@ import org.eclipse.aether.util.artifact.JavaScopes;
 import javax.inject.Inject;
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -84,6 +84,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
     public static final String RESOURCES_DIR = "src/main/resources";
     public static final String THIS_PLUGIN = "io.micronaut.maven:micronaut-maven-plugin";
 
+    private static final List<String> RELEVANT_SRC_DIRS = List.of("resources", "java", "kotlin", "groovy");
     private static final int LAST_COMPILATION_THRESHOLD = 500;
     private static final List<String> DEFAULT_EXCLUDES;
 
@@ -138,7 +139,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
     private String debugHost;
 
     /**
-     * List of inclusion/exclusion paths that should not trigger an application restart. 
+     * List of inclusion/exclusion paths that should not trigger an application restart.
      * For example, you can exclude a particular directory from being watched by adding the following
      * configuration:
      * <pre>
@@ -199,7 +200,6 @@ public class RunMojo extends AbstractTestResourcesMojo {
     private String classpath;
     private int classpathHash;
     private long lastCompilation;
-    private List<Path> sourceDirectories;
     private TestResourcesHelper testResourcesHelper;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
@@ -239,8 +239,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
             testResourcesDependencies,
             sharedServerNamespace,
             debugServer);
-        resolveDependencies();
-        this.sourceDirectories = compilerService.resolveSourceDirectories();
+        initialize();
 
         try {
             maybeStartTestResourcesServer();
@@ -250,42 +249,36 @@ public class RunMojo extends AbstractTestResourcesMojo {
 
             if (process != null && process.isAlive()) {
                 if (watchForChanges) {
-                    List<Path> pathsToWatch = new ArrayList<>(sourceDirectories);
-                    for (MavenProject project : mavenSession.getProjects()) {
-                        Path baseDir = project.getBasedir().toPath();
-                        pathsToWatch.add(baseDir);
-                        if (Files.exists(baseDir.resolve(RESOURCES_DIR))) {
-                            pathsToWatch.add(baseDir.resolve(RESOURCES_DIR));
-                        }
-                    }
-                    if (watches != null && !watches.isEmpty()) {
-                        for (FileSet fs : watches) {
-                            File directory = new File(fs.getDirectory()).getAbsoluteFile();
-                            if (directory.exists()) {
-                                pathsToWatch.add(directory.toPath());
-                                //If neither includes nor excludes, add a default include
-                                if ((fs.getIncludes() == null || fs.getIncludes().isEmpty()) && (fs.getExcludes() == null || fs.getExcludes().isEmpty())) {
-                                    fs.addInclude("**/*");
-                                }
-                            } else {
-                                if (getLog().isWarnEnabled()) {
-                                    getLog().warn("The specified directory to watch doesn't exist: " + directory.getPath());
-                                }
-                            }
+                    List<Path> pathsToWatch = new ArrayList<>();
+                    for (FileSet fs : watches) {
+                        var directory = runnableProject.getBasedir().toPath().resolve(fs.getDirectory()).toAbsolutePath();
+                        pathsToWatch.add(directory);
+                        //If neither includes nor excludes, add a default include
+                        if ((fs.getIncludes() == null || fs.getIncludes().isEmpty()) && (fs.getExcludes() == null || fs.getExcludes().isEmpty())) {
+                            fs.addInclude("**/*");
                         }
                     }
 
                     this.directoryWatcher = DirectoryWatcher
-                            .builder()
-                            .paths(pathsToWatch)
-                            .listener(this::handleEvent)
-                            .build();
+                        .builder()
+                        .paths(pathsToWatch)
+                        .listener(this::handleEvent)
+                        .build();
 
-                    Path projectRootDirectory = mavenSession.getTopLevelProject().getBasedir().toPath();
+                    // We use the working directory as the root path, because
+                    // the top-level project information may not be what we
+                    // expect, in particular if we run from a submodule, or
+                    // that we run from root but with the "-pl" option.
+                    // We can safely do this because it's only used to display
+                    // information about paths being watched to the user, the
+                    // actual paths are unchanged.
+                    Path root = Path.of(".").toAbsolutePath();
                     List<Path> pathList = pathsToWatch.stream()
-                            .map(other -> projectRootDirectory.getParent().relativize(other))
-                            .sorted()
-                            .toList();
+                        .map(root::relativize)
+                        .filter(s -> !s.toString().isEmpty())
+                        .filter(Files::exists)
+                        .sorted()
+                        .toList();
                     getLog().info("👀 Watching for changes in " + pathList);
                     this.directoryWatcher.watch();
                 } else if (process != null && process.isAlive()) {
@@ -305,15 +298,44 @@ public class RunMojo extends AbstractTestResourcesMojo {
         }
     }
 
-    private void handleEvent(DirectoryChangeEvent event) {
+    protected final void initialize() {
+        resolveDependencies();
+        if (watches == null) {
+            watches = new ArrayList<>();
+        }
+        // watch pom.xml file changes
+        mavenSession.getAllProjects()
+            .stream()
+            .map(MavenProject::getBasedir)
+            .map(File::toPath)
+            .forEach(path -> {
+                var fileSet = new FileSet();
+                fileSet.setDirectory(path.toString());
+                fileSet.addInclude("pom.xml");
+                watches.add(fileSet);
+            });
+        // Add the default watch paths
+        mavenSession.getAllProjects()
+            .stream()
+            .flatMap(p -> {
+                var basedir = p.getBasedir().toPath();
+                return RELEVANT_SRC_DIRS.stream().map(dir -> basedir.resolve("src/main/" + dir));
+            })
+            .forEach(path -> {
+                var fileSet = new FileSet();
+                fileSet.setDirectory(path.toString());
+                fileSet.addInclude("**/*");
+                watches.add(fileSet);
+            });
+    }
+
+    protected final void setWatches(List<FileSet> watches) {
+        this.watches = watches;
+    }
+
+    final void handleEvent(DirectoryChangeEvent event) {
         Path path = event.path();
         Path parent = path.getParent();
-
-        List<Path> projectRoots = mavenSession.getProjects().stream()
-                .map(MavenProject::getBasedir)
-                .map(File::toPath)
-                .toList();
-
         Path projectRootDirectory = mavenSession.getTopLevelProject().getBasedir().toPath();
 
         if (matches(path)) {
@@ -337,71 +359,50 @@ public class RunMojo extends AbstractTestResourcesMojo {
             return false;
         }
 
-        // Start by checking whether it's a change in any source directory
-        Collection<Path> values = this.sourceDirectories;
-        Collection<Path> pathsToCheck = new ArrayList<>(values.size() + 1);
-        pathsToCheck.addAll(values);
-        for (MavenProject project : mavenSession.getProjects()) {
-            Path baseDir = project.getBasedir().toPath();
-            pathsToCheck.add(baseDir);
-            if (Files.exists(baseDir.resolve(RESOURCES_DIR))) {
-                pathsToCheck.add(baseDir.resolve(RESOURCES_DIR));
-            }
-        }
-        boolean matches = pathsToCheck.stream().anyMatch(path.getParent()::startsWith);
         Path projectRootDirectory = mavenSession.getTopLevelProject().getBasedir().toPath();
 
         String relativePath = projectRootDirectory.relativize(path).toString();
 
-        if (getLog().isDebugEnabled()) {
-            String belongs = matches ? "belongs" : "does not belong";
-            getLog().debug("Path [" + relativePath + "] " + belongs + " to a source directory");
-        }
-
-        if (watches != null && !watches.isEmpty()) {
-            // Then process includes
-            if (!matches) {
-                for (FileSet fileSet : watches) {
-                    if (fileSet.getIncludes() != null && !fileSet.getIncludes().isEmpty()) {
-                        File directory = new File(fileSet.getDirectory());
-                        if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath())) {
-                            for (String includePattern : fileSet.getIncludes()) {
-                                if (AbstractScanner.match(includePattern, path.toString()) || new File(directory, includePattern).toPath().toAbsolutePath().equals(path)) {
-                                    matches = true;
-                                    if (getLog().isDebugEnabled()) {
-                                        getLog().debug("Path [" + relativePath + "] matched the include pattern [" + includePattern + "] of the directory [" + fileSet.getDirectory() + "]");
-                                    }
-                                    break;
-                                }
+        boolean matches = false;
+        for (FileSet fileSet : watches) {
+            if (fileSet.getIncludes() != null && !fileSet.getIncludes().isEmpty()) {
+                File directory = new File(fileSet.getDirectory());
+                if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath())) {
+                    for (String includePattern : fileSet.getIncludes()) {
+                        if (pathMatches(includePattern, path) || patternEquals(path, includePattern, directory)) {
+                            matches = true;
+                            if (getLog().isDebugEnabled()) {
+                                getLog().debug("Path [" + relativePath + "] matched the include pattern [" + includePattern + "] of the directory [" + fileSet.getDirectory() + "]");
                             }
+                            break;
                         }
-                    }
-                    if (matches) {
-                        break;
                     }
                 }
             }
-
-            // Finally, process excludes only if the path is matching
             if (matches) {
-                for (FileSet fileSet : watches) {
-                    if (fileSet.getExcludes() != null && !fileSet.getExcludes().isEmpty()) {
-                        File directory = new File(fileSet.getDirectory());
-                        if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath())) {
-                            for (String excludePattern : fileSet.getExcludes()) {
-                                if (AbstractScanner.match(excludePattern, path.toString()) || new File(directory, excludePattern).toPath().toAbsolutePath().equals(path)) {
-                                    matches = false;
-                                    if (getLog().isDebugEnabled()) {
-                                        getLog().debug("Path [" + relativePath + "] matched the exclude pattern [" + excludePattern + "] of the directory [" + fileSet.getDirectory() + "]");
-                                    }
-                                    break;
+                break;
+            }
+        }
+
+        // Finally, process excludes only if the path is matching
+        if (matches) {
+            for (FileSet fileSet : watches) {
+                if (fileSet.getExcludes() != null && !fileSet.getExcludes().isEmpty()) {
+                    File directory = new File(fileSet.getDirectory());
+                    if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath())) {
+                        for (String excludePattern : fileSet.getExcludes()) {
+                            if (pathMatches(excludePattern, path) || patternEquals(path, excludePattern, directory)) {
+                                matches = false;
+                                if (getLog().isDebugEnabled()) {
+                                    getLog().debug("Path [" + relativePath + "] matched the exclude pattern [" + excludePattern + "] of the directory [" + fileSet.getDirectory() + "]");
                                 }
+                                break;
                             }
                         }
                     }
-                    if (!matches) {
-                        break;
-                    }
+                }
+                if (!matches) {
+                    break;
                 }
             }
         }
@@ -419,8 +420,8 @@ public class RunMojo extends AbstractTestResourcesMojo {
             }
         }
         return (excludeTargetDirectory && path.startsWith(targetDirectory.getAbsolutePath())) ||
-                DEFAULT_EXCLUDES.stream()
-                        .anyMatch(excludePattern -> AbstractScanner.match(excludePattern, path.toString()));
+               DEFAULT_EXCLUDES.stream()
+                   .anyMatch(excludePattern -> pathMatches(excludePattern, path));
     }
 
     private boolean hasBeenCompiledRecently() {
@@ -480,7 +481,13 @@ public class RunMojo extends AbstractTestResourcesMojo {
 
     }
 
-    private void runApplication() throws Exception {
+    /**
+     * Runs or restarts the application. Only visible for testing, shouldn't
+     * be called directly.
+     *
+     * @throws Exception if something goes wrong while starting the application
+     */
+    protected void runApplication() throws Exception {
         if (restartLock.getQueueLength() >= 1) {
             // if there's more than one restart request, we'll handle them all at once
             return;
@@ -590,6 +597,23 @@ public class RunMojo extends AbstractTestResourcesMojo {
                 process.destroyForcibly();
                 Thread.currentThread().interrupt();
             }
+        }
+    }
+
+    private static String normalize(Path path) {
+        return path.toString().replace('\\', '/');
+    }
+
+    private static boolean pathMatches(String pattern, Path path) {
+        return AbstractScanner.match(pattern, normalize(path));
+    }
+
+    private static boolean patternEquals(Path path, String includePattern, File directory) {
+        try {
+            var testPath = normalize(directory.toPath().resolve(includePattern).toAbsolutePath());
+            return testPath.equals(normalize(path.toAbsolutePath()));
+        } catch (InvalidPathException ex) {
+            return false;
         }
     }
 
