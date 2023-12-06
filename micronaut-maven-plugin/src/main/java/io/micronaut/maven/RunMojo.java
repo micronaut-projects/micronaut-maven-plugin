@@ -48,6 +48,7 @@ import org.eclipse.aether.util.artifact.JavaScopes;
 import javax.inject.Inject;
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -368,7 +369,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
                 File directory = new File(fileSet.getDirectory());
                 if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath())) {
                     for (String includePattern : fileSet.getIncludes()) {
-                        if (AbstractScanner.match(includePattern, path.toString()) || new File(directory, includePattern).toPath().toAbsolutePath().equals(path)) {
+                        if (pathMatches(includePattern, path) || patternEquals(path, includePattern, directory)) {
                             matches = true;
                             if (getLog().isDebugEnabled()) {
                                 getLog().debug("Path [" + relativePath + "] matched the include pattern [" + includePattern + "] of the directory [" + fileSet.getDirectory() + "]");
@@ -390,7 +391,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
                     File directory = new File(fileSet.getDirectory());
                     if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath())) {
                         for (String excludePattern : fileSet.getExcludes()) {
-                            if (AbstractScanner.match(excludePattern, path.toString()) || new File(directory, excludePattern).toPath().toAbsolutePath().equals(path)) {
+                            if (pathMatches(excludePattern, path) || patternEquals(path, excludePattern, directory)) {
                                 matches = false;
                                 if (getLog().isDebugEnabled()) {
                                     getLog().debug("Path [" + relativePath + "] matched the exclude pattern [" + excludePattern + "] of the directory [" + fileSet.getDirectory() + "]");
@@ -420,7 +421,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         }
         return (excludeTargetDirectory && path.startsWith(targetDirectory.getAbsolutePath())) ||
                DEFAULT_EXCLUDES.stream()
-                   .anyMatch(excludePattern -> AbstractScanner.match(excludePattern, path.toString()));
+                   .anyMatch(excludePattern -> pathMatches(excludePattern, path));
     }
 
     private boolean hasBeenCompiledRecently() {
@@ -596,6 +597,23 @@ public class RunMojo extends AbstractTestResourcesMojo {
                 process.destroyForcibly();
                 Thread.currentThread().interrupt();
             }
+        }
+    }
+
+    private static String normalize(Path path) {
+        return path.toString().replace('\\', '/');
+    }
+
+    private static boolean pathMatches(String pattern, Path path) {
+        return AbstractScanner.match(pattern, normalize(path));
+    }
+
+    private static boolean patternEquals(Path path, String includePattern, File directory) {
+        try {
+            var testPath = normalize(directory.toPath().resolve(includePattern).toAbsolutePath());
+            return testPath.equals(normalize(path.toAbsolutePath()));
+        } catch (InvalidPathException ex) {
+            return false;
         }
     }
 
