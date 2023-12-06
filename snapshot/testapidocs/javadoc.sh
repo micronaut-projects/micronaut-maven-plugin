@@ -1,0 +1,1 @@
+/opt/hostedtoolcache/graalvm-community-jdk-17.0.9_linux-x64_bin/17.0.9/x64/graalvm-community-openjdk-17.0.9+9.1/bin/javadoc -J-Xmx512m -J-Xms128m @options @packages
