@@ -28,9 +28,8 @@ import java.util.List;
  */
 @Mojo(name = OpenApiClientMojo.MOJO_NAME, defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class OpenApiClientMojo extends AbstractOpenApiMojo {
-    private static final String CLIENT_PREFIX = MICRONAUT_OPENAPI_PREFIX + ".client.";
-
     public static final String MOJO_NAME = "generate-openapi-client";
+    private static final String CLIENT_PREFIX = MICRONAUT_OPENAPI_PREFIX + ".client.";
 
     /**
      * Client id.
@@ -71,21 +70,20 @@ public class OpenApiClientMojo extends AbstractOpenApiMojo {
     /**
      * Determines if the client should use lombok.
      */
-    @Parameter(property = CLIENT_PREFIX + ".lombok")
+    @Parameter(property = CLIENT_PREFIX + "lombok")
     protected boolean lombok;
 
     /**
      * Determines if the client should use flux for arrays.
      */
-    @Parameter(property = CLIENT_PREFIX + ".flux.for.arrays")
+    @Parameter(property = CLIENT_PREFIX + "flux.for.arrays")
     protected boolean fluxForArrays;
 
     /**
      * If set to true, the `javax.annotation.Generated` annotation will be added to all generated classes.
      */
-    @Parameter(property = CLIENT_PREFIX + ".generated.annotation", defaultValue = "true")
+    @Parameter(property = CLIENT_PREFIX + "generated.annotation", defaultValue = "true")
     protected boolean generatedAnnotation;
-
 
     @Override
     protected boolean isEnabled() {

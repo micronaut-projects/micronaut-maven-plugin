@@ -26,8 +26,8 @@ import org.apache.maven.plugins.annotations.Parameter;
  */
 @Mojo(name = OpenApiServerMojo.MOJO_NAME, defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class OpenApiServerMojo extends AbstractOpenApiMojo {
-    private static final String SERVER_PREFIX = MICRONAUT_OPENAPI_PREFIX + ".server.";
     public static final String MOJO_NAME = "generate-openapi-server";
+    private static final String SERVER_PREFIX = MICRONAUT_OPENAPI_PREFIX + ".server.";
 
     /**
      * The package name of the controller if controller implementation files are generated.
@@ -44,25 +44,25 @@ public class OpenApiServerMojo extends AbstractOpenApiMojo {
     /**
      * Determines if the server should use lombok.
      */
-    @Parameter(property = SERVER_PREFIX + ".lombok")
+    @Parameter(property = SERVER_PREFIX + "lombok")
     protected boolean lombok;
 
     /**
      * Determines if the server should use flux for arrays.
      */
-    @Parameter(property = SERVER_PREFIX + ".flux.for.arrays")
+    @Parameter(property = SERVER_PREFIX + "flux.for.arrays")
     protected boolean fluxForArrays;
 
     /**
      * If set to true, the `javax.annotation.Generated` annotation will be added to all generated classes.
      */
-    @Parameter(property = SERVER_PREFIX + ".generated.annotation", defaultValue = "true")
+    @Parameter(property = SERVER_PREFIX + "generated.annotation", defaultValue = "true")
     protected boolean generatedAnnotation;
 
     /**
      * If set to true, the generated code should be made compatible with Micronaut AOT.
      */
-    @Parameter(property = SERVER_PREFIX + ".aot.compatible")
+    @Parameter(property = SERVER_PREFIX + "aot.compatible")
     protected boolean aotCompatible;
 
     /**
