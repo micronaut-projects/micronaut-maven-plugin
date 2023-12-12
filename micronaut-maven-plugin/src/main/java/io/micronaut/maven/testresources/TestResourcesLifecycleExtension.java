@@ -15,8 +15,6 @@
  */
 package io.micronaut.maven.testresources;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import io.micronaut.maven.RunMojo;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.execution.MavenSession;
@@ -60,13 +58,11 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
     private final Map<MavenProject, TestResourcesConfiguration> perProjectConfiguration = new ConcurrentHashMap<>();
 
     private final Logger logger;
-    private final XmlMapper mapper;
 
     @Inject
     @SuppressWarnings("CdiInjectionPointsInspection")
-    public TestResourcesLifecycleExtension(Logger logger, XmlMapper mapper) {
+    public TestResourcesLifecycleExtension(Logger logger) {
         this.logger = logger;
-        this.mapper = mapper;
     }
 
     @Override
@@ -162,12 +158,35 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
         }
         Writer writer = new StringWriter();
         Xpp3DomWriter.write(writer, configuration);
-        try {
-            return mapper.readValue(writer.toString(), TestResourcesConfiguration.class);
-        } catch (JsonProcessingException e) {
-            logger.error(e.getMessage(), e);
-            return new TestResourcesConfiguration();
+        return parseConfiguration(configuration);
+    }
+
+    private TestResourcesConfiguration parseConfiguration(Xpp3Dom dom) {
+        TestResourcesConfiguration config = null;
+        if (dom != null) {
+            config = new TestResourcesConfiguration();
+
+            Xpp3Dom testResourcesEnabled = dom.getChild("testResourcesEnabled");
+            if (testResourcesEnabled != null) {
+                config.setTestResourcesEnabled(Boolean.parseBoolean(testResourcesEnabled.getValue()));
+            }
+
+            Xpp3Dom shared = dom.getChild("shared");
+            if (shared != null) {
+                config.setShared(Boolean.parseBoolean(shared.getValue()));
+            }
+
+            Xpp3Dom sharedServerNamespace = dom.getChild("sharedServerNamespace");
+            if (sharedServerNamespace != null) {
+                config.setSharedServerNamespace(sharedServerNamespace.getValue());
+            }
+
+            Xpp3Dom debugServer = dom.getChild("debugServer");
+            if (debugServer != null) {
+                config.setShared(Boolean.parseBoolean(debugServer.getValue()));
+            }
         }
+        return config;
     }
 
     private Boolean evaluateBooleanProperty(ExpressionEvaluator evaluator, String property) {
