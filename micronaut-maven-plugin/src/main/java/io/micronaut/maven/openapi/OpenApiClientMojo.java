@@ -69,21 +69,21 @@ public class OpenApiClientMojo extends AbstractOpenApiMojo {
 
     /**
      * Determines if the client should use lombok.
-     * @since 4.2.1
+     * @since 4.2.2
      */
     @Parameter(property = CLIENT_PREFIX + "lombok")
     protected boolean lombok;
 
     /**
      * Determines if the client should use flux for arrays.
-     * @since 4.2.1
+     * @since 4.2.2
      */
     @Parameter(property = CLIENT_PREFIX + "flux.for.arrays")
     protected boolean fluxForArrays;
 
     /**
      * If set to true, the `javax.annotation.Generated` annotation will be added to all generated classes.
-     * @since 4.2.1
+     * @since 4.2.2
      */
     @Parameter(property = CLIENT_PREFIX + "generated.annotation", defaultValue = "true")
     protected boolean generatedAnnotation;
