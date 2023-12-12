@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.micronaut.maven</groupId>
         <artifactId>micronaut-maven-plugin-parent</artifactId>
-        <version>4.2.1-SNAPSHOT</version>
+        <version>4.3.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>micronaut-maven-plugin</artifactId>
@@ -89,16 +89,10 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-xml</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>org.fusesource.jansi</groupId>
             <artifactId>jansi</artifactId>
@@ -114,6 +108,12 @@
             <groupId>org.apache.maven.plugin-testing</groupId>
             <artifactId>maven-plugin-testing-harness</artifactId>
             <version>3.3.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.8.0</version>
             <scope>test</scope>
         </dependency>
 
