@@ -15,9 +15,6 @@
  */
 package io.micronaut.maven.testresources;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonRootName;
 import org.apache.maven.plugins.annotations.Parameter;
 
 /**
@@ -26,8 +23,6 @@ import org.apache.maven.plugins.annotations.Parameter;
  * @author Álvaro Sánchez-Mariscal
  * @since 3.5.1
  */
-@JsonRootName("configuration")
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class TestResourcesConfiguration {
 
     public static final String DISABLED = "false";
@@ -39,7 +34,6 @@ public class TestResourcesConfiguration {
      * Whether to enable or disable Micronaut test resources support.
      */
     @Parameter(property =  CONFIG_PROPERTY_PREFIX + PROPERTY_ENABLED, defaultValue = DISABLED)
-    @JsonProperty(PROPERTY_ENABLED)
     protected boolean testResourcesEnabled;
 
     /**
@@ -86,5 +80,41 @@ public class TestResourcesConfiguration {
      */
     public String getSharedServerNamespace() {
         return sharedServerNamespace;
+    }
+
+    /**
+     * Whether to enable or disable Micronaut test resources support.
+     *
+     * @param testResourcesEnabled enabled flag
+     */
+    public void setTestResourcesEnabled(boolean testResourcesEnabled) {
+        this.testResourcesEnabled = testResourcesEnabled;
+    }
+
+    /**
+     * Whether the test resources service should be shared between independent builds.
+     *
+     * @param shared shared flag
+     */
+    public void setShared(boolean shared) {
+        this.shared = shared;
+    }
+
+    /**
+     * The shared server namespace (if any).
+     *
+     * @param sharedServerNamespace the shared server namespace to be set
+     */
+    public void setSharedServerNamespace(String sharedServerNamespace) {
+        this.sharedServerNamespace = sharedServerNamespace;
+    }
+
+    /**
+     * Whether to start the test resources server in debug mode.
+     *
+     * @param debugServer debug flag
+     */
+    public void setDebugServer(boolean debugServer) {
+        this.debugServer = debugServer;
     }
 }
