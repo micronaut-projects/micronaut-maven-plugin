@@ -215,11 +215,5 @@
             <description>Micronaut Test Resources Extension</description>
             <isolated-realm>false</isolated-realm>
         </component>
-
-        <component>
-            <role>com.fasterxml.jackson.core.ObjectCodec</role>
-            <role-hint>object-mapper</role-hint>
-            <implementation>com.fasterxml.jackson.dataformat.xml.XmlMapper</implementation>
-        </component>
     </components>
 </component-set>
