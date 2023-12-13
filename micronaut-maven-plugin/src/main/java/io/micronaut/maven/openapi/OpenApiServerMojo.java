@@ -82,17 +82,33 @@ public class OpenApiServerMojo extends AbstractOpenApiMojo {
 
     @Override
     protected void configureBuilder(MicronautCodeGeneratorBuilder builder) {
-        builder.forJavaServer(spec -> {
-            spec.withControllerPackage(controllerPackageName);
-            spec.withAuthentication(useAuth);
-            // we don't want these to be configurable in the plugin for now
-            spec.withGenerateImplementationFiles(false);
-            spec.withGenerateControllerFromExamples(false);
-            spec.withGenerateOperationsToReturnNotImplemented(false);
-            spec.withLombok(lombok);
-            spec.withFluxForArrays(fluxForArrays);
-            spec.withGeneratedAnnotation(generatedAnnotation);
-            spec.withAot(aotCompatible);
-        });
+        if ("java".equalsIgnoreCase(lang)) {
+            builder.forJavaServer(spec -> {
+                spec.withControllerPackage(controllerPackageName);
+                spec.withAuthentication(useAuth);
+                // we don't want these to be configurable in the plugin for now
+                spec.withGenerateImplementationFiles(false);
+                spec.withGenerateControllerFromExamples(false);
+                spec.withGenerateOperationsToReturnNotImplemented(false);
+                spec.withLombok(lombok);
+                spec.withFluxForArrays(fluxForArrays);
+                spec.withGeneratedAnnotation(generatedAnnotation);
+                spec.withAot(aotCompatible);
+            });
+        } else if ("kotlin".equalsIgnoreCase(lang)) {
+            builder.forKotlinServer(spec -> {
+                spec.withControllerPackage(controllerPackageName);
+                spec.withAuthentication(useAuth);
+                // we don't want these to be configurable in the plugin for now
+                spec.withGenerateImplementationFiles(false);
+                spec.withGenerateControllerFromExamples(false);
+                spec.withGenerateOperationsToReturnNotImplemented(false);
+                spec.withFluxForArrays(fluxForArrays);
+                spec.withGeneratedAnnotation(generatedAnnotation);
+                spec.withAot(aotCompatible);
+            });
+        } else {
+            throw new UnsupportedOperationException("Unsupported language: " + lang);
+        }
     }
 }

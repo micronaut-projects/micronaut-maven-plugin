@@ -18,6 +18,7 @@ package io.micronaut.maven.openapi;
 import io.micronaut.maven.AbstractMicronautMojo;
 import io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder;
 import io.micronaut.openapi.generator.MicronautCodeGeneratorEntryPoint;
+import io.micronaut.openapi.generator.MicronautCodeGeneratorOptionsBuilder;
 import io.micronaut.openapi.generator.SerializationLibraryKind;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -26,6 +27,7 @@ import org.apache.maven.project.MavenProject;
 
 import java.io.File;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
@@ -107,6 +109,13 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".responseBodyMappings")
     protected List<ResponseBodyMapping> responseBodyMappings;
 
+    /**
+     * Allows specifying the language of the generated code.
+     * @since 4.3.0
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".lang", defaultValue = "java")
+    protected String lang;
+
     @Parameter(defaultValue = "${project}", readonly = true)
     private MavenProject project;
 
@@ -139,6 +148,7 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
                         outputKinds.stream().map(String::toUpperCase).map(MicronautCodeGeneratorEntryPoint.OutputKind::valueOf).toList().toArray(new MicronautCodeGeneratorEntryPoint.OutputKind[0])
                 )
                 .withOptions(options -> {
+                    options.withLang(MicronautCodeGeneratorOptionsBuilder.GeneratorLanguage.valueOf(lang.toUpperCase(Locale.ENGLISH)));
                     options.withInvokerPackage(invokerPackageName);
                     options.withApiPackage(apiPackageName);
                     options.withModelPackage(modelPackageName);

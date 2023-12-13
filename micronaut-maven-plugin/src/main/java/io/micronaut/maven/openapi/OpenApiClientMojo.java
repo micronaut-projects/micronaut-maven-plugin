@@ -95,23 +95,45 @@ public class OpenApiClientMojo extends AbstractOpenApiMojo {
 
     @Override
     protected void configureBuilder(MicronautCodeGeneratorBuilder builder) {
-        builder.forJavaClient(spec -> {
-            spec.withAuthorization(useAuth);
-            if (clientId != null && !clientId.isEmpty()) {
-                spec.withClientId(clientId);
-            }
-            if (additionalTypeAnnotations != null) {
-                spec.withAdditionalClientTypeAnnotations(additionalTypeAnnotations);
-            }
-            if (basePathSeparator != null) {
-                spec.withBasePathSeparator(basePathSeparator);
-            }
-            if (authorizationFilterPattern != null) {
-                spec.withAuthorizationFilterPattern(authorizationFilterPattern);
-            }
-            spec.withLombok(lombok);
-            spec.withFluxForArrays(fluxForArrays);
-            spec.withGeneratedAnnotation(generatedAnnotation);
-        });
+        if ("java".equalsIgnoreCase(lang)) {
+            builder.forJavaClient(spec -> {
+                spec.withAuthorization(useAuth);
+                if (clientId != null && !clientId.isEmpty()) {
+                    spec.withClientId(clientId);
+                }
+                if (additionalTypeAnnotations != null) {
+                    spec.withAdditionalClientTypeAnnotations(additionalTypeAnnotations);
+                }
+                if (basePathSeparator != null) {
+                    spec.withBasePathSeparator(basePathSeparator);
+                }
+                if (authorizationFilterPattern != null) {
+                    spec.withAuthorizationFilterPattern(authorizationFilterPattern);
+                }
+                spec.withLombok(lombok);
+                spec.withFluxForArrays(fluxForArrays);
+                spec.withGeneratedAnnotation(generatedAnnotation);
+            });
+        } else if ("kotlin".equalsIgnoreCase(lang)) {
+            builder.forKotlinClient(spec -> {
+                spec.withAuthorization(useAuth);
+                if (clientId != null && !clientId.isEmpty()) {
+                    spec.withClientId(clientId);
+                }
+                if (additionalTypeAnnotations != null) {
+                    spec.withAdditionalClientTypeAnnotations(additionalTypeAnnotations);
+                }
+                if (basePathSeparator != null) {
+                    spec.withBasePathSeparator(basePathSeparator);
+                }
+                if (authorizationFilterPattern != null) {
+                    spec.withAuthorizationFilterPattern(authorizationFilterPattern);
+                }
+                spec.withFluxForArrays(fluxForArrays);
+                spec.withGeneratedAnnotation(generatedAnnotation);
+            });
+        } else {
+            throw new UnsupportedOperationException("Unsupported language:" + lang);
+        }
     }
 }
