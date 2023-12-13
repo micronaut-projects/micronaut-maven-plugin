@@ -19,6 +19,7 @@
     <micronaut.runtime>netty</micronaut.runtime>
     <micronaut.openapi.definition>src/openapi/petstore.json</micronaut.openapi.definition>
     <micronaut.openapi.generate.client>true</micronaut.openapi.generate.client>
+    <micronaut.openapi.client.generated.annotation>false</micronaut.openapi.client.generated.annotation>
   </properties>
 
   <dependencies>

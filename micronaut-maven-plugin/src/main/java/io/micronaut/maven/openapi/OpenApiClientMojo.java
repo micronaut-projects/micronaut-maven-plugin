@@ -29,35 +29,36 @@ import java.util.List;
 @Mojo(name = OpenApiClientMojo.MOJO_NAME, defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class OpenApiClientMojo extends AbstractOpenApiMojo {
     public static final String MOJO_NAME = "generate-openapi-client";
+    private static final String CLIENT_PREFIX = MICRONAUT_OPENAPI_PREFIX + ".client.";
 
     /**
      * Client id.
      */
-    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.id", defaultValue = "")
+    @Parameter(property = CLIENT_PREFIX  + "id", defaultValue = "")
     protected String clientId;
 
     /**
      * Whether to configure authentication for client.
      */
-    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.use.auth", defaultValue = "false")
+    @Parameter(property = CLIENT_PREFIX + "use.auth", defaultValue = "false")
     protected boolean useAuth;
 
     /**
      * Additional annotations to be used on the generated client API classes.
      */
-    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.additional.type.annotations")
+    @Parameter(property = CLIENT_PREFIX + "additional.type.annotations")
     protected List<String> additionalTypeAnnotations;
 
     /**
      * The base path separator.
      */
-    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.base.path.separator")
+    @Parameter(property = CLIENT_PREFIX + "base.path.separator")
     protected String basePathSeparator;
 
     /**
      * The pattern for authorization filter.
      */
-    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".client.authorization.filter.pattern")
+    @Parameter(property = CLIENT_PREFIX + "authorization.filter.pattern")
     protected String authorizationFilterPattern;
 
     /**
@@ -65,6 +66,27 @@ public class OpenApiClientMojo extends AbstractOpenApiMojo {
      */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generate.client")
     protected boolean enabled;
+
+    /**
+     * Determines if the client should use lombok.
+     * @since 4.2.2
+     */
+    @Parameter(property = CLIENT_PREFIX + "lombok")
+    protected boolean lombok;
+
+    /**
+     * Determines if the client should use flux for arrays.
+     * @since 4.2.2
+     */
+    @Parameter(property = CLIENT_PREFIX + "flux.for.arrays")
+    protected boolean fluxForArrays;
+
+    /**
+     * If set to true, the `javax.annotation.Generated` annotation will be added to all generated classes.
+     * @since 4.2.2
+     */
+    @Parameter(property = CLIENT_PREFIX + "generated.annotation", defaultValue = "true")
+    protected boolean generatedAnnotation;
 
     @Override
     protected boolean isEnabled() {
@@ -87,6 +109,9 @@ public class OpenApiClientMojo extends AbstractOpenApiMojo {
             if (authorizationFilterPattern != null) {
                 spec.withAuthorizationFilterPattern(authorizationFilterPattern);
             }
+            spec.withLombok(lombok);
+            spec.withFluxForArrays(fluxForArrays);
+            spec.withGeneratedAnnotation(generatedAnnotation);
         });
     }
 }
