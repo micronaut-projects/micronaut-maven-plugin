@@ -129,12 +129,27 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">
 <div class="block">The property that defines if this mojo is used.</div>
 </div>
-<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#MOJO_NAME" class="member-name-link">MOJO_NAME</a></code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>protected boolean</code></div>
+<div class="col-second odd-row-color"><code><a href="#fluxForArrays" class="member-name-link">fluxForArrays</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">Determines if the client should use flux for arrays.</div>
+</div>
 <div class="col-first even-row-color"><code>protected boolean</code></div>
-<div class="col-second even-row-color"><code><a href="#useAuth" class="member-name-link">useAuth</a></code></div>
+<div class="col-second even-row-color"><code><a href="#generatedAnnotation" class="member-name-link">generatedAnnotation</a></code></div>
 <div class="col-last even-row-color">
+<div class="block">If set to true, the `javax.annotation.Generated` annotation will be added to all generated classes.</div>
+</div>
+<div class="col-first odd-row-color"><code>protected boolean</code></div>
+<div class="col-second odd-row-color"><code><a href="#lombok" class="member-name-link">lombok</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">Determines if the client should use lombok.</div>
+</div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#MOJO_NAME" class="member-name-link">MOJO_NAME</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>protected boolean</code></div>
+<div class="col-second odd-row-color"><code><a href="#useAuth" class="member-name-link">useAuth</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">Whether to configure authentication for client.</div>
 </div>
 </div>
@@ -225,7 +240,7 @@ loadScripts(document, 'script');</script>
 <h3>clientId</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.id",
            defaultValue="")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-36">clientId</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-37">clientId</a></span></div>
 <div class="block">Client id.</div>
 </section>
 </li>
@@ -234,7 +249,7 @@ loadScripts(document, 'script');</script>
 <h3>useAuth</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.use.auth",
            defaultValue="false")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-42">useAuth</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-43">useAuth</a></span></div>
 <div class="block">Whether to configure authentication for client.</div>
 </section>
 </li>
@@ -242,7 +257,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="additionalTypeAnnotations">
 <h3>additionalTypeAnnotations</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.additional.type.annotations")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-48">additionalTypeAnnotations</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-49">additionalTypeAnnotations</a></span></div>
 <div class="block">Additional annotations to be used on the generated client API classes.</div>
 </section>
 </li>
@@ -250,7 +265,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="basePathSeparator">
 <h3>basePathSeparator</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.base.path.separator")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-54">basePathSeparator</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-55">basePathSeparator</a></span></div>
 <div class="block">The base path separator.</div>
 </section>
 </li>
@@ -258,7 +273,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="authorizationFilterPattern">
 <h3>authorizationFilterPattern</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.authorization.filter.pattern")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-60">authorizationFilterPattern</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-61">authorizationFilterPattern</a></span></div>
 <div class="block">The pattern for authorization filter.</div>
 </section>
 </li>
@@ -266,8 +281,45 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="enabled">
 <h3>enabled</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.generate.client")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-66">enabled</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-67">enabled</a></span></div>
 <div class="block">The property that defines if this mojo is used.</div>
+</section>
+</li>
+<li>
+<section class="detail" id="lombok">
+<h3>lombok</h3>
+<div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.lombok")
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-74">lombok</a></span></div>
+<div class="block">Determines if the client should use lombok.</div>
+<dl class="notes">
+<dt>Since:</dt>
+<dd>4.2.2</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="fluxForArrays">
+<h3>fluxForArrays</h3>
+<div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.flux.for.arrays")
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-81">fluxForArrays</a></span></div>
+<div class="block">Determines if the client should use flux for arrays.</div>
+<dl class="notes">
+<dt>Since:</dt>
+<dd>4.2.2</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="generatedAnnotation">
+<h3>generatedAnnotation</h3>
+<div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.generated.annotation",
+           defaultValue="true")
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-88">generatedAnnotation</a></span></div>
+<div class="block">If set to true, the `javax.annotation.Generated` annotation will be added to all generated classes.</div>
+<dl class="notes">
+<dt>Since:</dt>
+<dd>4.2.2</dd>
+</dl>
 </section>
 </li>
 </ul>
@@ -295,7 +347,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="isEnabled()">
 <h3>isEnabled</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-69">isEnabled</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-91">isEnabled</a></span>()</div>
 <div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="AbstractOpenApiMojo.html#isEnabled()">AbstractOpenApiMojo</a></code></span></div>
 <div class="block">Determines if this mojo must be executed.</div>
 <dl class="notes">
@@ -309,7 +361,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="configureBuilder(io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder)">
 <h3>configureBuilder</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-74">configureBuilder</a></span><wbr><span class="parameters">(io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder&nbsp;builder)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-96">configureBuilder</a></span><wbr><span class="parameters">(io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder&nbsp;builder)</span></div>
 <div class="block"><span class="descfrm-type-label">Description copied from class:&nbsp;<code><a href="AbstractOpenApiMojo.html#configureBuilder(io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder)">AbstractOpenApiMojo</a></code></span></div>
 <div class="block">Configures the OpenAPI generator. When this method is called,
  common properties shared by all generators have already been

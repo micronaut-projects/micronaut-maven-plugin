@@ -40,42 +40,75 @@
 <span class="source-line-no">027</span><span id="line-27">@Mojo(name = OpenApiServerMojo.MOJO_NAME, defaultPhase = LifecyclePhase.GENERATE_SOURCES)</span>
 <span class="source-line-no">028</span><span id="line-28">public class OpenApiServerMojo extends AbstractOpenApiMojo {</span>
 <span class="source-line-no">029</span><span id="line-29">    public static final String MOJO_NAME = "generate-openapi-server";</span>
-<span class="source-line-no">030</span><span id="line-30"></span>
-<span class="source-line-no">031</span><span id="line-31">    /**</span>
-<span class="source-line-no">032</span><span id="line-32">     * The package name of the controller if controller implementation files are generated.</span>
-<span class="source-line-no">033</span><span id="line-33">     */</span>
-<span class="source-line-no">034</span><span id="line-34">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".server.controller.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".controller.package.name", required = true)</span>
-<span class="source-line-no">035</span><span id="line-35">    protected String controllerPackageName;</span>
-<span class="source-line-no">036</span><span id="line-36"></span>
-<span class="source-line-no">037</span><span id="line-37">    /**</span>
-<span class="source-line-no">038</span><span id="line-38">     * Whether to generate authentication annotations for APIs.</span>
-<span class="source-line-no">039</span><span id="line-39">     */</span>
-<span class="source-line-no">040</span><span id="line-40">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".server.use.auth", defaultValue = "false")</span>
-<span class="source-line-no">041</span><span id="line-41">    protected boolean useAuth;</span>
-<span class="source-line-no">042</span><span id="line-42"></span>
-<span class="source-line-no">043</span><span id="line-43">    /**</span>
-<span class="source-line-no">044</span><span id="line-44">     * The property that defines if this mojo should be used in configuration.</span>
-<span class="source-line-no">045</span><span id="line-45">     */</span>
-<span class="source-line-no">046</span><span id="line-46">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generate.server")</span>
-<span class="source-line-no">047</span><span id="line-47">    protected boolean enabled;</span>
-<span class="source-line-no">048</span><span id="line-48"></span>
-<span class="source-line-no">049</span><span id="line-49">    @Override</span>
-<span class="source-line-no">050</span><span id="line-50">    protected boolean isEnabled() {</span>
-<span class="source-line-no">051</span><span id="line-51">        return enabled;</span>
-<span class="source-line-no">052</span><span id="line-52">    }</span>
-<span class="source-line-no">053</span><span id="line-53"></span>
-<span class="source-line-no">054</span><span id="line-54">    @Override</span>
-<span class="source-line-no">055</span><span id="line-55">    protected void configureBuilder(MicronautCodeGeneratorBuilder builder) {</span>
-<span class="source-line-no">056</span><span id="line-56">        builder.forJavaServer(spec -&gt; {</span>
-<span class="source-line-no">057</span><span id="line-57">            spec.withControllerPackage(controllerPackageName);</span>
-<span class="source-line-no">058</span><span id="line-58">            spec.withAuthentication(useAuth);</span>
-<span class="source-line-no">059</span><span id="line-59">            // we don't want these to be configurable in the plugin for now</span>
-<span class="source-line-no">060</span><span id="line-60">            spec.withGenerateImplementationFiles(false);</span>
-<span class="source-line-no">061</span><span id="line-61">            spec.withGenerateControllerFromExamples(false);</span>
-<span class="source-line-no">062</span><span id="line-62">            spec.withGenerateOperationsToReturnNotImplemented(false);</span>
-<span class="source-line-no">063</span><span id="line-63">        });</span>
-<span class="source-line-no">064</span><span id="line-64">    }</span>
-<span class="source-line-no">065</span><span id="line-65">}</span>
+<span class="source-line-no">030</span><span id="line-30">    private static final String SERVER_PREFIX = MICRONAUT_OPENAPI_PREFIX + ".server.";</span>
+<span class="source-line-no">031</span><span id="line-31"></span>
+<span class="source-line-no">032</span><span id="line-32">    /**</span>
+<span class="source-line-no">033</span><span id="line-33">     * The package name of the controller if controller implementation files are generated.</span>
+<span class="source-line-no">034</span><span id="line-34">     */</span>
+<span class="source-line-no">035</span><span id="line-35">    @Parameter(property = SERVER_PREFIX + "controller.package.name", defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + ".controller.package.name", required = true)</span>
+<span class="source-line-no">036</span><span id="line-36">    protected String controllerPackageName;</span>
+<span class="source-line-no">037</span><span id="line-37"></span>
+<span class="source-line-no">038</span><span id="line-38">    /**</span>
+<span class="source-line-no">039</span><span id="line-39">     * Whether to generate authentication annotations for APIs.</span>
+<span class="source-line-no">040</span><span id="line-40">     */</span>
+<span class="source-line-no">041</span><span id="line-41">    @Parameter(property = SERVER_PREFIX + "use.auth", defaultValue = "false")</span>
+<span class="source-line-no">042</span><span id="line-42">    protected boolean useAuth;</span>
+<span class="source-line-no">043</span><span id="line-43"></span>
+<span class="source-line-no">044</span><span id="line-44">    /**</span>
+<span class="source-line-no">045</span><span id="line-45">     * Determines if the server should use lombok.</span>
+<span class="source-line-no">046</span><span id="line-46">     * @since 4.2.2</span>
+<span class="source-line-no">047</span><span id="line-47">     */</span>
+<span class="source-line-no">048</span><span id="line-48">    @Parameter(property = SERVER_PREFIX + "lombok")</span>
+<span class="source-line-no">049</span><span id="line-49">    protected boolean lombok;</span>
+<span class="source-line-no">050</span><span id="line-50"></span>
+<span class="source-line-no">051</span><span id="line-51">    /**</span>
+<span class="source-line-no">052</span><span id="line-52">     * Determines if the server should use flux for arrays.</span>
+<span class="source-line-no">053</span><span id="line-53">     * @since 4.2.2</span>
+<span class="source-line-no">054</span><span id="line-54">     */</span>
+<span class="source-line-no">055</span><span id="line-55">    @Parameter(property = SERVER_PREFIX + "flux.for.arrays")</span>
+<span class="source-line-no">056</span><span id="line-56">    protected boolean fluxForArrays;</span>
+<span class="source-line-no">057</span><span id="line-57"></span>
+<span class="source-line-no">058</span><span id="line-58">    /**</span>
+<span class="source-line-no">059</span><span id="line-59">     * If set to true, the `javax.annotation.Generated` annotation will be added to all generated classes.</span>
+<span class="source-line-no">060</span><span id="line-60">     * @since 4.2.2</span>
+<span class="source-line-no">061</span><span id="line-61">     */</span>
+<span class="source-line-no">062</span><span id="line-62">    @Parameter(property = SERVER_PREFIX + "generated.annotation", defaultValue = "true")</span>
+<span class="source-line-no">063</span><span id="line-63">    protected boolean generatedAnnotation;</span>
+<span class="source-line-no">064</span><span id="line-64"></span>
+<span class="source-line-no">065</span><span id="line-65">    /**</span>
+<span class="source-line-no">066</span><span id="line-66">     * If set to true, the generated code should be made compatible with Micronaut AOT.</span>
+<span class="source-line-no">067</span><span id="line-67">     * @since 4.2.2</span>
+<span class="source-line-no">068</span><span id="line-68">     */</span>
+<span class="source-line-no">069</span><span id="line-69">    @Parameter(property = SERVER_PREFIX + "aot.compatible")</span>
+<span class="source-line-no">070</span><span id="line-70">    protected boolean aotCompatible;</span>
+<span class="source-line-no">071</span><span id="line-71"></span>
+<span class="source-line-no">072</span><span id="line-72">    /**</span>
+<span class="source-line-no">073</span><span id="line-73">     * The property that defines if this mojo should be used in configuration.</span>
+<span class="source-line-no">074</span><span id="line-74">     */</span>
+<span class="source-line-no">075</span><span id="line-75">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generate.server")</span>
+<span class="source-line-no">076</span><span id="line-76">    protected boolean enabled;</span>
+<span class="source-line-no">077</span><span id="line-77"></span>
+<span class="source-line-no">078</span><span id="line-78">    @Override</span>
+<span class="source-line-no">079</span><span id="line-79">    protected boolean isEnabled() {</span>
+<span class="source-line-no">080</span><span id="line-80">        return enabled;</span>
+<span class="source-line-no">081</span><span id="line-81">    }</span>
+<span class="source-line-no">082</span><span id="line-82"></span>
+<span class="source-line-no">083</span><span id="line-83">    @Override</span>
+<span class="source-line-no">084</span><span id="line-84">    protected void configureBuilder(MicronautCodeGeneratorBuilder builder) {</span>
+<span class="source-line-no">085</span><span id="line-85">        builder.forJavaServer(spec -&gt; {</span>
+<span class="source-line-no">086</span><span id="line-86">            spec.withControllerPackage(controllerPackageName);</span>
+<span class="source-line-no">087</span><span id="line-87">            spec.withAuthentication(useAuth);</span>
+<span class="source-line-no">088</span><span id="line-88">            // we don't want these to be configurable in the plugin for now</span>
+<span class="source-line-no">089</span><span id="line-89">            spec.withGenerateImplementationFiles(false);</span>
+<span class="source-line-no">090</span><span id="line-90">            spec.withGenerateControllerFromExamples(false);</span>
+<span class="source-line-no">091</span><span id="line-91">            spec.withGenerateOperationsToReturnNotImplemented(false);</span>
+<span class="source-line-no">092</span><span id="line-92">            spec.withLombok(lombok);</span>
+<span class="source-line-no">093</span><span id="line-93">            spec.withFluxForArrays(fluxForArrays);</span>
+<span class="source-line-no">094</span><span id="line-94">            spec.withGeneratedAnnotation(generatedAnnotation);</span>
+<span class="source-line-no">095</span><span id="line-95">            spec.withAot(aotCompatible);</span>
+<span class="source-line-no">096</span><span id="line-96">        });</span>
+<span class="source-line-no">097</span><span id="line-97">    }</span>
+<span class="source-line-no">098</span><span id="line-98">}</span>
 
 
 
