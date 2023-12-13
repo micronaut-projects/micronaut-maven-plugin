@@ -229,21 +229,26 @@
 <td><code>4.2.2</code></td>
 <td>If set to true, the `javax.annotation.Generated` annotation will be added to all generated classes.<br /><strong>Default</strong>: <code>true</code><br /><strong>User Property</strong>: <code>micronaut.openapi.client.generated.annotation</code></td></tr>
 <tr class="a">
+<td align="left"><a href="#lang"><code>&lt;lang&gt;</code></a></td>
+<td><code>String</code></td>
+<td><code>4.3.0</code></td>
+<td>Allows specifying the language of the generated code.<br /><strong>Default</strong>: <code>java</code><br /><strong>User Property</strong>: <code>micronaut.openapi.lang</code></td></tr>
+<tr class="b">
 <td align="left"><a href="#lombok"><code>&lt;lombok&gt;</code></a></td>
 <td><code>boolean</code></td>
 <td><code>4.2.2</code></td>
 <td>Determines if the client should use lombok.<br /><strong>User Property</strong>: <code>micronaut.openapi.client.lombok</code></td></tr>
-<tr class="b">
+<tr class="a">
 <td align="left"><a href="#parameterMappings"><code>&lt;parameterMappings&gt;</code></a></td>
 <td><code>List&lt;ParameterMapping&gt;</code></td>
 <td><code>-</code></td>
 <td>Define parameter mappings that allow using custom types for parameter binding. See <code>ParameterMapping</code><!-- no javadoc sites associated --> for details.<br /><strong>User Property</strong>: <code>micronaut.openapi.parameterMappings</code></td></tr>
-<tr class="a">
+<tr class="b">
 <td align="left"><a href="#responseBodyMappings"><code>&lt;responseBodyMappings&gt;</code></a></td>
 <td><code>List&lt;ResponseBodyMapping&gt;</code></td>
 <td><code>-</code></td>
 <td>Define parameter mappings that allow using custom types for parameter binding. See <code>ResponseBodyMapping</code><!-- no javadoc sites associated --> for details.<br /><strong>User Property</strong>: <code>micronaut.openapi.responseBodyMappings</code></td></tr>
-<tr class="b">
+<tr class="a">
 <td align="left"><a href="#useAuth"><code>&lt;useAuth&gt;</code></a></td>
 <td><code>boolean</code></td>
 <td><code>-</code></td>
@@ -314,7 +319,15 @@
 <li><strong>Type</strong>: <code>java.lang.String</code></li>
 <li><strong>Required</strong>: <code>report.plugin.goal.yes</code></li>
 <li><strong>User Property</strong>: <code>micronaut.openapi.invoker.package.name</code></li>
-<li><strong>Default</strong>: <code>io.micronaut.openapi.invoker</code></li></ul><hr /></section><a name="lombok"><section>
+<li><strong>Default</strong>: <code>io.micronaut.openapi.invoker</code></li></ul><hr /></section><a name="lang"><section>
+<h4><a name="a.3Clang.3E"></a>&lt;lang&gt;</h4><a name="a.3Clang.3E"></a></a>
+<div>Allows specifying the language of the generated code.</div>
+<ul>
+<li><strong>Type</strong>: <code>java.lang.String</code></li>
+<li><strong>Since</strong>: <code>4.3.0</code></li>
+<li><strong>Required</strong>: <code>report.plugin.goal.no</code></li>
+<li><strong>User Property</strong>: <code>micronaut.openapi.lang</code></li>
+<li><strong>Default</strong>: <code>java</code></li></ul><hr /></section><a name="lombok"><section>
 <h4><a name="a.3Clombok.3E"></a>&lt;lombok&gt;</h4><a name="a.3Clombok.3E"></a></a>
 <div>Determines if the client should use lombok.</div>
 <ul>

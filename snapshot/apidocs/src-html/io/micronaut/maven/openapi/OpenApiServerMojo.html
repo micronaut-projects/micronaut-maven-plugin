@@ -95,20 +95,36 @@
 <span class="source-line-no">082</span><span id="line-82"></span>
 <span class="source-line-no">083</span><span id="line-83">    @Override</span>
 <span class="source-line-no">084</span><span id="line-84">    protected void configureBuilder(MicronautCodeGeneratorBuilder builder) {</span>
-<span class="source-line-no">085</span><span id="line-85">        builder.forJavaServer(spec -&gt; {</span>
-<span class="source-line-no">086</span><span id="line-86">            spec.withControllerPackage(controllerPackageName);</span>
-<span class="source-line-no">087</span><span id="line-87">            spec.withAuthentication(useAuth);</span>
-<span class="source-line-no">088</span><span id="line-88">            // we don't want these to be configurable in the plugin for now</span>
-<span class="source-line-no">089</span><span id="line-89">            spec.withGenerateImplementationFiles(false);</span>
-<span class="source-line-no">090</span><span id="line-90">            spec.withGenerateControllerFromExamples(false);</span>
-<span class="source-line-no">091</span><span id="line-91">            spec.withGenerateOperationsToReturnNotImplemented(false);</span>
-<span class="source-line-no">092</span><span id="line-92">            spec.withLombok(lombok);</span>
-<span class="source-line-no">093</span><span id="line-93">            spec.withFluxForArrays(fluxForArrays);</span>
-<span class="source-line-no">094</span><span id="line-94">            spec.withGeneratedAnnotation(generatedAnnotation);</span>
-<span class="source-line-no">095</span><span id="line-95">            spec.withAot(aotCompatible);</span>
-<span class="source-line-no">096</span><span id="line-96">        });</span>
-<span class="source-line-no">097</span><span id="line-97">    }</span>
-<span class="source-line-no">098</span><span id="line-98">}</span>
+<span class="source-line-no">085</span><span id="line-85">        if ("java".equalsIgnoreCase(lang)) {</span>
+<span class="source-line-no">086</span><span id="line-86">            builder.forJavaServer(spec -&gt; {</span>
+<span class="source-line-no">087</span><span id="line-87">                spec.withControllerPackage(controllerPackageName);</span>
+<span class="source-line-no">088</span><span id="line-88">                spec.withAuthentication(useAuth);</span>
+<span class="source-line-no">089</span><span id="line-89">                // we don't want these to be configurable in the plugin for now</span>
+<span class="source-line-no">090</span><span id="line-90">                spec.withGenerateImplementationFiles(false);</span>
+<span class="source-line-no">091</span><span id="line-91">                spec.withGenerateControllerFromExamples(false);</span>
+<span class="source-line-no">092</span><span id="line-92">                spec.withGenerateOperationsToReturnNotImplemented(false);</span>
+<span class="source-line-no">093</span><span id="line-93">                spec.withLombok(lombok);</span>
+<span class="source-line-no">094</span><span id="line-94">                spec.withFluxForArrays(fluxForArrays);</span>
+<span class="source-line-no">095</span><span id="line-95">                spec.withGeneratedAnnotation(generatedAnnotation);</span>
+<span class="source-line-no">096</span><span id="line-96">                spec.withAot(aotCompatible);</span>
+<span class="source-line-no">097</span><span id="line-97">            });</span>
+<span class="source-line-no">098</span><span id="line-98">        } else if ("kotlin".equalsIgnoreCase(lang)) {</span>
+<span class="source-line-no">099</span><span id="line-99">            builder.forKotlinServer(spec -&gt; {</span>
+<span class="source-line-no">100</span><span id="line-100">                spec.withControllerPackage(controllerPackageName);</span>
+<span class="source-line-no">101</span><span id="line-101">                spec.withAuthentication(useAuth);</span>
+<span class="source-line-no">102</span><span id="line-102">                // we don't want these to be configurable in the plugin for now</span>
+<span class="source-line-no">103</span><span id="line-103">                spec.withGenerateImplementationFiles(false);</span>
+<span class="source-line-no">104</span><span id="line-104">                spec.withGenerateControllerFromExamples(false);</span>
+<span class="source-line-no">105</span><span id="line-105">                spec.withGenerateOperationsToReturnNotImplemented(false);</span>
+<span class="source-line-no">106</span><span id="line-106">                spec.withFluxForArrays(fluxForArrays);</span>
+<span class="source-line-no">107</span><span id="line-107">                spec.withGeneratedAnnotation(generatedAnnotation);</span>
+<span class="source-line-no">108</span><span id="line-108">                spec.withAot(aotCompatible);</span>
+<span class="source-line-no">109</span><span id="line-109">            });</span>
+<span class="source-line-no">110</span><span id="line-110">        } else {</span>
+<span class="source-line-no">111</span><span id="line-111">            throw new UnsupportedOperationException("Unsupported language: " + lang);</span>
+<span class="source-line-no">112</span><span id="line-112">        }</span>
+<span class="source-line-no">113</span><span id="line-113">    }</span>
+<span class="source-line-no">114</span><span id="line-114">}</span>
 
 
 
