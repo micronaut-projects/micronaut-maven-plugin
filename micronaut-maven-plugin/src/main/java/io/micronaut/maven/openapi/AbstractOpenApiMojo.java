@@ -111,7 +111,7 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
 
     /**
      * Allows specifying the language of the generated code.
-     * @since 4.2.2
+     * @since 4.3.0
      */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".lang", defaultValue = "java")
     protected String lang;
