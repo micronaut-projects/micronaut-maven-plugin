@@ -252,10 +252,12 @@ public class RunMojo extends AbstractTestResourcesMojo {
                     List<Path> pathsToWatch = new ArrayList<>();
                     for (FileSet fs : watches) {
                         var directory = runnableProject.getBasedir().toPath().resolve(fs.getDirectory()).toAbsolutePath();
-                        pathsToWatch.add(directory);
-                        //If neither includes nor excludes, add a default include
-                        if ((fs.getIncludes() == null || fs.getIncludes().isEmpty()) && (fs.getExcludes() == null || fs.getExcludes().isEmpty())) {
-                            fs.addInclude("**/*");
+                        if (Files.exists(directory)) {
+                            pathsToWatch.add(directory);
+                            //If neither includes nor excludes, add a default include
+                            if ((fs.getIncludes() == null || fs.getIncludes().isEmpty()) && (fs.getExcludes() == null || fs.getExcludes().isEmpty())) {
+                                fs.addInclude("**/*");
+                            }
                         }
                     }
 
