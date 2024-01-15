@@ -75,7 +75,6 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        checkJavaVersion();
         checkGraalVm();
 
         try {
@@ -84,9 +83,18 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             this.runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
 
             switch (runtime.getBuildStrategy()) {
-                case LAMBDA -> buildDockerNativeLambda();
-                case ORACLE_FUNCTION -> buildOracleCloud();
-                case DEFAULT -> buildDockerNative();
+                case LAMBDA -> {
+                    checkJavaVersion(17);
+                    buildDockerNativeLambda();
+                }
+                case ORACLE_FUNCTION -> {
+                    checkJavaVersion(17);
+                    buildOracleCloud();
+                }
+                case DEFAULT ->  {
+                    checkJavaVersion(21);
+                    buildDockerNative();
+                }
                 default -> throw new IllegalStateException("Unexpected value: " + runtime.getBuildStrategy());
             }
 
@@ -130,9 +138,9 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         }
     }
 
-    private void checkJavaVersion() throws MojoExecutionException {
-        if (javaVersion().getMajorVersion() > 17) {
-            throw new MojoExecutionException("To build native images you must set the Java target byte code level to Java 17 or below");
+    private void checkJavaVersion(int allowedVersion) throws MojoExecutionException {
+        if (javaVersion().getMajorVersion() > allowedVersion) {
+            throw new MojoExecutionException("To build native images you must set the Java target byte code level to Java %s or below".formatted(allowedVersion));
         }
     }
 
