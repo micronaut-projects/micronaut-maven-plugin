@@ -150,7 +150,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @return the JVM version to use for GraalVM.
      */
     protected String graalVmJvmVersion() {
-        return String.valueOf(javaVersion().getMajorVersion());
+        return javaVersion().getMajorVersion() == 17 ? "17" : "21";
     }
 
     /**

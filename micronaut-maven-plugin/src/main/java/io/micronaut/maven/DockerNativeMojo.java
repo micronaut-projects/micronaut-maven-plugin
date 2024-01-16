@@ -63,6 +63,9 @@ public class DockerNativeMojo extends AbstractDockerMojo {
     public static final String MICRONAUT_PARENT = "io.micronaut.platform:micronaut-parent";
     public static final String MICRONAUT_VERSION = "micronaut.version";
     public static final String ARGS_FILE_PROPERTY_NAME = "graalvm.native-image.args-file";
+    static final int AWS_LAMBDA_MAX_ALLOWED_VERSION = 17;
+    static final int ORACLE_FUNCTION_MAX_ALLOWED_VERSION = 17;
+    static final int MAX_ALLOWED_VERSION = 21;
     private MicronautRuntime runtime;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
@@ -84,15 +87,15 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
             switch (runtime.getBuildStrategy()) {
                 case LAMBDA -> {
-                    checkJavaVersion(17);
+                    checkJavaVersion(AWS_LAMBDA_MAX_ALLOWED_VERSION);
                     buildDockerNativeLambda();
                 }
                 case ORACLE_FUNCTION -> {
-                    checkJavaVersion(17);
+                    checkJavaVersion(ORACLE_FUNCTION_MAX_ALLOWED_VERSION);
                     buildOracleCloud();
                 }
                 case DEFAULT ->  {
-                    checkJavaVersion(21);
+                    checkJavaVersion(MAX_ALLOWED_VERSION);
                     buildDockerNative();
                 }
                 default -> throw new IllegalStateException("Unexpected value: " + runtime.getBuildStrategy());
@@ -138,9 +141,9 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         }
     }
 
-    private void checkJavaVersion(int allowedVersion) throws MojoExecutionException {
-        if (javaVersion().getMajorVersion() > allowedVersion) {
-            throw new MojoExecutionException("To build native images you must set the Java target byte code level to Java %s or below".formatted(allowedVersion));
+    private void checkJavaVersion(int maxAllowedVersion) throws MojoExecutionException {
+        if (javaVersion().getMajorVersion() > maxAllowedVersion) {
+            throw new MojoExecutionException("To build native images you must set the Java target byte code level to Java %s or below".formatted(maxAllowedVersion));
         }
     }
 
