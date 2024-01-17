@@ -54,7 +54,6 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
     public static final String ARM_ARCH = "aarch64";
     public static final String X86_64_ARCH = "x64";
-    public static final String JAVA_17 = "17";
     public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol9";
     public static final String ARCH_DEFAULT_PLACEHOLDER = "ARCH_DEFAULT";
 
@@ -151,7 +150,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @return the JVM version to use for GraalVM.
      */
     protected String graalVmJvmVersion() {
-        return JAVA_17;
+        return javaVersion().getMajorVersion() == 17 ? "17" : "21";
     }
 
     /**
