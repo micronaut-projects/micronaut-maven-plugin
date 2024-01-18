@@ -104,6 +104,9 @@
                         <extraArtifact>org.jacoco:org.jacoco.agent:${jacoco.version}:jar:runtime</extraArtifact>
                     </extraArtifacts>
                     <writeJunitReport>true</writeJunitReport>
+                    <properties>
+                        <jdk.version>${java.specification.version}</jdk.version>
+                    </properties>
                 </configuration>
                 <executions>
                     <execution>

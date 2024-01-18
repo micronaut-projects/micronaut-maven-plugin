@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.services.ApplicationConfigurationService;
+import org.apache.maven.project.MavenProject;
 
 import java.util.*;
 
@@ -34,8 +35,10 @@ import java.util.*;
  */
 public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
-    public static final String DEFAULT_BASE_IMAGE = "eclipse-temurin:17-alpine";
+    public static final String DEFAULT_JAVA17_BASE_IMAGE = "eclipse-temurin:17-jre";
+    public static final String DEFAULT_JAVA21_BASE_IMAGE = "eclipse-temurin:21-jre";
     private static final String LATEST_TAG = "latest";
+    private static final String JDK_VERSION = "jdk.version";
 
     @Override
     public Optional<Class<Void>> getExtraConfigType() {
@@ -52,9 +55,12 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
         JibConfigurationService jibConfigurationService = new JibConfigurationService(mavenData.getMavenProject());
 
+        String baseImage = buildPlan.getBaseImage();
         if (StringUtils.isEmpty(buildPlan.getBaseImage())) {
-            builder.setBaseImage(DEFAULT_BASE_IMAGE);
+            baseImage = determineBaseImage(getJdkVersion(mavenData.getMavenProject()));
+            builder.setBaseImage(baseImage);
         }
+        logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Using base image: " + baseImage);
 
         ApplicationConfigurationService applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());
         try {
@@ -67,6 +73,8 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
             // ignore, can't automatically expose port
             logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Dynamically resolved port present. Ensure the port is correctly exposed in the <container> configuration. See https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#example for an example.");
         }
+
+        builder.setPlatforms(Set.of(detectPlatform()));
 
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION -> {
@@ -117,6 +125,15 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         }
     }
 
+    public static String determineBaseImage(String jdkVersion) {
+        int javaVersion = Integer.parseInt(jdkVersion);
+        return javaVersion == 17 ? DEFAULT_JAVA17_BASE_IMAGE : DEFAULT_JAVA21_BASE_IMAGE;
+    }
+
+    public static String getJdkVersion(MavenProject project) {
+        return System.getProperty(JDK_VERSION, project.getProperties().getProperty(JDK_VERSION));
+    }
+
     static LayerObject remapLayer(LayerObject layerObject) {
         FileEntriesLayer originalLayer = (FileEntriesLayer) layerObject;
         FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(originalLayer.getName());
@@ -139,6 +156,11 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
         return new FileEntry(originalEntry.getSourceFile(), newPath, originalEntry.getPermissions(),
                 originalEntry.getModificationTime(), originalEntry.getOwnership());
+    }
+
+    private Platform detectPlatform() {
+        String arch = System.getProperty("os.arch").equals("aarch64") ? "arm64" : "amd64";
+        return new Platform(arch, "linux");
     }
 
 }
