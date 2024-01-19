@@ -38,7 +38,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     public static final String DEFAULT_JAVA17_BASE_IMAGE = "eclipse-temurin:17-jre";
     public static final String DEFAULT_JAVA21_BASE_IMAGE = "eclipse-temurin:21-jre";
     private static final String LATEST_TAG = "latest";
-    private static final String JDK_VERSION = "jdk.version";
+    private static final String JDK_VERSION = "maven.compiler.target";
 
     @Override
     public Optional<Class<Void>> getExtraConfigType() {

@@ -1,4 +1,5 @@
-FROM eclipse-temurin:17-jre
+ARG BASE_JAVA_IMAGE
+FROM ${BASE_JAVA_IMAGE}
 WORKDIR /home/app
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
