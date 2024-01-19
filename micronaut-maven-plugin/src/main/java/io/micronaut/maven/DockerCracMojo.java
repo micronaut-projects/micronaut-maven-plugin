@@ -107,7 +107,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
     @Parameter(property = DockerCracMojo.CRAC_CHECKPOINT_NETWORK_PROPERTY)
     private String checkpointNetworkName;
 
-    @Parameter(property = DockerCracMojo.CRAC_JAVA_VERSION, defaultValue = DockerCracMojo.DEFAULT_CRAC_JAVA_VERSION)
+    @Parameter(property = DockerCracMojo.CRAC_JAVA_VERSION, defaultValue = "${jdk.version}")
     private String cracJavaVersion;
 
     @Parameter(property = DockerCracMojo.CRAC_ARCHITECTURE)
@@ -187,10 +187,16 @@ public class DockerCracMojo extends AbstractDockerMojo {
         String systemArchitecture = limitArchitecture(System.getProperty("os.arch"));
         String filteredCracArchitecture = limitArchitecture(cracArchitecture);
         String finalArchitecture = filteredCracArchitecture == null ? systemArchitecture : filteredCracArchitecture;
+        String baseImage = getFromImage().orElse(DEFAULT_BASE_IMAGE);
+
+        getLog().info("Using BASE_IMAGE: " + baseImage);
+        getLog().info("Using CRAC_ARCH: " + finalArchitecture);
+        getLog().info("Using CRAC_JDK_VERSION: " + cracJavaVersion);
+
 
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
                 .withDockerfile(dockerfile)
-                .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))
+                .withBuildArg("BASE_IMAGE", baseImage)
                 .withBuildArg("CRAC_ARCH", finalArchitecture)
                 .withBuildArg("CRAC_JDK_VERSION", cracJavaVersion)
                 .withTags(checkpointTags);
@@ -206,6 +212,11 @@ public class DockerCracMojo extends AbstractDockerMojo {
         }
         copyScripts(RUN_SCRIPT_NAME);
         File dockerfile = dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_CRAC);
+        String baseImage = getFromImage().orElse(DEFAULT_BASE_IMAGE);
+
+        getLog().info("Using BASE_IMAGE: " + baseImage);
+        getLog().info("Using CHECKPOINT_IMAGE: " + checkpointContainerId);
+
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
                 .withDockerfile(dockerfile)
                 .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))
