@@ -36,125 +36,147 @@
 <span class="source-line-no">023</span><span id="line-23">import io.micronaut.core.util.StringUtils;</span>
 <span class="source-line-no">024</span><span id="line-24">import io.micronaut.maven.core.MicronautRuntime;</span>
 <span class="source-line-no">025</span><span id="line-25">import io.micronaut.maven.services.ApplicationConfigurationService;</span>
-<span class="source-line-no">026</span><span id="line-26"></span>
-<span class="source-line-no">027</span><span id="line-27">import java.util.*;</span>
-<span class="source-line-no">028</span><span id="line-28"></span>
-<span class="source-line-no">029</span><span id="line-29">/**</span>
-<span class="source-line-no">030</span><span id="line-30"> * Jib extension to support building Docker images.</span>
-<span class="source-line-no">031</span><span id="line-31"> *</span>
-<span class="source-line-no">032</span><span id="line-32"> * @author Álvaro Sánchez-Mariscal</span>
-<span class="source-line-no">033</span><span id="line-33"> * @since 1.1</span>
-<span class="source-line-no">034</span><span id="line-34"> */</span>
-<span class="source-line-no">035</span><span id="line-35">public class JibMicronautExtension implements JibMavenPluginExtension&lt;Void&gt; {</span>
-<span class="source-line-no">036</span><span id="line-36"></span>
-<span class="source-line-no">037</span><span id="line-37">    public static final String DEFAULT_BASE_IMAGE = "eclipse-temurin:17-alpine";</span>
-<span class="source-line-no">038</span><span id="line-38">    private static final String LATEST_TAG = "latest";</span>
-<span class="source-line-no">039</span><span id="line-39"></span>
-<span class="source-line-no">040</span><span id="line-40">    @Override</span>
-<span class="source-line-no">041</span><span id="line-41">    public Optional&lt;Class&lt;Void&gt;&gt; getExtraConfigType() {</span>
-<span class="source-line-no">042</span><span id="line-42">        return Optional.empty();</span>
-<span class="source-line-no">043</span><span id="line-43">    }</span>
-<span class="source-line-no">044</span><span id="line-44"></span>
-<span class="source-line-no">045</span><span id="line-45">    @Override</span>
-<span class="source-line-no">046</span><span id="line-46">    public ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan buildPlan, Map&lt;String, String&gt; properties,</span>
-<span class="source-line-no">047</span><span id="line-47">                                                       Optional&lt;Void&gt; extraConfig, MavenData mavenData,</span>
-<span class="source-line-no">048</span><span id="line-48">                                                       ExtensionLogger logger) {</span>
-<span class="source-line-no">049</span><span id="line-49"></span>
-<span class="source-line-no">050</span><span id="line-50">        ContainerBuildPlan.Builder builder = buildPlan.toBuilder();</span>
-<span class="source-line-no">051</span><span id="line-51">        MicronautRuntime runtime = MicronautRuntime.valueOf(mavenData.getMavenProject().getProperties().getProperty(MicronautRuntime.PROPERTY, "none").toUpperCase());</span>
+<span class="source-line-no">026</span><span id="line-26">import org.apache.maven.project.MavenProject;</span>
+<span class="source-line-no">027</span><span id="line-27"></span>
+<span class="source-line-no">028</span><span id="line-28">import java.util.*;</span>
+<span class="source-line-no">029</span><span id="line-29"></span>
+<span class="source-line-no">030</span><span id="line-30">/**</span>
+<span class="source-line-no">031</span><span id="line-31"> * Jib extension to support building Docker images.</span>
+<span class="source-line-no">032</span><span id="line-32"> *</span>
+<span class="source-line-no">033</span><span id="line-33"> * @author Álvaro Sánchez-Mariscal</span>
+<span class="source-line-no">034</span><span id="line-34"> * @since 1.1</span>
+<span class="source-line-no">035</span><span id="line-35"> */</span>
+<span class="source-line-no">036</span><span id="line-36">public class JibMicronautExtension implements JibMavenPluginExtension&lt;Void&gt; {</span>
+<span class="source-line-no">037</span><span id="line-37"></span>
+<span class="source-line-no">038</span><span id="line-38">    public static final String DEFAULT_JAVA17_BASE_IMAGE = "eclipse-temurin:17-jre";</span>
+<span class="source-line-no">039</span><span id="line-39">    public static final String DEFAULT_JAVA21_BASE_IMAGE = "eclipse-temurin:21-jre";</span>
+<span class="source-line-no">040</span><span id="line-40">    private static final String LATEST_TAG = "latest";</span>
+<span class="source-line-no">041</span><span id="line-41">    private static final String JDK_VERSION = "maven.compiler.target";</span>
+<span class="source-line-no">042</span><span id="line-42"></span>
+<span class="source-line-no">043</span><span id="line-43">    @Override</span>
+<span class="source-line-no">044</span><span id="line-44">    public Optional&lt;Class&lt;Void&gt;&gt; getExtraConfigType() {</span>
+<span class="source-line-no">045</span><span id="line-45">        return Optional.empty();</span>
+<span class="source-line-no">046</span><span id="line-46">    }</span>
+<span class="source-line-no">047</span><span id="line-47"></span>
+<span class="source-line-no">048</span><span id="line-48">    @Override</span>
+<span class="source-line-no">049</span><span id="line-49">    public ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan buildPlan, Map&lt;String, String&gt; properties,</span>
+<span class="source-line-no">050</span><span id="line-50">                                                       Optional&lt;Void&gt; extraConfig, MavenData mavenData,</span>
+<span class="source-line-no">051</span><span id="line-51">                                                       ExtensionLogger logger) {</span>
 <span class="source-line-no">052</span><span id="line-52"></span>
-<span class="source-line-no">053</span><span id="line-53">        JibConfigurationService jibConfigurationService = new JibConfigurationService(mavenData.getMavenProject());</span>
-<span class="source-line-no">054</span><span id="line-54"></span>
-<span class="source-line-no">055</span><span id="line-55">        if (StringUtils.isEmpty(buildPlan.getBaseImage())) {</span>
-<span class="source-line-no">056</span><span id="line-56">            builder.setBaseImage(DEFAULT_BASE_IMAGE);</span>
-<span class="source-line-no">057</span><span id="line-57">        }</span>
-<span class="source-line-no">058</span><span id="line-58"></span>
-<span class="source-line-no">059</span><span id="line-59">        ApplicationConfigurationService applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());</span>
-<span class="source-line-no">060</span><span id="line-60">        try {</span>
-<span class="source-line-no">061</span><span id="line-61">            int port = Integer.parseInt(applicationConfigurationService.getServerPort());</span>
-<span class="source-line-no">062</span><span id="line-62">            if (port &gt; 0) {</span>
-<span class="source-line-no">063</span><span id="line-63">                logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Exposing port: " + port);</span>
-<span class="source-line-no">064</span><span id="line-64">                builder.addExposedPort(Port.tcp(port));</span>
-<span class="source-line-no">065</span><span id="line-65">            }</span>
-<span class="source-line-no">066</span><span id="line-66">        } catch (NumberFormatException e) {</span>
-<span class="source-line-no">067</span><span id="line-67">            // ignore, can't automatically expose port</span>
-<span class="source-line-no">068</span><span id="line-68">            logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Dynamically resolved port present. Ensure the port is correctly exposed in the &lt;container&gt; configuration. See https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#example for an example.");</span>
-<span class="source-line-no">069</span><span id="line-69">        }</span>
-<span class="source-line-no">070</span><span id="line-70"></span>
-<span class="source-line-no">071</span><span id="line-71">        switch (runtime.getBuildStrategy()) {</span>
-<span class="source-line-no">072</span><span id="line-72">            case ORACLE_FUNCTION -&gt; {</span>
-<span class="source-line-no">073</span><span id="line-73">                List&lt;? extends LayerObject&gt; originalLayers = buildPlan.getLayers();</span>
-<span class="source-line-no">074</span><span id="line-74">                builder.setLayers(originalLayers.stream().map(JibMicronautExtension::remapLayer).toList());</span>
-<span class="source-line-no">075</span><span id="line-75">                List&lt;String&gt; cmd = jibConfigurationService.getArgs();</span>
-<span class="source-line-no">076</span><span id="line-76">                if (cmd.isEmpty()) {</span>
-<span class="source-line-no">077</span><span id="line-77">                    cmd = Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest");</span>
-<span class="source-line-no">078</span><span id="line-78">                }</span>
-<span class="source-line-no">079</span><span id="line-79">                String projectFnVersion = determineProjectFnVersion(System.getProperty("java.version"));</span>
-<span class="source-line-no">080</span><span id="line-80">                builder.setBaseImage("fnproject/fn-java-fdk:" + projectFnVersion)</span>
-<span class="source-line-no">081</span><span id="line-81">                        .setWorkingDirectory(AbsoluteUnixPath.get(jibConfigurationService.getWorkingDirectory().orElse("/function")))</span>
-<span class="source-line-no">082</span><span id="line-82">                        .setEntrypoint(buildProjectFnEntrypoint())</span>
-<span class="source-line-no">083</span><span id="line-83">                        .setCmd(cmd);</span>
-<span class="source-line-no">084</span><span id="line-84">            }</span>
-<span class="source-line-no">085</span><span id="line-85">            case LAMBDA -&gt; {</span>
-<span class="source-line-no">086</span><span id="line-86">                List&lt;String&gt; entrypoint = buildPlan.getEntrypoint();</span>
-<span class="source-line-no">087</span><span id="line-87">                Objects.requireNonNull(entrypoint).set(entrypoint.size() - 1, "io.micronaut.function.aws.runtime.MicronautLambdaRuntime");</span>
-<span class="source-line-no">088</span><span id="line-88">                builder.setEntrypoint(entrypoint);</span>
-<span class="source-line-no">089</span><span id="line-89">            }</span>
-<span class="source-line-no">090</span><span id="line-90">            default -&gt; {</span>
-<span class="source-line-no">091</span><span id="line-91">                //no op</span>
+<span class="source-line-no">053</span><span id="line-53">        ContainerBuildPlan.Builder builder = buildPlan.toBuilder();</span>
+<span class="source-line-no">054</span><span id="line-54">        MicronautRuntime runtime = MicronautRuntime.valueOf(mavenData.getMavenProject().getProperties().getProperty(MicronautRuntime.PROPERTY, "none").toUpperCase());</span>
+<span class="source-line-no">055</span><span id="line-55"></span>
+<span class="source-line-no">056</span><span id="line-56">        JibConfigurationService jibConfigurationService = new JibConfigurationService(mavenData.getMavenProject());</span>
+<span class="source-line-no">057</span><span id="line-57"></span>
+<span class="source-line-no">058</span><span id="line-58">        String baseImage = buildPlan.getBaseImage();</span>
+<span class="source-line-no">059</span><span id="line-59">        if (StringUtils.isEmpty(buildPlan.getBaseImage())) {</span>
+<span class="source-line-no">060</span><span id="line-60">            baseImage = determineBaseImage(getJdkVersion(mavenData.getMavenProject()));</span>
+<span class="source-line-no">061</span><span id="line-61">            builder.setBaseImage(baseImage);</span>
+<span class="source-line-no">062</span><span id="line-62">        }</span>
+<span class="source-line-no">063</span><span id="line-63">        logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Using base image: " + baseImage);</span>
+<span class="source-line-no">064</span><span id="line-64"></span>
+<span class="source-line-no">065</span><span id="line-65">        ApplicationConfigurationService applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());</span>
+<span class="source-line-no">066</span><span id="line-66">        try {</span>
+<span class="source-line-no">067</span><span id="line-67">            int port = Integer.parseInt(applicationConfigurationService.getServerPort());</span>
+<span class="source-line-no">068</span><span id="line-68">            if (port &gt; 0) {</span>
+<span class="source-line-no">069</span><span id="line-69">                logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Exposing port: " + port);</span>
+<span class="source-line-no">070</span><span id="line-70">                builder.addExposedPort(Port.tcp(port));</span>
+<span class="source-line-no">071</span><span id="line-71">            }</span>
+<span class="source-line-no">072</span><span id="line-72">        } catch (NumberFormatException e) {</span>
+<span class="source-line-no">073</span><span id="line-73">            // ignore, can't automatically expose port</span>
+<span class="source-line-no">074</span><span id="line-74">            logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Dynamically resolved port present. Ensure the port is correctly exposed in the &lt;container&gt; configuration. See https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#example for an example.");</span>
+<span class="source-line-no">075</span><span id="line-75">        }</span>
+<span class="source-line-no">076</span><span id="line-76"></span>
+<span class="source-line-no">077</span><span id="line-77">        builder.setPlatforms(Set.of(detectPlatform()));</span>
+<span class="source-line-no">078</span><span id="line-78"></span>
+<span class="source-line-no">079</span><span id="line-79">        switch (runtime.getBuildStrategy()) {</span>
+<span class="source-line-no">080</span><span id="line-80">            case ORACLE_FUNCTION -&gt; {</span>
+<span class="source-line-no">081</span><span id="line-81">                List&lt;? extends LayerObject&gt; originalLayers = buildPlan.getLayers();</span>
+<span class="source-line-no">082</span><span id="line-82">                builder.setLayers(originalLayers.stream().map(JibMicronautExtension::remapLayer).toList());</span>
+<span class="source-line-no">083</span><span id="line-83">                List&lt;String&gt; cmd = jibConfigurationService.getArgs();</span>
+<span class="source-line-no">084</span><span id="line-84">                if (cmd.isEmpty()) {</span>
+<span class="source-line-no">085</span><span id="line-85">                    cmd = Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest");</span>
+<span class="source-line-no">086</span><span id="line-86">                }</span>
+<span class="source-line-no">087</span><span id="line-87">                String projectFnVersion = determineProjectFnVersion(System.getProperty("java.version"));</span>
+<span class="source-line-no">088</span><span id="line-88">                builder.setBaseImage("fnproject/fn-java-fdk:" + projectFnVersion)</span>
+<span class="source-line-no">089</span><span id="line-89">                        .setWorkingDirectory(AbsoluteUnixPath.get(jibConfigurationService.getWorkingDirectory().orElse("/function")))</span>
+<span class="source-line-no">090</span><span id="line-90">                        .setEntrypoint(buildProjectFnEntrypoint())</span>
+<span class="source-line-no">091</span><span id="line-91">                        .setCmd(cmd);</span>
 <span class="source-line-no">092</span><span id="line-92">            }</span>
-<span class="source-line-no">093</span><span id="line-93">        }</span>
-<span class="source-line-no">094</span><span id="line-94">        return builder.build();</span>
-<span class="source-line-no">095</span><span id="line-95">    }</span>
-<span class="source-line-no">096</span><span id="line-96"></span>
-<span class="source-line-no">097</span><span id="line-97">    public static List&lt;String&gt; buildProjectFnEntrypoint() {</span>
-<span class="source-line-no">098</span><span id="line-98">        List&lt;String&gt; entrypoint = new ArrayList&lt;&gt;(9);</span>
-<span class="source-line-no">099</span><span id="line-99">        entrypoint.add("/usr/java/latest/bin/java");</span>
-<span class="source-line-no">100</span><span id="line-100">        entrypoint.add("-XX:-UsePerfData");</span>
-<span class="source-line-no">101</span><span id="line-101">        entrypoint.add("-XX:+UseSerialGC");</span>
-<span class="source-line-no">102</span><span id="line-102">        entrypoint.add("-Xshare:on");</span>
-<span class="source-line-no">103</span><span id="line-103">        entrypoint.add("-Djava.awt.headless=true");</span>
-<span class="source-line-no">104</span><span id="line-104">        entrypoint.add("-Djava.library.path=/function/runtime/lib");</span>
-<span class="source-line-no">105</span><span id="line-105">        entrypoint.add("-cp");</span>
-<span class="source-line-no">106</span><span id="line-106">        entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");</span>
-<span class="source-line-no">107</span><span id="line-107">        entrypoint.add("com.fnproject.fn.runtime.EntryPoint");</span>
-<span class="source-line-no">108</span><span id="line-108">        return entrypoint;</span>
-<span class="source-line-no">109</span><span id="line-109">    }</span>
-<span class="source-line-no">110</span><span id="line-110"></span>
-<span class="source-line-no">111</span><span id="line-111">    public static String determineProjectFnVersion(String javaVersion) {</span>
-<span class="source-line-no">112</span><span id="line-112">        int majorVersion = Integer.parseInt(javaVersion.split("\\.")[0]);</span>
-<span class="source-line-no">113</span><span id="line-113">        if (majorVersion &gt;= 17) {</span>
-<span class="source-line-no">114</span><span id="line-114">            return "jre17-latest";</span>
-<span class="source-line-no">115</span><span id="line-115">        } else {</span>
-<span class="source-line-no">116</span><span id="line-116">            return LATEST_TAG;</span>
-<span class="source-line-no">117</span><span id="line-117">        }</span>
-<span class="source-line-no">118</span><span id="line-118">    }</span>
-<span class="source-line-no">119</span><span id="line-119"></span>
-<span class="source-line-no">120</span><span id="line-120">    static LayerObject remapLayer(LayerObject layerObject) {</span>
-<span class="source-line-no">121</span><span id="line-121">        FileEntriesLayer originalLayer = (FileEntriesLayer) layerObject;</span>
-<span class="source-line-no">122</span><span id="line-122">        FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(originalLayer.getName());</span>
-<span class="source-line-no">123</span><span id="line-123">        for (FileEntry originalEntry : originalLayer.getEntries()) {</span>
-<span class="source-line-no">124</span><span id="line-124">            builder.addEntry(remapEntry(originalEntry, layerObject.getName()));</span>
+<span class="source-line-no">093</span><span id="line-93">            case LAMBDA -&gt; {</span>
+<span class="source-line-no">094</span><span id="line-94">                List&lt;String&gt; entrypoint = buildPlan.getEntrypoint();</span>
+<span class="source-line-no">095</span><span id="line-95">                Objects.requireNonNull(entrypoint).set(entrypoint.size() - 1, "io.micronaut.function.aws.runtime.MicronautLambdaRuntime");</span>
+<span class="source-line-no">096</span><span id="line-96">                builder.setEntrypoint(entrypoint);</span>
+<span class="source-line-no">097</span><span id="line-97">            }</span>
+<span class="source-line-no">098</span><span id="line-98">            default -&gt; {</span>
+<span class="source-line-no">099</span><span id="line-99">                //no op</span>
+<span class="source-line-no">100</span><span id="line-100">            }</span>
+<span class="source-line-no">101</span><span id="line-101">        }</span>
+<span class="source-line-no">102</span><span id="line-102">        return builder.build();</span>
+<span class="source-line-no">103</span><span id="line-103">    }</span>
+<span class="source-line-no">104</span><span id="line-104"></span>
+<span class="source-line-no">105</span><span id="line-105">    public static List&lt;String&gt; buildProjectFnEntrypoint() {</span>
+<span class="source-line-no">106</span><span id="line-106">        List&lt;String&gt; entrypoint = new ArrayList&lt;&gt;(9);</span>
+<span class="source-line-no">107</span><span id="line-107">        entrypoint.add("/usr/java/latest/bin/java");</span>
+<span class="source-line-no">108</span><span id="line-108">        entrypoint.add("-XX:-UsePerfData");</span>
+<span class="source-line-no">109</span><span id="line-109">        entrypoint.add("-XX:+UseSerialGC");</span>
+<span class="source-line-no">110</span><span id="line-110">        entrypoint.add("-Xshare:on");</span>
+<span class="source-line-no">111</span><span id="line-111">        entrypoint.add("-Djava.awt.headless=true");</span>
+<span class="source-line-no">112</span><span id="line-112">        entrypoint.add("-Djava.library.path=/function/runtime/lib");</span>
+<span class="source-line-no">113</span><span id="line-113">        entrypoint.add("-cp");</span>
+<span class="source-line-no">114</span><span id="line-114">        entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");</span>
+<span class="source-line-no">115</span><span id="line-115">        entrypoint.add("com.fnproject.fn.runtime.EntryPoint");</span>
+<span class="source-line-no">116</span><span id="line-116">        return entrypoint;</span>
+<span class="source-line-no">117</span><span id="line-117">    }</span>
+<span class="source-line-no">118</span><span id="line-118"></span>
+<span class="source-line-no">119</span><span id="line-119">    public static String determineProjectFnVersion(String javaVersion) {</span>
+<span class="source-line-no">120</span><span id="line-120">        int majorVersion = Integer.parseInt(javaVersion.split("\\.")[0]);</span>
+<span class="source-line-no">121</span><span id="line-121">        if (majorVersion &gt;= 17) {</span>
+<span class="source-line-no">122</span><span id="line-122">            return "jre17-latest";</span>
+<span class="source-line-no">123</span><span id="line-123">        } else {</span>
+<span class="source-line-no">124</span><span id="line-124">            return LATEST_TAG;</span>
 <span class="source-line-no">125</span><span id="line-125">        }</span>
-<span class="source-line-no">126</span><span id="line-126"></span>
-<span class="source-line-no">127</span><span id="line-127">        return builder.build();</span>
-<span class="source-line-no">128</span><span id="line-128">    }</span>
-<span class="source-line-no">129</span><span id="line-129"></span>
-<span class="source-line-no">130</span><span id="line-130">    static FileEntry remapEntry(FileEntry originalEntry, String layerName) {</span>
-<span class="source-line-no">131</span><span id="line-131">        List&lt;String&gt; pathComponents = UnixPathParser.parse(originalEntry.getExtractionPath().toString());</span>
-<span class="source-line-no">132</span><span id="line-132">        AbsoluteUnixPath newPath;</span>
-<span class="source-line-no">133</span><span id="line-133">        if (layerName.contains("dependencies")) {</span>
-<span class="source-line-no">134</span><span id="line-134">            newPath = AbsoluteUnixPath.get("/function/app/libs/" + pathComponents.get(pathComponents.size() - 1));</span>
-<span class="source-line-no">135</span><span id="line-135">        } else {</span>
-<span class="source-line-no">136</span><span id="line-136">            //classes or resources</span>
-<span class="source-line-no">137</span><span id="line-137">            newPath = AbsoluteUnixPath.get("/function" + originalEntry.getExtractionPath());</span>
-<span class="source-line-no">138</span><span id="line-138">        }</span>
-<span class="source-line-no">139</span><span id="line-139"></span>
-<span class="source-line-no">140</span><span id="line-140">        return new FileEntry(originalEntry.getSourceFile(), newPath, originalEntry.getPermissions(),</span>
-<span class="source-line-no">141</span><span id="line-141">                originalEntry.getModificationTime(), originalEntry.getOwnership());</span>
-<span class="source-line-no">142</span><span id="line-142">    }</span>
+<span class="source-line-no">126</span><span id="line-126">    }</span>
+<span class="source-line-no">127</span><span id="line-127"></span>
+<span class="source-line-no">128</span><span id="line-128">    public static String determineBaseImage(String jdkVersion) {</span>
+<span class="source-line-no">129</span><span id="line-129">        int javaVersion = Integer.parseInt(jdkVersion);</span>
+<span class="source-line-no">130</span><span id="line-130">        return javaVersion == 17 ? DEFAULT_JAVA17_BASE_IMAGE : DEFAULT_JAVA21_BASE_IMAGE;</span>
+<span class="source-line-no">131</span><span id="line-131">    }</span>
+<span class="source-line-no">132</span><span id="line-132"></span>
+<span class="source-line-no">133</span><span id="line-133">    public static String getJdkVersion(MavenProject project) {</span>
+<span class="source-line-no">134</span><span id="line-134">        return System.getProperty(JDK_VERSION, project.getProperties().getProperty(JDK_VERSION));</span>
+<span class="source-line-no">135</span><span id="line-135">    }</span>
+<span class="source-line-no">136</span><span id="line-136"></span>
+<span class="source-line-no">137</span><span id="line-137">    static LayerObject remapLayer(LayerObject layerObject) {</span>
+<span class="source-line-no">138</span><span id="line-138">        FileEntriesLayer originalLayer = (FileEntriesLayer) layerObject;</span>
+<span class="source-line-no">139</span><span id="line-139">        FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(originalLayer.getName());</span>
+<span class="source-line-no">140</span><span id="line-140">        for (FileEntry originalEntry : originalLayer.getEntries()) {</span>
+<span class="source-line-no">141</span><span id="line-141">            builder.addEntry(remapEntry(originalEntry, layerObject.getName()));</span>
+<span class="source-line-no">142</span><span id="line-142">        }</span>
 <span class="source-line-no">143</span><span id="line-143"></span>
-<span class="source-line-no">144</span><span id="line-144">}</span>
+<span class="source-line-no">144</span><span id="line-144">        return builder.build();</span>
+<span class="source-line-no">145</span><span id="line-145">    }</span>
+<span class="source-line-no">146</span><span id="line-146"></span>
+<span class="source-line-no">147</span><span id="line-147">    static FileEntry remapEntry(FileEntry originalEntry, String layerName) {</span>
+<span class="source-line-no">148</span><span id="line-148">        List&lt;String&gt; pathComponents = UnixPathParser.parse(originalEntry.getExtractionPath().toString());</span>
+<span class="source-line-no">149</span><span id="line-149">        AbsoluteUnixPath newPath;</span>
+<span class="source-line-no">150</span><span id="line-150">        if (layerName.contains("dependencies")) {</span>
+<span class="source-line-no">151</span><span id="line-151">            newPath = AbsoluteUnixPath.get("/function/app/libs/" + pathComponents.get(pathComponents.size() - 1));</span>
+<span class="source-line-no">152</span><span id="line-152">        } else {</span>
+<span class="source-line-no">153</span><span id="line-153">            //classes or resources</span>
+<span class="source-line-no">154</span><span id="line-154">            newPath = AbsoluteUnixPath.get("/function" + originalEntry.getExtractionPath());</span>
+<span class="source-line-no">155</span><span id="line-155">        }</span>
+<span class="source-line-no">156</span><span id="line-156"></span>
+<span class="source-line-no">157</span><span id="line-157">        return new FileEntry(originalEntry.getSourceFile(), newPath, originalEntry.getPermissions(),</span>
+<span class="source-line-no">158</span><span id="line-158">                originalEntry.getModificationTime(), originalEntry.getOwnership());</span>
+<span class="source-line-no">159</span><span id="line-159">    }</span>
+<span class="source-line-no">160</span><span id="line-160"></span>
+<span class="source-line-no">161</span><span id="line-161">    private Platform detectPlatform() {</span>
+<span class="source-line-no">162</span><span id="line-162">        String arch = System.getProperty("os.arch").equals("aarch64") ? "arm64" : "amd64";</span>
+<span class="source-line-no">163</span><span id="line-163">        return new Platform(arch, "linux");</span>
+<span class="source-line-no">164</span><span id="line-164">    }</span>
+<span class="source-line-no">165</span><span id="line-165"></span>
+<span class="source-line-no">166</span><span id="line-166">}</span>
 
 
 
