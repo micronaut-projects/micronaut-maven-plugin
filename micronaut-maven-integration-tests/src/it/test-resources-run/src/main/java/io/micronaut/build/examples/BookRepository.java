@@ -21,7 +21,7 @@ import io.micronaut.data.repository.CrudRepository;
 
 import java.util.List;
 
-@JdbcRepository(dialect = Dialect.MYSQL)
+@JdbcRepository(dialect = Dialect.POSTGRES)
 public interface BookRepository extends CrudRepository<Book, Long> {
     @Override
     List<Book> findAll();

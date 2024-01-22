@@ -3,7 +3,7 @@ micronaut:
     name: test-resources
 datasources:
   default:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    db-type: mysql
-    schema-generate: CREATE
-    dialect: MYSQL
+    driver-class-name: org.postgresql.Driver
+    db-type: postgres
+    schema-generate: CREATE_DROP
+    dialect: POSTGRES

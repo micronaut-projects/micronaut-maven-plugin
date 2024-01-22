@@ -22,7 +22,7 @@ import io.micronaut.data.repository.CrudRepository;
 import java.util.List;
 
 //@Repository("users")
-@JdbcRepository(dialect = Dialect.MYSQL)
+@JdbcRepository(dialect = Dialect.POSTGRES)
 public interface UserRepository extends CrudRepository<User, Long> {
     @Override
     List<User> findAll();

@@ -62,7 +62,7 @@ jobs:
 
       - name: Eagerly pull Docker images
         run: |
-          docker pull mysql:latest
+          docker pull postgres:latest
 
       - name: Run tests
         run: |
