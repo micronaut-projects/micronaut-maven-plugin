@@ -180,6 +180,8 @@ public class DockerfileMojo extends AbstractDockerMojo {
                         result.add(line.replace("${BASE_IMAGE_RUN}", baseImageRun));
                     } else if (line.contains("BASE_IMAGE")) {
                         result.add(line.replace("${BASE_IMAGE}", getFrom()));
+                    } else if (line.contains("BASE_JAVA_IMAGE")) {
+                        result.add(line.replace("${BASE_JAVA_IMAGE}", getBaseImage()));
                     } else if (line.contains("EXTRA_CMD")) {
                         if (baseImageRun.contains("alpine-glibc")) {
                             result.add("RUN apk update && apk add libstdc++");

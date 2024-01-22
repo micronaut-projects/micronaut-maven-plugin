@@ -17,6 +17,7 @@ package io.micronaut.maven;
 
 import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
+import io.micronaut.maven.jib.JibMicronautExtension;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
 import io.micronaut.maven.jib.JibConfigurationService;
@@ -284,6 +285,14 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      */
     protected Optional<String> getNetworkMode() {
         return Optional.ofNullable(networkMode);
+    }
+
+    /**
+     * @return the base image to use for the Dockerfile.
+     */
+    protected String getBaseImage() {
+        return JibMicronautExtension.determineBaseImage(JibMicronautExtension.getJdkVersion(mavenProject));
+
     }
 
 }

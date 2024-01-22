@@ -17,7 +17,6 @@ package io.micronaut.maven;
 
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
-import io.micronaut.maven.jib.JibMicronautExtension;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
 import io.micronaut.maven.jib.JibConfigurationService;
@@ -84,7 +83,7 @@ public class DockerMojo extends AbstractDockerMojo {
                 throw new MojoExecutionException(e.getMessage(), e);
             }
         } else if (jibConfigurationService.getFromImage().isEmpty()) {
-            mavenProject.getProperties().setProperty(PropertyNames.FROM_IMAGE, JibMicronautExtension.DEFAULT_BASE_IMAGE);
+            mavenProject.getProperties().setProperty(PropertyNames.FROM_IMAGE, getBaseImage());
         }
     }
 

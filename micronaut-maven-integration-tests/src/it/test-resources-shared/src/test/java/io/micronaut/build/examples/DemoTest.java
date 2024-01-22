@@ -28,7 +28,7 @@ class DemoTest {
     }
 */
     @Test
-    @DisplayName("A MySQL test container is required to run this test")
+    @DisplayName("A postgres test container is required to run this test")
     void testItWorks() {
         Book book = new Book();
         book.setTitle("Yet Another Book " + UUID.randomUUID());

@@ -7,9 +7,6 @@ netty:
       max-order: 3
 datasources:
   default:
-    schema-generate: CREATE
-    dialect: MYSQL
-#  users:
-#    driverClassName: org.postgresql.Driver
-#    schema-generate: CREATE_DROP
-#    dialect: POSTGRES
+    driverClassName: org.postgresql.Driver
+    schema-generate: CREATE_DROP
+    dialect: POSTGRES

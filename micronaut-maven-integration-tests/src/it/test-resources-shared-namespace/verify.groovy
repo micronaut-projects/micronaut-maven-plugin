@@ -1,9 +1,9 @@
 File log = new File(basedir, 'build.log')
 assert log.exists()
-assert log.text.contains("BUILD SUCCESS")
-assert log.text.contains("Test Resources is configured in shared mode with the namespace: my-namespace")
-assert log.text.contains("Starting Micronaut Test Resources service")
-assert log.text.contains("Shutting down Micronaut Test Resources service")
+assert log.text.contains("BUILD SUCCESS") : "Build did not succeed"
+assert log.text.contains("Test Resources is configured in shared mode with the namespace: my-namespace") : "Test Resources was not configured in shared mode"
+assert log.text.contains("Starting Micronaut Test Resources service") : "Test Resources service was not started"
+assert log.text.contains("Shutting down Micronaut Test Resources service") : "Test Resources service was not shutdown"
 
 String port = new File(basedir, "target/test-resources-port.txt").text
 try (ServerSocket s = new ServerSocket(port as int)) {

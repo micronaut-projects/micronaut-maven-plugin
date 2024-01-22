@@ -1,7 +1,8 @@
 File dockerfile = new File("$basedir/target", "Dockerfile")
 File expectedDockerfile = new File(basedir, "Dockerfile.${graalVmArch()}")
+String expectedDockerfileText = expectedDockerfile.text.replace("17", "${System.getProperty("java.specification.version")}")
 
-assert dockerfile.text == expectedDockerfile.text
+assert dockerfile.text == expectedDockerfileText
 
 static String graalVmArch() {
     String osArch = System.getProperty("os.arch")
