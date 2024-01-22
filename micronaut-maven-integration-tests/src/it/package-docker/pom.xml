@@ -119,7 +119,6 @@
                         <image>
                             <name>alvarosanchez/demo:${project.version}</name>
                             <run>
-                                <autoRemove>true</autoRemove>
                                 <wait>
                                     <log>Startup completed in</log>
                                     <time>20000</time>
