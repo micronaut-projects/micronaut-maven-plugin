@@ -19,7 +19,7 @@
         <maven.deploy.skip>true</maven.deploy.skip>
         <maven.javadoc.skip>true</maven.javadoc.skip>
 
-        <it.micronaut.version>4.3.0-SNAPSHOT</it.micronaut.version>
+        <it.micronaut.version>4.2.3</it.micronaut.version>
 
         <!-- Enable recording of coverage during execution of maven-invoker-plugin -->
         <jacoco.propertyName>invoker.mavenOpts</jacoco.propertyName>
