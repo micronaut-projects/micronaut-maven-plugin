@@ -60,6 +60,10 @@ jobs:
         with:
           auth_token: ${{ secrets.OCI_AUTH_TOKEN }}
 
+      - name: Eagerly pull Docker images
+        run: |
+          docker pull mysql:latest
+
       - name: Run tests
         run: |
           ./mvnw -q install -Dinvoker.skip=true && ./mvnw verify
