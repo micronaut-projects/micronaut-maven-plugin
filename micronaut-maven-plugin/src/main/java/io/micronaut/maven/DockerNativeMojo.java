@@ -183,8 +183,6 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_DISTROLESS;
         }
 
-        maybeUpdateBaseImageBasedOnArchitecture(runtime);
-
         buildDockerfile(dockerfileName, true);
     }
 

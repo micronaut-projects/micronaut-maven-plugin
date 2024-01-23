@@ -50,13 +50,11 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
 
     public static final String LATEST_TAG = "latest";
     // GlibC 2.34 is used by native image 17
-    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN_X86 = "frolvlad/alpine-glibc:alpine-3";
-    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN_ARM = "cgr.dev/chainguard/wolfi-base:latest";
+    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "cgr.dev/chainguard/wolfi-base:latest";
     public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
     public static final String ARM_ARCH = "aarch64";
     public static final String X86_64_ARCH = "x64";
     public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol9";
-    public static final String ARCH_DEFAULT_PLACEHOLDER = "ARCH_DEFAULT";
 
     protected final MavenProject mavenProject;
     protected final JibConfigurationService jibConfigurationService;
@@ -105,7 +103,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * The Docker image used to run the native image.
      * @since 1.2
      */
-    @Parameter(property = "micronaut.native-image.base-image-run", defaultValue = ARCH_DEFAULT_PLACEHOLDER)
+    @Parameter(property = "micronaut.native-image.base-image-run", defaultValue = DEFAULT_BASE_IMAGE_GRAALVM_RUN)
     protected String baseImageRun;
 
     /**
@@ -183,21 +181,6 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
             case ARM_ARCH, "arm64" -> true;
             default -> false;
         };
-    }
-
-    /**
-     * If we are building a default runtime image on arm, we need to use a different base image.
-     *
-     * @param runtime the runtime to check
-     */
-    protected void maybeUpdateBaseImageBasedOnArchitecture(MicronautRuntime runtime) {
-        if (ARCH_DEFAULT_PLACEHOLDER.equals(baseImageRun)) {
-            if (isArm() && runtime.getBuildStrategy() == DockerBuildStrategy.DEFAULT) {
-                baseImageRun = DEFAULT_BASE_IMAGE_GRAALVM_RUN_ARM;
-            } else {
-                baseImageRun = DEFAULT_BASE_IMAGE_GRAALVM_RUN_X86;
-            }
-        }
     }
 
     /**

@@ -144,8 +144,6 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     private Optional<File> buildDockerfileNative(MicronautRuntime runtime) throws IOException, MavenInvocationException {
-        maybeUpdateBaseImageBasedOnArchitecture(runtime);
-
         getLog().info("Generating GraalVM args file");
         executorService.invokeGoal("org.graalvm.buildtools:native-maven-plugin", "write-args-file");
         File dockerfile;
