@@ -50,7 +50,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
 
     public static final String LATEST_TAG = "latest";
     // GlibC 2.34 is used by native image 17
-    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN_X86 = "frolvlad/alpine-glibc:glibc-2.34";
+    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN_X86 = "frolvlad/alpine-glibc:alpine-3";
     public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN_ARM = "cgr.dev/chainguard/wolfi-base:latest";
     public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
     public static final String ARM_ARCH = "aarch64";
