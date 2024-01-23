@@ -1,5 +1,5 @@
 ARG BASE_IMAGE
-ARG BASE_IMAGE_RUN=frolvlad/alpine-glibc:alpine-3.12
+ARG BASE_IMAGE_RUN=frolvlad/alpine-glibc:alpine-3.16
 FROM ${BASE_IMAGE} AS builder
 WORKDIR /home/app
 
