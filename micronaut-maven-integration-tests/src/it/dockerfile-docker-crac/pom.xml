@@ -47,8 +47,8 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -122,7 +122,7 @@
             <image>ubuntu:18.04</image>
           </from>
           <to>
-            <image>alvarosanchez/demo:${project.version}</image>
+            <image>alvarosanchez/${project.artifactId}:${project.version}</image>
           </to>
         </configuration>
       </plugin>

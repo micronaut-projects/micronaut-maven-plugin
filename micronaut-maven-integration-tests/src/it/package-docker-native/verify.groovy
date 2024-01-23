@@ -8,4 +8,5 @@ if ("aarch64".equals(osArch)) {
 } else {
     assert log.text.contains("Using BASE_IMAGE_RUN: frolvlad/alpine-glibc:glibc-2.34")
 }
-assert log.text.contains("Successfully tagged alvarosanchez/demo:0.1")
+assert log.text.contains("Successfully tagged alvarosanchez/package-docker-native:0.1")
+assert log.text.contains("io.micronaut.runtime.Micronaut - Startup completed")

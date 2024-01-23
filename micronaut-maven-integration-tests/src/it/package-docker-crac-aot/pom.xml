@@ -50,8 +50,8 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -139,7 +139,7 @@
         <artifactId>jib-maven-plugin</artifactId>
         <configuration>
           <to>
-            <image>docker.io/alvarosanchez/demo:${project.version}</image>
+            <image>docker.io/alvarosanchez/${project.artifactId}:${project.version}</image>
           </to>
         </configuration>
       </plugin>
@@ -152,7 +152,7 @@
           <showLogs>true</showLogs>
           <images>
             <image>
-              <name>alvarosanchez/demo:${project.version}</name>
+              <name>alvarosanchez/${project.artifactId}:${project.version}</name>
               <run>
                 <wait>
                   <log>Startup completed in</log>
