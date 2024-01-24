@@ -18,4 +18,6 @@ COPY --from=crac-checkpoint /home/app/classes /home/app/classes
 COPY --from=crac-checkpoint /home/app/libs /home/app/libs
 COPY scripts/run.sh /home/app/run.sh
 
+EXPOSE 8080
+
 ENTRYPOINT ["/home/app/run.sh"]
