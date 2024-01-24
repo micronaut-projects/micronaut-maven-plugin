@@ -133,7 +133,7 @@
               <name>alvarosanchez/${project.artifactId}:${project.version}</name>
               <run>
                 <wait>
-                  <log>Startup completed in</log>
+                  <log>Restore completed!</log>
                   <time>20000</time>
                 </wait>
               </run>

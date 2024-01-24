@@ -20,4 +20,7 @@ COPY --from=crac-checkpoint /home/app/classes /home/app/classes
 COPY --from=crac-checkpoint /home/app/libs /home/app/libs
 COPY scripts/run.sh /home/app/run.sh
 
+ARG PORT=8080
+EXPOSE ${PORT}
+
 ENTRYPOINT ["/home/app/run.sh"]
