@@ -187,7 +187,7 @@ images. In this case, the `micronaut.runtime` property will also determine how t
 ** Default image (dynamic): `mvn package -Dpackaging=docker-native`.
 ** Static image: `mvn package -Dpackaging=docker-native -Dmicronaut.native-image.static=true`. This uses GraalVM's
    `--static --libc=musl` flags and then puts the binary in a `scratch` image.
-** Mostly static image: `mvn package -Dpackaging=docker-native -Dmicronaut.native-image.base-image-run=gcr.io/distroless/cc-debian10 -Pgraalvm`.
+** Mostly static image: `mvn package -Dpackaging=docker-native -Dmicronaut.native-image.base-image-run=gcr.io/distroless/cc-debian12 -Pgraalvm`.
    This will create a "mostly" static native image and adds automatically `-H:+StaticExecutableWithDynamicLibC` flag.
 ** Custom image: `mvn package -Dpackaging=docker-native -Dmicronaut.native-image.base-image-run=your-own-image-for-run-the-native-image`
 * Oracle Cloud Function: `mvn package -Dpackaging=docker-native -Dmicronaut.runtime=oracle_function`.

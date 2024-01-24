@@ -81,7 +81,7 @@
         <artifactId>micronaut-maven-plugin</artifactId>
         <version>${micronaut-maven-plugin.version}</version>
         <configuration>
-          <baseImageRun>gcr.io/distroless/cc-debian10</baseImageRun>
+          <baseImageRun>gcr.io/distroless/cc-debian12</baseImageRun>
           <nativeImageBuildArgs>-Ob</nativeImageBuildArgs>
         </configuration>
       </plugin>
