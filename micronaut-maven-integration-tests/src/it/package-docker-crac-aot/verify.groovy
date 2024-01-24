@@ -19,4 +19,4 @@ classes.eachFileRecurse(groovy.io.FileType.FILES) { file ->
 }
 assert list.empty
 
-assert log.text.contains("io.micronaut.runtime.Micronaut - Startup completed")
+assert log.text.contains("Restore completed!")
