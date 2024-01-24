@@ -78,9 +78,7 @@
         <artifactId>micronaut-maven-plugin</artifactId>
         <version>${micronaut-maven-plugin.version}</version>
         <configuration>
-          <configuration>
-            <configFile>aot-${packaging}.properties</configFile>
-          </configuration>
+          <configFile>aot.properties</configFile>
         </configuration>
       </plugin>
       <plugin>
