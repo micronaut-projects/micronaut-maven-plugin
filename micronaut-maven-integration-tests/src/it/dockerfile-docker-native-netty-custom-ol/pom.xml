@@ -49,8 +49,8 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -110,7 +110,7 @@
         <artifactId>jib-maven-plugin</artifactId>
         <configuration>
           <to>
-            <image>alvarosanchez/demo:${project.version}</image>
+            <image>alvarosanchez/${project.artifactId}:${project.version}</image>
           </to>
         </configuration>
       </plugin>

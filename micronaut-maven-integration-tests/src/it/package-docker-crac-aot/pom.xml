@@ -26,32 +26,17 @@
   <dependencies>
     <dependency>
       <groupId>io.micronaut</groupId>
-      <artifactId>micronaut-inject</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.micronaut.validation</groupId>
-      <artifactId>micronaut-validation</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.micronaut</groupId>
       <artifactId>micronaut-http-server-netty</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>io.micronaut</groupId>
-      <artifactId>micronaut-http-client</artifactId>
+      <groupId>io.micronaut.crac</groupId>
+      <artifactId>micronaut-crac</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>io.micronaut</groupId>
-      <artifactId>micronaut-runtime</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
+      <groupId>io.micronaut.serde</groupId>
+      <artifactId>micronaut-serde-jackson</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -65,13 +50,8 @@
       <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-http-client</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -80,16 +60,14 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.micronaut</groupId>
-      <artifactId>micronaut-jackson-databind</artifactId>
-      <scope>runtime</scope>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
     </dependency>
-
-    <!-- For CRaC -->
     <dependency>
-      <groupId>io.micronaut.crac</groupId>
-      <artifactId>micronaut-crac</artifactId>
-      <scope>compile</scope>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -100,19 +78,12 @@
         <artifactId>micronaut-maven-plugin</artifactId>
         <version>${micronaut-maven-plugin.version}</version>
         <configuration>
-          <aotDependencies>
-            <dependency>
-              <groupId>ch.qos.logback</groupId>
-              <artifactId>logback-classic</artifactId>
-              <version>1.4.14</version>
-            </dependency>
-            <dependency>
-              <groupId>org.fusesource.jansi</groupId>
-              <artifactId>jansi</artifactId>
-              <version>2.4.1</version>
-            </dependency>
-          </aotDependencies>
+          <configFile>aot.properties</configFile>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -123,8 +94,19 @@
           <annotationProcessorPaths combine.children="append">
             <path>
               <groupId>io.micronaut</groupId>
-              <artifactId>micronaut-graal</artifactId>
+              <artifactId>micronaut-http-validation</artifactId>
               <version>${micronaut.core.version}</version>
+            </path>
+            <path>
+              <groupId>io.micronaut.serde</groupId>
+              <artifactId>micronaut-serde-processor</artifactId>
+              <version>${micronaut.serialization.version}</version>
+              <exclusions>
+                <exclusion>
+                  <groupId>io.micronaut</groupId>
+                  <artifactId>micronaut-inject</artifactId>
+                </exclusion>
+              </exclusions>
             </path>
           </annotationProcessorPaths>
           <compilerArgs>
@@ -139,8 +121,28 @@
         <artifactId>jib-maven-plugin</artifactId>
         <configuration>
           <to>
-            <image>docker.io/alvarosanchez/demo:${project.version}</image>
+            <image>docker.io/alvarosanchez/${project.artifactId}:${project.version}</image>
           </to>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>io.fabric8</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
+        <version>0.43.4</version>
+        <configuration>
+          <showLogs>true</showLogs>
+          <images>
+            <image>
+              <name>alvarosanchez/${project.artifactId}:${project.version}</name>
+              <run>
+                <wait>
+                  <log>Restore completed!</log>
+                  <time>20000</time>
+                </wait>
+              </run>
+            </image>
+          </images>
         </configuration>
       </plugin>
     </plugins>

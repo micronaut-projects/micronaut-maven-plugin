@@ -183,8 +183,6 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_DISTROLESS;
         }
 
-        maybeUpdateBaseImageBasedOnArchitecture(runtime);
-
         buildDockerfile(dockerfileName, true);
     }
 
@@ -214,10 +212,6 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         getLog().info("Using BASE_IMAGE: " + from);
         if (StringUtils.isNotEmpty(baseImageRun) && Boolean.FALSE.equals(staticNativeImage)) {
             buildImageCmdArguments.put("BASE_IMAGE_RUN", baseImageRun);
-        }
-
-        if (baseImageRun.contains("alpine-glibc")) {
-            buildImageCmdArguments.put("EXTRA_CMD", "apk update && apk add libstdc++");
         }
 
         if (passClassName) {

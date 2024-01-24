@@ -210,6 +210,10 @@ public class DockerCracMojo extends AbstractDockerMojo {
         for (String tag : tags) {
             ImageReference.parse(tag);
         }
+
+        String port = getPort();
+        getLog().info("Exposing port: " + port);
+
         copyScripts(RUN_SCRIPT_NAME);
         File dockerfile = dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_CRAC);
         String baseImage = getFromImage().orElse(DEFAULT_BASE_IMAGE);
@@ -219,6 +223,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
 
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
                 .withDockerfile(dockerfile)
+                .withBuildArg("PORT", port)
                 .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))
                 .withBuildArg("CHECKPOINT_IMAGE", checkpointContainerId)
                 .withTags(getTags());

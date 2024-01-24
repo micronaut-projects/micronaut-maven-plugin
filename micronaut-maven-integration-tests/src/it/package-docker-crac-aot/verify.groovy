@@ -18,3 +18,5 @@ classes.eachFileRecurse(groovy.io.FileType.FILES) { file ->
     }
 }
 assert list.empty
+
+assert log.text.contains("Restore completed!")

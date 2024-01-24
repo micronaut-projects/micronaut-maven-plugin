@@ -1,21 +1,6 @@
-FROM ghcr.io/graalvm/graalvm-community:17-ol9 AS builder
-
-WORKDIR /
-RUN curl -L -o musl.tar.gz https://more.musl.cc/10/x86_64-linux-musl/x86_64-linux-musl-native.tgz && \
-    mkdir musl && tar -xzf musl.tar.gz -C musl --strip-components 1 && \
-    rm -f /musl.tar.gz
-
-ENV TOOLCHAIN_DIR="/musl"
-ENV PATH="$PATH:${TOOLCHAIN_DIR}/bin"
-ENV CC="${TOOLCHAIN_DIR}/bin/gcc"
-
-RUN curl -L -o zlib.tar.gz https://zlib.net/current/zlib.tar.gz && \
-    mkdir zlib && tar -xzf zlib.tar.gz -C zlib --strip-components 1 && cd zlib && \
-    ./configure --static --prefix=${TOOLCHAIN_DIR} && \
-    make && make install && \
-    cd / && rm -rf /zlib && rm -f /zlib.tar.gz
-
+FROM ghcr.io/graalvm/native-image-community:17-muslib-ol9 AS builder
 WORKDIR /home/app
+
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
 COPY *.args /home/app/graalvm-native-image.args
