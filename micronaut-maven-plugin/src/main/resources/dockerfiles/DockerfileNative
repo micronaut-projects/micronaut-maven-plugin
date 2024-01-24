@@ -10,8 +10,6 @@ ARG CLASS_NAME
 RUN native-image @/home/app/graalvm-native-image.args -H:Class=${CLASS_NAME} -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM ${BASE_IMAGE_RUN}
-ARG EXTRA_CMD=""
-RUN if [[ -n "${EXTRA_CMD}" ]] ; then eval ${EXTRA_CMD} ; fi
 COPY --from=builder /home/app/application /app/application
 
 ARG PORT=8080

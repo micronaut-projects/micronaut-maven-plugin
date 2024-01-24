@@ -163,8 +163,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      */
     protected String getFrom() {
         if (Boolean.TRUE.equals(staticNativeImage)) {
-            // For building a static native image we need a base image with tools (cc, make,...) already installed
-            return getFromImage().orElse("ghcr.io/graalvm/graalvm-community:" + graalVmJvmVersion() + "-" + oracleLinuxVersion);
+            return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmJvmVersion() + "-muslib-" + oracleLinuxVersion);
         } else {
             return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmJvmVersion() + "-" + oracleLinuxVersion);
         }

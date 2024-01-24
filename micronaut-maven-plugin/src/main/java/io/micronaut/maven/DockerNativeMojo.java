@@ -214,10 +214,6 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             buildImageCmdArguments.put("BASE_IMAGE_RUN", baseImageRun);
         }
 
-        if (baseImageRun.contains("alpine-glibc")) {
-            buildImageCmdArguments.put("EXTRA_CMD", "apk update && apk add libstdc++");
-        }
-
         if (passClassName) {
             buildImageCmdArguments.put("CLASS_NAME", mainClass);
         }
