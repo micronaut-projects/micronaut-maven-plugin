@@ -82,7 +82,6 @@ public class DockerCracMojo extends AbstractDockerMojo {
     public static final String CRAC_CHECKPOINT_TIMEOUT_PROPERTY = "crac.checkpoint.timeout";
 
     public static final String CRAC_JAVA_VERSION = "crac.java.version";
-    public static final String DEFAULT_CRAC_JAVA_VERSION = "17";
 
     public static final String CRAC_ARCHITECTURE = "crac.arch";
 
