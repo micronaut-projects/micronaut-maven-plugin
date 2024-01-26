@@ -144,12 +144,6 @@
                             <build>
                                 <dockerFileDir>${project.build.directory}</dockerFileDir>
                             </build>
-                            <run>
-                                <wait>
-                                    <log>Startup completed in</log>
-                                    <time>20000</time>
-                                </wait>
-                            </run>
                         </image>
                     </images>
                 </configuration>
