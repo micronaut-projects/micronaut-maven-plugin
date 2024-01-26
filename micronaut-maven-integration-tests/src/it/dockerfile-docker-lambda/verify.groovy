@@ -7,4 +7,4 @@ assert dockerfile.text == expectedDockerfileText
 File log = new File(basedir, 'build.log')
 assert log.exists()
 assert log.text.contains("public.ecr.aws/lambda/java:${System.getProperty("java.specification.version")}")
-assert log.text.contains("Successfully tagged alvarosanchez/package-docker-lambda:0.1")
+assert log.text.contains("Successfully tagged alvarosanchez/dockerfile-docker-lambda:0.1")
