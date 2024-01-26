@@ -129,6 +129,31 @@
                     </to>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.43.4</version>
+                <configuration>
+                    <showLogs>true</showLogs>
+                    <outputDirectory>${java.io.tmpdir}</outputDirectory>
+                    <verbose>true</verbose>
+                    <images>
+                        <image>
+                            <name>alvarosanchez/${project.artifactId}:${project.version}</name>
+                            <build>
+                                <dockerFileDir>${project.build.directory}</dockerFileDir>
+                            </build>
+                            <run>
+                                <wait>
+                                    <log>Startup completed in</log>
+                                    <time>20000</time>
+                                </wait>
+                            </run>
+                        </image>
+                    </images>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 

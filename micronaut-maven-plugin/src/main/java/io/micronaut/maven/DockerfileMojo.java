@@ -60,6 +60,8 @@ public class DockerfileMojo extends AbstractDockerMojo {
 
     public static final String DOCKERFILE = "Dockerfile";
     public static final String DOCKERFILE_AWS_CUSTOM_RUNTIME = "DockerfileNativeLambda";
+    public static final String DOCKERFILE_AWS = "DockerfileLambda";
+    public static final String DOCKERFILE_ORACLE_CLOUD = "DockerfileOracleCloud";
     public static final String DOCKERFILE_NATIVE = "DockerfileNative";
     public static final String DOCKERFILE_CRAC = "DockerfileCrac";
     public static final String DOCKERFILE_CRAC_CHECKPOINT = "DockerfileCracCheckpoint";
@@ -102,10 +104,14 @@ public class DockerfileMojo extends AbstractDockerMojo {
         File dockerfile;
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION -> {
-                dockerfile = dockerService.loadDockerfileAsResource("DockerfileOracleCloud");
+                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_ORACLE_CLOUD);
                 processOracleFunctionDockerfile(dockerfile);
             }
-            case LAMBDA, DEFAULT -> {
+            case LAMBDA -> {
+                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS);
+                processDockerfile(dockerfile);
+            }
+            case DEFAULT -> {
                 dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE);
                 processDockerfile(dockerfile);
             }
