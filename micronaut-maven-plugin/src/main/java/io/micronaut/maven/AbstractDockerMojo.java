@@ -272,7 +272,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @return the base image to use for the Dockerfile.
      */
     protected String getBaseImage() {
-        return JibMicronautExtension.determineBaseImage(JibMicronautExtension.getJdkVersion(mavenProject));
+        return JibMicronautExtension.determineBaseImage(JibMicronautExtension.getJdkVersion(mavenProject), MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy());
 
     }
 

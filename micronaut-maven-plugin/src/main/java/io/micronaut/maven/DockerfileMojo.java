@@ -59,7 +59,7 @@ import static io.micronaut.maven.DockerNativeMojo.ARGS_FILE_PROPERTY_NAME;
 public class DockerfileMojo extends AbstractDockerMojo {
 
     public static final String DOCKERFILE = "Dockerfile";
-    public static final String DOCKERFILE_AWS_CUSTOM_RUNTIME = "DockerfileAwsCustomRuntime";
+    public static final String DOCKERFILE_AWS_CUSTOM_RUNTIME = "DockerfileNativeLambda";
     public static final String DOCKERFILE_NATIVE = "DockerfileNative";
     public static final String DOCKERFILE_CRAC = "DockerfileCrac";
     public static final String DOCKERFILE_CRAC_CHECKPOINT = "DockerfileCracCheckpoint";

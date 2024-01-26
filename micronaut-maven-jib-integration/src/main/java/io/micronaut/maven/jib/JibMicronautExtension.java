@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import org.apache.maven.project.MavenProject;
@@ -57,7 +58,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
         String baseImage = buildPlan.getBaseImage();
         if (StringUtils.isEmpty(buildPlan.getBaseImage())) {
-            baseImage = determineBaseImage(getJdkVersion(mavenData.getMavenProject()));
+            baseImage = determineBaseImage(getJdkVersion(mavenData.getMavenProject()), runtime.getBuildStrategy());
             builder.setBaseImage(baseImage);
         }
         logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Using base image: " + baseImage);
@@ -84,13 +85,15 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
                 if (cmd.isEmpty()) {
                     cmd = Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest");
                 }
-                String projectFnVersion = determineProjectFnVersion(System.getProperty("java.version"));
-                builder.setBaseImage("fnproject/fn-java-fdk:" + projectFnVersion)
-                        .setWorkingDirectory(AbsoluteUnixPath.get(jibConfigurationService.getWorkingDirectory().orElse("/function")))
+                builder.setWorkingDirectory(AbsoluteUnixPath.get(jibConfigurationService.getWorkingDirectory().orElse("/function")))
                         .setEntrypoint(buildProjectFnEntrypoint())
                         .setCmd(cmd);
             }
             case LAMBDA -> {
+                //TODO Leverage AWS Base images:
+                // https://docs.aws.amazon.com/lambda/latest/dg/java-image.html
+                // https://docs.aws.amazon.com/lambda/latest/dg/images-create.html
+                // https://docs.aws.amazon.com/lambda/latest/dg/images-test.html
                 List<String> entrypoint = buildPlan.getEntrypoint();
                 Objects.requireNonNull(entrypoint).set(entrypoint.size() - 1, "io.micronaut.function.aws.runtime.MicronautLambdaRuntime");
                 builder.setEntrypoint(entrypoint);
@@ -125,9 +128,13 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         }
     }
 
-    public static String determineBaseImage(String jdkVersion) {
+    public static String determineBaseImage(String jdkVersion, DockerBuildStrategy buildStrategy) {
         int javaVersion = Integer.parseInt(jdkVersion);
-        return javaVersion == 17 ? DEFAULT_JAVA17_BASE_IMAGE : DEFAULT_JAVA21_BASE_IMAGE;
+        return switch (buildStrategy) {
+            case ORACLE_FUNCTION -> "fnproject/fn-java-fdk:" + determineProjectFnVersion(System.getProperty("java.version"));
+            case LAMBDA -> "public.ecr.aws/lambda/java:" + javaVersion;
+            default -> javaVersion == 17 ? DEFAULT_JAVA17_BASE_IMAGE : DEFAULT_JAVA21_BASE_IMAGE;
+        };
     }
 
     public static String getJdkVersion(MavenProject project) {
