@@ -100,21 +100,39 @@ public class DockerCracMojo extends AbstractDockerMojo {
     );
     private final MavenReaderFilter mavenReaderFilter;
 
+    /**
+     * The command to execute to determine if the application is ready to receive traffic.
+     */
     @Parameter(property = DockerCracMojo.CRAC_READINESS_PROPERTY, defaultValue = DockerCracMojo.DEFAULT_READINESS_COMMAND)
     private String readinessCommand;
 
+    /**
+     * The timeout in seconds to wait for the checkpoint to complete.
+     */
     @Parameter(property = DockerCracMojo.CRAC_CHECKPOINT_TIMEOUT_PROPERTY, defaultValue = DockerCracMojo.DEFAULT_CRAC_CHECKPOINT_TIMEOUT)
     private Integer checkpointTimeoutSeconds;
 
+    /**
+     * The name of the docker network to run the checkpoint container in.
+     */
     @Parameter(property = DockerCracMojo.CRAC_CHECKPOINT_NETWORK_PROPERTY)
     private String checkpointNetworkName;
 
+    /**
+     * The version of the Azul CRaC enabled JDK to use.
+     */
     @Parameter(property = DockerCracMojo.CRAC_JAVA_VERSION, defaultValue = "${jdk.version}")
     private String cracJavaVersion;
 
+    /**
+     * The architecture to use for the CRaC enabled JDK. Defaults to {@code os.arch}
+     */
     @Parameter(property = DockerCracMojo.CRAC_ARCHITECTURE)
     private String cracArchitecture;
 
+    /**
+     * The os to use for the CRaC enabled JDK.
+     */
     @Parameter(property = DockerCracMojo.CRAC_OS, defaultValue = DEFAULT_CRAC_OS)
     private String cracOs;
 
@@ -197,7 +215,6 @@ public class DockerCracMojo extends AbstractDockerMojo {
         getLog().info("Using BASE_IMAGE: " + baseImage);
         getLog().info("Using CRAC_ARCH: " + finalArchitecture);
         getLog().info("Using CRAC_JDK_VERSION: " + cracJavaVersion);
-
 
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
                 .withDockerfile(dockerfile)
