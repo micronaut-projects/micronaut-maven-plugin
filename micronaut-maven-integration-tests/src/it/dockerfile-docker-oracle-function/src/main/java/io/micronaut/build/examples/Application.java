@@ -1,7 +1,6 @@
 package io.micronaut.build.examples;
 
 import io.micronaut.runtime.Micronaut;
-import io.micronaut.build.examples.greeter.Greeter;
 
 public class Application {
 
