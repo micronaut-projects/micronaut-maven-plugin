@@ -88,7 +88,8 @@ loadScripts(document, 'script');</script>
 <hr>
 <div class="type-signature"><span class="annotations">@Mojo(name="dockerfile",
       requiresDependencyResolution=COMPILE_PLUS_RUNTIME)
-</span><span class="modifiers">public class </span><span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-55">DockerfileMojo</a></span>
+@Execute(goal="graalvm-resources")
+</span><span class="modifiers">public class </span><span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-57">DockerfileMojo</a></span>
 <span class="extends-implements">extends <a href="AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></span></div>
 <div class="block"><p>Generates a <code>Dockerfile</code> depending on the <code>packaging</code> and <code>micronaut.runtime</code>
  properties.
@@ -116,28 +117,34 @@ loadScripts(document, 'script');</script>
 <div class="col-second even-row-color"><code><a href="#DOCKERFILE" class="member-name-link">DOCKERFILE</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#DOCKERFILE_AWS_CUSTOM_RUNTIME" class="member-name-link">DOCKERFILE_AWS_CUSTOM_RUNTIME</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#DOCKERFILE_AWS" class="member-name-link">DOCKERFILE_AWS</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#DOCKERFILE_CRAC" class="member-name-link">DOCKERFILE_CRAC</a></code></div>
+<div class="col-second even-row-color"><code><a href="#DOCKERFILE_AWS_CUSTOM_RUNTIME" class="member-name-link">DOCKERFILE_AWS_CUSTOM_RUNTIME</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#DOCKERFILE_CRAC_CHECKPOINT" class="member-name-link">DOCKERFILE_CRAC_CHECKPOINT</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#DOCKERFILE_CRAC" class="member-name-link">DOCKERFILE_CRAC</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#DOCKERFILE_CRAC_CHECKPOINT_FILE" class="member-name-link">DOCKERFILE_CRAC_CHECKPOINT_FILE</a></code></div>
+<div class="col-second even-row-color"><code><a href="#DOCKERFILE_CRAC_CHECKPOINT" class="member-name-link">DOCKERFILE_CRAC_CHECKPOINT</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#DOCKERFILE_NATIVE" class="member-name-link">DOCKERFILE_NATIVE</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#DOCKERFILE_CRAC_CHECKPOINT_FILE" class="member-name-link">DOCKERFILE_CRAC_CHECKPOINT_FILE</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#DOCKERFILE_NATIVE_DISTROLESS" class="member-name-link">DOCKERFILE_NATIVE_DISTROLESS</a></code></div>
+<div class="col-second even-row-color"><code><a href="#DOCKERFILE_NATIVE" class="member-name-link">DOCKERFILE_NATIVE</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#DOCKERFILE_NATIVE_ORACLE_CLOUD" class="member-name-link">DOCKERFILE_NATIVE_ORACLE_CLOUD</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#DOCKERFILE_NATIVE_DISTROLESS" class="member-name-link">DOCKERFILE_NATIVE_DISTROLESS</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
 <div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#DOCKERFILE_NATIVE_STATIC" class="member-name-link">DOCKERFILE_NATIVE_STATIC</a></code></div>
+<div class="col-second even-row-color"><code><a href="#DOCKERFILE_NATIVE_ORACLE_CLOUD" class="member-name-link">DOCKERFILE_NATIVE_ORACLE_CLOUD</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#DOCKERFILE_NATIVE_STATIC" class="member-name-link">DOCKERFILE_NATIVE_STATIC</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#DOCKERFILE_ORACLE_CLOUD" class="member-name-link">DOCKERFILE_ORACLE_CLOUD</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 <div class="inherited-list">
@@ -210,7 +217,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="DOCKERFILE">
 <h3>DOCKERFILE</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-58">DOCKERFILE</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-61">DOCKERFILE</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -224,7 +231,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="DOCKERFILE_AWS_CUSTOM_RUNTIME">
 <h3>DOCKERFILE_AWS_CUSTOM_RUNTIME</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-59">DOCKERFILE_AWS_CUSTOM_RUNTIME</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-62">DOCKERFILE_AWS_CUSTOM_RUNTIME</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -236,9 +243,37 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
+<section class="detail" id="DOCKERFILE_AWS">
+<h3>DOCKERFILE_AWS</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-63">DOCKERFILE_AWS</a></span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="see-list">
+<li><a href="../../../constant-values.html#io.micronaut.maven.DockerfileMojo.DOCKERFILE_AWS">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</section>
+</li>
+<li>
+<section class="detail" id="DOCKERFILE_ORACLE_CLOUD">
+<h3>DOCKERFILE_ORACLE_CLOUD</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-64">DOCKERFILE_ORACLE_CLOUD</a></span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="see-list">
+<li><a href="../../../constant-values.html#io.micronaut.maven.DockerfileMojo.DOCKERFILE_ORACLE_CLOUD">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="DOCKERFILE_NATIVE">
 <h3>DOCKERFILE_NATIVE</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-60">DOCKERFILE_NATIVE</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-65">DOCKERFILE_NATIVE</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -252,7 +287,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="DOCKERFILE_CRAC">
 <h3>DOCKERFILE_CRAC</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-61">DOCKERFILE_CRAC</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-66">DOCKERFILE_CRAC</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -266,7 +301,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="DOCKERFILE_CRAC_CHECKPOINT">
 <h3>DOCKERFILE_CRAC_CHECKPOINT</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-62">DOCKERFILE_CRAC_CHECKPOINT</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-67">DOCKERFILE_CRAC_CHECKPOINT</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -280,7 +315,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="DOCKERFILE_CRAC_CHECKPOINT_FILE">
 <h3>DOCKERFILE_CRAC_CHECKPOINT_FILE</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-63">DOCKERFILE_CRAC_CHECKPOINT_FILE</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-68">DOCKERFILE_CRAC_CHECKPOINT_FILE</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -294,7 +329,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="DOCKERFILE_NATIVE_DISTROLESS">
 <h3>DOCKERFILE_NATIVE_DISTROLESS</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-64">DOCKERFILE_NATIVE_DISTROLESS</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-69">DOCKERFILE_NATIVE_DISTROLESS</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -308,7 +343,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="DOCKERFILE_NATIVE_STATIC">
 <h3>DOCKERFILE_NATIVE_STATIC</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-65">DOCKERFILE_NATIVE_STATIC</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-70">DOCKERFILE_NATIVE_STATIC</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -322,7 +357,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="DOCKERFILE_NATIVE_ORACLE_CLOUD">
 <h3>DOCKERFILE_NATIVE_ORACLE_CLOUD</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-66">DOCKERFILE_NATIVE_ORACLE_CLOUD</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-71">DOCKERFILE_NATIVE_ORACLE_CLOUD</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -345,7 +380,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="&lt;init&gt;(org.apache.maven.project.MavenProject,io.micronaut.maven.services.DockerService,io.micronaut.maven.jib.JibConfigurationService,io.micronaut.maven.services.ApplicationConfigurationService,io.micronaut.maven.services.ExecutorService,org.apache.maven.execution.MavenSession,org.apache.maven.plugin.MojoExecution)">
 <h3>DockerfileMojo</h3>
 <div class="member-signature"><span class="annotations">@Inject
-</span><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-70">DockerfileMojo</a></span><wbr><span class="parameters">(org.apache.maven.project.MavenProject&nbsp;mavenProject,
+</span><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-75">DockerfileMojo</a></span><wbr><span class="parameters">(org.apache.maven.project.MavenProject&nbsp;mavenProject,
  <a href="services/DockerService.html" title="class in io.micronaut.maven.services">DockerService</a>&nbsp;dockerService,
  <a href="jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a>&nbsp;jibConfigurationService,
  <a href="services/ApplicationConfigurationService.html" title="class in io.micronaut.maven.services">ApplicationConfigurationService</a>&nbsp;applicationConfigurationService,
@@ -365,7 +400,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="execute()">
 <h3>execute</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-78">execute</a></span>()
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/DockerfileMojo.html#line-83">execute</a></span>()
              throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
 <dt>Throws:</dt>

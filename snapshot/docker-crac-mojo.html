@@ -171,48 +171,53 @@
 <td align="left"><a href="#checkpointNetworkName"><code>&lt;checkpointNetworkName&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>-</code></td>
-<td>No description.<br /><strong>User Property</strong>: <code>crac.checkpoint.network</code></td></tr>
+<td>The name of the docker network to run the checkpoint container in.<br /><strong>User Property</strong>: <code>crac.checkpoint.network</code></td></tr>
 <tr class="a">
 <td align="left"><a href="#checkpointTimeoutSeconds"><code>&lt;checkpointTimeoutSeconds&gt;</code></a></td>
 <td><code>Integer</code></td>
 <td><code>-</code></td>
-<td>No description.<br /><strong>Default</strong>: <code>60</code><br /><strong>User Property</strong>: <code>crac.checkpoint.timeout</code></td></tr>
+<td>The timeout in seconds to wait for the checkpoint to complete.<br /><strong>Default</strong>: <code>60</code><br /><strong>User Property</strong>: <code>crac.checkpoint.timeout</code></td></tr>
 <tr class="b">
 <td align="left"><a href="#cracArchitecture"><code>&lt;cracArchitecture&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>-</code></td>
-<td>No description.<br /><strong>User Property</strong>: <code>crac.arch</code></td></tr>
+<td>The architecture to use for the CRaC enabled JDK. Defaults to <code>os.arch</code><br /><strong>User Property</strong>: <code>crac.arch</code></td></tr>
 <tr class="a">
 <td align="left"><a href="#cracJavaVersion"><code>&lt;cracJavaVersion&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>-</code></td>
-<td>No description.<br /><strong>Default</strong>: <code>${jdk.version}</code><br /><strong>User Property</strong>: <code>crac.java.version</code></td></tr>
+<td>The version of the Azul CRaC enabled JDK to use.<br /><strong>Default</strong>: <code>${jdk.version}</code><br /><strong>User Property</strong>: <code>crac.java.version</code></td></tr>
 <tr class="b">
+<td align="left"><a href="#cracOs"><code>&lt;cracOs&gt;</code></a></td>
+<td><code>String</code></td>
+<td><code>-</code></td>
+<td>The os to use for the CRaC enabled JDK.<br /><strong>Default</strong>: <code>linux-glibc</code><br /><strong>User Property</strong>: <code>crac.os</code></td></tr>
+<tr class="a">
 <td align="left"><a href="#micronautRuntime"><code>&lt;micronautRuntime&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>-</code></td>
 <td>The target runtime of the application.<br /><strong>Default</strong>: <code>NONE</code><br /><strong>User Property</strong>: <code>micronaut.runtime</code></td></tr>
-<tr class="a">
+<tr class="b">
 <td align="left"><a href="#nativeImageBuildArgs"><code>&lt;nativeImageBuildArgs&gt;</code></a></td>
 <td><code>List&lt;String&gt;</code></td>
 <td><code>-</code></td>
 <td>Additional arguments that will be passed to the <code>native-image</code> executable. Note that this will only be used when using a packaging of type <code>docker-native</code>. For <code>native-image</code> packaging you should use the <a href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization"> Native Image Maven Plugin </a> configuration options.<br /><strong>User Property</strong>: <code>micronaut.native-image.args</code></td></tr>
-<tr class="b">
+<tr class="a">
 <td align="left"><a href="#networkMode"><code>&lt;networkMode&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>4.0.0</code></td>
 <td>Networking mode for the RUN instructions during build.<br /><strong>User Property</strong>: <code>docker.networkMode</code></td></tr>
-<tr class="a">
+<tr class="b">
 <td align="left"><a href="#oracleLinuxVersion"><code>&lt;oracleLinuxVersion&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>-</code></td>
 <td>The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.<br /><strong>Default</strong>: <code>ol9</code><br /><strong>User Property</strong>: <code>micronaut.native-image.ol.version</code></td></tr>
-<tr class="b">
+<tr class="a">
 <td align="left"><a href="#readinessCommand"><code>&lt;readinessCommand&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>-</code></td>
-<td>No description.<br /><strong>Default</strong>: <code>curl --output /dev/null --silent --head http://localhost:8080</code><br /><strong>User Property</strong>: <code>crac.readiness</code></td></tr>
-<tr class="a">
+<td>The command to execute to determine if the application is ready to receive traffic.<br /><strong>Default</strong>: <code>curl --output /dev/null --silent --head http://localhost:8080</code><br /><strong>User Property</strong>: <code>crac.readiness</code></td></tr>
+<tr class="b">
 <td align="left"><a href="#staticNativeImage"><code>&lt;staticNativeImage&gt;</code></a></td>
 <td><code>Boolean</code></td>
 <td><code>-</code></td>
@@ -233,31 +238,38 @@
 <li><strong>User Property</strong>: <code>micronaut.native-image.base-image-run</code></li>
 <li><strong>Default</strong>: <code>cgr.dev/chainguard/wolfi-base:latest</code></li></ul><hr /></section><a name="checkpointNetworkName"><section>
 <h4><a name="a.3CcheckpointNetworkName.3E"></a>&lt;checkpointNetworkName&gt;</h4><a name="a.3CcheckpointNetworkName.3E"></a></a>
-<div>No description.</div>
+<div>The name of the docker network to run the checkpoint container in.</div>
 <ul>
 <li><strong>Type</strong>: <code>java.lang.String</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
 <li><strong>User Property</strong>: <code>crac.checkpoint.network</code></li></ul><hr /></section><a name="checkpointTimeoutSeconds"><section>
 <h4><a name="a.3CcheckpointTimeoutSeconds.3E"></a>&lt;checkpointTimeoutSeconds&gt;</h4><a name="a.3CcheckpointTimeoutSeconds.3E"></a></a>
-<div>No description.</div>
+<div>The timeout in seconds to wait for the checkpoint to complete.</div>
 <ul>
 <li><strong>Type</strong>: <code>java.lang.Integer</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
 <li><strong>User Property</strong>: <code>crac.checkpoint.timeout</code></li>
 <li><strong>Default</strong>: <code>60</code></li></ul><hr /></section><a name="cracArchitecture"><section>
 <h4><a name="a.3CcracArchitecture.3E"></a>&lt;cracArchitecture&gt;</h4><a name="a.3CcracArchitecture.3E"></a></a>
-<div>No description.</div>
+<div>The architecture to use for the CRaC enabled JDK. Defaults to <code>os.arch</code></div>
 <ul>
 <li><strong>Type</strong>: <code>java.lang.String</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
 <li><strong>User Property</strong>: <code>crac.arch</code></li></ul><hr /></section><a name="cracJavaVersion"><section>
 <h4><a name="a.3CcracJavaVersion.3E"></a>&lt;cracJavaVersion&gt;</h4><a name="a.3CcracJavaVersion.3E"></a></a>
-<div>No description.</div>
+<div>The version of the Azul CRaC enabled JDK to use.</div>
 <ul>
 <li><strong>Type</strong>: <code>java.lang.String</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
 <li><strong>User Property</strong>: <code>crac.java.version</code></li>
-<li><strong>Default</strong>: <code>${jdk.version}</code></li></ul><hr /></section><a name="mainClass"><section>
+<li><strong>Default</strong>: <code>${jdk.version}</code></li></ul><hr /></section><a name="cracOs"><section>
+<h4><a name="a.3CcracOs.3E"></a>&lt;cracOs&gt;</h4><a name="a.3CcracOs.3E"></a></a>
+<div>The os to use for the CRaC enabled JDK.</div>
+<ul>
+<li><strong>Type</strong>: <code>java.lang.String</code></li>
+<li><strong>Required</strong>: <code>No</code></li>
+<li><strong>User Property</strong>: <code>crac.os</code></li>
+<li><strong>Default</strong>: <code>linux-glibc</code></li></ul><hr /></section><a name="mainClass"><section>
 <h4><a name="a.3CmainClass.3E"></a>&lt;mainClass&gt;</h4><a name="a.3CmainClass.3E"></a></a>
 <div>The main class of the application, as defined in the <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.</div>
 <ul>
@@ -292,7 +304,7 @@
 <li><strong>User Property</strong>: <code>micronaut.native-image.ol.version</code></li>
 <li><strong>Default</strong>: <code>ol9</code></li></ul><hr /></section><a name="readinessCommand"><section>
 <h4><a name="a.3CreadinessCommand.3E"></a>&lt;readinessCommand&gt;</h4><a name="a.3CreadinessCommand.3E"></a></a>
-<div>No description.</div>
+<div>The command to execute to determine if the application is ready to receive traffic.</div>
 <ul>
 <li><strong>Type</strong>: <code>java.lang.String</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
