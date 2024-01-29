@@ -24,10 +24,12 @@ import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.invoker.MavenInvocationException;
+import org.graalvm.buildtools.utils.NativeImageUtils;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -53,10 +55,13 @@ import static io.micronaut.maven.DockerNativeMojo.ARGS_FILE_PROPERTY_NAME;
  * @since 1.1
  */
 @Mojo(name = "dockerfile", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+@Execute(goal = GraalVMResourcesMojo.GRAALVM_RESOURCES)
 public class DockerfileMojo extends AbstractDockerMojo {
 
     public static final String DOCKERFILE = "Dockerfile";
-    public static final String DOCKERFILE_AWS_CUSTOM_RUNTIME = "DockerfileAwsCustomRuntime";
+    public static final String DOCKERFILE_AWS_CUSTOM_RUNTIME = "DockerfileNativeLambda";
+    public static final String DOCKERFILE_AWS = "DockerfileLambda";
+    public static final String DOCKERFILE_ORACLE_CLOUD = "DockerfileOracleCloud";
     public static final String DOCKERFILE_NATIVE = "DockerfileNative";
     public static final String DOCKERFILE_CRAC = "DockerfileCrac";
     public static final String DOCKERFILE_CRAC_CHECKPOINT = "DockerfileCracCheckpoint";
@@ -99,10 +104,14 @@ public class DockerfileMojo extends AbstractDockerMojo {
         File dockerfile;
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION -> {
-                dockerfile = dockerService.loadDockerfileAsResource("DockerfileOracleCloud");
+                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_ORACLE_CLOUD);
                 processOracleFunctionDockerfile(dockerfile);
             }
-            case LAMBDA, DEFAULT -> {
+            case LAMBDA -> {
+                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS);
+                processDockerfile(dockerfile);
+            }
+            case DEFAULT -> {
                 dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE);
                 processDockerfile(dockerfile);
             }
@@ -211,7 +220,13 @@ public class DockerfileMojo extends AbstractDockerMojo {
             }
             if (argsFile != null) {
                 List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);
+                //Remove extra main class argument
+                allNativeImageBuildArgs.remove(mainClass);
                 getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);
+                List<String> conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));
+                if (conversionResult.size() == 1) {
+                    Files.delete(Paths.get(argsFile));
+                }
             }
 
             if (appArguments != null && !appArguments.isEmpty()) {

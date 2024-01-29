@@ -5,7 +5,7 @@ RUN curl -4 -L https://download.oracle.com/graalvm/17/latest/graalvm-jdk-17_linu
     && mkdir -p /usr/lib/graalvm \
     && tar -zxf /tmp/graalvm.tar.gz -C /usr/lib/graalvm --strip-components 1 \
     && rm -rf /tmp/*
-ENV PATH=/usr/lib/graalvm/bin:${PATH}
+ENV PATH="/usr/lib/graalvm/bin:${PATH}"
 WORKDIR /home/app
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/

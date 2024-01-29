@@ -12,3 +12,7 @@ static String graalVmArch() {
         return "amd64"
     }
 }
+
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains("Copying /function/function.zip")

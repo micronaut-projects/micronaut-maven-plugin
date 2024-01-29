@@ -82,9 +82,11 @@ public class DockerCracMojo extends AbstractDockerMojo {
     public static final String CRAC_CHECKPOINT_TIMEOUT_PROPERTY = "crac.checkpoint.timeout";
 
     public static final String CRAC_JAVA_VERSION = "crac.java.version";
-    public static final String DEFAULT_CRAC_JAVA_VERSION = "17";
 
     public static final String CRAC_ARCHITECTURE = "crac.arch";
+
+    public static final String CRAC_OS = "crac.os";
+    public static final String DEFAULT_CRAC_OS = "linux-glibc";
 
     public static final String DEFAULT_BASE_IMAGE = "ubuntu:22.04";
 
@@ -98,20 +100,41 @@ public class DockerCracMojo extends AbstractDockerMojo {
     );
     private final MavenReaderFilter mavenReaderFilter;
 
+    /**
+     * The command to execute to determine if the application is ready to receive traffic.
+     */
     @Parameter(property = DockerCracMojo.CRAC_READINESS_PROPERTY, defaultValue = DockerCracMojo.DEFAULT_READINESS_COMMAND)
     private String readinessCommand;
 
+    /**
+     * The timeout in seconds to wait for the checkpoint to complete.
+     */
     @Parameter(property = DockerCracMojo.CRAC_CHECKPOINT_TIMEOUT_PROPERTY, defaultValue = DockerCracMojo.DEFAULT_CRAC_CHECKPOINT_TIMEOUT)
     private Integer checkpointTimeoutSeconds;
 
+    /**
+     * The name of the docker network to run the checkpoint container in.
+     */
     @Parameter(property = DockerCracMojo.CRAC_CHECKPOINT_NETWORK_PROPERTY)
     private String checkpointNetworkName;
 
+    /**
+     * The version of the Azul CRaC enabled JDK to use.
+     */
     @Parameter(property = DockerCracMojo.CRAC_JAVA_VERSION, defaultValue = "${jdk.version}")
     private String cracJavaVersion;
 
+    /**
+     * The architecture to use for the CRaC enabled JDK. Defaults to {@code os.arch}
+     */
     @Parameter(property = DockerCracMojo.CRAC_ARCHITECTURE)
     private String cracArchitecture;
+
+    /**
+     * The os to use for the CRaC enabled JDK.
+     */
+    @Parameter(property = DockerCracMojo.CRAC_OS, defaultValue = DEFAULT_CRAC_OS)
+    private String cracOs;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -193,11 +216,11 @@ public class DockerCracMojo extends AbstractDockerMojo {
         getLog().info("Using CRAC_ARCH: " + finalArchitecture);
         getLog().info("Using CRAC_JDK_VERSION: " + cracJavaVersion);
 
-
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
                 .withDockerfile(dockerfile)
                 .withBuildArg("BASE_IMAGE", baseImage)
                 .withBuildArg("CRAC_ARCH", finalArchitecture)
+                .withBuildArg("CRAC_OS", cracOs)
                 .withBuildArg("CRAC_JDK_VERSION", cracJavaVersion)
                 .withTags(checkpointTags);
         getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
