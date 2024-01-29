@@ -337,8 +337,9 @@ These can be overridden by passing properties to the build:
 .Example setting the CRaC JDK version and architecture
 ----
 <properties>
-    <crac.java.version>21</crac.java.version>
+    <crac.java.version>17</crac.java.version>
     <crac.arch>amd64</crac.arch>
+    <crac.os>linux-glibc</crac.os>
 </properties>
 ----
 

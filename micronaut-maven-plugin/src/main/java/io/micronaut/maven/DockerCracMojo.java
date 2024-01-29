@@ -85,6 +85,9 @@ public class DockerCracMojo extends AbstractDockerMojo {
 
     public static final String CRAC_ARCHITECTURE = "crac.arch";
 
+    public static final String CRAC_OS = "crac.os";
+    public static final String DEFAULT_CRAC_OS = "linux-glibc";
+
     public static final String DEFAULT_BASE_IMAGE = "ubuntu:22.04";
 
     public static final String ARM_ARCH = "aarch64";
@@ -111,6 +114,9 @@ public class DockerCracMojo extends AbstractDockerMojo {
 
     @Parameter(property = DockerCracMojo.CRAC_ARCHITECTURE)
     private String cracArchitecture;
+
+    @Parameter(property = DockerCracMojo.CRAC_OS, defaultValue = DEFAULT_CRAC_OS)
+    private String cracOs;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -197,6 +203,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
                 .withDockerfile(dockerfile)
                 .withBuildArg("BASE_IMAGE", baseImage)
                 .withBuildArg("CRAC_ARCH", finalArchitecture)
+                .withBuildArg("CRAC_OS", cracOs)
                 .withBuildArg("CRAC_JDK_VERSION", cracJavaVersion)
                 .withTags(checkpointTags);
         getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
