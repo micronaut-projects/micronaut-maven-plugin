@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.micronaut.maven.AbstractDockerMojo.MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG;
@@ -92,7 +93,7 @@ public final class MojoUtils {
                     .filter(arg -> !arg.startsWith("-H:Name"))
                     .filter(arg -> !arg.startsWith("-H:Class"))
                     .filter(arg -> !arg.startsWith("-H:Path"))
-                    .filter(arg -> !arg.startsWith("-H:ConfigurationFileDirectories"))
+//                    .filter(arg -> !arg.startsWith("-H:ConfigurationFileDirectories"))
                     .flatMap(arg -> {
                         if (arg.startsWith("@")) {
                             String fileName = arg.substring(1);
@@ -101,12 +102,40 @@ public final class MojoUtils {
                             // start the search at length - 3 to skip \Q or \E at the end
                             int lastIndexOfSlash = arg.lastIndexOf(File.separator, arg.length() - 3);
                             return Stream.of("\\Q/home/app/libs/" + arg.substring(lastIndexOfSlash + 1));
+                        } else if (arg.startsWith("-H:ConfigurationFileDirectories")) {
+                            return Stream.of(parseConfigurationFilesDirectoriesArg(arg));
                         } else {
                             return Stream.of(arg);
                         }
                     });
         } else {
             throw new RuntimeException("Unable to find args file: " + argsFilePath);
+        }
+    }
+
+    static String parseConfigurationFilesDirectoriesArg(String arg) {
+        String[] split = arg.split("=");
+        String[] directories = split[1].split(",");
+        if (arg.contains("generateResourceConfig") || arg.contains("generateTestResourceConfig")) {
+            return Stream.of(directories)
+                    .map(directory -> {
+                        String[] splitDirectory = directory.split("/");
+                        return "/home/app/" + splitDirectory[splitDirectory.length - 1];
+                    })
+                    .collect(Collectors.joining(","))
+                    .transform(s -> "-H:ConfigurationFileDirectories=" + s);
+        } else {
+            return Stream.of(directories)
+                    .map(directory -> {
+                        String[] splitDirectory = directory.split("/");
+                        String last4Directories = splitDirectory[splitDirectory.length - 4] + "/" +
+                                splitDirectory[splitDirectory.length - 3] + "/" +
+                                splitDirectory[splitDirectory.length - 2] + "/" +
+                                splitDirectory[splitDirectory.length - 1];
+                        return "/home/app/graalvm-reachability-metadata/" + last4Directories;
+                    })
+                    .collect(Collectors.joining(","))
+                    .transform(s -> "-H:ConfigurationFileDirectories=" + s);
         }
     }
 }

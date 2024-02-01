@@ -36,8 +36,7 @@
                                 org.apache.maven.plugins:maven-surefire-plugin:test
                             </test>
                             <prepare-package>
-                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
-                                ${project.groupId}:${project.artifactId}:${project.version}:graalvm-resources
+                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
                             </prepare-package>
                             <package>
                                 org.apache.maven.plugins:maven-jar-plugin:jar,
@@ -78,9 +77,24 @@
                             <compile>
                                 org.apache.maven.plugins:maven-compiler-plugin:compile
                             </compile>
+                            <process-classes>
+                                org.graalvm.buildtools:native-maven-plugin:generateResourceConfig
+                            </process-classes>
+                            <process-test-resources>
+                                org.apache.maven.plugins:maven-resources-plugin:testResources
+                            </process-test-resources>
+                            <test-compile>
+                                org.apache.maven.plugins:maven-compiler-plugin:testCompile
+                            </test-compile>
+                            <process-test-classes>
+                                org.graalvm.buildtools:native-maven-plugin:generateTestResourceConfig
+                            </process-test-classes>
+                            <test>
+                                ${project.groupId}:${project.artifactId}:${project.version}:start-testresources-service,
+                                org.apache.maven.plugins:maven-surefire-plugin:test
+                            </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
-                                ${project.groupId}:${project.artifactId}:${project.version}:graalvm-resources,
                                 org.apache.maven.plugins:maven-jar-plugin:jar
                             </prepare-package>
                             <package>
@@ -115,6 +129,16 @@
                             <compile>
                                 org.apache.maven.plugins:maven-compiler-plugin:compile
                             </compile>
+                            <process-test-resources>
+                                org.apache.maven.plugins:maven-resources-plugin:testResources
+                            </process-test-resources>
+                            <test-compile>
+                                org.apache.maven.plugins:maven-compiler-plugin:testCompile
+                            </test-compile>
+                            <test>
+                                ${project.groupId}:${project.artifactId}:${project.version}:start-testresources-service,
+                                org.apache.maven.plugins:maven-surefire-plugin:test
+                            </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
                             </prepare-package>
@@ -154,6 +178,16 @@
                             <compile>
                                 org.apache.maven.plugins:maven-compiler-plugin:compile
                             </compile>
+                            <process-test-resources>
+                                org.apache.maven.plugins:maven-resources-plugin:testResources
+                            </process-test-resources>
+                            <test-compile>
+                                org.apache.maven.plugins:maven-compiler-plugin:testCompile
+                            </test-compile>
+                            <test>
+                                ${project.groupId}:${project.artifactId}:${project.version}:start-testresources-service,
+                                org.apache.maven.plugins:maven-surefire-plugin:test
+                            </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
                             </prepare-package>
@@ -181,18 +215,35 @@
                     <lifecycle>
                         <id>default</id>
                         <phases>
-                            <generate-resources>
-                                org.graalvm.buildtools:native-maven-plugin:add-reachability-metadata
-                            </generate-resources>
+                            <generate-sources>
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-generic,
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-client,
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server
+                            </generate-sources>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:resources
                             </process-resources>
                             <compile>
                                 org.apache.maven.plugins:maven-compiler-plugin:compile
                             </compile>
+                            <process-classes>
+                                org.graalvm.buildtools:native-maven-plugin:generateResourceConfig
+                            </process-classes>
+                            <process-test-resources>
+                                org.apache.maven.plugins:maven-resources-plugin:testResources
+                            </process-test-resources>
+                            <test-compile>
+                                org.apache.maven.plugins:maven-compiler-plugin:testCompile
+                            </test-compile>
+                            <process-test-classes>
+                                org.graalvm.buildtools:native-maven-plugin:generateTestResourceConfig
+                            </process-test-classes>
+                            <test>
+                                ${project.groupId}:${project.artifactId}:${project.version}:start-testresources-service,
+                                org.apache.maven.plugins:maven-surefire-plugin:test
+                            </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
-                                ${project.groupId}:${project.artifactId}:${project.version}:graalvm-resources,
                                 org.graalvm.buildtools:native-maven-plugin:write-args-file
                             </prepare-package>
                             <package>

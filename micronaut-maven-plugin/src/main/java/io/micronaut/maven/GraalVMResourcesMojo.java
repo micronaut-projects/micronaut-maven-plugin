@@ -38,8 +38,10 @@ import java.util.*;
  *
  * @author Iván López
  * @since 2.0
+ * @deprecated Please use native:generateResourceConfig and/or native:generateTestResourceConfig instead.
  */
 @Mojo(name = GraalVMResourcesMojo.GRAALVM_RESOURCES)
+@Deprecated(since = "4.4.0", forRemoval = true)
 public class GraalVMResourcesMojo extends ResourcesMojo {
 
     public static final String GRAALVM_RESOURCES = "graalvm-resources";
