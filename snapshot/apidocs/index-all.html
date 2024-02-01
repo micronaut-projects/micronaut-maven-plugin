@@ -31,6 +31,7 @@ loadScripts(document, 'script');</script>
 <li>Class</li>
 <li>Use</li>
 <li><a href="overview-tree.html">Tree</a></li>
+<li><a href="deprecated-list.html">Deprecated</a></li>
 <li class="nav-bar-cell1-rev">Index</li>
 <li><a href="help-doc.html#index">Help</a></li>
 </ul>
@@ -373,7 +374,7 @@ loadScripts(document, 'script');</script>
 <div class="block">Generates a <code>Dockerfile</code> depending on the <code>packaging</code> and <code>micronaut.runtime</code>
  properties.</div>
 </dd>
-<dt><a href="io/micronaut/maven/DockerfileMojo.html#%3Cinit%3E(org.apache.maven.project.MavenProject,io.micronaut.maven.services.DockerService,io.micronaut.maven.jib.JibConfigurationService,io.micronaut.maven.services.ApplicationConfigurationService,io.micronaut.maven.services.ExecutorService,org.apache.maven.execution.MavenSession,org.apache.maven.plugin.MojoExecution)" class="member-name-link">DockerfileMojo(MavenProject, DockerService, JibConfigurationService, ApplicationConfigurationService, ExecutorService, MavenSession, MojoExecution)</a> - Constructor for class io.micronaut.maven.<a href="io/micronaut/maven/DockerfileMojo.html" title="class in io.micronaut.maven">DockerfileMojo</a></dt>
+<dt><a href="io/micronaut/maven/DockerfileMojo.html#%3Cinit%3E(org.apache.maven.project.MavenProject,io.micronaut.maven.services.DockerService,io.micronaut.maven.jib.JibConfigurationService,io.micronaut.maven.services.ApplicationConfigurationService,io.micronaut.maven.services.ExecutorService,org.apache.maven.execution.MavenSession,org.apache.maven.plugin.MojoExecution,io.micronaut.maven.services.CompilerService)" class="member-name-link">DockerfileMojo(MavenProject, DockerService, JibConfigurationService, ApplicationConfigurationService, ExecutorService, MavenSession, MojoExecution, CompilerService)</a> - Constructor for class io.micronaut.maven.<a href="io/micronaut/maven/DockerfileMojo.html" title="class in io.micronaut.maven">DockerfileMojo</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/DockerMojo.html" class="type-name-link" title="class in io.micronaut.maven">DockerMojo</a> - Class in <a href="io/micronaut/maven/package-summary.html">io.micronaut.maven</a></dt>
 <dd>
@@ -449,7 +450,9 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/maven/enforcer/CheckSnakeYaml.html#execute()" class="member-name-link">execute()</a> - Method in class io.micronaut.maven.enforcer.<a href="io/micronaut/maven/enforcer/CheckSnakeYaml.html" title="class in io.micronaut.maven.enforcer">CheckSnakeYaml</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/GraalVMResourcesMojo.html#execute()" class="member-name-link">execute()</a> - Method in class io.micronaut.maven.<a href="io/micronaut/maven/GraalVMResourcesMojo.html" title="class in io.micronaut.maven">GraalVMResourcesMojo</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
+&nbsp;</dd>
 <dt><a href="io/micronaut/maven/HelpMojo.html#execute()" class="member-name-link">execute()</a> - Method in class io.micronaut.maven.<a href="io/micronaut/maven/HelpMojo.html" title="class in io.micronaut.maven">HelpMojo</a></dt>
 <dt><a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html#execute()" class="member-name-link">execute()</a> - Method in class io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html" title="class in io.micronaut.maven.openapi">AbstractOpenApiMojo</a></dt>
 <dd>&nbsp;</dd>
@@ -590,17 +593,23 @@ loadScripts(document, 'script');</script>
 <div class="block">Google Cloud Function, packaged as a Fat JAR.</div>
 </dd>
 <dt><a href="io/micronaut/maven/GraalVMResourcesMojo.html#GRAALVM_RESOURCES" class="member-name-link">GRAALVM_RESOURCES</a> - Static variable in class io.micronaut.maven.<a href="io/micronaut/maven/GraalVMResourcesMojo.html" title="class in io.micronaut.maven">GraalVMResourcesMojo</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
+&nbsp;</dd>
 <dt><a href="io/micronaut/maven/AbstractDockerMojo.html#graalVmArch()" class="member-name-link">graalVmArch()</a> - Method in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/AbstractDockerMojo.html#graalVmJvmVersion()" class="member-name-link">graalVmJvmVersion()</a> - Method in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/GraalVMResourcesMojo.html" class="type-name-link" title="class in io.micronaut.maven">GraalVMResourcesMojo</a> - Class in <a href="io/micronaut/maven/package-summary.html">io.micronaut.maven</a></dt>
 <dd>
-<div class="block">Generate GraalVM <code>resources-config.json</code> with all the resources included in the application</div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Please use native:generateResourceConfig and/or native:generateTestResourceConfig instead.</div>
+</div>
 </dd>
 <dt><a href="io/micronaut/maven/GraalVMResourcesMojo.html#%3Cinit%3E()" class="member-name-link">GraalVMResourcesMojo()</a> - Constructor for class io.micronaut.maven.<a href="io/micronaut/maven/GraalVMResourcesMojo.html" title="class in io.micronaut.maven">GraalVMResourcesMojo</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
+&nbsp;</dd>
 <dt><a href="io/micronaut/maven/AbstractDockerMojo.html#graalVmVersion()" class="member-name-link">graalVmVersion()</a> - Method in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></dt>
 <dd>&nbsp;</dd>
 </dl>
@@ -827,6 +836,8 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/aot/AotRuntime.html#NATIVE" class="member-name-link">NATIVE</a> - Enum constant in enum class io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AotRuntime.html" title="enum class in io.micronaut.maven.aot">AotRuntime</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/maven/DockerfileMojo.html#NATIVE_BUILD_TOOLS_MAVEN_PLUGIN" class="member-name-link">NATIVE_BUILD_TOOLS_MAVEN_PLUGIN</a> - Static variable in class io.micronaut.maven.<a href="io/micronaut/maven/DockerfileMojo.html" title="class in io.micronaut.maven">DockerfileMojo</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/Packaging.html#NATIVE_IMAGE" class="member-name-link">NATIVE_IMAGE</a> - Enum constant in enum class io.micronaut.maven.<a href="io/micronaut/maven/Packaging.html" title="enum class in io.micronaut.maven">Packaging</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/AbstractDockerMojo.html#nativeImageBuildArgs" class="member-name-link">nativeImageBuildArgs</a> - Variable in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></dt>
@@ -1014,7 +1025,9 @@ loadScripts(document, 'script');</script>
 <dt><a href="io/micronaut/maven/AbstractMicronautMojo.html#setLog(org.apache.maven.plugin.logging.Log)" class="member-name-link">setLog(Log)</a> - Method in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractMicronautMojo.html" title="class in io.micronaut.maven">AbstractMicronautMojo</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/GraalVMResourcesMojo.html#setLog(org.apache.maven.plugin.logging.Log)" class="member-name-link">setLog(Log)</a> - Method in class io.micronaut.maven.<a href="io/micronaut/maven/GraalVMResourcesMojo.html" title="class in io.micronaut.maven">GraalVMResourcesMojo</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
+&nbsp;</dd>
 <dt><a href="io/micronaut/maven/testresources/AbstractTestResourcesMojo.html#setLog(org.apache.maven.plugin.logging.Log)" class="member-name-link">setLog(Log)</a> - Method in class io.micronaut.maven.testresources.<a href="io/micronaut/maven/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.maven.testresources">AbstractTestResourcesMojo</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/openapi/ResponseBodyMapping.html#setMappedBodyType(java.lang.String)" class="member-name-link">setMappedBodyType(String)</a> - Method in class io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/ResponseBodyMapping.html" title="class in io.micronaut.maven.openapi">ResponseBodyMapping</a></dt>
