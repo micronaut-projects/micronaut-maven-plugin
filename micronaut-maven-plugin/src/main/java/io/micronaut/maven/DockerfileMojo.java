@@ -18,6 +18,7 @@ package io.micronaut.maven;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.jib.JibMicronautExtension;
 import io.micronaut.maven.services.ApplicationConfigurationService;
+import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DockerService;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.ExecutorService;
@@ -25,6 +26,7 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Execute;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
@@ -55,7 +57,7 @@ import static io.micronaut.maven.DockerNativeMojo.ARGS_FILE_PROPERTY_NAME;
  * @since 1.1
  */
 @Mojo(name = "dockerfile", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
-@Execute(goal = GraalVMResourcesMojo.GRAALVM_RESOURCES)
+@Execute(phase = LifecyclePhase.PROCESS_CLASSES)
 public class DockerfileMojo extends AbstractDockerMojo {
 
     public static final String DOCKERFILE = "Dockerfile";
@@ -69,15 +71,18 @@ public class DockerfileMojo extends AbstractDockerMojo {
     public static final String DOCKERFILE_NATIVE_DISTROLESS = "DockerfileNativeDistroless";
     public static final String DOCKERFILE_NATIVE_STATIC = "DockerfileNativeStatic";
     public static final String DOCKERFILE_NATIVE_ORACLE_CLOUD = "DockerfileNativeOracleCloud";
+    public static final String NATIVE_BUILD_TOOLS_MAVEN_PLUGIN = "org.graalvm.buildtools:native-maven-plugin";
 
     private final ExecutorService executorService;
+    private final CompilerService compilerService;
 
     @Inject
     public DockerfileMojo(MavenProject mavenProject, DockerService dockerService, JibConfigurationService jibConfigurationService,
                           ApplicationConfigurationService applicationConfigurationService, ExecutorService executorService,
-                          MavenSession mavenSession, MojoExecution mojoExecution) {
+                          MavenSession mavenSession, MojoExecution mojoExecution, CompilerService compilerService) {
         super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession, mojoExecution);
         this.executorService = executorService;
+        this.compilerService = compilerService;
     }
 
     @Override
@@ -154,7 +159,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
 
     private Optional<File> buildDockerfileNative(MicronautRuntime runtime) throws IOException, MavenInvocationException {
         getLog().info("Generating GraalVM args file");
-        executorService.invokeGoal("org.graalvm.buildtools:native-maven-plugin", "write-args-file");
+        executorService.invokeGoal(NATIVE_BUILD_TOOLS_MAVEN_PLUGIN, "write-args-file");
         File dockerfile;
         switch (runtime.getBuildStrategy()) {
             case LAMBDA -> dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS_CUSTOM_RUNTIME);

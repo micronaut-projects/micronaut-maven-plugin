@@ -1,6 +1,6 @@
 File log = new File(basedir, 'build.log')
 assert log.exists()
 assert log.text.contains("BUILD SUCCESS")
-assert log.text.contains("mn:${pluginVersion}:graalvm-resources")
+assert log.text.contains("native:${nativeMavenPluginVersion}:generateTestResourceConfig")
 assert log.text.contains("Successfully built")
 assert log.text.contains("AWS Lambda Custom Runtime ZIP:")

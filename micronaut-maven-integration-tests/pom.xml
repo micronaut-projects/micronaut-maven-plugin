@@ -106,6 +106,8 @@
                     <writeJunitReport>true</writeJunitReport>
                     <properties>
                         <jdk.version>${java.specification.version}</jdk.version>
+                        <!-- TODO: remove when using Micronaut 4.3 -->
+                        <resources.autodetection.enabled>true</resources.autodetection.enabled>
                     </properties>
                 </configuration>
                 <executions>
