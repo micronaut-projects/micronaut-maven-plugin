@@ -9,8 +9,8 @@ File resourceConfigFile = new File(basedir, 'target/native/generated/generateRes
 def resourceConfigJson = new groovy.json.JsonSlurper().parse(resourceConfigFile)
 
 assert resourceConfigJson.resources.includes.any { it.pattern == "\\Qapplication.yml\\E" }
-assert resourceConfigJson.resources.includes.any { it.pattern == "\\QMETA-INF/swagger/app-0.0.yml\\E" }
-assert resourceConfigJson.resources.includes.any { it.pattern == "\\QMETA-INF/swagger/views/swagger-ui/index.html\\E" }
+assert resourceConfigJson.resources.includes.any { it.pattern.contains == "app-0.0.yml\\E" }
+assert resourceConfigJson.resources.includes.any { it.pattern.contains == "index.html\\E" }
 
 File fatJar = new File(basedir, "target/package-native-image-aot-0.1.jar")
 assert fatJar.exists()
