@@ -23,3 +23,5 @@ assert jarFile.stream().anyMatch{ e -> e.name == 'META-INF/native-image/io.micro
 
 // Resource filtering
 assert jarFile.stream().noneMatch{ e -> e.name == 'application.yml' }
+
+assert log.text.contains("io.micronaut.runtime.Micronaut - Startup completed")
