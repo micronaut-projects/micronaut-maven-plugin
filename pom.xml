@@ -309,6 +309,13 @@
                                             </property>
                                             <property>
                                                 <name>formats</name>
+                                                <inputs>
+                                                    <properties>
+                                                        <property>
+                                                            <name>format</name>
+                                                        </property>
+                                                    </properties>
+                                                </inputs>
                                             </property>
                                             <property>
                                                 <name>goal</name>
