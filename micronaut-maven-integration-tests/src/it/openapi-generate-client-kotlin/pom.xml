@@ -22,6 +22,7 @@
     <micronaut.openapi.generate.client>true</micronaut.openapi.generate.client>
     <micronaut.openapi.client.generated.annotation>false</micronaut.openapi.client.generated.annotation>
     <kotlinVersion>1.9.22</kotlinVersion>
+    <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
   </properties>
 
   <dependencies>

@@ -18,6 +18,7 @@
         <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
         <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
         <micronaut.test.resources.enabled>false</micronaut.test.resources.enabled>
+        <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
     </properties>
 
     <dependencies>
