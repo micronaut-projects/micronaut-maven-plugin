@@ -22,6 +22,7 @@
         <micronaut.aot.enabled>true</micronaut.aot.enabled>
         <micronaut.aot.packageName>io.micronaut.build.examples</micronaut.aot.packageName>
         <micronaut.aot.version>@micronaut.aot.version@</micronaut.aot.version>
+        <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
     </properties>
 
     <dependencies>

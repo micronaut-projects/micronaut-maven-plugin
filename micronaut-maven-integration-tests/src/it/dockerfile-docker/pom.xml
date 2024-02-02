@@ -18,6 +18,7 @@
         <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
         <packaging>jar</packaging>
         <micronaut.runtime>netty</micronaut.runtime>
+        <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
     </properties>
 
     <dependencies>

@@ -19,6 +19,7 @@
         <micronaut.runtime>netty</micronaut.runtime>
         <micronaut.openapi.definition>src/openapi/petstore.json</micronaut.openapi.definition>
         <micronaut.openapi.generator.builder.classname>io.micronaut.maven.fixtures.DummyOpenApiGenerator</micronaut.openapi.generator.builder.classname>
+        <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
     </properties>
 
     <dependencies>

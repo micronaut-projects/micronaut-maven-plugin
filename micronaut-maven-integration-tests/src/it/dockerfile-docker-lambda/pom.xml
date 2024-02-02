@@ -20,6 +20,7 @@
         <micronaut.aot.enabled>false</micronaut.aot.enabled>
         <micronaut.aot.packageName>com.example.aot.generated</micronaut.aot.packageName>
         <micronaut.runtime>lambda</micronaut.runtime>
+        <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
     </properties>
 
     <dependencies>
