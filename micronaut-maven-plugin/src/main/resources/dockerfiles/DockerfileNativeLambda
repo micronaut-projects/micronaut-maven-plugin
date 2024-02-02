@@ -1,8 +1,8 @@
-FROM amazonlinux:2 AS graalvm
+FROM amazonlinux:2023 AS graalvm
 ENV LANG=en_US.UTF-8
 ARG GRAALVM_JVM_VERSION
 ARG GRAALVM_ARCH
-RUN yum update -y && yum install -y gcc gcc-c++ libc6-dev zlib1g-dev curl bash zlib zlib-devel zlib-static zip tar gzip && yum clean all && rm -rf /var/cache/yum
+RUN yum update -y && yum install -y gcc gcc-c++ glibc-devel curl-minimal bash zlib zlib-devel zlib-static zip tar gzip && yum clean all && rm -rf /var/cache/yum
 RUN curl -4 -L https://download.oracle.com/graalvm/${GRAALVM_JVM_VERSION}/latest/graalvm-jdk-${GRAALVM_JVM_VERSION}_linux-${GRAALVM_ARCH}_bin.tar.gz -o /tmp/graalvm.tar.gz \
     && mkdir -p /usr/lib/graalvm \
     && tar -zxf /tmp/graalvm.tar.gz -C /usr/lib/graalvm --strip-components 1 \
@@ -17,7 +17,7 @@ COPY *.args /home/app/graalvm-native-image.args
 ARG CLASS_NAME
 RUN native-image @/home/app/graalvm-native-image.args -H:Class=${CLASS_NAME} -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
 
-FROM amazonlinux:2
+FROM amazonlinux:2023
 WORKDIR /function
 RUN yum update -y && yum install -y zip && yum clean all
 COPY --from=graalvm /home/app/application /function/func
