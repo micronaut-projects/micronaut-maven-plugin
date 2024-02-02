@@ -12,3 +12,5 @@ assert resourceConfigJson.resources.includes.any { it.pattern.contains "index.ht
 
 File fatJar = new File(basedir, "target/package-native-image-0.1.jar")
 assert fatJar.exists()
+
+assert log.text.contains("io.micronaut.runtime.Micronaut - Startup completed")
