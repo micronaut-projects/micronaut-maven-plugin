@@ -4,4 +4,20 @@
     <server>
         <url>https://ge.micronaut.io</url>
     </server>
+    <buildScan>
+        <captureGoalInputFiles>true</captureGoalInputFiles>
+        <backgroundBuildScanUpload>#{isFalse(env['CI'])}</backgroundBuildScanUpload> <!-- adjust to your CI provider -->
+        <publish>ALWAYS</publish>
+    </buildScan>
+    <buildCache>
+        <local>
+            <enabled>true</enabled>
+        </local>
+        <remote>
+            <!-- Use the Develocity connector's access key based authentication.
+                 This is available in Develocity 2022.3+ and Develocity Plugin 3.11+. -->
+            <enabled>true</enabled>
+            <storeEnabled>#{isTrue(env['CI'])}</storeEnabled> <!-- adjust to your CI provider -->
+        </remote>
+    </buildCache>
 </gradleEnterprise>
