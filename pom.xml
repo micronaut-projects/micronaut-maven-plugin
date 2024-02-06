@@ -286,6 +286,7 @@
                                                 <name>baseDir</name>
                                                 <excludes>
                                                     <exclude>.idea/*</exclude>
+                                                    <exclude>.git/*</exclude>
                                                     <exclude>target/*</exclude>
                                                 </excludes>
                                                 <normalization>
@@ -308,16 +309,6 @@
                                                 <name>filePatterns</name>
                                             </property>
                                             <property>
-                                                <name>formats</name>
-                                                <inputs>
-                                                    <properties>
-                                                        <property>
-                                                            <name>format</name>
-                                                        </property>
-                                                    </properties>
-                                                </inputs>
-                                            </property>
-                                            <property>
                                                 <name>goal</name>
                                             </property>
                                             <property>
@@ -337,6 +328,11 @@
                                             <ignore>lineEndings</ignore>
                                         </ignoredProperties>
                                     </inputs>
+                                    <iteratedProperties>
+                                        <property>
+                                            <name>formats</name>
+                                        </property>
+                                    </iteratedProperties>
                                     <nestedProperties>
                                         <property>
                                             <name>licenseHeader</name>
