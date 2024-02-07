@@ -5,7 +5,7 @@
 
     <groupId>io.micronaut.maven</groupId>
     <artifactId>micronaut-maven-plugin-parent</artifactId>
-    <version>4.3.2-SNAPSHOT</version>
+    <version>4.4.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Micronaut Maven Plugin - Parent</name>
@@ -73,7 +73,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.version>3.9.6</maven.version>
-        <micronaut.version>4.3.3</micronaut.version>
+        <micronaut.version>4.3.4</micronaut.version>
         <native-maven-plugin.version>0.10.0</native-maven-plugin.version>
         <micronaut.aot.version>2.2.0</micronaut.aot.version>
         <micronaut.test.resources.version>2.3.3</micronaut.test.resources.version>
@@ -89,14 +89,14 @@
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <project.build.outputTimestamp>2024-01-17T10:35:34Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2024-02-02T17:40:38Z</project.build.outputTimestamp>
 
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.organization>micronaut-projects</sonar.organization>
         <sonar.java.checkstyle.reportPaths>${project.basedir}/target/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
         <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/micronaut-maven-integration-tests/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <jacoco.version>0.8.11</jacoco.version>
-        <junit-jupiter.version>5.10.1</junit-jupiter.version>
+        <junit-jupiter.version>5.10.2</junit-jupiter.version>
         <directory-watcher.version>0.18.0</directory-watcher.version>
         <testcontainers.version>1.19.4</testcontainers.version>
         <snakeyaml.version>2.2</snakeyaml.version>
