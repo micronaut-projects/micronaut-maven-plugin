@@ -191,6 +191,9 @@
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.12.1</version>
+                    <configuration>
+                        <proc>none</proc>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-plugin-plugin</artifactId>
