@@ -302,7 +302,7 @@
                                                 <excludes>
                                                     <exclude>.idea/*</exclude>
                                                     <exclude>.git/*</exclude>
-                                                    <exclude>target/*</exclude>
+                                                    <exclude>**/target/*</exclude>
                                                 </excludes>
                                                 <normalization>
                                                     <ignoreEmptyDirectories>true</ignoreEmptyDirectories>
