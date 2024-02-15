@@ -303,6 +303,7 @@
                                                     <exclude>.idea/*</exclude>
                                                     <exclude>.git/*</exclude>
                                                     <exclude>**/target/*</exclude>
+                                                    <exclude>.mvn/.gradle-enterprise/gradle-enterprise-workspace-id</exclude>
                                                 </excludes>
                                                 <normalization>
                                                     <ignoreEmptyDirectories>true</ignoreEmptyDirectories>
