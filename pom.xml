@@ -331,6 +331,13 @@
                                                     <ignoreLineEndings>true</ignoreLineEndings>
                                                 </normalization>
                                             </fileSet>
+                                            <fileSet>
+                                                <name>licenseFile</name>
+                                                <paths>
+                                                    <path>${maven.multiModuleProjectDirectory}/config/spotless.license.java</path>
+                                                </paths>
+                                                <normalization>RELATIVE_PATH</normalization>
+                                            </fileSet>
                                         </fileSets>
                                         <properties>
                                             <property>
