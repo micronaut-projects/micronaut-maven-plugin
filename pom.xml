@@ -293,6 +293,26 @@
                         <gradleEnterprise>
                             <plugins>
                                 <plugin>
+                                    <artifactId>maven-checkstyle-plugin</artifactId>
+                                    <inputs>
+                                        <properties>
+                                            <property>
+                                                <name>propertyExpansion</name>
+                                                <value>config_loc=ignored</value>
+                                            </property>
+                                        </properties>
+                                        <fileSets>
+                                            <fileSet>
+                                                <name>checkstyleConfigs</name>
+                                                <paths>
+                                                    <path>${maven.multiModuleProjectDirectory}/config/checkstyle</path>
+                                                </paths>
+                                                <normalization>RELATIVE_PATH</normalization>
+                                            </fileSet>
+                                        </fileSets>
+                                    </inputs>
+                                </plugin>
+                                <plugin>
                                     <groupId>com.diffplug.spotless</groupId>
                                     <artifactId>spotless-maven-plugin</artifactId>
                                     <inputs>
@@ -303,6 +323,7 @@
                                                     <exclude>.idea/*</exclude>
                                                     <exclude>.git/*</exclude>
                                                     <exclude>**/target/*</exclude>
+                                                    <exclude>config/checkstyle/*</exclude>
                                                     <exclude>.mvn/.gradle-enterprise/gradle-enterprise-workspace-id</exclude>
                                                 </excludes>
                                                 <normalization>
@@ -532,7 +553,7 @@
                         <sourceDirectory>src/main/java</sourceDirectory>
                     </sourceDirectories>
                     <configLocation>${maven.multiModuleProjectDirectory}/config/checkstyle/checkstyle.xml</configLocation>
-                    <propertyExpansion>config_loc=${maven.multiModuleProjectDirectory}/config/checkstyle</propertyExpansion>
+                    <propertyExpansion>config_loc=${maven.multiModuleProjectDirectory}/config/checkstyle</propertyExpansion> <!-- Needs to be synchronized with the caching config for checkstyle above -->
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
                     <failOnViolation>true</failOnViolation>
