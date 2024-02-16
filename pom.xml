@@ -488,7 +488,7 @@
                                                 <name>buildDir</name>
                                             </directory>
                                         </directories>
-                                        <cacheableBecause>check should only run when inputs change
+                                        <cacheableBecause>Execution is CPU-bound and check should only run when inputs change
                                         </cacheableBecause>
                                     </outputs>
                                 </plugin>
