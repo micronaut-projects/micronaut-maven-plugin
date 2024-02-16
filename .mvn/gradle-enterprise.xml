@@ -16,7 +16,7 @@
         <remote>
             <!-- Use the Develocity connector's access key based authentication.-->
             <enabled>true</enabled>
-            <storeEnabled>#{isTrue(env['CI'])}</storeEnabled>
+            <storeEnabled>#{isTrue(env['CI']) and isTrue(env['GRADLE_ENTERPRISE_ACCESS_KEY'])}</storeEnabled>
         </remote>
     </buildCache>
 </gradleEnterprise>
