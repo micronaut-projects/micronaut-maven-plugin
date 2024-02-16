@@ -588,7 +588,7 @@
                                 <include>src/main/**/module-info.java</include>
                             </includes>
                             <licenseHeader>
-                                <file>${maven.multiModuleProjectDirectory}/config/spotless.license.java</file>
+                                <file>${maven.multiModuleProjectDirectory}/config/spotless.license.java</file> <!-- Needs to be synchronized with the path for spotless caching config above -->
                                 <delimiter>/\*\*</delimiter>
                             </licenseHeader>
                         </format>
