@@ -132,7 +132,7 @@
       <plugin>
         <groupId>io.fabric8</groupId>
         <artifactId>docker-maven-plugin</artifactId>
-        <version>0.43.4</version>
+        <version>0.44.0</version>
         <configuration>
           <showLogs>true</showLogs>
           <outputDirectory>${java.io.tmpdir}</outputDirectory>
