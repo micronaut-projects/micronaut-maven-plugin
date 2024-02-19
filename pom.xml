@@ -482,15 +482,21 @@
                                             <name>shell</name>
                                         </property>
                                     </nestedProperties>
-                                    <outputs>
-                                        <directories>
-                                            <directory>
-                                                <name>buildDir</name>
-                                            </directory>
-                                        </directories>
-                                        <cacheableBecause>Execution is CPU-bound and check should only run when inputs change
-                                        </cacheableBecause>
-                                    </outputs>
+                                    <executions>
+                                        <execution>
+                                            <!-- Cache only the spotless:check goal -->
+                                            <id>spotless-check</id>
+                                            <outputs>
+                                                <directories>
+                                                    <directory>
+                                                        <name>buildDir</name>
+                                                    </directory>
+                                                </directories>
+                                                <cacheableBecause>Execution is CPU-bound and check should only run when inputs change
+                                                </cacheableBecause>
+                                            </outputs>
+                                        </execution>
+                                    </executions>
                                 </plugin>
                             </plugins>
                         </gradleEnterprise>
