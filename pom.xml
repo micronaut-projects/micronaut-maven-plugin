@@ -560,7 +560,7 @@
                         <sourceDirectory>src/main/java</sourceDirectory>
                     </sourceDirectories>
                     <configLocation>${maven.multiModuleProjectDirectory}/config/checkstyle/checkstyle.xml</configLocation>
-                    <propertyExpansion>config_loc=${maven.multiModuleProjectDirectory}/config/checkstyle</propertyExpansion> <!-- Needs to be synchronized with the caching config for checkstyle above -->
+                    <propertyExpansion>config_loc=${maven.multiModuleProjectDirectory}/config/checkstyle</propertyExpansion> <!-- Needs to be synchronized with the caching config for checkstyle in the Develocity Caching Configuration (gradleEnterprise config). -->
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
                     <failOnViolation>true</failOnViolation>
@@ -588,7 +588,7 @@
                                 <include>src/main/**/module-info.java</include>
                             </includes>
                             <licenseHeader>
-                                <file>${maven.multiModuleProjectDirectory}/config/spotless.license.java</file> <!-- Needs to be synchronized with the path for spotless caching config above -->
+                                <file>${maven.multiModuleProjectDirectory}/config/spotless.license.java</file> <!-- Needs to be synchronized with the path for spotless caching config in the Develocity Caching Configuration (gradleEnterprise config). -->
                                 <delimiter>/\*\*</delimiter>
                             </licenseHeader>
                         </format>
