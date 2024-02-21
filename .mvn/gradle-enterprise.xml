@@ -8,6 +8,7 @@
         <captureGoalInputFiles>true</captureGoalInputFiles>
         <backgroundBuildScanUpload>#{isFalse(env['CI'])}</backgroundBuildScanUpload>
         <publish>ALWAYS</publish>
+        <publishIfAuthenticated>true</publishIfAuthenticated>
     </buildScan>
     <buildCache>
         <local>
