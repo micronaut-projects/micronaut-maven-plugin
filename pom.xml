@@ -100,6 +100,9 @@
         <directory-watcher.version>0.18.0</directory-watcher.version>
         <testcontainers.version>1.19.5</testcontainers.version>
         <snakeyaml.version>2.2</snakeyaml.version>
+        <sisu.version>0.9.0.M2</sisu.version>
+        <checkstyle.config.dir.path>${maven.multiModuleProjectDirectory}/config/checkstyle</checkstyle.config.dir.path>
+        <spotless.licenseHeader.path>${maven.multiModuleProjectDirectory}/config/spotless.license.java</spotless.licenseHeader.path>
     </properties>
 
     <repositories>
@@ -191,6 +194,15 @@
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.12.1</version>
+                    <configuration>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.eclipse.sisu</groupId>
+                                <artifactId>org.eclipse.sisu.inject</artifactId>
+                                <version>${sisu.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-plugin-plugin</artifactId>
@@ -271,6 +283,227 @@
                     <artifactId>jacoco-maven-plugin</artifactId>
                     <version>${jacoco.version}</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.eclipse.sisu</groupId>
+                    <artifactId>sisu-maven-plugin</artifactId>
+                    <version>${sisu.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>com.gradle</groupId>
+                    <artifactId>gradle-enterprise-maven-extension</artifactId>
+                    <configuration>
+                        <gradleEnterprise>
+                            <plugins>
+                                <plugin>
+                                    <artifactId>maven-checkstyle-plugin</artifactId>
+                                    <inputs>
+                                        <properties>
+                                            <property>
+                                                <name>propertyExpansion</name>
+                                                <value>config_loc=ignored</value>
+                                            </property>
+                                        </properties>
+                                        <fileSets>
+                                            <fileSet>
+                                                <name>checkstyleConfigs</name>
+                                                <paths>
+                                                    <path>${checkstyle.config.dir.path}</path>
+                                                </paths>
+                                                <normalization>RELATIVE_PATH</normalization>
+                                            </fileSet>
+                                        </fileSets>
+                                    </inputs>
+                                </plugin>
+                                <plugin>
+                                    <groupId>com.diffplug.spotless</groupId>
+                                    <artifactId>spotless-maven-plugin</artifactId>
+                                    <inputs>
+                                        <fileSets>
+                                            <fileSet>
+                                                <name>baseDir</name>
+                                                <excludes>
+                                                    <exclude>.idea/*</exclude>
+                                                    <exclude>.git/*</exclude>
+                                                    <exclude>**/target/*</exclude>
+                                                    <exclude>config/checkstyle/*</exclude>
+                                                    <exclude>.mvn/.gradle-enterprise/gradle-enterprise-workspace-id</exclude>
+                                                </excludes>
+                                                <normalization>
+                                                    <ignoreEmptyDirectories>true</ignoreEmptyDirectories>
+                                                    <ignoreLineEndings>true</ignoreLineEndings>
+                                                </normalization>
+                                            </fileSet>
+                                            <fileSet>
+                                                <name>licenseFile</name>
+                                                <paths>
+                                                    <path>${spotless.licenseHeader.path}</path>
+                                                </paths>
+                                                <normalization>RELATIVE_PATH</normalization>
+                                            </fileSet>
+                                        </fileSets>
+                                        <properties>
+                                            <property>
+                                                <name>applySkip</name>
+                                            </property>
+                                            <property>
+                                                <name>encoding</name>
+                                            </property>
+                                            <property>
+                                                <name>checkSkip</name>
+                                            </property>
+                                            <property>
+                                                <name>filePatterns</name>
+                                            </property>
+                                            <property>
+                                                <name>goal</name>
+                                            </property>
+                                            <property>
+                                                <name>setLicenseHeaderYearsFromGitHistory</name>
+                                            </property>
+                                            <property>
+                                                <name>skip</name>
+                                            </property>
+                                            <property>
+                                                <name>ratchetFrom</name>
+                                            </property>
+                                        </properties>
+                                        <ignoredProperties>
+                                            <ignore>repositorySystemSession</ignore>
+                                            <ignore>repositories</ignore>
+                                            <ignore>project</ignore>
+                                            <ignore>lineEndings</ignore>
+                                        </ignoredProperties>
+                                    </inputs>
+                                    <iteratedProperties>
+                                        <property>
+                                            <name>formats</name>
+                                            <inputs>
+                                                <properties>
+                                                    <property>
+                                                        <name>encoding</name>
+                                                    </property>
+                                                    <property>
+                                                        <name>lineEndings</name>
+                                                    </property>
+                                                    <property>
+                                                        <name>ratchetFrom</name>
+                                                    </property>
+                                                    <property>
+                                                        <name>includes</name>
+                                                    </property>
+                                                    <property>
+                                                        <name>excludes</name>
+                                                    </property>
+                                                </properties>
+                                            </inputs>
+                                        </property>
+                                    </iteratedProperties>
+                                    <nestedProperties>
+                                        <property>
+                                            <name>licenseHeader</name>
+                                            <inputs>
+                                                <properties>
+                                                    <property>
+                                                        <name>file</name>
+                                                    </property>
+                                                    <property>
+                                                        <name>content</name>
+                                                    </property>
+                                                    <property>
+                                                        <name>delimiter</name>
+                                                    </property>
+                                                    <property>
+                                                        <name>skipLinesMatching</name>
+                                                    </property>
+                                                </properties>
+                                            </inputs>
+                                        </property>
+                                        <property>
+                                            <name>upToDateChecking</name>
+                                            <inputs>
+                                                <properties>
+                                                    <property>
+                                                        <name>enabled</name>
+                                                    </property>
+                                                    <property>
+                                                        <name>indexFile</name>
+                                                    </property>
+                                                </properties>
+                                            </inputs>
+                                        </property>
+                                        <!-- Entities used by Spotless with parameters defined in FormatterFactory -->
+                                        <property>
+                                            <name>java</name>
+                                        </property>
+                                        <property>
+                                            <name>python</name>
+                                        </property>
+                                        <property>
+                                            <name>scala</name>
+                                        </property>
+                                        <property>
+                                            <name>groovy</name>
+                                        </property>
+                                        <property>
+                                            <name>javascript</name>
+                                        </property>
+                                        <property>
+                                            <name>json</name>
+                                        </property>
+                                        <property>
+                                            <name>kotlin</name>
+                                        </property>
+                                        <property>
+                                            <name>cpp</name>
+                                        </property>
+                                        <property>
+                                            <name>antlr4</name>
+                                        </property>
+                                        <property>
+                                            <name>sql</name>
+                                        </property>
+                                        <property>
+                                            <name>typescript</name>
+                                        </property>
+                                        <property>
+                                            <name>yaml</name>
+                                        </property>
+                                        <property>
+                                            <name>pom</name>
+                                        </property>
+                                        <property>
+                                            <name>markdown</name>
+                                        </property>
+                                        <property>
+                                            <name>gherkin</name>
+                                        </property>
+                                        <property>
+                                            <name>go</name>
+                                        </property>
+                                        <property>
+                                            <name>shell</name>
+                                        </property>
+                                    </nestedProperties>
+                                    <executions>
+                                        <execution>
+                                            <!-- Cache only the spotless:check goal -->
+                                            <id>spotless-check</id>
+                                            <outputs>
+                                                <directories>
+                                                    <directory>
+                                                        <name>buildDir</name>
+                                                    </directory>
+                                                </directories>
+                                                <cacheableBecause>Execution is CPU-bound and check should only run when inputs change
+                                                </cacheableBecause>
+                                            </outputs>
+                                        </execution>
+                                    </executions>
+                                </plugin>
+                            </plugins>
+                        </gradleEnterprise>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -334,8 +567,8 @@
                     <sourceDirectories>
                         <sourceDirectory>src/main/java</sourceDirectory>
                     </sourceDirectories>
-                    <configLocation>${maven.multiModuleProjectDirectory}/config/checkstyle/checkstyle.xml</configLocation>
-                    <propertyExpansion>config_loc=${maven.multiModuleProjectDirectory}/config/checkstyle</propertyExpansion>
+                    <configLocation>${checkstyle.config.dir.path}/checkstyle.xml</configLocation>
+                    <propertyExpansion>config_loc=${checkstyle.config.dir.path}</propertyExpansion>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
                     <failOnViolation>true</failOnViolation>
@@ -363,7 +596,7 @@
                                 <include>src/main/**/module-info.java</include>
                             </includes>
                             <licenseHeader>
-                                <file>${maven.multiModuleProjectDirectory}/config/spotless.license.java</file>
+                                <file>${spotless.licenseHeader.path}</file>
                                 <delimiter>/\*\*</delimiter>
                             </licenseHeader>
                         </format>
