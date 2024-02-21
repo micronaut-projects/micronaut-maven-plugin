@@ -101,6 +101,8 @@
         <testcontainers.version>1.19.5</testcontainers.version>
         <snakeyaml.version>2.2</snakeyaml.version>
         <sisu.version>0.9.0.M2</sisu.version>
+        <checkstyle.config.dir.path>${maven.multiModuleProjectDirectory}/config/checkstyle</checkstyle.config.dir.path>
+        <spotless.licenseHeader.path>${maven.multiModuleProjectDirectory}/config/spotless.license.java</spotless.licenseHeader.path>
     </properties>
 
     <repositories>
@@ -305,7 +307,7 @@
                                             <fileSet>
                                                 <name>checkstyleConfigs</name>
                                                 <paths>
-                                                    <path>${maven.multiModuleProjectDirectory}/config/checkstyle</path>
+                                                    <path>${checkstyle.config.dir.path}</path>
                                                 </paths>
                                                 <normalization>RELATIVE_PATH</normalization>
                                             </fileSet>
@@ -334,7 +336,7 @@
                                             <fileSet>
                                                 <name>licenseFile</name>
                                                 <paths>
-                                                    <path>${maven.multiModuleProjectDirectory}/config/spotless.license.java</path>
+                                                    <path>${spotless.licenseHeader.path}</path>
                                                 </paths>
                                                 <normalization>RELATIVE_PATH</normalization>
                                             </fileSet>
@@ -565,8 +567,8 @@
                     <sourceDirectories>
                         <sourceDirectory>src/main/java</sourceDirectory>
                     </sourceDirectories>
-                    <configLocation>${maven.multiModuleProjectDirectory}/config/checkstyle/checkstyle.xml</configLocation>
-                    <propertyExpansion>config_loc=${maven.multiModuleProjectDirectory}/config/checkstyle</propertyExpansion> <!-- Path needs to be synchronized with the caching config for checkstyle in the Develocity Caching Configuration (gradleEnterprise). -->
+                    <configLocation>${checkstyle.config.dir.path}/checkstyle.xml</configLocation>
+                    <propertyExpansion>config_loc=${checkstyle.config.dir.path}</propertyExpansion>
                     <consoleOutput>true</consoleOutput>
                     <failsOnError>true</failsOnError>
                     <failOnViolation>true</failOnViolation>
@@ -594,7 +596,7 @@
                                 <include>src/main/**/module-info.java</include>
                             </includes>
                             <licenseHeader>
-                                <file>${maven.multiModuleProjectDirectory}/config/spotless.license.java</file> <!-- Path needs to be synchronized with the path for spotless caching config in the Develocity Caching Configuration (gradleEnterprise). -->
+                                <file>${spotless.licenseHeader.path}</file>
                                 <delimiter>/\*\*</delimiter>
                             </licenseHeader>
                         </format>
