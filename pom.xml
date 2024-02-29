@@ -101,7 +101,7 @@
         <testcontainers.version>1.19.6</testcontainers.version>
         <snakeyaml.version>2.2</snakeyaml.version>
         <sisu.version>0.9.0.M2</sisu.version>
-        <docker-java.version>3.3.5</docker-java.version>
+        <docker-java.version>3.3.6</docker-java.version>
         <checkstyle.config.dir.path>${maven.multiModuleProjectDirectory}/config/checkstyle</checkstyle.config.dir.path>
         <spotless.licenseHeader.path>${maven.multiModuleProjectDirectory}/config/spotless.license.java</spotless.licenseHeader.path>
     </properties>
