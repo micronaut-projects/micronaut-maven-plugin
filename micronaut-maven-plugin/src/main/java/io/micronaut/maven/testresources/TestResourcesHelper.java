@@ -288,7 +288,9 @@ public class TestResourcesHelper {
                 log.info("Shutting down Micronaut Test Resources service");
                 doStop();
             } else {
-                log.info("Cannot find Micronaut Test Resources service settings, server may already be shutdown.");
+                if (log.isDebugEnabled()) {
+                    log.debug("Cannot find Micronaut Test Resources service settings, server may already be shutdown.");
+                }
             }
         } catch (Exception e) {
             throw new MojoExecutionException("Unable to stop test resources server", e);
