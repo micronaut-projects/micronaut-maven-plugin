@@ -28,6 +28,7 @@
             <item name="Using Micronaut AOT" href="examples/aot.html"/>
             <item name="Integration with Micronaut Test Resources" href="examples/test-resources.html"/>
             <item name="Generating OpenAPI clients or servers" href="examples/openapi.html"/>
+            <item name="Importing beans from project dependencies" href="examples/bean-import.html"/>
         </menu>
 
         <menu ref="reports"/>

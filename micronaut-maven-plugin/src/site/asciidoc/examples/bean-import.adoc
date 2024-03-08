@@ -1,0 +1,37 @@
+=== Importing beans from dependencies
+
+When project dependencies contain beans but don't contain the Micronaut bean definitions the `@Import` annotation can
+be used to import those beans and allow them to be injected in the Micronaut application context. Since this annotation
+is handled by an annotation processor which can't list the available packages each package must be defined in the
+`@Import` annotation which can be cumbersome.
+
+This plugin is able to generate a Micronaut bean factory which imports the beans from the dependencies. The list of
+packages from which the beans are imported can be controlled by filtering the dependencies and the packages using
+regular expressions.
+
+In order to import beans from the dependencies the minimal thing to do is to enable the import factory:
+
+[source,xml]
+----
+<properties>
+   ...
+    <micronaut.importfactory.enabled>true</micronaut.importfactory.enabled>
+</properties>
+----
+
+It is however recommended to define a filter for the dependencies and for the packages:
+
+[source,xml]
+----
+<properties>
+   ...
+    <micronaut.importfactory.enabled>true</micronaut.importfactory.enabled>
+    <micronaut.importfactory.includeDependenciesFilter>my.company:.*</micronaut.importfactory.includeDependenciesFilter>
+    <micronaut.importfactory.excludeDependenciesFilter>my.company:exclude-this.*</micronaut.importfactory.excludeDependenciesFilter>
+    <micronaut.importfactory.includePackagesFilter>my.company.library.*</micronaut.importfactory.includePackagesFilter>
+    <micronaut.importfactory.excludePackagesFilter>my.company.library.internal.*</micronaut.importfactory.excludePackagesFilter>
+    <micronaut.importfactory.targetPackage>my.company.application</micronaut.importfactory.targetPackage>
+</properties>
+----
+
+The full list of configuration properties can be found link:../generate-import-factory-mojo.html[here].
