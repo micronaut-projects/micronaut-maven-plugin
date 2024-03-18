@@ -215,6 +215,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
         getLog().info("Using BASE_IMAGE: " + baseImage);
         getLog().info("Using CRAC_ARCH: " + finalArchitecture);
         getLog().info("Using CRAC_JDK_VERSION: " + cracJavaVersion);
+        getLog().info("Using CRAC_OS: " + cracOs);
 
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
                 .withDockerfile(dockerfile)
