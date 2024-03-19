@@ -98,26 +98,6 @@ jobs:
           echo $release_url
           curl -s --request PATCH -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/json" $release_url --data "{\"draft\": false}"
 
-      - name: Checkout micronaut-core
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GH_TOKEN }}
-          repository: micronaut-projects/micronaut-core
-          ref: ${{ env.MICRONAUT_CORE_BRANCH }}
-          path: micronaut-core # Must be micronaut-core
-        continue-on-error: true
-
-      - name: Update BOM
-        uses: micronaut-projects/github-actions/update-bom@master
-        continue-on-error: true
-        with:
-          token: ${{ secrets.GH_TOKEN }}
-        env:
-          MICRONAUT_BUILD_EMAIL: ${{ secrets.MICRONAUT_BUILD_EMAIL }}
-          githubCoreBranch: ${{ env.MICRONAUT_CORE_BRANCH }}
-          projectVersion: ${{ steps.release_version.outputs.release_version }}
-          bomProperty: micronautMavenPluginVersion
-
       - name: Rollback release
         if: failure()
         run: ./mvnw release:rollback

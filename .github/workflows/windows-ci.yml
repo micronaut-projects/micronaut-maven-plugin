@@ -13,7 +13,6 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        graalvm: ['latest']
         java: ['17']
     steps:
       - uses: actions/checkout@v4
@@ -23,12 +22,11 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Setup GraalVM CE
-        uses: graalvm/setup-graalvm@v1
+      - name: Setup GraalVM
+        uses: graalvm/setup-graalvm@v1.1.9
         with:
-          version: ${{ matrix.graalvm }}
+          distribution: 'graalvm'
           java-version: ${{ matrix.java }}
-          components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build with Maven
         shell: cmd
