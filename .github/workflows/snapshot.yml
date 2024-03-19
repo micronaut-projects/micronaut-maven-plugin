@@ -27,73 +27,73 @@ jobs:
       OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
       GRAALVM_QUICK_BUILD: true
     steps:
-      - name: Check out Git repository
+      - name: "📥 Checkout repository"
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Install Java and Maven and set up Apache Maven Central
+      - name: "☕️ Install Java and Maven and set up Apache Maven Central"
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: ${{ matrix.java }}
           server-password: GH_TOKEN
 
-      - name: Setup GraalVM CE
-        uses: graalvm/setup-graalvm@v1
+      - name: "🔧 Setup GraalVM CE"
+        uses: graalvm/setup-graalvm@v1.1.9
         with:
+          distribution: 'graalvm'
           java-version: ${{ matrix.java }}
-          distribution: 'graalvm-community'
-          components: 'native-image'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cache Maven packages
+      - name: "📦 Cache Maven packages"
         uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Log into OCIR
+      - name: "🔑 Log into OCIR"
+        if: github.repository_owner == 'micronaut-projects'
         uses: oracle-actions/login-ocir@v1.2
         id: login-ocir
         with:
           auth_token: ${{ secrets.OCI_AUTH_TOKEN }}
 
-      - name: Eagerly pull Docker images
+      - name: "⏬ Eagerly pull Docker images"
         run: |
           docker pull postgres:latest
 
-      - name: Run tests
+      - name: "🧪 Run tests"
         run: |
           ./mvnw -q install -Dinvoker.skip=true && ./mvnw verify
 
-      - name: Publish Test Report
+      - name: "📊 Publish Test Report"
         if: always()
-        uses: mikepenz/action-junit-report@v4.1.0
+        uses: mikepenz/action-junit-report@v4.2.1
         with:
           check_name: Java CI / Test Report
           report_paths: '**/target/invoker-reports/TEST-*.xml'
           check_retries: 'true'
 
-      - name: Run static analysis
+      - name: "🔎 Run static analysis"
         if: github.repository_owner == 'micronaut-projects'
         run: ./mvnw sonar:sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Determine current version
+      - name: "❓ Determine current version"
         id: release_version
         run: echo ::set-output name=release_version::`./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout`
 
-      - name: Generate site
+      - name: "🌎 Generate site"
         if: success() && github.event_name == 'push'
         run: |
           ./mvnw site:site
           cp -R target/site/apidocs/* micronaut-maven-plugin/target/site/apidocs
 
-      - name: Publish to Github Pages
+      - name: "📑 Publish to Github Pages"
         if: success() && github.event_name == 'push'
         uses: micronaut-projects/github-pages-deploy-action@master
         env:
@@ -102,13 +102,13 @@ jobs:
           BRANCH: gh-pages
           FOLDER: micronaut-maven-plugin/target/site
 
-      - name: Set up Maven
+      - name: "🛠 Set up Maven"
         if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT')
         uses: stCarolas/setup-maven@v4.5
         with:
           maven-version: 3.9.0
 
-      - name: Deploy snapshot
+      - name: "📦 Deploy snapshot"
         if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT')
         uses: samuelmeuli/action-maven-publish@v1
         with:

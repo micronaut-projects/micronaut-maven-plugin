@@ -2,8 +2,6 @@ package io.micronaut.openapi.controller;
 
 
 import io.micronaut.http.annotation.*;
-import io.micronaut.openapi.invoker.annotation.HardNullable;
-import io.micronaut.core.convert.format.Format;
 import reactor.core.publisher.Mono;
 import io.micronaut.openapi.dated.DatedResponse;
 import io.micronaut.openapi.filter.MyFilter;
