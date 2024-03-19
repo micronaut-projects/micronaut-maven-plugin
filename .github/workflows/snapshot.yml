@@ -54,7 +54,7 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
 
       - name: "🔑 Log into OCIR"
-        if: github.repository_owner == 'micronaut-projects'
+        if: secrets.OCI_AUTH_TOKEN != ''
         uses: oracle-actions/login-ocir@v1.2
         id: login-ocir
         with:
@@ -77,24 +77,25 @@ jobs:
           check_retries: 'true'
 
       - name: "🔎 Run static analysis"
-        if: github.repository_owner == 'micronaut-projects'
+        if: env.SONAR_TOKEN != '' && matrix.java == '17'
         run: ./mvnw sonar:sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "❓ Determine current version"
+        if: success() && github.event_name == 'push' && matrix.java == '17'
         id: release_version
         run: echo ::set-output name=release_version::`./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout`
 
       - name: "🌎 Generate site"
-        if: success() && github.event_name == 'push'
+        if: success() && github.event_name == 'push' && matrix.java == '17'
         run: |
           ./mvnw site:site
           cp -R target/site/apidocs/* micronaut-maven-plugin/target/site/apidocs
 
       - name: "📑 Publish to Github Pages"
-        if: success() && github.event_name == 'push'
+        if: success() && github.event_name == 'push' && matrix.java == '17'
         uses: micronaut-projects/github-pages-deploy-action@master
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -103,13 +104,13 @@ jobs:
           FOLDER: micronaut-maven-plugin/target/site
 
       - name: "🛠 Set up Maven"
-        if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT')
+        if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') && matrix.java == '17'
         uses: stCarolas/setup-maven@v4.5
         with:
           maven-version: 3.9.0
 
       - name: "📦 Deploy snapshot"
-        if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT')
+        if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') && matrix.java == '17'
         uses: samuelmeuli/action-maven-publish@v1
         with:
           maven_args: "-Dinvoker.skip=true"
