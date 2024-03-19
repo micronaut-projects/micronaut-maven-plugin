@@ -1,1 +1,1 @@
-return System.getenv("OCI_CLI_USER") != null
+return System.getenv("OCIR_USER") && System.getenv("OCIR_PWD")"
