@@ -1,1 +1,1 @@
-/opt/hostedtoolcache/graalvm-jdk-21_linux-x64_bin/21.0.0/x64/graalvm-jdk-21.0.2+13.1/bin/javadoc -J-Xmx512m -J-Xms128m @options @packages
+/opt/hostedtoolcache/graalvm-jdk-17_linux-x64_bin/17.0.0/x64/graalvm-jdk-17.0.10+11.1/bin/javadoc -J-Xmx512m -J-Xms128m @options @packages
