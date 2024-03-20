@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:21.0.2_13-jre
 WORKDIR /home/app
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
