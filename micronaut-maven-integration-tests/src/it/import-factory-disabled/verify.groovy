@@ -1,0 +1,6 @@
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains("BUILD SUCCESS")
+assert log.text.contains("generate-import-factory")
+assert !log.text.contains("matching dependencies")
+assert !log.text.contains("matching packages")
