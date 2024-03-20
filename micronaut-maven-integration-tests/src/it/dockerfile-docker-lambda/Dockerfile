@@ -1,4 +1,4 @@
-FROM public.ecr.aws/lambda/java:17
+FROM public.ecr.aws/lambda/java:21
 WORKDIR /home/app
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/
