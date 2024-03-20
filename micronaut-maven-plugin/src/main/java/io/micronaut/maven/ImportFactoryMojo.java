@@ -269,7 +269,7 @@ public class ImportFactoryMojo extends AbstractMicronautMojo {
     code.add("");
     code.add("import io.micronaut.context.annotation.Factory;");
     code.add("import io.micronaut.context.annotation.Import;");
-    code.add("jakarta.annotation.Generated");
+    code.add("import jakarta.annotation.Generated");
     code.add("");
     code.add("/** Factory which allows Micronaut to import beans from the specified packages. */");
     code.add("@Generated(\"io.micronaut.maven:micronaut-maven-plugin\")");
