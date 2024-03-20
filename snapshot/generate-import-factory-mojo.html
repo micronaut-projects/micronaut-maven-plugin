@@ -10,7 +10,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content="Apache Maven Doxia Site Renderer 1.11.1" />
-    <title>Micronaut Maven Plugin - Plugin &#x2013; mn:docker-native</title>
+    <title>Micronaut Maven Plugin - Plugin &#x2013; mn:generate-import-factory</title>
     <link rel="stylesheet" href="./css/apache-maven-fluido-1.11.1.min.css" />
     <link rel="stylesheet" href="./css/site.css" />
     <link rel="stylesheet" href="./css/print.css" media="print" />
@@ -124,19 +124,18 @@
       </header>
         <main id="bodyColumn" >
 <section>
-<h2><a name="mn:docker-native"></a>mn:docker-native</h2><a name="mn:docker-native"></a>
+<h2><a name="mn:generate-import-factory"></a>mn:generate-import-factory</h2><a name="mn:generate-import-factory"></a>
 <p><strong>Full name</strong>:</p>
-<p>io.micronaut.maven:micronaut-maven-plugin:4.5.0-SNAPSHOT:docker-native</p>
+<p>io.micronaut.maven:micronaut-maven-plugin:4.5.0-SNAPSHOT:generate-import-factory</p>
 <p><strong>Description</strong>:</p>
-<p><p>Implementation of the <code>docker-native</code> packaging.</p>
-<p><strong>WARNING</strong>: this goal is not intended to be executed directly. Instead, specify the packaging type using the <code>packaging</code> property, eg:</p>
-<pre>mvn package -Dpackaging=docker-native</pre></p>
+<p>Import beans from project dependencies by generating factories annotated with <code>@Import</code> containing the list of packages.</p>
 <p><strong>Attributes</strong>:</p>
 <ul>
 <li>Requires a Maven project to be executed.</li>
 <li>Requires dependency resolution of artifacts in scope: <code>compile+runtime</code>.</li>
-<li>The goal is not marked as thread-safe and thus does not support parallel builds.</li>
-<li>Since version: <code>1.1</code>.</li></ul><section>
+<li>The goal is thread-safe and supports parallel builds.</li>
+<li>Since version: <code>4.5.0</code>.</li>
+<li>Binds by default to the <a class="externalLink" href="https://maven.apache.org/ref/current/maven-core/lifecycles.html">lifecycle phase</a>: <code>generate-sources</code>.</li></ul><section>
 <h3><a name="Required_Parameters"></a>Required Parameters</h3><a name="Required_Parameters"></a>
 <table border="0" class="table table-striped">
 <tr class="a">
@@ -145,10 +144,30 @@
 <th>Since</th>
 <th>Description</th></tr>
 <tr class="b">
-<td align="left"><a href="#mainClass"><code>&lt;mainClass&gt;</code></a></td>
+<td align="left"><a href="#excludeDependenciesFilter"><code>&lt;excludeDependenciesFilter&gt;</code></a></td>
 <td><code>String</code></td>
-<td><code>-</code></td>
-<td>The main class of the application, as defined in the <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.<br /><strong>Default</strong>: <code>${exec.mainClass}</code></td></tr></table></section><section>
+<td><code>4.5.0</code></td>
+<td>Regexp pattern which allows excluding certain dependencies.<br /><strong>Default</strong>: <code>^$</code><br /><strong>User Property</strong>: <code>micronaut.importfactory.excludeDependenciesFilter</code></td></tr>
+<tr class="a">
+<td align="left"><a href="#excludePackagesFilter"><code>&lt;excludePackagesFilter&gt;</code></a></td>
+<td><code>String</code></td>
+<td><code>4.5.0</code></td>
+<td>Regexp pattern which allows excluding certain packages.<br /><strong>Default</strong>: <code>^$</code><br /><strong>User Property</strong>: <code>micronaut.importfactory.excludePackagesFilter</code></td></tr>
+<tr class="b">
+<td align="left"><a href="#includeDependenciesFilter"><code>&lt;includeDependenciesFilter&gt;</code></a></td>
+<td><code>String</code></td>
+<td><code>4.5.0</code></td>
+<td>Regexp pattern which allows including certain dependencies.<br /><strong>Default</strong>: <code>^.*:.*$</code><br /><strong>User Property</strong>: <code>micronaut.importfactory.includeDependenciesFilter</code></td></tr>
+<tr class="a">
+<td align="left"><a href="#includePackagesFilter"><code>&lt;includePackagesFilter&gt;</code></a></td>
+<td><code>String</code></td>
+<td><code>4.5.0</code></td>
+<td>Regexp pattern which allows including certain packages.<br /><strong>Default</strong>: <code>^.*$</code><br /><strong>User Property</strong>: <code>micronaut.importfactory.includePackagesFilter</code></td></tr>
+<tr class="b">
+<td align="left"><a href="#outputDirectory"><code>&lt;outputDirectory&gt;</code></a></td>
+<td><code>File</code></td>
+<td><code>4.5.0</code></td>
+<td>The output directory to which all the sources will be generated.<br /><strong>Default</strong>: <code>${project.build.directory}/generated-sources/importfactory</code><br /><strong>User Property</strong>: <code>micronaut.importfactory.outputDirectory</code></td></tr></table></section><section>
 <h3><a name="Optional_Parameters"></a>Optional Parameters</h3><a name="Optional_Parameters"></a>
 <table border="0" class="table table-striped">
 <tr class="a">
@@ -157,95 +176,84 @@
 <th>Since</th>
 <th>Description</th></tr>
 <tr class="b">
-<td align="left"><a href="#appArguments"><code>&lt;appArguments&gt;</code></a></td>
-<td><code>List&lt;String&gt;</code></td>
-<td><code>-</code></td>
-<td>List of additional arguments that will be passed to the application.<br /><strong>User Property</strong>: <code>mn.appArgs</code></td></tr>
+<td align="left"><a href="#addCompileSourceRoot"><code>&lt;addCompileSourceRoot&gt;</code></a></td>
+<td><code>boolean</code></td>
+<td><code>4.5.0</code></td>
+<td>Add the output directory to the project as a source root in order to let the generated java classes be compiled and included in the project artifact.<br /><strong>Default</strong>: <code>true</code><br /><strong>User Property</strong>: <code>micronaut.importfactory.addCompileSourceRoot</code></td></tr>
 <tr class="a">
-<td align="left"><a href="#baseImageRun"><code>&lt;baseImageRun&gt;</code></a></td>
-<td><code>String</code></td>
-<td><code>1.2</code></td>
-<td>The Docker image used to run the native image.<br /><strong>Default</strong>: <code>cgr.dev/chainguard/wolfi-base:latest</code><br /><strong>User Property</strong>: <code>micronaut.native-image.base-image-run</code></td></tr>
+<td align="left"><a href="#enabled"><code>&lt;enabled&gt;</code></a></td>
+<td><code>boolean</code></td>
+<td><code>4.5.0</code></td>
+<td>Whether to enable or disable the generation of the import factory.<br /><strong>Default</strong>: <code>false</code><br /><strong>User Property</strong>: <code>micronaut.importfactory.enabled</code></td></tr>
 <tr class="b">
-<td align="left"><a href="#micronautRuntime"><code>&lt;micronautRuntime&gt;</code></a></td>
+<td align="left"><a href="#targetPackage"><code>&lt;targetPackage&gt;</code></a></td>
 <td><code>String</code></td>
-<td><code>-</code></td>
-<td>The target runtime of the application.<br /><strong>Default</strong>: <code>NONE</code><br /><strong>User Property</strong>: <code>micronaut.runtime</code></td></tr>
-<tr class="a">
-<td align="left"><a href="#nativeImageBuildArgs"><code>&lt;nativeImageBuildArgs&gt;</code></a></td>
-<td><code>List&lt;String&gt;</code></td>
-<td><code>-</code></td>
-<td>Additional arguments that will be passed to the <code>native-image</code> executable. Note that this will only be used when using a packaging of type <code>docker-native</code>. For <code>native-image</code> packaging you should use the <a href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization"> Native Image Maven Plugin </a> configuration options.<br /><strong>User Property</strong>: <code>micronaut.native-image.args</code></td></tr>
-<tr class="b">
-<td align="left"><a href="#networkMode"><code>&lt;networkMode&gt;</code></a></td>
-<td><code>String</code></td>
-<td><code>4.0.0</code></td>
-<td>Networking mode for the RUN instructions during build.<br /><strong>User Property</strong>: <code>docker.networkMode</code></td></tr>
-<tr class="a">
-<td align="left"><a href="#oracleLinuxVersion"><code>&lt;oracleLinuxVersion&gt;</code></a></td>
-<td><code>String</code></td>
-<td><code>-</code></td>
-<td>The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.<br /><strong>Default</strong>: <code>ol9</code><br /><strong>User Property</strong>: <code>micronaut.native-image.ol.version</code></td></tr>
-<tr class="b">
-<td align="left"><a href="#staticNativeImage"><code>&lt;staticNativeImage&gt;</code></a></td>
-<td><code>Boolean</code></td>
-<td><code>-</code></td>
-<td>Whether to produce a static native image when using <code>docker-native</code> packaging.<br /><strong>Default</strong>: <code>false</code><br /><strong>User Property</strong>: <code>micronaut.native-image.static</code></td></tr></table></section><section>
-<h3><a name="Parameter_Details"></a>Parameter Details</h3><a name="Parameter_Details"></a><a name="appArguments"><section>
-<h4><a name="a.3CappArguments.3E"></a>&lt;appArguments&gt;</h4><a name="a.3CappArguments.3E"></a></a>
-<div>List of additional arguments that will be passed to the application.</div>
+<td><code>4.5.0</code></td>
+<td>The package name which is used for the generated import factories. When not specified a factory is generated for each package within that package in order to access package protected fields.<br /><strong>User Property</strong>: <code>micronaut.importfactory.targetPackage</code></td></tr></table></section><section>
+<h3><a name="Parameter_Details"></a>Parameter Details</h3><a name="Parameter_Details"></a><a name="addCompileSourceRoot"><section>
+<h4><a name="a.3CaddCompileSourceRoot.3E"></a>&lt;addCompileSourceRoot&gt;</h4><a name="a.3CaddCompileSourceRoot.3E"></a></a>
+<div>Add the output directory to the project as a source root in order to let the generated java classes be compiled and included in the project artifact.</div>
 <ul>
-<li><strong>Type</strong>: <code>java.util.List&lt;java.lang.String&gt;</code></li>
+<li><strong>Type</strong>: <code>boolean</code></li>
+<li><strong>Since</strong>: <code>4.5.0</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>mn.appArgs</code></li></ul><hr /></section><a name="baseImageRun"><section>
-<h4><a name="a.3CbaseImageRun.3E"></a>&lt;baseImageRun&gt;</h4><a name="a.3CbaseImageRun.3E"></a></a>
-<div>The Docker image used to run the native image.</div>
+<li><strong>User Property</strong>: <code>micronaut.importfactory.addCompileSourceRoot</code></li>
+<li><strong>Default</strong>: <code>true</code></li></ul><hr /></section><a name="enabled"><section>
+<h4><a name="a.3Cenabled.3E"></a>&lt;enabled&gt;</h4><a name="a.3Cenabled.3E"></a></a>
+<div>Whether to enable or disable the generation of the import factory.</div>
+<ul>
+<li><strong>Type</strong>: <code>boolean</code></li>
+<li><strong>Since</strong>: <code>4.5.0</code></li>
+<li><strong>Required</strong>: <code>No</code></li>
+<li><strong>User Property</strong>: <code>micronaut.importfactory.enabled</code></li>
+<li><strong>Default</strong>: <code>false</code></li></ul><hr /></section><a name="excludeDependenciesFilter"><section>
+<h4><a name="a.3CexcludeDependenciesFilter.3E"></a>&lt;excludeDependenciesFilter&gt;</h4><a name="a.3CexcludeDependenciesFilter.3E"></a></a>
+<div>Regexp pattern which allows excluding certain dependencies.</div>
 <ul>
 <li><strong>Type</strong>: <code>java.lang.String</code></li>
-<li><strong>Since</strong>: <code>1.2</code></li>
-<li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>micronaut.native-image.base-image-run</code></li>
-<li><strong>Default</strong>: <code>cgr.dev/chainguard/wolfi-base:latest</code></li></ul><hr /></section><a name="mainClass"><section>
-<h4><a name="a.3CmainClass.3E"></a>&lt;mainClass&gt;</h4><a name="a.3CmainClass.3E"></a></a>
-<div>The main class of the application, as defined in the <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.</div>
-<ul>
-<li><strong>Type</strong>: <code>java.lang.String</code></li>
+<li><strong>Since</strong>: <code>4.5.0</code></li>
 <li><strong>Required</strong>: <code>Yes</code></li>
-<li><strong>Default</strong>: <code>${exec.mainClass}</code></li></ul><hr /></section><a name="micronautRuntime"><section>
-<h4><a name="a.3CmicronautRuntime.3E"></a>&lt;micronautRuntime&gt;</h4><a name="a.3CmicronautRuntime.3E"></a></a>
-<div>The target runtime of the application.</div>
+<li><strong>User Property</strong>: <code>micronaut.importfactory.excludeDependenciesFilter</code></li>
+<li><strong>Default</strong>: <code>^$</code></li></ul><hr /></section><a name="excludePackagesFilter"><section>
+<h4><a name="a.3CexcludePackagesFilter.3E"></a>&lt;excludePackagesFilter&gt;</h4><a name="a.3CexcludePackagesFilter.3E"></a></a>
+<div>Regexp pattern which allows excluding certain packages.</div>
 <ul>
 <li><strong>Type</strong>: <code>java.lang.String</code></li>
-<li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>micronaut.runtime</code></li>
-<li><strong>Default</strong>: <code>NONE</code></li></ul><hr /></section><a name="nativeImageBuildArgs"><section>
-<h4><a name="a.3CnativeImageBuildArgs.3E"></a>&lt;nativeImageBuildArgs&gt;</h4><a name="a.3CnativeImageBuildArgs.3E"></a></a>
-<div>Additional arguments that will be passed to the <code>native-image</code> executable. Note that this will only be used when using a packaging of type <code>docker-native</code>. For <code>native-image</code> packaging you should use the <a href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization"> Native Image Maven Plugin </a> configuration options.</div>
-<ul>
-<li><strong>Type</strong>: <code>java.util.List&lt;java.lang.String&gt;</code></li>
-<li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>micronaut.native-image.args</code></li></ul><hr /></section><a name="networkMode"><section>
-<h4><a name="a.3CnetworkMode.3E"></a>&lt;networkMode&gt;</h4><a name="a.3CnetworkMode.3E"></a></a>
-<div>Networking mode for the RUN instructions during build.</div>
+<li><strong>Since</strong>: <code>4.5.0</code></li>
+<li><strong>Required</strong>: <code>Yes</code></li>
+<li><strong>User Property</strong>: <code>micronaut.importfactory.excludePackagesFilter</code></li>
+<li><strong>Default</strong>: <code>^$</code></li></ul><hr /></section><a name="includeDependenciesFilter"><section>
+<h4><a name="a.3CincludeDependenciesFilter.3E"></a>&lt;includeDependenciesFilter&gt;</h4><a name="a.3CincludeDependenciesFilter.3E"></a></a>
+<div>Regexp pattern which allows including certain dependencies.</div>
 <ul>
 <li><strong>Type</strong>: <code>java.lang.String</code></li>
-<li><strong>Since</strong>: <code>4.0.0</code></li>
-<li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>docker.networkMode</code></li></ul><hr /></section><a name="oracleLinuxVersion"><section>
-<h4><a name="a.3CoracleLinuxVersion.3E"></a>&lt;oracleLinuxVersion&gt;</h4><a name="a.3CoracleLinuxVersion.3E"></a></a>
-<div>The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.</div>
+<li><strong>Since</strong>: <code>4.5.0</code></li>
+<li><strong>Required</strong>: <code>Yes</code></li>
+<li><strong>User Property</strong>: <code>micronaut.importfactory.includeDependenciesFilter</code></li>
+<li><strong>Default</strong>: <code>^.*:.*$</code></li></ul><hr /></section><a name="includePackagesFilter"><section>
+<h4><a name="a.3CincludePackagesFilter.3E"></a>&lt;includePackagesFilter&gt;</h4><a name="a.3CincludePackagesFilter.3E"></a></a>
+<div>Regexp pattern which allows including certain packages.</div>
 <ul>
 <li><strong>Type</strong>: <code>java.lang.String</code></li>
-<li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>micronaut.native-image.ol.version</code></li>
-<li><strong>Default</strong>: <code>ol9</code></li></ul><hr /></section><a name="staticNativeImage"><section>
-<h4><a name="a.3CstaticNativeImage.3E"></a>&lt;staticNativeImage&gt;</h4><a name="a.3CstaticNativeImage.3E"></a></a>
-<div>Whether to produce a static native image when using <code>docker-native</code> packaging.</div>
+<li><strong>Since</strong>: <code>4.5.0</code></li>
+<li><strong>Required</strong>: <code>Yes</code></li>
+<li><strong>User Property</strong>: <code>micronaut.importfactory.includePackagesFilter</code></li>
+<li><strong>Default</strong>: <code>^.*$</code></li></ul><hr /></section><a name="outputDirectory"><section>
+<h4><a name="a.3CoutputDirectory.3E"></a>&lt;outputDirectory&gt;</h4><a name="a.3CoutputDirectory.3E"></a></a>
+<div>The output directory to which all the sources will be generated.</div>
 <ul>
-<li><strong>Type</strong>: <code>java.lang.Boolean</code></li>
+<li><strong>Type</strong>: <code>java.io.File</code></li>
+<li><strong>Since</strong>: <code>4.5.0</code></li>
+<li><strong>Required</strong>: <code>Yes</code></li>
+<li><strong>User Property</strong>: <code>micronaut.importfactory.outputDirectory</code></li>
+<li><strong>Default</strong>: <code>${project.build.directory}/generated-sources/importfactory</code></li></ul><hr /></section><a name="targetPackage"><section>
+<h4><a name="a.3CtargetPackage.3E"></a>&lt;targetPackage&gt;</h4><a name="a.3CtargetPackage.3E"></a></a>
+<div>The package name which is used for the generated import factories. When not specified a factory is generated for each package within that package in order to access package protected fields.</div>
+<ul>
+<li><strong>Type</strong>: <code>java.lang.String</code></li>
+<li><strong>Since</strong>: <code>4.5.0</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>micronaut.native-image.static</code></li>
-<li><strong>Default</strong>: <code>false</code></li></ul></section></section></section>
+<li><strong>User Property</strong>: <code>micronaut.importfactory.targetPackage</code></li></ul></section></section></section>
         </main>
     </div>
     <hr/>
