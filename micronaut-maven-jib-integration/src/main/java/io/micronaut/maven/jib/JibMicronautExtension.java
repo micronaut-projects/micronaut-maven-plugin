@@ -107,10 +107,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
     public static List<String> buildProjectFnEntrypoint() {
         List<String> entrypoint = new ArrayList<>(9);
-        entrypoint.add("/usr/java/latest/bin/java");
+        entrypoint.add("java");
         entrypoint.add("-XX:-UsePerfData");
         entrypoint.add("-XX:+UseSerialGC");
-        entrypoint.add("-Xshare:on");
+        entrypoint.add("-Xshare:auto");
         entrypoint.add("-Djava.awt.headless=true");
         entrypoint.add("-Djava.library.path=/function/runtime/lib");
         entrypoint.add("-cp");
