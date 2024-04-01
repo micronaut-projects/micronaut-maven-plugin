@@ -38,12 +38,15 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>Implementation of the <code>docker-native</code> packaging.</p>
@@ -232,6 +235,19 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);
         //Remove extra main class argument
         allNativeImageBuildArgs.remove(mainClass);
+        //Remove old args file
+        getLog().info("Cleaning old native image build args");
+        try (Stream<Path> walk = Files.walk(Paths.get(mavenProject.getBuild().getDirectory()))) {
+            walk.filter(p -> !Files.isDirectory(p)).filter(f -> f.endsWith(".args"))
+                .forEach(file -> {
+                    try {
+                        Files.delete(file);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+        }
+
         getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);
         List<String> conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));
         if (conversionResult.size() == 1) {
