@@ -234,18 +234,6 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);
         //Remove extra main class argument
         allNativeImageBuildArgs.remove(mainClass);
-        //Remove old args file
-        getLog().info("Cleaning old native image build args");
-        try (Stream<Path> walk = Files.walk(Paths.get(mavenProject.getBuild().getDirectory()))) {
-            walk.filter(p -> !Files.isDirectory(p)).filter(f -> f.endsWith(".args"))
-                .forEach(file -> {
-                    try {
-                        Files.delete(file);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-        }
 
         getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);
         List<String> conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));
