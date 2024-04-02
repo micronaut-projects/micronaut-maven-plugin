@@ -120,10 +120,10 @@
 <span class="source-line-no">107</span><span id="line-107"></span>
 <span class="source-line-no">108</span><span id="line-108">    public static List&lt;String&gt; buildProjectFnEntrypoint() {</span>
 <span class="source-line-no">109</span><span id="line-109">        List&lt;String&gt; entrypoint = new ArrayList&lt;&gt;(9);</span>
-<span class="source-line-no">110</span><span id="line-110">        entrypoint.add("/usr/java/latest/bin/java");</span>
+<span class="source-line-no">110</span><span id="line-110">        entrypoint.add("java");</span>
 <span class="source-line-no">111</span><span id="line-111">        entrypoint.add("-XX:-UsePerfData");</span>
 <span class="source-line-no">112</span><span id="line-112">        entrypoint.add("-XX:+UseSerialGC");</span>
-<span class="source-line-no">113</span><span id="line-113">        entrypoint.add("-Xshare:on");</span>
+<span class="source-line-no">113</span><span id="line-113">        entrypoint.add("-Xshare:auto");</span>
 <span class="source-line-no">114</span><span id="line-114">        entrypoint.add("-Djava.awt.headless=true");</span>
 <span class="source-line-no">115</span><span id="line-115">        entrypoint.add("-Djava.library.path=/function/runtime/lib");</span>
 <span class="source-line-no">116</span><span id="line-116">        entrypoint.add("-cp");</span>
