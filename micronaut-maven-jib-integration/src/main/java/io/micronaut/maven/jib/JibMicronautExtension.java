@@ -121,8 +121,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
     public static String determineProjectFnVersion(String javaVersion) {
         int majorVersion = Integer.parseInt(javaVersion.split("\\.")[0]);
-        if (majorVersion >= 17) {
-            return "jre17-latest";
+        if (majorVersion >= 21) {
+            return "21-jre";
+        } else if (majorVersion >= 17) {
+            return "17-jre";
         } else {
             return LATEST_TAG;
         }
@@ -131,7 +133,6 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     public static String determineBaseImage(String jdkVersion, DockerBuildStrategy buildStrategy) {
         int javaVersion = Integer.parseInt(jdkVersion);
         return switch (buildStrategy) {
-            case ORACLE_FUNCTION -> "fnproject/fn-java-fdk:" + determineProjectFnVersion(System.getProperty("java.version"));
             case LAMBDA -> "public.ecr.aws/lambda/java:" + javaVersion;
             default -> javaVersion == 17 ? DEFAULT_JAVA17_BASE_IMAGE : DEFAULT_JAVA21_BASE_IMAGE;
         };
