@@ -15,6 +15,7 @@
  */
 package io.micronaut.maven;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.toolchain.Toolchain;
 import org.apache.maven.toolchain.ToolchainManager;
@@ -93,7 +94,6 @@ public final class MojoUtils {
                     .filter(arg -> !arg.startsWith("-H:Name"))
                     .filter(arg -> !arg.startsWith("-H:Class"))
                     .filter(arg -> !arg.startsWith("-H:Path"))
-//                    .filter(arg -> !arg.startsWith("-H:ConfigurationFileDirectories"))
                     .flatMap(arg -> {
                         if (arg.startsWith("@")) {
                             String fileName = arg.substring(1);
@@ -116,22 +116,25 @@ public final class MojoUtils {
     static String parseConfigurationFilesDirectoriesArg(String arg) {
         String[] split = arg.split("=");
         String[] directories = split[1].split(",");
+        String separator = "/";
         if (arg.contains("generateResourceConfig") || arg.contains("generateTestResourceConfig")) {
             return Stream.of(directories)
+                    .map(FilenameUtils::separatorsToUnix)
                     .map(directory -> {
-                        String[] splitDirectory = directory.split("/");
+                        String[] splitDirectory = directory.split(separator);
                         return "/home/app/" + splitDirectory[splitDirectory.length - 1];
                     })
                     .collect(Collectors.joining(","))
                     .transform(s -> "-H:ConfigurationFileDirectories=" + s);
         } else {
             return Stream.of(directories)
+                    .map(FilenameUtils::separatorsToUnix)
                     .map(directory -> {
-                        String[] splitDirectory = directory.split("/");
-                        String last4Directories = splitDirectory[splitDirectory.length - 4] + "/" +
-                                splitDirectory[splitDirectory.length - 3] + "/" +
-                                splitDirectory[splitDirectory.length - 2] + "/" +
-                                splitDirectory[splitDirectory.length - 1];
+                        String[] splitDirectory = directory.split(separator);
+                        String last4Directories = splitDirectory[splitDirectory.length - 4] + separator +
+                                                  splitDirectory[splitDirectory.length - 3] + separator +
+                                                  splitDirectory[splitDirectory.length - 2] + separator +
+                                                  splitDirectory[splitDirectory.length - 1];
                         return "/home/app/graalvm-reachability-metadata/" + last4Directories;
                     })
                     .collect(Collectors.joining(","))
