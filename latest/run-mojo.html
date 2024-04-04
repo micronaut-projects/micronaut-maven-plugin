@@ -118,7 +118,7 @@
           <ul class="breadcrumb">
         <li id="publishDate">Last Published: 2024-04-04<span class="divider">|</span>
 </li>
-          <li id="projectVersion">Version: 4.5.1</li>
+          <li id="projectVersion">Version: 4.5.2</li>
           </ul>
         </div>
       </header>
@@ -126,7 +126,7 @@
 <section>
 <h2><a name="mn:run"></a>mn:run</h2><a name="mn:run"></a>
 <p><strong>Full name</strong>:</p>
-<p>io.micronaut.maven:micronaut-maven-plugin:4.5.1:run</p>
+<p>io.micronaut.maven:micronaut-maven-plugin:4.5.2:run</p>
 <p><strong>Description</strong>:</p>
 <p><p>Executes a Micronaut application in development mode.</p>
 <p>It watches for changes in the project tree. If there are changes in the <code>pom.xml</code> file, dependencies will be reloaded. If the changes are anywhere underneath <code>src/main</code>, it will recompile the project and restart the application.</p>
@@ -251,6 +251,11 @@
 <td><code>-</code></td>
 <td>Whether to enable or disable Micronaut test resources support.<br /><strong>Default</strong>: <code>false</code><br /><strong>User Property</strong>: <code>micronaut.test.resources.enabled</code></td></tr>
 <tr class="b">
+<td align="left"><a href="#watchForChanges"><code>&lt;watchForChanges&gt;</code></a></td>
+<td><code>boolean</code></td>
+<td><code>-</code></td>
+<td>Whether to watch for changes, or finish the execution after the first run.<br /><strong>Default</strong>: <code>true</code><br /><strong>User Property</strong>: <code>mn.watch</code></td></tr>
+<tr class="a">
 <td align="left"><a href="#watches"><code>&lt;watches&gt;</code></a></td>
 <td><code>List&lt;FileSet&gt;</code></td>
 <td><code>-</code></td>
@@ -263,12 +268,7 @@
             &lt;/excludes&gt;
         &lt;/watch&gt;
     &lt;/watches&gt;
-</pre> Check the <a href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a> documentation for more details.<br /><strong>See also:</strong> <a href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a></td></tr>
-<tr class="a">
-<td align="left"><a href="#watchForChanges"><code>&lt;watchForChanges&gt;</code></a></td>
-<td><code>boolean</code></td>
-<td><code>-</code></td>
-<td>Whether to watch for changes, or finish the execution after the first run.<br /><strong>Default</strong>: <code>true</code><br /><strong>User Property</strong>: <code>mn.watch</code></td></tr></table></section><section>
+</pre> Check the <a href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a> documentation for more details.<br /><strong>See also:</strong> <a href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a></td></tr></table></section><section>
 <h3><a name="Parameter_Details"></a>Parameter Details</h3><a name="Parameter_Details"></a><a name="aotEnabled"><section>
 <h4><a name="a.3CaotEnabled.3E"></a>&lt;aotEnabled&gt;</h4><a name="a.3CaotEnabled.3E"></a></a>
 <div>Whether to enable or disable Micronaut AOT.</div>
@@ -395,7 +395,14 @@
 <ul>
 <li><strong>Type</strong>: <code>java.lang.String</code></li>
 <li><strong>Required</strong>: <code>Yes</code></li>
-<li><strong>User Property</strong>: <code>micronaut.test.resources.version</code></li></ul><hr /></section><a name="watches"><section>
+<li><strong>User Property</strong>: <code>micronaut.test.resources.version</code></li></ul><hr /></section><a name="watchForChanges"><section>
+<h4><a name="a.3CwatchForChanges.3E"></a>&lt;watchForChanges&gt;</h4><a name="a.3CwatchForChanges.3E"></a></a>
+<div>Whether to watch for changes, or finish the execution after the first run.</div>
+<ul>
+<li><strong>Type</strong>: <code>boolean</code></li>
+<li><strong>Required</strong>: <code>No</code></li>
+<li><strong>User Property</strong>: <code>mn.watch</code></li>
+<li><strong>Default</strong>: <code>true</code></li></ul><hr /></section><a name="watches"><section>
 <h4><a name="a.3Cwatches.3E"></a>&lt;watches&gt;</h4><a name="a.3Cwatches.3E"></a></a>
 <div>List of inclusion/exclusion paths that should not trigger an application restart. For example, you can exclude a particular directory from being watched by adding the following configuration: 
 <pre>    &lt;watches&gt;
@@ -409,14 +416,7 @@
 </pre> Check the <a href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a> documentation for more details.<br /><strong>See also:</strong> <a href="https://maven.apache.org/ref/3.3.9/maven-model/apidocs/org/apache/maven/model/FileSet.html">FileSet</a></div>
 <ul>
 <li><strong>Type</strong>: <code>java.util.List&lt;org.apache.maven.model.FileSet&gt;</code></li>
-<li><strong>Required</strong>: <code>No</code></li></ul><hr /></section><a name="watchForChanges"><section>
-<h4><a name="a.3CwatchForChanges.3E"></a>&lt;watchForChanges&gt;</h4><a name="a.3CwatchForChanges.3E"></a></a>
-<div>Whether to watch for changes, or finish the execution after the first run.</div>
-<ul>
-<li><strong>Type</strong>: <code>boolean</code></li>
-<li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>mn.watch</code></li>
-<li><strong>Default</strong>: <code>true</code></li></ul></section></section></section>
+<li><strong>Required</strong>: <code>No</code></li></ul></section></section></section>
         </main>
     </div>
     <hr/>
