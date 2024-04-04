@@ -81,8 +81,8 @@ class JibMicronautExtensionTest {
 
     @ParameterizedTest
     @CsvSource({
-            "DEFAULT,           17, eclipse-temurin:17-jre-focal",
-            "ORACLE_FUNCTION,   17, eclipse-temurin:17-jre-focal",
+            "DEFAULT,           17, eclipse-temurin:17-jre",
+            "ORACLE_FUNCTION,   17, eclipse-temurin:17-jre",
             "LAMBDA,            17, public.ecr.aws/lambda/java:17",
 
             "DEFAULT,           21, eclipse-temurin:21-jre",
