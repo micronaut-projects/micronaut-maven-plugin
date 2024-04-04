@@ -36,6 +36,8 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.StandardCopyOption;
 
+import static io.micronaut.maven.DockerfileMojo.DOCKERFILE_ORACLE_CLOUD;
+
 /**
  * <p>Allows using a provided Dockerfile.</p>
  * <p><strong>WARNING</strong>: this goal is not intended to be executed directly. Instead, specify the packaging type
@@ -76,7 +78,7 @@ public class DockerMojo extends AbstractDockerMojo {
             return providedDockerfile;
         } else {
             try {
-                return dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_ORACLE_CLOUD);
+                return dockerService.loadDockerfileAsResource(DOCKERFILE_ORACLE_CLOUD);
             } catch (IOException e) {
                 throw new MojoExecutionException("Error loading Dockerfile", e);
             }
@@ -90,6 +92,10 @@ public class DockerMojo extends AbstractDockerMojo {
 
     private void buildDockerfile(File dockerfile) throws MojoExecutionException {
         try {
+            var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
+            if (runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION) {
+                DockerfileMojo.processOracleFunctionDockerfile(dockerfile);
+            }
             getLog().info("Using Dockerfile: " + dockerfile.getAbsolutePath());
             mavenProject.getProperties().put(PropertyNames.SKIP, "true");
 

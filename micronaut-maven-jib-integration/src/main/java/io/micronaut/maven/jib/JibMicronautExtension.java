@@ -36,8 +36,8 @@ import java.util.*;
  */
 public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
-    public static final String DEFAULT_JAVA17_BASE_IMAGE = "eclipse-temurin:17-jre";
-    public static final String DEFAULT_JAVA21_BASE_IMAGE = "eclipse-temurin:21-jre";
+    public static final String DEFAULT_JAVA17_BASE_IMAGE = "eclipse-temurin:17-jre-focal";
+    public static final String DEFAULT_JAVA21_BASE_IMAGE = "eclipse-temurin:21-jre-jammy";
     private static final String LATEST_TAG = "latest";
     private static final String JDK_VERSION = "maven.compiler.target";
 
@@ -121,10 +121,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
     public static String determineProjectFnVersion(String javaVersion) {
         int majorVersion = Integer.parseInt(javaVersion.split("\\.")[0]);
-        if (majorVersion >= 21) {
-            return "21-jre";
-        } else if (majorVersion >= 17) {
-            return "17-jre";
+        if (majorVersion <= 21 && majorVersion > 17) {
+            return "21-jre-jammy";
+        } else if (majorVersion <= 17) {
+            return "17-jre-focal";
         } else {
             return LATEST_TAG;
         }
