@@ -17,6 +17,8 @@ package io.micronaut.maven;
 
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import io.micronaut.maven.core.DockerBuildStrategy;
+import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
 import io.micronaut.maven.jib.JibConfigurationService;
@@ -33,6 +35,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.StandardCopyOption;
+
+import static io.micronaut.maven.DockerfileMojo.DOCKERFILE_ORACLE_CLOUD;
 
 /**
  * <p>Allows using a provided Dockerfile.</p>
@@ -60,30 +64,56 @@ public class DockerMojo extends AbstractDockerMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        File dockerfile = new File(mavenProject.getBasedir(), DockerfileMojo.DOCKERFILE);
-        if (dockerfile.exists()) {
-            try {
-                getLog().info("Using provided Dockerfile: " + dockerfile.getAbsolutePath());
-                mavenProject.getProperties().put(PropertyNames.SKIP, "true");
-
-                copyDependencies();
-
-                String targetDir = mavenProject.getBuild().getDirectory();
-                File targetDockerfile = new File(targetDir, dockerfile.getName());
-                Files.copy(dockerfile.toPath(), targetDockerfile.toPath(), LinkOption.NOFOLLOW_LINKS,
-                        StandardCopyOption.REPLACE_EXISTING);
-
-                BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
-                        .withDockerfile(targetDockerfile)
-                        .withTags(getTags())
-                        .withBaseDirectory(new File(targetDir));
-                getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
-                dockerService.buildImage(buildImageCmd);
-            } catch (IOException e) {
-                throw new MojoExecutionException(e.getMessage(), e);
-            }
+        var providedDockerfile = new File(mavenProject.getBasedir(), DockerfileMojo.DOCKERFILE);
+        if (shouldBuildWithDockerfile(providedDockerfile)) {
+            var dockerfile = determineDockerfile(providedDockerfile);
+            buildDockerfile(dockerfile);
         } else if (jibConfigurationService.getFromImage().isEmpty()) {
             mavenProject.getProperties().setProperty(PropertyNames.FROM_IMAGE, getBaseImage());
+        }
+    }
+
+    private File determineDockerfile(File providedDockerfile) throws MojoExecutionException {
+        if (providedDockerfile.exists()) {
+            return providedDockerfile;
+        } else {
+            try {
+                return dockerService.loadDockerfileAsResource(DOCKERFILE_ORACLE_CLOUD);
+            } catch (IOException e) {
+                throw new MojoExecutionException("Error loading Dockerfile", e);
+            }
+        }
+    }
+
+    private boolean shouldBuildWithDockerfile(File providedDockerfile) {
+        var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
+        return providedDockerfile.exists() || runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION;
+    }
+
+    private void buildDockerfile(File dockerfile) throws MojoExecutionException {
+        try {
+            var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
+            if (runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION) {
+                DockerfileMojo.processOracleFunctionDockerfile(dockerfile);
+            }
+            getLog().info("Using Dockerfile: " + dockerfile.getAbsolutePath());
+            mavenProject.getProperties().put(PropertyNames.SKIP, "true");
+
+            copyDependencies();
+
+            String targetDir = mavenProject.getBuild().getDirectory();
+            File targetDockerfile = new File(targetDir, dockerfile.getName());
+            Files.copy(dockerfile.toPath(), targetDockerfile.toPath(), LinkOption.NOFOLLOW_LINKS,
+                    StandardCopyOption.REPLACE_EXISTING);
+
+            BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
+                    .withDockerfile(targetDockerfile)
+                    .withTags(getTags())
+                    .withBaseDirectory(new File(targetDir));
+            getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
+            dockerService.buildImage(buildImageCmd);
+        } catch (IOException e) {
+            throw new MojoExecutionException(e.getMessage(), e);
         }
     }
 

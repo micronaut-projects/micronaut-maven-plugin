@@ -141,7 +141,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
         return Optional.ofNullable(dockerfile);
     }
 
-    private void processOracleFunctionDockerfile(File dockerfile) throws IOException {
+    static void processOracleFunctionDockerfile(File dockerfile) throws IOException {
         if (dockerfile != null) {
             List<String> allLines = Files.readAllLines(dockerfile.toPath());
             String projectFnVersion = JibMicronautExtension.determineProjectFnVersion(System.getProperty("java.version"));

@@ -6,7 +6,7 @@ COPY dependency/* /home/app/libs/
 COPY graalvm-reachability-metadat[a] /home/app/graalvm-reachability-metadata
 COPY nativ[e]/generated /home/app/
 COPY *.args /home/app/graalvm-native-image.args
-RUN native-image @/home/app/graalvm-native-image.args --report-unsupported-elements-at-runtime -H:Class=com.fnproject.fn.runtime.EntryPoint -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
+RUN native-image @/home/app/graalvm-native-image.args --report-unsupported-elements-at-runtime -H:PageSize=64k -H:Class=com.fnproject.fn.runtime.EntryPoint -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM fnproject/fn-java-fdk:jre17-latest AS fnfdk
 

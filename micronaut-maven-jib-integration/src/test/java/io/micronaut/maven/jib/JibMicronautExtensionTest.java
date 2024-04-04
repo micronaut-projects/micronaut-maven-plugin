@@ -19,9 +19,10 @@ class JibMicronautExtensionTest {
 
     @ParameterizedTest
     @CsvSource({
-            "17.0.1,    jre17-latest",
-            "17.0.4.1,  jre17-latest",
-            "19.0.1,    jre17-latest"
+            "17.0.1,    17-jre",
+            "17.0.4.1,  17-jre",
+            "19.0.1,    21-jre",
+            "21.0.1,    21-jre"
     })
     void testDetermineJavaVersion(String javaVersion, String expectedFnVersion) {
         String fnVersion = JibMicronautExtension.determineProjectFnVersion(javaVersion);
@@ -81,11 +82,11 @@ class JibMicronautExtensionTest {
     @ParameterizedTest
     @CsvSource({
             "DEFAULT,           17, eclipse-temurin:17-jre",
-            "ORACLE_FUNCTION,   17, fnproject/fn-java-fdk:jre17-latest",
+            "ORACLE_FUNCTION,   17, eclipse-temurin:17-jre",
             "LAMBDA,            17, public.ecr.aws/lambda/java:17",
 
             "DEFAULT,           21, eclipse-temurin:21-jre",
-            "ORACLE_FUNCTION,   21, fnproject/fn-java-fdk:jre17-latest",
+            "ORACLE_FUNCTION,   21, eclipse-temurin:21-jre",
             "LAMBDA,            21, public.ecr.aws/lambda/java:21"
     })
     void testDetermineBaseImage(String dockerBuildStrategy, String jdkVersion, String expectedImage) {

@@ -64,7 +64,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
     public static final String MICRONAUT_VERSION = "micronaut.version";
     public static final String ARGS_FILE_PROPERTY_NAME = "graalvm.native-image.args-file";
     static final int AWS_LAMBDA_MAX_ALLOWED_VERSION = 21;
-    static final int ORACLE_FUNCTION_MAX_ALLOWED_VERSION = 17;
+    static final int ORACLE_FUNCTION_MAX_ALLOWED_VERSION = 21;
     static final int MAX_ALLOWED_VERSION = 21;
     private MicronautRuntime runtime;
 
