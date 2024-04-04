@@ -5,7 +5,7 @@
 
     <groupId>io.micronaut.maven</groupId>
     <artifactId>micronaut-maven-plugin-parent</artifactId>
-    <version>4.5.1-SNAPSHOT</version>
+    <version>4.5.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Micronaut Maven Plugin - Parent</name>
@@ -89,13 +89,13 @@
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <project.build.outputTimestamp>2024-03-20T15:42:07Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2024-04-04T07:26:46Z</project.build.outputTimestamp>
 
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.organization>micronaut-projects</sonar.organization>
         <sonar.java.checkstyle.reportPaths>${project.basedir}/target/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
         <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/micronaut-maven-integration-tests/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-        <jacoco.version>0.8.11</jacoco.version>
+        <jacoco.version>0.8.12</jacoco.version>
         <junit-jupiter.version>5.10.2</junit-jupiter.version>
         <directory-watcher.version>0.18.0</directory-watcher.version>
         <testcontainers.version>1.19.7</testcontainers.version>
@@ -221,7 +221,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-plugin-report-plugin</artifactId>
-                    <version>3.11.0</version>
+                    <version>3.12.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>

@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.micronaut.maven</groupId>
         <artifactId>micronaut-maven-plugin-parent</artifactId>
-        <version>4.5.1-SNAPSHOT</version>
+        <version>4.5.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>micronaut-maven-plugin</artifactId>
@@ -100,6 +100,11 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.micronaut.maven</groupId>
         <artifactId>micronaut-maven-plugin-parent</artifactId>
-        <version>4.5.1-SNAPSHOT</version>
+        <version>4.5.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>micronaut-maven-jib-integration</artifactId>
@@ -27,7 +27,7 @@
         <dependency>
             <groupId>com.google.cloud.tools</groupId>
             <artifactId>jib-maven-plugin</artifactId>
-            <version>3.4.1</version>
+            <version>3.4.2</version>
         </dependency>
         <dependency>
             <groupId>com.google.cloud.tools</groupId>
