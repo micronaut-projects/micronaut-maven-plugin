@@ -61,3 +61,9 @@ mvnDebug package -Dpackaging=docker
 ```
 
 Then in your IDE, attach a remote debugger to port 8000.
+
+### Preparing for a new minor/major version
+
+```shell
+mvn release:update-versions -DautoVersionSubmodules=true -DdevelopmentVersion=4.6.0-SNAPSHOT
+```
