@@ -1,4 +1,4 @@
-ARG BASE_JAVA_IMAGE=eclipse-temurin:21-jre-jammy
+ARG BASE_JAVA_IMAGE=eclipse-temurin:21-jre
 
 FROM fnproject/fn-java-fdk:jre17-latest AS fnfdk
 
