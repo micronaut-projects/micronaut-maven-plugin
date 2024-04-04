@@ -123,7 +123,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         int majorVersion = Integer.parseInt(javaVersion.split("\\.")[0]);
         if (majorVersion <= 21 && majorVersion > 17) {
             return "21-jre";
-        } else if (majorVersion <= 17) {
+        } else if (majorVersion == 17) {
             return "17-jre";
         } else {
             return LATEST_TAG;
