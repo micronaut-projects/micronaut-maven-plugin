@@ -125,9 +125,9 @@
             </plugin>
 
             <plugin>
-                <groupId>pl.project13.maven</groupId>
-                <artifactId>git-commit-id-plugin</artifactId>
-                <version>4.9.10</version>
+                <groupId>io.github.git-commit-id</groupId>
+                <artifactId>git-commit-id-maven-plugin</artifactId>
+                <version>8.0.2</version>
                 <executions>
                     <execution>
                         <id>get-the-git-infos</id>
@@ -138,7 +138,6 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <prefix>git</prefix>
                     <verbose>true</verbose>
                     <failOnNoGitDirectory>false</failOnNoGitDirectory>
                     <excludeProperties>
@@ -149,10 +148,9 @@
                         <replacementProperty>
                             <property>git.branch</property>
                             <propertyOutputSuffix>name</propertyOutputSuffix>
-                            <token>^([^\/]*)\/([^\/]*)$</token>
-                            <value>$1-$2</value>
+                            <token>^.*/(.*)$</token>
+                            <value>$1</value>
                             <regex>true</regex>
-                            <forceValueEvaluation>false</forceValueEvaluation>
                         </replacementProperty>
                     </replacementProperties>
                 </configuration>
