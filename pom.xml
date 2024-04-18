@@ -5,7 +5,7 @@
 
     <groupId>io.micronaut.maven</groupId>
     <artifactId>micronaut-maven-plugin-parent</artifactId>
-    <version>4.5.2-SNAPSHOT</version>
+    <version>4.5.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Micronaut Maven Plugin - Parent</name>
