@@ -5,6 +5,7 @@ assert log.text.contains("BUILD SUCCESS")
 
 def petApi = new File(basedir, "target/generated-sources/openapi/src/main/java/io/micronaut/openapi/api/PetApi.java")
 assert petApi.exists()
+assert petApi.text.contains('@Client("${openapi-micronaut-client.base-path}")')
 assert new File(basedir, "target/generated-sources/openapi/src/main/java/io/micronaut/openapi/model/Pet.java").exists()
 assert new File(basedir, "target/classes/io/micronaut/openapi/api/PetApi.class").exists()
 assert new File(basedir, "target/classes/io/micronaut/openapi/model/Pet.class").exists()

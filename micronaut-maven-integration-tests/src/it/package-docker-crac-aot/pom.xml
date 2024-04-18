@@ -137,6 +137,7 @@
             <image>
               <name>alvarosanchez/${project.artifactId}:${project.version}</name>
               <run>
+                <privileged>true</privileged>
                 <wait>
                   <log>Restore completed!</log>
                   <time>20000</time>
