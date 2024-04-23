@@ -99,7 +99,6 @@ jobs:
         uses: micronaut-projects/github-pages-deploy-action@master
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          BASE_BRANCH: master
           BRANCH: gh-pages
           FOLDER: micronaut-maven-plugin/target/site
 
