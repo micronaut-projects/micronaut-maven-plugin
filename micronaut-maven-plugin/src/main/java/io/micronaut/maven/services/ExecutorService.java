@@ -15,6 +15,7 @@
  */
 package io.micronaut.maven.services;
 
+import io.micronaut.core.util.StringUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
@@ -36,8 +37,10 @@ import javax.inject.Singleton;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.micronaut.maven.testresources.TestResourcesConfiguration.TEST_RESOURCES_ENABLED_PROPERTY;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.*;
 
 /**
@@ -140,12 +143,16 @@ public class ExecutorService {
         if (settingsFile.exists()) {
             request.setUserSettingsFile(settingsFile);
         }
+        Properties properties = new Properties();
+        properties.put(TEST_RESOURCES_ENABLED_PROPERTY, StringUtils.FALSE);
+
         request.setLocalRepositoryDirectory(new File(mavenSession.getLocalRepository().getBasedir()));
-        request.setGoals(Arrays.asList(goals));
+        request.addArgs(Arrays.asList(goals));
         request.setBatchMode(true);
         request.setQuiet(true);
         request.setErrorHandler(LOG::error);
         request.setOutputHandler(LOG::info);
+        request.setProperties(properties);
         return invoker.execute(request);
     }
 }

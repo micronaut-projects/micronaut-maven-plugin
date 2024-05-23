@@ -29,11 +29,12 @@ public class TestResourcesConfiguration {
     public static final String CONFIG_PROPERTY_PREFIX = "micronaut.test.resources.";
 
     private static final String PROPERTY_ENABLED = "enabled";
+    public static final String TEST_RESOURCES_ENABLED_PROPERTY = CONFIG_PROPERTY_PREFIX + PROPERTY_ENABLED;
 
     /**
      * Whether to enable or disable Micronaut test resources support.
      */
-    @Parameter(property =  CONFIG_PROPERTY_PREFIX + PROPERTY_ENABLED, defaultValue = DISABLED)
+    @Parameter(property = TEST_RESOURCES_ENABLED_PROPERTY, defaultValue = DISABLED)
     protected boolean testResourcesEnabled;
 
     /**
