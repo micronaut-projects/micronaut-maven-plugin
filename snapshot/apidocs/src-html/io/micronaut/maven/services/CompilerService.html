@@ -102,7 +102,7 @@
 <span class="source-line-no">089</span><span id="line-89">        try {</span>
 <span class="source-line-no">090</span><span id="line-90">            executorService.invokeGoals(COMPILE_GOAL);</span>
 <span class="source-line-no">091</span><span id="line-91">            lastCompilation = System.currentTimeMillis();</span>
-<span class="source-line-no">092</span><span id="line-92">        } catch (MavenInvocationException e) {</span>
+<span class="source-line-no">092</span><span id="line-92">        } catch (Exception e) {</span>
 <span class="source-line-no">093</span><span id="line-93">            if (log.isErrorEnabled()) {</span>
 <span class="source-line-no">094</span><span id="line-94">                log.error("Error while compiling the project: ", e);</span>
 <span class="source-line-no">095</span><span id="line-95">            }</span>

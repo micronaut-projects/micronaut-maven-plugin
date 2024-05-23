@@ -124,9 +124,12 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color">
 <div class="block">Allows configuring a namespace for the shared test resources server.</div>
 </div>
-<div class="col-first odd-row-color"><code>protected boolean</code></div>
-<div class="col-second odd-row-color"><code><a href="#testResourcesEnabled" class="member-name-link">testResourcesEnabled</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#TEST_RESOURCES_ENABLED_PROPERTY" class="member-name-link">TEST_RESOURCES_ENABLED_PROPERTY</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>protected boolean</code></div>
+<div class="col-second even-row-color"><code><a href="#testResourcesEnabled" class="member-name-link">testResourcesEnabled</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Whether to enable or disable Micronaut test resources support.</div>
 </div>
 </div>
@@ -231,11 +234,25 @@ loadScripts(document, 'script');</script>
 </section>
 </li>
 <li>
+<section class="detail" id="TEST_RESOURCES_ENABLED_PROPERTY">
+<h3>TEST_RESOURCES_ENABLED_PROPERTY</h3>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-32">TEST_RESOURCES_ENABLED_PROPERTY</a></span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="see-list">
+<li><a href="../../../../constant-values.html#io.micronaut.maven.testresources.TestResourcesConfiguration.TEST_RESOURCES_ENABLED_PROPERTY">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</section>
+</li>
+<li>
 <section class="detail" id="testResourcesEnabled">
 <h3>testResourcesEnabled</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.test.resources.enabled",
            defaultValue="false")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-36">testResourcesEnabled</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-37">testResourcesEnabled</a></span></div>
 <div class="block">Whether to enable or disable Micronaut test resources support.</div>
 </section>
 </li>
@@ -244,7 +261,7 @@ loadScripts(document, 'script');</script>
 <h3>shared</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.test.resources.shared",
            defaultValue="false")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-43">shared</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-44">shared</a></span></div>
 <div class="block">Whether the test resources service should be shared between independent builds
  (e.g different projects, even built with different build tools).</div>
 </section>
@@ -253,7 +270,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="sharedServerNamespace">
 <h3>sharedServerNamespace</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.test.resources.namespace")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-52">sharedServerNamespace</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-53">sharedServerNamespace</a></span></div>
 <div class="block">Allows configuring a namespace for the shared test resources server. This can be used in case it makes sense to
  have different instances of shared services, for example when independent builds sets share different services.</div>
 <dl class="notes">
@@ -267,7 +284,7 @@ loadScripts(document, 'script');</script>
 <h3>debugServer</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.test.resources.debug-server",
            defaultValue="false")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-61">debugServer</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-62">debugServer</a></span></div>
 <div class="block">Allows starting the test resources server in debug mode. The server will be started with the ability
  to attach a remote debugger on port 8000.</div>
 <dl class="notes">
@@ -301,7 +318,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="isTestResourcesEnabled()">
 <h3>isTestResourcesEnabled</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-67">isTestResourcesEnabled</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-68">isTestResourcesEnabled</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Whether to enable or disable Micronaut test resources support.</dd>
@@ -311,7 +328,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="isShared()">
 <h3>isShared</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-74">isShared</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-75">isShared</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Whether the test resources service should be shared between independent builds.</dd>
@@ -321,7 +338,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getSharedServerNamespace()">
 <h3>getSharedServerNamespace</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-81">getSharedServerNamespace</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-82">getSharedServerNamespace</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The shared server namespace (if any).</dd>
@@ -331,7 +348,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="setTestResourcesEnabled(boolean)">
 <h3>setTestResourcesEnabled</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-90">setTestResourcesEnabled</a></span><wbr><span class="parameters">(boolean&nbsp;testResourcesEnabled)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-91">setTestResourcesEnabled</a></span><wbr><span class="parameters">(boolean&nbsp;testResourcesEnabled)</span></div>
 <div class="block">Whether to enable or disable Micronaut test resources support.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -342,7 +359,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="setShared(boolean)">
 <h3>setShared</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-99">setShared</a></span><wbr><span class="parameters">(boolean&nbsp;shared)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-100">setShared</a></span><wbr><span class="parameters">(boolean&nbsp;shared)</span></div>
 <div class="block">Whether the test resources service should be shared between independent builds.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -353,7 +370,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="setSharedServerNamespace(java.lang.String)">
 <h3>setSharedServerNamespace</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-108">setSharedServerNamespace</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;sharedServerNamespace)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-109">setSharedServerNamespace</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;sharedServerNamespace)</span></div>
 <div class="block">The shared server namespace (if any).</div>
 <dl class="notes">
 <dt>Parameters:</dt>
@@ -364,7 +381,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="setDebugServer(boolean)">
 <h3>setDebugServer</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-117">setDebugServer</a></span><wbr><span class="parameters">(boolean&nbsp;debugServer)</span></div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/testresources/TestResourcesConfiguration.html#line-118">setDebugServer</a></span><wbr><span class="parameters">(boolean&nbsp;debugServer)</span></div>
 <div class="block">Whether to start the test resources server in debug mode.</div>
 <dl class="notes">
 <dt>Parameters:</dt>

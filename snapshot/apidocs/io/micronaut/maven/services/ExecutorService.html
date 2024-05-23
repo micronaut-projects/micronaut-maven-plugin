@@ -78,7 +78,7 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <hr>
 <div class="type-signature"><span class="annotations">@Singleton
-</span><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/ExecutorService.html#line-49">ExecutorService</a></span>
+</span><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/ExecutorService.html#line-52">ExecutorService</a></span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
 <div class="block">Provides methods to execute goals on the current project.</div>
 <dl class="notes">
@@ -164,7 +164,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="&lt;init&gt;(org.apache.maven.project.MavenProject,org.apache.maven.execution.MavenSession,org.apache.maven.plugin.BuildPluginManager,org.apache.maven.shared.invoker.Invoker)">
 <h3>ExecutorService</h3>
 <div class="member-signature"><span class="annotations">@Inject
-</span><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/ExecutorService.html#line-59">ExecutorService</a></span><wbr><span class="parameters">(org.apache.maven.project.MavenProject&nbsp;mavenProject,
+</span><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/ExecutorService.html#line-62">ExecutorService</a></span><wbr><span class="parameters">(org.apache.maven.project.MavenProject&nbsp;mavenProject,
  org.apache.maven.execution.MavenSession&nbsp;mavenSession,
  org.apache.maven.plugin.BuildPluginManager&nbsp;pluginManager,
  org.apache.maven.shared.invoker.Invoker&nbsp;invoker)</span></div>
@@ -181,7 +181,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="executeGoal(java.lang.String,java.lang.String)">
 <h3>executeGoal</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/ExecutorService.html#line-76">executeGoal</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pluginKey,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/ExecutorService.html#line-79">executeGoal</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pluginKey,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;goal)</span>
                  throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <div class="block">Executes the given goal from the given plugin coordinates.</div>
@@ -197,7 +197,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="executeGoal(java.lang.String,java.lang.String,java.lang.String,java.lang.String,org.codehaus.plexus.util.xml.Xpp3Dom)">
 <h3>executeGoal</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/ExecutorService.html#line-114">executeGoal</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pluginGroup,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/ExecutorService.html#line-117">executeGoal</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pluginGroup,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pluginArtifact,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pluginVersion,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;goal,
@@ -219,7 +219,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="invokeGoal(java.lang.String,java.lang.String)">
 <h3>invokeGoal</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.apache.maven.shared.invoker.InvocationResult</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/ExecutorService.html#line-126">invokeGoal</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pluginKey,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.apache.maven.shared.invoker.InvocationResult</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/ExecutorService.html#line-129">invokeGoal</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;pluginKey,
  <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;goal)</span>
                                                             throws <span class="exceptions">org.apache.maven.shared.invoker.MavenInvocationException</span></div>
 <div class="block">Executes a goal using the Maven shared invoker.</div>
@@ -237,7 +237,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="invokeGoals(java.lang.String...)">
 <h3>invokeGoals</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.apache.maven.shared.invoker.InvocationResult</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/ExecutorService.html#line-136">invokeGoals</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>...&nbsp;goals)</span>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">org.apache.maven.shared.invoker.InvocationResult</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/services/ExecutorService.html#line-139">invokeGoals</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>...&nbsp;goals)</span>
                                                              throws <span class="exceptions">org.apache.maven.shared.invoker.MavenInvocationException</span></div>
 <div class="block">Executes a goal using the Maven shared invoker.</div>
 <dl class="notes">
