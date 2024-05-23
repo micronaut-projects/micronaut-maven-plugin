@@ -89,7 +89,7 @@ public class CompilerService {
         try {
             executorService.invokeGoals(COMPILE_GOAL);
             lastCompilation = System.currentTimeMillis();
-        } catch (MavenInvocationException e) {
+        } catch (Exception e) {
             if (log.isErrorEnabled()) {
                 log.error("Error while compiling the project: ", e);
             }
