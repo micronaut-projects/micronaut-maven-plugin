@@ -104,6 +104,7 @@
         <docker-java.version>3.3.6</docker-java.version>
         <checkstyle.config.dir.path>${maven.multiModuleProjectDirectory}/config/checkstyle</checkstyle.config.dir.path>
         <spotless.licenseHeader.path>${maven.multiModuleProjectDirectory}/config/spotless.license.java</spotless.licenseHeader.path>
+        <maven-plugin-tools.version>3.13.1</maven-plugin-tools.version>
     </properties>
 
     <repositories>
@@ -187,6 +188,11 @@
                 <artifactId>docker-java-transport-zerodep</artifactId>
                 <version>${docker-java.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.maven.plugin-tools</groupId>
+                <artifactId>maven-plugin-annotations</artifactId>
+                <version>${maven-plugin-tools.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -217,11 +223,11 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-plugin-plugin</artifactId>
-                    <version>3.13.0</version>
+                    <version>${maven-plugin-tools.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-plugin-report-plugin</artifactId>
-                    <version>3.13.0</version>
+                    <version>${maven-plugin-tools.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
