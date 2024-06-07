@@ -94,6 +94,7 @@ public class DockerMojo extends AbstractDockerMojo {
         try {
             var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
             if (runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION) {
+                oracleCloudFunctionCmd(dockerfile);
                 DockerfileMojo.processOracleFunctionDockerfile(dockerfile);
             }
             getLog().info("Using Dockerfile: " + dockerfile.getAbsolutePath());

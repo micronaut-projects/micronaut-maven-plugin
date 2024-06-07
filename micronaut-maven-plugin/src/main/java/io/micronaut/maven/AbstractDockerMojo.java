@@ -15,6 +15,7 @@
  */
 package io.micronaut.maven;
 
+import com.google.common.io.FileWriteMode;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.jib.JibMicronautExtension;
 import io.micronaut.maven.services.ApplicationConfigurationService;
@@ -31,6 +32,7 @@ import org.apache.maven.project.MavenProject;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
@@ -54,6 +56,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     public static final String ARM_ARCH = "aarch64";
     public static final String X86_64_ARCH = "x64";
     public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol9";
+    public static final String ORACLE_CLOUD_FUNCTION_DEFAULT_CMD = "CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]";
 
     protected final MavenProject mavenProject;
     protected final JibConfigurationService jibConfigurationService;
@@ -273,7 +276,19 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      */
     protected String getBaseImage() {
         return JibMicronautExtension.determineBaseImage(JibMicronautExtension.getJdkVersion(mavenProject), MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy());
+    }
 
+    /**
+     * Adds cmd to docker oracle cloud function file.
+     * @param dockerfile the docker file
+     */
+    protected void oracleCloudFunctionCmd(File dockerfile) throws IOException {
+        if (appArguments != null && !appArguments.isEmpty()) {
+            getLog().info("Using application arguments: " + appArguments);
+            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());
+        } else  {
+            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + ORACLE_CLOUD_FUNCTION_DEFAULT_CMD);
+        }
     }
 
 }
