@@ -6,4 +6,4 @@ assert dockerfile.text == expectedDockerfileText
 
 File log = new File(basedir, 'build.log')
 assert log.exists()
-assert log.text.contains("Successfully tagged alvarosanchez/dockerfile-docker-native-oracle-function:0.1")
+assert log.text.contains("Successfully tagged alvarosanchez/dockerfile-docker-native-oracle-http-function:0.1")
