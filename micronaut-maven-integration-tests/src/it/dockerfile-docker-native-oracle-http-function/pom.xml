@@ -19,7 +19,6 @@
     <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
     <packaging>jar</packaging>
     <micronaut.runtime>oracle_function</micronaut.runtime>
-    <function.entrypoint>example.micronaut.Function::handleRequest</function.entrypoint>
   </properties>
 
   <dependencies>
@@ -88,11 +87,7 @@
         <version>${micronaut-maven-plugin.version}</version>
         <configuration>
           <nativeImageBuildArgs>-Ob</nativeImageBuildArgs>
-          <appArguments>
-            <arg>${function.entrypoint}</arg>
-          </appArguments>
         </configuration>
-
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

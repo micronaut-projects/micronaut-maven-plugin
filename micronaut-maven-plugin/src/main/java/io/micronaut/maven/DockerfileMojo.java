@@ -110,6 +110,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION -> {
                 dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_ORACLE_CLOUD);
+                oracleCloudFunctionCmd(dockerfile);
                 processOracleFunctionDockerfile(dockerfile);
             }
             case LAMBDA -> {
