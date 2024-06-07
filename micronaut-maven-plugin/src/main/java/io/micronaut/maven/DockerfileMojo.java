@@ -164,7 +164,10 @@ public class DockerfileMojo extends AbstractDockerMojo {
         File dockerfile;
         switch (runtime.getBuildStrategy()) {
             case LAMBDA -> dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS_CUSTOM_RUNTIME);
-            case ORACLE_FUNCTION -> dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_NATIVE_ORACLE_CLOUD);
+            case ORACLE_FUNCTION -> {
+                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_NATIVE_ORACLE_CLOUD);
+                oracleCloudFunctionCmd(dockerfile);
+            }
             case DEFAULT -> {
                 String dockerfileName = DOCKERFILE_NATIVE;
                 if (Boolean.TRUE.equals(staticNativeImage)) {
@@ -183,6 +186,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     private void processDockerfile(File dockerfile) throws IOException {
+
         if (dockerfile != null) {
             List<String> allLines = Files.readAllLines(dockerfile.toPath());
             List<String> result = new ArrayList<>();
@@ -233,11 +237,6 @@ public class DockerfileMojo extends AbstractDockerMojo {
                 if (conversionResult.size() == 1) {
                     Files.delete(Paths.get(argsFile));
                 }
-            }
-
-            if (appArguments != null && !appArguments.isEmpty()) {
-                getLog().info("Using application arguments: " + appArguments);
-                result.add(getCmd());
             }
 
             Files.write(dockerfile.toPath(), result);
