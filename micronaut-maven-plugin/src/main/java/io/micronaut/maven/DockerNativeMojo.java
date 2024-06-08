@@ -19,7 +19,6 @@ import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.exception.DockerClientException;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
-import com.google.common.io.FileWriteMode;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
@@ -36,7 +35,6 @@ import org.graalvm.buildtools.utils.NativeImageUtils;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -202,10 +200,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
         File dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);
 
-        if (appArguments != null && !appArguments.isEmpty()) {
-            getLog().info("Using application arguments: " + appArguments);
-            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());
-        }
+        oracleCloudFunctionCmd(dockerfile);
 
         Map<String, String> buildImageCmdArguments = new HashMap<>();
 

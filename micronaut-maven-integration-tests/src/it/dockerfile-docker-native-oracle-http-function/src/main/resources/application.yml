@@ -1,0 +1,3 @@
+micronaut:
+  application:
+    name: dockerfile-docker-native-oracle-function

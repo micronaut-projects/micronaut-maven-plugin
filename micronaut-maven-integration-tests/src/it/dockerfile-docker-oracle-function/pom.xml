@@ -18,6 +18,7 @@
     <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     <packaging>jar</packaging>
     <micronaut.runtime>oracle_function</micronaut.runtime>
+    <function.entrypoint>example.micronaut.Function::handleRequest</function.entrypoint>
   </properties>
 
   <dependencies>
@@ -84,6 +85,11 @@
         <groupId>io.micronaut.maven</groupId>
         <artifactId>micronaut-maven-plugin</artifactId>
         <version>${micronaut-maven-plugin.version}</version>
+        <configuration>
+          <appArguments>
+            <arg>${function.entrypoint}</arg>
+          </appArguments>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

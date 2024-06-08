@@ -15,4 +15,4 @@ WORKDIR /function
 COPY --from=builder /home/app/application /function/func
 COPY --from=fnfdk /function/runtime/lib/* .
 ENTRYPOINT ["./func", "-XX:MaximumHeapSizePercent=80", "-Dio.netty.allocator.numDirectArenas=0", "-Dio.netty.noPreferDirect=true", "-Djava.library.path=/function"]
-CMD ["example.micronaut.Function::handleRequest"]
+CMD ["io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest"]
