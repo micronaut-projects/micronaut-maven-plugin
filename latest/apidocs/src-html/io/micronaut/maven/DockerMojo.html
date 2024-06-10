@@ -107,30 +107,31 @@
 <span class="source-line-no">094</span><span id="line-94">        try {</span>
 <span class="source-line-no">095</span><span id="line-95">            var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());</span>
 <span class="source-line-no">096</span><span id="line-96">            if (runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION) {</span>
-<span class="source-line-no">097</span><span id="line-97">                DockerfileMojo.processOracleFunctionDockerfile(dockerfile);</span>
-<span class="source-line-no">098</span><span id="line-98">            }</span>
-<span class="source-line-no">099</span><span id="line-99">            getLog().info("Using Dockerfile: " + dockerfile.getAbsolutePath());</span>
-<span class="source-line-no">100</span><span id="line-100">            mavenProject.getProperties().put(PropertyNames.SKIP, "true");</span>
-<span class="source-line-no">101</span><span id="line-101"></span>
-<span class="source-line-no">102</span><span id="line-102">            copyDependencies();</span>
-<span class="source-line-no">103</span><span id="line-103"></span>
-<span class="source-line-no">104</span><span id="line-104">            String targetDir = mavenProject.getBuild().getDirectory();</span>
-<span class="source-line-no">105</span><span id="line-105">            File targetDockerfile = new File(targetDir, dockerfile.getName());</span>
-<span class="source-line-no">106</span><span id="line-106">            Files.copy(dockerfile.toPath(), targetDockerfile.toPath(), LinkOption.NOFOLLOW_LINKS,</span>
-<span class="source-line-no">107</span><span id="line-107">                    StandardCopyOption.REPLACE_EXISTING);</span>
-<span class="source-line-no">108</span><span id="line-108"></span>
-<span class="source-line-no">109</span><span id="line-109">            BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
-<span class="source-line-no">110</span><span id="line-110">                    .withDockerfile(targetDockerfile)</span>
-<span class="source-line-no">111</span><span id="line-111">                    .withTags(getTags())</span>
-<span class="source-line-no">112</span><span id="line-112">                    .withBaseDirectory(new File(targetDir));</span>
-<span class="source-line-no">113</span><span id="line-113">            getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
-<span class="source-line-no">114</span><span id="line-114">            dockerService.buildImage(buildImageCmd);</span>
-<span class="source-line-no">115</span><span id="line-115">        } catch (IOException e) {</span>
-<span class="source-line-no">116</span><span id="line-116">            throw new MojoExecutionException(e.getMessage(), e);</span>
-<span class="source-line-no">117</span><span id="line-117">        }</span>
-<span class="source-line-no">118</span><span id="line-118">    }</span>
-<span class="source-line-no">119</span><span id="line-119"></span>
-<span class="source-line-no">120</span><span id="line-120">}</span>
+<span class="source-line-no">097</span><span id="line-97">                oracleCloudFunctionCmd(dockerfile);</span>
+<span class="source-line-no">098</span><span id="line-98">                DockerfileMojo.processOracleFunctionDockerfile(dockerfile);</span>
+<span class="source-line-no">099</span><span id="line-99">            }</span>
+<span class="source-line-no">100</span><span id="line-100">            getLog().info("Using Dockerfile: " + dockerfile.getAbsolutePath());</span>
+<span class="source-line-no">101</span><span id="line-101">            mavenProject.getProperties().put(PropertyNames.SKIP, "true");</span>
+<span class="source-line-no">102</span><span id="line-102"></span>
+<span class="source-line-no">103</span><span id="line-103">            copyDependencies();</span>
+<span class="source-line-no">104</span><span id="line-104"></span>
+<span class="source-line-no">105</span><span id="line-105">            String targetDir = mavenProject.getBuild().getDirectory();</span>
+<span class="source-line-no">106</span><span id="line-106">            File targetDockerfile = new File(targetDir, dockerfile.getName());</span>
+<span class="source-line-no">107</span><span id="line-107">            Files.copy(dockerfile.toPath(), targetDockerfile.toPath(), LinkOption.NOFOLLOW_LINKS,</span>
+<span class="source-line-no">108</span><span id="line-108">                    StandardCopyOption.REPLACE_EXISTING);</span>
+<span class="source-line-no">109</span><span id="line-109"></span>
+<span class="source-line-no">110</span><span id="line-110">            BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
+<span class="source-line-no">111</span><span id="line-111">                    .withDockerfile(targetDockerfile)</span>
+<span class="source-line-no">112</span><span id="line-112">                    .withTags(getTags())</span>
+<span class="source-line-no">113</span><span id="line-113">                    .withBaseDirectory(new File(targetDir));</span>
+<span class="source-line-no">114</span><span id="line-114">            getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
+<span class="source-line-no">115</span><span id="line-115">            dockerService.buildImage(buildImageCmd);</span>
+<span class="source-line-no">116</span><span id="line-116">        } catch (IOException e) {</span>
+<span class="source-line-no">117</span><span id="line-117">            throw new MojoExecutionException(e.getMessage(), e);</span>
+<span class="source-line-no">118</span><span id="line-118">        }</span>
+<span class="source-line-no">119</span><span id="line-119">    }</span>
+<span class="source-line-no">120</span><span id="line-120"></span>
+<span class="source-line-no">121</span><span id="line-121">}</span>
 
 
 
