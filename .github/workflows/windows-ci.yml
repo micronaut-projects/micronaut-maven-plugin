@@ -24,7 +24,7 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       - name: Setup GraalVM
-        uses: graalvm/setup-graalvm@v1.2.1
+        uses: graalvm/setup-graalvm@v1.2.2
         with:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
