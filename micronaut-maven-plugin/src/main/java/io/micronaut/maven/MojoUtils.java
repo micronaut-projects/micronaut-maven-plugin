@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.micronaut.maven;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.maven.execution.MavenSession;
