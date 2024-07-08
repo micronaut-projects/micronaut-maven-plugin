@@ -224,7 +224,6 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
     private BuildImageCmd addNativeImageBuildArgs(Map<String, String> buildImageCmdArguments, Supplier<BuildImageCmd> buildImageCmdSupplier) throws IOException {
         String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);
-        getLog().info("ARGSFILE"+ argsFile);
         List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);
         //Remove extra main class argument
         allNativeImageBuildArgs.remove(mainClass);
