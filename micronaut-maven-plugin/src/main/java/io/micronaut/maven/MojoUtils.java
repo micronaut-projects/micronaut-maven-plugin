@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.maven;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.maven.execution.MavenSession;
@@ -27,7 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -82,7 +80,9 @@ public final class MojoUtils {
             List<String> args;
             try {
                 args = Files.readAllLines(argsFilePath);
-                // TODO: fix native-build-tools write-args-file to avoid this
+                // for testing
+                // ignore whitespaces in the generated args
+                // TODO: fix the write-args-file from the maven build-tool plugin
                 args = ignorePathWhiteSpaces(args);
             } catch (IOException e) {
                 throw new RuntimeException("Could not read the args file: " + argsFilePath, e);
@@ -92,20 +92,29 @@ public final class MojoUtils {
                 args.remove(cpPosition);
                 args.remove(cpPosition);
             }
-
             return args.stream()
                     .filter(arg -> !arg.startsWith("-H:Name"))
                     .filter(arg -> !arg.startsWith("-H:Class"))
                     .filter(arg -> !arg.startsWith("-H:Path"))
                     .flatMap(arg -> {
-                        arg= arg.replaceAll("\"", "");
+                        arg= arg.replace("\"", ""); // remove the " quotation from the arg
+                        String[] patterns = new String[]{"\\Q","\\E"};
+                        boolean isWindows = false;
+                        if(File.separator.equals("\\")) {
+                            patterns = new String[]{"\\\\Q","\\\\E"};
+                            isWindows=true;
+                        }
                         if (arg.startsWith("@")) {
                             String fileName = arg.substring(1);
                             return parseNativeImageArgsFile(fileName);
-                        } else if (arg.startsWith("\\\\Q") && arg.endsWith("\\\\E")) {
+                        } else if (arg.startsWith(patterns[0]) && arg.endsWith(patterns[1])) {
                             // start the search at length - 3 to skip \Q or \E at the end
-                            int lastIndexOfSlash = arg.lastIndexOf(File.separator , arg.length() - 4);
-                            return Stream.of("\\Q/home/app/libs/" + arg.substring(lastIndexOfSlash + 1,arg.length()-3) +"\\E");
+                            int skip = isWindows ? 4: 3;
+                            int lastIndexOfSlash = arg.lastIndexOf(File.separator , arg.length() - skip);
+                            if(isWindows) {
+                                return Stream.of("\\Q/home/app/libs/" + arg.substring(lastIndexOfSlash + 1,arg.length()-3) +"\\E");
+                            }
+                            return Stream.of("\\Q/home/app/libs/" + arg.substring(lastIndexOfSlash + 1));
                         } else if (arg.startsWith("-H:ConfigurationFileDirectories")) {
                             return Stream.of(parseConfigurationFilesDirectoriesArg(arg));
                         }else {
@@ -117,8 +126,8 @@ public final class MojoUtils {
         }
     }
 
-    // to avoid the line breaks introduced by native:write-args-file
-    // to be deleted after fixing it
+    // remove lines breaks introduced by write-args-file
+    // with maven build-tools plugin
     private static List<String> ignorePathWhiteSpaces(List<String> args) {
         int i=0;
         List<String> result = new ArrayList<>();
@@ -171,9 +180,9 @@ public final class MojoUtils {
                     .map(directory -> {
                         String[] splitDirectory = directory.replaceAll("//","/").split(separator);
                         String last4Directories = splitDirectory[splitDirectory.length - 4] + separator +
-                                                  splitDirectory[splitDirectory.length - 3] + separator +
-                                                  splitDirectory[splitDirectory.length - 2] + separator +
-                                                  splitDirectory[splitDirectory.length - 1];
+                                splitDirectory[splitDirectory.length - 3] + separator +
+                                splitDirectory[splitDirectory.length - 2] + separator +
+                                splitDirectory[splitDirectory.length - 1];
                         return "/home/app/graalvm-reachability-metadata/" +last4Directories;
                     })
                     .collect(Collectors.joining(","))
