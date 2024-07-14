@@ -81,10 +81,6 @@ public final class MojoUtils {
             List<String> args;
             try {
                 args = Files.readAllLines(argsFilePath);
-                // for testing
-                // ignore whitespaces in the generated args
-                // TODO: fix the write-args-file from the maven build-tool plugin
-                args = ignorePathWhiteSpaces(args);
             } catch (IOException e) {
                 throw new RuntimeException("Could not read the args file: " + argsFilePath, e);
             }
@@ -93,28 +89,18 @@ public final class MojoUtils {
                 args.remove(cpPosition);
                 args.remove(cpPosition);
             }
+
             return args.stream()
                     .filter(arg -> !arg.startsWith("-H:Name"))
                     .filter(arg -> !arg.startsWith("-H:Class"))
                     .filter(arg -> !arg.startsWith("-H:Path"))
                     .flatMap(arg -> {
-                        arg = arg.replace("\"", ""); // remove the " quotation from the arg
-                        String[] patterns = new String[]{"\\Q", "\\E"};
-                        boolean isWindows = false;
-                        if (File.separator.equals("\\")) {
-                            patterns = new String[]{"\\\\Q", "\\\\E"};
-                            isWindows = true;
-                        }
                         if (arg.startsWith("@")) {
                             String fileName = arg.substring(1);
                             return parseNativeImageArgsFile(fileName);
-                        } else if (arg.startsWith(patterns[0]) && arg.endsWith(patterns[1])) {
+                        } else if (arg.startsWith("\\Q") && arg.endsWith("\\E")) {
                             // start the search at length - 3 to skip \Q or \E at the end
-                            int skip = isWindows ? 4 : 3;
-                            int lastIndexOfSlash = arg.lastIndexOf(File.separator , arg.length() - skip);
-                            if (isWindows) {
-                                return Stream.of("\\Q/home/app/libs/" + arg.substring(lastIndexOfSlash + 1, arg.length() - 3) + "\\E");
-                            }
+                            int lastIndexOfSlash = arg.lastIndexOf(File.separator, arg.length() - 3);
                             return Stream.of("\\Q/home/app/libs/" + arg.substring(lastIndexOfSlash + 1));
                         } else if (arg.startsWith("-H:ConfigurationFileDirectories")) {
                             return Stream.of(parseConfigurationFilesDirectoriesArg(arg));
@@ -125,41 +111,6 @@ public final class MojoUtils {
         } else {
             throw new RuntimeException("Unable to find args file: " + argsFilePath);
         }
-    }
-
-    // remove lines breaks introduced by write-args-file
-    // with maven build-tools plugin
-    private static List<String> ignorePathWhiteSpaces(List<String> args) {
-        int i = 0;
-        List<String> result = new ArrayList<>();
-        while (i < args.size()) {
-            if (args.get(i).startsWith("\\\\Q") &&
-                    !args.get(i).endsWith("\\\\E")) {
-                StringBuilder line = new StringBuilder(args.get(i));
-                i++;
-                while (!args.get(i).endsWith("\\E")) {
-                    line.append(" ").append(args.get(i));
-                    i++;
-                }
-                line.append(" ").append(args.get(i));
-                result.add(line.toString());
-                i++;
-            } else if (args.get(i).startsWith("-H:ConfigurationFileDirectories")) {
-                StringBuilder line = new StringBuilder(args.get(i));
-                i++;
-                while (i < args.size() && args.get(i).toLowerCase().charAt(0) <= 'z'
-                        && args.get(i).toLowerCase().charAt(0) >= 'a') {
-                    line.append(" ").append(args.get(i));
-                    i++;
-                }
-                result.add(line.toString());
-                i++;
-            } else {
-                result.add(args.get(i));
-                i++;
-            }
-        }
-        return result;
     }
 
     static String parseConfigurationFilesDirectoriesArg(String arg) {
@@ -179,7 +130,7 @@ public final class MojoUtils {
             return Stream.of(directories)
                     .map(FilenameUtils::separatorsToUnix)
                     .map(directory -> {
-                        String[] splitDirectory = directory.replaceAll("//", "/").split(separator);
+                        String[] splitDirectory = directory.split(separator);
                         String last4Directories = splitDirectory[splitDirectory.length - 4] + separator +
                                                   splitDirectory[splitDirectory.length - 3] + separator +
                                                   splitDirectory[splitDirectory.length - 2] + separator +
