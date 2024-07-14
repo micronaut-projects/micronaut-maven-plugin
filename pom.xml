@@ -590,7 +590,6 @@
                     <failsOnError>true</failsOnError>
                     <failOnViolation>true</failOnViolation>
                     <linkXRef>false</linkXRef>
-                    <skip>true</skip>
                     <maxAllowedViolations>1</maxAllowedViolations>
                 </configuration>
                 <executions>
