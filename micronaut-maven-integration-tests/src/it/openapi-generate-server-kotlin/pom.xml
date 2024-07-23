@@ -21,7 +21,7 @@
     <micronaut.openapi.lang>kotlin</micronaut.openapi.lang>
     <micronaut.openapi.generate.server>true</micronaut.openapi.generate.server>
     <micronaut.openapi.server.generated.annotation>false</micronaut.openapi.server.generated.annotation>
-    <kotlinVersion>1.9.24</kotlinVersion>
+    <kotlinVersion>1.9.25</kotlinVersion>
     <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
   </properties>
 
