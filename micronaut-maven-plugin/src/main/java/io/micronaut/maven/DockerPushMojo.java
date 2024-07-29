@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
+import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
 import io.micronaut.maven.jib.JibConfigurationService;
@@ -35,7 +36,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * <p>Implementation of the <code>deploy</code> lifecycle for pushing Docker images</p>
@@ -74,11 +77,21 @@ public class DockerPushMojo extends AbstractDockerMojo {
                     try (PushImageCmd pushImageCmd = dockerService.pushImageCmd(taggedImage)) {
                         ImageReference imageReference = ImageReference.parse(taggedImage);
                         CredentialRetrieverFactory factory = CredentialRetrieverFactory.forImage(imageReference, this::logEvent);
-                        Credential wellKnown = factory
-                                .wellKnownCredentialHelpers()
-                                .retrieve()
+                        Credential credentialHelperCredential = Stream
+                                .of(factory.wellKnownCredentialHelpers(), factory.googleApplicationDefaultCredentials())
+                                .map(retriever -> {
+                                    try {
+                                        return retriever.retrieve();
+                                    } catch (CredentialRetrievalException e) {
+                                        return Optional.<Credential>empty();
+                                    }
+                                })
+                                .filter(Optional::isPresent)
+                                .map(Optional::get)
+                                .findFirst()
                                 .orElse(factory.dockerConfig().retrieve().orElse(null));
-                        Credential credential = jibConfigurationService.getToCredentials().orElse(wellKnown);
+
+                        Credential credential = jibConfigurationService.getToCredentials().orElse(credentialHelperCredential);
                         if (credential != null) {
                             AuthConfig authConfig = dockerService.getAuthConfigFor(taggedImage, credential.getUsername(), credential.getPassword());
                             pushImageCmd.withAuthConfig(authConfig);
