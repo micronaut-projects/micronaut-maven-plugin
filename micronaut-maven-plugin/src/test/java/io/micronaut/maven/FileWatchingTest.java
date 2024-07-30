@@ -8,7 +8,9 @@ import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.FileSet;
+import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.BuildPluginManager;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.toolchain.ToolchainManager;
@@ -27,6 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static io.micronaut.maven.RunMojo.THIS_PLUGIN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -38,7 +41,7 @@ class FileWatchingTest {
 
     @Test
     @DisplayName("should detect changes in a single module project")
-    void testFileWatchesSingleProject() throws IOException {
+    void testFileWatchesSingleProject() throws IOException, MojoExecutionException {
         // given:
         var mojo = createMojoForSingleProject();
         var javaSources = tempDir.resolve("src/main/java");
@@ -108,7 +111,7 @@ class FileWatchingTest {
 
     @Test
     @DisplayName("should detect changes in a multi-module project")
-    void testFileWatchesMultiProject() throws IOException {
+    void testFileWatchesMultiProject() throws IOException, MojoExecutionException {
         // given:
         var mojo = createMojoForMultiProject(2, 0);
         var module0 = tempDir.resolve("module0");
@@ -184,14 +187,19 @@ class FileWatchingTest {
 
     }
 
-    private MojoUnderTest createMojoForSingleProject() {
+    private MojoUnderTest createMojoForSingleProject() throws MojoExecutionException {
         var project = newProject(tempDir);
         var compilerService = createCompilerServices();
-        when(compilerService.findRunnableProject()).thenReturn(project);
         var mavenSession = mock(MavenSession.class);
         when(mavenSession.getTopLevelProject()).thenReturn(project);
         when(mavenSession.getProjects()).thenReturn(List.of(project));
         when(mavenSession.getAllProjects()).thenReturn(List.of(project));
+        when(mavenSession.getCurrentProject()).thenReturn(project);
+        var thisPlugin = new Plugin();
+        thisPlugin.setGroupId("io.micronaut.maven");
+        thisPlugin.setArtifactId("micronaut-maven-plugin");
+        when(project.getPlugin(THIS_PLUGIN)).thenReturn(thisPlugin);
+        when(project.getBuildPlugins()).thenReturn(List.of(thisPlugin));
         return createMojoUnderTest(mavenSession, compilerService);
     }
 
@@ -212,7 +220,7 @@ class FileWatchingTest {
         return project;
     }
 
-    private MojoUnderTest createMojoForMultiProject(int moduleCount, int consideredProject) {
+    private MojoUnderTest createMojoForMultiProject(int moduleCount, int consideredProject) throws MojoExecutionException {
         var rootProject = newProject(tempDir);
         var mavenSession = mock(MavenSession.class);
         when(mavenSession.getTopLevelProject()).thenReturn(rootProject);
@@ -222,15 +230,21 @@ class FileWatchingTest {
             .map(this::newProject)
             .toList();
         var compilerService = createCompilerServices();
-        when(compilerService.findRunnableProject()).thenReturn(modules.get(consideredProject));
+        var runnableProject = modules.get(consideredProject);
+        var thisPlugin = new Plugin();
+        thisPlugin.setGroupId("io.micronaut.maven");
+        thisPlugin.setArtifactId("micronaut-maven-plugin");
+        when(runnableProject.getPlugin(THIS_PLUGIN)).thenReturn(thisPlugin);
+        when(runnableProject.getBuildPlugins()).thenReturn(List.of(thisPlugin));
         when(mavenSession.getProjects()).thenReturn(modules);
+        when(mavenSession.getCurrentProject()).thenReturn(runnableProject);
         when(mavenSession.getAllProjects()).thenReturn(
             Stream.concat(Stream.of(rootProject), modules.stream()).toList()
         );
         return createMojoUnderTest(mavenSession, compilerService);
     }
 
-    private static MojoUnderTest createMojoUnderTest(MavenSession mavenSession, CompilerService compilerService) {
+    private static MojoUnderTest createMojoUnderTest(MavenSession mavenSession, CompilerService compilerService) throws MojoExecutionException {
         var recompilationCount = new AtomicInteger();
         var mojo = new RunMojo(
             mavenSession,

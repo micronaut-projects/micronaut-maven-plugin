@@ -17,6 +17,7 @@ package io.micronaut.maven;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.project.MavenProject;
 import org.apache.maven.toolchain.Toolchain;
 import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.util.Os;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.micronaut.maven.AbstractDockerMojo.MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG;
+import static io.micronaut.maven.RunMojo.THIS_PLUGIN;
 
 /**
  * Utility methods for different mojos.
@@ -140,5 +142,19 @@ public final class MojoUtils {
                     .collect(Collectors.joining(","))
                     .transform(s -> "-H:ConfigurationFileDirectories=" + s);
         }
+    }
+
+    /**
+     * Checks if the project has the Micronaut Maven plugin defined.
+     *
+     * @param project the Maven project
+     * @return true if the project has the Micronaut Maven plugin defined
+     */
+    public static boolean hasMicronautMavenPlugin(MavenProject project) {
+        String[] parts = THIS_PLUGIN.split(":");
+        String groupId = parts[0];
+        String artifactId = parts[1];
+        return project.getBuildPlugins().stream()
+                .anyMatch(p -> p.getGroupId().equals(groupId) && p.getArtifactId().equals(artifactId));
     }
 }

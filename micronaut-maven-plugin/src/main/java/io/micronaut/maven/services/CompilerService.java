@@ -33,15 +33,10 @@ import org.eclipse.aether.util.filter.DependencyFilterUtils;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -56,12 +51,8 @@ public class CompilerService {
     public static final String MAVEN_JAR_PLUGIN = "org.apache.maven.plugins:maven-jar-plugin";
 
     private static final String COMPILE_GOAL = "compile";
-    private static final String JAVA = "java";
-    private static final String GROOVY = "groovy";
-    private static final String KOTLIN = "kotlin";
 
     private final Log log;
-    private final MavenProject runnableProject;
     private final MavenSession mavenSession;
     private final ExecutorService executorService;
     private final ProjectDependenciesResolver resolver;
@@ -71,7 +62,6 @@ public class CompilerService {
     public CompilerService(MavenSession mavenSession, ExecutorService executorService,
                            ProjectDependenciesResolver resolver) {
         this.mavenSession = mavenSession;
-        this.runnableProject = findRunnableProject();
         this.resolver = resolver;
         this.log = new SystemStreamLog();
         this.executorService = executorService;
@@ -98,67 +88,13 @@ public class CompilerService {
     }
 
     /**
-     * Resolves the source directories by checking the existence of Java, Groovy or Kotlin sources.
-     *
-     * @return a map with the language as key and the source directory as value.
-     */
-    public List<Path> resolveSourceDirectories() {
-        if (log.isDebugEnabled()) {
-            log.debug("Resolving source directories...");
-        }
-        return mavenSession.getProjects().stream()
-                .map(this::resolveSourceDirectories)
-                .flatMap(Set::stream)
-                .toList();
-    }
-
-    private Set<Path> resolveSourceDirectories(MavenProject project) {
-        Set<Path> sourceDirectoriesToResolve = new HashSet<>(3);
-        for (String lang : Arrays.asList(JAVA, GROOVY, KOTLIN)) {
-            Path sourceDir = project.getBasedir().toPath().resolve("src/main/" + lang);
-            if (Files.exists(sourceDir)) {
-                sourceDirectoriesToResolve.add(sourceDir);
-            }
-        }
-        sourceDirectoriesToResolve.addAll(project.getCompileSourceRoots().stream()
-                .map(File::new)
-                .map(File::toPath)
-                .filter(Files::exists)
-                .collect(Collectors.toSet()));
-        return sourceDirectoriesToResolve;
-    }
-
-    /**
-     * Finds the Maven project that has the Micronaut Maven plugin defined.
-     *
-     * @return the Maven project
-     */
-    public MavenProject findRunnableProject() {
-        return mavenSession.getProjects().stream()
-                .filter(this::hasMicronautMavenPlugin)
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("There are no projects with the Micronaut Maven plugin defined"));
-    }
-
-    private boolean hasMicronautMavenPlugin(MavenProject project) {
-        return hasPlugin(project, "io.micronaut.maven:micronaut-maven-plugin");
-    }
-
-    private boolean hasPlugin(MavenProject project, String pluginKey) {
-        String[] parts = pluginKey.split(":");
-        String groupId = parts[0];
-        String artifactId = parts[1];
-        return project.getBuildPlugins().stream()
-                .anyMatch(p -> p.getGroupId().equals(groupId) && p.getArtifactId().equals(artifactId));
-    }
-
-    /**
      * Resolves project dependencies for the given scopes.
      *
+     * @param runnableProject the project to resolve dependencies for.
      * @param scopes the scopes to resolve dependencies for.
      * @return the list of dependencies.
      */
-    public List<Dependency> resolveDependencies(String... scopes) {
+    public List<Dependency> resolveDependencies(MavenProject runnableProject, String... scopes) {
         try {
             DependencyFilter filter = DependencyFilterUtils.classpathFilter(scopes);
             RepositorySystemSession session = mavenSession.getRepositorySession();

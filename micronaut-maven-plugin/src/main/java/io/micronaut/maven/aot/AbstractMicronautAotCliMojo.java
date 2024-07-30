@@ -168,7 +168,7 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
         String projectJar = new File(mavenProject.getBuild().getDirectory(), mavenProject.getBuild().getFinalName() + ".jar").getAbsolutePath();
         List<String> result = new ArrayList<>();
         result.add(projectJar);
-        String classpath = compilerService.buildClasspath(compilerService.resolveDependencies(JavaScopes.RUNTIME));
+        String classpath = compilerService.buildClasspath(compilerService.resolveDependencies(mavenProject, JavaScopes.RUNTIME));
         result.addAll(Arrays.asList(classpath.split(File.pathSeparator)));
         return result;
     }

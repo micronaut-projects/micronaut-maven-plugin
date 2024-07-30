@@ -36,6 +36,8 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
+import static io.micronaut.maven.RunMojo.THIS_PLUGIN;
+
 /**
  * Import beans from project dependencies by generating factories annotated with
  * <code>@Import</code> containing the list of packages.
@@ -272,7 +274,7 @@ public class ImportFactoryMojo extends AbstractMicronautMojo {
     code.add("import jakarta.annotation.Generated;");
     code.add("");
     code.add("/** Factory which allows Micronaut to import beans from the specified packages. */");
-    code.add("@Generated(\"io.micronaut.maven:micronaut-maven-plugin\")");
+    code.add("@Generated(\"%s\")".formatted(THIS_PLUGIN));
     code.add("@Factory");
     code.add("@Import(");
     code.add("    packages = {");
