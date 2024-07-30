@@ -323,6 +323,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         // watch pom.xml file changes
         mavenSession.getAllProjects()
             .stream()
+            .filter(this::isDependencyOfRunnableProject)
             .map(MavenProject::getBasedir)
             .map(File::toPath)
             .forEach(path -> {
@@ -334,6 +335,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         // Add the default watch paths
         mavenSession.getAllProjects()
             .stream()
+            .filter(this::isDependencyOfRunnableProject)
             .flatMap(p -> {
                 var basedir = p.getBasedir().toPath();
                 return RELEVANT_SRC_DIRS.stream().map(dir -> basedir.resolve("src/main/" + dir));
@@ -344,6 +346,11 @@ public class RunMojo extends AbstractTestResourcesMojo {
                 fileSet.addInclude("**/*");
                 watches.add(fileSet);
             });
+    }
+
+    private boolean isDependencyOfRunnableProject(MavenProject mavenProject) {
+        return mavenProject.equals(runnableProject) || runnableProject.getDependencies().stream()
+            .anyMatch(d -> d.getGroupId().equals(mavenProject.getGroupId()) && d.getArtifactId().equals(mavenProject.getArtifactId()));
     }
 
     protected final void setWatches(List<FileSet> watches) {

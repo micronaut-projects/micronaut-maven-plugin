@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>io.micronaut.platform</groupId>
+        <artifactId>micronaut-parent</artifactId>
+        <version>@it.micronaut.version@</version>
+    </parent>
+    <artifactId>multi-project-parent</artifactId>
+    <version>0.1</version>
+    <groupId>io.micronaut.build.examples</groupId>
+    <name>multi-project</name>
+    <packaging>pom</packaging>
+
+    <properties>
+        <micronaut.version>@it.micronaut.version@</micronaut.version>
+        <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
+        <micronaut.runtime>netty</micronaut.runtime>
+        <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
+    </properties>
+
+    <modules>
+        <module>lib</module>
+        <module>app1</module>
+        <module>app2</module>
+    </modules>
+</project>

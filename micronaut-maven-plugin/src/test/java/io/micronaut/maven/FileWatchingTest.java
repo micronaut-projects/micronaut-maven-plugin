@@ -7,6 +7,7 @@ import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.BuildPluginManager;
@@ -215,6 +216,9 @@ class FileWatchingTest {
         var build = mock(Build.class);
         when(build.getDirectory()).thenReturn("target");
         var project = mock(MavenProject.class);
+        when(project.getGroupId()).thenReturn("io.micronaut.maven");
+        when(project.getArtifactId()).thenReturn(baseDir.getFileName().toString());
+        when(project.getVersion()).thenReturn("1.0.0");
         when(project.getBuild()).thenReturn(build);
         when(project.getBasedir()).thenReturn(baseDir.toFile());
         return project;
@@ -236,6 +240,18 @@ class FileWatchingTest {
         thisPlugin.setArtifactId("micronaut-maven-plugin");
         when(runnableProject.getPlugin(THIS_PLUGIN)).thenReturn(thisPlugin);
         when(runnableProject.getBuildPlugins()).thenReturn(List.of(thisPlugin));
+        var dependencies = modules.stream()
+            .filter(p -> !p.equals(runnableProject))
+            .filter(p -> !p.equals(rootProject))
+            .map(p -> {
+                var dependency = new Dependency();
+                dependency.setGroupId(p.getGroupId());
+                dependency.setArtifactId(p.getArtifactId());
+                dependency.setVersion(p.getVersion());
+                return dependency;
+            })
+            .toList();
+        when(runnableProject.getDependencies()).thenReturn(dependencies);
         when(mavenSession.getProjects()).thenReturn(modules);
         when(mavenSession.getCurrentProject()).thenReturn(runnableProject);
         when(mavenSession.getAllProjects()).thenReturn(
