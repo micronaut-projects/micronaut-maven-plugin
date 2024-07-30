@@ -11,7 +11,6 @@ import org.apache.maven.model.Dependency;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.BuildPluginManager;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.toolchain.ToolchainManager;
@@ -42,7 +41,7 @@ class FileWatchingTest {
 
     @Test
     @DisplayName("should detect changes in a single module project")
-    void testFileWatchesSingleProject() throws IOException, MojoExecutionException {
+    void testFileWatchesSingleProject() throws IOException {
         // given:
         var mojo = createMojoForSingleProject();
         var javaSources = tempDir.resolve("src/main/java");
@@ -112,7 +111,7 @@ class FileWatchingTest {
 
     @Test
     @DisplayName("should detect changes in a multi-module project")
-    void testFileWatchesMultiProject() throws IOException, MojoExecutionException {
+    void testFileWatchesMultiProject() throws IOException {
         // given:
         var mojo = createMojoForMultiProject(2, 0);
         var module0 = tempDir.resolve("module0");
@@ -188,7 +187,7 @@ class FileWatchingTest {
 
     }
 
-    private MojoUnderTest createMojoForSingleProject() throws MojoExecutionException {
+    private MojoUnderTest createMojoForSingleProject() {
         var project = newProject(tempDir);
         var compilerService = createCompilerServices();
         var mavenSession = mock(MavenSession.class);
@@ -224,7 +223,7 @@ class FileWatchingTest {
         return project;
     }
 
-    private MojoUnderTest createMojoForMultiProject(int moduleCount, int consideredProject) throws MojoExecutionException {
+    private MojoUnderTest createMojoForMultiProject(int moduleCount, int consideredProject) {
         var rootProject = newProject(tempDir);
         var mavenSession = mock(MavenSession.class);
         when(mavenSession.getTopLevelProject()).thenReturn(rootProject);
@@ -260,7 +259,7 @@ class FileWatchingTest {
         return createMojoUnderTest(mavenSession, compilerService);
     }
 
-    private static MojoUnderTest createMojoUnderTest(MavenSession mavenSession, CompilerService compilerService) throws MojoExecutionException {
+    private static MojoUnderTest createMojoUnderTest(MavenSession mavenSession, CompilerService compilerService) {
         var recompilationCount = new AtomicInteger();
         var mojo = new RunMojo(
             mavenSession,

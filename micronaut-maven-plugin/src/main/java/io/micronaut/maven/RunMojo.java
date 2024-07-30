@@ -223,7 +223,11 @@ public class RunMojo extends AbstractTestResourcesMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        initialize();
+        try {
+            initialize();
+        } catch (Exception e) {
+            throw new MojoExecutionException(e.getMessage());
+        }
 
         try {
             maybeStartTestResourcesServer();
@@ -284,7 +288,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         }
     }
 
-    protected final void initialize() throws MojoExecutionException {
+    protected final void initialize()  {
         final MavenProject currentProject = mavenSession.getCurrentProject();
         if (hasMicronautMavenPlugin(currentProject)) {
             runnableProject = currentProject;
@@ -296,8 +300,8 @@ public class RunMojo extends AbstractTestResourcesMojo {
                 runnableProject = projectsWithPlugin.get(0);
                 log.info("Running project %s".formatted(runnableProject.getArtifactId()));
             } else  {
-                throw new MojoExecutionException("%s is declared in the following projects: %s. Please specify the project to run with the -pl option."
-                        .formatted(THIS_PLUGIN, projectsWithPlugin.stream().map(MavenProject::getArtifactId).toList()));
+                throw new IllegalStateException("The Micronaut Maven Plugin is declared in the following projects: %s. Please specify the project to run with the -pl option."
+                        .formatted(projectsWithPlugin.stream().map(MavenProject::getArtifactId).toList()));
             }
         }
         this.targetDirectory = new File(runnableProject.getBuild().getDirectory());
