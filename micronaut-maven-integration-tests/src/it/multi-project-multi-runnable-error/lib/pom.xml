@@ -3,8 +3,8 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <artifactId>app</artifactId>
-  <packaging>${packaging}</packaging>
+  <artifactId>lib</artifactId>
+  <packaging>jar</packaging>
 
   <parent>
     <groupId>io.micronaut.build.examples</groupId>
@@ -13,8 +13,7 @@
   </parent>
 
   <properties>
-    <packaging>jar</packaging>
-    <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
+    <micronaut.version>@it.micronaut.version@</micronaut.version>
   </properties>
 
   <dependencies>
@@ -68,30 +67,18 @@
       <artifactId>junit-jupiter-engine</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>io.micronaut.build.examples</groupId>
-      <artifactId>lib</artifactId>
-      <version>${project.version}</version>
-      <scope>compile</scope>
-    </dependency>
   </dependencies>
 
   <build>
+
+    <resources>
+      <resource>
+        <directory>${basedir}/src/main/resources</directory>
+      </resource>
+    </resources>
+
     <plugins>
-      <plugin>
-        <groupId>com.google.cloud.tools</groupId>
-        <artifactId>jib-maven-plugin</artifactId>
-        <configuration>
-          <to>
-            <image>${project.parent.name}-${project.artifactId}</image>
-          </to>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>io.micronaut.maven</groupId>
-        <artifactId>micronaut-maven-plugin</artifactId>
-      </plugin>
-      
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -101,25 +88,14 @@
 
           <annotationProcessorPaths combine.children="append">
             <path>
-              <groupId>io.micronaut.validation</groupId>
-              <artifactId>micronaut-validation-processor</artifactId>
-              <version>${micronaut.validation.version}</version>
-              <exclusions>
-                <exclusion>
-                  <groupId>io.micronaut</groupId>
-                  <artifactId>micronaut-inject</artifactId>
-                </exclusion>
-              </exclusions>
-            </path>
-            <path>
               <groupId>io.micronaut</groupId>
               <artifactId>micronaut-http-validation</artifactId>
-              <version>${micronaut.core.version}</version>
+              <version>${micronaut.version}</version>
             </path>
           </annotationProcessorPaths>
           <compilerArgs>
             <arg>-Amicronaut.processing.group=io.micronaut.build.examples</arg>
-            <arg>-Amicronaut.processing.module=oci</arg>
+            <arg>-Amicronaut.processing.module=lib</arg>
           </compilerArgs>
         </configuration>
       </plugin>

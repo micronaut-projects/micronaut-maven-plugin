@@ -23,6 +23,7 @@
 
     <modules>
         <module>lib</module>
-        <module>app</module>
+        <module>app1</module>
+        <module>app2</module>
     </modules>
 </project>

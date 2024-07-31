@@ -59,6 +59,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static io.micronaut.maven.MojoUtils.findJavaExecutable;
+import static io.micronaut.maven.MojoUtils.hasMicronautMavenPlugin;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isReadable;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
@@ -105,13 +106,13 @@ public class RunMojo extends AbstractTestResourcesMojo {
     /**
      * The project's target directory.
      */
-    private final File targetDirectory;
+    private File targetDirectory;
 
     /**
      * The main class of the application, as defined in the
      * <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.
      */
-    @Parameter(defaultValue = EXEC_MAIN_CLASS, required = true)
+    @Parameter(defaultValue = EXEC_MAIN_CLASS)
     private String mainClass;
 
     /**
@@ -211,7 +212,6 @@ public class RunMojo extends AbstractTestResourcesMojo {
                    CompilerService compilerService,
                    ExecutorService executorService,
                    DependencyResolutionService dependencyResolutionService) {
-        this.runnableProject = compilerService.findRunnableProject();
         this.mavenSession = mavenSession;
         this.projectBuilder = projectBuilder;
         this.toolchainManager = toolchainManager;
@@ -219,27 +219,15 @@ public class RunMojo extends AbstractTestResourcesMojo {
         this.executorService = executorService;
         this.javaExecutable = findJavaExecutable(toolchainManager, mavenSession);
         this.dependencyResolutionService = dependencyResolutionService;
-        this.targetDirectory = new File(runnableProject.getBuild().getDirectory());
     }
 
     @Override
     public void execute() throws MojoExecutionException {
-        testResourcesHelper = new TestResourcesHelper(testResourcesEnabled,
-            shared,
-            buildDirectory,
-            explicitPort,
-            clientTimeout,
-            serverIdleTimeoutMinutes,
-            runnableProject,
-            mavenSession,
-            dependencyResolutionService,
-            toolchainManager,
-            testResourcesVersion,
-            classpathInference,
-            testResourcesDependencies,
-            sharedServerNamespace,
-            debugServer);
-        initialize();
+        try {
+            initialize();
+        } catch (Exception e) {
+            throw new MojoExecutionException(e.getMessage());
+        }
 
         try {
             maybeStartTestResourcesServer();
@@ -300,7 +288,38 @@ public class RunMojo extends AbstractTestResourcesMojo {
         }
     }
 
-    protected final void initialize() {
+    protected final void initialize()  {
+        final MavenProject currentProject = mavenSession.getCurrentProject();
+        if (hasMicronautMavenPlugin(currentProject)) {
+            runnableProject = currentProject;
+        } else {
+            final List<MavenProject> projectsWithPlugin = mavenSession.getProjects().stream()
+                    .filter(MojoUtils::hasMicronautMavenPlugin)
+                    .toList();
+            if (projectsWithPlugin.size() == 1) {
+                runnableProject = projectsWithPlugin.get(0);
+                log.info("Running project %s".formatted(runnableProject.getArtifactId()));
+            } else  {
+                throw new IllegalStateException("The Micronaut Maven Plugin is declared in the following projects: %s. Please specify the project to run with the -pl option."
+                        .formatted(projectsWithPlugin.stream().map(MavenProject::getArtifactId).toList()));
+            }
+        }
+        this.targetDirectory = new File(runnableProject.getBuild().getDirectory());
+        this.testResourcesHelper = new TestResourcesHelper(testResourcesEnabled,
+                shared,
+                buildDirectory,
+                explicitPort,
+                clientTimeout,
+                serverIdleTimeoutMinutes,
+                runnableProject,
+                mavenSession,
+                dependencyResolutionService,
+                toolchainManager,
+                testResourcesVersion,
+                classpathInference,
+                testResourcesDependencies,
+                sharedServerNamespace,
+                debugServer);
         resolveDependencies();
         if (watches == null) {
             watches = new ArrayList<>();
@@ -308,6 +327,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         // watch pom.xml file changes
         mavenSession.getAllProjects()
             .stream()
+            .filter(this::isDependencyOfRunnableProject)
             .map(MavenProject::getBasedir)
             .map(File::toPath)
             .forEach(path -> {
@@ -319,6 +339,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         // Add the default watch paths
         mavenSession.getAllProjects()
             .stream()
+            .filter(this::isDependencyOfRunnableProject)
             .flatMap(p -> {
                 var basedir = p.getBasedir().toPath();
                 return RELEVANT_SRC_DIRS.stream().map(dir -> basedir.resolve("src/main/" + dir));
@@ -329,6 +350,11 @@ public class RunMojo extends AbstractTestResourcesMojo {
                 fileSet.addInclude("**/*");
                 watches.add(fileSet);
             });
+    }
+
+    private boolean isDependencyOfRunnableProject(MavenProject mavenProject) {
+        return mavenProject.equals(runnableProject) || runnableProject.getDependencies().stream()
+            .anyMatch(d -> d.getGroupId().equals(mavenProject.getGroupId()) && d.getArtifactId().equals(mavenProject.getArtifactId()));
     }
 
     protected final void setWatches(List<FileSet> watches) {
@@ -462,7 +488,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
 
     private boolean resolveDependencies() {
         try {
-            List<Dependency> dependencies = compilerService.resolveDependencies(JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME);
+            List<Dependency> dependencies = compilerService.resolveDependencies(runnableProject, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME);
             if (dependencies.isEmpty()) {
                 return false;
             } else {
@@ -522,6 +548,10 @@ public class RunMojo extends AbstractTestResourcesMojo {
 
             if (!mavenSession.getUserProperties().isEmpty()) {
                 mavenSession.getUserProperties().forEach((k, v) -> args.add("-D" + k + "=" + v));
+            }
+
+            if (mainClass == null) {
+                mainClass = runnableProject.getProperties().getProperty("exec.mainClass");
             }
 
             args.add("-classpath");
