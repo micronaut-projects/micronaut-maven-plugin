@@ -492,10 +492,6 @@ loadScripts(document, 'script');</script>
 <dl class="index">
 <dt><a href="io/micronaut/maven/MojoUtils.html#findJavaExecutable(org.apache.maven.toolchain.ToolchainManager,org.apache.maven.execution.MavenSession)" class="member-name-link">findJavaExecutable(ToolchainManager, MavenSession)</a> - Static method in class io.micronaut.maven.<a href="io/micronaut/maven/MojoUtils.html" title="class in io.micronaut.maven">MojoUtils</a></dt>
 <dd>&nbsp;</dd>
-<dt><a href="io/micronaut/maven/services/CompilerService.html#findRunnableProject()" class="member-name-link">findRunnableProject()</a> - Method in class io.micronaut.maven.services.<a href="io/micronaut/maven/services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a></dt>
-<dd>
-<div class="block">Finds the Maven project that has the Micronaut Maven plugin defined.</div>
-</dd>
 <dt><a href="io/micronaut/maven/openapi/OpenApiClientMojo.html#fluxForArrays" class="member-name-link">fluxForArrays</a> - Variable in class io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/OpenApiClientMojo.html" title="class in io.micronaut.maven.openapi">OpenApiClientMojo</a></dt>
 <dd>
 <div class="block">Determines if the client should use flux for arrays.</div>
@@ -617,6 +613,10 @@ loadScripts(document, 'script');</script>
 </dl>
 <h2 class="title" id="I:H">H</h2>
 <dl class="index">
+<dt><a href="io/micronaut/maven/MojoUtils.html#hasMicronautMavenPlugin(org.apache.maven.project.MavenProject)" class="member-name-link">hasMicronautMavenPlugin(MavenProject)</a> - Static method in class io.micronaut.maven.<a href="io/micronaut/maven/MojoUtils.html" title="class in io.micronaut.maven">MojoUtils</a></dt>
+<dd>
+<div class="block">Checks if the project has the Micronaut Maven plugin defined.</div>
+</dd>
 <dt><a href="io/micronaut/maven/openapi/ParameterMapping.ParameterLocation.html#HEADER" class="member-name-link">HEADER</a> - Enum constant in enum class io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/ParameterMapping.ParameterLocation.html" title="enum class in io.micronaut.maven.openapi">ParameterMapping.ParameterLocation</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/HelpMojo.html" class="type-name-link" title="class in io.micronaut.maven">HelpMojo</a> - Class in <a href="io/micronaut/maven/package-summary.html">io.micronaut.maven</a></dt>
@@ -977,13 +977,9 @@ loadScripts(document, 'script');</script>
 </dl>
 <h2 class="title" id="I:R">R</h2>
 <dl class="index">
-<dt><a href="io/micronaut/maven/services/CompilerService.html#resolveDependencies(java.lang.String...)" class="member-name-link">resolveDependencies(String...)</a> - Method in class io.micronaut.maven.services.<a href="io/micronaut/maven/services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a></dt>
+<dt><a href="io/micronaut/maven/services/CompilerService.html#resolveDependencies(org.apache.maven.project.MavenProject,java.lang.String...)" class="member-name-link">resolveDependencies(MavenProject, String...)</a> - Method in class io.micronaut.maven.services.<a href="io/micronaut/maven/services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a></dt>
 <dd>
 <div class="block">Resolves project dependencies for the given scopes.</div>
-</dd>
-<dt><a href="io/micronaut/maven/services/CompilerService.html#resolveSourceDirectories()" class="member-name-link">resolveSourceDirectories()</a> - Method in class io.micronaut.maven.services.<a href="io/micronaut/maven/services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a></dt>
-<dd>
-<div class="block">Resolves the source directories by checking the existence of Java, Groovy or Kotlin sources.</div>
 </dd>
 <dt><a href="io/micronaut/maven/RunMojo.html#RESOURCES_DIR" class="member-name-link">RESOURCES_DIR</a> - Static variable in class io.micronaut.maven.<a href="io/micronaut/maven/RunMojo.html" title="class in io.micronaut.maven">RunMojo</a></dt>
 <dd>&nbsp;</dd>

@@ -181,7 +181,7 @@
 <span class="source-line-no">168</span><span id="line-168">        String projectJar = new File(mavenProject.getBuild().getDirectory(), mavenProject.getBuild().getFinalName() + ".jar").getAbsolutePath();</span>
 <span class="source-line-no">169</span><span id="line-169">        List&lt;String&gt; result = new ArrayList&lt;&gt;();</span>
 <span class="source-line-no">170</span><span id="line-170">        result.add(projectJar);</span>
-<span class="source-line-no">171</span><span id="line-171">        String classpath = compilerService.buildClasspath(compilerService.resolveDependencies(JavaScopes.RUNTIME));</span>
+<span class="source-line-no">171</span><span id="line-171">        String classpath = compilerService.buildClasspath(compilerService.resolveDependencies(mavenProject, JavaScopes.RUNTIME));</span>
 <span class="source-line-no">172</span><span id="line-172">        result.addAll(Arrays.asList(classpath.split(File.pathSeparator)));</span>
 <span class="source-line-no">173</span><span id="line-173">        return result;</span>
 <span class="source-line-no">174</span><span id="line-174">    }</span>
