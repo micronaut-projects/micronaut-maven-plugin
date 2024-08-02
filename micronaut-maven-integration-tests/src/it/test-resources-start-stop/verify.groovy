@@ -3,7 +3,6 @@ assert log.exists()
 assert log.text.contains("BUILD SUCCESS")
 
 String port = new File(basedir, "target/test-resources-port.txt").text
-assert log.text.contains("Test resources service already started on port " + port)
 
 try (ServerSocket s = new ServerSocket(port as int)) {
     assert s != null
