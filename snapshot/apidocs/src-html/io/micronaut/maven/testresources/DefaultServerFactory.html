@@ -94,24 +94,29 @@
 <span class="source-line-no">081</span><span id="line-81">        try {</span>
 <span class="source-line-no">082</span><span id="line-82">            process = builder.inheritIO().start();</span>
 <span class="source-line-no">083</span><span id="line-83">        } catch (Exception e) {</span>
-<span class="source-line-no">084</span><span id="line-84">            serverStarted.set(false);</span>
-<span class="source-line-no">085</span><span id="line-85">            process.destroyForcibly();</span>
-<span class="source-line-no">086</span><span id="line-86">        } finally {</span>
-<span class="source-line-no">087</span><span id="line-87">            if (process.isAlive()) {</span>
-<span class="source-line-no">088</span><span id="line-88">                serverStarted.set(true);</span>
-<span class="source-line-no">089</span><span id="line-89">            } else {</span>
-<span class="source-line-no">090</span><span id="line-90">                process.destroyForcibly();</span>
-<span class="source-line-no">091</span><span id="line-91">            }</span>
-<span class="source-line-no">092</span><span id="line-92">        }</span>
-<span class="source-line-no">093</span><span id="line-93">    }</span>
-<span class="source-line-no">094</span><span id="line-94"></span>
-<span class="source-line-no">095</span><span id="line-95">    @Override</span>
-<span class="source-line-no">096</span><span id="line-96">    public void waitFor(Duration duration) throws InterruptedException {</span>
-<span class="source-line-no">097</span><span id="line-97">        if (process != null) {</span>
-<span class="source-line-no">098</span><span id="line-98">            process.waitFor(duration.toMillis(), TimeUnit.MILLISECONDS);</span>
-<span class="source-line-no">099</span><span id="line-99">        }</span>
-<span class="source-line-no">100</span><span id="line-100">    }</span>
-<span class="source-line-no">101</span><span id="line-101">}</span>
+<span class="source-line-no">084</span><span id="line-84">            log.error("Failed to start server", e);</span>
+<span class="source-line-no">085</span><span id="line-85">            serverStarted.set(false);</span>
+<span class="source-line-no">086</span><span id="line-86">            if (process != null) {</span>
+<span class="source-line-no">087</span><span id="line-87">                process.destroyForcibly();</span>
+<span class="source-line-no">088</span><span id="line-88">            }</span>
+<span class="source-line-no">089</span><span id="line-89">        } finally {</span>
+<span class="source-line-no">090</span><span id="line-90">            if (process != null) {</span>
+<span class="source-line-no">091</span><span id="line-91">                if (process.isAlive()) {</span>
+<span class="source-line-no">092</span><span id="line-92">                    serverStarted.set(true);</span>
+<span class="source-line-no">093</span><span id="line-93">                } else {</span>
+<span class="source-line-no">094</span><span id="line-94">                    process.destroyForcibly();</span>
+<span class="source-line-no">095</span><span id="line-95">                }</span>
+<span class="source-line-no">096</span><span id="line-96">            }</span>
+<span class="source-line-no">097</span><span id="line-97">        }</span>
+<span class="source-line-no">098</span><span id="line-98">    }</span>
+<span class="source-line-no">099</span><span id="line-99"></span>
+<span class="source-line-no">100</span><span id="line-100">    @Override</span>
+<span class="source-line-no">101</span><span id="line-101">    public void waitFor(Duration duration) throws InterruptedException {</span>
+<span class="source-line-no">102</span><span id="line-102">        if (process != null) {</span>
+<span class="source-line-no">103</span><span id="line-103">            process.waitFor(duration.toMillis(), TimeUnit.MILLISECONDS);</span>
+<span class="source-line-no">104</span><span id="line-104">        }</span>
+<span class="source-line-no">105</span><span id="line-105">    }</span>
+<span class="source-line-no">106</span><span id="line-106">}</span>
 
 
 
