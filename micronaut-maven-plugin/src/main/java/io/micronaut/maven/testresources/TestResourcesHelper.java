@@ -15,6 +15,7 @@
  */
 package io.micronaut.maven.testresources;
 
+import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.testresources.buildtools.MavenDependency;
 import io.micronaut.testresources.buildtools.ServerFactory;
@@ -273,27 +274,45 @@ public class TestResourcesHelper {
 
     /**
      * Contains the logic to stop the Test Resources Service.
+     *
+     * @param quiet Whether to perform logging or not.
      */
-    public void stop() throws MojoExecutionException {
+    public void stop(boolean quiet) throws MojoExecutionException {
         if (!enabled) {
             return;
         }
         if (isKeepAlive()) {
-            log.info("Keeping Micronaut Test Resources service alive");
+            log("Keeping Micronaut Test Resources service alive", quiet);
             return;
         }
         try {
             Optional<ServerSettings> optionalServerSettings = ServerUtils.readServerSettings(getServerSettingsDirectory());
-            if (optionalServerSettings.isPresent() && ServerUtils.isServerStarted(optionalServerSettings.get().getPort())) {
-                log.info("Shutting down Micronaut Test Resources service");
+            if (optionalServerSettings.isPresent() && isServerStarted(optionalServerSettings.get().getPort())) {
+                log("Shutting down Micronaut Test Resources service", quiet);
                 doStop();
             } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Cannot find Micronaut Test Resources service settings, server may already be shutdown.");
-                }
+                log("Cannot find Micronaut Test Resources service settings, server may already be shutdown", quiet);
             }
         } catch (Exception e) {
             throw new MojoExecutionException("Unable to stop test resources server", e);
+        }
+    }
+
+    private static boolean isServerStarted(int port) {
+        if (System.getProperty("test.resources.internal.server.started") != null) {
+            return Boolean.getBoolean("test.resources.internal.server.started");
+        } else {
+            return !SocketUtils.isTcpPortAvailable(port);
+        }
+    }
+
+    private void log(String message, boolean quiet) {
+        if (quiet) {
+            if (log.isDebugEnabled()) {
+                log.debug(message);
+            }
+        } else {
+            log.info(message);
         }
     }
 
