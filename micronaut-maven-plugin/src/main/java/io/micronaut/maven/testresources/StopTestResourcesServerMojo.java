@@ -58,7 +58,7 @@ public class StopTestResourcesServerMojo extends AbstractTestResourcesMojo {
                 dependencyResolutionService, toolchainManager, testResourcesVersion,
                 classpathInference, testResourcesDependencies, sharedServerNamespace,
                 debugServer);
-        helper.stop();
+        helper.stop(false);
     }
 
 }

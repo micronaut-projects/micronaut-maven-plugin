@@ -107,7 +107,7 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
                         helper.setSharedServerNamespace(sharedServerNamespace);
                     }
                     try {
-                        helper.stop();
+                        helper.stop(true);
                     } catch (Exception e) {
                         logger.error(e.getMessage(), e);
                     }
