@@ -81,13 +81,18 @@ public class DefaultServerFactory implements ServerFactory {
         try {
             process = builder.inheritIO().start();
         } catch (Exception e) {
+            log.error("Failed to start server", e);
             serverStarted.set(false);
-            process.destroyForcibly();
-        } finally {
-            if (process.isAlive()) {
-                serverStarted.set(true);
-            } else {
+            if (process != null) {
                 process.destroyForcibly();
+            }
+        } finally {
+            if (process != null) {
+                if (process.isAlive()) {
+                    serverStarted.set(true);
+                } else {
+                    process.destroyForcibly();
+                }
             }
         }
     }
