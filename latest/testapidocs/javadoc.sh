@@ -1,1 +1,1 @@
-/usr/lib/jvm/temurin-17-jdk-amd64/bin/javadoc -J-Xmx512m -J-Xms128m @options @packages
+/usr/lib/jvm/temurin-17-jdk-amd64/bin/javadoc -J-Xmx512m -J-Xms128m -J-Duser.language= -J-Duser.country= @options @packages
