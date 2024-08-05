@@ -83,7 +83,7 @@ public class DefaultServerFactory implements ServerFactory {
         if (mainClass == null) {
             throw new IllegalStateException("Main class is not set");
         }
-        cli.add(processParameters.getMainClass());
+        cli.add(mainClass);
         cli.addAll(processParameters.getArguments());
 
         if (log.isDebugEnabled()) {
