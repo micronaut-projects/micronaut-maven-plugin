@@ -17,7 +17,7 @@
 -docencoding
 'UTF-8'
 -doctitle
-'Micronaut Maven Plugin - Plugin 4.6.2 Test API'
+'Micronaut Maven Plugin - Plugin 4.6.3-SNAPSHOT Test API'
 -link
 '../apidocs'
 -linksource
@@ -25,4 +25,4 @@
 -use
 -version
 -windowtitle
-'Micronaut Maven Plugin - Plugin 4.6.2 Test API'
+'Micronaut Maven Plugin - Plugin 4.6.3-SNAPSHOT Test API'
