@@ -65,8 +65,12 @@ public class DefaultServerFactory implements ServerFactory {
     @Override
     public void startServer(ServerUtils.ProcessParameters processParameters) {
         log.info("Starting Micronaut Test Resources service, version " + testResourcesVersion);
-        String javaBin = findJavaExecutable(toolchainManager, mavenSession);
         List<String> cli = new ArrayList<>();
+
+        String javaBin = findJavaExecutable(toolchainManager, mavenSession);
+        if (javaBin == null) {
+            throw new IllegalStateException("Java executable not found");
+        }
         cli.add(javaBin);
         cli.addAll(processParameters.getJvmArguments());
         if (debugServer) {
@@ -75,8 +79,17 @@ public class DefaultServerFactory implements ServerFactory {
         processParameters.getSystemProperties().forEach((key, value) -> cli.add("-D" + key + "=" + value));
         cli.add("-cp");
         cli.add(processParameters.getClasspath().stream().map(File::getAbsolutePath).collect(Collectors.joining(File.pathSeparator)));
+        String mainClass = processParameters.getMainClass();
+        if (mainClass == null) {
+            throw new IllegalStateException("Main class is not set");
+        }
         cli.add(processParameters.getMainClass());
         cli.addAll(processParameters.getArguments());
+
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("Command parameters: %s", cli.stream().collect(Collectors.joining(" "))));
+        }
+
         ProcessBuilder builder = new ProcessBuilder(cli);
         try {
             process = builder.inheritIO().start();
