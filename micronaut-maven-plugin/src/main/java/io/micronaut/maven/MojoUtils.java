@@ -81,10 +81,6 @@ public final class MojoUtils {
             List<String> args;
             try {
                 args = Files.readAllLines(argsFilePath);
-                // for testing
-                // ignore whitespaces in the generated args
-                // TODO: fix the write-args-file from the maven build-tool plugin
-                args = ignorePathWhiteSpaces(args);
             } catch (IOException e) {
                 throw new RuntimeException("Could not read the args file: " + argsFilePath, e);
             }
@@ -93,18 +89,28 @@ public final class MojoUtils {
                 args.remove(cpPosition);
                 args.remove(cpPosition);
             }
+
+            if (args.contains("-o")) {
+                int oPosition = args.indexOf("-o");
+                args.set(oPosition + 1, "/home/app/");
+            }
+
             return args.stream()
                     .filter(arg -> !arg.startsWith("-H:Name"))
                     .filter(arg -> !arg.startsWith("-H:Class"))
                     .filter(arg -> !arg.startsWith("-H:Path"))
                     .flatMap(arg -> {
-                        arg = arg.replace("\"", ""); // remove the " quotation from the arg
                         String[] patterns = new String[]{"\\Q", "\\E"};
                         boolean isWindows = false;
-                        if (File.separator.equals("\\")) {
+                        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
                             patterns = new String[]{"\\\\Q", "\\\\E"};
                             isWindows = true;
                         }
+
+                        if (arg.startsWith("\"") && arg.endsWith("\"")) {
+                            arg = arg.substring(1, arg.length() - 1);
+                        }
+
                         if (arg.startsWith("@")) {
                             String fileName = arg.substring(1);
                             return parseNativeImageArgsFile(fileName);
@@ -125,41 +131,6 @@ public final class MojoUtils {
         } else {
             throw new RuntimeException("Unable to find args file: " + argsFilePath);
         }
-    }
-
-    // remove lines breaks introduced by write-args-file
-    // with maven build-tools plugin
-    private static List<String> ignorePathWhiteSpaces(List<String> args) {
-        int i = 0;
-        List<String> result = new ArrayList<>();
-        while (i < args.size()) {
-            if (args.get(i).startsWith("\\\\Q") &&
-                    !args.get(i).endsWith("\\\\E")) {
-                StringBuilder line = new StringBuilder(args.get(i));
-                i++;
-                while (!args.get(i).endsWith("\\E")) {
-                    line.append(" ").append(args.get(i));
-                    i++;
-                }
-                line.append(" ").append(args.get(i));
-                result.add(line.toString());
-                i++;
-            } else if (args.get(i).startsWith("-H:ConfigurationFileDirectories")) {
-                StringBuilder line = new StringBuilder(args.get(i));
-                i++;
-                while (i < args.size() && args.get(i).toLowerCase().charAt(0) <= 'z'
-                        && args.get(i).toLowerCase().charAt(0) >= 'a') {
-                    line.append(" ").append(args.get(i));
-                    i++;
-                }
-                result.add(line.toString());
-                i++;
-            } else {
-                result.add(args.get(i));
-                i++;
-            }
-        }
-        return result;
     }
 
     static String parseConfigurationFilesDirectoriesArg(String arg) {
