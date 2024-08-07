@@ -92,17 +92,37 @@ public final class MojoUtils {
                 args.remove(cpPosition);
             }
 
+            if (args.contains("-o")) {
+                int oPosition = args.indexOf("-o");
+                args.set(oPosition + 1, "/home/app/");
+            }
+
             return args.stream()
                     .filter(arg -> !arg.startsWith("-H:Name"))
                     .filter(arg -> !arg.startsWith("-H:Class"))
                     .filter(arg -> !arg.startsWith("-H:Path"))
                     .flatMap(arg -> {
+                        String[] patterns = new String[]{"\\Q", "\\E"};
+                        boolean isWindows = false;
+                        if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+                            patterns = new String[]{"\\\\Q", "\\\\E"};
+                            isWindows = true;
+                        }
+
+                        if (arg.startsWith("\"") && arg.endsWith("\"")) {
+                            arg = arg.substring(1, arg.length() - 1);
+                        }
+
                         if (arg.startsWith("@")) {
                             String fileName = arg.substring(1);
                             return parseNativeImageArgsFile(fileName);
-                        } else if (arg.startsWith("\\Q") && arg.endsWith("\\E")) {
+                        } else if (arg.startsWith(patterns[0]) && arg.endsWith(patterns[1])) {
                             // start the search at length - 3 to skip \Q or \E at the end
-                            int lastIndexOfSlash = arg.lastIndexOf(File.separator, arg.length() - 3);
+                            int skip = isWindows ? 4 : 3;
+                            int lastIndexOfSlash = arg.lastIndexOf(File.separator , arg.length() - skip);
+                            if (isWindows) {
+                                return Stream.of("\\Q/home/app/libs/" + arg.substring(lastIndexOfSlash + 1, arg.length() - 3) + "\\E");
+                            }
                             return Stream.of("\\Q/home/app/libs/" + arg.substring(lastIndexOfSlash + 1));
                         } else if (arg.startsWith("-H:ConfigurationFileDirectories")) {
                             return Stream.of(parseConfigurationFilesDirectoriesArg(arg));
@@ -132,11 +152,11 @@ public final class MojoUtils {
             return Stream.of(directories)
                     .map(FilenameUtils::separatorsToUnix)
                     .map(directory -> {
-                        String[] splitDirectory = directory.split(separator);
+                        String[] splitDirectory = directory.replaceAll("//", "/").split(separator);
                         String last4Directories = splitDirectory[splitDirectory.length - 4] + separator +
-                                                  splitDirectory[splitDirectory.length - 3] + separator +
-                                                  splitDirectory[splitDirectory.length - 2] + separator +
-                                                  splitDirectory[splitDirectory.length - 1];
+                                splitDirectory[splitDirectory.length - 3] + separator +
+                                splitDirectory[splitDirectory.length - 2] + separator +
+                                splitDirectory[splitDirectory.length - 1];
                         return "/home/app/graalvm-reachability-metadata/" + last4Directories;
                     })
                     .collect(Collectors.joining(","))
