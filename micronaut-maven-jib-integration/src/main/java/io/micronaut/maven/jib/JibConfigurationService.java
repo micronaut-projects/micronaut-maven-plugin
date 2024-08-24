@@ -24,7 +24,13 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -99,8 +105,8 @@ public class JibConfigurationService {
                 Xpp3Dom tags = to.getChild("tags");
                 if (tags != null && tags.getChildCount() > 0) {
                     result = Arrays.stream(tags.getChildren())
-                            .map(Xpp3Dom::getValue)
-                            .collect(Collectors.toSet());
+                        .map(Xpp3Dom::getValue)
+                        .collect(Collectors.toSet());
                 }
             }
             if (result == null) {
@@ -162,7 +168,7 @@ public class JibConfigurationService {
      * @return the <code>container.args</code> configuration.
      */
     public List<String> getArgs() {
-        List<String> result = new ArrayList<>();
+        var result = new ArrayList<String>();
         if (configuration != null) {
             Xpp3Dom container = configuration.getChild(CONTAINER);
             if (container != null) {
@@ -181,7 +187,7 @@ public class JibConfigurationService {
 
     private static Set<String> parseCommaSeparatedList(String list) {
         String[] parts = list.split(",");
-        Set<String> items = new HashSet<>(parts.length);
+        var items = new HashSet<String>(parts.length);
         for (String part : parts) {
             items.add(part.trim());
         }

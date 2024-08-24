@@ -28,7 +28,6 @@ import org.apache.maven.project.MavenProject;
 import java.io.File;
 import java.util.List;
 import java.util.Locale;
-import java.util.stream.Collectors;
 
 /**
  * Base class for OpenAPI generator mojos. This provides the common
@@ -111,6 +110,7 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
 
     /**
      * Allows specifying the language of the generated code.
+     *
      * @since 4.3.0
      */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".lang", defaultValue = "java")
@@ -121,6 +121,7 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
 
     /**
      * Determines if this mojo must be executed.
+     *
      * @return true if the mojo is enabled
      */
     protected abstract boolean isEnabled();
@@ -130,6 +131,7 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
      * common properties shared by all generators have already been
      * configured, so this method should only take care of configuring
      * the generator specific parameters.
+     *
      * @param builder the generator configuration builder
      */
     protected abstract void configureBuilder(MicronautCodeGeneratorBuilder builder) throws MojoExecutionException;
@@ -142,42 +144,42 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
         }
         project.addCompileSourceRoot(outputDirectory.getAbsolutePath());
         var builder = MicronautCodeGeneratorEntryPoint.builder()
-                .withDefinitionFile(definitionFile.toURI())
-                .withOutputDirectory(outputDirectory)
-                .withOutputs(
-                        outputKinds.stream().map(String::toUpperCase).map(MicronautCodeGeneratorEntryPoint.OutputKind::valueOf).toList().toArray(new MicronautCodeGeneratorEntryPoint.OutputKind[0])
-                )
-                .withOptions(options -> {
-                    options.withLang(MicronautCodeGeneratorOptionsBuilder.GeneratorLanguage.valueOf(lang.toUpperCase(Locale.ENGLISH)));
-                    options.withInvokerPackage(invokerPackageName);
-                    options.withApiPackage(apiPackageName);
-                    options.withModelPackage(modelPackageName);
-                    options.withBeanValidation(useBeanValidation);
-                    options.withOptional(useOptional);
-                    options.withReactive(useReactive);
-                    options.withSerializationLibrary(SerializationLibraryKind.MICRONAUT_SERDE_JACKSON);
-                    options.withParameterMappings(parameterMappings.stream()
-                            .map(mapping -> new io.micronaut.openapi.generator.ParameterMapping(
-                                    mapping.getName(),
-                                    io.micronaut.openapi.generator.ParameterMapping.ParameterLocation.valueOf(
-                                            mapping.getLocation().name()
-                                    ),
-                                    mapping.getMappedType(),
-                                    mapping.getMappedName(),
-                                    mapping.isValidated()
-                            ))
-                            .collect(Collectors.toList())
-                    );
-                    options.withResponseBodyMappings(responseBodyMappings.stream()
-                            .map(mapping -> new io.micronaut.openapi.generator.ResponseBodyMapping(
-                                    mapping.getHeaderName(),
-                                    mapping.getMappedBodyType(),
-                                    mapping.isListWrapper(),
-                                    mapping.isValidated()
-                            ))
-                            .collect(Collectors.toList())
-                    );
-                });
+            .withDefinitionFile(definitionFile.toURI())
+            .withOutputDirectory(outputDirectory)
+            .withOutputs(
+                outputKinds.stream().map(String::toUpperCase).map(MicronautCodeGeneratorEntryPoint.OutputKind::valueOf).toList().toArray(new MicronautCodeGeneratorEntryPoint.OutputKind[0])
+            )
+            .withOptions(options -> {
+                options.withLang(MicronautCodeGeneratorOptionsBuilder.GeneratorLanguage.valueOf(lang.toUpperCase(Locale.ENGLISH)));
+                options.withInvokerPackage(invokerPackageName);
+                options.withApiPackage(apiPackageName);
+                options.withModelPackage(modelPackageName);
+                options.withBeanValidation(useBeanValidation);
+                options.withOptional(useOptional);
+                options.withReactive(useReactive);
+                options.withSerializationLibrary(SerializationLibraryKind.MICRONAUT_SERDE_JACKSON);
+                options.withParameterMappings(parameterMappings.stream()
+                    .map(mapping -> new io.micronaut.openapi.generator.ParameterMapping(
+                        mapping.getName(),
+                        io.micronaut.openapi.generator.ParameterMapping.ParameterLocation.valueOf(
+                            mapping.getLocation().name()
+                        ),
+                        mapping.getMappedType(),
+                        mapping.getMappedName(),
+                        mapping.isValidated()
+                    ))
+                    .toList()
+                );
+                options.withResponseBodyMappings(responseBodyMappings.stream()
+                    .map(mapping -> new io.micronaut.openapi.generator.ResponseBodyMapping(
+                        mapping.getHeaderName(),
+                        mapping.getMappedBodyType(),
+                        mapping.isListWrapper(),
+                        mapping.isValidated()
+                    ))
+                    .toList()
+                );
+            });
         configureBuilder(builder);
         builder.build().generate();
     }

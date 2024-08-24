@@ -15,7 +15,12 @@
  */
 package io.micronaut.maven.services;
 
-import io.micronaut.context.env.*;
+import io.micronaut.context.env.EnvironmentPropertySource;
+import io.micronaut.context.env.MapPropertySource;
+import io.micronaut.context.env.PropertiesPropertySourceLoader;
+import io.micronaut.context.env.PropertySource;
+import io.micronaut.context.env.PropertySourceLoader;
+import io.micronaut.context.env.SystemPropertiesPropertySource;
 import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
 import io.micronaut.core.io.file.DefaultFileSystemResourceLoader;
 import org.apache.maven.project.MavenProject;
@@ -59,11 +64,11 @@ public class ApplicationConfigurationService {
     }
 
     private Map<String, Object> parseApplicationConfiguration() {
-        Map<String, Object> configuration = new HashMap<>();
+        var configuration = new HashMap<String, Object>();
 
         PropertySourceLoader[] loaders = {
-                new YamlPropertySourceLoader(),
-                new PropertiesPropertySourceLoader()
+            new YamlPropertySourceLoader(),
+            new PropertiesPropertySourceLoader()
         };
 
         for (PropertySourceLoader loader : loaders) {
@@ -75,8 +80,8 @@ public class ApplicationConfigurationService {
         }
 
         MapPropertySource[] propertySources = {
-                new EnvironmentPropertySource(),
-                new SystemPropertiesPropertySource()
+            new EnvironmentPropertySource(),
+            new SystemPropertiesPropertySource()
         };
         for (MapPropertySource propertySource : propertySources) {
             configuration.putAll(propertySource.asMap());

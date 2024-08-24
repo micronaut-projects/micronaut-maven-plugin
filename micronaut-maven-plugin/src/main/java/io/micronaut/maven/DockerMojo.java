@@ -19,9 +19,9 @@ import com.github.dockerjava.api.command.BuildImageCmd;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
+import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
-import io.micronaut.maven.jib.JibConfigurationService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -59,7 +59,7 @@ public class DockerMojo extends AbstractDockerMojo {
                       ApplicationConfigurationService applicationConfigurationService, DockerService dockerService,
                       MavenSession mavenSession, MojoExecution mojoExecution) {
         super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession,
-                mojoExecution);
+            mojoExecution);
     }
 
     @Override
@@ -76,12 +76,11 @@ public class DockerMojo extends AbstractDockerMojo {
     private File determineDockerfile(File providedDockerfile) throws MojoExecutionException {
         if (providedDockerfile.exists()) {
             return providedDockerfile;
-        } else {
-            try {
-                return dockerService.loadDockerfileAsResource(DOCKERFILE_ORACLE_CLOUD);
-            } catch (IOException e) {
-                throw new MojoExecutionException("Error loading Dockerfile", e);
-            }
+        }
+        try {
+            return dockerService.loadDockerfileAsResource(DOCKERFILE_ORACLE_CLOUD);
+        } catch (IOException e) {
+            throw new MojoExecutionException("Error loading Dockerfile", e);
         }
     }
 
@@ -103,14 +102,14 @@ public class DockerMojo extends AbstractDockerMojo {
             copyDependencies();
 
             String targetDir = mavenProject.getBuild().getDirectory();
-            File targetDockerfile = new File(targetDir, dockerfile.getName());
+            var targetDockerfile = new File(targetDir, dockerfile.getName());
             Files.copy(dockerfile.toPath(), targetDockerfile.toPath(), LinkOption.NOFOLLOW_LINKS,
-                    StandardCopyOption.REPLACE_EXISTING);
+                StandardCopyOption.REPLACE_EXISTING);
 
             BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
-                    .withDockerfile(targetDockerfile)
-                    .withTags(getTags())
-                    .withBaseDirectory(new File(targetDir));
+                .withDockerfile(targetDockerfile)
+                .withTags(getTags())
+                .withBaseDirectory(new File(targetDir));
             getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
             dockerService.buildImage(buildImageCmd);
         } catch (IOException e) {

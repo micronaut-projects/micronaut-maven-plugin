@@ -69,6 +69,7 @@ public class CompilerService {
 
     /**
      * Compiles the project.
+     *
      * @return the last compilation time millis.
      */
     public Optional<Long> compileProject() {
@@ -120,9 +121,9 @@ public class CompilerService {
         Comparator<Dependency> byGroupId = Comparator.comparing(d -> d.getArtifact().getGroupId());
         Comparator<Dependency> byArtifactId = Comparator.comparing(d -> d.getArtifact().getArtifactId());
         return dependencies.stream()
-                .sorted(byGroupId.thenComparing(byArtifactId))
-                .map(dependency -> dependency.getArtifact().getFile().getAbsolutePath())
-                .collect(Collectors.joining(File.pathSeparator));
+            .sorted(byGroupId.thenComparing(byArtifactId))
+            .map(dependency -> dependency.getArtifact().getFile().getAbsolutePath())
+            .collect(Collectors.joining(File.pathSeparator));
     }
 
     /**

@@ -54,7 +54,7 @@ public class StartTestResourcesServerMojo extends AbstractTestResourcesMojo {
 
     @Override
     public final void execute() throws MojoExecutionException {
-        TestResourcesHelper helper = new TestResourcesHelper(
+        var helper = new TestResourcesHelper(
             testResourcesEnabled, shared, buildDirectory,
             explicitPort, clientTimeout, serverIdleTimeoutMinutes, mavenProject, mavenSession,
             dependencyResolutionService, toolchainManager, testResourcesVersion,

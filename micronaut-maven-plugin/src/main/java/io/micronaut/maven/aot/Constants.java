@@ -19,33 +19,33 @@ import java.util.List;
 
 abstract class Constants {
     static final List<String> TYPES_TO_CHECK = List.of(
-            "io.reactivex.Observable",
-            "reactor.core.publisher.Flux",
-            "kotlinx.coroutines.flow.Flow",
-            "io.reactivex.rxjava3.core.Flowable",
-            "io.reactivex.rxjava3.core.Observable",
-            "io.reactivex.Single",
-            "reactor.core.publisher.Mono",
-            "io.reactivex.Maybe",
-            "io.reactivex.rxjava3.core.Single",
-            "io.reactivex.rxjava3.core.Maybe",
-            "io.reactivex.Completable",
-            "io.reactivex.rxjava3.core.Completable",
-            "io.methvin.watchservice.MacOSXListeningWatchService",
-            "io.micronaut.core.async.publisher.CompletableFuturePublisher",
-            "io.micronaut.core.async.publisher.Publishers.JustPublisher",
-            "io.micronaut.core.async.subscriber.Completable"
+        "io.reactivex.Observable",
+        "reactor.core.publisher.Flux",
+        "kotlinx.coroutines.flow.Flow",
+        "io.reactivex.rxjava3.core.Flowable",
+        "io.reactivex.rxjava3.core.Observable",
+        "io.reactivex.Single",
+        "reactor.core.publisher.Mono",
+        "io.reactivex.Maybe",
+        "io.reactivex.rxjava3.core.Single",
+        "io.reactivex.rxjava3.core.Maybe",
+        "io.reactivex.Completable",
+        "io.reactivex.rxjava3.core.Completable",
+        "io.methvin.watchservice.MacOSXListeningWatchService",
+        "io.micronaut.core.async.publisher.CompletableFuturePublisher",
+        "io.micronaut.core.async.publisher.Publishers.JustPublisher",
+        "io.micronaut.core.async.subscriber.Completable"
     );
 
     static final List<String> SERVICE_TYPES = List.of(
-            "io.micronaut.context.env.PropertySourceLoader",
-            "io.micronaut.inject.BeanConfiguration",
-            "io.micronaut.inject.BeanDefinitionReference",
-            "io.micronaut.http.HttpRequestFactory",
-            "io.micronaut.http.HttpResponseFactory",
-            "io.micronaut.core.beans.BeanIntrospectionReference",
-            "io.micronaut.core.convert.TypeConverterRegistrar",
-            "io.micronaut.context.env.PropertyExpressionResolver"
+        "io.micronaut.context.env.PropertySourceLoader",
+        "io.micronaut.inject.BeanConfiguration",
+        "io.micronaut.inject.BeanDefinitionReference",
+        "io.micronaut.http.HttpRequestFactory",
+        "io.micronaut.http.HttpResponseFactory",
+        "io.micronaut.core.beans.BeanIntrospectionReference",
+        "io.micronaut.core.convert.TypeConverterRegistrar",
+        "io.micronaut.context.env.PropertyExpressionResolver"
     );
 
     static final String MICRONAUT_AOT_GROUP_ID = "io.micronaut.aot";

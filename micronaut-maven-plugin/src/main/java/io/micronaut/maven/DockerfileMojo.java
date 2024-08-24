@@ -16,11 +16,11 @@
 package io.micronaut.maven;
 
 import io.micronaut.maven.core.MicronautRuntime;
+import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.jib.JibMicronautExtension;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DockerService;
-import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
@@ -87,8 +87,8 @@ public class DockerfileMojo extends AbstractDockerMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        MicronautRuntime runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
-        Packaging packaging = Packaging.of(mavenProject.getPackaging());
+        var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
+        var packaging = Packaging.of(mavenProject.getPackaging());
         try {
             copyDependencies();
             Optional<File> dockerfile = switch (packaging) {
@@ -144,13 +144,13 @@ public class DockerfileMojo extends AbstractDockerMojo {
 
     static void processOracleFunctionDockerfile(File dockerfile) throws IOException {
         if (dockerfile != null) {
-            List<String> allLines = Files.readAllLines(dockerfile.toPath());
+            var allLines = Files.readAllLines(dockerfile.toPath());
             String projectFnVersion = JibMicronautExtension.determineProjectFnVersion(System.getProperty("java.version"));
             allLines.add(0, allLines.remove(0) + projectFnVersion);
             String entrypoint = JibMicronautExtension.buildProjectFnEntrypoint()
-                    .stream()
-                    .map(s -> "\"" + s + "\"")
-                    .collect(Collectors.joining(", "));
+                .stream()
+                .map(s -> "\"" + s + "\"")
+                .collect(Collectors.joining(", "));
 
             allLines.add("ENTRYPOINT [" + entrypoint + "]");
 
@@ -188,8 +188,8 @@ public class DockerfileMojo extends AbstractDockerMojo {
     private void processDockerfile(File dockerfile) throws IOException {
 
         if (dockerfile != null) {
-            List<String> allLines = Files.readAllLines(dockerfile.toPath());
-            List<String> result = new ArrayList<>();
+            var allLines = Files.readAllLines(dockerfile.toPath());
+            var result = new ArrayList<String>();
 
             for (String line : allLines) {
                 if (!line.startsWith("ARG")) {
@@ -201,9 +201,9 @@ public class DockerfileMojo extends AbstractDockerMojo {
                         result.add(line.replace("${BASE_JAVA_IMAGE}", getBaseImage()));
                     } else if (line.contains("GRAALVM_") || line.contains("CLASS_NAME")) {
                         result.add(line
-                                .replace("${GRAALVM_JVM_VERSION}", graalVmJvmVersion())
-                                .replace("${GRAALVM_ARCH}", graalVmArch())
-                                .replace("${CLASS_NAME}", mainClass)
+                            .replace("${GRAALVM_JVM_VERSION}", graalVmJvmVersion())
+                            .replace("${GRAALVM_ARCH}", graalVmArch())
+                            .replace("${CLASS_NAME}", mainClass)
                         );
                     } else if (line.contains("PORT")) {
                         result.add(line.replace("${PORT}", getPort()));
@@ -218,11 +218,11 @@ public class DockerfileMojo extends AbstractDockerMojo {
                 Path targetPath = Paths.get(mavenProject.getBuild().getDirectory());
                 try (Stream<Path> listStream = Files.list(targetPath)) {
                     Path argsFilePath = listStream
-                            .map(path -> path.getFileName().toString())
-                            .filter(f -> f.startsWith("native-image") && f.endsWith("args"))
-                            .map(targetPath::resolve)
-                            .findFirst()
-                            .orElse(null);
+                        .map(path -> path.getFileName().toString())
+                        .filter(f -> f.startsWith("native-image") && f.endsWith("args"))
+                        .map(targetPath::resolve)
+                        .findFirst()
+                        .orElse(null);
                     if (argsFilePath != null) {
                         argsFile = argsFilePath.toAbsolutePath().toString();
                     }

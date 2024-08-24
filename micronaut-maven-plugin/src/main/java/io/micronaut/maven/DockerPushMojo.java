@@ -23,9 +23,9 @@ import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
+import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
-import io.micronaut.maven.jib.JibConfigurationService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -78,18 +78,18 @@ public class DockerPushMojo extends AbstractDockerMojo {
                         ImageReference imageReference = ImageReference.parse(taggedImage);
                         CredentialRetrieverFactory factory = CredentialRetrieverFactory.forImage(imageReference, this::logEvent);
                         Credential credentialHelperCredential = Stream
-                                .of(factory.wellKnownCredentialHelpers(), factory.googleApplicationDefaultCredentials())
-                                .map(retriever -> {
-                                    try {
-                                        return retriever.retrieve();
-                                    } catch (CredentialRetrievalException e) {
-                                        return Optional.<Credential>empty();
-                                    }
-                                })
-                                .filter(Optional::isPresent)
-                                .map(Optional::get)
-                                .findFirst()
-                                .orElse(factory.dockerConfig().retrieve().orElse(null));
+                            .of(factory.wellKnownCredentialHelpers(), factory.googleApplicationDefaultCredentials())
+                            .map(retriever -> {
+                                try {
+                                    return retriever.retrieve();
+                                } catch (CredentialRetrievalException e) {
+                                    return Optional.<Credential>empty();
+                                }
+                            })
+                            .filter(Optional::isPresent)
+                            .map(Optional::get)
+                            .findFirst()
+                            .orElse(factory.dockerConfig().retrieve().orElse(null));
 
                         Credential credential = jibConfigurationService.getToCredentials().orElse(credentialHelperCredential);
                         if (credential != null) {

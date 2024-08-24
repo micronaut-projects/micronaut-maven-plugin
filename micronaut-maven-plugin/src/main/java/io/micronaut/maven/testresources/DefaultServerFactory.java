@@ -24,7 +24,6 @@ import org.apache.maven.toolchain.ToolchainManager;
 import java.io.File;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -65,7 +64,7 @@ public class DefaultServerFactory implements ServerFactory {
     @Override
     public void startServer(ServerUtils.ProcessParameters processParameters) {
         log.info("Starting Micronaut Test Resources service, version " + testResourcesVersion);
-        List<String> cli = new ArrayList<>();
+        var cli = new ArrayList<String>();
 
         String javaBin = findJavaExecutable(toolchainManager, mavenSession);
         if (javaBin == null) {
@@ -78,7 +77,9 @@ public class DefaultServerFactory implements ServerFactory {
         }
         processParameters.getSystemProperties().forEach((key, value) -> cli.add("-D" + key + "=" + value));
         cli.add("-cp");
-        cli.add(processParameters.getClasspath().stream().map(File::getAbsolutePath).collect(Collectors.joining(File.pathSeparator)));
+        cli.add(processParameters.getClasspath().stream()
+            .map(File::getAbsolutePath)
+            .collect(Collectors.joining(File.pathSeparator)));
         String mainClass = processParameters.getMainClass();
         if (mainClass == null) {
             throw new IllegalStateException("Main class is not set");
@@ -87,10 +88,10 @@ public class DefaultServerFactory implements ServerFactory {
         cli.addAll(processParameters.getArguments());
 
         if (log.isDebugEnabled()) {
-            log.debug(String.format("Command parameters: %s", cli.stream().collect(Collectors.joining(" "))));
+            log.debug(String.format("Command parameters: %s", String.join(" ", cli)));
         }
 
-        ProcessBuilder builder = new ProcessBuilder(cli);
+        var builder = new ProcessBuilder(cli);
         try {
             process = builder.inheritIO().start();
         } catch (Exception e) {

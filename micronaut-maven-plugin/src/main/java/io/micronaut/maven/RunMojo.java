@@ -237,7 +237,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
 
             if (process != null && process.isAlive()) {
                 if (watchForChanges) {
-                    List<Path> pathsToWatch = new ArrayList<>();
+                    var pathsToWatch = new ArrayList<Path>();
                     for (FileSet fs : watches) {
                         var directory = runnableProject.getBasedir().toPath().resolve(fs.getDirectory()).toAbsolutePath();
                         if (Files.exists(directory)) {
@@ -288,45 +288,44 @@ public class RunMojo extends AbstractTestResourcesMojo {
         }
     }
 
-    protected final void initialize()  {
+    protected final void initialize() {
         final MavenProject currentProject = mavenSession.getCurrentProject();
         if (hasMicronautMavenPlugin(currentProject)) {
             runnableProject = currentProject;
         } else {
             final List<MavenProject> projectsWithPlugin = mavenSession.getProjects().stream()
-                    .filter(MojoUtils::hasMicronautMavenPlugin)
-                    .toList();
+                .filter(MojoUtils::hasMicronautMavenPlugin)
+                .toList();
             if (projectsWithPlugin.size() == 1) {
                 runnableProject = projectsWithPlugin.get(0);
                 log.info("Running project %s".formatted(runnableProject.getArtifactId()));
-            } else  {
+            } else {
                 throw new IllegalStateException("The Micronaut Maven Plugin is declared in the following projects: %s. Please specify the project to run with the -pl option."
-                        .formatted(projectsWithPlugin.stream().map(MavenProject::getArtifactId).toList()));
+                    .formatted(projectsWithPlugin.stream().map(MavenProject::getArtifactId).toList()));
             }
         }
         this.targetDirectory = new File(runnableProject.getBuild().getDirectory());
         this.testResourcesHelper = new TestResourcesHelper(testResourcesEnabled,
-                shared,
-                buildDirectory,
-                explicitPort,
-                clientTimeout,
-                serverIdleTimeoutMinutes,
-                runnableProject,
-                mavenSession,
-                dependencyResolutionService,
-                toolchainManager,
-                testResourcesVersion,
-                classpathInference,
-                testResourcesDependencies,
-                sharedServerNamespace,
-                debugServer);
+            shared,
+            buildDirectory,
+            explicitPort,
+            clientTimeout,
+            serverIdleTimeoutMinutes,
+            runnableProject,
+            mavenSession,
+            dependencyResolutionService,
+            toolchainManager,
+            testResourcesVersion,
+            classpathInference,
+            testResourcesDependencies,
+            sharedServerNamespace,
+            debugServer);
         resolveDependencies();
         if (watches == null) {
             watches = new ArrayList<>();
         }
         // watch pom.xml file changes
-        mavenSession.getAllProjects()
-            .stream()
+        mavenSession.getAllProjects().stream()
             .filter(this::isDependencyOfRunnableProject)
             .map(MavenProject::getBasedir)
             .map(File::toPath)
@@ -337,8 +336,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
                 watches.add(fileSet);
             });
         // Add the default watch paths
-        mavenSession.getAllProjects()
-            .stream()
+        mavenSession.getAllProjects().stream()
             .filter(this::isDependencyOfRunnableProject)
             .flatMap(p -> {
                 var basedir = p.getBasedir().toPath();
@@ -394,7 +392,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         boolean matches = false;
         for (FileSet fileSet : watches) {
             if (fileSet.getIncludes() != null && !fileSet.getIncludes().isEmpty()) {
-                File directory = new File(fileSet.getDirectory());
+                var directory = new File(fileSet.getDirectory());
                 if (directory.exists() && path.getParent().startsWith(directory.getAbsolutePath())) {
                     for (String includePattern : fileSet.getIncludes()) {
                         if (pathMatches(includePattern, path) || patternEquals(path, includePattern, directory)) {
@@ -448,8 +446,8 @@ public class RunMojo extends AbstractTestResourcesMojo {
             }
         }
         return (excludeTargetDirectory && path.startsWith(targetDirectory.getAbsolutePath())) ||
-               DEFAULT_EXCLUDES.stream()
-                   .anyMatch(excludePattern -> pathMatches(excludePattern, path));
+            DEFAULT_EXCLUDES.stream()
+                .anyMatch(excludePattern -> pathMatches(excludePattern, path));
     }
 
     private boolean hasBeenCompiledRecently() {
@@ -525,7 +523,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
             runAotIfNeeded();
             String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
 
-            List<String> args = new ArrayList<>();
+            var args = new ArrayList<String>();
             args.add(javaExecutable);
 
             if (debug) {

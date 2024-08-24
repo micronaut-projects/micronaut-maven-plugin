@@ -19,11 +19,11 @@ import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.exception.DockerClientException;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.maven.core.MicronautRuntime;
+import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
-import io.micronaut.maven.jib.JibConfigurationService;
-import io.micronaut.core.util.StringUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -92,7 +92,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
                     checkJavaVersion(ORACLE_FUNCTION_MAX_ALLOWED_VERSION);
                     buildOracleCloud();
                 }
-                case DEFAULT ->  {
+                case DEFAULT -> {
                     checkJavaVersion(MAX_ALLOWED_VERSION);
                     buildDockerNative();
                 }
@@ -102,10 +102,10 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
         } catch (InvalidImageReferenceException iire) {
             String message = "Invalid image reference "
-                    + iire.getInvalidReference()
-                    + ", perhaps you should check that the reference is formatted correctly according to " +
-                    "https://docs.docker.com/engine/reference/commandline/tag/#extended-description" +
-                    "\nFor example, slash-separated name components cannot have uppercase letters";
+                + iire.getInvalidReference()
+                + ", perhaps you should check that the reference is formatted correctly according to " +
+                "https://docs.docker.com/engine/reference/commandline/tag/#extended-description" +
+                "\nFor example, slash-separated name components cannot have uppercase letters";
             throw new MojoExecutionException(message);
         } catch (IOException | IllegalArgumentException e) {
             throw new MojoExecutionException(e.getMessage(), e);
@@ -146,7 +146,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
     }
 
     private void buildDockerNativeLambda() throws IOException {
-        Map<String, String> buildImageCmdArguments = new HashMap<>();
+        var buildImageCmdArguments = new HashMap<String, String>();
 
         getLog().info("Using GRAALVM_JVM_VERSION: " + graalVmJvmVersion());
         getLog().info("Using GRAALVM_ARCH: " + graalVmArch());
@@ -158,9 +158,9 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, () -> {
             try {
                 return dockerService.buildImageCmd(DockerfileMojo.DOCKERFILE_AWS_CUSTOM_RUNTIME)
-                        .withBuildArg("GRAALVM_VERSION", graalVmVersion())
-                        .withBuildArg("GRAALVM_JVM_VERSION", graalVmJvmVersion())
-                        .withBuildArg("GRAALVM_ARCH", graalVmArch());
+                    .withBuildArg("GRAALVM_VERSION", graalVmVersion())
+                    .withBuildArg("GRAALVM_JVM_VERSION", graalVmJvmVersion())
+                    .withBuildArg("GRAALVM_ARCH", graalVmArch());
             } catch (IOException e) {
                 throw new DockerClientException(e.getMessage(), e);
             }
@@ -202,7 +202,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
         oracleCloudFunctionCmd(dockerfile);
 
-        Map<String, String> buildImageCmdArguments = new HashMap<>();
+        var buildImageCmdArguments = new HashMap<String, String>();
 
         getLog().info("Using BASE_IMAGE: " + from);
         if (StringUtils.isNotEmpty(baseImageRun) && Boolean.FALSE.equals(staticNativeImage)) {
@@ -214,10 +214,10 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         }
 
         BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, () -> dockerService.buildImageCmd()
-                .withDockerfile(dockerfile)
-                .withTags(getTags())
-                .withBuildArg("BASE_IMAGE", from)
-                .withBuildArg("PORT", port));
+            .withDockerfile(dockerfile)
+            .withTags(getTags())
+            .withBuildArg("BASE_IMAGE", from)
+            .withBuildArg("PORT", port));
 
         dockerService.buildImage(buildImageCmd);
     }

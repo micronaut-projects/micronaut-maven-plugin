@@ -39,7 +39,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -68,20 +67,20 @@ public class DependencyResolutionService {
 
     private static Stream<File> streamClasspath(List<ArtifactResult> resolutionResult) {
         return resolutionResult
-                .stream()
-                .map(ArtifactResult::getArtifact)
-                .map(Artifact::getFile);
+            .stream()
+            .map(ArtifactResult::getArtifact)
+            .map(Artifact::getFile);
     }
 
     public static List<String> toClasspath(List<ArtifactResult> resolutionResult) {
         return streamClasspath(resolutionResult)
-                .map(File::getAbsolutePath)
-                .toList();
+            .map(File::getAbsolutePath)
+            .toList();
     }
 
     public static List<File> toClasspathFiles(List<ArtifactResult> resolutionResult) {
         return streamClasspath(resolutionResult)
-                .toList();
+            .toList();
     }
 
     public static Dependency mavenDependencyToAetherDependency(org.apache.maven.model.Dependency d) {
@@ -111,12 +110,12 @@ public class DependencyResolutionService {
     public List<ArtifactResult> artifactResultsFor(Stream<Artifact> artifacts, boolean applyManagedDependencies) throws DependencyResolutionException {
         RepositorySystemSession repositorySession = mavenSession.getRepositorySession();
         DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.RUNTIME);
-        CollectRequest collectRequest = new CollectRequest();
+        var collectRequest = new CollectRequest();
         collectRequest.setRepositories(mavenProject.getRemoteProjectRepositories());
 
         if (applyManagedDependencies) {
             List<org.apache.maven.model.Dependency> dependencies = mavenProject.getDependencyManagement().getDependencies();
-            Map<String, Dependency> dependencyMap = new HashMap<>(dependencies.size());
+            var dependencyMap = new HashMap<String, Dependency>(dependencies.size());
             for (org.apache.maven.model.Dependency dependency : dependencies) {
                 String ga = dependency.getGroupId() + ":" + dependency.getArtifactId();
                 dependencyMap.putIfAbsent(ga, DependencyResolutionService.mavenDependencyToAetherDependency(dependency));
@@ -137,7 +136,7 @@ public class DependencyResolutionService {
             artifacts.map(a -> new Dependency(a, JavaScopes.RUNTIME)).forEach(collectRequest::addDependency);
         }
 
-        DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, classpathFilter);
+        var dependencyRequest = new DependencyRequest(collectRequest, classpathFilter);
 
         DependencyResult dependencyResult = repositorySystem.resolveDependencies(repositorySession, dependencyRequest);
         return dependencyResult.getArtifactResults();

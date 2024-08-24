@@ -35,15 +35,14 @@ import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
-import com.github.dockerjava.transport.DockerHttpClient;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 import com.google.cloud.tools.jib.api.Credential;
 import io.micronaut.maven.DockerfileMojo;
 import io.micronaut.maven.jib.JibConfigurationService;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.project.MavenProject;
 import org.slf4j.Logger;
@@ -85,10 +84,10 @@ public class DockerService {
         this.mavenProject = mavenProject;
         this.jibConfigurationService = jibConfigurationService;
         this.config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-        DockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder()
-                .dockerHost(config.getDockerHost())
-                .sslConfig(config.getSSLConfig())
-                .build();
+        var httpClient = new ZerodepDockerHttpClient.Builder()
+            .dockerHost(config.getDockerHost())
+            .sslConfig(config.getSSLConfig())
+            .build();
         dockerClient = DockerClientImpl.getInstance(config, httpClient);
     }
 
@@ -108,7 +107,7 @@ public class DockerService {
         Optional<Credential> fromCredentials = jibConfigurationService.getFromCredentials();
         if (fromImage.isPresent() && fromCredentials.isPresent()) {
             AuthConfig authConfig = getAuthConfigFor(fromImage.get(), fromCredentials.get().getUsername(), fromCredentials.get().getPassword());
-            AuthConfigurations authConfigurations = new AuthConfigurations();
+            var authConfigurations = new AuthConfigurations();
             authConfigurations.addConfig(authConfig);
             buildImageCmd.withBuildAuthConfigs(authConfigurations);
         }
@@ -146,8 +145,8 @@ public class DockerService {
         };
 
         return builder
-                .exec(resultCallback)
-                .awaitImageId();
+            .exec(resultCallback)
+            .awaitImageId();
     }
 
     /**
@@ -179,24 +178,24 @@ public class DockerService {
                 try (WaitContainerCmd wait = dockerClient.waitContainerCmd(createResponse.getId())) {
                     WaitContainerResultCallback waitResult = wait.start();
                     LOG.info("Waiting {} seconds for completion", timeoutSeconds);
-                    Integer exitcode = waitResult.awaitStatusCode(timeoutSeconds, TimeUnit.SECONDS);
-                    if (exitcode != 0) {
+                    Integer exitCode = waitResult.awaitStatusCode(timeoutSeconds, TimeUnit.SECONDS);
+                    if (exitCode != 0) {
                         final Slf4jLogConsumer stdoutConsumer = new Slf4jLogConsumer(LOG);
                         final Slf4jLogConsumer stderrConsumer = new Slf4jLogConsumer(LOG);
 
-                        try (FrameConsumerResultCallback callback = new FrameConsumerResultCallback()) {
+                        try (var callback = new FrameConsumerResultCallback()) {
                             callback.addConsumer(OutputFrame.OutputType.STDOUT, stdoutConsumer);
                             callback.addConsumer(OutputFrame.OutputType.STDERR, stderrConsumer);
 
                             dockerClient.logContainerCmd(start.getContainerId())
-                                    .withStdOut(true)
-                                    .withStdErr(true)
-                                    .exec(callback)
-                                    .awaitCompletion();
+                                .withStdOut(true)
+                                .withStdErr(true)
+                                .exec(callback)
+                                .awaitCompletion();
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
                         }
-                        throw new IOException("Image " + imageId + " exited with code " + exitcode);
+                        throw new IOException("Image " + imageId + " exited with code " + exitCode);
                     }
                 }
             }
@@ -216,8 +215,8 @@ public class DockerService {
         dockerClient.startContainerCmd(container.getId());
         InputStream nativeImage = dockerClient.copyArchiveFromContainerCmd(container.getId(), containerPath).exec();
 
-        try (TarArchiveInputStream fin = new TarArchiveInputStream(nativeImage)) {
-            TarArchiveEntry tarEntry = fin.getNextTarEntry();
+        try (var fin = new TarArchiveInputStream(nativeImage)) {
+            TarArchiveEntry tarEntry = fin.getNextEntry();
             File file = new File(mavenProject.getBuild().getDirectory(), tarEntry.getName());
             if (!file.getCanonicalFile().toPath().startsWith(mavenProject.getBuild().getDirectory())) {
                 throw new IOException("Entry is outside of the target directory");
@@ -255,7 +254,7 @@ public class DockerService {
         String path = "/dockerfiles/" + name;
         InputStream stream = getClass().getResourceAsStream(path);
         if (stream != null) {
-            File dockerfile = new File(mavenProject.getBuild().getDirectory(), targetFileName);
+            var dockerfile = new File(mavenProject.getBuild().getDirectory(), targetFileName);
             FileUtils.copyInputStreamToFile(stream, dockerfile);
             return dockerfile;
         }
@@ -272,7 +271,6 @@ public class DockerService {
     }
 
     /**
-     *
      * @param dockerImage the image name
      * @param username the username
      * @param password the password
@@ -280,10 +278,10 @@ public class DockerService {
      */
     public AuthConfig getAuthConfigFor(String dockerImage, String username, String password) {
         DockerImageName dockerImageName = DockerImageName.parse(dockerImage);
-        AuthConfig defaultAuthConfig = new AuthConfig()
-                .withRegistryAddress(dockerImageName.getRegistry())
-                .withUsername(username)
-                .withPassword(password);
+        var defaultAuthConfig = new AuthConfig()
+            .withRegistryAddress(dockerImageName.getRegistry())
+            .withUsername(username)
+            .withPassword(password);
         RegistryAuthLocator registryAuthLocator = RegistryAuthLocator.instance();
         AuthConfig authConfig = registryAuthLocator.lookupAuthConfig(dockerImageName, defaultAuthConfig);
         AuthResponse authResponse = dockerClient.authCmd().withAuthConfig(authConfig).exec();

@@ -39,13 +39,13 @@ public class TestResourcesConfiguration {
 
     /**
      * Whether the test resources service should be shared between independent builds
-     * (e.g different projects, even built with different build tools).
+     * (e.g. different projects, even built with different build tools).
      */
     @Parameter(property = CONFIG_PROPERTY_PREFIX + "shared", defaultValue = DISABLED)
     protected boolean shared;
 
     /**
-     * Allows configuring a namespace for the shared test resources server. This can be used in case it makes sense to
+     * Allows configuring a namespace for the shared test-resources server. This can be used in case it makes sense to
      * have different instances of shared services, for example when independent builds sets share different services.
      *
      * @since 3.5.1

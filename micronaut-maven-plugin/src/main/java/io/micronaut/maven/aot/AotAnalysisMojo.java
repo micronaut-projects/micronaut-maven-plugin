@@ -79,7 +79,7 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
 
     @Override
     protected List<String> getExtraArgs() throws MojoExecutionException {
-        List<String> args = new ArrayList<>();
+        var args = new ArrayList<String>();
         args.add("--output");
         File generated = outputFile("generated");
         args.add(generated.getAbsolutePath());
@@ -91,7 +91,7 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
 
     private File writeEffectiveConfigFile() throws MojoExecutionException {
         File userProvidedFile = this.configFile == null ? new File(baseDirectory, AOT_PROPERTIES_FILE_NAME) : this.configFile;
-        Properties props = new Properties();
+        var props = new Properties();
         if (userProvidedFile.exists()) {
             try (InputStream in = Files.newInputStream(userProvidedFile.toPath())) {
                 getLog().info("Using AOT configuration file: " + configFile.getAbsolutePath());
@@ -104,7 +104,7 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
             props.put(KnownMissingTypesSourceGenerator.OPTION.key(), String.join(",", Constants.TYPES_TO_CHECK));
         }
         props.computeIfAbsent(AbstractStaticServiceLoaderSourceGenerator.SERVICE_TYPES,
-                key -> String.join(",", Constants.SERVICE_TYPES));
+            key -> String.join(",", Constants.SERVICE_TYPES));
         File effectiveConfig = outputFile("effective-" + AOT_PROPERTIES_FILE_NAME);
         try (OutputStream out = Files.newOutputStream(effectiveConfig.toPath())) {
             props.store(out, "Effective AOT configuration");
