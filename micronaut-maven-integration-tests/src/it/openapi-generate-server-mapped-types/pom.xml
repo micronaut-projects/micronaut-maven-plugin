@@ -165,7 +165,11 @@
               <isListWrapper>true</isListWrapper>
             </responseBodyMapping>
           </responseBodyMappings>
-
+          <additionalProperties>
+            <lombok>true</lombok>
+            <additionalEnumTypeAnnotations>@io.micronaut.aot.core.AOTModule</additionalEnumTypeAnnotations>
+            <additionalEnumTypeAnnotations>@io.test.MyAnnotation</additionalEnumTypeAnnotations>
+          </additionalProperties>
         </configuration>
       </plugin>
       <plugin>

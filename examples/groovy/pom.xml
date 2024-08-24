@@ -14,8 +14,8 @@
   </parent>
   <properties>
     <packaging>jar</packaging>
-    <micronaut.version>4.0.0-SNAPSHOT</micronaut.version>
-    <micronaut-maven-plugin.version>4.0.0-SNAPSHOT</micronaut-maven-plugin.version>
+    <micronaut.version>4.6.2</micronaut.version>
+    <micronaut-maven-plugin.version>4.6.3</micronaut-maven-plugin.version>
     <micronaut.runtime>netty</micronaut.runtime>
     <exec.mainClass>io.micronaut.maven.examples.Application</exec.mainClass>
     <groovyVersion>4.0.12</groovyVersion>

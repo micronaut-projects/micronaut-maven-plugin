@@ -72,12 +72,12 @@
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <maven.version>3.9.8</maven.version>
+        <maven.version>3.9.9</maven.version>
         <micronaut.version>4.6.2</micronaut.version>
         <native-maven-plugin.version>0.10.3</native-maven-plugin.version>
-        <micronaut.aot.version>2.4.0</micronaut.aot.version>
+        <micronaut.aot.version>2.5.0</micronaut.aot.version>
         <micronaut.test.resources.version>2.6.2</micronaut.test.resources.version>
-        <micronaut.openapi.version>6.11.1</micronaut.openapi.version>
+        <micronaut.openapi.version>6.13.0</micronaut.openapi.version>
 
         <maven.resources-plugin.version>3.3.1</maven.resources-plugin.version>
         <maven.archiver-plugin.version>3.6.0</maven.archiver-plugin.version>
@@ -168,16 +168,6 @@
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter-params</artifactId>
                 <version>${junit-jupiter.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.swagger.parser</groupId>
-                <artifactId>swagger-parser</artifactId>
-                <version>1.0.67</version>
-            </dependency>
-            <dependency>
-                <groupId>io.swagger.parser.v3</groupId>
-                <artifactId>swagger-parser</artifactId>
-                <version>2.1.22</version>
             </dependency>
             <dependency>
                 <groupId>com.github.docker-java</groupId>

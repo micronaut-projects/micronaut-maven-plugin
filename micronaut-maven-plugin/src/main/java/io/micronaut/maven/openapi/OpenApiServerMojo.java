@@ -26,7 +26,9 @@ import org.apache.maven.plugins.annotations.Parameter;
  */
 @Mojo(name = OpenApiServerMojo.MOJO_NAME, defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class OpenApiServerMojo extends AbstractOpenApiMojo {
+
     public static final String MOJO_NAME = "generate-openapi-server";
+
     private static final String SERVER_PREFIX = MICRONAUT_OPENAPI_PREFIX + ".server.";
 
     /**
@@ -86,31 +88,32 @@ public class OpenApiServerMojo extends AbstractOpenApiMojo {
 
     @Override
     protected void configureBuilder(MicronautCodeGeneratorBuilder builder) {
-        if ("java".equalsIgnoreCase(lang)) {
-            builder.forJavaServer(spec -> {
-                spec.withControllerPackage(controllerPackageName);
-                spec.withAuthentication(useAuth);
+        if ("kotlin".equalsIgnoreCase(lang)) {
+            builder.forKotlinServer(spec -> spec
+                .withControllerPackage(controllerPackageName)
+                .withAuthentication(useAuth)
+                .withAot(aotCompatible)
                 // we don't want these to be configurable in the plugin for now
-                spec.withGenerateImplementationFiles(false);
-                spec.withGenerateControllerFromExamples(false);
-                spec.withGenerateOperationsToReturnNotImplemented(false);
-                spec.withLombok(lombok);
-                spec.withFluxForArrays(fluxForArrays);
-                spec.withGeneratedAnnotation(generatedAnnotation);
-                spec.withAot(aotCompatible);
-            });
-        } else if ("kotlin".equalsIgnoreCase(lang)) {
-            builder.forKotlinServer(spec -> {
-                spec.withControllerPackage(controllerPackageName);
-                spec.withAuthentication(useAuth);
+                .withGenerateImplementationFiles(false)
+                .withGenerateControllerFromExamples(false)
+                .withGenerateOperationsToReturnNotImplemented(false)
+                .withGeneratedAnnotation(generatedAnnotation)
+                .withFluxForArrays(fluxForArrays)
+                .withKsp(ksp)
+            );
+        } else if ("java".equalsIgnoreCase(lang)) {
+            builder.forJavaServer(spec -> spec
+                .withControllerPackage(controllerPackageName)
+                .withAuthentication(useAuth)
+                .withAot(aotCompatible)
                 // we don't want these to be configurable in the plugin for now
-                spec.withGenerateImplementationFiles(false);
-                spec.withGenerateControllerFromExamples(false);
-                spec.withGenerateOperationsToReturnNotImplemented(false);
-                spec.withFluxForArrays(fluxForArrays);
-                spec.withGeneratedAnnotation(generatedAnnotation);
-                spec.withAot(aotCompatible);
-            });
+                .withGenerateImplementationFiles(false)
+                .withGenerateControllerFromExamples(false)
+                .withGenerateOperationsToReturnNotImplemented(false)
+                .withGeneratedAnnotation(generatedAnnotation)
+                .withFluxForArrays(fluxForArrays)
+                .withLombok(lombok)
+            );
         } else {
             throw new UnsupportedOperationException("Unsupported language: " + lang);
         }

@@ -10,3 +10,10 @@ assert new File(basedir, "target/classes/io/micronaut/openapi/api/PetApi.class")
 assert new File(basedir, "target/classes/io/micronaut/openapi/model/Pet.class").exists()
 
 assert !petApi.text.contains("import jakarta.annotation.Generated;")
+
+def category = new File(basedir, "target/generated-sources/openapi/src/main/java/io/micronaut/openapi/model/Category.java")
+assert category.exists()
+assert category.text.contains("@Accessors(chain = true)")
+assert category.text.contains("@NoArgsConstructor")
+assert category.text.contains("@AllArgsConstructor")
+assert category.text.contains("@Data")
