@@ -34,7 +34,7 @@ public class OpenApiClientMojo extends AbstractOpenApiMojo {
     /**
      * Client id.
      */
-    @Parameter(property = CLIENT_PREFIX  + "id", defaultValue = "")
+    @Parameter(property = CLIENT_PREFIX + "id")
     protected String clientId;
 
     /**
@@ -69,6 +69,7 @@ public class OpenApiClientMojo extends AbstractOpenApiMojo {
 
     /**
      * Determines if the client should use lombok.
+     *
      * @since 4.2.2
      */
     @Parameter(property = CLIENT_PREFIX + "lombok")
@@ -76,6 +77,7 @@ public class OpenApiClientMojo extends AbstractOpenApiMojo {
 
     /**
      * Determines if the client should use flux for arrays.
+     *
      * @since 4.2.2
      */
     @Parameter(property = CLIENT_PREFIX + "flux.for.arrays")
@@ -83,6 +85,7 @@ public class OpenApiClientMojo extends AbstractOpenApiMojo {
 
     /**
      * If set to true, the `javax.annotation.Generated` annotation will be added to all generated classes.
+     *
      * @since 4.2.2
      */
     @Parameter(property = CLIENT_PREFIX + "generated.annotation", defaultValue = "true")

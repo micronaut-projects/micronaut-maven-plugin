@@ -158,11 +158,11 @@ public class TestResourcesHelper {
     }
 
     private void doStart() throws IOException {
-        String accessToken = UUID.randomUUID().toString();
+        var accessToken = UUID.randomUUID().toString();
         Path buildDir = buildDirectory.toPath();
         Path serverSettingsDirectory = getServerSettingsDirectory();
-        AtomicBoolean serverStarted = new AtomicBoolean(false);
-        ServerFactory serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion, debugServer);
+        var serverStarted = new AtomicBoolean(false);
+        var serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion, debugServer);
         Optional<ServerSettings> optionalServerSettings = startOrConnectToExistingServer(accessToken, buildDir, serverSettingsDirectory, serverFactory);
         if (optionalServerSettings.isPresent()) {
             ServerSettings serverSettings = optionalServerSettings.get();
@@ -213,7 +213,7 @@ public class TestResourcesHelper {
      * @return The system properties
      */
     public Map<String, String> computeSystemProperties(ServerSettings serverSettings) {
-        Map<String, String> systemProperties = new HashMap<>(3);
+        var systemProperties = new HashMap<String, String>(3);
         String uri = String.format("http://localhost:%d", serverSettings.getPort());
         systemProperties.put(TEST_RESOURCES_PROP_SERVER_URI, uri);
         serverSettings.getAccessToken().ifPresent(accessToken -> systemProperties.put(TEST_RESOURCES_PROP_ACCESS_TOKEN, accessToken));
@@ -228,16 +228,16 @@ public class TestResourcesHelper {
     private Optional<ServerSettings> startOrConnectToExistingServer(String accessToken, Path buildDir, Path serverSettingsDirectory, ServerFactory serverFactory) {
         try {
             return Optional.ofNullable(
-                    ServerUtils.startOrConnectToExistingServer(
-                        explicitPort,
-                        buildDir.resolve(PORT_FILE_NAME),
-                        serverSettingsDirectory,
-                        accessToken,
-                        resolveServerClasspath(),
-                        clientTimeout,
-                        serverIdleTimeoutMinutes,
-                        serverFactory
-                    )
+                ServerUtils.startOrConnectToExistingServer(
+                    explicitPort,
+                    buildDir.resolve(PORT_FILE_NAME),
+                    serverSettingsDirectory,
+                    accessToken,
+                    resolveServerClasspath(),
+                    clientTimeout,
+                    serverIdleTimeoutMinutes,
+                    serverFactory
+                )
             );
         } catch (Exception e) {
             log.error("Error starting Micronaut Test Resources service", e);
@@ -251,15 +251,15 @@ public class TestResourcesHelper {
             applicationDependencies = getApplicationDependencies();
         }
         Stream<Artifact> serverDependencies =
-                TestResourcesClasspath.inferTestResourcesClasspath(applicationDependencies, testResourcesVersion)
-                        .stream()
-                        .map(DependencyResolutionService::testResourcesDependencyToAetherArtifact);
+            TestResourcesClasspath.inferTestResourcesClasspath(applicationDependencies, testResourcesVersion)
+                .stream()
+                .map(DependencyResolutionService::testResourcesDependencyToAetherArtifact);
 
         List<org.apache.maven.model.Dependency> extraDependencies =
-                testResourcesDependencies != null ? testResourcesDependencies : Collections.emptyList();
+            testResourcesDependencies != null ? testResourcesDependencies : Collections.emptyList();
 
         Stream<Artifact> extraDependenciesStream = extraDependencies.stream()
-                .map(DependencyResolutionService::mavenDependencyToAetherArtifact);
+            .map(DependencyResolutionService::mavenDependencyToAetherArtifact);
 
         Stream<Artifact> artifacts = concat(serverDependencies, extraDependenciesStream);
 
@@ -268,8 +268,8 @@ public class TestResourcesHelper {
 
     private List<MavenDependency> getApplicationDependencies() {
         return this.mavenProject.getDependencies().stream()
-                .map(DependencyResolutionService::mavenDependencyToTestResourcesDependency)
-                .toList();
+            .map(DependencyResolutionService::mavenDependencyToTestResourcesDependency)
+            .toList();
     }
 
     /**
@@ -343,7 +343,7 @@ public class TestResourcesHelper {
     }
 
     private Path getKeepAliveFile() {
-        Path tmpDir = Path.of(System.getProperty("java.io.tmpdir"));
+        var tmpDir = Path.of(System.getProperty("java.io.tmpdir"));
         return tmpDir.resolve("keepalive-" + mavenSession.getRequest().getBuilderId());
     }
 

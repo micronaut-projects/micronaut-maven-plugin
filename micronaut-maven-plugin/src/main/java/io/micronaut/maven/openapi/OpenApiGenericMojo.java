@@ -83,10 +83,10 @@ public class OpenApiGenericMojo extends AbstractOpenApiMojo {
         MicronautCodeGenerator<? extends GeneratorOptionsBuilder> generator;
         try {
             generator = (MicronautCodeGenerator<? extends GeneratorOptionsBuilder>) this.getClass()
-                    .getClassLoader()
-                    .loadClass(generatorClassName)
-                    .getDeclaredConstructor()
-                    .newInstance();
+                .getClassLoader()
+                .loadClass(generatorClassName)
+                .getDeclaredConstructor()
+                .newInstance();
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
@@ -124,8 +124,8 @@ public class OpenApiGenericMojo extends AbstractOpenApiMojo {
                     return true;
                 }
             } else if (parameterType.equals(Integer.TYPE) && (value.matches("[0-9]+"))) {
-                    method.invoke(builder, Integer.parseInt(value));
-                    return true;
+                method.invoke(builder, Integer.parseInt(value));
+                return true;
 
             }
         }

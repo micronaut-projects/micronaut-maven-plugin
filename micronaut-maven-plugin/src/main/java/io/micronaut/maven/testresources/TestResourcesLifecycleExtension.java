@@ -34,7 +34,6 @@ import org.twdata.maven.mojoexecutor.MojoExecutor;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.StringWriter;
-import java.io.Writer;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,7 +48,7 @@ import static io.micronaut.maven.testresources.StopTestResourcesServerMojo.MICRO
  * be stopped when the build is complete.
  */
 @Component(role = AbstractMavenLifecycleParticipant.class, hint = "test-resources")
-public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParticipant  {
+public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParticipant {
 
     private static final String EXPLICIT_START_SERVICE_GOAL_NAME = "mn:" + StartTestResourcesServerMojo.NAME;
     private static final String EXPLICIT_STOP_SERVICE_GOAL_NAME = "mn:" + StopTestResourcesServerMojo.NAME;
@@ -101,7 +100,7 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
                     boolean shared = isShared(evaluator, configuration);
                     File buildDirectory = new File(build.getDirectory());
 
-                    TestResourcesHelper helper = new TestResourcesHelper(session, enabled, shared, buildDirectory);
+                    var helper = new TestResourcesHelper(session, enabled, shared, buildDirectory);
                     if (shared) {
                         String sharedServerNamespace = findSharedServerNamespace(evaluator, configuration);
                         helper.setSharedServerNamespace(sharedServerNamespace);
@@ -151,12 +150,12 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
     }
 
     private TestResourcesConfiguration initConfiguration(Plugin plugin) {
-        Xpp3Dom configuration = (Xpp3Dom) plugin.getConfiguration();
+        var configuration = (Xpp3Dom) plugin.getConfiguration();
         if (configuration == null) {
             configuration = MojoExecutor.configuration();
             plugin.setConfiguration(configuration);
         }
-        Writer writer = new StringWriter();
+        var writer = new StringWriter();
         Xpp3DomWriter.write(writer, configuration);
         return parseConfiguration(configuration);
     }
@@ -194,7 +193,8 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
             Object result = evaluator.evaluate("${" + property + "}");
             if (result instanceof Boolean b) {
                 return b;
-            } else if (result instanceof String s && (s.equals(Boolean.TRUE.toString()) || s.equals(Boolean.FALSE.toString()))) {
+            }
+            if (result instanceof String s && (s.equals(Boolean.TRUE.toString()) || s.equals(Boolean.FALSE.toString()))) {
                 return Boolean.parseBoolean(s);
             }
         } catch (ExpressionEvaluationException e) {
@@ -205,7 +205,7 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
 
     private ExpressionEvaluator initEvaluator(MavenProject currentProject, MavenSession session) {
         Plugin thisPlugin = currentProject.getPlugin(THIS_PLUGIN);
-        MojoExecution execution = new MojoExecution(thisPlugin, null, null);
+        var execution = new MojoExecution(thisPlugin, null, null);
         MavenProject actualCurrentProject = session.getCurrentProject();
         ExpressionEvaluator evaluator;
 
@@ -222,9 +222,9 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
 
     private static void withPlugin(Build build, Consumer<? super Plugin> consumer) {
         build.getPlugins()
-                .stream()
-                .filter(p -> RunMojo.THIS_PLUGIN.equals(p.getGroupId() + ":" + p.getArtifactId()))
-                .findFirst()
-                .ifPresent(consumer);
+            .stream()
+            .filter(p -> RunMojo.THIS_PLUGIN.equals(p.getGroupId() + ":" + p.getArtifactId()))
+            .findFirst()
+            .ifPresent(consumer);
     }
 }

@@ -68,7 +68,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMicronautMojo {
     abstract void onSuccess(File outputDir) throws MojoExecutionException;
 
     protected final File getBaseOutputDirectory() {
-        File targetDirectory = new File(mavenProject.getBuild().getDirectory(), "aot");
+        var targetDirectory = new File(mavenProject.getBuild().getDirectory(), "aot");
         return new File(targetDirectory, runtime);
     }
 
@@ -103,8 +103,8 @@ public abstract class AbstractMicronautAotMojo extends AbstractMicronautMojo {
     }
 
     private void validateRuntime() {
-        Packaging packaging = Packaging.of(mavenProject.getPackaging());
-        AotRuntime aotRuntime = AotRuntime.valueOf(runtime.toUpperCase());
+        var packaging = Packaging.of(mavenProject.getPackaging());
+        var aotRuntime = AotRuntime.valueOf(runtime.toUpperCase());
         switch (packaging) {
             case JAR, DOCKER_CRAC, DOCKER -> {
                 if (aotRuntime != AotRuntime.JIT) {

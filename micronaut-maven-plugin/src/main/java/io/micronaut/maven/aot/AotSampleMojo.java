@@ -46,14 +46,14 @@ public class AotSampleMojo extends AbstractMicronautAotCliMojo {
     @Override
     protected List<String> getExtraArgs() {
         return Arrays.asList(
-                "--config",
-                outputFile(SAMPLE_AOT_PROPERTIES_FILE_NAME).getAbsolutePath()
+            "--config",
+            outputFile(SAMPLE_AOT_PROPERTIES_FILE_NAME).getAbsolutePath()
         );
     }
 
     @Override
     protected void onSuccess(File outputDir) {
-        File sampleFile = new File(outputDir, SAMPLE_AOT_PROPERTIES_FILE_NAME);
+        var sampleFile = new File(outputDir, SAMPLE_AOT_PROPERTIES_FILE_NAME);
         if (sampleFile.exists()) {
             getLog().info("Sample configuration file written to " + sampleFile);
         }

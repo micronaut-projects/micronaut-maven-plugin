@@ -15,7 +15,13 @@
  */
 package io.micronaut.maven.jib;
 
-import com.google.cloud.tools.jib.api.buildplan.*;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.ContainerBuildPlan;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FileEntry;
+import com.google.cloud.tools.jib.api.buildplan.LayerObject;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.buildplan.UnixPathParser;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
@@ -26,7 +32,13 @@ import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import org.apache.maven.project.MavenProject;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Jib extension to support building Docker images.
@@ -54,7 +66,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         ContainerBuildPlan.Builder builder = buildPlan.toBuilder();
         MicronautRuntime runtime = MicronautRuntime.valueOf(mavenData.getMavenProject().getProperties().getProperty(MicronautRuntime.PROPERTY, "none").toUpperCase());
 
-        JibConfigurationService jibConfigurationService = new JibConfigurationService(mavenData.getMavenProject());
+        var jibConfigurationService = new JibConfigurationService(mavenData.getMavenProject());
 
         String baseImage = buildPlan.getBaseImage();
         if (StringUtils.isEmpty(buildPlan.getBaseImage())) {
@@ -63,7 +75,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         }
         logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Using base image: " + baseImage);
 
-        ApplicationConfigurationService applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());
+        var applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());
         try {
             int port = Integer.parseInt(applicationConfigurationService.getServerPort());
             if (port > 0) {
@@ -86,8 +98,8 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
                     cmd = Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest");
                 }
                 builder.setWorkingDirectory(AbsoluteUnixPath.get(jibConfigurationService.getWorkingDirectory().orElse("/function")))
-                        .setEntrypoint(buildProjectFnEntrypoint())
-                        .setCmd(cmd);
+                    .setEntrypoint(buildProjectFnEntrypoint())
+                    .setCmd(cmd);
             }
             case LAMBDA -> {
                 //TODO Leverage AWS Base images:
@@ -106,7 +118,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     }
 
     public static List<String> buildProjectFnEntrypoint() {
-        List<String> entrypoint = new ArrayList<>(9);
+        var entrypoint = new ArrayList<String>(9);
         entrypoint.add("java");
         entrypoint.add("-XX:-UsePerfData");
         entrypoint.add("-XX:+UseSerialGC");
@@ -143,7 +155,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     }
 
     static LayerObject remapLayer(LayerObject layerObject) {
-        FileEntriesLayer originalLayer = (FileEntriesLayer) layerObject;
+        var originalLayer = (FileEntriesLayer) layerObject;
         FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(originalLayer.getName());
         for (FileEntry originalEntry : originalLayer.getEntries()) {
             builder.addEntry(remapEntry(originalEntry, layerObject.getName()));
@@ -163,7 +175,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         }
 
         return new FileEntry(originalEntry.getSourceFile(), newPath, originalEntry.getPermissions(),
-                originalEntry.getModificationTime(), originalEntry.getOwnership());
+            originalEntry.getModificationTime(), originalEntry.getOwnership());
     }
 
     private Platform detectPlatform() {

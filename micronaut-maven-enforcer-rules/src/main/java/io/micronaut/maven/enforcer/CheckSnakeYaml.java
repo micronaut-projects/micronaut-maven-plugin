@@ -56,7 +56,7 @@ public class CheckSnakeYaml extends AbstractEnforcerRule {
     public void execute() throws EnforcerRuleException {
         if (hasYamlConfiguration() && !hasSnakeYaml()) {
             String message = "YAML configuration file detected, but SnakeYAML is not on the runtime classpath. Make sure to add the following dependency:" +
-                    System.lineSeparator();
+                System.lineSeparator();
 
             message += toXml(snakeYaml);
             throw new EnforcerRuleException(message);
@@ -69,7 +69,7 @@ public class CheckSnakeYaml extends AbstractEnforcerRule {
 
     private boolean hasSnakeYaml() {
         return project.getDependencies().stream()
-                .anyMatch(d -> d.getGroupId().equals(snakeYaml.getGroupId()) && d.getArtifactId().equals(snakeYaml.getArtifactId()));
+            .anyMatch(d -> d.getGroupId().equals(snakeYaml.getGroupId()) && d.getArtifactId().equals(snakeYaml.getArtifactId()));
     }
 
     private boolean hasYamlConfiguration(Resource resource) {
@@ -88,10 +88,10 @@ public class CheckSnakeYaml extends AbstractEnforcerRule {
 
     private String toXml(Dependency dependency) {
         StringReader dependencyXml = new StringReader("<dependency>" +
-                "<groupId>" + dependency.getGroupId() + "</groupId>" +
-                "<artifactId>" + dependency.getArtifactId() + "</artifactId>" +
-                "<scope>" + dependency.getScope() + "</scope>" +
-                "</dependency>");
+            "<groupId>" + dependency.getGroupId() + "</groupId>" +
+            "<artifactId>" + dependency.getArtifactId() + "</artifactId>" +
+            "<scope>" + dependency.getScope() + "</scope>" +
+            "</dependency>");
         StringWriter result = new StringWriter();
         try {
             XmlUtil.prettyFormat(dependencyXml, result);

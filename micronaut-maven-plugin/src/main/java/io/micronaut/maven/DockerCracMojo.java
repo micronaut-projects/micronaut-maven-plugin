@@ -18,11 +18,11 @@ package io.micronaut.maven;
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.maven.core.MicronautRuntime;
+import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
-import io.micronaut.maven.jib.JibConfigurationService;
-import io.micronaut.core.annotation.Experimental;
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
@@ -94,9 +94,9 @@ public class DockerCracMojo extends AbstractDockerMojo {
     public static final String X86_64_ARCH = "amd64";
 
     private static final EnumSet<PosixFilePermission> POSIX_FILE_PERMISSIONS = EnumSet.of(
-            PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
-            PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE,
-            PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
+        PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+        PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE,
+        PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
     );
     private final MavenReaderFilter mavenReaderFilter;
 
@@ -139,13 +139,13 @@ public class DockerCracMojo extends AbstractDockerMojo {
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     public DockerCracMojo(
-            MavenProject mavenProject,
-            JibConfigurationService jibConfigurationService,
-            ApplicationConfigurationService applicationConfigurationService,
-            DockerService dockerService,
-            MavenReaderFilter mavenReaderFilter,
-            MavenSession mavenSession,
-            MojoExecution mojoExecution
+        MavenProject mavenProject,
+        JibConfigurationService jibConfigurationService,
+        ApplicationConfigurationService applicationConfigurationService,
+        DockerService dockerService,
+        MavenReaderFilter mavenReaderFilter,
+        MavenSession mavenSession,
+        MojoExecution mojoExecution
     ) {
         super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession, mojoExecution);
         this.mavenReaderFilter = mavenReaderFilter;
@@ -166,10 +166,10 @@ public class DockerCracMojo extends AbstractDockerMojo {
             }
         } catch (InvalidImageReferenceException iire) {
             String message = "Invalid image reference "
-                    + iire.getInvalidReference()
-                    + ", perhaps you should check that the reference is formatted correctly according to " +
-                    "https://docs.docker.com/engine/reference/commandline/tag/#extended-description" +
-                    "\nFor example, slash-separated name components cannot have uppercase letters";
+                + iire.getInvalidReference()
+                + ", perhaps you should check that the reference is formatted correctly according to " +
+                "https://docs.docker.com/engine/reference/commandline/tag/#extended-description" +
+                "\nFor example, slash-separated name components cannot have uppercase letters";
             throw new MojoExecutionException(message);
         } catch (IOException | IllegalArgumentException | MavenFilteringException e) {
             throw new MojoExecutionException(e.getMessage(), e);
@@ -183,10 +183,10 @@ public class DockerCracMojo extends AbstractDockerMojo {
         // We need to make this folder first, or else Docker on linux will make it as root and break clean on CI
         checkpointDir.mkdirs();
         dockerService.runPrivilegedImageAndWait(
-                checkpointImage,
-                checkpointTimeoutSeconds,
-                checkpointNetworkName,
-                checkpointDir.getAbsolutePath() + ":/home/app/cr"
+            checkpointImage,
+            checkpointTimeoutSeconds,
+            checkpointNetworkName,
+            checkpointDir.getAbsolutePath() + ":/home/app/cr"
         );
         buildFinalDockerfile(checkpointImage);
     }
@@ -203,7 +203,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
 
     private String buildCheckpointDockerfile() throws IOException, MavenFilteringException {
         String name = mavenProject.getArtifactId() + "-crac-checkpoint";
-        Set<String> checkpointTags = Collections.singleton(name);
+        var checkpointTags = Collections.singleton(name);
         copyScripts(CHECKPOINT_SCRIPT_NAME, WARMUP_SCRIPT_NAME, RUN_SCRIPT_NAME);
         File dockerfile = dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_CRAC_CHECKPOINT);
 
@@ -218,12 +218,12 @@ public class DockerCracMojo extends AbstractDockerMojo {
         getLog().info("Using CRAC_OS: " + cracOs);
 
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
-                .withDockerfile(dockerfile)
-                .withBuildArg("BASE_IMAGE", baseImage)
-                .withBuildArg("CRAC_ARCH", finalArchitecture)
-                .withBuildArg("CRAC_OS", cracOs)
-                .withBuildArg("CRAC_JDK_VERSION", cracJavaVersion)
-                .withTags(checkpointTags);
+            .withDockerfile(dockerfile)
+            .withBuildArg("BASE_IMAGE", baseImage)
+            .withBuildArg("CRAC_ARCH", finalArchitecture)
+            .withBuildArg("CRAC_OS", cracOs)
+            .withBuildArg("CRAC_JDK_VERSION", cracJavaVersion)
+            .withTags(checkpointTags);
         getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
         dockerService.buildImage(buildImageCmd);
         return name;
@@ -246,11 +246,11 @@ public class DockerCracMojo extends AbstractDockerMojo {
         getLog().info("Using CHECKPOINT_IMAGE: " + checkpointContainerId);
 
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
-                .withDockerfile(dockerfile)
-                .withBuildArg("PORT", port)
-                .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))
-                .withBuildArg("CHECKPOINT_IMAGE", checkpointContainerId)
-                .withTags(getTags());
+            .withDockerfile(dockerfile)
+            .withBuildArg("PORT", port)
+            .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))
+            .withBuildArg("CHECKPOINT_IMAGE", checkpointContainerId)
+            .withTags(getTags());
         getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
         dockerService.buildImage(buildImageCmd);
 
@@ -267,7 +267,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
     }
 
     private void copyScripts(String... scriptNames) throws IOException, MavenFilteringException {
-        File target = new File(mavenProject.getBuild().getDirectory(), "scripts");
+        var target = new File(mavenProject.getBuild().getDirectory(), "scripts");
         if (!target.exists()) {
             target.mkdirs();
         }
@@ -276,14 +276,14 @@ public class DockerCracMojo extends AbstractDockerMojo {
 
     private void processScripts(File target, Properties replacements, String... scriptNames) throws IOException, MavenFilteringException {
         for (String script : scriptNames) {
-            File localOverride = new File(mavenProject.getBasedir(), script);
+            var localOverride = new File(mavenProject.getBasedir(), script);
             InputStream resourceStream = DockerCracMojo.class.getResourceAsStream("/cracScripts/" + script);
             Reader resourceReader = resourceStream == null ? null : new InputStreamReader(resourceStream);
             try (Reader reader = localOverride.exists() ? Files.newBufferedReader(localOverride.toPath()) : resourceReader) {
                 if (reader == null) {
                     throw new IOException("Could not find script " + script);
                 }
-                MavenReaderFilterRequest req = new MavenReaderFilterRequest();
+                var req = new MavenReaderFilterRequest();
                 req.setFrom(reader);
                 req.setFiltering(true);
                 req.setAdditionalProperties(replacements);

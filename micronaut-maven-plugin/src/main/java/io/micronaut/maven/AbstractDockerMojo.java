@@ -17,10 +17,10 @@ package io.micronaut.maven;
 
 import com.google.common.io.FileWriteMode;
 import io.micronaut.maven.core.MicronautRuntime;
+import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.jib.JibMicronautExtension;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
-import io.micronaut.maven.jib.JibConfigurationService;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
@@ -35,7 +35,11 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static io.micronaut.maven.services.ApplicationConfigurationService.DEFAULT_PORT;
@@ -103,6 +107,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
 
     /**
      * The Docker image used to run the native image.
+     *
      * @since 1.2
      */
     @Parameter(property = "micronaut.native-image.base-image-run", defaultValue = DEFAULT_BASE_IMAGE_GRAALVM_RUN)
@@ -195,7 +200,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @return the Docker image tags by looking at the Jib plugin configuration.
      */
     protected Set<String> getTags() {
-        Set<String> tags = new HashSet<>();
+        var tags = new HashSet<String>();
         Optional<String> toImageOptional = jibConfigurationService.getToImage();
         String imageName = mavenProject.getArtifactId();
         if (toImageOptional.isPresent()) {
@@ -217,8 +222,8 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
             tags.add(String.format("%s:%s", imageName, tag));
         }
         return tags.stream()
-                .map(this::evaluateExpression)
-                .collect(Collectors.toSet());
+            .map(this::evaluateExpression)
+            .collect(Collectors.toSet());
     }
 
     private String evaluateExpression(String expression) {
@@ -242,9 +247,9 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      */
     @SuppressWarnings("ResultOfMethodCallIgnored")
     protected void copyDependencies() throws IOException {
-        List<String> imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
+        var imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
         mavenProject.setArtifactFilter(artifact -> imageClasspathScopes.contains(artifact.getScope()));
-        File target = new File(mavenProject.getBuild().getDirectory(), "dependency");
+        var target = new File(mavenProject.getBuild().getDirectory(), "dependency");
         if (!target.exists()) {
             target.mkdirs();
         }
@@ -258,10 +263,10 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      */
     protected String getCmd() {
         return "CMD [" +
-                appArguments.stream()
-                        .map(s -> "\"" + s + "\"")
-                        .collect(Collectors.joining(", ")) +
-                "]";
+            appArguments.stream()
+                .map(s -> "\"" + s + "\"")
+                .collect(Collectors.joining(", ")) +
+            "]";
     }
 
     /**
@@ -280,13 +285,14 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
 
     /**
      * Adds cmd to docker oracle cloud function file.
+     *
      * @param dockerfile the docker file
      */
     protected void oracleCloudFunctionCmd(File dockerfile) throws IOException {
         if (appArguments != null && !appArguments.isEmpty()) {
             getLog().info("Using application arguments: " + appArguments);
             com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());
-        } else  {
+        } else {
             com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + ORACLE_CLOUD_FUNCTION_DEFAULT_CMD);
         }
     }

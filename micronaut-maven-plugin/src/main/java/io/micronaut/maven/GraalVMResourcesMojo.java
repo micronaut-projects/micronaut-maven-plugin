@@ -30,7 +30,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * <p>Generate GraalVM <code>resources-config.json</code> with all the resources included in the application</p>
@@ -64,7 +71,7 @@ public class GraalVMResourcesMojo extends ResourcesMojo {
             return;
         }
 
-        Set<String> resourcesToAdd = new HashSet<>();
+        var resourcesToAdd = new HashSet<String>();
 
         // Application resources (src/main/resources)
         for (Resource resource : getResources()) {
@@ -78,10 +85,10 @@ public class GraalVMResourcesMojo extends ResourcesMojo {
         Path nativeImagePath = buildNativeImagePath();
         Path graalVMResourcesPath = metaInfPath.resolve(nativeImagePath).toAbsolutePath();
 
-        Map<String, Object> json = new HashMap<>();
+        var json = new HashMap<String, Object>();
         List<Map<String, String>> resourceList = resourcesToAdd.stream()
-                .map(this::mapToGraalResource)
-                .toList();
+            .map(this::mapToGraalResource)
+            .toList();
 
         json.put(RESOURCES, resourceList);
 
@@ -101,7 +108,7 @@ public class GraalVMResourcesMojo extends ResourcesMojo {
     }
 
     private Set<String> findResourceFiles(File folder, List<String> filePath) {
-        Set<String> resourceFiles = new HashSet<>();
+        var resourceFiles = new HashSet<String>();
 
         if (filePath == null) {
             filePath = new ArrayList<>();
@@ -119,7 +126,7 @@ public class GraalVMResourcesMojo extends ResourcesMojo {
                     // 'META-INF' files and directories, for example, to include swagger-ui.
                     if (!isMetaInfDirectory || !isExcludedDirectory) {
                         if (element.isDirectory()) {
-                            List<String> paths = new ArrayList<>(filePath);
+                            var paths = new ArrayList<>(filePath);
                             paths.add(element.getName());
 
                             resourceFiles.addAll(findResourceFiles(element, paths));
@@ -145,7 +152,7 @@ public class GraalVMResourcesMojo extends ResourcesMojo {
     }
 
     private Map<String, String> mapToGraalResource(String resourceName) {
-        Map<String, String> result = new HashMap<>();
+        var result = new HashMap<String, String>();
 
         if (resourceName.contains("*")) {
             result.put(PATTERN, resourceName);

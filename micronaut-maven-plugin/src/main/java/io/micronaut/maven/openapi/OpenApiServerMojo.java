@@ -43,6 +43,7 @@ public class OpenApiServerMojo extends AbstractOpenApiMojo {
 
     /**
      * Determines if the server should use lombok.
+     *
      * @since 4.2.2
      */
     @Parameter(property = SERVER_PREFIX + "lombok")
@@ -50,6 +51,7 @@ public class OpenApiServerMojo extends AbstractOpenApiMojo {
 
     /**
      * Determines if the server should use flux for arrays.
+     *
      * @since 4.2.2
      */
     @Parameter(property = SERVER_PREFIX + "flux.for.arrays")
@@ -57,6 +59,7 @@ public class OpenApiServerMojo extends AbstractOpenApiMojo {
 
     /**
      * If set to true, the `javax.annotation.Generated` annotation will be added to all generated classes.
+     *
      * @since 4.2.2
      */
     @Parameter(property = SERVER_PREFIX + "generated.annotation", defaultValue = "true")
@@ -64,6 +67,7 @@ public class OpenApiServerMojo extends AbstractOpenApiMojo {
 
     /**
      * If set to true, the generated code should be made compatible with Micronaut AOT.
+     *
      * @since 4.2.2
      */
     @Parameter(property = SERVER_PREFIX + "aot.compatible")
