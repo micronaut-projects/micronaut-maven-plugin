@@ -245,6 +245,7 @@
                             </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
+                                ${project.groupId}:${project.artifactId}:${project.version}:clean-args-file,
                                 org.graalvm.buildtools:native-maven-plugin:write-args-file
                             </prepare-package>
                             <package>
