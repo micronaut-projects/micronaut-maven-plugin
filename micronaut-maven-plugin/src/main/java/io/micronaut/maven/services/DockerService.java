@@ -284,8 +284,17 @@ public class DockerService {
             .withPassword(password);
         RegistryAuthLocator registryAuthLocator = RegistryAuthLocator.instance();
         AuthConfig authConfig = registryAuthLocator.lookupAuthConfig(dockerImageName, defaultAuthConfig);
-        AuthResponse authResponse = dockerClient.authCmd().withAuthConfig(authConfig).exec();
-        if (authResponse.getStatus() != null && authResponse.getStatus().equals("Login Succeeded")) {
+        boolean loginSucceeded = false;
+        try {
+            AuthResponse authResponse = dockerClient.authCmd().withAuthConfig(authConfig).exec();
+            if (authResponse.getStatus() != null && authResponse.getStatus().equals("Login Succeeded")) {
+                loginSucceeded = true;
+            }
+        } catch (Exception ignored) {
+            // typically this is com.github.dockerjava.api.exception.UnauthorizedException
+        }
+
+        if (loginSucceeded) {
             LOG.info("Successfully logged in to registry {}", dockerImageName.getRegistry());
         } else {
             LOG.warn("Failed to login to registry {}", dockerImageName.getRegistry());
