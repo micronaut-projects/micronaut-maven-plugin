@@ -40,7 +40,7 @@ jobs:
           server-password: GH_TOKEN
 
       - name: "🔧 Setup GraalVM CE"
-        uses: graalvm/setup-graalvm@v1.2.2
+        uses: graalvm/setup-graalvm@v1.2.3
         with:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
