@@ -1,6 +1,5 @@
 package io.micronaut.openapi.controller;
 
-
 import io.micronaut.http.annotation.*;
 import reactor.core.publisher.Mono;
 import io.micronaut.openapi.dated.DatedResponse;
@@ -25,7 +24,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.micronaut.openapi.api.MappedApi;
 import java.time.ZonedDateTime;
 
-
 @Controller
 public class MappedController implements MappedApi {
 
@@ -36,7 +34,7 @@ public class MappedController implements MappedApi {
 
     @Override
     public Mono<Page<String>> getPaginatedSimpleModel(Pageable pageable) {
-        return Mono.just(Page.of(List.of(), pageable, 0));
+        return Mono.just(Page.of(List.of(), pageable, 0L));
     }
 
     @Override
