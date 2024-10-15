@@ -73,10 +73,10 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.version>3.9.8</maven.version>
-        <micronaut.version>4.5.4</micronaut.version>
+        <micronaut.version>4.6.2</micronaut.version>
         <native-maven-plugin.version>0.10.2</native-maven-plugin.version>
         <micronaut.aot.version>2.4.0</micronaut.aot.version>
-        <micronaut.test.resources.version>2.5.4</micronaut.test.resources.version>
+        <micronaut.test.resources.version>2.6.2</micronaut.test.resources.version>
         <micronaut.openapi.version>6.11.1</micronaut.openapi.version>
 
         <maven.resources-plugin.version>3.3.1</maven.resources-plugin.version>
@@ -96,12 +96,13 @@
         <sonar.java.checkstyle.reportPaths>${project.basedir}/target/checkstyle-result.xml</sonar.java.checkstyle.reportPaths>
         <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/micronaut-maven-integration-tests/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
         <jacoco.version>0.8.12</jacoco.version>
-        <junit-jupiter.version>5.10.3</junit-jupiter.version>
+        <junit-jupiter.version>5.11.2</junit-jupiter.version>
         <directory-watcher.version>0.18.0</directory-watcher.version>
-        <testcontainers.version>1.19.8</testcontainers.version>
+        <testcontainers.version>1.20.2</testcontainers.version>
+        <jib-maven-plugin.version>3.4.2</jib-maven-plugin.version>
         <snakeyaml.version>2.2</snakeyaml.version>
         <sisu.version>0.9.0.M2</sisu.version>
-        <docker-java.version>3.3.6</docker-java.version>
+        <docker-java.version>3.4.0</docker-java.version>
         <checkstyle.config.dir.path>${maven.multiModuleProjectDirectory}/config/checkstyle</checkstyle.config.dir.path>
         <spotless.licenseHeader.path>${maven.multiModuleProjectDirectory}/config/spotless.license.java</spotless.licenseHeader.path>
         <maven-plugin-tools.version>3.13.1</maven-plugin-tools.version>
@@ -245,11 +246,11 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.1.2</version>
+                    <version>3.1.3</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-deploy-plugin</artifactId>
-                    <version>3.1.2</version>
+                    <version>3.1.3</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-invoker-plugin</artifactId>
@@ -279,7 +280,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
-                    <version>3.2.4</version>
+                    <version>3.2.7</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-release-plugin</artifactId>

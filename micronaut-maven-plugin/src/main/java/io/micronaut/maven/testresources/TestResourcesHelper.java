@@ -18,6 +18,7 @@ package io.micronaut.maven.testresources;
 import io.micronaut.core.io.socket.SocketUtils;
 import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.testresources.buildtools.MavenDependency;
+import io.micronaut.testresources.buildtools.ModuleIdentifier;
 import io.micronaut.testresources.buildtools.ServerFactory;
 import io.micronaut.testresources.buildtools.ServerSettings;
 import io.micronaut.testresources.buildtools.ServerUtils;
@@ -263,7 +264,15 @@ public class TestResourcesHelper {
 
         Stream<Artifact> artifacts = concat(serverDependencies, extraDependenciesStream);
 
-        return toClasspathFiles(dependencyResolutionService.artifactResultsFor(artifacts, true));
+        var resolutionResult = dependencyResolutionService.artifactResultsFor(artifacts, true);
+        var filteredArtifacts = resolutionResult.stream()
+            .filter(result -> {
+                var artifact = result.getArtifact();
+                var id = new ModuleIdentifier(artifact.getGroupId(), artifact.getArtifactId());
+                return TestResourcesClasspath.isDependencyAllowedOnServerClasspath(id);
+            })
+            .toList();
+        return toClasspathFiles(filteredArtifacts);
     }
 
     private List<MavenDependency> getApplicationDependencies() {

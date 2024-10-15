@@ -36,7 +36,7 @@ public class MappedController implements MappedApi {
 
     @Override
     public Mono<Page<String>> getPaginatedSimpleModel(Pageable pageable) {
-        return Mono.just(Page.of(List.of(), pageable, 0));
+        return Mono.just(Page.of(List.of(), pageable, 0L));
     }
 
     @Override
