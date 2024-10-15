@@ -102,7 +102,7 @@
         <jib-maven-plugin.version>3.4.2</jib-maven-plugin.version>
         <snakeyaml.version>2.2</snakeyaml.version>
         <sisu.version>0.9.0.M2</sisu.version>
-        <docker-java.version>3.3.6</docker-java.version>
+        <docker-java.version>3.4.0</docker-java.version>
         <checkstyle.config.dir.path>${maven.multiModuleProjectDirectory}/config/checkstyle</checkstyle.config.dir.path>
         <spotless.licenseHeader.path>${maven.multiModuleProjectDirectory}/config/spotless.license.java</spotless.licenseHeader.path>
         <maven-plugin-tools.version>3.13.1</maven-plugin-tools.version>
