@@ -19,6 +19,7 @@
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
     <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
+    <jib-maven-plugin.version>@jib-maven-plugin.version@</jib-maven-plugin.version>
   </properties>
 
   <dependencies>
