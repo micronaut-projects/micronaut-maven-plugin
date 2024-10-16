@@ -105,7 +105,7 @@
         <docker-java.version>3.4.0</docker-java.version>
         <checkstyle.config.dir.path>${maven.multiModuleProjectDirectory}/config/checkstyle</checkstyle.config.dir.path>
         <spotless.licenseHeader.path>${maven.multiModuleProjectDirectory}/config/spotless.license.java</spotless.licenseHeader.path>
-        <maven-plugin-tools.version>3.13.1</maven-plugin-tools.version>
+        <maven-plugin-tools.version>3.15.0</maven-plugin-tools.version>
     </properties>
 
     <repositories>
