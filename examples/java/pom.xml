@@ -13,8 +13,8 @@
   </parent>
 
   <properties>
-    <micronaut.version>4.0.0-M1</micronaut.version>
-    <micronaut-maven-plugin.version>4.0.0-SNAPSHOT</micronaut-maven-plugin.version>
+    <micronaut.version>4.6.2</micronaut.version>
+    <micronaut-maven-plugin.version>4.6.3</micronaut-maven-plugin.version>
     <exec.mainClass>io.micronaut.maven.examples.Application</exec.mainClass>
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
