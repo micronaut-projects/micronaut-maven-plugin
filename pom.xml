@@ -100,7 +100,7 @@
         <directory-watcher.version>0.18.0</directory-watcher.version>
         <testcontainers.version>1.20.2</testcontainers.version>
         <jib-maven-plugin.version>3.4.4</jib-maven-plugin.version>
-        <snakeyaml.version>2.2</snakeyaml.version>
+        <snakeyaml.version>2.3</snakeyaml.version>
         <sisu.version>0.9.0.M2</sisu.version>
         <docker-java.version>3.4.0</docker-java.version>
         <checkstyle.config.dir.path>${maven.multiModuleProjectDirectory}/config/checkstyle</checkstyle.config.dir.path>
