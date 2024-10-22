@@ -1,7 +1,7 @@
-FROM amazonlinux:2023 AS graalvm
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal AS graalvm
 ENV LANG=en_US.UTF-8
-RUN yum update -y && yum install -y gcc gcc-c++ glibc-devel curl-minimal bash zlib zlib-devel zlib-static zip tar gzip && yum clean all && rm -rf /var/cache/yum
-RUN curl -4 -L https://download.oracle.com/graalvm/17/latest/graalvm-jdk-17_linux-x64_bin.tar.gz -o /tmp/graalvm.tar.gz \
+RUN dnf update -y && dnf install -y gcc glibc-devel zlib-devel libstdc++-static tar && dnf clean all && rm -rf /var/cache/dnf
+RUN curl -4 -L https://download.oracle.com/graalvm/17/archive/graalvm-jdk-17.0.12_linux-aarch64_bin.tar.gz -o /tmp/graalvm.tar.gz \
     && mkdir -p /usr/lib/graalvm \
     && tar -zxf /tmp/graalvm.tar.gz -C /usr/lib/graalvm --strip-components 1 \
     && rm -rf /tmp/*
@@ -14,9 +14,9 @@ COPY nativ[e]/generated /home/app/
 COPY *.args /home/app/graalvm-native-image.args
 RUN native-image @/home/app/graalvm-native-image.args -H:Class=io.micronaut.function.aws.runtime.MicronautLambdaRuntime -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
 
-FROM amazonlinux:2023
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal
 WORKDIR /function
-RUN yum update -y && yum install -y zip && yum clean all
+RUN dnf update -y && dnf install -y zip && dnf clean all
 COPY --from=graalvm /home/app/application /function/func
 RUN echo "#!/bin/sh" >> bootstrap && echo "set -euo pipefail" >> bootstrap && echo "./func -XX:MaximumHeapSizePercent=80 -Dio.netty.allocator.numDirectArenas=0 -Dio.netty.noPreferDirect=true -Djava.library.path=$(pwd)" >> bootstrap
 RUN chmod 777 bootstrap

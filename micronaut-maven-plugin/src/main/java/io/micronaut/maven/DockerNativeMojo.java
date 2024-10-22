@@ -148,19 +148,13 @@ public class DockerNativeMojo extends AbstractDockerMojo {
     private void buildDockerNativeLambda() throws IOException {
         var buildImageCmdArguments = new HashMap<String, String>();
 
-        getLog().info("Using GRAALVM_JVM_VERSION: " + graalVmJvmVersion());
-        getLog().info("Using GRAALVM_ARCH: " + graalVmArch());
-
         // Starter sets the right class in pom.xml:
         //   - For applications: io.micronaut.function.aws.runtime.MicronautLambdaRuntime
         //   - For function apps: com.example.BookLambdaRuntime
-        getLog().info("Using CLASS_NAME: " + mainClass);
         BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, () -> {
             try {
                 return dockerService.buildImageCmd(DockerfileMojo.DOCKERFILE_AWS_CUSTOM_RUNTIME)
-                    .withBuildArg("GRAALVM_VERSION", graalVmVersion())
-                    .withBuildArg("GRAALVM_JVM_VERSION", graalVmJvmVersion())
-                    .withBuildArg("GRAALVM_ARCH", graalVmArch());
+                    .withBuildArg("GRAALVM_DOWNLOAD_URL", graalVmDownloadUrl());
             } catch (IOException e) {
                 throw new DockerClientException(e.getMessage(), e);
             }
@@ -204,7 +198,6 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
         var buildImageCmdArguments = new HashMap<String, String>();
 
-        getLog().info("Using BASE_IMAGE: " + from);
         if (StringUtils.isNotEmpty(baseImageRun) && Boolean.FALSE.equals(staticNativeImage)) {
             buildImageCmdArguments.put("BASE_IMAGE_RUN", baseImageRun);
         }
@@ -235,10 +228,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             BuildImageCmd buildImageCmd = buildImageCmdSupplier.get();
 
             for (Map.Entry<String, String> buildArg : buildImageCmdArguments.entrySet()) {
-                String key = buildArg.getKey();
-                String value = buildArg.getValue();
-                getLog().info("Using " + key + ": " + value);
-                buildImageCmd.withBuildArg(key, value);
+                buildImageCmd.withBuildArg(buildArg.getKey(), buildArg.getValue());
             }
 
             getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);

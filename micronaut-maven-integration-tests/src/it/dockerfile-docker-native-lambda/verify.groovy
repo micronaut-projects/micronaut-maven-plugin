@@ -1,9 +1,3 @@
-File dockerfile = new File("$basedir/target", "Dockerfile")
-File expectedDockerfile = new File(basedir, "Dockerfile.${graalVmArch()}")
-String expectedDockerfileText = expectedDockerfile.text.replace("17", "${System.getProperty("java.specification.version")}")
-
-assert dockerfile.text == expectedDockerfileText
-
 static String graalVmArch() {
     String osArch = System.getProperty("os.arch")
     if ("aarch64".equals(osArch)) {
@@ -12,6 +6,11 @@ static String graalVmArch() {
         return "amd64"
     }
 }
+
+File dockerfile = new File("$basedir/target", "Dockerfile")
+File expectedDockerfile = new File(basedir, "Dockerfile.${System.getProperty("java.specification.version")}.${graalVmArch()}")
+
+assert dockerfile.text == expectedDockerfile.text
 
 File log = new File(basedir, 'build.log')
 assert log.exists()

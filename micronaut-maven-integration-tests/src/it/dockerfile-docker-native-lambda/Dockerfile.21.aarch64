@@ -1,8 +1,7 @@
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal AS graalvm
 ENV LANG=en_US.UTF-8
 RUN dnf update -y && dnf install -y gcc glibc-devel zlib-devel libstdc++-static tar && dnf clean all && rm -rf /var/cache/dnf
-ARG GRAALVM_DOWNLOAD_URL
-RUN curl -4 -L ${GRAALVM_DOWNLOAD_URL} -o /tmp/graalvm.tar.gz \
+RUN curl -4 -L https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-aarch64_bin.tar.gz -o /tmp/graalvm.tar.gz \
     && mkdir -p /usr/lib/graalvm \
     && tar -zxf /tmp/graalvm.tar.gz -C /usr/lib/graalvm --strip-components 1 \
     && rm -rf /tmp/*
@@ -13,8 +12,7 @@ COPY dependency/* /home/app/libs/
 COPY graalvm-reachability-metadat[a] /home/app/graalvm-reachability-metadata
 COPY nativ[e]/generated /home/app/
 COPY *.args /home/app/graalvm-native-image.args
-ARG CLASS_NAME
-RUN native-image @/home/app/graalvm-native-image.args -H:Class=${CLASS_NAME} -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
+RUN native-image @/home/app/graalvm-native-image.args -H:Class=io.micronaut.function.aws.runtime.MicronautLambdaRuntime -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
 
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal
 WORKDIR /function
