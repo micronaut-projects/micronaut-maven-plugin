@@ -14,10 +14,10 @@
   </parent>
   <properties>
     <packaging>jar</packaging>
-    <micronaut.version>4.0.0-SNAPSHOT</micronaut.version>
-    <micronaut-maven-plugin.version>4.0.0-SNAPSHOT</micronaut-maven-plugin.version>
+    <micronaut.version>4.6.2</micronaut.version>
+    <micronaut-maven-plugin.version>4.6.3</micronaut-maven-plugin.version>
     <micronaut.runtime>netty</micronaut.runtime>
-    <kotlinVersion>1.8.22</kotlinVersion>
+    <kotlinVersion>1.9.25</kotlinVersion>
     <exec.mainClass>io.micronaut.maven.examples.ApplicationKt</exec.mainClass>
   </properties>
 

@@ -15,8 +15,8 @@
     <packaging>pom</packaging>
 
     <properties>
-        <micronaut.version>4.0.0-SNAPSHOT</micronaut.version>
-        <micronaut-maven-plugin.version>4.0.0-SNAPSHOT</micronaut-maven-plugin.version>
+        <micronaut.version>4.6.2</micronaut.version>
+        <micronaut-maven-plugin.version>4.6.3</micronaut-maven-plugin.version>
         <micronaut.runtime>netty</micronaut.runtime>
         <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     </properties>

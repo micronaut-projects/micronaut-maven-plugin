@@ -61,6 +61,10 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     public static final String X86_64_ARCH = "x64";
     public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol9";
     public static final String ORACLE_CLOUD_FUNCTION_DEFAULT_CMD = "CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]";
+    public static final String GRAALVM_DOWNLOAD_URL = "https://download.oracle.com/graalvm/%s/%s/graalvm-jdk-%s_linux-%s_bin.tar.gz";
+
+    //Latest version of GraalVM for JDK 17 available under the GraalVM Free Terms and Conditions (GFTC) licence
+    public static final String GRAALVM_FOR_JDK17 = "17.0.12";
 
     protected final MavenProject mavenProject;
     protected final JibConfigurationService jibConfigurationService;
@@ -145,18 +149,21 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     }
 
     /**
-     * @return the GraalVM version from the <code>graalvm.version</code> property, which is expected to come from the
-     * Micronaut Parent POM.
-     */
-    protected String graalVmVersion() {
-        return mavenProject.getProperties().getProperty("graal.version");
-    }
-
-    /**
      * @return the JVM version to use for GraalVM.
      */
     protected String graalVmJvmVersion() {
         return javaVersion().getMajorVersion() == 17 ? "17" : "21";
+    }
+
+    /**
+     * @return the GraalVM download URL depending on the Java version.
+     */
+    protected String graalVmDownloadUrl() {
+        if (javaVersion().getMajorVersion() == 17) {
+            return GRAALVM_DOWNLOAD_URL.formatted(17, "archive", GRAALVM_FOR_JDK17, graalVmArch());
+        } else {
+            return GRAALVM_DOWNLOAD_URL.formatted(21, "latest", 21, graalVmArch());
+        }
     }
 
     /**
