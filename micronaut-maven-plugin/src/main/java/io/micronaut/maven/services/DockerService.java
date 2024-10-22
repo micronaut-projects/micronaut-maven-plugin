@@ -131,6 +131,7 @@ public class DockerService {
      */
     public String buildImage(BuildImageCmd builder) {
         verifyDockerRunning();
+        builder.getBuildArgs().forEach((k, v) -> LOG.info("Using {}: {}", k, v));
         BuildImageResultCallback resultCallback = new BuildImageResultCallback() {
             @Override
             public void onNext(BuildResponseItem item) {
