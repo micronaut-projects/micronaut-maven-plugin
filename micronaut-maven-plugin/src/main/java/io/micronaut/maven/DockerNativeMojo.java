@@ -159,7 +159,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
                 throw new DockerClientException(e.getMessage(), e);
             }
         });
-        buildImageCmd.withBuildArg("CLASS_NAME", mainClass).withNoCache(true);
+        buildImageCmd.withBuildArg("CLASS_NAME", mainClass);
         String imageId = dockerService.buildImage(buildImageCmd);
         File functionZip = dockerService.copyFromContainer(imageId, "/function/function.zip");
         getLog().info("AWS Lambda Custom Runtime ZIP: " + functionZip.getPath());
@@ -207,7 +207,6 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         }
 
         BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, () -> dockerService.buildImageCmd()
-            .withNoCache(true)
             .withDockerfile(dockerfile)
             .withTags(getTags())
             .withBuildArg("BASE_IMAGE", from)

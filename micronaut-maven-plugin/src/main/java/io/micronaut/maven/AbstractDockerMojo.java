@@ -149,15 +149,14 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     }
 
     /**
-     * @return the GraalVM version from the <code>graalvm.version</code> property, which is expected to come from the
-     * Micronaut Parent POM.
+     * @return the JVM version to use for GraalVM.
      */
-    protected String graalVmVersion() {
-        return mavenProject.getProperties().getProperty("graal.version");
+    protected String graalVmJvmVersion() {
+        return javaVersion().getMajorVersion() == 17 ? "17" : "21";
     }
 
     /**
-     * @return the JVM version to use for GraalVM.
+     * @return the GraalVM download URL depending on the Java version.
      */
     protected String graalVmDownloadUrl() {
         if (javaVersion().getMajorVersion() == 17) {
@@ -179,9 +178,9 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      */
     protected String getFrom() {
         if (Boolean.TRUE.equals(staticNativeImage)) {
-            return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmDownloadUrl() + "-muslib-" + oracleLinuxVersion);
+            return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmJvmVersion() + "-muslib-" + oracleLinuxVersion);
         } else {
-            return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmDownloadUrl() + "-" + oracleLinuxVersion);
+            return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmJvmVersion() + "-" + oracleLinuxVersion);
         }
     }
 
