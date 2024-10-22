@@ -19,7 +19,6 @@ import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.jib.JibMicronautExtension;
 import io.micronaut.maven.services.ApplicationConfigurationService;
-import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DockerService;
 import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
@@ -74,15 +73,13 @@ public class DockerfileMojo extends AbstractDockerMojo {
     public static final String NATIVE_BUILD_TOOLS_MAVEN_PLUGIN = "org.graalvm.buildtools:native-maven-plugin";
 
     private final ExecutorService executorService;
-    private final CompilerService compilerService;
 
     @Inject
     public DockerfileMojo(MavenProject mavenProject, DockerService dockerService, JibConfigurationService jibConfigurationService,
                           ApplicationConfigurationService applicationConfigurationService, ExecutorService executorService,
-                          MavenSession mavenSession, MojoExecution mojoExecution, CompilerService compilerService) {
+                          MavenSession mavenSession, MojoExecution mojoExecution) {
         super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession, mojoExecution);
         this.executorService = executorService;
-        this.compilerService = compilerService;
     }
 
     @Override
@@ -190,7 +187,6 @@ public class DockerfileMojo extends AbstractDockerMojo {
         if (dockerfile != null) {
             var allLines = Files.readAllLines(dockerfile.toPath());
             var result = new ArrayList<String>();
-
             for (String line : allLines) {
                 if (!line.startsWith("ARG")) {
                     if (line.contains("BASE_IMAGE_RUN")) {
@@ -199,12 +195,10 @@ public class DockerfileMojo extends AbstractDockerMojo {
                         result.add(line.replace("${BASE_IMAGE}", getFrom()));
                     } else if (line.contains("BASE_JAVA_IMAGE")) {
                         result.add(line.replace("${BASE_JAVA_IMAGE}", getBaseImage()));
-                    } else if (line.contains("GRAALVM_") || line.contains("CLASS_NAME")) {
-                        result.add(line
-                            .replace("${GRAALVM_JVM_VERSION}", graalVmJvmVersion())
-                            .replace("${GRAALVM_ARCH}", graalVmArch())
-                            .replace("${CLASS_NAME}", mainClass)
-                        );
+                    } else if (line.contains("GRAALVM_DOWNLOAD_URL")) {
+                        result.add(line.replace("${GRAALVM_DOWNLOAD_URL}", graalVmDownloadUrl()));
+                    } else if (line.contains("CLASS_NAME")) {
+                        result.add(line.replace("${CLASS_NAME}", mainClass));
                     } else if (line.contains("PORT")) {
                         result.add(line.replace("${PORT}", getPort()));
                     } else {
