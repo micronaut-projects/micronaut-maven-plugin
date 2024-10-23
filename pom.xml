@@ -262,11 +262,11 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.21.0</version>
+                    <version>3.12.1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-project-info-reports-plugin</artifactId>
-                    <version>3.8.0</version>
+                    <version>3.4.5</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-source-plugin</artifactId>
@@ -535,6 +535,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
                 <configuration>
+                    <inputEncoding>UTF-8</inputEncoding>
+                    <outputEncoding>UTF-8</outputEncoding>
+                    <generateReports>true</generateReports>
                     <asciidoc>
                         <attributes>
                             <icons>font</icons>
@@ -546,7 +549,7 @@
                 <dependencies>
                     <dependency><!-- add Asciidoctor Doxia Parser Module -->
                         <groupId>org.asciidoctor</groupId>
-                        <artifactId>asciidoctor-maven-plugin</artifactId>
+                        <artifactId>asciidoctor-converter-doxia-module</artifactId>
                         <version>3.0.0</version>
                     </dependency>
                 </dependencies>
