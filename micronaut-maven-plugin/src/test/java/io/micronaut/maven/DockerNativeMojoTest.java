@@ -26,7 +26,7 @@ class DockerNativeMojoTest {
 
     @ParameterizedTest
     @CsvSource({
-            "17,https://download.oracle.com/graalvm/17/archive/graalvm-jdk-17.0.12_linux-x64_bin.tar.gz",
+            "17,https://gds.oracle.com/download/graal/17/archive/graalvm-jdk-17.0.12_linux-x64_bin.tar.gz",
             "21,https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-x64_bin.tar.gz"
     })
     @SetSystemProperty(key = "os.arch", value = X86_64_ARCH)
@@ -48,7 +48,9 @@ class DockerNativeMojoTest {
 
         assertEquals(expectedUrl, actualUrl);
 
-        var client = HttpClient.newHttpClient();
+        var client = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .build();
         var request = HttpRequest.newBuilder()
                 .uri(new URI(actualUrl))
                 .method("HEAD", HttpRequest.BodyPublishers.noBody())
