@@ -87,7 +87,9 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
             logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Dynamically resolved port present. Ensure the port is correctly exposed in the <container> configuration. See https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#example for an example.");
         }
 
-        builder.setPlatforms(Set.of(detectPlatform()));
+        if (buildPlan.getPlatforms() == null || buildPlan.getPlatforms().isEmpty()) {
+            builder.setPlatforms(Set.of(detectPlatform()));
+        }
 
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION -> {
