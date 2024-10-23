@@ -155,7 +155,10 @@ public class JibConfigurationService {
      * @return the <code>container.workingDirectory</code> configuration.
      */
     public Optional<String> getWorkingDirectory() {
-        if (configuration != null) {
+        String propertyValue = System.getProperties().getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY);
+        if (propertyValue != null) {
+            return Optional.of(propertyValue);
+        } else if (configuration != null) {
             Xpp3Dom container = configuration.getChild(CONTAINER);
             if (container != null && container.getChild(WORKING_DIRECTORY) != null) {
                 return Optional.ofNullable(container.getChild(WORKING_DIRECTORY).getValue());
@@ -169,7 +172,10 @@ public class JibConfigurationService {
      */
     public List<String> getArgs() {
         var result = new ArrayList<String>();
-        if (configuration != null) {
+        String propertyValue = System.getProperties().getProperty(PropertyNames.CONTAINER_ARGS);
+        if (propertyValue != null) {
+            result = new ArrayList<>(parseCommaSeparatedList(propertyValue));
+        } else if (configuration != null) {
             Xpp3Dom container = configuration.getChild(CONTAINER);
             if (container != null) {
                 Xpp3Dom args = container.getChild("args");
