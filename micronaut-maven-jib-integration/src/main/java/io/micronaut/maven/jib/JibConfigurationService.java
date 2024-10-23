@@ -15,23 +15,24 @@
  */
 package io.micronaut.maven.jib;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
+
+import static io.micronaut.maven.jib.JibConfiguration.*;
 
 /**
  * Exposes the Jib plugin configuration so that it can be read by other mojos.
@@ -42,21 +43,23 @@ import java.util.stream.Collectors;
 @Singleton
 public class JibConfigurationService {
 
-    private static final String IMAGE = "image";
-    private static final String CONTAINER = "container";
-    private static final String WORKING_DIRECTORY = "workingDirectory";
-
-    private Xpp3Dom configuration;
-    private Xpp3Dom to;
-    private Xpp3Dom from;
+    private final Optional<JibConfiguration> configuration;
 
     @Inject
     public JibConfigurationService(MavenProject mavenProject) {
         final Plugin plugin = mavenProject.getPlugin(MavenProjectProperties.PLUGIN_KEY);
         if (plugin != null && plugin.getConfiguration() != null) {
-            configuration = (Xpp3Dom) plugin.getConfiguration();
-            to = configuration.getChild("to");
-            from = configuration.getChild("from");
+            final XmlMapper mapper = XmlMapper.builder()
+                    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                    .findAndAddModules()
+                    .build();
+            try {
+                configuration = Optional.ofNullable(mapper.readValue(plugin.getConfiguration().toString(), JibConfiguration.class));
+            } catch (JsonProcessingException e) {
+                throw new IllegalArgumentException("Error parsing Jib plugin configuration", e);
+            }
+        } else {
+            configuration = Optional.empty();
         }
     }
 
@@ -64,131 +67,83 @@ public class JibConfigurationService {
      * @return the <code>to.image</code> configuration.
      */
     public Optional<String> getToImage() {
-        Optional<String> result;
-        String propertyValue = System.getProperties().getProperty(PropertyNames.TO_IMAGE);
-        if (propertyValue != null) {
-            result = Optional.of(propertyValue);
-        } else if (to != null) {
-            result = Optional.ofNullable(to.getChild(IMAGE).getValue());
-        } else {
-            result = Optional.empty();
-        }
-        return result;
+        final String value = configuration.flatMap(c -> c.to().flatMap(ToConfiguration::image)).orElse(null);
+        return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.TO_IMAGE, value));
     }
 
     /**
      * @return the <code>from.image</code> configuration.
      */
     public Optional<String> getFromImage() {
-        Optional<String> result;
-        String propertyValue = System.getProperties().getProperty(PropertyNames.FROM_IMAGE);
-        if (propertyValue != null) {
-            result = Optional.of(propertyValue);
-        } else if (from != null) {
-            result = Optional.ofNullable(from.getChild(IMAGE).getValue());
-        } else {
-            result = Optional.empty();
-        }
-        return result;
+        final String value = configuration.flatMap(c -> c.from().flatMap(FromConfiguration::image)).orElse(null);
+        return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.FROM_IMAGE, value));
     }
 
     /**
      * @return the <code>to.tags</code> configuration.
      */
     public Set<String> getTags() {
-        Set<String> result = null;
-        String propertyValue = System.getProperties().getProperty(PropertyNames.TO_TAGS);
-        if (propertyValue != null) {
-            result = new HashSet<>(parseCommaSeparatedList(propertyValue));
-        } else {
-            if (to != null) {
-                Xpp3Dom tags = to.getChild("tags");
-                if (tags != null && tags.getChildCount() > 0) {
-                    result = Arrays.stream(tags.getChildren())
-                        .map(Xpp3Dom::getValue)
-                        .collect(Collectors.toSet());
-                }
-            }
-            if (result == null) {
-                result = Collections.emptySet();
-            }
-        }
-        return result;
+        final Set<String> tags = configuration.flatMap(c -> c.to().map(ToConfiguration::tags)).orElse(Collections.emptySet());
+        return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.TO_TAGS))
+                .map(JibConfigurationService::parseCommaSeparatedList)
+                .orElse(tags);
     }
 
     /**
      * @return the <code>to.auth.username</code> and <code>to.auth.password</code> configuration.
      */
     public Optional<Credential> getToCredentials() {
-        return getCredentials(PropertyNames.TO_AUTH_USERNAME, PropertyNames.TO_AUTH_PASSWORD, to);
+        String usernameProperty = System.getProperties().getProperty(PropertyNames.TO_AUTH_USERNAME);
+        String passwordProperty = System.getProperties().getProperty(PropertyNames.TO_AUTH_PASSWORD);
+        if (usernameProperty != null || passwordProperty != null) {
+            return Optional.of(Credential.from(usernameProperty, passwordProperty));
+        } else {
+            return configuration
+                    .flatMap(c -> c.to().flatMap(ToConfiguration::auth))
+                    .map(this::getCredentials);
+        }
     }
 
     /**
      * @return the <code>from.auth.username</code> and <code>from.auth.password</code> configuration.
      */
     public Optional<Credential> getFromCredentials() {
-        return getCredentials(PropertyNames.FROM_AUTH_USERNAME, PropertyNames.FROM_AUTH_PASSWORD, from);
+        String usernameProperty = System.getProperties().getProperty(PropertyNames.FROM_AUTH_USERNAME);
+        String passwordProperty = System.getProperties().getProperty(PropertyNames.FROM_AUTH_PASSWORD);
+        if (usernameProperty != null || passwordProperty != null) {
+            return Optional.of(Credential.from(usernameProperty, passwordProperty));
+        } else {
+            return configuration
+                    .flatMap(c -> c.from().flatMap(FromConfiguration::auth))
+                    .map(this::getCredentials);
+        }
+
     }
 
-    private Optional<Credential> getCredentials(String usernamePropName, String passwordPropName, Xpp3Dom node) {
-        Optional<Credential> result = Optional.empty();
-        String usernameProp = System.getProperties().getProperty(usernamePropName);
-        String passwordProp = System.getProperties().getProperty(passwordPropName);
-        if (usernameProp != null && passwordProp != null) {
-            result = Optional.of(Credential.from(usernameProp, passwordProp));
-        } else {
-            if (node != null) {
-                Xpp3Dom auth = node.getChild("auth");
-                if (auth != null) {
-                    Xpp3Dom username = auth.getChild("username");
-                    Xpp3Dom password = auth.getChild("password");
-                    if (username != null && password != null) {
-                        result = Optional.of(Credential.from(username.getValue(), password.getValue()));
-                    }
-                }
-            }
-        }
-        return result;
+    private Credential getCredentials(AuthConfiguration authConfiguration) {
+        return Credential.from(
+                authConfiguration.username().orElse(null),
+                authConfiguration.password().orElse(null)
+        );
     }
 
     /**
      * @return the <code>container.workingDirectory</code> configuration.
      */
     public Optional<String> getWorkingDirectory() {
-        String propertyValue = System.getProperties().getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY);
-        if (propertyValue != null) {
-            return Optional.of(propertyValue);
-        } else if (configuration != null) {
-            Xpp3Dom container = configuration.getChild(CONTAINER);
-            if (container != null && container.getChild(WORKING_DIRECTORY) != null) {
-                return Optional.ofNullable(container.getChild(WORKING_DIRECTORY).getValue());
-            }
-        }
-        return Optional.empty();
+        final String value = configuration.flatMap(c -> c.container().flatMap(ContainerConfiguration::workingDirectory)).orElse(null);
+        return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY, value));
     }
 
     /**
      * @return the <code>container.args</code> configuration.
      */
     public List<String> getArgs() {
-        var result = new ArrayList<String>();
-        String propertyValue = System.getProperties().getProperty(PropertyNames.CONTAINER_ARGS);
-        if (propertyValue != null) {
-            result = new ArrayList<>(parseCommaSeparatedList(propertyValue));
-        } else if (configuration != null) {
-            Xpp3Dom container = configuration.getChild(CONTAINER);
-            if (container != null) {
-                Xpp3Dom args = container.getChild("args");
-                if (args.getChildCount() > 0) {
-                    for (Xpp3Dom arg : args.getChildren()) {
-                        result.add(arg.getValue());
-                    }
-                } else {
-                    result.add(args.getValue());
-                }
-            }
-        }
-        return result;
+        final List<String> args = configuration.flatMap(c -> c.container().map(ContainerConfiguration::args)).orElse(Collections.emptyList());
+        return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.CONTAINER_ARGS))
+                .map(JibConfigurationService::parseCommaSeparatedList)
+                .map(List::copyOf)
+                .orElse(args);
     }
 
     private static Set<String> parseCommaSeparatedList(String list) {
