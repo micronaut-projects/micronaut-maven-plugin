@@ -200,7 +200,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
                     } else if (line.contains("CLASS_NAME")) {
                         result.add(line.replace("${CLASS_NAME}", mainClass));
                     } else if (line.contains("PORT")) {
-                        result.add(line.replace("${PORT}", getPort()));
+                        result.add(line.replace("${PORT}", getPorts()));
                     } else {
                         result.add(line);
                     }

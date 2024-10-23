@@ -189,8 +189,8 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         }
 
         String from = getFrom();
-        String port = getPort();
-        getLog().info("Exposing port: " + port);
+        String ports = getPorts();
+        getLog().info("Exposing port(s): " + ports);
 
         File dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);
 
@@ -210,7 +210,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             .withDockerfile(dockerfile)
             .withTags(getTags())
             .withBuildArg("BASE_IMAGE", from)
-            .withBuildArg("PORT", port));
+            .withBuildArg("PORT", ports));
 
         dockerService.buildImage(buildImageCmd);
     }

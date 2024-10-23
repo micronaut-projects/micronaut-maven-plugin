@@ -244,7 +244,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     /**
      * @return the application port to expose by looking at the application configuration.
      */
-    protected String getPort() {
+    protected String getPorts() {
         String port = applicationConfigurationService.getServerPort();
         return "-1".equals(port) ? DEFAULT_PORT : port;
     }
