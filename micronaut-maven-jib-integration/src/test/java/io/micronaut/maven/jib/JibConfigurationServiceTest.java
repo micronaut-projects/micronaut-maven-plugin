@@ -116,6 +116,13 @@ class JibConfigurationServiceTest {
     }
 
     @Test
+    void testGetTagsEmpty() {
+        var service = setupJibConfigurationService();
+
+        assertTrue(service.getTags().isEmpty());
+    }
+
+    @Test
     void testGetToCredentialsFromXml() throws XmlPullParserException, IOException {
         var config = """
                 <configuration>
@@ -247,6 +254,13 @@ class JibConfigurationServiceTest {
     }
 
     @Test
+    void testGetArgsEmpty() {
+        var service = setupJibConfigurationService();
+
+        assertTrue(service.getArgs().isEmpty());
+    }
+
+    @Test
     void testGetPortsFromXml() throws XmlPullParserException, IOException {
         var config = """
                 <configuration>
@@ -276,6 +290,13 @@ class JibConfigurationServiceTest {
         var ports = service.getPorts().get();
 
         assertEquals("1000 2000-2003/udp", ports);
+    }
+
+    @Test
+    void testGetPortsEmpty() {
+        var service = setupJibConfigurationService();
+
+        assertTrue(service.getPorts().isEmpty());
     }
 
     private JibConfigurationService setupJibConfigurationService(String xmlConfiguration) throws XmlPullParserException, IOException {

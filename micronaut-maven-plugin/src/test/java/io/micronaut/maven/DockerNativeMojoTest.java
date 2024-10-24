@@ -1,8 +1,11 @@
 package io.micronaut.maven;
 
+import io.micronaut.maven.jib.JibConfigurationService;
+import io.micronaut.maven.services.ApplicationConfigurationService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.project.MavenProject;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junitpioneer.jupiter.RestoreSystemProperties;
@@ -14,6 +17,9 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 
 import static io.micronaut.maven.AbstractDockerMojo.X86_64_ARCH;
@@ -56,5 +62,43 @@ class DockerNativeMojoTest {
         var response = client.send(request, HttpResponse.BodyHandlers.discarding());
 
         assertEquals(200, response.statusCode());
+    }
+
+    @Test
+    void testGetPortsFromJib() {
+        var project = mock(MavenProject.class);
+        var session = mock(MavenSession.class);
+        var execution = mock(MojoExecution.class);
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        when(project.getProperties()).thenReturn(new Properties());
+
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getPorts()).thenReturn(Optional.of("8081"));
+        var mojo = new DockerNativeMojo(project, jibConfigurationService, null, null, session, execution);
+
+        var ports = mojo.getPorts();
+
+        assertEquals("8081", ports);
+    }
+
+    @Test
+    void testGetPortsFromAppConfig() {
+        var project = mock(MavenProject.class);
+        var session = mock(MavenSession.class);
+        var execution = mock(MojoExecution.class);
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        when(project.getProperties()).thenReturn(new Properties());
+
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getPorts()).thenReturn(Optional.empty());
+        var applicationConfigurationService = mock(ApplicationConfigurationService.class);
+        when(applicationConfigurationService.getServerPort()).thenReturn("8081");
+        var mojo = new DockerNativeMojo(project, jibConfigurationService, applicationConfigurationService, null, session, execution);
+
+        var ports = mojo.getPorts();
+
+        assertEquals("8081", ports);
     }
 }

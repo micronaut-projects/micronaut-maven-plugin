@@ -159,7 +159,7 @@ public class JibConfigurationService {
                 .orElse(Collections.emptySet());
         return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.CONTAINER_PORTS))
                 .map(s -> s.replace(",", " "))
-                .or(() -> Optional.of(String.join(" ", ports)));
+                .or(() -> ports.isEmpty() ? Optional.empty() : Optional.of(String.join(" ", ports)));
     }
 
     private static Set<String> parseCommaSeparatedList(String list) {
