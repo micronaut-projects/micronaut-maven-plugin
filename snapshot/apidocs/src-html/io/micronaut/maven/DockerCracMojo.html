@@ -248,8 +248,8 @@
 <span class="source-line-no">235</span><span id="line-235">            ImageReference.parse(tag);</span>
 <span class="source-line-no">236</span><span id="line-236">        }</span>
 <span class="source-line-no">237</span><span id="line-237"></span>
-<span class="source-line-no">238</span><span id="line-238">        String port = getPort();</span>
-<span class="source-line-no">239</span><span id="line-239">        getLog().info("Exposing port: " + port);</span>
+<span class="source-line-no">238</span><span id="line-238">        String ports = getPorts();</span>
+<span class="source-line-no">239</span><span id="line-239">        getLog().info("Exposing port(s): " + ports);</span>
 <span class="source-line-no">240</span><span id="line-240"></span>
 <span class="source-line-no">241</span><span id="line-241">        copyScripts(RUN_SCRIPT_NAME);</span>
 <span class="source-line-no">242</span><span id="line-242">        File dockerfile = dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_CRAC);</span>
@@ -260,7 +260,7 @@
 <span class="source-line-no">247</span><span id="line-247"></span>
 <span class="source-line-no">248</span><span id="line-248">        BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
 <span class="source-line-no">249</span><span id="line-249">            .withDockerfile(dockerfile)</span>
-<span class="source-line-no">250</span><span id="line-250">            .withBuildArg("PORT", port)</span>
+<span class="source-line-no">250</span><span id="line-250">            .withBuildArg("PORTS", ports)</span>
 <span class="source-line-no">251</span><span id="line-251">            .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))</span>
 <span class="source-line-no">252</span><span id="line-252">            .withBuildArg("CHECKPOINT_IMAGE", checkpointContainerId)</span>
 <span class="source-line-no">253</span><span id="line-253">            .withTags(getTags());</span>

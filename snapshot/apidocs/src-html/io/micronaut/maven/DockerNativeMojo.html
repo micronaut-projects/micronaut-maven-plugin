@@ -202,8 +202,8 @@
 <span class="source-line-no">189</span><span id="line-189">        }</span>
 <span class="source-line-no">190</span><span id="line-190"></span>
 <span class="source-line-no">191</span><span id="line-191">        String from = getFrom();</span>
-<span class="source-line-no">192</span><span id="line-192">        String port = getPort();</span>
-<span class="source-line-no">193</span><span id="line-193">        getLog().info("Exposing port: " + port);</span>
+<span class="source-line-no">192</span><span id="line-192">        String ports = getPorts();</span>
+<span class="source-line-no">193</span><span id="line-193">        getLog().info("Exposing port(s): " + ports);</span>
 <span class="source-line-no">194</span><span id="line-194"></span>
 <span class="source-line-no">195</span><span id="line-195">        File dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);</span>
 <span class="source-line-no">196</span><span id="line-196"></span>
@@ -223,7 +223,7 @@
 <span class="source-line-no">210</span><span id="line-210">            .withDockerfile(dockerfile)</span>
 <span class="source-line-no">211</span><span id="line-211">            .withTags(getTags())</span>
 <span class="source-line-no">212</span><span id="line-212">            .withBuildArg("BASE_IMAGE", from)</span>
-<span class="source-line-no">213</span><span id="line-213">            .withBuildArg("PORT", port));</span>
+<span class="source-line-no">213</span><span id="line-213">            .withBuildArg("PORTS", ports));</span>
 <span class="source-line-no">214</span><span id="line-214"></span>
 <span class="source-line-no">215</span><span id="line-215">        dockerService.buildImage(buildImageCmd);</span>
 <span class="source-line-no">216</span><span id="line-216">    }</span>

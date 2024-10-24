@@ -88,117 +88,119 @@
 <span class="source-line-no">075</span><span id="line-75">        }</span>
 <span class="source-line-no">076</span><span id="line-76">        logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Using base image: " + baseImage);</span>
 <span class="source-line-no">077</span><span id="line-77"></span>
-<span class="source-line-no">078</span><span id="line-78">        var applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());</span>
-<span class="source-line-no">079</span><span id="line-79">        try {</span>
-<span class="source-line-no">080</span><span id="line-80">            int port = Integer.parseInt(applicationConfigurationService.getServerPort());</span>
-<span class="source-line-no">081</span><span id="line-81">            if (port &gt; 0) {</span>
-<span class="source-line-no">082</span><span id="line-82">                logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Exposing port: " + port);</span>
-<span class="source-line-no">083</span><span id="line-83">                builder.addExposedPort(Port.tcp(port));</span>
-<span class="source-line-no">084</span><span id="line-84">            }</span>
-<span class="source-line-no">085</span><span id="line-85">        } catch (NumberFormatException e) {</span>
-<span class="source-line-no">086</span><span id="line-86">            // ignore, can't automatically expose port</span>
-<span class="source-line-no">087</span><span id="line-87">            logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Dynamically resolved port present. Ensure the port is correctly exposed in the &lt;container&gt; configuration. See https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#example for an example.");</span>
-<span class="source-line-no">088</span><span id="line-88">        }</span>
-<span class="source-line-no">089</span><span id="line-89"></span>
-<span class="source-line-no">090</span><span id="line-90">        if (buildPlan.getPlatforms() == null || buildPlan.getPlatforms().isEmpty()) {</span>
-<span class="source-line-no">091</span><span id="line-91">            builder.setPlatforms(Set.of(detectPlatform()));</span>
-<span class="source-line-no">092</span><span id="line-92">        }</span>
-<span class="source-line-no">093</span><span id="line-93"></span>
-<span class="source-line-no">094</span><span id="line-94">        switch (runtime.getBuildStrategy()) {</span>
-<span class="source-line-no">095</span><span id="line-95">            case ORACLE_FUNCTION -&gt; {</span>
-<span class="source-line-no">096</span><span id="line-96">                List&lt;? extends LayerObject&gt; originalLayers = buildPlan.getLayers();</span>
-<span class="source-line-no">097</span><span id="line-97">                builder.setLayers(originalLayers.stream().map(JibMicronautExtension::remapLayer).toList());</span>
-<span class="source-line-no">098</span><span id="line-98">                List&lt;String&gt; cmd = jibConfigurationService.getArgs();</span>
-<span class="source-line-no">099</span><span id="line-99">                if (cmd.isEmpty()) {</span>
-<span class="source-line-no">100</span><span id="line-100">                    cmd = Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest");</span>
-<span class="source-line-no">101</span><span id="line-101">                }</span>
-<span class="source-line-no">102</span><span id="line-102">                builder.setWorkingDirectory(AbsoluteUnixPath.get(jibConfigurationService.getWorkingDirectory().orElse("/function")))</span>
-<span class="source-line-no">103</span><span id="line-103">                    .setEntrypoint(buildProjectFnEntrypoint())</span>
-<span class="source-line-no">104</span><span id="line-104">                    .setCmd(cmd);</span>
-<span class="source-line-no">105</span><span id="line-105">            }</span>
-<span class="source-line-no">106</span><span id="line-106">            case LAMBDA -&gt; {</span>
-<span class="source-line-no">107</span><span id="line-107">                //TODO Leverage AWS Base images:</span>
-<span class="source-line-no">108</span><span id="line-108">                // https://docs.aws.amazon.com/lambda/latest/dg/java-image.html</span>
-<span class="source-line-no">109</span><span id="line-109">                // https://docs.aws.amazon.com/lambda/latest/dg/images-create.html</span>
-<span class="source-line-no">110</span><span id="line-110">                // https://docs.aws.amazon.com/lambda/latest/dg/images-test.html</span>
-<span class="source-line-no">111</span><span id="line-111">                List&lt;String&gt; entrypoint = buildPlan.getEntrypoint();</span>
-<span class="source-line-no">112</span><span id="line-112">                Objects.requireNonNull(entrypoint).set(entrypoint.size() - 1, "io.micronaut.function.aws.runtime.MicronautLambdaRuntime");</span>
-<span class="source-line-no">113</span><span id="line-113">                builder.setEntrypoint(entrypoint);</span>
-<span class="source-line-no">114</span><span id="line-114">            }</span>
-<span class="source-line-no">115</span><span id="line-115">            default -&gt; {</span>
-<span class="source-line-no">116</span><span id="line-116">                //no op</span>
-<span class="source-line-no">117</span><span id="line-117">            }</span>
-<span class="source-line-no">118</span><span id="line-118">        }</span>
-<span class="source-line-no">119</span><span id="line-119">        return builder.build();</span>
-<span class="source-line-no">120</span><span id="line-120">    }</span>
-<span class="source-line-no">121</span><span id="line-121"></span>
-<span class="source-line-no">122</span><span id="line-122">    public static List&lt;String&gt; buildProjectFnEntrypoint() {</span>
-<span class="source-line-no">123</span><span id="line-123">        var entrypoint = new ArrayList&lt;String&gt;(9);</span>
-<span class="source-line-no">124</span><span id="line-124">        entrypoint.add("java");</span>
-<span class="source-line-no">125</span><span id="line-125">        entrypoint.add("-XX:-UsePerfData");</span>
-<span class="source-line-no">126</span><span id="line-126">        entrypoint.add("-XX:+UseSerialGC");</span>
-<span class="source-line-no">127</span><span id="line-127">        entrypoint.add("-Xshare:auto");</span>
-<span class="source-line-no">128</span><span id="line-128">        entrypoint.add("-Djava.awt.headless=true");</span>
-<span class="source-line-no">129</span><span id="line-129">        entrypoint.add("-Djava.library.path=/function/runtime/lib");</span>
-<span class="source-line-no">130</span><span id="line-130">        entrypoint.add("-cp");</span>
-<span class="source-line-no">131</span><span id="line-131">        entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");</span>
-<span class="source-line-no">132</span><span id="line-132">        entrypoint.add("com.fnproject.fn.runtime.EntryPoint");</span>
-<span class="source-line-no">133</span><span id="line-133">        return entrypoint;</span>
-<span class="source-line-no">134</span><span id="line-134">    }</span>
-<span class="source-line-no">135</span><span id="line-135"></span>
-<span class="source-line-no">136</span><span id="line-136">    public static String determineProjectFnVersion(String javaVersion) {</span>
-<span class="source-line-no">137</span><span id="line-137">        int majorVersion = Integer.parseInt(javaVersion.split("\\.")[0]);</span>
-<span class="source-line-no">138</span><span id="line-138">        if (majorVersion &lt;= 21 &amp;&amp; majorVersion &gt; 17) {</span>
-<span class="source-line-no">139</span><span id="line-139">            return "21-jre";</span>
-<span class="source-line-no">140</span><span id="line-140">        } else if (majorVersion == 17) {</span>
-<span class="source-line-no">141</span><span id="line-141">            return "17-jre";</span>
-<span class="source-line-no">142</span><span id="line-142">        } else {</span>
-<span class="source-line-no">143</span><span id="line-143">            return LATEST_TAG;</span>
-<span class="source-line-no">144</span><span id="line-144">        }</span>
-<span class="source-line-no">145</span><span id="line-145">    }</span>
-<span class="source-line-no">146</span><span id="line-146"></span>
-<span class="source-line-no">147</span><span id="line-147">    public static String determineBaseImage(String jdkVersion, DockerBuildStrategy buildStrategy) {</span>
-<span class="source-line-no">148</span><span id="line-148">        int javaVersion = Integer.parseInt(jdkVersion);</span>
-<span class="source-line-no">149</span><span id="line-149">        return switch (buildStrategy) {</span>
-<span class="source-line-no">150</span><span id="line-150">            case LAMBDA -&gt; "public.ecr.aws/lambda/java:" + javaVersion;</span>
-<span class="source-line-no">151</span><span id="line-151">            default -&gt; javaVersion == 17 ? DEFAULT_JAVA17_BASE_IMAGE : DEFAULT_JAVA21_BASE_IMAGE;</span>
-<span class="source-line-no">152</span><span id="line-152">        };</span>
-<span class="source-line-no">153</span><span id="line-153">    }</span>
-<span class="source-line-no">154</span><span id="line-154"></span>
-<span class="source-line-no">155</span><span id="line-155">    public static String getJdkVersion(MavenProject project) {</span>
-<span class="source-line-no">156</span><span id="line-156">        return System.getProperty(JDK_VERSION, project.getProperties().getProperty(JDK_VERSION));</span>
-<span class="source-line-no">157</span><span id="line-157">    }</span>
-<span class="source-line-no">158</span><span id="line-158"></span>
-<span class="source-line-no">159</span><span id="line-159">    static LayerObject remapLayer(LayerObject layerObject) {</span>
-<span class="source-line-no">160</span><span id="line-160">        var originalLayer = (FileEntriesLayer) layerObject;</span>
-<span class="source-line-no">161</span><span id="line-161">        FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(originalLayer.getName());</span>
-<span class="source-line-no">162</span><span id="line-162">        for (FileEntry originalEntry : originalLayer.getEntries()) {</span>
-<span class="source-line-no">163</span><span id="line-163">            builder.addEntry(remapEntry(originalEntry, layerObject.getName()));</span>
-<span class="source-line-no">164</span><span id="line-164">        }</span>
-<span class="source-line-no">165</span><span id="line-165"></span>
-<span class="source-line-no">166</span><span id="line-166">        return builder.build();</span>
-<span class="source-line-no">167</span><span id="line-167">    }</span>
-<span class="source-line-no">168</span><span id="line-168"></span>
-<span class="source-line-no">169</span><span id="line-169">    static FileEntry remapEntry(FileEntry originalEntry, String layerName) {</span>
-<span class="source-line-no">170</span><span id="line-170">        List&lt;String&gt; pathComponents = UnixPathParser.parse(originalEntry.getExtractionPath().toString());</span>
-<span class="source-line-no">171</span><span id="line-171">        AbsoluteUnixPath newPath;</span>
-<span class="source-line-no">172</span><span id="line-172">        if (layerName.contains("dependencies")) {</span>
-<span class="source-line-no">173</span><span id="line-173">            newPath = AbsoluteUnixPath.get("/function/app/libs/" + pathComponents.get(pathComponents.size() - 1));</span>
-<span class="source-line-no">174</span><span id="line-174">        } else {</span>
-<span class="source-line-no">175</span><span id="line-175">            //classes or resources</span>
-<span class="source-line-no">176</span><span id="line-176">            newPath = AbsoluteUnixPath.get("/function" + originalEntry.getExtractionPath());</span>
-<span class="source-line-no">177</span><span id="line-177">        }</span>
-<span class="source-line-no">178</span><span id="line-178"></span>
-<span class="source-line-no">179</span><span id="line-179">        return new FileEntry(originalEntry.getSourceFile(), newPath, originalEntry.getPermissions(),</span>
-<span class="source-line-no">180</span><span id="line-180">            originalEntry.getModificationTime(), originalEntry.getOwnership());</span>
-<span class="source-line-no">181</span><span id="line-181">    }</span>
-<span class="source-line-no">182</span><span id="line-182"></span>
-<span class="source-line-no">183</span><span id="line-183">    private Platform detectPlatform() {</span>
-<span class="source-line-no">184</span><span id="line-184">        String arch = System.getProperty("os.arch").equals("aarch64") ? "arm64" : "amd64";</span>
-<span class="source-line-no">185</span><span id="line-185">        return new Platform(arch, "linux");</span>
-<span class="source-line-no">186</span><span id="line-186">    }</span>
-<span class="source-line-no">187</span><span id="line-187"></span>
-<span class="source-line-no">188</span><span id="line-188">}</span>
+<span class="source-line-no">078</span><span id="line-78">        if (buildPlan.getExposedPorts() == null || buildPlan.getExposedPorts().isEmpty()) {</span>
+<span class="source-line-no">079</span><span id="line-79">            var applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());</span>
+<span class="source-line-no">080</span><span id="line-80">            try {</span>
+<span class="source-line-no">081</span><span id="line-81">                int port = Integer.parseInt(applicationConfigurationService.getServerPort());</span>
+<span class="source-line-no">082</span><span id="line-82">                if (port &gt; 0) {</span>
+<span class="source-line-no">083</span><span id="line-83">                    logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Exposing port: " + port);</span>
+<span class="source-line-no">084</span><span id="line-84">                    builder.addExposedPort(Port.tcp(port));</span>
+<span class="source-line-no">085</span><span id="line-85">                }</span>
+<span class="source-line-no">086</span><span id="line-86">            } catch (NumberFormatException e) {</span>
+<span class="source-line-no">087</span><span id="line-87">                // ignore, can't automatically expose port</span>
+<span class="source-line-no">088</span><span id="line-88">                logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Dynamically resolved port present. Ensure the port is correctly exposed in the &lt;container&gt; configuration. See https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#example for an example.");</span>
+<span class="source-line-no">089</span><span id="line-89">            }</span>
+<span class="source-line-no">090</span><span id="line-90">        }</span>
+<span class="source-line-no">091</span><span id="line-91"></span>
+<span class="source-line-no">092</span><span id="line-92">        if (buildPlan.getPlatforms() == null || buildPlan.getPlatforms().isEmpty()) {</span>
+<span class="source-line-no">093</span><span id="line-93">            builder.setPlatforms(Set.of(detectPlatform()));</span>
+<span class="source-line-no">094</span><span id="line-94">        }</span>
+<span class="source-line-no">095</span><span id="line-95"></span>
+<span class="source-line-no">096</span><span id="line-96">        switch (runtime.getBuildStrategy()) {</span>
+<span class="source-line-no">097</span><span id="line-97">            case ORACLE_FUNCTION -&gt; {</span>
+<span class="source-line-no">098</span><span id="line-98">                List&lt;? extends LayerObject&gt; originalLayers = buildPlan.getLayers();</span>
+<span class="source-line-no">099</span><span id="line-99">                builder.setLayers(originalLayers.stream().map(JibMicronautExtension::remapLayer).toList());</span>
+<span class="source-line-no">100</span><span id="line-100">                List&lt;String&gt; cmd = jibConfigurationService.getArgs();</span>
+<span class="source-line-no">101</span><span id="line-101">                if (cmd.isEmpty()) {</span>
+<span class="source-line-no">102</span><span id="line-102">                    cmd = Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest");</span>
+<span class="source-line-no">103</span><span id="line-103">                }</span>
+<span class="source-line-no">104</span><span id="line-104">                builder.setWorkingDirectory(AbsoluteUnixPath.get(jibConfigurationService.getWorkingDirectory().orElse("/function")))</span>
+<span class="source-line-no">105</span><span id="line-105">                    .setEntrypoint(buildProjectFnEntrypoint())</span>
+<span class="source-line-no">106</span><span id="line-106">                    .setCmd(cmd);</span>
+<span class="source-line-no">107</span><span id="line-107">            }</span>
+<span class="source-line-no">108</span><span id="line-108">            case LAMBDA -&gt; {</span>
+<span class="source-line-no">109</span><span id="line-109">                //TODO Leverage AWS Base images:</span>
+<span class="source-line-no">110</span><span id="line-110">                // https://docs.aws.amazon.com/lambda/latest/dg/java-image.html</span>
+<span class="source-line-no">111</span><span id="line-111">                // https://docs.aws.amazon.com/lambda/latest/dg/images-create.html</span>
+<span class="source-line-no">112</span><span id="line-112">                // https://docs.aws.amazon.com/lambda/latest/dg/images-test.html</span>
+<span class="source-line-no">113</span><span id="line-113">                List&lt;String&gt; entrypoint = buildPlan.getEntrypoint();</span>
+<span class="source-line-no">114</span><span id="line-114">                Objects.requireNonNull(entrypoint).set(entrypoint.size() - 1, "io.micronaut.function.aws.runtime.MicronautLambdaRuntime");</span>
+<span class="source-line-no">115</span><span id="line-115">                builder.setEntrypoint(entrypoint);</span>
+<span class="source-line-no">116</span><span id="line-116">            }</span>
+<span class="source-line-no">117</span><span id="line-117">            default -&gt; {</span>
+<span class="source-line-no">118</span><span id="line-118">                //no op</span>
+<span class="source-line-no">119</span><span id="line-119">            }</span>
+<span class="source-line-no">120</span><span id="line-120">        }</span>
+<span class="source-line-no">121</span><span id="line-121">        return builder.build();</span>
+<span class="source-line-no">122</span><span id="line-122">    }</span>
+<span class="source-line-no">123</span><span id="line-123"></span>
+<span class="source-line-no">124</span><span id="line-124">    public static List&lt;String&gt; buildProjectFnEntrypoint() {</span>
+<span class="source-line-no">125</span><span id="line-125">        var entrypoint = new ArrayList&lt;String&gt;(9);</span>
+<span class="source-line-no">126</span><span id="line-126">        entrypoint.add("java");</span>
+<span class="source-line-no">127</span><span id="line-127">        entrypoint.add("-XX:-UsePerfData");</span>
+<span class="source-line-no">128</span><span id="line-128">        entrypoint.add("-XX:+UseSerialGC");</span>
+<span class="source-line-no">129</span><span id="line-129">        entrypoint.add("-Xshare:auto");</span>
+<span class="source-line-no">130</span><span id="line-130">        entrypoint.add("-Djava.awt.headless=true");</span>
+<span class="source-line-no">131</span><span id="line-131">        entrypoint.add("-Djava.library.path=/function/runtime/lib");</span>
+<span class="source-line-no">132</span><span id="line-132">        entrypoint.add("-cp");</span>
+<span class="source-line-no">133</span><span id="line-133">        entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");</span>
+<span class="source-line-no">134</span><span id="line-134">        entrypoint.add("com.fnproject.fn.runtime.EntryPoint");</span>
+<span class="source-line-no">135</span><span id="line-135">        return entrypoint;</span>
+<span class="source-line-no">136</span><span id="line-136">    }</span>
+<span class="source-line-no">137</span><span id="line-137"></span>
+<span class="source-line-no">138</span><span id="line-138">    public static String determineProjectFnVersion(String javaVersion) {</span>
+<span class="source-line-no">139</span><span id="line-139">        int majorVersion = Integer.parseInt(javaVersion.split("\\.")[0]);</span>
+<span class="source-line-no">140</span><span id="line-140">        if (majorVersion &lt;= 21 &amp;&amp; majorVersion &gt; 17) {</span>
+<span class="source-line-no">141</span><span id="line-141">            return "21-jre";</span>
+<span class="source-line-no">142</span><span id="line-142">        } else if (majorVersion == 17) {</span>
+<span class="source-line-no">143</span><span id="line-143">            return "17-jre";</span>
+<span class="source-line-no">144</span><span id="line-144">        } else {</span>
+<span class="source-line-no">145</span><span id="line-145">            return LATEST_TAG;</span>
+<span class="source-line-no">146</span><span id="line-146">        }</span>
+<span class="source-line-no">147</span><span id="line-147">    }</span>
+<span class="source-line-no">148</span><span id="line-148"></span>
+<span class="source-line-no">149</span><span id="line-149">    public static String determineBaseImage(String jdkVersion, DockerBuildStrategy buildStrategy) {</span>
+<span class="source-line-no">150</span><span id="line-150">        int javaVersion = Integer.parseInt(jdkVersion);</span>
+<span class="source-line-no">151</span><span id="line-151">        return switch (buildStrategy) {</span>
+<span class="source-line-no">152</span><span id="line-152">            case LAMBDA -&gt; "public.ecr.aws/lambda/java:" + javaVersion;</span>
+<span class="source-line-no">153</span><span id="line-153">            default -&gt; javaVersion == 17 ? DEFAULT_JAVA17_BASE_IMAGE : DEFAULT_JAVA21_BASE_IMAGE;</span>
+<span class="source-line-no">154</span><span id="line-154">        };</span>
+<span class="source-line-no">155</span><span id="line-155">    }</span>
+<span class="source-line-no">156</span><span id="line-156"></span>
+<span class="source-line-no">157</span><span id="line-157">    public static String getJdkVersion(MavenProject project) {</span>
+<span class="source-line-no">158</span><span id="line-158">        return System.getProperty(JDK_VERSION, project.getProperties().getProperty(JDK_VERSION));</span>
+<span class="source-line-no">159</span><span id="line-159">    }</span>
+<span class="source-line-no">160</span><span id="line-160"></span>
+<span class="source-line-no">161</span><span id="line-161">    static LayerObject remapLayer(LayerObject layerObject) {</span>
+<span class="source-line-no">162</span><span id="line-162">        var originalLayer = (FileEntriesLayer) layerObject;</span>
+<span class="source-line-no">163</span><span id="line-163">        FileEntriesLayer.Builder builder = FileEntriesLayer.builder().setName(originalLayer.getName());</span>
+<span class="source-line-no">164</span><span id="line-164">        for (FileEntry originalEntry : originalLayer.getEntries()) {</span>
+<span class="source-line-no">165</span><span id="line-165">            builder.addEntry(remapEntry(originalEntry, layerObject.getName()));</span>
+<span class="source-line-no">166</span><span id="line-166">        }</span>
+<span class="source-line-no">167</span><span id="line-167"></span>
+<span class="source-line-no">168</span><span id="line-168">        return builder.build();</span>
+<span class="source-line-no">169</span><span id="line-169">    }</span>
+<span class="source-line-no">170</span><span id="line-170"></span>
+<span class="source-line-no">171</span><span id="line-171">    static FileEntry remapEntry(FileEntry originalEntry, String layerName) {</span>
+<span class="source-line-no">172</span><span id="line-172">        List&lt;String&gt; pathComponents = UnixPathParser.parse(originalEntry.getExtractionPath().toString());</span>
+<span class="source-line-no">173</span><span id="line-173">        AbsoluteUnixPath newPath;</span>
+<span class="source-line-no">174</span><span id="line-174">        if (layerName.contains("dependencies")) {</span>
+<span class="source-line-no">175</span><span id="line-175">            newPath = AbsoluteUnixPath.get("/function/app/libs/" + pathComponents.get(pathComponents.size() - 1));</span>
+<span class="source-line-no">176</span><span id="line-176">        } else {</span>
+<span class="source-line-no">177</span><span id="line-177">            //classes or resources</span>
+<span class="source-line-no">178</span><span id="line-178">            newPath = AbsoluteUnixPath.get("/function" + originalEntry.getExtractionPath());</span>
+<span class="source-line-no">179</span><span id="line-179">        }</span>
+<span class="source-line-no">180</span><span id="line-180"></span>
+<span class="source-line-no">181</span><span id="line-181">        return new FileEntry(originalEntry.getSourceFile(), newPath, originalEntry.getPermissions(),</span>
+<span class="source-line-no">182</span><span id="line-182">            originalEntry.getModificationTime(), originalEntry.getOwnership());</span>
+<span class="source-line-no">183</span><span id="line-183">    }</span>
+<span class="source-line-no">184</span><span id="line-184"></span>
+<span class="source-line-no">185</span><span id="line-185">    private Platform detectPlatform() {</span>
+<span class="source-line-no">186</span><span id="line-186">        String arch = System.getProperty("os.arch").equals("aarch64") ? "arm64" : "amd64";</span>
+<span class="source-line-no">187</span><span id="line-187">        return new Platform(arch, "linux");</span>
+<span class="source-line-no">188</span><span id="line-188">    }</span>
+<span class="source-line-no">189</span><span id="line-189"></span>
+<span class="source-line-no">190</span><span id="line-190">}</span>
 
 
 

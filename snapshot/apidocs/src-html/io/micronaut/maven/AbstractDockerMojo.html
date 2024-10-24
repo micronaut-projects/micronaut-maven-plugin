@@ -255,69 +255,71 @@
 <span class="source-line-no">242</span><span id="line-242">    }</span>
 <span class="source-line-no">243</span><span id="line-243"></span>
 <span class="source-line-no">244</span><span id="line-244">    /**</span>
-<span class="source-line-no">245</span><span id="line-245">     * @return the application port to expose by looking at the application configuration.</span>
+<span class="source-line-no">245</span><span id="line-245">     * @return the application ports to expose by looking at the Jib configuration or the application configuration.</span>
 <span class="source-line-no">246</span><span id="line-246">     */</span>
-<span class="source-line-no">247</span><span id="line-247">    protected String getPort() {</span>
-<span class="source-line-no">248</span><span id="line-248">        String port = applicationConfigurationService.getServerPort();</span>
-<span class="source-line-no">249</span><span id="line-249">        return "-1".equals(port) ? DEFAULT_PORT : port;</span>
-<span class="source-line-no">250</span><span id="line-250">    }</span>
-<span class="source-line-no">251</span><span id="line-251"></span>
-<span class="source-line-no">252</span><span id="line-252">    /**</span>
-<span class="source-line-no">253</span><span id="line-253">     * Copy project dependencies to a &lt;code&gt;target/dependency&lt;/code&gt; directory.</span>
-<span class="source-line-no">254</span><span id="line-254">     */</span>
-<span class="source-line-no">255</span><span id="line-255">    @SuppressWarnings("ResultOfMethodCallIgnored")</span>
-<span class="source-line-no">256</span><span id="line-256">    protected void copyDependencies() throws IOException {</span>
-<span class="source-line-no">257</span><span id="line-257">        var imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);</span>
-<span class="source-line-no">258</span><span id="line-258">        mavenProject.setArtifactFilter(artifact -&gt; imageClasspathScopes.contains(artifact.getScope()));</span>
-<span class="source-line-no">259</span><span id="line-259">        var target = new File(mavenProject.getBuild().getDirectory(), "dependency");</span>
-<span class="source-line-no">260</span><span id="line-260">        if (!target.exists()) {</span>
-<span class="source-line-no">261</span><span id="line-261">            target.mkdirs();</span>
-<span class="source-line-no">262</span><span id="line-262">        }</span>
-<span class="source-line-no">263</span><span id="line-263">        for (Artifact dependency : mavenProject.getArtifacts()) {</span>
-<span class="source-line-no">264</span><span id="line-264">            Files.copy(dependency.getFile().toPath(), target.toPath().resolve(dependency.getFile().getName()), StandardCopyOption.REPLACE_EXISTING);</span>
-<span class="source-line-no">265</span><span id="line-265">        }</span>
-<span class="source-line-no">266</span><span id="line-266">    }</span>
-<span class="source-line-no">267</span><span id="line-267"></span>
-<span class="source-line-no">268</span><span id="line-268">    /**</span>
-<span class="source-line-no">269</span><span id="line-269">     * @return the Docker CMD command.</span>
-<span class="source-line-no">270</span><span id="line-270">     */</span>
-<span class="source-line-no">271</span><span id="line-271">    protected String getCmd() {</span>
-<span class="source-line-no">272</span><span id="line-272">        return "CMD [" +</span>
-<span class="source-line-no">273</span><span id="line-273">            appArguments.stream()</span>
-<span class="source-line-no">274</span><span id="line-274">                .map(s -&gt; "\"" + s + "\"")</span>
-<span class="source-line-no">275</span><span id="line-275">                .collect(Collectors.joining(", ")) +</span>
-<span class="source-line-no">276</span><span id="line-276">            "]";</span>
-<span class="source-line-no">277</span><span id="line-277">    }</span>
-<span class="source-line-no">278</span><span id="line-278"></span>
-<span class="source-line-no">279</span><span id="line-279">    /**</span>
-<span class="source-line-no">280</span><span id="line-280">     * @return Networking mode for the RUN instructions during build (if any).</span>
-<span class="source-line-no">281</span><span id="line-281">     */</span>
-<span class="source-line-no">282</span><span id="line-282">    protected Optional&lt;String&gt; getNetworkMode() {</span>
-<span class="source-line-no">283</span><span id="line-283">        return Optional.ofNullable(networkMode);</span>
-<span class="source-line-no">284</span><span id="line-284">    }</span>
-<span class="source-line-no">285</span><span id="line-285"></span>
-<span class="source-line-no">286</span><span id="line-286">    /**</span>
-<span class="source-line-no">287</span><span id="line-287">     * @return the base image to use for the Dockerfile.</span>
-<span class="source-line-no">288</span><span id="line-288">     */</span>
-<span class="source-line-no">289</span><span id="line-289">    protected String getBaseImage() {</span>
-<span class="source-line-no">290</span><span id="line-290">        return JibMicronautExtension.determineBaseImage(JibMicronautExtension.getJdkVersion(mavenProject), MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy());</span>
-<span class="source-line-no">291</span><span id="line-291">    }</span>
-<span class="source-line-no">292</span><span id="line-292"></span>
-<span class="source-line-no">293</span><span id="line-293">    /**</span>
-<span class="source-line-no">294</span><span id="line-294">     * Adds cmd to docker oracle cloud function file.</span>
-<span class="source-line-no">295</span><span id="line-295">     *</span>
-<span class="source-line-no">296</span><span id="line-296">     * @param dockerfile the docker file</span>
-<span class="source-line-no">297</span><span id="line-297">     */</span>
-<span class="source-line-no">298</span><span id="line-298">    protected void oracleCloudFunctionCmd(File dockerfile) throws IOException {</span>
-<span class="source-line-no">299</span><span id="line-299">        if (appArguments != null &amp;&amp; !appArguments.isEmpty()) {</span>
-<span class="source-line-no">300</span><span id="line-300">            getLog().info("Using application arguments: " + appArguments);</span>
-<span class="source-line-no">301</span><span id="line-301">            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());</span>
-<span class="source-line-no">302</span><span id="line-302">        } else {</span>
-<span class="source-line-no">303</span><span id="line-303">            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + ORACLE_CLOUD_FUNCTION_DEFAULT_CMD);</span>
-<span class="source-line-no">304</span><span id="line-304">        }</span>
-<span class="source-line-no">305</span><span id="line-305">    }</span>
-<span class="source-line-no">306</span><span id="line-306"></span>
-<span class="source-line-no">307</span><span id="line-307">}</span>
+<span class="source-line-no">247</span><span id="line-247">    protected String getPorts() {</span>
+<span class="source-line-no">248</span><span id="line-248">        return jibConfigurationService.getPorts().orElseGet(() -&gt; {</span>
+<span class="source-line-no">249</span><span id="line-249">            String port = applicationConfigurationService.getServerPort();</span>
+<span class="source-line-no">250</span><span id="line-250">            return "-1".equals(port) ? DEFAULT_PORT : port;</span>
+<span class="source-line-no">251</span><span id="line-251">        });</span>
+<span class="source-line-no">252</span><span id="line-252">    }</span>
+<span class="source-line-no">253</span><span id="line-253"></span>
+<span class="source-line-no">254</span><span id="line-254">    /**</span>
+<span class="source-line-no">255</span><span id="line-255">     * Copy project dependencies to a &lt;code&gt;target/dependency&lt;/code&gt; directory.</span>
+<span class="source-line-no">256</span><span id="line-256">     */</span>
+<span class="source-line-no">257</span><span id="line-257">    @SuppressWarnings("ResultOfMethodCallIgnored")</span>
+<span class="source-line-no">258</span><span id="line-258">    protected void copyDependencies() throws IOException {</span>
+<span class="source-line-no">259</span><span id="line-259">        var imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);</span>
+<span class="source-line-no">260</span><span id="line-260">        mavenProject.setArtifactFilter(artifact -&gt; imageClasspathScopes.contains(artifact.getScope()));</span>
+<span class="source-line-no">261</span><span id="line-261">        var target = new File(mavenProject.getBuild().getDirectory(), "dependency");</span>
+<span class="source-line-no">262</span><span id="line-262">        if (!target.exists()) {</span>
+<span class="source-line-no">263</span><span id="line-263">            target.mkdirs();</span>
+<span class="source-line-no">264</span><span id="line-264">        }</span>
+<span class="source-line-no">265</span><span id="line-265">        for (Artifact dependency : mavenProject.getArtifacts()) {</span>
+<span class="source-line-no">266</span><span id="line-266">            Files.copy(dependency.getFile().toPath(), target.toPath().resolve(dependency.getFile().getName()), StandardCopyOption.REPLACE_EXISTING);</span>
+<span class="source-line-no">267</span><span id="line-267">        }</span>
+<span class="source-line-no">268</span><span id="line-268">    }</span>
+<span class="source-line-no">269</span><span id="line-269"></span>
+<span class="source-line-no">270</span><span id="line-270">    /**</span>
+<span class="source-line-no">271</span><span id="line-271">     * @return the Docker CMD command.</span>
+<span class="source-line-no">272</span><span id="line-272">     */</span>
+<span class="source-line-no">273</span><span id="line-273">    protected String getCmd() {</span>
+<span class="source-line-no">274</span><span id="line-274">        return "CMD [" +</span>
+<span class="source-line-no">275</span><span id="line-275">            appArguments.stream()</span>
+<span class="source-line-no">276</span><span id="line-276">                .map(s -&gt; "\"" + s + "\"")</span>
+<span class="source-line-no">277</span><span id="line-277">                .collect(Collectors.joining(", ")) +</span>
+<span class="source-line-no">278</span><span id="line-278">            "]";</span>
+<span class="source-line-no">279</span><span id="line-279">    }</span>
+<span class="source-line-no">280</span><span id="line-280"></span>
+<span class="source-line-no">281</span><span id="line-281">    /**</span>
+<span class="source-line-no">282</span><span id="line-282">     * @return Networking mode for the RUN instructions during build (if any).</span>
+<span class="source-line-no">283</span><span id="line-283">     */</span>
+<span class="source-line-no">284</span><span id="line-284">    protected Optional&lt;String&gt; getNetworkMode() {</span>
+<span class="source-line-no">285</span><span id="line-285">        return Optional.ofNullable(networkMode);</span>
+<span class="source-line-no">286</span><span id="line-286">    }</span>
+<span class="source-line-no">287</span><span id="line-287"></span>
+<span class="source-line-no">288</span><span id="line-288">    /**</span>
+<span class="source-line-no">289</span><span id="line-289">     * @return the base image to use for the Dockerfile.</span>
+<span class="source-line-no">290</span><span id="line-290">     */</span>
+<span class="source-line-no">291</span><span id="line-291">    protected String getBaseImage() {</span>
+<span class="source-line-no">292</span><span id="line-292">        return JibMicronautExtension.determineBaseImage(JibMicronautExtension.getJdkVersion(mavenProject), MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy());</span>
+<span class="source-line-no">293</span><span id="line-293">    }</span>
+<span class="source-line-no">294</span><span id="line-294"></span>
+<span class="source-line-no">295</span><span id="line-295">    /**</span>
+<span class="source-line-no">296</span><span id="line-296">     * Adds cmd to docker oracle cloud function file.</span>
+<span class="source-line-no">297</span><span id="line-297">     *</span>
+<span class="source-line-no">298</span><span id="line-298">     * @param dockerfile the docker file</span>
+<span class="source-line-no">299</span><span id="line-299">     */</span>
+<span class="source-line-no">300</span><span id="line-300">    protected void oracleCloudFunctionCmd(File dockerfile) throws IOException {</span>
+<span class="source-line-no">301</span><span id="line-301">        if (appArguments != null &amp;&amp; !appArguments.isEmpty()) {</span>
+<span class="source-line-no">302</span><span id="line-302">            getLog().info("Using application arguments: " + appArguments);</span>
+<span class="source-line-no">303</span><span id="line-303">            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());</span>
+<span class="source-line-no">304</span><span id="line-304">        } else {</span>
+<span class="source-line-no">305</span><span id="line-305">            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + ORACLE_CLOUD_FUNCTION_DEFAULT_CMD);</span>
+<span class="source-line-no">306</span><span id="line-306">        }</span>
+<span class="source-line-no">307</span><span id="line-307">    }</span>
+<span class="source-line-no">308</span><span id="line-308"></span>
+<span class="source-line-no">309</span><span id="line-309">}</span>
 
 
 
