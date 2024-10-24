@@ -75,16 +75,18 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         }
         logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Using base image: " + baseImage);
 
-        var applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());
-        try {
-            int port = Integer.parseInt(applicationConfigurationService.getServerPort());
-            if (port > 0) {
-                logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Exposing port: " + port);
-                builder.addExposedPort(Port.tcp(port));
+        if (buildPlan.getExposedPorts() == null || buildPlan.getExposedPorts().isEmpty()) {
+            var applicationConfigurationService = new ApplicationConfigurationService(mavenData.getMavenProject());
+            try {
+                int port = Integer.parseInt(applicationConfigurationService.getServerPort());
+                if (port > 0) {
+                    logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Exposing port: " + port);
+                    builder.addExposedPort(Port.tcp(port));
+                }
+            } catch (NumberFormatException e) {
+                // ignore, can't automatically expose port
+                logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Dynamically resolved port present. Ensure the port is correctly exposed in the <container> configuration. See https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#example for an example.");
             }
-        } catch (NumberFormatException e) {
-            // ignore, can't automatically expose port
-            logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Dynamically resolved port present. Ensure the port is correctly exposed in the <container> configuration. See https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#example for an example.");
         }
 
         if (buildPlan.getPlatforms() == null || buildPlan.getPlatforms().isEmpty()) {

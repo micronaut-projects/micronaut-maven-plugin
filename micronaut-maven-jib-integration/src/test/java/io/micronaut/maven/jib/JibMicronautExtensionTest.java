@@ -6,6 +6,7 @@ import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
 import com.google.cloud.tools.jib.api.buildplan.FileEntry;
 import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
 import com.google.cloud.tools.jib.api.buildplan.LayerObject;
+import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import io.micronaut.maven.core.DockerBuildStrategy;
@@ -26,6 +27,7 @@ import java.util.Optional;
 import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -142,7 +144,28 @@ class JibMicronautExtensionTest {
         platform = iterator.next();
         assertEquals("arm64", platform.getArchitecture());
         assertEquals("linux", platform.getOs());
+    }
 
+    @Test
+    void testDetectPorts() {
+        var originalPlan = ContainerBuildPlan.builder().build();
+        var finalPlan = extendContainerBuildPlan(originalPlan);
+
+        assertEquals(1, finalPlan.getExposedPorts().size());
+        assertTrue(finalPlan.getExposedPorts().contains(Port.tcp(8080)));
+    }
+
+    @Test
+    void testConfigurePorts() {
+        var originalPlan = ContainerBuildPlan.builder()
+                .addExposedPort(Port.tcp(8080))
+                .addExposedPort(Port.tcp(8081))
+                .build();
+        var finalPlan = extendContainerBuildPlan(originalPlan);
+
+        assertEquals(2, finalPlan.getExposedPorts().size());
+        assertTrue(finalPlan.getExposedPorts().contains(Port.tcp(8080)));
+        assertTrue(finalPlan.getExposedPorts().contains(Port.tcp(8081)));
     }
 
     private ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan originalPlan) {
