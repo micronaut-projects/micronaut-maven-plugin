@@ -62,10 +62,5 @@ public record JibConfiguration(Optional<FromConfiguration> from, Optional<ToConf
      * @param args The arguments.
      * @param labels The labels.
      */
-    public record ContainerConfiguration(Optional<String> workingDirectory, Set<String> ports, List<String> args, Set<String> labels) {
-
-//        public Set<Port> parsedPorts() {
-//            return Ports.parse(ports.stream().toList());
-//        }
-    }
+    public record ContainerConfiguration(Optional<String> workingDirectory, Set<String> ports, List<String> args, Set<String> labels) { }
 }

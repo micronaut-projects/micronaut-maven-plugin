@@ -67,7 +67,8 @@ public class JibConfigurationService {
      * @return the <code>to.image</code> configuration.
      */
     public Optional<String> getToImage() {
-        final String value = configuration.flatMap(c -> c.to().flatMap(ToConfiguration::image)).orElse(null);
+        final String value = configuration.flatMap(c -> c.to().flatMap(ToConfiguration::image))
+                .orElse(null);
         return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.TO_IMAGE, value));
     }
 
@@ -75,7 +76,8 @@ public class JibConfigurationService {
      * @return the <code>from.image</code> configuration.
      */
     public Optional<String> getFromImage() {
-        final String value = configuration.flatMap(c -> c.from().flatMap(FromConfiguration::image)).orElse(null);
+        final String value = configuration.flatMap(c -> c.from().flatMap(FromConfiguration::image))
+                .orElse(null);
         return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.FROM_IMAGE, value));
     }
 
@@ -83,7 +85,8 @@ public class JibConfigurationService {
      * @return the <code>to.tags</code> configuration.
      */
     public Set<String> getTags() {
-        final Set<String> tags = configuration.flatMap(c -> c.to().map(ToConfiguration::tags)).orElse(Collections.emptySet());
+        final Set<String> tags = configuration.flatMap(c -> c.to().map(ToConfiguration::tags))
+                .orElse(Collections.emptySet());
         return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.TO_TAGS))
                 .map(JibConfigurationService::parseCommaSeparatedList)
                 .orElse(tags);
@@ -131,7 +134,8 @@ public class JibConfigurationService {
      * @return the <code>container.workingDirectory</code> configuration.
      */
     public Optional<String> getWorkingDirectory() {
-        final String value = configuration.flatMap(c -> c.container().flatMap(ContainerConfiguration::workingDirectory)).orElse(null);
+        final String value = configuration.flatMap(c -> c.container().flatMap(ContainerConfiguration::workingDirectory))
+                .orElse(null);
         return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY, value));
     }
 
@@ -139,11 +143,20 @@ public class JibConfigurationService {
      * @return the <code>container.args</code> configuration.
      */
     public List<String> getArgs() {
-        final List<String> args = configuration.flatMap(c -> c.container().map(ContainerConfiguration::args)).orElse(Collections.emptyList());
+        final List<String> args = configuration.flatMap(c -> c.container().map(ContainerConfiguration::args))
+                .orElse(Collections.emptyList());
         return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.CONTAINER_ARGS))
                 .map(JibConfigurationService::parseCommaSeparatedList)
                 .map(List::copyOf)
                 .orElse(args);
+    }
+
+    public Optional<String> getPorts() {
+        final Set<String> ports = configuration.flatMap(c -> c.container().map(ContainerConfiguration::ports))
+                .orElse(Collections.emptySet());
+        return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.CONTAINER_PORTS))
+                .map(s -> s.replace(",", " "))
+                .or(() -> Optional.of(String.join(" ", ports)));
     }
 
     private static Set<String> parseCommaSeparatedList(String list) {

@@ -246,6 +246,38 @@ class JibConfigurationServiceTest {
         assertTrue(args.contains("args"));
     }
 
+    @Test
+    void testGetPortsFromXml() throws XmlPullParserException, IOException {
+        var config = """
+                <configuration>
+                  <container>
+                    <ports>
+                      <port>1000</port>
+                      <port>2000-2003/udp</port>
+                    </ports>
+                  </container>
+                </configuration>""";
+        var service = setupJibConfigurationService(config);
+
+        assertFalse(service.getPorts().isEmpty());
+
+        var ports = service.getPorts().get();
+
+        assertEquals("1000 2000-2003/udp", ports);
+    }
+
+    @Test
+    @SetSystemProperty(key = PropertyNames.CONTAINER_PORTS, value = "1000,2000-2003/udp")
+    void testGetPortsFromSystemProperties() {
+        var service = setupJibConfigurationService();
+
+        assertFalse(service.getPorts().isEmpty());
+
+        var ports = service.getPorts().get();
+
+        assertEquals("1000 2000-2003/udp", ports);
+    }
+
     private JibConfigurationService setupJibConfigurationService(String xmlConfiguration) throws XmlPullParserException, IOException {
         var configuration = parseConfiguration(xmlConfiguration);
         return setupJibConfigurationService(configuration);
