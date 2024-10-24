@@ -64,7 +64,7 @@
 <span class="source-line-no">051</span><span id="line-51">        if (toolchain != null) {</span>
 <span class="source-line-no">052</span><span id="line-52">            executable = toolchain.findTool(JAVA);</span>
 <span class="source-line-no">053</span><span id="line-53">        } else {</span>
-<span class="source-line-no">054</span><span id="line-54">            File javaBinariesDir = new File(new File(System.getProperty("java.home")), "bin");</span>
+<span class="source-line-no">054</span><span id="line-54">            var javaBinariesDir = new File(new File(System.getProperty("java.home")), "bin");</span>
 <span class="source-line-no">055</span><span id="line-55">            if (Os.isFamily(Os.FAMILY_UNIX)) {</span>
 <span class="source-line-no">056</span><span id="line-56">                executable = new File(javaBinariesDir, JAVA).getAbsolutePath();</span>
 <span class="source-line-no">057</span><span id="line-57">            } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {</span>
@@ -77,7 +77,7 @@
 <span class="source-line-no">064</span><span id="line-64">    }</span>
 <span class="source-line-no">065</span><span id="line-65"></span>
 <span class="source-line-no">066</span><span id="line-66">    public static List&lt;String&gt; computeNativeImageArgs(List&lt;String&gt; nativeImageBuildArgs, String baseImageRun, String argsFile) {</span>
-<span class="source-line-no">067</span><span id="line-67">        List&lt;String&gt; allNativeImageBuildArgs = new ArrayList&lt;&gt;();</span>
+<span class="source-line-no">067</span><span id="line-67">        var allNativeImageBuildArgs = new ArrayList&lt;String&gt;();</span>
 <span class="source-line-no">068</span><span id="line-68">        if (nativeImageBuildArgs != null &amp;&amp; !nativeImageBuildArgs.isEmpty()) {</span>
 <span class="source-line-no">069</span><span id="line-69">            allNativeImageBuildArgs.addAll(nativeImageBuildArgs);</span>
 <span class="source-line-no">070</span><span id="line-70">        }</span>
@@ -106,23 +106,23 @@
 <span class="source-line-no">093</span><span id="line-93">            }</span>
 <span class="source-line-no">094</span><span id="line-94"></span>
 <span class="source-line-no">095</span><span id="line-95">            return args.stream()</span>
-<span class="source-line-no">096</span><span id="line-96">                    .filter(arg -&gt; !arg.startsWith("-H:Name"))</span>
-<span class="source-line-no">097</span><span id="line-97">                    .filter(arg -&gt; !arg.startsWith("-H:Class"))</span>
-<span class="source-line-no">098</span><span id="line-98">                    .filter(arg -&gt; !arg.startsWith("-H:Path"))</span>
-<span class="source-line-no">099</span><span id="line-99">                    .flatMap(arg -&gt; {</span>
-<span class="source-line-no">100</span><span id="line-100">                        if (arg.startsWith("@")) {</span>
-<span class="source-line-no">101</span><span id="line-101">                            String fileName = arg.substring(1);</span>
-<span class="source-line-no">102</span><span id="line-102">                            return parseNativeImageArgsFile(fileName);</span>
-<span class="source-line-no">103</span><span id="line-103">                        } else if (arg.startsWith("\\Q") &amp;&amp; arg.endsWith("\\E")) {</span>
-<span class="source-line-no">104</span><span id="line-104">                            // start the search at length - 3 to skip \Q or \E at the end</span>
-<span class="source-line-no">105</span><span id="line-105">                            int lastIndexOfSlash = arg.lastIndexOf(File.separator, arg.length() - 3);</span>
-<span class="source-line-no">106</span><span id="line-106">                            return Stream.of("\\Q/home/app/libs/" + arg.substring(lastIndexOfSlash + 1));</span>
-<span class="source-line-no">107</span><span id="line-107">                        } else if (arg.startsWith("-H:ConfigurationFileDirectories")) {</span>
-<span class="source-line-no">108</span><span id="line-108">                            return Stream.of(parseConfigurationFilesDirectoriesArg(arg));</span>
-<span class="source-line-no">109</span><span id="line-109">                        } else {</span>
-<span class="source-line-no">110</span><span id="line-110">                            return Stream.of(arg);</span>
-<span class="source-line-no">111</span><span id="line-111">                        }</span>
-<span class="source-line-no">112</span><span id="line-112">                    });</span>
+<span class="source-line-no">096</span><span id="line-96">                .filter(arg -&gt; !arg.startsWith("-H:Name"))</span>
+<span class="source-line-no">097</span><span id="line-97">                .filter(arg -&gt; !arg.startsWith("-H:Class"))</span>
+<span class="source-line-no">098</span><span id="line-98">                .filter(arg -&gt; !arg.startsWith("-H:Path"))</span>
+<span class="source-line-no">099</span><span id="line-99">                .flatMap(arg -&gt; {</span>
+<span class="source-line-no">100</span><span id="line-100">                    if (arg.startsWith("@")) {</span>
+<span class="source-line-no">101</span><span id="line-101">                        String fileName = arg.substring(1);</span>
+<span class="source-line-no">102</span><span id="line-102">                        return parseNativeImageArgsFile(fileName);</span>
+<span class="source-line-no">103</span><span id="line-103">                    } else if (arg.startsWith("\\Q") &amp;&amp; arg.endsWith("\\E")) {</span>
+<span class="source-line-no">104</span><span id="line-104">                        // start the search at length - 3 to skip \Q or \E at the end</span>
+<span class="source-line-no">105</span><span id="line-105">                        int lastIndexOfSlash = arg.lastIndexOf(File.separator, arg.length() - 3);</span>
+<span class="source-line-no">106</span><span id="line-106">                        return Stream.of("\\Q/home/app/libs/" + arg.substring(lastIndexOfSlash + 1));</span>
+<span class="source-line-no">107</span><span id="line-107">                    } else if (arg.startsWith("-H:ConfigurationFileDirectories")) {</span>
+<span class="source-line-no">108</span><span id="line-108">                        return Stream.of(parseConfigurationFilesDirectoriesArg(arg));</span>
+<span class="source-line-no">109</span><span id="line-109">                    } else {</span>
+<span class="source-line-no">110</span><span id="line-110">                        return Stream.of(arg);</span>
+<span class="source-line-no">111</span><span id="line-111">                    }</span>
+<span class="source-line-no">112</span><span id="line-112">                });</span>
 <span class="source-line-no">113</span><span id="line-113">        } else {</span>
 <span class="source-line-no">114</span><span id="line-114">            throw new RuntimeException("Unable to find args file: " + argsFilePath);</span>
 <span class="source-line-no">115</span><span id="line-115">        }</span>
@@ -134,26 +134,26 @@
 <span class="source-line-no">121</span><span id="line-121">        String separator = "/";</span>
 <span class="source-line-no">122</span><span id="line-122">        if (arg.contains("generateResourceConfig") || arg.contains("generateTestResourceConfig")) {</span>
 <span class="source-line-no">123</span><span id="line-123">            return Stream.of(directories)</span>
-<span class="source-line-no">124</span><span id="line-124">                    .map(FilenameUtils::separatorsToUnix)</span>
-<span class="source-line-no">125</span><span id="line-125">                    .map(directory -&gt; {</span>
-<span class="source-line-no">126</span><span id="line-126">                        String[] splitDirectory = directory.split(separator);</span>
-<span class="source-line-no">127</span><span id="line-127">                        return "/home/app/" + splitDirectory[splitDirectory.length - 1];</span>
-<span class="source-line-no">128</span><span id="line-128">                    })</span>
-<span class="source-line-no">129</span><span id="line-129">                    .collect(Collectors.joining(","))</span>
-<span class="source-line-no">130</span><span id="line-130">                    .transform(s -&gt; "-H:ConfigurationFileDirectories=" + s);</span>
+<span class="source-line-no">124</span><span id="line-124">                .map(FilenameUtils::separatorsToUnix)</span>
+<span class="source-line-no">125</span><span id="line-125">                .map(directory -&gt; {</span>
+<span class="source-line-no">126</span><span id="line-126">                    String[] splitDirectory = directory.split(separator);</span>
+<span class="source-line-no">127</span><span id="line-127">                    return "/home/app/" + splitDirectory[splitDirectory.length - 1];</span>
+<span class="source-line-no">128</span><span id="line-128">                })</span>
+<span class="source-line-no">129</span><span id="line-129">                .collect(Collectors.joining(","))</span>
+<span class="source-line-no">130</span><span id="line-130">                .transform(s -&gt; "-H:ConfigurationFileDirectories=" + s);</span>
 <span class="source-line-no">131</span><span id="line-131">        } else {</span>
 <span class="source-line-no">132</span><span id="line-132">            return Stream.of(directories)</span>
-<span class="source-line-no">133</span><span id="line-133">                    .map(FilenameUtils::separatorsToUnix)</span>
-<span class="source-line-no">134</span><span id="line-134">                    .map(directory -&gt; {</span>
-<span class="source-line-no">135</span><span id="line-135">                        String[] splitDirectory = directory.split(separator);</span>
-<span class="source-line-no">136</span><span id="line-136">                        String last4Directories = splitDirectory[splitDirectory.length - 4] + separator +</span>
-<span class="source-line-no">137</span><span id="line-137">                                                  splitDirectory[splitDirectory.length - 3] + separator +</span>
-<span class="source-line-no">138</span><span id="line-138">                                                  splitDirectory[splitDirectory.length - 2] + separator +</span>
-<span class="source-line-no">139</span><span id="line-139">                                                  splitDirectory[splitDirectory.length - 1];</span>
-<span class="source-line-no">140</span><span id="line-140">                        return "/home/app/graalvm-reachability-metadata/" + last4Directories;</span>
-<span class="source-line-no">141</span><span id="line-141">                    })</span>
-<span class="source-line-no">142</span><span id="line-142">                    .collect(Collectors.joining(","))</span>
-<span class="source-line-no">143</span><span id="line-143">                    .transform(s -&gt; "-H:ConfigurationFileDirectories=" + s);</span>
+<span class="source-line-no">133</span><span id="line-133">                .map(FilenameUtils::separatorsToUnix)</span>
+<span class="source-line-no">134</span><span id="line-134">                .map(directory -&gt; {</span>
+<span class="source-line-no">135</span><span id="line-135">                    String[] splitDirectory = directory.split(separator);</span>
+<span class="source-line-no">136</span><span id="line-136">                    String last4Directories = splitDirectory[splitDirectory.length - 4] + separator +</span>
+<span class="source-line-no">137</span><span id="line-137">                        splitDirectory[splitDirectory.length - 3] + separator +</span>
+<span class="source-line-no">138</span><span id="line-138">                        splitDirectory[splitDirectory.length - 2] + separator +</span>
+<span class="source-line-no">139</span><span id="line-139">                        splitDirectory[splitDirectory.length - 1];</span>
+<span class="source-line-no">140</span><span id="line-140">                    return "/home/app/graalvm-reachability-metadata/" + last4Directories;</span>
+<span class="source-line-no">141</span><span id="line-141">                })</span>
+<span class="source-line-no">142</span><span id="line-142">                .collect(Collectors.joining(","))</span>
+<span class="source-line-no">143</span><span id="line-143">                .transform(s -&gt; "-H:ConfigurationFileDirectories=" + s);</span>
 <span class="source-line-no">144</span><span id="line-144">        }</span>
 <span class="source-line-no">145</span><span id="line-145">    }</span>
 <span class="source-line-no">146</span><span id="line-146"></span>
@@ -168,7 +168,7 @@
 <span class="source-line-no">155</span><span id="line-155">        String groupId = parts[0];</span>
 <span class="source-line-no">156</span><span id="line-156">        String artifactId = parts[1];</span>
 <span class="source-line-no">157</span><span id="line-157">        return project.getBuildPlugins().stream()</span>
-<span class="source-line-no">158</span><span id="line-158">                .anyMatch(p -&gt; p.getGroupId().equals(groupId) &amp;&amp; p.getArtifactId().equals(artifactId));</span>
+<span class="source-line-no">158</span><span id="line-158">            .anyMatch(p -&gt; p.getGroupId().equals(groupId) &amp;&amp; p.getArtifactId().equals(artifactId));</span>
 <span class="source-line-no">159</span><span id="line-159">    }</span>
 <span class="source-line-no">160</span><span id="line-160">}</span>
 

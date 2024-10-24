@@ -82,71 +82,72 @@
 <span class="source-line-no">069</span><span id="line-69"></span>
 <span class="source-line-no">070</span><span id="line-70">    /**</span>
 <span class="source-line-no">071</span><span id="line-71">     * Compiles the project.</span>
-<span class="source-line-no">072</span><span id="line-72">     * @return the last compilation time millis.</span>
-<span class="source-line-no">073</span><span id="line-73">     */</span>
-<span class="source-line-no">074</span><span id="line-74">    public Optional&lt;Long&gt; compileProject() {</span>
-<span class="source-line-no">075</span><span id="line-75">        Long lastCompilation = null;</span>
-<span class="source-line-no">076</span><span id="line-76">        if (log.isDebugEnabled()) {</span>
-<span class="source-line-no">077</span><span id="line-77">            log.debug("Compiling the project");</span>
-<span class="source-line-no">078</span><span id="line-78">        }</span>
-<span class="source-line-no">079</span><span id="line-79">        try {</span>
-<span class="source-line-no">080</span><span id="line-80">            executorService.invokeGoals(COMPILE_GOAL);</span>
-<span class="source-line-no">081</span><span id="line-81">            lastCompilation = System.currentTimeMillis();</span>
-<span class="source-line-no">082</span><span id="line-82">        } catch (Exception e) {</span>
-<span class="source-line-no">083</span><span id="line-83">            if (log.isErrorEnabled()) {</span>
-<span class="source-line-no">084</span><span id="line-84">                log.error("Error while compiling the project: ", e);</span>
-<span class="source-line-no">085</span><span id="line-85">            }</span>
-<span class="source-line-no">086</span><span id="line-86">        }</span>
-<span class="source-line-no">087</span><span id="line-87">        return Optional.ofNullable(lastCompilation);</span>
-<span class="source-line-no">088</span><span id="line-88">    }</span>
-<span class="source-line-no">089</span><span id="line-89"></span>
-<span class="source-line-no">090</span><span id="line-90">    /**</span>
-<span class="source-line-no">091</span><span id="line-91">     * Resolves project dependencies for the given scopes.</span>
-<span class="source-line-no">092</span><span id="line-92">     *</span>
-<span class="source-line-no">093</span><span id="line-93">     * @param runnableProject the project to resolve dependencies for.</span>
-<span class="source-line-no">094</span><span id="line-94">     * @param scopes the scopes to resolve dependencies for.</span>
-<span class="source-line-no">095</span><span id="line-95">     * @return the list of dependencies.</span>
-<span class="source-line-no">096</span><span id="line-96">     */</span>
-<span class="source-line-no">097</span><span id="line-97">    public List&lt;Dependency&gt; resolveDependencies(MavenProject runnableProject, String... scopes) {</span>
-<span class="source-line-no">098</span><span id="line-98">        try {</span>
-<span class="source-line-no">099</span><span id="line-99">            DependencyFilter filter = DependencyFilterUtils.classpathFilter(scopes);</span>
-<span class="source-line-no">100</span><span id="line-100">            RepositorySystemSession session = mavenSession.getRepositorySession();</span>
-<span class="source-line-no">101</span><span id="line-101">            DependencyResolutionRequest dependencyResolutionRequest = new DefaultDependencyResolutionRequest(runnableProject, session);</span>
-<span class="source-line-no">102</span><span id="line-102">            dependencyResolutionRequest.setResolutionFilter(filter);</span>
-<span class="source-line-no">103</span><span id="line-103">            DependencyResolutionResult result = resolver.resolve(dependencyResolutionRequest);</span>
-<span class="source-line-no">104</span><span id="line-104">            return result.getDependencies();</span>
-<span class="source-line-no">105</span><span id="line-105">        } catch (org.apache.maven.project.DependencyResolutionException e) {</span>
-<span class="source-line-no">106</span><span id="line-106">            if (log.isWarnEnabled()) {</span>
-<span class="source-line-no">107</span><span id="line-107">                log.warn("Error while trying to resolve dependencies for the current project", e);</span>
-<span class="source-line-no">108</span><span id="line-108">            }</span>
-<span class="source-line-no">109</span><span id="line-109">            return Collections.emptyList();</span>
-<span class="source-line-no">110</span><span id="line-110">        }</span>
-<span class="source-line-no">111</span><span id="line-111">    }</span>
-<span class="source-line-no">112</span><span id="line-112"></span>
-<span class="source-line-no">113</span><span id="line-113">    /**</span>
-<span class="source-line-no">114</span><span id="line-114">     * Builds a classpath string for the given dependencies.</span>
-<span class="source-line-no">115</span><span id="line-115">     *</span>
-<span class="source-line-no">116</span><span id="line-116">     * @param dependencies the dependencies to build the classpath for.</span>
-<span class="source-line-no">117</span><span id="line-117">     * @return the classpath string.</span>
-<span class="source-line-no">118</span><span id="line-118">     */</span>
-<span class="source-line-no">119</span><span id="line-119">    public String buildClasspath(List&lt;Dependency&gt; dependencies) {</span>
-<span class="source-line-no">120</span><span id="line-120">        Comparator&lt;Dependency&gt; byGroupId = Comparator.comparing(d -&gt; d.getArtifact().getGroupId());</span>
-<span class="source-line-no">121</span><span id="line-121">        Comparator&lt;Dependency&gt; byArtifactId = Comparator.comparing(d -&gt; d.getArtifact().getArtifactId());</span>
-<span class="source-line-no">122</span><span id="line-122">        return dependencies.stream()</span>
-<span class="source-line-no">123</span><span id="line-123">                .sorted(byGroupId.thenComparing(byArtifactId))</span>
-<span class="source-line-no">124</span><span id="line-124">                .map(dependency -&gt; dependency.getArtifact().getFile().getAbsolutePath())</span>
-<span class="source-line-no">125</span><span id="line-125">                .collect(Collectors.joining(File.pathSeparator));</span>
-<span class="source-line-no">126</span><span id="line-126">    }</span>
-<span class="source-line-no">127</span><span id="line-127"></span>
-<span class="source-line-no">128</span><span id="line-128">    /**</span>
-<span class="source-line-no">129</span><span id="line-129">     * Packages the project by invoking the Jar plugin.</span>
-<span class="source-line-no">130</span><span id="line-130">     *</span>
-<span class="source-line-no">131</span><span id="line-131">     * @return the invocation result.</span>
-<span class="source-line-no">132</span><span id="line-132">     */</span>
-<span class="source-line-no">133</span><span id="line-133">    public InvocationResult packageProject() throws MavenInvocationException {</span>
-<span class="source-line-no">134</span><span id="line-134">        return executorService.invokeGoal(MAVEN_JAR_PLUGIN, "jar");</span>
-<span class="source-line-no">135</span><span id="line-135">    }</span>
-<span class="source-line-no">136</span><span id="line-136">}</span>
+<span class="source-line-no">072</span><span id="line-72">     *</span>
+<span class="source-line-no">073</span><span id="line-73">     * @return the last compilation time millis.</span>
+<span class="source-line-no">074</span><span id="line-74">     */</span>
+<span class="source-line-no">075</span><span id="line-75">    public Optional&lt;Long&gt; compileProject() {</span>
+<span class="source-line-no">076</span><span id="line-76">        Long lastCompilation = null;</span>
+<span class="source-line-no">077</span><span id="line-77">        if (log.isDebugEnabled()) {</span>
+<span class="source-line-no">078</span><span id="line-78">            log.debug("Compiling the project");</span>
+<span class="source-line-no">079</span><span id="line-79">        }</span>
+<span class="source-line-no">080</span><span id="line-80">        try {</span>
+<span class="source-line-no">081</span><span id="line-81">            executorService.invokeGoals(COMPILE_GOAL);</span>
+<span class="source-line-no">082</span><span id="line-82">            lastCompilation = System.currentTimeMillis();</span>
+<span class="source-line-no">083</span><span id="line-83">        } catch (Exception e) {</span>
+<span class="source-line-no">084</span><span id="line-84">            if (log.isErrorEnabled()) {</span>
+<span class="source-line-no">085</span><span id="line-85">                log.error("Error while compiling the project: ", e);</span>
+<span class="source-line-no">086</span><span id="line-86">            }</span>
+<span class="source-line-no">087</span><span id="line-87">        }</span>
+<span class="source-line-no">088</span><span id="line-88">        return Optional.ofNullable(lastCompilation);</span>
+<span class="source-line-no">089</span><span id="line-89">    }</span>
+<span class="source-line-no">090</span><span id="line-90"></span>
+<span class="source-line-no">091</span><span id="line-91">    /**</span>
+<span class="source-line-no">092</span><span id="line-92">     * Resolves project dependencies for the given scopes.</span>
+<span class="source-line-no">093</span><span id="line-93">     *</span>
+<span class="source-line-no">094</span><span id="line-94">     * @param runnableProject the project to resolve dependencies for.</span>
+<span class="source-line-no">095</span><span id="line-95">     * @param scopes the scopes to resolve dependencies for.</span>
+<span class="source-line-no">096</span><span id="line-96">     * @return the list of dependencies.</span>
+<span class="source-line-no">097</span><span id="line-97">     */</span>
+<span class="source-line-no">098</span><span id="line-98">    public List&lt;Dependency&gt; resolveDependencies(MavenProject runnableProject, String... scopes) {</span>
+<span class="source-line-no">099</span><span id="line-99">        try {</span>
+<span class="source-line-no">100</span><span id="line-100">            DependencyFilter filter = DependencyFilterUtils.classpathFilter(scopes);</span>
+<span class="source-line-no">101</span><span id="line-101">            RepositorySystemSession session = mavenSession.getRepositorySession();</span>
+<span class="source-line-no">102</span><span id="line-102">            DependencyResolutionRequest dependencyResolutionRequest = new DefaultDependencyResolutionRequest(runnableProject, session);</span>
+<span class="source-line-no">103</span><span id="line-103">            dependencyResolutionRequest.setResolutionFilter(filter);</span>
+<span class="source-line-no">104</span><span id="line-104">            DependencyResolutionResult result = resolver.resolve(dependencyResolutionRequest);</span>
+<span class="source-line-no">105</span><span id="line-105">            return result.getDependencies();</span>
+<span class="source-line-no">106</span><span id="line-106">        } catch (org.apache.maven.project.DependencyResolutionException e) {</span>
+<span class="source-line-no">107</span><span id="line-107">            if (log.isWarnEnabled()) {</span>
+<span class="source-line-no">108</span><span id="line-108">                log.warn("Error while trying to resolve dependencies for the current project", e);</span>
+<span class="source-line-no">109</span><span id="line-109">            }</span>
+<span class="source-line-no">110</span><span id="line-110">            return Collections.emptyList();</span>
+<span class="source-line-no">111</span><span id="line-111">        }</span>
+<span class="source-line-no">112</span><span id="line-112">    }</span>
+<span class="source-line-no">113</span><span id="line-113"></span>
+<span class="source-line-no">114</span><span id="line-114">    /**</span>
+<span class="source-line-no">115</span><span id="line-115">     * Builds a classpath string for the given dependencies.</span>
+<span class="source-line-no">116</span><span id="line-116">     *</span>
+<span class="source-line-no">117</span><span id="line-117">     * @param dependencies the dependencies to build the classpath for.</span>
+<span class="source-line-no">118</span><span id="line-118">     * @return the classpath string.</span>
+<span class="source-line-no">119</span><span id="line-119">     */</span>
+<span class="source-line-no">120</span><span id="line-120">    public String buildClasspath(List&lt;Dependency&gt; dependencies) {</span>
+<span class="source-line-no">121</span><span id="line-121">        Comparator&lt;Dependency&gt; byGroupId = Comparator.comparing(d -&gt; d.getArtifact().getGroupId());</span>
+<span class="source-line-no">122</span><span id="line-122">        Comparator&lt;Dependency&gt; byArtifactId = Comparator.comparing(d -&gt; d.getArtifact().getArtifactId());</span>
+<span class="source-line-no">123</span><span id="line-123">        return dependencies.stream()</span>
+<span class="source-line-no">124</span><span id="line-124">            .sorted(byGroupId.thenComparing(byArtifactId))</span>
+<span class="source-line-no">125</span><span id="line-125">            .map(dependency -&gt; dependency.getArtifact().getFile().getAbsolutePath())</span>
+<span class="source-line-no">126</span><span id="line-126">            .collect(Collectors.joining(File.pathSeparator));</span>
+<span class="source-line-no">127</span><span id="line-127">    }</span>
+<span class="source-line-no">128</span><span id="line-128"></span>
+<span class="source-line-no">129</span><span id="line-129">    /**</span>
+<span class="source-line-no">130</span><span id="line-130">     * Packages the project by invoking the Jar plugin.</span>
+<span class="source-line-no">131</span><span id="line-131">     *</span>
+<span class="source-line-no">132</span><span id="line-132">     * @return the invocation result.</span>
+<span class="source-line-no">133</span><span id="line-133">     */</span>
+<span class="source-line-no">134</span><span id="line-134">    public InvocationResult packageProject() throws MavenInvocationException {</span>
+<span class="source-line-no">135</span><span id="line-135">        return executorService.invokeGoal(MAVEN_JAR_PLUGIN, "jar");</span>
+<span class="source-line-no">136</span><span id="line-136">    }</span>
+<span class="source-line-no">137</span><span id="line-137">}</span>
 
 
 

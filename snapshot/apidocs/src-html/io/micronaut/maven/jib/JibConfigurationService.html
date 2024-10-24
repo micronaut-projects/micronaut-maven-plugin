@@ -37,170 +37,176 @@
 <span class="source-line-no">024</span><span id="line-24"></span>
 <span class="source-line-no">025</span><span id="line-25">import javax.inject.Inject;</span>
 <span class="source-line-no">026</span><span id="line-26">import javax.inject.Singleton;</span>
-<span class="source-line-no">027</span><span id="line-27">import java.util.*;</span>
-<span class="source-line-no">028</span><span id="line-28">import java.util.stream.Collectors;</span>
-<span class="source-line-no">029</span><span id="line-29"></span>
-<span class="source-line-no">030</span><span id="line-30">/**</span>
-<span class="source-line-no">031</span><span id="line-31"> * Exposes the Jib plugin configuration so that it can be read by other mojos.</span>
-<span class="source-line-no">032</span><span id="line-32"> *</span>
-<span class="source-line-no">033</span><span id="line-33"> * @author Álvaro Sánchez-Mariscal</span>
-<span class="source-line-no">034</span><span id="line-34"> * @since 1.1</span>
-<span class="source-line-no">035</span><span id="line-35"> */</span>
-<span class="source-line-no">036</span><span id="line-36">@Singleton</span>
-<span class="source-line-no">037</span><span id="line-37">public class JibConfigurationService {</span>
-<span class="source-line-no">038</span><span id="line-38"></span>
-<span class="source-line-no">039</span><span id="line-39">    private static final String IMAGE = "image";</span>
-<span class="source-line-no">040</span><span id="line-40">    private static final String CONTAINER = "container";</span>
-<span class="source-line-no">041</span><span id="line-41">    private static final String WORKING_DIRECTORY = "workingDirectory";</span>
-<span class="source-line-no">042</span><span id="line-42"></span>
-<span class="source-line-no">043</span><span id="line-43">    private Xpp3Dom configuration;</span>
-<span class="source-line-no">044</span><span id="line-44">    private Xpp3Dom to;</span>
-<span class="source-line-no">045</span><span id="line-45">    private Xpp3Dom from;</span>
-<span class="source-line-no">046</span><span id="line-46"></span>
-<span class="source-line-no">047</span><span id="line-47">    @Inject</span>
-<span class="source-line-no">048</span><span id="line-48">    public JibConfigurationService(MavenProject mavenProject) {</span>
-<span class="source-line-no">049</span><span id="line-49">        final Plugin plugin = mavenProject.getPlugin(MavenProjectProperties.PLUGIN_KEY);</span>
-<span class="source-line-no">050</span><span id="line-50">        if (plugin != null &amp;&amp; plugin.getConfiguration() != null) {</span>
-<span class="source-line-no">051</span><span id="line-51">            configuration = (Xpp3Dom) plugin.getConfiguration();</span>
-<span class="source-line-no">052</span><span id="line-52">            to = configuration.getChild("to");</span>
-<span class="source-line-no">053</span><span id="line-53">            from = configuration.getChild("from");</span>
-<span class="source-line-no">054</span><span id="line-54">        }</span>
-<span class="source-line-no">055</span><span id="line-55">    }</span>
-<span class="source-line-no">056</span><span id="line-56"></span>
-<span class="source-line-no">057</span><span id="line-57">    /**</span>
-<span class="source-line-no">058</span><span id="line-58">     * @return the &lt;code&gt;to.image&lt;/code&gt; configuration.</span>
-<span class="source-line-no">059</span><span id="line-59">     */</span>
-<span class="source-line-no">060</span><span id="line-60">    public Optional&lt;String&gt; getToImage() {</span>
-<span class="source-line-no">061</span><span id="line-61">        Optional&lt;String&gt; result;</span>
-<span class="source-line-no">062</span><span id="line-62">        String propertyValue = System.getProperties().getProperty(PropertyNames.TO_IMAGE);</span>
-<span class="source-line-no">063</span><span id="line-63">        if (propertyValue != null) {</span>
-<span class="source-line-no">064</span><span id="line-64">            result = Optional.of(propertyValue);</span>
-<span class="source-line-no">065</span><span id="line-65">        } else if (to != null) {</span>
-<span class="source-line-no">066</span><span id="line-66">            result = Optional.ofNullable(to.getChild(IMAGE).getValue());</span>
-<span class="source-line-no">067</span><span id="line-67">        } else {</span>
-<span class="source-line-no">068</span><span id="line-68">            result = Optional.empty();</span>
-<span class="source-line-no">069</span><span id="line-69">        }</span>
-<span class="source-line-no">070</span><span id="line-70">        return result;</span>
-<span class="source-line-no">071</span><span id="line-71">    }</span>
-<span class="source-line-no">072</span><span id="line-72"></span>
-<span class="source-line-no">073</span><span id="line-73">    /**</span>
-<span class="source-line-no">074</span><span id="line-74">     * @return the &lt;code&gt;from.image&lt;/code&gt; configuration.</span>
-<span class="source-line-no">075</span><span id="line-75">     */</span>
-<span class="source-line-no">076</span><span id="line-76">    public Optional&lt;String&gt; getFromImage() {</span>
-<span class="source-line-no">077</span><span id="line-77">        Optional&lt;String&gt; result;</span>
-<span class="source-line-no">078</span><span id="line-78">        String propertyValue = System.getProperties().getProperty(PropertyNames.FROM_IMAGE);</span>
-<span class="source-line-no">079</span><span id="line-79">        if (propertyValue != null) {</span>
-<span class="source-line-no">080</span><span id="line-80">            result = Optional.of(propertyValue);</span>
-<span class="source-line-no">081</span><span id="line-81">        } else if (from != null) {</span>
-<span class="source-line-no">082</span><span id="line-82">            result = Optional.ofNullable(from.getChild(IMAGE).getValue());</span>
-<span class="source-line-no">083</span><span id="line-83">        } else {</span>
-<span class="source-line-no">084</span><span id="line-84">            result = Optional.empty();</span>
-<span class="source-line-no">085</span><span id="line-85">        }</span>
-<span class="source-line-no">086</span><span id="line-86">        return result;</span>
-<span class="source-line-no">087</span><span id="line-87">    }</span>
-<span class="source-line-no">088</span><span id="line-88"></span>
-<span class="source-line-no">089</span><span id="line-89">    /**</span>
-<span class="source-line-no">090</span><span id="line-90">     * @return the &lt;code&gt;to.tags&lt;/code&gt; configuration.</span>
-<span class="source-line-no">091</span><span id="line-91">     */</span>
-<span class="source-line-no">092</span><span id="line-92">    public Set&lt;String&gt; getTags() {</span>
-<span class="source-line-no">093</span><span id="line-93">        Set&lt;String&gt; result = null;</span>
-<span class="source-line-no">094</span><span id="line-94">        String propertyValue = System.getProperties().getProperty(PropertyNames.TO_TAGS);</span>
-<span class="source-line-no">095</span><span id="line-95">        if (propertyValue != null) {</span>
-<span class="source-line-no">096</span><span id="line-96">            result = new HashSet&lt;&gt;(parseCommaSeparatedList(propertyValue));</span>
-<span class="source-line-no">097</span><span id="line-97">        } else {</span>
-<span class="source-line-no">098</span><span id="line-98">            if (to != null) {</span>
-<span class="source-line-no">099</span><span id="line-99">                Xpp3Dom tags = to.getChild("tags");</span>
-<span class="source-line-no">100</span><span id="line-100">                if (tags != null &amp;&amp; tags.getChildCount() &gt; 0) {</span>
-<span class="source-line-no">101</span><span id="line-101">                    result = Arrays.stream(tags.getChildren())</span>
-<span class="source-line-no">102</span><span id="line-102">                            .map(Xpp3Dom::getValue)</span>
-<span class="source-line-no">103</span><span id="line-103">                            .collect(Collectors.toSet());</span>
-<span class="source-line-no">104</span><span id="line-104">                }</span>
-<span class="source-line-no">105</span><span id="line-105">            }</span>
-<span class="source-line-no">106</span><span id="line-106">            if (result == null) {</span>
-<span class="source-line-no">107</span><span id="line-107">                result = Collections.emptySet();</span>
-<span class="source-line-no">108</span><span id="line-108">            }</span>
-<span class="source-line-no">109</span><span id="line-109">        }</span>
-<span class="source-line-no">110</span><span id="line-110">        return result;</span>
-<span class="source-line-no">111</span><span id="line-111">    }</span>
-<span class="source-line-no">112</span><span id="line-112"></span>
-<span class="source-line-no">113</span><span id="line-113">    /**</span>
-<span class="source-line-no">114</span><span id="line-114">     * @return the &lt;code&gt;to.auth.username&lt;/code&gt; and &lt;code&gt;to.auth.password&lt;/code&gt; configuration.</span>
-<span class="source-line-no">115</span><span id="line-115">     */</span>
-<span class="source-line-no">116</span><span id="line-116">    public Optional&lt;Credential&gt; getToCredentials() {</span>
-<span class="source-line-no">117</span><span id="line-117">        return getCredentials(PropertyNames.TO_AUTH_USERNAME, PropertyNames.TO_AUTH_PASSWORD, to);</span>
-<span class="source-line-no">118</span><span id="line-118">    }</span>
-<span class="source-line-no">119</span><span id="line-119"></span>
-<span class="source-line-no">120</span><span id="line-120">    /**</span>
-<span class="source-line-no">121</span><span id="line-121">     * @return the &lt;code&gt;from.auth.username&lt;/code&gt; and &lt;code&gt;from.auth.password&lt;/code&gt; configuration.</span>
-<span class="source-line-no">122</span><span id="line-122">     */</span>
-<span class="source-line-no">123</span><span id="line-123">    public Optional&lt;Credential&gt; getFromCredentials() {</span>
-<span class="source-line-no">124</span><span id="line-124">        return getCredentials(PropertyNames.FROM_AUTH_USERNAME, PropertyNames.FROM_AUTH_PASSWORD, from);</span>
-<span class="source-line-no">125</span><span id="line-125">    }</span>
-<span class="source-line-no">126</span><span id="line-126"></span>
-<span class="source-line-no">127</span><span id="line-127">    private Optional&lt;Credential&gt; getCredentials(String usernamePropName, String passwordPropName, Xpp3Dom node) {</span>
-<span class="source-line-no">128</span><span id="line-128">        Optional&lt;Credential&gt; result = Optional.empty();</span>
-<span class="source-line-no">129</span><span id="line-129">        String usernameProp = System.getProperties().getProperty(usernamePropName);</span>
-<span class="source-line-no">130</span><span id="line-130">        String passwordProp = System.getProperties().getProperty(passwordPropName);</span>
-<span class="source-line-no">131</span><span id="line-131">        if (usernameProp != null &amp;&amp; passwordProp != null) {</span>
-<span class="source-line-no">132</span><span id="line-132">            result = Optional.of(Credential.from(usernameProp, passwordProp));</span>
-<span class="source-line-no">133</span><span id="line-133">        } else {</span>
-<span class="source-line-no">134</span><span id="line-134">            if (node != null) {</span>
-<span class="source-line-no">135</span><span id="line-135">                Xpp3Dom auth = node.getChild("auth");</span>
-<span class="source-line-no">136</span><span id="line-136">                if (auth != null) {</span>
-<span class="source-line-no">137</span><span id="line-137">                    Xpp3Dom username = auth.getChild("username");</span>
-<span class="source-line-no">138</span><span id="line-138">                    Xpp3Dom password = auth.getChild("password");</span>
-<span class="source-line-no">139</span><span id="line-139">                    if (username != null &amp;&amp; password != null) {</span>
-<span class="source-line-no">140</span><span id="line-140">                        result = Optional.of(Credential.from(username.getValue(), password.getValue()));</span>
-<span class="source-line-no">141</span><span id="line-141">                    }</span>
-<span class="source-line-no">142</span><span id="line-142">                }</span>
-<span class="source-line-no">143</span><span id="line-143">            }</span>
-<span class="source-line-no">144</span><span id="line-144">        }</span>
-<span class="source-line-no">145</span><span id="line-145">        return result;</span>
-<span class="source-line-no">146</span><span id="line-146">    }</span>
-<span class="source-line-no">147</span><span id="line-147"></span>
-<span class="source-line-no">148</span><span id="line-148">    /**</span>
-<span class="source-line-no">149</span><span id="line-149">     * @return the &lt;code&gt;container.workingDirectory&lt;/code&gt; configuration.</span>
-<span class="source-line-no">150</span><span id="line-150">     */</span>
-<span class="source-line-no">151</span><span id="line-151">    public Optional&lt;String&gt; getWorkingDirectory() {</span>
-<span class="source-line-no">152</span><span id="line-152">        if (configuration != null) {</span>
-<span class="source-line-no">153</span><span id="line-153">            Xpp3Dom container = configuration.getChild(CONTAINER);</span>
-<span class="source-line-no">154</span><span id="line-154">            if (container != null &amp;&amp; container.getChild(WORKING_DIRECTORY) != null) {</span>
-<span class="source-line-no">155</span><span id="line-155">                return Optional.ofNullable(container.getChild(WORKING_DIRECTORY).getValue());</span>
-<span class="source-line-no">156</span><span id="line-156">            }</span>
-<span class="source-line-no">157</span><span id="line-157">        }</span>
-<span class="source-line-no">158</span><span id="line-158">        return Optional.empty();</span>
-<span class="source-line-no">159</span><span id="line-159">    }</span>
-<span class="source-line-no">160</span><span id="line-160"></span>
-<span class="source-line-no">161</span><span id="line-161">    /**</span>
-<span class="source-line-no">162</span><span id="line-162">     * @return the &lt;code&gt;container.args&lt;/code&gt; configuration.</span>
-<span class="source-line-no">163</span><span id="line-163">     */</span>
-<span class="source-line-no">164</span><span id="line-164">    public List&lt;String&gt; getArgs() {</span>
-<span class="source-line-no">165</span><span id="line-165">        List&lt;String&gt; result = new ArrayList&lt;&gt;();</span>
-<span class="source-line-no">166</span><span id="line-166">        if (configuration != null) {</span>
-<span class="source-line-no">167</span><span id="line-167">            Xpp3Dom container = configuration.getChild(CONTAINER);</span>
-<span class="source-line-no">168</span><span id="line-168">            if (container != null) {</span>
-<span class="source-line-no">169</span><span id="line-169">                Xpp3Dom args = container.getChild("args");</span>
-<span class="source-line-no">170</span><span id="line-170">                if (args.getChildCount() &gt; 0) {</span>
-<span class="source-line-no">171</span><span id="line-171">                    for (Xpp3Dom arg : args.getChildren()) {</span>
-<span class="source-line-no">172</span><span id="line-172">                        result.add(arg.getValue());</span>
-<span class="source-line-no">173</span><span id="line-173">                    }</span>
-<span class="source-line-no">174</span><span id="line-174">                } else {</span>
-<span class="source-line-no">175</span><span id="line-175">                    result.add(args.getValue());</span>
-<span class="source-line-no">176</span><span id="line-176">                }</span>
-<span class="source-line-no">177</span><span id="line-177">            }</span>
-<span class="source-line-no">178</span><span id="line-178">        }</span>
-<span class="source-line-no">179</span><span id="line-179">        return result;</span>
-<span class="source-line-no">180</span><span id="line-180">    }</span>
-<span class="source-line-no">181</span><span id="line-181"></span>
-<span class="source-line-no">182</span><span id="line-182">    private static Set&lt;String&gt; parseCommaSeparatedList(String list) {</span>
-<span class="source-line-no">183</span><span id="line-183">        String[] parts = list.split(",");</span>
-<span class="source-line-no">184</span><span id="line-184">        Set&lt;String&gt; items = new HashSet&lt;&gt;(parts.length);</span>
-<span class="source-line-no">185</span><span id="line-185">        for (String part : parts) {</span>
-<span class="source-line-no">186</span><span id="line-186">            items.add(part.trim());</span>
-<span class="source-line-no">187</span><span id="line-187">        }</span>
-<span class="source-line-no">188</span><span id="line-188">        return items;</span>
-<span class="source-line-no">189</span><span id="line-189">    }</span>
-<span class="source-line-no">190</span><span id="line-190">}</span>
+<span class="source-line-no">027</span><span id="line-27">import java.util.ArrayList;</span>
+<span class="source-line-no">028</span><span id="line-28">import java.util.Arrays;</span>
+<span class="source-line-no">029</span><span id="line-29">import java.util.Collections;</span>
+<span class="source-line-no">030</span><span id="line-30">import java.util.HashSet;</span>
+<span class="source-line-no">031</span><span id="line-31">import java.util.List;</span>
+<span class="source-line-no">032</span><span id="line-32">import java.util.Optional;</span>
+<span class="source-line-no">033</span><span id="line-33">import java.util.Set;</span>
+<span class="source-line-no">034</span><span id="line-34">import java.util.stream.Collectors;</span>
+<span class="source-line-no">035</span><span id="line-35"></span>
+<span class="source-line-no">036</span><span id="line-36">/**</span>
+<span class="source-line-no">037</span><span id="line-37"> * Exposes the Jib plugin configuration so that it can be read by other mojos.</span>
+<span class="source-line-no">038</span><span id="line-38"> *</span>
+<span class="source-line-no">039</span><span id="line-39"> * @author Álvaro Sánchez-Mariscal</span>
+<span class="source-line-no">040</span><span id="line-40"> * @since 1.1</span>
+<span class="source-line-no">041</span><span id="line-41"> */</span>
+<span class="source-line-no">042</span><span id="line-42">@Singleton</span>
+<span class="source-line-no">043</span><span id="line-43">public class JibConfigurationService {</span>
+<span class="source-line-no">044</span><span id="line-44"></span>
+<span class="source-line-no">045</span><span id="line-45">    private static final String IMAGE = "image";</span>
+<span class="source-line-no">046</span><span id="line-46">    private static final String CONTAINER = "container";</span>
+<span class="source-line-no">047</span><span id="line-47">    private static final String WORKING_DIRECTORY = "workingDirectory";</span>
+<span class="source-line-no">048</span><span id="line-48"></span>
+<span class="source-line-no">049</span><span id="line-49">    private Xpp3Dom configuration;</span>
+<span class="source-line-no">050</span><span id="line-50">    private Xpp3Dom to;</span>
+<span class="source-line-no">051</span><span id="line-51">    private Xpp3Dom from;</span>
+<span class="source-line-no">052</span><span id="line-52"></span>
+<span class="source-line-no">053</span><span id="line-53">    @Inject</span>
+<span class="source-line-no">054</span><span id="line-54">    public JibConfigurationService(MavenProject mavenProject) {</span>
+<span class="source-line-no">055</span><span id="line-55">        final Plugin plugin = mavenProject.getPlugin(MavenProjectProperties.PLUGIN_KEY);</span>
+<span class="source-line-no">056</span><span id="line-56">        if (plugin != null &amp;&amp; plugin.getConfiguration() != null) {</span>
+<span class="source-line-no">057</span><span id="line-57">            configuration = (Xpp3Dom) plugin.getConfiguration();</span>
+<span class="source-line-no">058</span><span id="line-58">            to = configuration.getChild("to");</span>
+<span class="source-line-no">059</span><span id="line-59">            from = configuration.getChild("from");</span>
+<span class="source-line-no">060</span><span id="line-60">        }</span>
+<span class="source-line-no">061</span><span id="line-61">    }</span>
+<span class="source-line-no">062</span><span id="line-62"></span>
+<span class="source-line-no">063</span><span id="line-63">    /**</span>
+<span class="source-line-no">064</span><span id="line-64">     * @return the &lt;code&gt;to.image&lt;/code&gt; configuration.</span>
+<span class="source-line-no">065</span><span id="line-65">     */</span>
+<span class="source-line-no">066</span><span id="line-66">    public Optional&lt;String&gt; getToImage() {</span>
+<span class="source-line-no">067</span><span id="line-67">        Optional&lt;String&gt; result;</span>
+<span class="source-line-no">068</span><span id="line-68">        String propertyValue = System.getProperties().getProperty(PropertyNames.TO_IMAGE);</span>
+<span class="source-line-no">069</span><span id="line-69">        if (propertyValue != null) {</span>
+<span class="source-line-no">070</span><span id="line-70">            result = Optional.of(propertyValue);</span>
+<span class="source-line-no">071</span><span id="line-71">        } else if (to != null) {</span>
+<span class="source-line-no">072</span><span id="line-72">            result = Optional.ofNullable(to.getChild(IMAGE).getValue());</span>
+<span class="source-line-no">073</span><span id="line-73">        } else {</span>
+<span class="source-line-no">074</span><span id="line-74">            result = Optional.empty();</span>
+<span class="source-line-no">075</span><span id="line-75">        }</span>
+<span class="source-line-no">076</span><span id="line-76">        return result;</span>
+<span class="source-line-no">077</span><span id="line-77">    }</span>
+<span class="source-line-no">078</span><span id="line-78"></span>
+<span class="source-line-no">079</span><span id="line-79">    /**</span>
+<span class="source-line-no">080</span><span id="line-80">     * @return the &lt;code&gt;from.image&lt;/code&gt; configuration.</span>
+<span class="source-line-no">081</span><span id="line-81">     */</span>
+<span class="source-line-no">082</span><span id="line-82">    public Optional&lt;String&gt; getFromImage() {</span>
+<span class="source-line-no">083</span><span id="line-83">        Optional&lt;String&gt; result;</span>
+<span class="source-line-no">084</span><span id="line-84">        String propertyValue = System.getProperties().getProperty(PropertyNames.FROM_IMAGE);</span>
+<span class="source-line-no">085</span><span id="line-85">        if (propertyValue != null) {</span>
+<span class="source-line-no">086</span><span id="line-86">            result = Optional.of(propertyValue);</span>
+<span class="source-line-no">087</span><span id="line-87">        } else if (from != null) {</span>
+<span class="source-line-no">088</span><span id="line-88">            result = Optional.ofNullable(from.getChild(IMAGE).getValue());</span>
+<span class="source-line-no">089</span><span id="line-89">        } else {</span>
+<span class="source-line-no">090</span><span id="line-90">            result = Optional.empty();</span>
+<span class="source-line-no">091</span><span id="line-91">        }</span>
+<span class="source-line-no">092</span><span id="line-92">        return result;</span>
+<span class="source-line-no">093</span><span id="line-93">    }</span>
+<span class="source-line-no">094</span><span id="line-94"></span>
+<span class="source-line-no">095</span><span id="line-95">    /**</span>
+<span class="source-line-no">096</span><span id="line-96">     * @return the &lt;code&gt;to.tags&lt;/code&gt; configuration.</span>
+<span class="source-line-no">097</span><span id="line-97">     */</span>
+<span class="source-line-no">098</span><span id="line-98">    public Set&lt;String&gt; getTags() {</span>
+<span class="source-line-no">099</span><span id="line-99">        Set&lt;String&gt; result = null;</span>
+<span class="source-line-no">100</span><span id="line-100">        String propertyValue = System.getProperties().getProperty(PropertyNames.TO_TAGS);</span>
+<span class="source-line-no">101</span><span id="line-101">        if (propertyValue != null) {</span>
+<span class="source-line-no">102</span><span id="line-102">            result = new HashSet&lt;&gt;(parseCommaSeparatedList(propertyValue));</span>
+<span class="source-line-no">103</span><span id="line-103">        } else {</span>
+<span class="source-line-no">104</span><span id="line-104">            if (to != null) {</span>
+<span class="source-line-no">105</span><span id="line-105">                Xpp3Dom tags = to.getChild("tags");</span>
+<span class="source-line-no">106</span><span id="line-106">                if (tags != null &amp;&amp; tags.getChildCount() &gt; 0) {</span>
+<span class="source-line-no">107</span><span id="line-107">                    result = Arrays.stream(tags.getChildren())</span>
+<span class="source-line-no">108</span><span id="line-108">                        .map(Xpp3Dom::getValue)</span>
+<span class="source-line-no">109</span><span id="line-109">                        .collect(Collectors.toSet());</span>
+<span class="source-line-no">110</span><span id="line-110">                }</span>
+<span class="source-line-no">111</span><span id="line-111">            }</span>
+<span class="source-line-no">112</span><span id="line-112">            if (result == null) {</span>
+<span class="source-line-no">113</span><span id="line-113">                result = Collections.emptySet();</span>
+<span class="source-line-no">114</span><span id="line-114">            }</span>
+<span class="source-line-no">115</span><span id="line-115">        }</span>
+<span class="source-line-no">116</span><span id="line-116">        return result;</span>
+<span class="source-line-no">117</span><span id="line-117">    }</span>
+<span class="source-line-no">118</span><span id="line-118"></span>
+<span class="source-line-no">119</span><span id="line-119">    /**</span>
+<span class="source-line-no">120</span><span id="line-120">     * @return the &lt;code&gt;to.auth.username&lt;/code&gt; and &lt;code&gt;to.auth.password&lt;/code&gt; configuration.</span>
+<span class="source-line-no">121</span><span id="line-121">     */</span>
+<span class="source-line-no">122</span><span id="line-122">    public Optional&lt;Credential&gt; getToCredentials() {</span>
+<span class="source-line-no">123</span><span id="line-123">        return getCredentials(PropertyNames.TO_AUTH_USERNAME, PropertyNames.TO_AUTH_PASSWORD, to);</span>
+<span class="source-line-no">124</span><span id="line-124">    }</span>
+<span class="source-line-no">125</span><span id="line-125"></span>
+<span class="source-line-no">126</span><span id="line-126">    /**</span>
+<span class="source-line-no">127</span><span id="line-127">     * @return the &lt;code&gt;from.auth.username&lt;/code&gt; and &lt;code&gt;from.auth.password&lt;/code&gt; configuration.</span>
+<span class="source-line-no">128</span><span id="line-128">     */</span>
+<span class="source-line-no">129</span><span id="line-129">    public Optional&lt;Credential&gt; getFromCredentials() {</span>
+<span class="source-line-no">130</span><span id="line-130">        return getCredentials(PropertyNames.FROM_AUTH_USERNAME, PropertyNames.FROM_AUTH_PASSWORD, from);</span>
+<span class="source-line-no">131</span><span id="line-131">    }</span>
+<span class="source-line-no">132</span><span id="line-132"></span>
+<span class="source-line-no">133</span><span id="line-133">    private Optional&lt;Credential&gt; getCredentials(String usernamePropName, String passwordPropName, Xpp3Dom node) {</span>
+<span class="source-line-no">134</span><span id="line-134">        Optional&lt;Credential&gt; result = Optional.empty();</span>
+<span class="source-line-no">135</span><span id="line-135">        String usernameProp = System.getProperties().getProperty(usernamePropName);</span>
+<span class="source-line-no">136</span><span id="line-136">        String passwordProp = System.getProperties().getProperty(passwordPropName);</span>
+<span class="source-line-no">137</span><span id="line-137">        if (usernameProp != null &amp;&amp; passwordProp != null) {</span>
+<span class="source-line-no">138</span><span id="line-138">            result = Optional.of(Credential.from(usernameProp, passwordProp));</span>
+<span class="source-line-no">139</span><span id="line-139">        } else {</span>
+<span class="source-line-no">140</span><span id="line-140">            if (node != null) {</span>
+<span class="source-line-no">141</span><span id="line-141">                Xpp3Dom auth = node.getChild("auth");</span>
+<span class="source-line-no">142</span><span id="line-142">                if (auth != null) {</span>
+<span class="source-line-no">143</span><span id="line-143">                    Xpp3Dom username = auth.getChild("username");</span>
+<span class="source-line-no">144</span><span id="line-144">                    Xpp3Dom password = auth.getChild("password");</span>
+<span class="source-line-no">145</span><span id="line-145">                    if (username != null &amp;&amp; password != null) {</span>
+<span class="source-line-no">146</span><span id="line-146">                        result = Optional.of(Credential.from(username.getValue(), password.getValue()));</span>
+<span class="source-line-no">147</span><span id="line-147">                    }</span>
+<span class="source-line-no">148</span><span id="line-148">                }</span>
+<span class="source-line-no">149</span><span id="line-149">            }</span>
+<span class="source-line-no">150</span><span id="line-150">        }</span>
+<span class="source-line-no">151</span><span id="line-151">        return result;</span>
+<span class="source-line-no">152</span><span id="line-152">    }</span>
+<span class="source-line-no">153</span><span id="line-153"></span>
+<span class="source-line-no">154</span><span id="line-154">    /**</span>
+<span class="source-line-no">155</span><span id="line-155">     * @return the &lt;code&gt;container.workingDirectory&lt;/code&gt; configuration.</span>
+<span class="source-line-no">156</span><span id="line-156">     */</span>
+<span class="source-line-no">157</span><span id="line-157">    public Optional&lt;String&gt; getWorkingDirectory() {</span>
+<span class="source-line-no">158</span><span id="line-158">        if (configuration != null) {</span>
+<span class="source-line-no">159</span><span id="line-159">            Xpp3Dom container = configuration.getChild(CONTAINER);</span>
+<span class="source-line-no">160</span><span id="line-160">            if (container != null &amp;&amp; container.getChild(WORKING_DIRECTORY) != null) {</span>
+<span class="source-line-no">161</span><span id="line-161">                return Optional.ofNullable(container.getChild(WORKING_DIRECTORY).getValue());</span>
+<span class="source-line-no">162</span><span id="line-162">            }</span>
+<span class="source-line-no">163</span><span id="line-163">        }</span>
+<span class="source-line-no">164</span><span id="line-164">        return Optional.empty();</span>
+<span class="source-line-no">165</span><span id="line-165">    }</span>
+<span class="source-line-no">166</span><span id="line-166"></span>
+<span class="source-line-no">167</span><span id="line-167">    /**</span>
+<span class="source-line-no">168</span><span id="line-168">     * @return the &lt;code&gt;container.args&lt;/code&gt; configuration.</span>
+<span class="source-line-no">169</span><span id="line-169">     */</span>
+<span class="source-line-no">170</span><span id="line-170">    public List&lt;String&gt; getArgs() {</span>
+<span class="source-line-no">171</span><span id="line-171">        var result = new ArrayList&lt;String&gt;();</span>
+<span class="source-line-no">172</span><span id="line-172">        if (configuration != null) {</span>
+<span class="source-line-no">173</span><span id="line-173">            Xpp3Dom container = configuration.getChild(CONTAINER);</span>
+<span class="source-line-no">174</span><span id="line-174">            if (container != null) {</span>
+<span class="source-line-no">175</span><span id="line-175">                Xpp3Dom args = container.getChild("args");</span>
+<span class="source-line-no">176</span><span id="line-176">                if (args.getChildCount() &gt; 0) {</span>
+<span class="source-line-no">177</span><span id="line-177">                    for (Xpp3Dom arg : args.getChildren()) {</span>
+<span class="source-line-no">178</span><span id="line-178">                        result.add(arg.getValue());</span>
+<span class="source-line-no">179</span><span id="line-179">                    }</span>
+<span class="source-line-no">180</span><span id="line-180">                } else {</span>
+<span class="source-line-no">181</span><span id="line-181">                    result.add(args.getValue());</span>
+<span class="source-line-no">182</span><span id="line-182">                }</span>
+<span class="source-line-no">183</span><span id="line-183">            }</span>
+<span class="source-line-no">184</span><span id="line-184">        }</span>
+<span class="source-line-no">185</span><span id="line-185">        return result;</span>
+<span class="source-line-no">186</span><span id="line-186">    }</span>
+<span class="source-line-no">187</span><span id="line-187"></span>
+<span class="source-line-no">188</span><span id="line-188">    private static Set&lt;String&gt; parseCommaSeparatedList(String list) {</span>
+<span class="source-line-no">189</span><span id="line-189">        String[] parts = list.split(",");</span>
+<span class="source-line-no">190</span><span id="line-190">        var items = new HashSet&lt;String&gt;(parts.length);</span>
+<span class="source-line-no">191</span><span id="line-191">        for (String part : parts) {</span>
+<span class="source-line-no">192</span><span id="line-192">            items.add(part.trim());</span>
+<span class="source-line-no">193</span><span id="line-193">        }</span>
+<span class="source-line-no">194</span><span id="line-194">        return items;</span>
+<span class="source-line-no">195</span><span id="line-195">    }</span>
+<span class="source-line-no">196</span><span id="line-196">}</span>
 
 
 

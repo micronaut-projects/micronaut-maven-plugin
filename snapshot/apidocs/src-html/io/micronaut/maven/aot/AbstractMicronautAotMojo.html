@@ -81,7 +81,7 @@
 <span class="source-line-no">068</span><span id="line-68">    abstract void onSuccess(File outputDir) throws MojoExecutionException;</span>
 <span class="source-line-no">069</span><span id="line-69"></span>
 <span class="source-line-no">070</span><span id="line-70">    protected final File getBaseOutputDirectory() {</span>
-<span class="source-line-no">071</span><span id="line-71">        File targetDirectory = new File(mavenProject.getBuild().getDirectory(), "aot");</span>
+<span class="source-line-no">071</span><span id="line-71">        var targetDirectory = new File(mavenProject.getBuild().getDirectory(), "aot");</span>
 <span class="source-line-no">072</span><span id="line-72">        return new File(targetDirectory, runtime);</span>
 <span class="source-line-no">073</span><span id="line-73">    }</span>
 <span class="source-line-no">074</span><span id="line-74"></span>
@@ -116,8 +116,8 @@
 <span class="source-line-no">103</span><span id="line-103">    }</span>
 <span class="source-line-no">104</span><span id="line-104"></span>
 <span class="source-line-no">105</span><span id="line-105">    private void validateRuntime() {</span>
-<span class="source-line-no">106</span><span id="line-106">        Packaging packaging = Packaging.of(mavenProject.getPackaging());</span>
-<span class="source-line-no">107</span><span id="line-107">        AotRuntime aotRuntime = AotRuntime.valueOf(runtime.toUpperCase());</span>
+<span class="source-line-no">106</span><span id="line-106">        var packaging = Packaging.of(mavenProject.getPackaging());</span>
+<span class="source-line-no">107</span><span id="line-107">        var aotRuntime = AotRuntime.valueOf(runtime.toUpperCase());</span>
 <span class="source-line-no">108</span><span id="line-108">        switch (packaging) {</span>
 <span class="source-line-no">109</span><span id="line-109">            case JAR, DOCKER_CRAC, DOCKER -&gt; {</span>
 <span class="source-line-no">110</span><span id="line-110">                if (aotRuntime != AotRuntime.JIT) {</span>

@@ -31,11 +31,11 @@
 <span class="source-line-no">018</span><span id="line-18">import com.github.dockerjava.api.command.BuildImageCmd;</span>
 <span class="source-line-no">019</span><span id="line-19">import com.google.cloud.tools.jib.api.ImageReference;</span>
 <span class="source-line-no">020</span><span id="line-20">import com.google.cloud.tools.jib.api.InvalidImageReferenceException;</span>
-<span class="source-line-no">021</span><span id="line-21">import io.micronaut.maven.core.MicronautRuntime;</span>
-<span class="source-line-no">022</span><span id="line-22">import io.micronaut.maven.services.ApplicationConfigurationService;</span>
-<span class="source-line-no">023</span><span id="line-23">import io.micronaut.maven.services.DockerService;</span>
-<span class="source-line-no">024</span><span id="line-24">import io.micronaut.maven.jib.JibConfigurationService;</span>
-<span class="source-line-no">025</span><span id="line-25">import io.micronaut.core.annotation.Experimental;</span>
+<span class="source-line-no">021</span><span id="line-21">import io.micronaut.core.annotation.Experimental;</span>
+<span class="source-line-no">022</span><span id="line-22">import io.micronaut.maven.core.MicronautRuntime;</span>
+<span class="source-line-no">023</span><span id="line-23">import io.micronaut.maven.jib.JibConfigurationService;</span>
+<span class="source-line-no">024</span><span id="line-24">import io.micronaut.maven.services.ApplicationConfigurationService;</span>
+<span class="source-line-no">025</span><span id="line-25">import io.micronaut.maven.services.DockerService;</span>
 <span class="source-line-no">026</span><span id="line-26">import org.apache.commons.io.IOUtils;</span>
 <span class="source-line-no">027</span><span id="line-27">import org.apache.maven.execution.MavenSession;</span>
 <span class="source-line-no">028</span><span id="line-28">import org.apache.maven.plugin.MojoExecution;</span>
@@ -107,9 +107,9 @@
 <span class="source-line-no">094</span><span id="line-94">    public static final String X86_64_ARCH = "amd64";</span>
 <span class="source-line-no">095</span><span id="line-95"></span>
 <span class="source-line-no">096</span><span id="line-96">    private static final EnumSet&lt;PosixFilePermission&gt; POSIX_FILE_PERMISSIONS = EnumSet.of(</span>
-<span class="source-line-no">097</span><span id="line-97">            PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,</span>
-<span class="source-line-no">098</span><span id="line-98">            PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE,</span>
-<span class="source-line-no">099</span><span id="line-99">            PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE</span>
+<span class="source-line-no">097</span><span id="line-97">        PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,</span>
+<span class="source-line-no">098</span><span id="line-98">        PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE,</span>
+<span class="source-line-no">099</span><span id="line-99">        PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE</span>
 <span class="source-line-no">100</span><span id="line-100">    );</span>
 <span class="source-line-no">101</span><span id="line-101">    private final MavenReaderFilter mavenReaderFilter;</span>
 <span class="source-line-no">102</span><span id="line-102"></span>
@@ -152,13 +152,13 @@
 <span class="source-line-no">139</span><span id="line-139">    @SuppressWarnings("CdiInjectionPointsInspection")</span>
 <span class="source-line-no">140</span><span id="line-140">    @Inject</span>
 <span class="source-line-no">141</span><span id="line-141">    public DockerCracMojo(</span>
-<span class="source-line-no">142</span><span id="line-142">            MavenProject mavenProject,</span>
-<span class="source-line-no">143</span><span id="line-143">            JibConfigurationService jibConfigurationService,</span>
-<span class="source-line-no">144</span><span id="line-144">            ApplicationConfigurationService applicationConfigurationService,</span>
-<span class="source-line-no">145</span><span id="line-145">            DockerService dockerService,</span>
-<span class="source-line-no">146</span><span id="line-146">            MavenReaderFilter mavenReaderFilter,</span>
-<span class="source-line-no">147</span><span id="line-147">            MavenSession mavenSession,</span>
-<span class="source-line-no">148</span><span id="line-148">            MojoExecution mojoExecution</span>
+<span class="source-line-no">142</span><span id="line-142">        MavenProject mavenProject,</span>
+<span class="source-line-no">143</span><span id="line-143">        JibConfigurationService jibConfigurationService,</span>
+<span class="source-line-no">144</span><span id="line-144">        ApplicationConfigurationService applicationConfigurationService,</span>
+<span class="source-line-no">145</span><span id="line-145">        DockerService dockerService,</span>
+<span class="source-line-no">146</span><span id="line-146">        MavenReaderFilter mavenReaderFilter,</span>
+<span class="source-line-no">147</span><span id="line-147">        MavenSession mavenSession,</span>
+<span class="source-line-no">148</span><span id="line-148">        MojoExecution mojoExecution</span>
 <span class="source-line-no">149</span><span id="line-149">    ) {</span>
 <span class="source-line-no">150</span><span id="line-150">        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession, mojoExecution);</span>
 <span class="source-line-no">151</span><span id="line-151">        this.mavenReaderFilter = mavenReaderFilter;</span>
@@ -179,10 +179,10 @@
 <span class="source-line-no">166</span><span id="line-166">            }</span>
 <span class="source-line-no">167</span><span id="line-167">        } catch (InvalidImageReferenceException iire) {</span>
 <span class="source-line-no">168</span><span id="line-168">            String message = "Invalid image reference "</span>
-<span class="source-line-no">169</span><span id="line-169">                    + iire.getInvalidReference()</span>
-<span class="source-line-no">170</span><span id="line-170">                    + ", perhaps you should check that the reference is formatted correctly according to " +</span>
-<span class="source-line-no">171</span><span id="line-171">                    "https://docs.docker.com/engine/reference/commandline/tag/#extended-description" +</span>
-<span class="source-line-no">172</span><span id="line-172">                    "\nFor example, slash-separated name components cannot have uppercase letters";</span>
+<span class="source-line-no">169</span><span id="line-169">                + iire.getInvalidReference()</span>
+<span class="source-line-no">170</span><span id="line-170">                + ", perhaps you should check that the reference is formatted correctly according to " +</span>
+<span class="source-line-no">171</span><span id="line-171">                "https://docs.docker.com/engine/reference/commandline/tag/#extended-description" +</span>
+<span class="source-line-no">172</span><span id="line-172">                "\nFor example, slash-separated name components cannot have uppercase letters";</span>
 <span class="source-line-no">173</span><span id="line-173">            throw new MojoExecutionException(message);</span>
 <span class="source-line-no">174</span><span id="line-174">        } catch (IOException | IllegalArgumentException | MavenFilteringException e) {</span>
 <span class="source-line-no">175</span><span id="line-175">            throw new MojoExecutionException(e.getMessage(), e);</span>
@@ -196,10 +196,10 @@
 <span class="source-line-no">183</span><span id="line-183">        // We need to make this folder first, or else Docker on linux will make it as root and break clean on CI</span>
 <span class="source-line-no">184</span><span id="line-184">        checkpointDir.mkdirs();</span>
 <span class="source-line-no">185</span><span id="line-185">        dockerService.runPrivilegedImageAndWait(</span>
-<span class="source-line-no">186</span><span id="line-186">                checkpointImage,</span>
-<span class="source-line-no">187</span><span id="line-187">                checkpointTimeoutSeconds,</span>
-<span class="source-line-no">188</span><span id="line-188">                checkpointNetworkName,</span>
-<span class="source-line-no">189</span><span id="line-189">                checkpointDir.getAbsolutePath() + ":/home/app/cr"</span>
+<span class="source-line-no">186</span><span id="line-186">            checkpointImage,</span>
+<span class="source-line-no">187</span><span id="line-187">            checkpointTimeoutSeconds,</span>
+<span class="source-line-no">188</span><span id="line-188">            checkpointNetworkName,</span>
+<span class="source-line-no">189</span><span id="line-189">            checkpointDir.getAbsolutePath() + ":/home/app/cr"</span>
 <span class="source-line-no">190</span><span id="line-190">        );</span>
 <span class="source-line-no">191</span><span id="line-191">        buildFinalDockerfile(checkpointImage);</span>
 <span class="source-line-no">192</span><span id="line-192">    }</span>
@@ -216,7 +216,7 @@
 <span class="source-line-no">203</span><span id="line-203"></span>
 <span class="source-line-no">204</span><span id="line-204">    private String buildCheckpointDockerfile() throws IOException, MavenFilteringException {</span>
 <span class="source-line-no">205</span><span id="line-205">        String name = mavenProject.getArtifactId() + "-crac-checkpoint";</span>
-<span class="source-line-no">206</span><span id="line-206">        Set&lt;String&gt; checkpointTags = Collections.singleton(name);</span>
+<span class="source-line-no">206</span><span id="line-206">        var checkpointTags = Collections.singleton(name);</span>
 <span class="source-line-no">207</span><span id="line-207">        copyScripts(CHECKPOINT_SCRIPT_NAME, WARMUP_SCRIPT_NAME, RUN_SCRIPT_NAME);</span>
 <span class="source-line-no">208</span><span id="line-208">        File dockerfile = dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_CRAC_CHECKPOINT);</span>
 <span class="source-line-no">209</span><span id="line-209"></span>
@@ -231,12 +231,12 @@
 <span class="source-line-no">218</span><span id="line-218">        getLog().info("Using CRAC_OS: " + cracOs);</span>
 <span class="source-line-no">219</span><span id="line-219"></span>
 <span class="source-line-no">220</span><span id="line-220">        BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
-<span class="source-line-no">221</span><span id="line-221">                .withDockerfile(dockerfile)</span>
-<span class="source-line-no">222</span><span id="line-222">                .withBuildArg("BASE_IMAGE", baseImage)</span>
-<span class="source-line-no">223</span><span id="line-223">                .withBuildArg("CRAC_ARCH", finalArchitecture)</span>
-<span class="source-line-no">224</span><span id="line-224">                .withBuildArg("CRAC_OS", cracOs)</span>
-<span class="source-line-no">225</span><span id="line-225">                .withBuildArg("CRAC_JDK_VERSION", cracJavaVersion)</span>
-<span class="source-line-no">226</span><span id="line-226">                .withTags(checkpointTags);</span>
+<span class="source-line-no">221</span><span id="line-221">            .withDockerfile(dockerfile)</span>
+<span class="source-line-no">222</span><span id="line-222">            .withBuildArg("BASE_IMAGE", baseImage)</span>
+<span class="source-line-no">223</span><span id="line-223">            .withBuildArg("CRAC_ARCH", finalArchitecture)</span>
+<span class="source-line-no">224</span><span id="line-224">            .withBuildArg("CRAC_OS", cracOs)</span>
+<span class="source-line-no">225</span><span id="line-225">            .withBuildArg("CRAC_JDK_VERSION", cracJavaVersion)</span>
+<span class="source-line-no">226</span><span id="line-226">            .withTags(checkpointTags);</span>
 <span class="source-line-no">227</span><span id="line-227">        getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
 <span class="source-line-no">228</span><span id="line-228">        dockerService.buildImage(buildImageCmd);</span>
 <span class="source-line-no">229</span><span id="line-229">        return name;</span>
@@ -259,11 +259,11 @@
 <span class="source-line-no">246</span><span id="line-246">        getLog().info("Using CHECKPOINT_IMAGE: " + checkpointContainerId);</span>
 <span class="source-line-no">247</span><span id="line-247"></span>
 <span class="source-line-no">248</span><span id="line-248">        BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
-<span class="source-line-no">249</span><span id="line-249">                .withDockerfile(dockerfile)</span>
-<span class="source-line-no">250</span><span id="line-250">                .withBuildArg("PORT", port)</span>
-<span class="source-line-no">251</span><span id="line-251">                .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))</span>
-<span class="source-line-no">252</span><span id="line-252">                .withBuildArg("CHECKPOINT_IMAGE", checkpointContainerId)</span>
-<span class="source-line-no">253</span><span id="line-253">                .withTags(getTags());</span>
+<span class="source-line-no">249</span><span id="line-249">            .withDockerfile(dockerfile)</span>
+<span class="source-line-no">250</span><span id="line-250">            .withBuildArg("PORT", port)</span>
+<span class="source-line-no">251</span><span id="line-251">            .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))</span>
+<span class="source-line-no">252</span><span id="line-252">            .withBuildArg("CHECKPOINT_IMAGE", checkpointContainerId)</span>
+<span class="source-line-no">253</span><span id="line-253">            .withTags(getTags());</span>
 <span class="source-line-no">254</span><span id="line-254">        getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
 <span class="source-line-no">255</span><span id="line-255">        dockerService.buildImage(buildImageCmd);</span>
 <span class="source-line-no">256</span><span id="line-256"></span>
@@ -280,7 +280,7 @@
 <span class="source-line-no">267</span><span id="line-267">    }</span>
 <span class="source-line-no">268</span><span id="line-268"></span>
 <span class="source-line-no">269</span><span id="line-269">    private void copyScripts(String... scriptNames) throws IOException, MavenFilteringException {</span>
-<span class="source-line-no">270</span><span id="line-270">        File target = new File(mavenProject.getBuild().getDirectory(), "scripts");</span>
+<span class="source-line-no">270</span><span id="line-270">        var target = new File(mavenProject.getBuild().getDirectory(), "scripts");</span>
 <span class="source-line-no">271</span><span id="line-271">        if (!target.exists()) {</span>
 <span class="source-line-no">272</span><span id="line-272">            target.mkdirs();</span>
 <span class="source-line-no">273</span><span id="line-273">        }</span>
@@ -289,14 +289,14 @@
 <span class="source-line-no">276</span><span id="line-276"></span>
 <span class="source-line-no">277</span><span id="line-277">    private void processScripts(File target, Properties replacements, String... scriptNames) throws IOException, MavenFilteringException {</span>
 <span class="source-line-no">278</span><span id="line-278">        for (String script : scriptNames) {</span>
-<span class="source-line-no">279</span><span id="line-279">            File localOverride = new File(mavenProject.getBasedir(), script);</span>
+<span class="source-line-no">279</span><span id="line-279">            var localOverride = new File(mavenProject.getBasedir(), script);</span>
 <span class="source-line-no">280</span><span id="line-280">            InputStream resourceStream = DockerCracMojo.class.getResourceAsStream("/cracScripts/" + script);</span>
 <span class="source-line-no">281</span><span id="line-281">            Reader resourceReader = resourceStream == null ? null : new InputStreamReader(resourceStream);</span>
 <span class="source-line-no">282</span><span id="line-282">            try (Reader reader = localOverride.exists() ? Files.newBufferedReader(localOverride.toPath()) : resourceReader) {</span>
 <span class="source-line-no">283</span><span id="line-283">                if (reader == null) {</span>
 <span class="source-line-no">284</span><span id="line-284">                    throw new IOException("Could not find script " + script);</span>
 <span class="source-line-no">285</span><span id="line-285">                }</span>
-<span class="source-line-no">286</span><span id="line-286">                MavenReaderFilterRequest req = new MavenReaderFilterRequest();</span>
+<span class="source-line-no">286</span><span id="line-286">                var req = new MavenReaderFilterRequest();</span>
 <span class="source-line-no">287</span><span id="line-287">                req.setFrom(reader);</span>
 <span class="source-line-no">288</span><span id="line-288">                req.setFiltering(true);</span>
 <span class="source-line-no">289</span><span id="line-289">                req.setAdditionalProperties(replacements);</span>

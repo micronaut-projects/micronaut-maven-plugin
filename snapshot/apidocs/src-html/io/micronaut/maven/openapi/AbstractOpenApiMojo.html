@@ -41,7 +41,7 @@
 <span class="source-line-no">028</span><span id="line-28">import java.io.File;</span>
 <span class="source-line-no">029</span><span id="line-29">import java.util.List;</span>
 <span class="source-line-no">030</span><span id="line-30">import java.util.Locale;</span>
-<span class="source-line-no">031</span><span id="line-31">import java.util.stream.Collectors;</span>
+<span class="source-line-no">031</span><span id="line-31">import java.util.Map;</span>
 <span class="source-line-no">032</span><span id="line-32"></span>
 <span class="source-line-no">033</span><span id="line-33">/**</span>
 <span class="source-line-no">034</span><span id="line-34"> * Base class for OpenAPI generator mojos. This provides the common</span>
@@ -84,117 +84,382 @@
 <span class="source-line-no">071</span><span id="line-71">    protected boolean useBeanValidation;</span>
 <span class="source-line-no">072</span><span id="line-72"></span>
 <span class="source-line-no">073</span><span id="line-73">    /**</span>
-<span class="source-line-no">074</span><span id="line-74">     * Whether to use {@link java.util.Optional} for non-required model properties and API parameters.</span>
+<span class="source-line-no">074</span><span id="line-74">     * Flag to indicate whether to use the utils.OneOfImplementorAdditionalData related logic.</span>
 <span class="source-line-no">075</span><span id="line-75">     */</span>
-<span class="source-line-no">076</span><span id="line-76">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.optional", defaultValue = "false", required = true)</span>
-<span class="source-line-no">077</span><span id="line-77">    protected boolean useOptional;</span>
+<span class="source-line-no">076</span><span id="line-76">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.one.of.interfaces", defaultValue = "true", required = true)</span>
+<span class="source-line-no">077</span><span id="line-77">    protected boolean useOneOfInterfaces;</span>
 <span class="source-line-no">078</span><span id="line-78"></span>
 <span class="source-line-no">079</span><span id="line-79">    /**</span>
-<span class="source-line-no">080</span><span id="line-80">     * Whether to use reactor types for operation responses.</span>
+<span class="source-line-no">080</span><span id="line-80">     * Whether to use {@link java.util.Optional} for non-required model properties and API parameters.</span>
 <span class="source-line-no">081</span><span id="line-81">     */</span>
-<span class="source-line-no">082</span><span id="line-82">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.reactive", defaultValue = "true", required = true)</span>
-<span class="source-line-no">083</span><span id="line-83">    protected boolean useReactive;</span>
+<span class="source-line-no">082</span><span id="line-82">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.optional", defaultValue = "false", required = true)</span>
+<span class="source-line-no">083</span><span id="line-83">    protected boolean useOptional;</span>
 <span class="source-line-no">084</span><span id="line-84"></span>
 <span class="source-line-no">085</span><span id="line-85">    /**</span>
-<span class="source-line-no">086</span><span id="line-86">     * Comma-separated values of output kinds to generate. The values are defined by the</span>
-<span class="source-line-no">087</span><span id="line-87">     * {@link MicronautCodeGeneratorEntryPoint.OutputKind} enum.</span>
-<span class="source-line-no">088</span><span id="line-88">     */</span>
-<span class="source-line-no">089</span><span id="line-89">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".outputs", required = true, defaultValue = "apis,models,supporting_files")</span>
-<span class="source-line-no">090</span><span id="line-90">    protected List&lt;String&gt; outputKinds;</span>
-<span class="source-line-no">091</span><span id="line-91"></span>
-<span class="source-line-no">092</span><span id="line-92">    /**</span>
-<span class="source-line-no">093</span><span id="line-93">     * The output directory to which all the sources will be generated.</span>
-<span class="source-line-no">094</span><span id="line-94">     */</span>
-<span class="source-line-no">095</span><span id="line-95">    @Parameter(defaultValue = "${project.build.directory}/generated-sources/openapi", required = true)</span>
-<span class="source-line-no">096</span><span id="line-96">    protected File outputDirectory;</span>
-<span class="source-line-no">097</span><span id="line-97"></span>
-<span class="source-line-no">098</span><span id="line-98">    /**</span>
-<span class="source-line-no">099</span><span id="line-99">     * Define parameter mappings that allow using custom types for parameter binding.</span>
-<span class="source-line-no">100</span><span id="line-100">     * See {@link ParameterMapping} for details.</span>
-<span class="source-line-no">101</span><span id="line-101">     */</span>
-<span class="source-line-no">102</span><span id="line-102">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".parameterMappings")</span>
-<span class="source-line-no">103</span><span id="line-103">    protected List&lt;ParameterMapping&gt; parameterMappings;</span>
-<span class="source-line-no">104</span><span id="line-104"></span>
-<span class="source-line-no">105</span><span id="line-105">    /**</span>
-<span class="source-line-no">106</span><span id="line-106">     * Define parameter mappings that allow using custom types for parameter binding.</span>
-<span class="source-line-no">107</span><span id="line-107">     * See {@link ResponseBodyMapping} for details.</span>
-<span class="source-line-no">108</span><span id="line-108">     */</span>
-<span class="source-line-no">109</span><span id="line-109">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".responseBodyMappings")</span>
-<span class="source-line-no">110</span><span id="line-110">    protected List&lt;ResponseBodyMapping&gt; responseBodyMappings;</span>
-<span class="source-line-no">111</span><span id="line-111"></span>
-<span class="source-line-no">112</span><span id="line-112">    /**</span>
-<span class="source-line-no">113</span><span id="line-113">     * Allows specifying the language of the generated code.</span>
-<span class="source-line-no">114</span><span id="line-114">     * @since 4.3.0</span>
-<span class="source-line-no">115</span><span id="line-115">     */</span>
-<span class="source-line-no">116</span><span id="line-116">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".lang", defaultValue = "java")</span>
-<span class="source-line-no">117</span><span id="line-117">    protected String lang;</span>
-<span class="source-line-no">118</span><span id="line-118"></span>
-<span class="source-line-no">119</span><span id="line-119">    @Parameter(defaultValue = "${project}", readonly = true)</span>
-<span class="source-line-no">120</span><span id="line-120">    private MavenProject project;</span>
-<span class="source-line-no">121</span><span id="line-121"></span>
-<span class="source-line-no">122</span><span id="line-122">    /**</span>
-<span class="source-line-no">123</span><span id="line-123">     * Determines if this mojo must be executed.</span>
-<span class="source-line-no">124</span><span id="line-124">     * @return true if the mojo is enabled</span>
-<span class="source-line-no">125</span><span id="line-125">     */</span>
-<span class="source-line-no">126</span><span id="line-126">    protected abstract boolean isEnabled();</span>
+<span class="source-line-no">086</span><span id="line-86">     * Whether to use reactor types for operation responses.</span>
+<span class="source-line-no">087</span><span id="line-87">     */</span>
+<span class="source-line-no">088</span><span id="line-88">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".use.reactive", defaultValue = "true", required = true)</span>
+<span class="source-line-no">089</span><span id="line-89">    protected boolean useReactive;</span>
+<span class="source-line-no">090</span><span id="line-90"></span>
+<span class="source-line-no">091</span><span id="line-91">    /**</span>
+<span class="source-line-no">092</span><span id="line-92">     * Configure the serialization library.</span>
+<span class="source-line-no">093</span><span id="line-93">     */</span>
+<span class="source-line-no">094</span><span id="line-94">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".serialization.framework", defaultValue = "MICRONAUT_SERDE_JACKSON", required = true)</span>
+<span class="source-line-no">095</span><span id="line-95">    protected String serializationFramework;</span>
+<span class="source-line-no">096</span><span id="line-96"></span>
+<span class="source-line-no">097</span><span id="line-97">    /**</span>
+<span class="source-line-no">098</span><span id="line-98">     * If true, the generated operation return types will be wrapped in HttpResponse.</span>
+<span class="source-line-no">099</span><span id="line-99">     */</span>
+<span class="source-line-no">100</span><span id="line-100">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".always.use.generate.http.response", defaultValue = "false", required = true)</span>
+<span class="source-line-no">101</span><span id="line-101">    protected boolean alwaysUseGenerateHttpResponse;</span>
+<span class="source-line-no">102</span><span id="line-102"></span>
+<span class="source-line-no">103</span><span id="line-103">    /**</span>
+<span class="source-line-no">104</span><span id="line-104">     * Wrap the operations response in HttpResponse object where non-200 HTTP status codes or additional headers are defined.</span>
+<span class="source-line-no">105</span><span id="line-105">     */</span>
+<span class="source-line-no">106</span><span id="line-106">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generate.http.response.where.required", defaultValue = "false", required = true)</span>
+<span class="source-line-no">107</span><span id="line-107">    protected boolean generateHttpResponseWhereRequired;</span>
+<span class="source-line-no">108</span><span id="line-108"></span>
+<span class="source-line-no">109</span><span id="line-109">    /**</span>
+<span class="source-line-no">110</span><span id="line-110">     * If set to true, generated code will be fully compatible with KSP, but not 100% with KAPT.</span>
+<span class="source-line-no">111</span><span id="line-111">     */</span>
+<span class="source-line-no">112</span><span id="line-112">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".ksp", defaultValue = "false", required = true)</span>
+<span class="source-line-no">113</span><span id="line-113">    protected boolean ksp;</span>
+<span class="source-line-no">114</span><span id="line-114"></span>
+<span class="source-line-no">115</span><span id="line-115">    /**</span>
+<span class="source-line-no">116</span><span id="line-116">     * Configure the date-time format.</span>
+<span class="source-line-no">117</span><span id="line-117">     */</span>
+<span class="source-line-no">118</span><span id="line-118">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".date.time.format", defaultValue = "ZONED_DATETIME", required = true)</span>
+<span class="source-line-no">119</span><span id="line-119">    protected String dateTimeFormat;</span>
+<span class="source-line-no">120</span><span id="line-120"></span>
+<span class="source-line-no">121</span><span id="line-121">    /**</span>
+<span class="source-line-no">122</span><span id="line-122">     * Comma-separated values of output kinds to generate. The values are defined by the</span>
+<span class="source-line-no">123</span><span id="line-123">     * {@link MicronautCodeGeneratorEntryPoint.OutputKind} enum.</span>
+<span class="source-line-no">124</span><span id="line-124">     */</span>
+<span class="source-line-no">125</span><span id="line-125">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".outputs", required = true, defaultValue = "apis,models,supporting_files")</span>
+<span class="source-line-no">126</span><span id="line-126">    protected List&lt;String&gt; outputKinds;</span>
 <span class="source-line-no">127</span><span id="line-127"></span>
 <span class="source-line-no">128</span><span id="line-128">    /**</span>
-<span class="source-line-no">129</span><span id="line-129">     * Configures the OpenAPI generator. When this method is called,</span>
-<span class="source-line-no">130</span><span id="line-130">     * common properties shared by all generators have already been</span>
-<span class="source-line-no">131</span><span id="line-131">     * configured, so this method should only take care of configuring</span>
-<span class="source-line-no">132</span><span id="line-132">     * the generator specific parameters.</span>
-<span class="source-line-no">133</span><span id="line-133">     * @param builder the generator configuration builder</span>
-<span class="source-line-no">134</span><span id="line-134">     */</span>
-<span class="source-line-no">135</span><span id="line-135">    protected abstract void configureBuilder(MicronautCodeGeneratorBuilder builder) throws MojoExecutionException;</span>
-<span class="source-line-no">136</span><span id="line-136"></span>
-<span class="source-line-no">137</span><span id="line-137">    @Override</span>
-<span class="source-line-no">138</span><span id="line-138">    public final void execute() throws MojoExecutionException, MojoFailureException {</span>
-<span class="source-line-no">139</span><span id="line-139">        if (!isEnabled()) {</span>
-<span class="source-line-no">140</span><span id="line-140">            getLog().debug(this.getClass().getSimpleName() + " is disabled");</span>
-<span class="source-line-no">141</span><span id="line-141">            return;</span>
-<span class="source-line-no">142</span><span id="line-142">        }</span>
-<span class="source-line-no">143</span><span id="line-143">        project.addCompileSourceRoot(outputDirectory.getAbsolutePath());</span>
-<span class="source-line-no">144</span><span id="line-144">        var builder = MicronautCodeGeneratorEntryPoint.builder()</span>
-<span class="source-line-no">145</span><span id="line-145">                .withDefinitionFile(definitionFile.toURI())</span>
-<span class="source-line-no">146</span><span id="line-146">                .withOutputDirectory(outputDirectory)</span>
-<span class="source-line-no">147</span><span id="line-147">                .withOutputs(</span>
-<span class="source-line-no">148</span><span id="line-148">                        outputKinds.stream().map(String::toUpperCase).map(MicronautCodeGeneratorEntryPoint.OutputKind::valueOf).toList().toArray(new MicronautCodeGeneratorEntryPoint.OutputKind[0])</span>
-<span class="source-line-no">149</span><span id="line-149">                )</span>
-<span class="source-line-no">150</span><span id="line-150">                .withOptions(options -&gt; {</span>
-<span class="source-line-no">151</span><span id="line-151">                    options.withLang(MicronautCodeGeneratorOptionsBuilder.GeneratorLanguage.valueOf(lang.toUpperCase(Locale.ENGLISH)));</span>
-<span class="source-line-no">152</span><span id="line-152">                    options.withInvokerPackage(invokerPackageName);</span>
-<span class="source-line-no">153</span><span id="line-153">                    options.withApiPackage(apiPackageName);</span>
-<span class="source-line-no">154</span><span id="line-154">                    options.withModelPackage(modelPackageName);</span>
-<span class="source-line-no">155</span><span id="line-155">                    options.withBeanValidation(useBeanValidation);</span>
-<span class="source-line-no">156</span><span id="line-156">                    options.withOptional(useOptional);</span>
-<span class="source-line-no">157</span><span id="line-157">                    options.withReactive(useReactive);</span>
-<span class="source-line-no">158</span><span id="line-158">                    options.withSerializationLibrary(SerializationLibraryKind.MICRONAUT_SERDE_JACKSON);</span>
-<span class="source-line-no">159</span><span id="line-159">                    options.withParameterMappings(parameterMappings.stream()</span>
-<span class="source-line-no">160</span><span id="line-160">                            .map(mapping -&gt; new io.micronaut.openapi.generator.ParameterMapping(</span>
-<span class="source-line-no">161</span><span id="line-161">                                    mapping.getName(),</span>
-<span class="source-line-no">162</span><span id="line-162">                                    io.micronaut.openapi.generator.ParameterMapping.ParameterLocation.valueOf(</span>
-<span class="source-line-no">163</span><span id="line-163">                                            mapping.getLocation().name()</span>
-<span class="source-line-no">164</span><span id="line-164">                                    ),</span>
-<span class="source-line-no">165</span><span id="line-165">                                    mapping.getMappedType(),</span>
-<span class="source-line-no">166</span><span id="line-166">                                    mapping.getMappedName(),</span>
-<span class="source-line-no">167</span><span id="line-167">                                    mapping.isValidated()</span>
-<span class="source-line-no">168</span><span id="line-168">                            ))</span>
-<span class="source-line-no">169</span><span id="line-169">                            .collect(Collectors.toList())</span>
-<span class="source-line-no">170</span><span id="line-170">                    );</span>
-<span class="source-line-no">171</span><span id="line-171">                    options.withResponseBodyMappings(responseBodyMappings.stream()</span>
-<span class="source-line-no">172</span><span id="line-172">                            .map(mapping -&gt; new io.micronaut.openapi.generator.ResponseBodyMapping(</span>
-<span class="source-line-no">173</span><span id="line-173">                                    mapping.getHeaderName(),</span>
-<span class="source-line-no">174</span><span id="line-174">                                    mapping.getMappedBodyType(),</span>
-<span class="source-line-no">175</span><span id="line-175">                                    mapping.isListWrapper(),</span>
-<span class="source-line-no">176</span><span id="line-176">                                    mapping.isValidated()</span>
-<span class="source-line-no">177</span><span id="line-177">                            ))</span>
-<span class="source-line-no">178</span><span id="line-178">                            .collect(Collectors.toList())</span>
-<span class="source-line-no">179</span><span id="line-179">                    );</span>
-<span class="source-line-no">180</span><span id="line-180">                });</span>
-<span class="source-line-no">181</span><span id="line-181">        configureBuilder(builder);</span>
-<span class="source-line-no">182</span><span id="line-182">        builder.build().generate();</span>
-<span class="source-line-no">183</span><span id="line-183">    }</span>
-<span class="source-line-no">184</span><span id="line-184">}</span>
+<span class="source-line-no">129</span><span id="line-129">     * The output directory to which all the sources will be generated.</span>
+<span class="source-line-no">130</span><span id="line-130">     */</span>
+<span class="source-line-no">131</span><span id="line-131">    @Parameter(defaultValue = "${project.build.directory}/generated-sources/openapi", required = true)</span>
+<span class="source-line-no">132</span><span id="line-132">    protected File outputDirectory;</span>
+<span class="source-line-no">133</span><span id="line-133"></span>
+<span class="source-line-no">134</span><span id="line-134">    /**</span>
+<span class="source-line-no">135</span><span id="line-135">     * Define parameter mappings that allow using custom types for parameter binding.</span>
+<span class="source-line-no">136</span><span id="line-136">     * See {@link ParameterMapping} for details.</span>
+<span class="source-line-no">137</span><span id="line-137">     */</span>
+<span class="source-line-no">138</span><span id="line-138">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".parameterMappings")</span>
+<span class="source-line-no">139</span><span id="line-139">    protected List&lt;ParameterMapping&gt; parameterMappings;</span>
+<span class="source-line-no">140</span><span id="line-140"></span>
+<span class="source-line-no">141</span><span id="line-141">    /**</span>
+<span class="source-line-no">142</span><span id="line-142">     * Define parameter mappings that allow using custom types for parameter binding.</span>
+<span class="source-line-no">143</span><span id="line-143">     * See {@link ResponseBodyMapping} for details.</span>
+<span class="source-line-no">144</span><span id="line-144">     */</span>
+<span class="source-line-no">145</span><span id="line-145">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".responseBodyMappings")</span>
+<span class="source-line-no">146</span><span id="line-146">    protected List&lt;ResponseBodyMapping&gt; responseBodyMappings;</span>
+<span class="source-line-no">147</span><span id="line-147"></span>
+<span class="source-line-no">148</span><span id="line-148">    /**</span>
+<span class="source-line-no">149</span><span id="line-149">     * Add the schema mappings.</span>
+<span class="source-line-no">150</span><span id="line-150">     */</span>
+<span class="source-line-no">151</span><span id="line-151">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".schemaMapping")</span>
+<span class="source-line-no">152</span><span id="line-152">    protected Map&lt;String, String&gt; schemaMapping;</span>
+<span class="source-line-no">153</span><span id="line-153"></span>
+<span class="source-line-no">154</span><span id="line-154">    /**</span>
+<span class="source-line-no">155</span><span id="line-155">     * Add the import mappings.</span>
+<span class="source-line-no">156</span><span id="line-156">     */</span>
+<span class="source-line-no">157</span><span id="line-157">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".importMapping")</span>
+<span class="source-line-no">158</span><span id="line-158">    protected Map&lt;String, String&gt; importMapping;</span>
+<span class="source-line-no">159</span><span id="line-159"></span>
+<span class="source-line-no">160</span><span id="line-160">    /**</span>
+<span class="source-line-no">161</span><span id="line-161">     * Add the name mappings.</span>
+<span class="source-line-no">162</span><span id="line-162">     */</span>
+<span class="source-line-no">163</span><span id="line-163">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".nameMapping")</span>
+<span class="source-line-no">164</span><span id="line-164">    protected Map&lt;String, String&gt; nameMapping;</span>
+<span class="source-line-no">165</span><span id="line-165"></span>
+<span class="source-line-no">166</span><span id="line-166">    /**</span>
+<span class="source-line-no">167</span><span id="line-167">     * Add the type mappings.</span>
+<span class="source-line-no">168</span><span id="line-168">     */</span>
+<span class="source-line-no">169</span><span id="line-169">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".typeMapping")</span>
+<span class="source-line-no">170</span><span id="line-170">    protected Map&lt;String, String&gt; typeMapping;</span>
+<span class="source-line-no">171</span><span id="line-171"></span>
+<span class="source-line-no">172</span><span id="line-172">    /**</span>
+<span class="source-line-no">173</span><span id="line-173">     * Add the enum name mappings.</span>
+<span class="source-line-no">174</span><span id="line-174">     */</span>
+<span class="source-line-no">175</span><span id="line-175">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".enumNameMapping")</span>
+<span class="source-line-no">176</span><span id="line-176">    protected Map&lt;String, String&gt; enumNameMapping;</span>
+<span class="source-line-no">177</span><span id="line-177"></span>
+<span class="source-line-no">178</span><span id="line-178">    /**</span>
+<span class="source-line-no">179</span><span id="line-179">     * Add the model name mappings.</span>
+<span class="source-line-no">180</span><span id="line-180">     */</span>
+<span class="source-line-no">181</span><span id="line-181">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".modelNameMapping")</span>
+<span class="source-line-no">182</span><span id="line-182">    protected Map&lt;String, String&gt; modelNameMapping;</span>
+<span class="source-line-no">183</span><span id="line-183"></span>
+<span class="source-line-no">184</span><span id="line-184">    /**</span>
+<span class="source-line-no">185</span><span id="line-185">     * Add the inline schema name mappings.</span>
+<span class="source-line-no">186</span><span id="line-186">     */</span>
+<span class="source-line-no">187</span><span id="line-187">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".inlineSchemaNameMapping")</span>
+<span class="source-line-no">188</span><span id="line-188">    protected Map&lt;String, String&gt; inlineSchemaNameMapping;</span>
+<span class="source-line-no">189</span><span id="line-189"></span>
+<span class="source-line-no">190</span><span id="line-190">    /**</span>
+<span class="source-line-no">191</span><span id="line-191">     * Add the inline schema options.</span>
+<span class="source-line-no">192</span><span id="line-192">     */</span>
+<span class="source-line-no">193</span><span id="line-193">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".inlineSchemaOption")</span>
+<span class="source-line-no">194</span><span id="line-194">    protected Map&lt;String, String&gt; inlineSchemaOption;</span>
+<span class="source-line-no">195</span><span id="line-195"></span>
+<span class="source-line-no">196</span><span id="line-196">    /**</span>
+<span class="source-line-no">197</span><span id="line-197">     * Add the OpenAPI normalizer options.</span>
+<span class="source-line-no">198</span><span id="line-198">     */</span>
+<span class="source-line-no">199</span><span id="line-199">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".openapiNormalizer")</span>
+<span class="source-line-no">200</span><span id="line-200">    protected Map&lt;String, String&gt; openapiNormalizer;</span>
+<span class="source-line-no">201</span><span id="line-201"></span>
+<span class="source-line-no">202</span><span id="line-202">    /**</span>
+<span class="source-line-no">203</span><span id="line-203">     * Set the api name prefix.</span>
+<span class="source-line-no">204</span><span id="line-204">     */</span>
+<span class="source-line-no">205</span><span id="line-205">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".apiNamePrefix")</span>
+<span class="source-line-no">206</span><span id="line-206">    protected String apiNamePrefix;</span>
+<span class="source-line-no">207</span><span id="line-207"></span>
+<span class="source-line-no">208</span><span id="line-208">    /**</span>
+<span class="source-line-no">209</span><span id="line-209">     * Set the api name suffix.</span>
+<span class="source-line-no">210</span><span id="line-210">     */</span>
+<span class="source-line-no">211</span><span id="line-211">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".apiNameSuffix")</span>
+<span class="source-line-no">212</span><span id="line-212">    protected String apiNameSuffix;</span>
+<span class="source-line-no">213</span><span id="line-213"></span>
+<span class="source-line-no">214</span><span id="line-214">    /**</span>
+<span class="source-line-no">215</span><span id="line-215">     * Set the model name prefix.</span>
+<span class="source-line-no">216</span><span id="line-216">     */</span>
+<span class="source-line-no">217</span><span id="line-217">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".modelNamePrefix")</span>
+<span class="source-line-no">218</span><span id="line-218">    protected String modelNamePrefix;</span>
+<span class="source-line-no">219</span><span id="line-219"></span>
+<span class="source-line-no">220</span><span id="line-220">    /**</span>
+<span class="source-line-no">221</span><span id="line-221">     * Set the model name suffix.</span>
+<span class="source-line-no">222</span><span id="line-222">     */</span>
+<span class="source-line-no">223</span><span id="line-223">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".modelNameSuffix")</span>
+<span class="source-line-no">224</span><span id="line-224">    protected String modelNameSuffix;</span>
+<span class="source-line-no">225</span><span id="line-225"></span>
+<span class="source-line-no">226</span><span id="line-226">    /**</span>
+<span class="source-line-no">227</span><span id="line-227">     * Allows specifying the language of the generated code.</span>
+<span class="source-line-no">228</span><span id="line-228">     *</span>
+<span class="source-line-no">229</span><span id="line-229">     * @since 4.3.0</span>
+<span class="source-line-no">230</span><span id="line-230">     */</span>
+<span class="source-line-no">231</span><span id="line-231">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".lang", defaultValue = "java")</span>
+<span class="source-line-no">232</span><span id="line-232">    protected String lang;</span>
+<span class="source-line-no">233</span><span id="line-233"></span>
+<span class="source-line-no">234</span><span id="line-234">    /**</span>
+<span class="source-line-no">235</span><span id="line-235">     * If set to true, the generated enums check enum value with ignoring case.</span>
+<span class="source-line-no">236</span><span id="line-236">     */</span>
+<span class="source-line-no">237</span><span id="line-237">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".useEnumCaseInsensitive", defaultValue = "false")</span>
+<span class="source-line-no">238</span><span id="line-238">    protected boolean useEnumCaseInsensitive;</span>
+<span class="source-line-no">239</span><span id="line-239"></span>
+<span class="source-line-no">240</span><span id="line-240">    /**</span>
+<span class="source-line-no">241</span><span id="line-241">     * Additional annotations for enum type (class level annotations).</span>
+<span class="source-line-no">242</span><span id="line-242">     */</span>
+<span class="source-line-no">243</span><span id="line-243">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".additionalEnumTypeAnnotations")</span>
+<span class="source-line-no">244</span><span id="line-244">    protected List&lt;String&gt; additionalEnumTypeAnnotations;</span>
+<span class="source-line-no">245</span><span id="line-245"></span>
+<span class="source-line-no">246</span><span id="line-246">    /**</span>
+<span class="source-line-no">247</span><span id="line-247">     * Additional annotations for model type (class level annotations).</span>
+<span class="source-line-no">248</span><span id="line-248">     */</span>
+<span class="source-line-no">249</span><span id="line-249">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".additionalModelTypeAnnotations")</span>
+<span class="source-line-no">250</span><span id="line-250">    protected List&lt;String&gt; additionalModelTypeAnnotations;</span>
+<span class="source-line-no">251</span><span id="line-251"></span>
+<span class="source-line-no">252</span><span id="line-252">    /**</span>
+<span class="source-line-no">253</span><span id="line-253">     * Additional annotations for oneOf interfaces (class level annotations).</span>
+<span class="source-line-no">254</span><span id="line-254">     */</span>
+<span class="source-line-no">255</span><span id="line-255">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".additionalOneOfTypeAnnotations")</span>
+<span class="source-line-no">256</span><span id="line-256">    protected List&lt;String&gt; additionalOneOfTypeAnnotations;</span>
+<span class="source-line-no">257</span><span id="line-257"></span>
+<span class="source-line-no">258</span><span id="line-258">    /**</span>
+<span class="source-line-no">259</span><span id="line-259">     * Additional generator properties.</span>
+<span class="source-line-no">260</span><span id="line-260">     */</span>
+<span class="source-line-no">261</span><span id="line-261">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".additionalProperties")</span>
+<span class="source-line-no">262</span><span id="line-262">    protected Map&lt;String, Object&gt; additionalProperties;</span>
+<span class="source-line-no">263</span><span id="line-263"></span>
+<span class="source-line-no">264</span><span id="line-264">    /**</span>
+<span class="source-line-no">265</span><span id="line-265">     * If set to true, controller and client method will be generated with openAPI annotations.</span>
+<span class="source-line-no">266</span><span id="line-266">     */</span>
+<span class="source-line-no">267</span><span id="line-267">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generateSwaggerAnnotations", defaultValue = "false")</span>
+<span class="source-line-no">268</span><span id="line-268">    protected boolean generateSwaggerAnnotations;</span>
+<span class="source-line-no">269</span><span id="line-269"></span>
+<span class="source-line-no">270</span><span id="line-270">    /**</span>
+<span class="source-line-no">271</span><span id="line-271">     * Set the implicit headers flag.</span>
+<span class="source-line-no">272</span><span id="line-272">     */</span>
+<span class="source-line-no">273</span><span id="line-273">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".implicitHeaders", defaultValue = "false")</span>
+<span class="source-line-no">274</span><span id="line-274">    protected boolean implicitHeaders;</span>
+<span class="source-line-no">275</span><span id="line-275"></span>
+<span class="source-line-no">276</span><span id="line-276">    /**</span>
+<span class="source-line-no">277</span><span id="line-277">     * Set the implicit headers regex.</span>
+<span class="source-line-no">278</span><span id="line-278">     */</span>
+<span class="source-line-no">279</span><span id="line-279">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".implicitHeadersRegex")</span>
+<span class="source-line-no">280</span><span id="line-280">    protected String implicitHeadersRegex;</span>
+<span class="source-line-no">281</span><span id="line-281"></span>
+<span class="source-line-no">282</span><span id="line-282">    /**</span>
+<span class="source-line-no">283</span><span id="line-283">     * Flag to indicate whether to use the "jakarta" or "javax" package.</span>
+<span class="source-line-no">284</span><span id="line-284">     */</span>
+<span class="source-line-no">285</span><span id="line-285">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".useJakartaEe", defaultValue = "true")</span>
+<span class="source-line-no">286</span><span id="line-286">    protected boolean useJakartaEe = true;</span>
+<span class="source-line-no">287</span><span id="line-287"></span>
+<span class="source-line-no">288</span><span id="line-288">    /**</span>
+<span class="source-line-no">289</span><span id="line-289">     * Sort method arguments to place required parameters before optional parameters.</span>
+<span class="source-line-no">290</span><span id="line-290">     * Default: true</span>
+<span class="source-line-no">291</span><span id="line-291">     */</span>
+<span class="source-line-no">292</span><span id="line-292">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".sortParamsByRequiredFlag", defaultValue = "true")</span>
+<span class="source-line-no">293</span><span id="line-293">    protected boolean sortParamsByRequiredFlag = true;</span>
+<span class="source-line-no">294</span><span id="line-294"></span>
+<span class="source-line-no">295</span><span id="line-295">    /**</span>
+<span class="source-line-no">296</span><span id="line-296">     * Skip examples defined in operations to avoid out of memory errors.</span>
+<span class="source-line-no">297</span><span id="line-297">     * Default: false</span>
+<span class="source-line-no">298</span><span id="line-298">     */</span>
+<span class="source-line-no">299</span><span id="line-299">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".skipOperationExample")</span>
+<span class="source-line-no">300</span><span id="line-300">    protected boolean skipOperationExample;</span>
+<span class="source-line-no">301</span><span id="line-301"></span>
+<span class="source-line-no">302</span><span id="line-302">    /**</span>
+<span class="source-line-no">303</span><span id="line-303">     * Skip sorting operations.</span>
+<span class="source-line-no">304</span><span id="line-304">     * Default: false</span>
+<span class="source-line-no">305</span><span id="line-305">     */</span>
+<span class="source-line-no">306</span><span id="line-306">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".skipSortingOperations")</span>
+<span class="source-line-no">307</span><span id="line-307">    protected boolean skipSortingOperations;</span>
+<span class="source-line-no">308</span><span id="line-308"></span>
+<span class="source-line-no">309</span><span id="line-309">    /**</span>
+<span class="source-line-no">310</span><span id="line-310">     * Character to use as a delimiter for the prefix. Default: '_'</span>
+<span class="source-line-no">311</span><span id="line-311">     */</span>
+<span class="source-line-no">312</span><span id="line-312">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".removeOperationIdPrefixDelimiter", defaultValue = "_")</span>
+<span class="source-line-no">313</span><span id="line-313">    protected String removeOperationIdPrefixDelimiter = "_";</span>
+<span class="source-line-no">314</span><span id="line-314"></span>
+<span class="source-line-no">315</span><span id="line-315">    /**</span>
+<span class="source-line-no">316</span><span id="line-316">     * Count of delimiter for the prefix. Use -1 for last. Default: 1</span>
+<span class="source-line-no">317</span><span id="line-317">     */</span>
+<span class="source-line-no">318</span><span id="line-318">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".removeOperationIdPrefixCount", defaultValue = "1")</span>
+<span class="source-line-no">319</span><span id="line-319">    protected int removeOperationIdPrefixCount = 1;</span>
+<span class="source-line-no">320</span><span id="line-320"></span>
+<span class="source-line-no">321</span><span id="line-321">    /**</span>
+<span class="source-line-no">322</span><span id="line-322">     * Sort model properties to place required parameters before optional parameters.</span>
+<span class="source-line-no">323</span><span id="line-323">     */</span>
+<span class="source-line-no">324</span><span id="line-324">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".sortModelPropertiesByRequiredFlag", defaultValue = "true")</span>
+<span class="source-line-no">325</span><span id="line-325">    protected boolean sortModelPropertiesByRequiredFlag = true;</span>
+<span class="source-line-no">326</span><span id="line-326"></span>
+<span class="source-line-no">327</span><span id="line-327">    /**</span>
+<span class="source-line-no">328</span><span id="line-328">     * Whether to ensure parameter names are unique in an operation (rename parameters that are not).</span>
+<span class="source-line-no">329</span><span id="line-329">     */</span>
+<span class="source-line-no">330</span><span id="line-330">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".ensureUniqueParams", defaultValue = "true")</span>
+<span class="source-line-no">331</span><span id="line-331">    protected boolean ensureUniqueParams = true;</span>
+<span class="source-line-no">332</span><span id="line-332"></span>
+<span class="source-line-no">333</span><span id="line-333">    /**</span>
+<span class="source-line-no">334</span><span id="line-334">     * boolean, toggles whether Unicode identifiers are allowed in names or not, default is false.</span>
+<span class="source-line-no">335</span><span id="line-335">     */</span>
+<span class="source-line-no">336</span><span id="line-336">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".allowUnicodeIdentifiers")</span>
+<span class="source-line-no">337</span><span id="line-337">    protected boolean allowUnicodeIdentifiers;</span>
+<span class="source-line-no">338</span><span id="line-338"></span>
+<span class="source-line-no">339</span><span id="line-339">    /**</span>
+<span class="source-line-no">340</span><span id="line-340">     * Add form or body parameters to the beginning of the parameter list.</span>
+<span class="source-line-no">341</span><span id="line-341">     */</span>
+<span class="source-line-no">342</span><span id="line-342">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".prependFormOrBodyParameters")</span>
+<span class="source-line-no">343</span><span id="line-343">    protected boolean prependFormOrBodyParameters;</span>
+<span class="source-line-no">344</span><span id="line-344"></span>
+<span class="source-line-no">345</span><span id="line-345">    @Parameter(defaultValue = "${project}", readonly = true)</span>
+<span class="source-line-no">346</span><span id="line-346">    protected MavenProject project;</span>
+<span class="source-line-no">347</span><span id="line-347"></span>
+<span class="source-line-no">348</span><span id="line-348">    /**</span>
+<span class="source-line-no">349</span><span id="line-349">     * Determines if this mojo must be executed.</span>
+<span class="source-line-no">350</span><span id="line-350">     *</span>
+<span class="source-line-no">351</span><span id="line-351">     * @return true if the mojo is enabled</span>
+<span class="source-line-no">352</span><span id="line-352">     */</span>
+<span class="source-line-no">353</span><span id="line-353">    protected abstract boolean isEnabled();</span>
+<span class="source-line-no">354</span><span id="line-354"></span>
+<span class="source-line-no">355</span><span id="line-355">    /**</span>
+<span class="source-line-no">356</span><span id="line-356">     * Configures the OpenAPI generator. When this method is called,</span>
+<span class="source-line-no">357</span><span id="line-357">     * common properties shared by all generators have already been</span>
+<span class="source-line-no">358</span><span id="line-358">     * configured, so this method should only take care of configuring</span>
+<span class="source-line-no">359</span><span id="line-359">     * the generator specific parameters.</span>
+<span class="source-line-no">360</span><span id="line-360">     *</span>
+<span class="source-line-no">361</span><span id="line-361">     * @param builder the generator configuration builder</span>
+<span class="source-line-no">362</span><span id="line-362">     */</span>
+<span class="source-line-no">363</span><span id="line-363">    protected abstract void configureBuilder(MicronautCodeGeneratorBuilder builder) throws MojoExecutionException;</span>
+<span class="source-line-no">364</span><span id="line-364"></span>
+<span class="source-line-no">365</span><span id="line-365">    @Override</span>
+<span class="source-line-no">366</span><span id="line-366">    public final void execute() throws MojoExecutionException, MojoFailureException {</span>
+<span class="source-line-no">367</span><span id="line-367">        if (!isEnabled()) {</span>
+<span class="source-line-no">368</span><span id="line-368">            getLog().debug(this.getClass().getSimpleName() + " is disabled");</span>
+<span class="source-line-no">369</span><span id="line-369">            return;</span>
+<span class="source-line-no">370</span><span id="line-370">        }</span>
+<span class="source-line-no">371</span><span id="line-371"></span>
+<span class="source-line-no">372</span><span id="line-372">        project.addCompileSourceRoot(outputDirectory.getAbsolutePath());</span>
+<span class="source-line-no">373</span><span id="line-373">        var builder = MicronautCodeGeneratorEntryPoint.builder()</span>
+<span class="source-line-no">374</span><span id="line-374">            .withDefinitionFile(definitionFile.toURI())</span>
+<span class="source-line-no">375</span><span id="line-375">            .withOutputDirectory(outputDirectory)</span>
+<span class="source-line-no">376</span><span id="line-376">            .withOutputs(</span>
+<span class="source-line-no">377</span><span id="line-377">                outputKinds.stream().map(String::toUpperCase).map(MicronautCodeGeneratorEntryPoint.OutputKind::valueOf).toList().toArray(new MicronautCodeGeneratorEntryPoint.OutputKind[0])</span>
+<span class="source-line-no">378</span><span id="line-378">            )</span>
+<span class="source-line-no">379</span><span id="line-379">            .withOptions(options -&gt; options</span>
+<span class="source-line-no">380</span><span id="line-380">                .withLang(MicronautCodeGeneratorOptionsBuilder.GeneratorLanguage.valueOf(lang.toUpperCase(Locale.ENGLISH)))</span>
+<span class="source-line-no">381</span><span id="line-381">                .withApiPackage(apiPackageName)</span>
+<span class="source-line-no">382</span><span id="line-382">                .withModelPackage(modelPackageName)</span>
+<span class="source-line-no">383</span><span id="line-383">                .withInvokerPackage(invokerPackageName)</span>
+<span class="source-line-no">384</span><span id="line-384">                .withBeanValidation(useBeanValidation)</span>
+<span class="source-line-no">385</span><span id="line-385">                .withUseOneOfInterfaces(useOneOfInterfaces)</span>
+<span class="source-line-no">386</span><span id="line-386">                .withOptional(useOptional)</span>
+<span class="source-line-no">387</span><span id="line-387">                .withReactive(useReactive)</span>
+<span class="source-line-no">388</span><span id="line-388">                .withSerializationLibrary(SerializationLibraryKind.valueOf(serializationFramework.toUpperCase(Locale.ENGLISH)))</span>
+<span class="source-line-no">389</span><span id="line-389">                .withGenerateHttpResponseAlways(alwaysUseGenerateHttpResponse)</span>
+<span class="source-line-no">390</span><span id="line-390">                .withGenerateHttpResponseWhereRequired(generateHttpResponseWhereRequired)</span>
+<span class="source-line-no">391</span><span id="line-391">                .withDateTimeFormat(MicronautCodeGeneratorOptionsBuilder.DateTimeFormat.valueOf(dateTimeFormat.toUpperCase(Locale.ENGLISH)))</span>
+<span class="source-line-no">392</span><span id="line-392">                .withParameterMappings(parameterMappings.stream()</span>
+<span class="source-line-no">393</span><span id="line-393">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ParameterMapping(</span>
+<span class="source-line-no">394</span><span id="line-394">                        mapping.getName(),</span>
+<span class="source-line-no">395</span><span id="line-395">                        io.micronaut.openapi.generator.ParameterMapping.ParameterLocation.valueOf(</span>
+<span class="source-line-no">396</span><span id="line-396">                            mapping.getLocation().name()</span>
+<span class="source-line-no">397</span><span id="line-397">                        ),</span>
+<span class="source-line-no">398</span><span id="line-398">                        mapping.getMappedType(),</span>
+<span class="source-line-no">399</span><span id="line-399">                        mapping.getMappedName(),</span>
+<span class="source-line-no">400</span><span id="line-400">                        mapping.isValidated()</span>
+<span class="source-line-no">401</span><span id="line-401">                    ))</span>
+<span class="source-line-no">402</span><span id="line-402">                    .toList()</span>
+<span class="source-line-no">403</span><span id="line-403">                )</span>
+<span class="source-line-no">404</span><span id="line-404">                .withResponseBodyMappings(responseBodyMappings.stream()</span>
+<span class="source-line-no">405</span><span id="line-405">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ResponseBodyMapping(</span>
+<span class="source-line-no">406</span><span id="line-406">                        mapping.getHeaderName(),</span>
+<span class="source-line-no">407</span><span id="line-407">                        mapping.getMappedBodyType(),</span>
+<span class="source-line-no">408</span><span id="line-408">                        mapping.isListWrapper(),</span>
+<span class="source-line-no">409</span><span id="line-409">                        mapping.isValidated()</span>
+<span class="source-line-no">410</span><span id="line-410">                    ))</span>
+<span class="source-line-no">411</span><span id="line-411">                    .toList()</span>
+<span class="source-line-no">412</span><span id="line-412">                )</span>
+<span class="source-line-no">413</span><span id="line-413">                .withSchemaMapping(schemaMapping)</span>
+<span class="source-line-no">414</span><span id="line-414">                .withImportMapping(importMapping)</span>
+<span class="source-line-no">415</span><span id="line-415">                .withNameMapping(nameMapping)</span>
+<span class="source-line-no">416</span><span id="line-416">                .withTypeMapping(typeMapping)</span>
+<span class="source-line-no">417</span><span id="line-417">                .withEnumNameMapping(enumNameMapping)</span>
+<span class="source-line-no">418</span><span id="line-418">                .withModelNameMapping(modelNameMapping)</span>
+<span class="source-line-no">419</span><span id="line-419">                .withInlineSchemaNameMapping(inlineSchemaNameMapping)</span>
+<span class="source-line-no">420</span><span id="line-420">                .withInlineSchemaOption(inlineSchemaOption)</span>
+<span class="source-line-no">421</span><span id="line-421">                .withOpenapiNormalizer(openapiNormalizer)</span>
+<span class="source-line-no">422</span><span id="line-422">                .withApiNamePrefix(apiNamePrefix != null ? apiNamePrefix : "")</span>
+<span class="source-line-no">423</span><span id="line-423">                .withApiNameSuffix(apiNameSuffix != null ? apiNameSuffix : "")</span>
+<span class="source-line-no">424</span><span id="line-424">                .withModelNamePrefix(modelNamePrefix != null ? modelNamePrefix : "")</span>
+<span class="source-line-no">425</span><span id="line-425">                .withModelNameSuffix(modelNameSuffix != null ? modelNameSuffix : "")</span>
+<span class="source-line-no">426</span><span id="line-426">                .withGenerateSwaggerAnnotations(generateSwaggerAnnotations)</span>
+<span class="source-line-no">427</span><span id="line-427">                .withImplicitHeaders(implicitHeaders)</span>
+<span class="source-line-no">428</span><span id="line-428">                .withImplicitHeadersRegex(implicitHeadersRegex != null ? implicitHeadersRegex : "")</span>
+<span class="source-line-no">429</span><span id="line-429">                .withUseEnumCaseInsensitive(useEnumCaseInsensitive)</span>
+<span class="source-line-no">430</span><span id="line-430">                .withAdditionalEnumTypeAnnotations(additionalEnumTypeAnnotations)</span>
+<span class="source-line-no">431</span><span id="line-431">                .withAdditionalModelTypeAnnotations(additionalModelTypeAnnotations)</span>
+<span class="source-line-no">432</span><span id="line-432">                .withAdditionalOneOfTypeAnnotations(additionalOneOfTypeAnnotations)</span>
+<span class="source-line-no">433</span><span id="line-433">                .withAdditionalProperties(additionalProperties)</span>
+<span class="source-line-no">434</span><span id="line-434"></span>
+<span class="source-line-no">435</span><span id="line-435">                .withUseJakartaEe(useJakartaEe)</span>
+<span class="source-line-no">436</span><span id="line-436">                .withSortParamsByRequiredFlag(sortParamsByRequiredFlag)</span>
+<span class="source-line-no">437</span><span id="line-437">                .withSkipOperationExample(skipOperationExample)</span>
+<span class="source-line-no">438</span><span id="line-438">                .withSkipSortingOperations(skipSortingOperations)</span>
+<span class="source-line-no">439</span><span id="line-439">                .withRemoveOperationIdPrefixDelimiter(removeOperationIdPrefixDelimiter)</span>
+<span class="source-line-no">440</span><span id="line-440">                .withRemoveOperationIdPrefixCount(removeOperationIdPrefixCount)</span>
+<span class="source-line-no">441</span><span id="line-441">                .withSortModelPropertiesByRequiredFlag(sortModelPropertiesByRequiredFlag)</span>
+<span class="source-line-no">442</span><span id="line-442">                .withEnsureUniqueParams(ensureUniqueParams)</span>
+<span class="source-line-no">443</span><span id="line-443">                .withAllowUnicodeIdentifiers(allowUnicodeIdentifiers)</span>
+<span class="source-line-no">444</span><span id="line-444">                .withPrependFormOrBodyParameters(prependFormOrBodyParameters)</span>
+<span class="source-line-no">445</span><span id="line-445">            );</span>
+<span class="source-line-no">446</span><span id="line-446">        configureBuilder(builder);</span>
+<span class="source-line-no">447</span><span id="line-447">        builder.build().generate();</span>
+<span class="source-line-no">448</span><span id="line-448">    }</span>
+<span class="source-line-no">449</span><span id="line-449">}</span>
 
 
 

@@ -69,7 +69,7 @@
 <span class="source-line-no">056</span><span id="line-56">    public void execute() throws EnforcerRuleException {</span>
 <span class="source-line-no">057</span><span id="line-57">        if (hasYamlConfiguration() &amp;&amp; !hasSnakeYaml()) {</span>
 <span class="source-line-no">058</span><span id="line-58">            String message = "YAML configuration file detected, but SnakeYAML is not on the runtime classpath. Make sure to add the following dependency:" +</span>
-<span class="source-line-no">059</span><span id="line-59">                    System.lineSeparator();</span>
+<span class="source-line-no">059</span><span id="line-59">                System.lineSeparator();</span>
 <span class="source-line-no">060</span><span id="line-60"></span>
 <span class="source-line-no">061</span><span id="line-61">            message += toXml(snakeYaml);</span>
 <span class="source-line-no">062</span><span id="line-62">            throw new EnforcerRuleException(message);</span>
@@ -82,7 +82,7 @@
 <span class="source-line-no">069</span><span id="line-69"></span>
 <span class="source-line-no">070</span><span id="line-70">    private boolean hasSnakeYaml() {</span>
 <span class="source-line-no">071</span><span id="line-71">        return project.getDependencies().stream()</span>
-<span class="source-line-no">072</span><span id="line-72">                .anyMatch(d -&gt; d.getGroupId().equals(snakeYaml.getGroupId()) &amp;&amp; d.getArtifactId().equals(snakeYaml.getArtifactId()));</span>
+<span class="source-line-no">072</span><span id="line-72">            .anyMatch(d -&gt; d.getGroupId().equals(snakeYaml.getGroupId()) &amp;&amp; d.getArtifactId().equals(snakeYaml.getArtifactId()));</span>
 <span class="source-line-no">073</span><span id="line-73">    }</span>
 <span class="source-line-no">074</span><span id="line-74"></span>
 <span class="source-line-no">075</span><span id="line-75">    private boolean hasYamlConfiguration(Resource resource) {</span>
@@ -101,10 +101,10 @@
 <span class="source-line-no">088</span><span id="line-88"></span>
 <span class="source-line-no">089</span><span id="line-89">    private String toXml(Dependency dependency) {</span>
 <span class="source-line-no">090</span><span id="line-90">        StringReader dependencyXml = new StringReader("&lt;dependency&gt;" +</span>
-<span class="source-line-no">091</span><span id="line-91">                "&lt;groupId&gt;" + dependency.getGroupId() + "&lt;/groupId&gt;" +</span>
-<span class="source-line-no">092</span><span id="line-92">                "&lt;artifactId&gt;" + dependency.getArtifactId() + "&lt;/artifactId&gt;" +</span>
-<span class="source-line-no">093</span><span id="line-93">                "&lt;scope&gt;" + dependency.getScope() + "&lt;/scope&gt;" +</span>
-<span class="source-line-no">094</span><span id="line-94">                "&lt;/dependency&gt;");</span>
+<span class="source-line-no">091</span><span id="line-91">            "&lt;groupId&gt;" + dependency.getGroupId() + "&lt;/groupId&gt;" +</span>
+<span class="source-line-no">092</span><span id="line-92">            "&lt;artifactId&gt;" + dependency.getArtifactId() + "&lt;/artifactId&gt;" +</span>
+<span class="source-line-no">093</span><span id="line-93">            "&lt;scope&gt;" + dependency.getScope() + "&lt;/scope&gt;" +</span>
+<span class="source-line-no">094</span><span id="line-94">            "&lt;/dependency&gt;");</span>
 <span class="source-line-no">095</span><span id="line-95">        StringWriter result = new StringWriter();</span>
 <span class="source-line-no">096</span><span id="line-96">        try {</span>
 <span class="source-line-no">097</span><span id="line-97">            XmlUtil.prettyFormat(dependencyXml, result);</span>

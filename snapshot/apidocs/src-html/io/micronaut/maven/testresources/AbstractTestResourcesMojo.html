@@ -92,7 +92,7 @@
 <span class="source-line-no">079</span><span id="line-79">    protected Integer explicitPort;</span>
 <span class="source-line-no">080</span><span id="line-80"></span>
 <span class="source-line-no">081</span><span id="line-81">    /**</span>
-<span class="source-line-no">082</span><span id="line-82">     * Configures the maximum amount of time to wait for the server to start a test resource. Some containeres may take</span>
+<span class="source-line-no">082</span><span id="line-82">     * Configures the maximum amount of time to wait for the server to start a test resource. Some containers may take</span>
 <span class="source-line-no">083</span><span id="line-83">     * a long amount of time to start with slow internet connections.</span>
 <span class="source-line-no">084</span><span id="line-84">     */</span>
 <span class="source-line-no">085</span><span id="line-85">    @Parameter(property = CONFIG_PROPERTY_PREFIX + "client-timeout", defaultValue = DEFAULT_CLIENT_TIMEOUT)</span>
@@ -101,39 +101,40 @@
 <span class="source-line-no">088</span><span id="line-88">    /**</span>
 <span class="source-line-no">089</span><span id="line-89">     * Configures the duration after which the test resources service will automatically shut down if it doesn't</span>
 <span class="source-line-no">090</span><span id="line-90">     * get any request.</span>
-<span class="source-line-no">091</span><span id="line-91">     * @since 4.2.0</span>
-<span class="source-line-no">092</span><span id="line-92">     */</span>
-<span class="source-line-no">093</span><span id="line-93">    @Parameter(property = CONFIG_PROPERTY_PREFIX + "server-idle-timeout-minutes")</span>
-<span class="source-line-no">094</span><span id="line-94">    protected Integer serverIdleTimeoutMinutes = Integer.valueOf(DEFAULT_CLIENT_TIMEOUT);</span>
-<span class="source-line-no">095</span><span id="line-95"></span>
-<span class="source-line-no">096</span><span id="line-96">    public static Path serverSettingsDirectoryOf(Path buildDir) {</span>
-<span class="source-line-no">097</span><span id="line-97">        return buildDir.resolve("../.micronaut/test-resources");</span>
-<span class="source-line-no">098</span><span id="line-98">    }</span>
-<span class="source-line-no">099</span><span id="line-99"></span>
-<span class="source-line-no">100</span><span id="line-100">    @Override</span>
-<span class="source-line-no">101</span><span id="line-101">    public void setLog(Log log) {</span>
-<span class="source-line-no">102</span><span id="line-102">        this.log = new JansiLog(log);</span>
-<span class="source-line-no">103</span><span id="line-103">    }</span>
-<span class="source-line-no">104</span><span id="line-104"></span>
-<span class="source-line-no">105</span><span id="line-105">    @Override</span>
-<span class="source-line-no">106</span><span id="line-106">    public Log getLog() {</span>
-<span class="source-line-no">107</span><span id="line-107">        if (log == null) {</span>
-<span class="source-line-no">108</span><span id="line-108">            log = new SystemStreamLog();</span>
-<span class="source-line-no">109</span><span id="line-109">        }</span>
-<span class="source-line-no">110</span><span id="line-110">        return log;</span>
-<span class="source-line-no">111</span><span id="line-111">    }</span>
-<span class="source-line-no">112</span><span id="line-112"></span>
-<span class="source-line-no">113</span><span id="line-113">    @Override</span>
-<span class="source-line-no">114</span><span id="line-114">    public Map&lt;?, ?&gt; getPluginContext() {</span>
-<span class="source-line-no">115</span><span id="line-115">        return pluginContext;</span>
-<span class="source-line-no">116</span><span id="line-116">    }</span>
-<span class="source-line-no">117</span><span id="line-117"></span>
-<span class="source-line-no">118</span><span id="line-118">    @Override</span>
-<span class="source-line-no">119</span><span id="line-119">    public void setPluginContext(Map pluginContext) {</span>
-<span class="source-line-no">120</span><span id="line-120">        this.pluginContext = pluginContext;</span>
-<span class="source-line-no">121</span><span id="line-121">    }</span>
-<span class="source-line-no">122</span><span id="line-122"></span>
-<span class="source-line-no">123</span><span id="line-123">}</span>
+<span class="source-line-no">091</span><span id="line-91">     *</span>
+<span class="source-line-no">092</span><span id="line-92">     * @since 4.2.0</span>
+<span class="source-line-no">093</span><span id="line-93">     */</span>
+<span class="source-line-no">094</span><span id="line-94">    @Parameter(property = CONFIG_PROPERTY_PREFIX + "server-idle-timeout-minutes")</span>
+<span class="source-line-no">095</span><span id="line-95">    protected Integer serverIdleTimeoutMinutes = Integer.valueOf(DEFAULT_CLIENT_TIMEOUT);</span>
+<span class="source-line-no">096</span><span id="line-96"></span>
+<span class="source-line-no">097</span><span id="line-97">    public static Path serverSettingsDirectoryOf(Path buildDir) {</span>
+<span class="source-line-no">098</span><span id="line-98">        return buildDir.resolve("../.micronaut/test-resources");</span>
+<span class="source-line-no">099</span><span id="line-99">    }</span>
+<span class="source-line-no">100</span><span id="line-100"></span>
+<span class="source-line-no">101</span><span id="line-101">    @Override</span>
+<span class="source-line-no">102</span><span id="line-102">    public void setLog(Log log) {</span>
+<span class="source-line-no">103</span><span id="line-103">        this.log = new JansiLog(log);</span>
+<span class="source-line-no">104</span><span id="line-104">    }</span>
+<span class="source-line-no">105</span><span id="line-105"></span>
+<span class="source-line-no">106</span><span id="line-106">    @Override</span>
+<span class="source-line-no">107</span><span id="line-107">    public Log getLog() {</span>
+<span class="source-line-no">108</span><span id="line-108">        if (log == null) {</span>
+<span class="source-line-no">109</span><span id="line-109">            log = new SystemStreamLog();</span>
+<span class="source-line-no">110</span><span id="line-110">        }</span>
+<span class="source-line-no">111</span><span id="line-111">        return log;</span>
+<span class="source-line-no">112</span><span id="line-112">    }</span>
+<span class="source-line-no">113</span><span id="line-113"></span>
+<span class="source-line-no">114</span><span id="line-114">    @Override</span>
+<span class="source-line-no">115</span><span id="line-115">    public Map&lt;?, ?&gt; getPluginContext() {</span>
+<span class="source-line-no">116</span><span id="line-116">        return pluginContext;</span>
+<span class="source-line-no">117</span><span id="line-117">    }</span>
+<span class="source-line-no">118</span><span id="line-118"></span>
+<span class="source-line-no">119</span><span id="line-119">    @Override</span>
+<span class="source-line-no">120</span><span id="line-120">    public void setPluginContext(Map pluginContext) {</span>
+<span class="source-line-no">121</span><span id="line-121">        this.pluginContext = pluginContext;</span>
+<span class="source-line-no">122</span><span id="line-122">    }</span>
+<span class="source-line-no">123</span><span id="line-123"></span>
+<span class="source-line-no">124</span><span id="line-124">}</span>
 
 
 
