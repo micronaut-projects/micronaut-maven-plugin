@@ -14,9 +14,6 @@
 
     <name>Micronaut Maven Plugin - Jib Integration</name>
     <description>Integration with the Jib Maven Plugin</description>
-    <properties>
-        <jackson.version>2.18.0</jackson.version>
-    </properties>
 
     <dependencies>
         <!-- Internal dependencies -->
@@ -56,17 +53,14 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-xml</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jdk8</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
 
         <!-- JUnit -->
