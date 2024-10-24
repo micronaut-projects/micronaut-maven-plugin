@@ -235,6 +235,9 @@
                 <plugin>
                     <artifactId>maven-plugin-report-plugin</artifactId>
                     <version>${maven-plugin-tools.version}</version>
+                    <configuration>
+                        <requirementsHistoryDetectionRange>[4.0.0,)</requirementsHistoryDetectionRange>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
