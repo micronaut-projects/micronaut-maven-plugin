@@ -17,6 +17,7 @@
     <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
     <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
+    <jib-maven-plugin.version>@jib-maven-plugin.version@</jib-maven-plugin.version>
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
   </properties>
