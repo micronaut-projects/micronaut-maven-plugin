@@ -247,7 +247,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
 
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
             .withDockerfile(dockerfile)
-            .withBuildArg("PORT", ports)
+            .withBuildArg("PORTS", ports)
             .withBuildArg("BASE_IMAGE", getFromImage().orElse(DEFAULT_BASE_IMAGE))
             .withBuildArg("CHECKPOINT_IMAGE", checkpointContainerId)
             .withTags(getTags());

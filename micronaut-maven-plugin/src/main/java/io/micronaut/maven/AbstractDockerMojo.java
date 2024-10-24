@@ -242,11 +242,13 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     }
 
     /**
-     * @return the application port to expose by looking at the application configuration.
+     * @return the application ports to expose by looking at the Jib configuration or the application configuration.
      */
     protected String getPorts() {
-        String port = applicationConfigurationService.getServerPort();
-        return "-1".equals(port) ? DEFAULT_PORT : port;
+        return jibConfigurationService.getPorts().orElseGet(() -> {
+            String port = applicationConfigurationService.getServerPort();
+            return "-1".equals(port) ? DEFAULT_PORT : port;
+        });
     }
 
     /**

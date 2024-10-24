@@ -14,6 +14,6 @@ RUN native-image @/home/app/graalvm-native-image.args -H:Class=${CLASS_NAME} -H:
 FROM ${BASE_IMAGE_RUN}
 COPY --from=builder /home/app/application /app/application
 
-ARG PORT=8080
-EXPOSE ${PORT}
+ARG PORTS=8080
+EXPOSE ${PORTS}
 ENTRYPOINT ["/app/application"]

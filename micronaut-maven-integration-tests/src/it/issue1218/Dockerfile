@@ -1,6 +1,4 @@
-ARG BASE_IMAGE
-ARG BASE_IMAGE_RUN
-FROM ${BASE_IMAGE} AS builder
+FROM ghcr.io/graalvm/native-image-community:17-ol9 AS builder
 WORKDIR /home/app
 
 COPY classes /home/app/classes
@@ -8,11 +6,10 @@ COPY dependency/* /home/app/libs/
 COPY graalvm-reachability-metadat[a] /home/app/graalvm-reachability-metadata
 COPY nativ[e]/generated /home/app/
 COPY *.args /home/app/graalvm-native-image.args
-ARG CLASS_NAME
-RUN native-image @/home/app/graalvm-native-image.args --static --target=linux-amd64 --libc=musl -H:Class=${CLASS_NAME} -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
+RUN native-image @/home/app/graalvm-native-image.args -H:Class=io.micronaut.build.examples.Application -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
 
-FROM scratch
+FROM cgr.dev/chainguard/wolfi-base:latest
 COPY --from=builder /home/app/application /app/application
-ARG PORTS=8080
-EXPOSE ${PORTS}
+
+EXPOSE 8080 8081
 ENTRYPOINT ["/app/application"]

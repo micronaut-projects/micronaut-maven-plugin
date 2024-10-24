@@ -210,7 +210,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             .withDockerfile(dockerfile)
             .withTags(getTags())
             .withBuildArg("BASE_IMAGE", from)
-            .withBuildArg("PORT", ports));
+            .withBuildArg("PORTS", ports));
 
         dockerService.buildImage(buildImageCmd);
     }

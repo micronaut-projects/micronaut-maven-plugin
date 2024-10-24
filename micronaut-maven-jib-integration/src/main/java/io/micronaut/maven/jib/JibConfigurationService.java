@@ -151,6 +151,9 @@ public class JibConfigurationService {
                 .orElse(args);
     }
 
+    /**
+     * @return the <code>container.ports</code> configuration.
+     */
     public Optional<String> getPorts() {
         final Set<String> ports = configuration.flatMap(c -> c.container().map(ContainerConfiguration::ports))
                 .orElse(Collections.emptySet());
