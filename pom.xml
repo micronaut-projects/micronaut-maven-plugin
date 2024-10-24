@@ -73,7 +73,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <maven.version>3.9.9</maven.version>
-        <micronaut.version>4.6.2</micronaut.version>
+        <micronaut.version>4.7.0</micronaut.version>
         <native-maven-plugin.version>0.10.3</native-maven-plugin.version>
         <micronaut.aot.version>2.5.0</micronaut.aot.version>
         <micronaut.test.resources.version>2.6.2</micronaut.test.resources.version>
@@ -98,14 +98,15 @@
         <jacoco.version>0.8.12</jacoco.version>
         <junit-jupiter.version>5.11.3</junit-jupiter.version>
         <directory-watcher.version>0.18.0</directory-watcher.version>
-        <testcontainers.version>1.20.2</testcontainers.version>
+        <testcontainers.version>1.20.3</testcontainers.version>
         <jib-maven-plugin.version>3.4.4</jib-maven-plugin.version>
-        <snakeyaml.version>2.2</snakeyaml.version>
+        <snakeyaml.version>2.3</snakeyaml.version>
         <sisu.version>0.9.0.M2</sisu.version>
         <docker-java.version>3.4.0</docker-java.version>
         <checkstyle.config.dir.path>${maven.multiModuleProjectDirectory}/config/checkstyle</checkstyle.config.dir.path>
         <spotless.licenseHeader.path>${maven.multiModuleProjectDirectory}/config/spotless.license.java</spotless.licenseHeader.path>
         <maven-plugin-tools.version>3.15.0</maven-plugin-tools.version>
+        <jackson.version>2.18.0</jackson.version>
     </properties>
 
     <repositories>
@@ -190,6 +191,23 @@
                 <artifactId>maven-plugin-annotations</artifactId>
                 <version>${maven-plugin-tools.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.mockito</groupId>
+                <artifactId>mockito-core</artifactId>
+                <version>5.14.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit-pioneer</groupId>
+                <artifactId>junit-pioneer</artifactId>
+                <version>2.3.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -225,6 +243,9 @@
                 <plugin>
                     <artifactId>maven-plugin-report-plugin</artifactId>
                     <version>${maven-plugin-tools.version}</version>
+                    <configuration>
+                        <requirementsHistoryDetectionRange>[4.0.0,)</requirementsHistoryDetectionRange>
+                    </configuration>
                 </plugin>
                 <plugin>
                     <artifactId>maven-surefire-plugin</artifactId>
@@ -252,11 +273,11 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.21.0</version>
+                    <version>3.12.1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-project-info-reports-plugin</artifactId>
-                    <version>3.8.0</version>
+                    <version>3.4.5</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-source-plugin</artifactId>
@@ -525,6 +546,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
                 <configuration>
+                    <inputEncoding>UTF-8</inputEncoding>
+                    <outputEncoding>UTF-8</outputEncoding>
+                    <generateReports>true</generateReports>
                     <asciidoc>
                         <attributes>
                             <icons>font</icons>
@@ -536,7 +560,7 @@
                 <dependencies>
                     <dependency><!-- add Asciidoctor Doxia Parser Module -->
                         <groupId>org.asciidoctor</groupId>
-                        <artifactId>asciidoctor-maven-plugin</artifactId>
+                        <artifactId>asciidoctor-converter-doxia-module</artifactId>
                         <version>3.0.0</version>
                     </dependency>
                 </dependencies>
