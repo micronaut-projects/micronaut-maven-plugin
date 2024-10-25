@@ -12,3 +12,4 @@ try (ServerSocket s = new ServerSocket(port as int)) {
 }
 
 assert !new File(basedir, ".micronaut/test-resources/test-resources.properties").exists()
+assert !new File(System.getProperty("user.home"), ".micronaut/test-resources-my-namespace/test-resources.properties").exists()

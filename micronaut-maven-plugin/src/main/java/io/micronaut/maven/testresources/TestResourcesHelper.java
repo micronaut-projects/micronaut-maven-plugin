@@ -304,7 +304,11 @@ public class TestResourcesHelper {
                     doStop();
                 } else {
                     log("Cannot find Micronaut Test Resources service settings, server may already be shutdown", quiet);
-                    Files.delete(getServerSettingsDirectory().resolve(PROPERTIES_FILE_NAME));
+                    Files.deleteIfExists(getServerSettingsDirectory().resolve(PROPERTIES_FILE_NAME));
+                }
+                if (shared && sharedServerNamespace != null) {
+                    Path projectSettingsDirectory = serverSettingsDirectoryOf(buildDirectory.toPath());
+                    Files.deleteIfExists(projectSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES));
                 }
             }
         } catch (Exception e) {
@@ -350,6 +354,9 @@ public class TestResourcesHelper {
     }
 
     private Path getServerSettingsDirectory() {
+        if (shared) {
+            return ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace);
+        }
         return serverSettingsDirectoryOf(buildDirectory.toPath());
     }
 
