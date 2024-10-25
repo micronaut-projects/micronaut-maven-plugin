@@ -1,0 +1,12 @@
+micronaut:
+  application:
+    name: test-resources-start-kill-stop
+netty:
+  default:
+    allocator:
+      max-order: 3
+datasources:
+  default:
+    schema-generate: CREATE
+    driverClassName: org.postgresql.Driver
+    dialect: POSTGRES

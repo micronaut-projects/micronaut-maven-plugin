@@ -48,6 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import static io.micronaut.maven.services.DependencyResolutionService.toClasspathFiles;
+import static io.micronaut.testresources.buildtools.ServerUtils.PROPERTIES_FILE_NAME;
 import static java.util.stream.Stream.concat;
 
 /**
@@ -177,6 +178,7 @@ public class TestResourcesHelper {
                     Path source = serverSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES);
                     Path target = projectSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES);
                     Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+
                 } else {
                     log.info("Test Resources is configured in shared mode");
                 }
@@ -296,11 +298,14 @@ public class TestResourcesHelper {
         }
         try {
             Optional<ServerSettings> optionalServerSettings = ServerUtils.readServerSettings(getServerSettingsDirectory());
-            if (optionalServerSettings.isPresent() && isServerStarted(optionalServerSettings.get().getPort())) {
-                log("Shutting down Micronaut Test Resources service", quiet);
-                doStop();
-            } else {
-                log("Cannot find Micronaut Test Resources service settings, server may already be shutdown", quiet);
+            if (optionalServerSettings.isPresent()) {
+                if (isServerStarted(optionalServerSettings.get().getPort())) {
+                    log("Shutting down Micronaut Test Resources service", quiet);
+                    doStop();
+                } else {
+                    log("Cannot find Micronaut Test Resources service settings, server may already be shutdown", quiet);
+                    Files.delete(getServerSettingsDirectory().resolve(PROPERTIES_FILE_NAME));
+                }
             }
         } catch (Exception e) {
             throw new MojoExecutionException("Unable to stop test resources server", e);
@@ -345,9 +350,6 @@ public class TestResourcesHelper {
     }
 
     private Path getServerSettingsDirectory() {
-        if (shared) {
-            return ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace);
-        }
         return serverSettingsDirectoryOf(buildDirectory.toPath());
     }
 

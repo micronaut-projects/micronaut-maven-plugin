@@ -34,7 +34,8 @@
                             </test-compile>
                             <test>
                                 ${project.groupId}:${project.artifactId}:${project.version}:start-testresources-service,
-                                org.apache.maven.plugins:maven-surefire-plugin:test
+                                org.apache.maven.plugins:maven-surefire-plugin:test,
+                                ${project.groupId}:${project.artifactId}:${project.version}:stop-testresources-service
                             </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
@@ -92,7 +93,8 @@
                             </process-test-classes>
                             <test>
                                 ${project.groupId}:${project.artifactId}:${project.version}:start-testresources-service,
-                                org.apache.maven.plugins:maven-surefire-plugin:test
+                                org.apache.maven.plugins:maven-surefire-plugin:test,
+                                ${project.groupId}:${project.artifactId}:${project.version}:stop-testresources-service
                             </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
@@ -138,7 +140,8 @@
                             </test-compile>
                             <test>
                                 ${project.groupId}:${project.artifactId}:${project.version}:start-testresources-service,
-                                org.apache.maven.plugins:maven-surefire-plugin:test
+                                org.apache.maven.plugins:maven-surefire-plugin:test,
+                                ${project.groupId}:${project.artifactId}:${project.version}:stop-testresources-service
                             </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
@@ -187,7 +190,8 @@
                             </test-compile>
                             <test>
                                 ${project.groupId}:${project.artifactId}:${project.version}:start-testresources-service,
-                                org.apache.maven.plugins:maven-surefire-plugin:test
+                                org.apache.maven.plugins:maven-surefire-plugin:test,
+                                ${project.groupId}:${project.artifactId}:${project.version}:stop-testresources-service
                             </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
@@ -241,7 +245,8 @@
                             </process-test-classes>
                             <test>
                                 ${project.groupId}:${project.artifactId}:${project.version}:start-testresources-service,
-                                org.apache.maven.plugins:maven-surefire-plugin:test
+                                org.apache.maven.plugins:maven-surefire-plugin:test,
+                                ${project.groupId}:${project.artifactId}:${project.version}:stop-testresources-service
                             </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
