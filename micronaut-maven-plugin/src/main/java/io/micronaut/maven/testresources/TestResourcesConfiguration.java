@@ -63,6 +63,14 @@ public class TestResourcesConfiguration {
     protected boolean debugServer;
 
     /**
+     * Whether the test resources server should be started in the foreground.
+     *
+     * @since 4.7.0
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + "foreground", defaultValue = DISABLED)
+    protected boolean foreground;
+
+    /**
      * @return Whether to enable or disable Micronaut test resources support.
      */
     public boolean isTestResourcesEnabled() {

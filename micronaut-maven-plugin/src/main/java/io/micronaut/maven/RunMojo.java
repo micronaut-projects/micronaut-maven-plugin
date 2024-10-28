@@ -305,21 +305,10 @@ public class RunMojo extends AbstractTestResourcesMojo {
             }
         }
         this.targetDirectory = new File(runnableProject.getBuild().getDirectory());
-        this.testResourcesHelper = new TestResourcesHelper(testResourcesEnabled,
-            shared,
-            buildDirectory,
-            explicitPort,
-            clientTimeout,
-            serverIdleTimeoutMinutes,
-            runnableProject,
-            mavenSession,
-            dependencyResolutionService,
-            toolchainManager,
-            testResourcesVersion,
-            classpathInference,
-            testResourcesDependencies,
-            sharedServerNamespace,
-            debugServer);
+        this.testResourcesHelper = new TestResourcesHelper(testResourcesEnabled, shared, buildDirectory, explicitPort,
+                clientTimeout, serverIdleTimeoutMinutes, runnableProject, mavenSession, dependencyResolutionService,
+                toolchainManager, testResourcesVersion, classpathInference, testResourcesDependencies,
+                sharedServerNamespace, debugServer, false);
         resolveDependencies();
         if (watches == null) {
             watches = new ArrayList<>();

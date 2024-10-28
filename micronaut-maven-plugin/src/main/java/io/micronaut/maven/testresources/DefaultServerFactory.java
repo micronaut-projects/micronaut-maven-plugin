@@ -44,6 +44,7 @@ public class DefaultServerFactory implements ServerFactory {
     private final AtomicBoolean serverStarted;
     private final String testResourcesVersion;
     private final boolean debugServer;
+    private final boolean foreground;
 
     private Process process;
 
@@ -52,13 +53,15 @@ public class DefaultServerFactory implements ServerFactory {
                                 MavenSession mavenSession,
                                 AtomicBoolean serverStarted,
                                 String testResourcesVersion,
-                                boolean debugServer) {
+                                boolean debugServer,
+                                boolean foreground) {
         this.log = log;
         this.toolchainManager = toolchainManager;
         this.mavenSession = mavenSession;
         this.serverStarted = serverStarted;
         this.testResourcesVersion = testResourcesVersion;
         this.debugServer = debugServer;
+        this.foreground = foreground;
     }
 
     @Override
@@ -94,6 +97,10 @@ public class DefaultServerFactory implements ServerFactory {
         var builder = new ProcessBuilder(cli);
         try {
             process = builder.inheritIO().start();
+            if (foreground) {
+                log.info("Test Resources Service started in foreground. Press Ctrl+C to stop.");
+                process.waitFor();
+            }
         } catch (Exception e) {
             log.error("Failed to start server", e);
             serverStarted.set(false);

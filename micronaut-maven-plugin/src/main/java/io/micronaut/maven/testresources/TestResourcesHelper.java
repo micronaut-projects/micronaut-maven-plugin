@@ -97,6 +97,8 @@ public class TestResourcesHelper {
 
     private boolean debugServer;
 
+    private boolean foreground = false;
+
     public TestResourcesHelper(boolean enabled,
                                boolean shared,
                                File buildDirectory,
@@ -111,7 +113,8 @@ public class TestResourcesHelper {
                                boolean classpathInference,
                                List<Dependency> testResourcesDependencies,
                                String sharedServerNamespace,
-                               boolean debugServer) {
+                               boolean debugServer,
+                               boolean foreground) {
         this(mavenSession, enabled, shared, buildDirectory);
         this.explicitPort = explicitPort;
         this.clientTimeout = clientTimeout;
@@ -124,6 +127,7 @@ public class TestResourcesHelper {
         this.testResourcesDependencies = testResourcesDependencies;
         this.sharedServerNamespace = sharedServerNamespace;
         this.debugServer = debugServer;
+        this.foreground = foreground;
     }
 
     public TestResourcesHelper(MavenSession mavenSession, boolean enabled, boolean shared, File buildDirectory) {
@@ -164,7 +168,7 @@ public class TestResourcesHelper {
         Path buildDir = buildDirectory.toPath();
         Path serverSettingsDirectory = getServerSettingsDirectory();
         var serverStarted = new AtomicBoolean(false);
-        var serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion, debugServer);
+        var serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion, debugServer, foreground);
         Optional<ServerSettings> optionalServerSettings = startOrConnectToExistingServer(accessToken, buildDir, serverSettingsDirectory, serverFactory);
         if (optionalServerSettings.isPresent()) {
             ServerSettings serverSettings = optionalServerSettings.get();
