@@ -101,6 +101,9 @@ public class DefaultServerFactory implements ServerFactory {
                 log.info("Test Resources Service started in foreground. Press Ctrl+C to stop.");
                 process.waitFor();
             }
+        } catch (InterruptedException e) {
+            log.error("Failed to start server", e);
+            Thread.currentThread().interrupt();
         } catch (Exception e) {
             log.error("Failed to start server", e);
             serverStarted.set(false);
