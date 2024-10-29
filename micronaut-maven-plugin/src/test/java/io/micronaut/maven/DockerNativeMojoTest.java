@@ -32,8 +32,8 @@ class DockerNativeMojoTest {
 
     @ParameterizedTest
     @CsvSource({
-            "17,https://gds.oracle.com/download/graal/17/archive/graalvm-jdk-17.0.12_linux-x64_bin.tar.gz",
-            "21,https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-x64_bin.tar.gz"
+            "17,https://gds-stage.oraclecorp.com/download/graal/17/latest-gftc/graalvm-jdk-17_linux-x64_bin.tar.gz",
+            "21,https://gds-stage.oraclecorp.com/download/graal/21/latest-gftc/graalvm-jdk-21_linux-x64_bin.tar.gz"
     })
     @SetSystemProperty(key = "os.arch", value = X86_64_ARCH)
     void testGraalVmDownloadUrl(String javaVersion, String expectedUrl) throws URISyntaxException, IOException, InterruptedException {
