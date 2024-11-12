@@ -300,25 +300,34 @@
 <span class="source-line-no">287</span><span id="line-287">            .withPassword(password);</span>
 <span class="source-line-no">288</span><span id="line-288">        RegistryAuthLocator registryAuthLocator = RegistryAuthLocator.instance();</span>
 <span class="source-line-no">289</span><span id="line-289">        AuthConfig authConfig = registryAuthLocator.lookupAuthConfig(dockerImageName, defaultAuthConfig);</span>
-<span class="source-line-no">290</span><span id="line-290">        AuthResponse authResponse = dockerClient.authCmd().withAuthConfig(authConfig).exec();</span>
-<span class="source-line-no">291</span><span id="line-291">        if (authResponse.getStatus() != null &amp;&amp; authResponse.getStatus().equals("Login Succeeded")) {</span>
-<span class="source-line-no">292</span><span id="line-292">            LOG.info("Successfully logged in to registry {}", dockerImageName.getRegistry());</span>
-<span class="source-line-no">293</span><span id="line-293">        } else {</span>
-<span class="source-line-no">294</span><span id="line-294">            LOG.warn("Failed to login to registry {}", dockerImageName.getRegistry());</span>
-<span class="source-line-no">295</span><span id="line-295">        }</span>
-<span class="source-line-no">296</span><span id="line-296">        return authConfig;</span>
-<span class="source-line-no">297</span><span id="line-297">    }</span>
-<span class="source-line-no">298</span><span id="line-298"></span>
-<span class="source-line-no">299</span><span id="line-299">    private void verifyDockerRunning() {</span>
-<span class="source-line-no">300</span><span id="line-300">        try {</span>
-<span class="source-line-no">301</span><span id="line-301">            dockerClient.pingCmd().exec();</span>
-<span class="source-line-no">302</span><span id="line-302">        } catch (DockerException e) {</span>
-<span class="source-line-no">303</span><span id="line-303">            throw new IllegalStateException(e.getMessage());</span>
-<span class="source-line-no">304</span><span id="line-304">        } catch (RuntimeException e) {</span>
-<span class="source-line-no">305</span><span id="line-305">            throw new IllegalStateException("Cannot connect to the Docker daemon at " + config.getDockerHost() + ". Is the docker daemon running?", e);</span>
-<span class="source-line-no">306</span><span id="line-306">        }</span>
-<span class="source-line-no">307</span><span id="line-307">    }</span>
-<span class="source-line-no">308</span><span id="line-308">}</span>
+<span class="source-line-no">290</span><span id="line-290">        boolean loginSucceeded = false;</span>
+<span class="source-line-no">291</span><span id="line-291">        try {</span>
+<span class="source-line-no">292</span><span id="line-292">            AuthResponse authResponse = dockerClient.authCmd().withAuthConfig(authConfig).exec();</span>
+<span class="source-line-no">293</span><span id="line-293">            if (authResponse.getStatus() != null &amp;&amp; authResponse.getStatus().equals("Login Succeeded")) {</span>
+<span class="source-line-no">294</span><span id="line-294">                loginSucceeded = true;</span>
+<span class="source-line-no">295</span><span id="line-295">            }</span>
+<span class="source-line-no">296</span><span id="line-296">        } catch (Exception ignored) {</span>
+<span class="source-line-no">297</span><span id="line-297">            // typically this is com.github.dockerjava.api.exception.UnauthorizedException</span>
+<span class="source-line-no">298</span><span id="line-298">        }</span>
+<span class="source-line-no">299</span><span id="line-299"></span>
+<span class="source-line-no">300</span><span id="line-300">        if (loginSucceeded) {</span>
+<span class="source-line-no">301</span><span id="line-301">            LOG.info("Successfully logged in to registry {}", dockerImageName.getRegistry());</span>
+<span class="source-line-no">302</span><span id="line-302">        } else {</span>
+<span class="source-line-no">303</span><span id="line-303">            LOG.warn("Failed to login to registry {}", dockerImageName.getRegistry());</span>
+<span class="source-line-no">304</span><span id="line-304">        }</span>
+<span class="source-line-no">305</span><span id="line-305">        return authConfig;</span>
+<span class="source-line-no">306</span><span id="line-306">    }</span>
+<span class="source-line-no">307</span><span id="line-307"></span>
+<span class="source-line-no">308</span><span id="line-308">    private void verifyDockerRunning() {</span>
+<span class="source-line-no">309</span><span id="line-309">        try {</span>
+<span class="source-line-no">310</span><span id="line-310">            dockerClient.pingCmd().exec();</span>
+<span class="source-line-no">311</span><span id="line-311">        } catch (DockerException e) {</span>
+<span class="source-line-no">312</span><span id="line-312">            throw new IllegalStateException(e.getMessage());</span>
+<span class="source-line-no">313</span><span id="line-313">        } catch (RuntimeException e) {</span>
+<span class="source-line-no">314</span><span id="line-314">            throw new IllegalStateException("Cannot connect to the Docker daemon at " + config.getDockerHost() + ". Is the docker daemon running?", e);</span>
+<span class="source-line-no">315</span><span id="line-315">        }</span>
+<span class="source-line-no">316</span><span id="line-316">    }</span>
+<span class="source-line-no">317</span><span id="line-317">}</span>
 
 
 
