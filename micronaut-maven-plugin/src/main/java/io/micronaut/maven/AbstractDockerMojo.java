@@ -61,7 +61,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     public static final String X86_64_ARCH = "x64";
     public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol9";
     public static final String ORACLE_CLOUD_FUNCTION_DEFAULT_CMD = "CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]";
-    public static final String GDS_DOWNLOAD_URL = "https://gds-stage.oraclecorp.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz";
+    public static final String GDS_DOWNLOAD_URL = "https://gds.oracle.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz";
 
     protected final MavenProject mavenProject;
     protected final JibConfigurationService jibConfigurationService;
