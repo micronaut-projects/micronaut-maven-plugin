@@ -103,7 +103,7 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
     /**
      * Wrap the operations response in HttpResponse object where non-200 HTTP status codes or additional headers are defined.
      */
-    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generate.http.response.where.required", defaultValue = "false", required = true)
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generate.http.response.where.required", defaultValue = "true", required = true)
     protected boolean generateHttpResponseWhereRequired;
 
     /**
