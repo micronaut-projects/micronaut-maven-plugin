@@ -144,6 +144,11 @@
             <artifactId>micronaut-openapi-generator</artifactId>
             <version>${micronaut.openapi.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.micronaut.jsonschema</groupId>
+            <artifactId>micronaut-jsonschema-generator</artifactId>
+            <version>${micronaut.jsonschema.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
