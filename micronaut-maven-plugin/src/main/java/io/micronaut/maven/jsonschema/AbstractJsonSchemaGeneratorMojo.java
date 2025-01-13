@@ -22,6 +22,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 import io.micronaut.jsonschema.generator.SourceGenerator;
@@ -66,11 +67,16 @@ public abstract class AbstractJsonSchemaGeneratorMojo extends AbstractMicronautM
             UrlLoader.setAllowedUrlPatterns(acceptedUrlPatterns);
         }
 
-        var builder = SourceGeneratorConfigBuilder
-                .withOutputFolder(outputDirectory.getAbsolutePath())
+        var builder = new SourceGeneratorConfigBuilder()
+                .withOutputFolder(outputDirectory.toPath())
                 .withOutputPackageName(outputPackageName)
                 .withOutputFileName(outputFileName);
         configureBuilder(builder);
-        langGenerator.generate(builder.build());
+
+        try {
+            langGenerator.generate(builder.build());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -35,6 +35,6 @@ public abstract class JsonSchemaFolderMojo extends AbstractJsonSchemaGeneratorMo
 
     @Override
     protected void configureBuilder(SourceGeneratorConfigBuilder builder) {
-        builder.withInputFolder(inputDirectory);
+        builder.withInputFolder(inputDirectory.toPath());
     }
 }
