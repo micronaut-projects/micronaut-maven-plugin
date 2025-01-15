@@ -35,7 +35,6 @@ import io.micronaut.jsonschema.generator.loaders.UrlLoader;
  */
 public abstract class AbstractJsonSchemaGeneratorMojo extends AbstractMicronautMojo {
     static final String MICRONAUT_SCHEMA_PREFIX = "micronaut.jsonschema.generator";
-    static final String IO_MICRONAUT_OPENAPI_PREFIX = "io." + MICRONAUT_SCHEMA_PREFIX;
 
     @Parameter(property = MICRONAUT_SCHEMA_PREFIX + ".language", defaultValue = "JAVA")
     protected String language;
