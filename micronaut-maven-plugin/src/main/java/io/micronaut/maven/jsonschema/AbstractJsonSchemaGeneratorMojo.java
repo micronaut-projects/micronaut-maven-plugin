@@ -23,6 +23,7 @@ import org.apache.maven.project.MavenProject;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 import io.micronaut.jsonschema.generator.SourceGenerator;
@@ -39,10 +40,10 @@ public abstract class AbstractJsonSchemaGeneratorMojo extends AbstractMicronautM
     @Parameter(property = MICRONAUT_SCHEMA_PREFIX + ".language", defaultValue = "JAVA")
     protected String language;
 
-    @Parameter(property = MICRONAUT_SCHEMA_PREFIX + ".output-folder", required = true)
-    protected File outputDirectory;
+    @Parameter(property = MICRONAUT_SCHEMA_PREFIX + ".output-folder", defaultValue = "generated/jsonschema/")
+    protected String outputDirectory;
 
-    @Parameter(property = MICRONAUT_SCHEMA_PREFIX + ".output-package-name")
+    @Parameter(property = MICRONAUT_SCHEMA_PREFIX + ".output-package-name", defaultValue = "io.micronaut.jsonschema.generated")
     protected String outputPackageName;
 
     @Parameter(property = MICRONAUT_SCHEMA_PREFIX + ".output-file-name")
@@ -58,16 +59,17 @@ public abstract class AbstractJsonSchemaGeneratorMojo extends AbstractMicronautM
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-
-        project.addCompileSourceRoot(outputDirectory.getAbsolutePath());
         var langGenerator = new SourceGenerator(language.toUpperCase());
 
         if (!acceptedUrlPatterns.isEmpty()) {
             UrlLoader.setAllowedUrlPatterns(acceptedUrlPatterns);
         }
 
+        Path outputDirPath = new File(outputDirectory).toPath().resolve("src/main/" + language.toLowerCase());
+        project.addCompileSourceRoot(outputDirPath.toAbsolutePath().toString());
+
         var builder = new SourceGeneratorConfigBuilder()
-                .withOutputFolder(outputDirectory.toPath())
+                .withOutputFolder(outputDirPath)
                 .withOutputPackageName(outputPackageName)
                 .withOutputFileName(outputFileName);
         configureBuilder(builder);
