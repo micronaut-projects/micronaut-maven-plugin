@@ -92,7 +92,7 @@ loadScripts(document, 'script');</script>
 <div class="type-signature"><span class="annotations">@Mojo(name="aot-sample-config",
       defaultPhase=PACKAGE,
       requiresDependencyResolution=COMPILE_PLUS_RUNTIME)
-</span><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AotSampleMojo.html#line-34">AotSampleMojo</a></span>
+</span><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AotSampleMojo.html#line-37">AotSampleMojo</a></span>
 <span class="extends-implements">extends <a href="AbstractMicronautAotCliMojo.html" title="class in io.micronaut.maven.aot">AbstractMicronautAotCliMojo</a></span></div>
 <div class="block">Generates a sample <code>aot.properties</code> showcasing all the possible values along with a description.</div>
 </section>
@@ -133,10 +133,12 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.maven.services.CompilerService,io.micronaut.maven.services.ExecutorService,org.apache.maven.project.MavenProject,io.micronaut.maven.services.DependencyResolutionService)" class="member-name-link">AotSampleMojo</a><wbr>(<a href="../services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a>&nbsp;compilerService,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.maven.services.CompilerService,io.micronaut.maven.services.ExecutorService,org.apache.maven.project.MavenProject,io.micronaut.maven.services.DependencyResolutionService,org.apache.maven.execution.MavenSession,org.apache.maven.toolchain.ToolchainManager)" class="member-name-link">AotSampleMojo</a><wbr>(<a href="../services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a>&nbsp;compilerService,
  <a href="../services/ExecutorService.html" title="class in io.micronaut.maven.services">ExecutorService</a>&nbsp;executorService,
  org.apache.maven.project.MavenProject&nbsp;mavenProject,
- <a href="../services/DependencyResolutionService.html" title="class in io.micronaut.maven.services">DependencyResolutionService</a>&nbsp;dependencyResolutionService)</code></div>
+ <a href="../services/DependencyResolutionService.html" title="class in io.micronaut.maven.services">DependencyResolutionService</a>&nbsp;dependencyResolutionService,
+ org.apache.maven.execution.MavenSession&nbsp;mavenSession,
+ org.apache.maven.toolchain.ToolchainManager&nbsp;toolchainManager)</code></div>
 <div class="col-last even-row-color">&nbsp;</div>
 </div>
 </section>
@@ -190,7 +192,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="SAMPLE_AOT_PROPERTIES_FILE_NAME">
 <h3>SAMPLE_AOT_PROPERTIES_FILE_NAME</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AotSampleMojo.html#line-37">SAMPLE_AOT_PROPERTIES_FILE_NAME</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AotSampleMojo.html#line-40">SAMPLE_AOT_PROPERTIES_FILE_NAME</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -204,7 +206,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="NAME">
 <h3>NAME</h3>
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AotSampleMojo.html#line-38">NAME</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AotSampleMojo.html#line-41">NAME</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -224,13 +226,15 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(io.micronaut.maven.services.CompilerService,io.micronaut.maven.services.ExecutorService,org.apache.maven.project.MavenProject,io.micronaut.maven.services.DependencyResolutionService)">
+<section class="detail" id="&lt;init&gt;(io.micronaut.maven.services.CompilerService,io.micronaut.maven.services.ExecutorService,org.apache.maven.project.MavenProject,io.micronaut.maven.services.DependencyResolutionService,org.apache.maven.execution.MavenSession,org.apache.maven.toolchain.ToolchainManager)">
 <h3>AotSampleMojo</h3>
 <div class="member-signature"><span class="annotations">@Inject
-</span><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AotSampleMojo.html#line-40">AotSampleMojo</a></span><wbr><span class="parameters">(<a href="../services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a>&nbsp;compilerService,
+</span><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AotSampleMojo.html#line-43">AotSampleMojo</a></span><wbr><span class="parameters">(<a href="../services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a>&nbsp;compilerService,
  <a href="../services/ExecutorService.html" title="class in io.micronaut.maven.services">ExecutorService</a>&nbsp;executorService,
  org.apache.maven.project.MavenProject&nbsp;mavenProject,
- <a href="../services/DependencyResolutionService.html" title="class in io.micronaut.maven.services">DependencyResolutionService</a>&nbsp;dependencyResolutionService)</span></div>
+ <a href="../services/DependencyResolutionService.html" title="class in io.micronaut.maven.services">DependencyResolutionService</a>&nbsp;dependencyResolutionService,
+ org.apache.maven.execution.MavenSession&nbsp;mavenSession,
+ org.apache.maven.toolchain.ToolchainManager&nbsp;toolchainManager)</span></div>
 </section>
 </li>
 </ul>
@@ -244,7 +248,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getExtraArgs()">
 <h3>getExtraArgs</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AotSampleMojo.html#line-46">getExtraArgs</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AotSampleMojo.html#line-50">getExtraArgs</a></span>()</div>
 <dl class="notes">
 <dt>Specified by:</dt>
 <dd><code><a href="AbstractMicronautAotCliMojo.html#getExtraArgs()">getExtraArgs</a></code>&nbsp;in class&nbsp;<code><a href="AbstractMicronautAotCliMojo.html" title="class in io.micronaut.maven.aot">AbstractMicronautAotCliMojo</a></code></dd>
@@ -254,7 +258,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="onSuccess(java.io.File)">
 <h3>onSuccess</h3>
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AotSampleMojo.html#line-54">onSuccess</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;outputDir)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AotSampleMojo.html#line-58">onSuccess</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;outputDir)</span></div>
 </section>
 </li>
 </ul>
