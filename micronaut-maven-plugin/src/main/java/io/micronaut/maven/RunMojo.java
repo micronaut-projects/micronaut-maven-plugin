@@ -308,7 +308,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         this.testResourcesHelper = new TestResourcesHelper(testResourcesEnabled, shared, buildDirectory, explicitPort,
                 clientTimeout, serverIdleTimeoutMinutes, runnableProject, mavenSession, dependencyResolutionService,
                 toolchainManager, testResourcesVersion, classpathInference, testResourcesDependencies,
-                sharedServerNamespace, debugServer, false);
+                sharedServerNamespace, debugServer, false, testResourcesSystemProperties);
         resolveDependencies();
         if (watches == null) {
             watches = new ArrayList<>();
