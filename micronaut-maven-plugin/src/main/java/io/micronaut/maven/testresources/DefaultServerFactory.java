@@ -103,6 +103,14 @@ public class DefaultServerFactory implements ServerFactory {
         }
     }
 
+    /**
+     * Computes the command-line arguments required to run the server based on the provided process parameters.
+     *
+     * @param processParameters the process parameters containing information about JVM arguments, system properties,
+     *                          classpath, main class, and program arguments
+     * @return a list of command-line arguments as strings
+     * @throws IllegalStateException if the Java executable cannot be found, or if the main class is not set
+     */
     List<String> computeCliArguments(ServerUtils.ProcessParameters processParameters) {
         var cli = new ArrayList<String>();
 
