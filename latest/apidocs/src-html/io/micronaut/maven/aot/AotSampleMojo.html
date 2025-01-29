@@ -31,52 +31,56 @@
 <span class="source-line-no">018</span><span id="line-18">import io.micronaut.maven.services.CompilerService;</span>
 <span class="source-line-no">019</span><span id="line-19">import io.micronaut.maven.services.DependencyResolutionService;</span>
 <span class="source-line-no">020</span><span id="line-20">import io.micronaut.maven.services.ExecutorService;</span>
-<span class="source-line-no">021</span><span id="line-21">import org.apache.maven.plugins.annotations.LifecyclePhase;</span>
-<span class="source-line-no">022</span><span id="line-22">import org.apache.maven.plugins.annotations.Mojo;</span>
-<span class="source-line-no">023</span><span id="line-23">import org.apache.maven.plugins.annotations.ResolutionScope;</span>
-<span class="source-line-no">024</span><span id="line-24">import org.apache.maven.project.MavenProject;</span>
-<span class="source-line-no">025</span><span id="line-25"></span>
-<span class="source-line-no">026</span><span id="line-26">import javax.inject.Inject;</span>
-<span class="source-line-no">027</span><span id="line-27">import java.io.File;</span>
-<span class="source-line-no">028</span><span id="line-28">import java.util.Arrays;</span>
-<span class="source-line-no">029</span><span id="line-29">import java.util.List;</span>
-<span class="source-line-no">030</span><span id="line-30"></span>
-<span class="source-line-no">031</span><span id="line-31">/**</span>
-<span class="source-line-no">032</span><span id="line-32"> * Generates a sample &lt;code&gt;aot.properties&lt;/code&gt; showcasing all the possible values along with a description.</span>
-<span class="source-line-no">033</span><span id="line-33"> */</span>
-<span class="source-line-no">034</span><span id="line-34">@Mojo(name = AotSampleMojo.NAME, defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)</span>
-<span class="source-line-no">035</span><span id="line-35">public class AotSampleMojo extends AbstractMicronautAotCliMojo {</span>
-<span class="source-line-no">036</span><span id="line-36"></span>
-<span class="source-line-no">037</span><span id="line-37">    public static final String SAMPLE_AOT_PROPERTIES_FILE_NAME = "aot.properties";</span>
-<span class="source-line-no">038</span><span id="line-38">    public static final String NAME = "aot-sample-config";</span>
+<span class="source-line-no">021</span><span id="line-21"></span>
+<span class="source-line-no">022</span><span id="line-22">import org.apache.maven.execution.MavenSession;</span>
+<span class="source-line-no">023</span><span id="line-23">import org.apache.maven.plugins.annotations.LifecyclePhase;</span>
+<span class="source-line-no">024</span><span id="line-24">import org.apache.maven.plugins.annotations.Mojo;</span>
+<span class="source-line-no">025</span><span id="line-25">import org.apache.maven.plugins.annotations.ResolutionScope;</span>
+<span class="source-line-no">026</span><span id="line-26">import org.apache.maven.project.MavenProject;</span>
+<span class="source-line-no">027</span><span id="line-27">import org.apache.maven.toolchain.ToolchainManager;</span>
+<span class="source-line-no">028</span><span id="line-28"></span>
+<span class="source-line-no">029</span><span id="line-29">import javax.inject.Inject;</span>
+<span class="source-line-no">030</span><span id="line-30">import java.io.File;</span>
+<span class="source-line-no">031</span><span id="line-31">import java.util.Arrays;</span>
+<span class="source-line-no">032</span><span id="line-32">import java.util.List;</span>
+<span class="source-line-no">033</span><span id="line-33"></span>
+<span class="source-line-no">034</span><span id="line-34">/**</span>
+<span class="source-line-no">035</span><span id="line-35"> * Generates a sample &lt;code&gt;aot.properties&lt;/code&gt; showcasing all the possible values along with a description.</span>
+<span class="source-line-no">036</span><span id="line-36"> */</span>
+<span class="source-line-no">037</span><span id="line-37">@Mojo(name = AotSampleMojo.NAME, defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)</span>
+<span class="source-line-no">038</span><span id="line-38">public class AotSampleMojo extends AbstractMicronautAotCliMojo {</span>
 <span class="source-line-no">039</span><span id="line-39"></span>
-<span class="source-line-no">040</span><span id="line-40">    @Inject</span>
-<span class="source-line-no">041</span><span id="line-41">    public AotSampleMojo(CompilerService compilerService, ExecutorService executorService, MavenProject mavenProject,</span>
-<span class="source-line-no">042</span><span id="line-42">                         DependencyResolutionService dependencyResolutionService) {</span>
-<span class="source-line-no">043</span><span id="line-43">        super(compilerService, executorService, mavenProject, dependencyResolutionService);</span>
-<span class="source-line-no">044</span><span id="line-44">    }</span>
-<span class="source-line-no">045</span><span id="line-45"></span>
-<span class="source-line-no">046</span><span id="line-46">    @Override</span>
-<span class="source-line-no">047</span><span id="line-47">    protected List&lt;String&gt; getExtraArgs() {</span>
-<span class="source-line-no">048</span><span id="line-48">        return Arrays.asList(</span>
-<span class="source-line-no">049</span><span id="line-49">            "--config",</span>
-<span class="source-line-no">050</span><span id="line-50">            outputFile(SAMPLE_AOT_PROPERTIES_FILE_NAME).getAbsolutePath()</span>
-<span class="source-line-no">051</span><span id="line-51">        );</span>
-<span class="source-line-no">052</span><span id="line-52">    }</span>
-<span class="source-line-no">053</span><span id="line-53"></span>
-<span class="source-line-no">054</span><span id="line-54">    @Override</span>
-<span class="source-line-no">055</span><span id="line-55">    protected void onSuccess(File outputDir) {</span>
-<span class="source-line-no">056</span><span id="line-56">        var sampleFile = new File(outputDir, SAMPLE_AOT_PROPERTIES_FILE_NAME);</span>
-<span class="source-line-no">057</span><span id="line-57">        if (sampleFile.exists()) {</span>
-<span class="source-line-no">058</span><span id="line-58">            getLog().info("Sample configuration file written to " + sampleFile);</span>
-<span class="source-line-no">059</span><span id="line-59">        }</span>
-<span class="source-line-no">060</span><span id="line-60">    }</span>
-<span class="source-line-no">061</span><span id="line-61"></span>
-<span class="source-line-no">062</span><span id="line-62">    @Override</span>
-<span class="source-line-no">063</span><span id="line-63">    String getName() {</span>
-<span class="source-line-no">064</span><span id="line-64">        return NAME;</span>
-<span class="source-line-no">065</span><span id="line-65">    }</span>
-<span class="source-line-no">066</span><span id="line-66">}</span>
+<span class="source-line-no">040</span><span id="line-40">    public static final String SAMPLE_AOT_PROPERTIES_FILE_NAME = "aot.properties";</span>
+<span class="source-line-no">041</span><span id="line-41">    public static final String NAME = "aot-sample-config";</span>
+<span class="source-line-no">042</span><span id="line-42"></span>
+<span class="source-line-no">043</span><span id="line-43">    @Inject</span>
+<span class="source-line-no">044</span><span id="line-44">    public AotSampleMojo(CompilerService compilerService, ExecutorService executorService, MavenProject mavenProject,</span>
+<span class="source-line-no">045</span><span id="line-45">                         DependencyResolutionService dependencyResolutionService,</span>
+<span class="source-line-no">046</span><span id="line-46">                         MavenSession mavenSession, ToolchainManager toolchainManager) {</span>
+<span class="source-line-no">047</span><span id="line-47">        super(compilerService, executorService, mavenProject, dependencyResolutionService, mavenSession, toolchainManager);</span>
+<span class="source-line-no">048</span><span id="line-48">    }</span>
+<span class="source-line-no">049</span><span id="line-49"></span>
+<span class="source-line-no">050</span><span id="line-50">    @Override</span>
+<span class="source-line-no">051</span><span id="line-51">    protected List&lt;String&gt; getExtraArgs() {</span>
+<span class="source-line-no">052</span><span id="line-52">        return Arrays.asList(</span>
+<span class="source-line-no">053</span><span id="line-53">            "--config",</span>
+<span class="source-line-no">054</span><span id="line-54">            outputFile(SAMPLE_AOT_PROPERTIES_FILE_NAME).getAbsolutePath()</span>
+<span class="source-line-no">055</span><span id="line-55">        );</span>
+<span class="source-line-no">056</span><span id="line-56">    }</span>
+<span class="source-line-no">057</span><span id="line-57"></span>
+<span class="source-line-no">058</span><span id="line-58">    @Override</span>
+<span class="source-line-no">059</span><span id="line-59">    protected void onSuccess(File outputDir) {</span>
+<span class="source-line-no">060</span><span id="line-60">        var sampleFile = new File(outputDir, SAMPLE_AOT_PROPERTIES_FILE_NAME);</span>
+<span class="source-line-no">061</span><span id="line-61">        if (sampleFile.exists()) {</span>
+<span class="source-line-no">062</span><span id="line-62">            getLog().info("Sample configuration file written to " + sampleFile);</span>
+<span class="source-line-no">063</span><span id="line-63">        }</span>
+<span class="source-line-no">064</span><span id="line-64">    }</span>
+<span class="source-line-no">065</span><span id="line-65"></span>
+<span class="source-line-no">066</span><span id="line-66">    @Override</span>
+<span class="source-line-no">067</span><span id="line-67">    String getName() {</span>
+<span class="source-line-no">068</span><span id="line-68">        return NAME;</span>
+<span class="source-line-no">069</span><span id="line-69">    }</span>
+<span class="source-line-no">070</span><span id="line-70">}</span>
 
 
 

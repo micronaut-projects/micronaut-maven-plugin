@@ -107,34 +107,46 @@
 <span class="source-line-no">094</span><span id="line-94">    @Parameter(property = CONFIG_PROPERTY_PREFIX + "server-idle-timeout-minutes")</span>
 <span class="source-line-no">095</span><span id="line-95">    protected Integer serverIdleTimeoutMinutes = Integer.valueOf(DEFAULT_CLIENT_TIMEOUT);</span>
 <span class="source-line-no">096</span><span id="line-96"></span>
-<span class="source-line-no">097</span><span id="line-97">    public static Path serverSettingsDirectoryOf(Path buildDir) {</span>
-<span class="source-line-no">098</span><span id="line-98">        return buildDir.resolve("../.micronaut/test-resources");</span>
-<span class="source-line-no">099</span><span id="line-99">    }</span>
-<span class="source-line-no">100</span><span id="line-100"></span>
-<span class="source-line-no">101</span><span id="line-101">    @Override</span>
-<span class="source-line-no">102</span><span id="line-102">    public void setLog(Log log) {</span>
-<span class="source-line-no">103</span><span id="line-103">        this.log = new JansiLog(log);</span>
-<span class="source-line-no">104</span><span id="line-104">    }</span>
-<span class="source-line-no">105</span><span id="line-105"></span>
-<span class="source-line-no">106</span><span id="line-106">    @Override</span>
-<span class="source-line-no">107</span><span id="line-107">    public Log getLog() {</span>
-<span class="source-line-no">108</span><span id="line-108">        if (log == null) {</span>
-<span class="source-line-no">109</span><span id="line-109">            log = new SystemStreamLog();</span>
-<span class="source-line-no">110</span><span id="line-110">        }</span>
-<span class="source-line-no">111</span><span id="line-111">        return log;</span>
-<span class="source-line-no">112</span><span id="line-112">    }</span>
-<span class="source-line-no">113</span><span id="line-113"></span>
-<span class="source-line-no">114</span><span id="line-114">    @Override</span>
-<span class="source-line-no">115</span><span id="line-115">    public Map&lt;?, ?&gt; getPluginContext() {</span>
-<span class="source-line-no">116</span><span id="line-116">        return pluginContext;</span>
-<span class="source-line-no">117</span><span id="line-117">    }</span>
-<span class="source-line-no">118</span><span id="line-118"></span>
-<span class="source-line-no">119</span><span id="line-119">    @Override</span>
-<span class="source-line-no">120</span><span id="line-120">    public void setPluginContext(Map pluginContext) {</span>
-<span class="source-line-no">121</span><span id="line-121">        this.pluginContext = pluginContext;</span>
-<span class="source-line-no">122</span><span id="line-122">    }</span>
-<span class="source-line-no">123</span><span id="line-123"></span>
-<span class="source-line-no">124</span><span id="line-124">}</span>
+<span class="source-line-no">097</span><span id="line-97">    /**</span>
+<span class="source-line-no">098</span><span id="line-98">     * System properties that will be passed to the Test Resources service, e.g.</span>
+<span class="source-line-no">099</span><span id="line-99">     * &lt;pre&gt;</span>
+<span class="source-line-no">100</span><span id="line-100">     * &amp;lt;testResourcesSystemProperties&amp;gt;</span>
+<span class="source-line-no">101</span><span id="line-101">     *     &amp;lt;docker.check.timeout.seconds&amp;gt;30&amp;lt;/docker.check.timeout.seconds&amp;gt;</span>
+<span class="source-line-no">102</span><span id="line-102">     * &amp;lt;/testResourcesSystemProperties&amp;gt;</span>
+<span class="source-line-no">103</span><span id="line-103">     * &lt;/pre&gt;</span>
+<span class="source-line-no">104</span><span id="line-104">     * @since 4.7.2</span>
+<span class="source-line-no">105</span><span id="line-105">     */</span>
+<span class="source-line-no">106</span><span id="line-106">    @Parameter</span>
+<span class="source-line-no">107</span><span id="line-107">    protected Map&lt;String, String&gt; testResourcesSystemProperties;</span>
+<span class="source-line-no">108</span><span id="line-108"></span>
+<span class="source-line-no">109</span><span id="line-109">    public static Path serverSettingsDirectoryOf(Path buildDir) {</span>
+<span class="source-line-no">110</span><span id="line-110">        return buildDir.resolve("../.micronaut/test-resources");</span>
+<span class="source-line-no">111</span><span id="line-111">    }</span>
+<span class="source-line-no">112</span><span id="line-112"></span>
+<span class="source-line-no">113</span><span id="line-113">    @Override</span>
+<span class="source-line-no">114</span><span id="line-114">    public void setLog(Log log) {</span>
+<span class="source-line-no">115</span><span id="line-115">        this.log = new JansiLog(log);</span>
+<span class="source-line-no">116</span><span id="line-116">    }</span>
+<span class="source-line-no">117</span><span id="line-117"></span>
+<span class="source-line-no">118</span><span id="line-118">    @Override</span>
+<span class="source-line-no">119</span><span id="line-119">    public Log getLog() {</span>
+<span class="source-line-no">120</span><span id="line-120">        if (log == null) {</span>
+<span class="source-line-no">121</span><span id="line-121">            log = new SystemStreamLog();</span>
+<span class="source-line-no">122</span><span id="line-122">        }</span>
+<span class="source-line-no">123</span><span id="line-123">        return log;</span>
+<span class="source-line-no">124</span><span id="line-124">    }</span>
+<span class="source-line-no">125</span><span id="line-125"></span>
+<span class="source-line-no">126</span><span id="line-126">    @Override</span>
+<span class="source-line-no">127</span><span id="line-127">    public Map&lt;?, ?&gt; getPluginContext() {</span>
+<span class="source-line-no">128</span><span id="line-128">        return pluginContext;</span>
+<span class="source-line-no">129</span><span id="line-129">    }</span>
+<span class="source-line-no">130</span><span id="line-130"></span>
+<span class="source-line-no">131</span><span id="line-131">    @Override</span>
+<span class="source-line-no">132</span><span id="line-132">    public void setPluginContext(Map pluginContext) {</span>
+<span class="source-line-no">133</span><span id="line-133">        this.pluginContext = pluginContext;</span>
+<span class="source-line-no">134</span><span id="line-134">    }</span>
+<span class="source-line-no">135</span><span id="line-135"></span>
+<span class="source-line-no">136</span><span id="line-136">}</span>
 
 
 
