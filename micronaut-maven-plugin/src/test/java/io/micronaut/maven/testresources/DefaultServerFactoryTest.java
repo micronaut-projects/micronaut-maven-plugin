@@ -5,7 +5,7 @@ import io.micronaut.testresources.buildtools.ServerUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 
-import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -16,7 +16,7 @@ class DefaultServerFactoryTest {
     @Test
     void itPassesSystemProperties() {
         try (MockedStatic<MojoUtils> mojoUtils = mockStatic(MojoUtils.class)) {
-            var serverFactory = new DefaultServerFactory(null, null, null, null, null, false, false, List.of("foo=bar"));
+            var serverFactory = new DefaultServerFactory(null, null, null, null, null, false, false, Map.of("foo", "bar"));
             mojoUtils.when(() -> MojoUtils.findJavaExecutable(any(), any())).thenReturn("java");
             var cliArguments = serverFactory.computeCliArguments(createProcessParameters());
             assertTrue(cliArguments.contains("-Dfoo=bar"));

@@ -25,6 +25,7 @@ import java.io.File;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -46,7 +47,7 @@ public class DefaultServerFactory implements ServerFactory {
     private final String testResourcesVersion;
     private final boolean debugServer;
     private final boolean foreground;
-    private final List<String> testResourcesSystemProperties;
+    private final Map<String, String> testResourcesSystemProperties;
 
     private Process process;
 
@@ -56,7 +57,7 @@ public class DefaultServerFactory implements ServerFactory {
                                 AtomicBoolean serverStarted,
                                 String testResourcesVersion,
                                 boolean debugServer,
-                                boolean foreground, final List<String> testResourcesSystemProperties) {
+                                boolean foreground, final Map<String, String> testResourcesSystemProperties) {
         this.log = log;
         this.toolchainManager = toolchainManager;
         this.mavenSession = mavenSession;
@@ -125,7 +126,7 @@ public class DefaultServerFactory implements ServerFactory {
         }
         processParameters.getSystemProperties().forEach((key, value) -> cli.add("-D" + key + "=" + value));
         if (testResourcesSystemProperties != null && !testResourcesSystemProperties.isEmpty()) {
-            testResourcesSystemProperties.forEach(s -> cli.add("-D" + s));
+            testResourcesSystemProperties.forEach((key, value) -> cli.add("-D" + key + "=" + value));
         }
         cli.add("-cp");
         cli.add(processParameters.getClasspath().stream()

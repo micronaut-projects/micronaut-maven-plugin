@@ -99,7 +99,7 @@ public class TestResourcesHelper {
 
     private boolean foreground = false;
 
-    private List<String> testResourcesSystemProperties;
+    private Map<String, String> testResourcesSystemProperties;
 
     public TestResourcesHelper(boolean enabled,
                                boolean shared,
@@ -116,7 +116,7 @@ public class TestResourcesHelper {
                                List<Dependency> testResourcesDependencies,
                                String sharedServerNamespace,
                                boolean debugServer,
-                               boolean foreground, final List<String> testResourcesSystemProperties) {
+                               boolean foreground, final Map<String, String> testResourcesSystemProperties) {
         this(mavenSession, enabled, shared, buildDirectory);
         this.explicitPort = explicitPort;
         this.clientTimeout = clientTimeout;
