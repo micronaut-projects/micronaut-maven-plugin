@@ -114,9 +114,9 @@
 
         <div id="breadcrumbs">
           <ul class="breadcrumb">
-        <li id="publishDate">Last Published: 2024-11-12<span class="divider">|</span>
+        <li id="publishDate">Last Published: 2025-01-29<span class="divider">|</span>
 </li>
-          <li id="projectVersion">Version: 4.7.2-SNAPSHOT</li>
+          <li id="projectVersion">Version: 4.8.0-SNAPSHOT</li>
           </ul>
         </div>
       </header>
@@ -124,7 +124,7 @@
 <section><a id="mn.3Astop-testresources-service"></a>
 <h1>mn:stop-testresources-service</h1>
 <p><strong>Full name</strong>:</p>
-<p>io.micronaut.maven:micronaut-maven-plugin:4.7.2-SNAPSHOT:stop-testresources-service</p>
+<p>io.micronaut.maven:micronaut-maven-plugin:4.8.0-SNAPSHOT:stop-testresources-service</p>
 <p><strong>Description</strong>:</p>
 <p>Stops the Micronaut test resources server.</p>
 <p><strong>Attributes</strong>:</p>
@@ -206,7 +206,16 @@
 <td><a href="#testResourcesEnabled"><code>&lt;testResourcesEnabled&gt;</code></a></td>
 <td><code>boolean</code></td>
 <td><code>-</code></td>
-<td>Whether to enable or disable Micronaut test resources support.<br /><strong>Default</strong>: <code>false</code><br /><strong>User Property</strong>: <code>micronaut.test.resources.enabled</code></td></tr></table></section><section><a id="Parameter_Details"></a>
+<td>Whether to enable or disable Micronaut test resources support.<br /><strong>Default</strong>: <code>false</code><br /><strong>User Property</strong>: <code>micronaut.test.resources.enabled</code></td></tr>
+<tr class="b">
+<td><a href="#testResourcesSystemProperties"><code>&lt;testResourcesSystemProperties&gt;</code></a></td>
+<td><code>Map&lt;String,String&gt;</code></td>
+<td><code>4.7.2</code></td>
+<td>System properties that will be passed to the Test Resources service, e.g. 
+<pre>&lt;testResourcesSystemProperties&gt;
+    &lt;docker.check.timeout.seconds&gt;30&lt;/docker.check.timeout.seconds&gt;
+&lt;/testResourcesSystemProperties&gt;
+</pre></td></tr></table></section><section><a id="Parameter_Details"></a>
 <h2>Parameter Details</h2><a id="buildDirectory"></a><section><a id="a.3CbuildDirectory.3E"></a>
 <h3>&lt;buildDirectory&gt;</h3>
 <div>No description.</div>
@@ -281,7 +290,17 @@
 <li><strong>Type</strong>: <code>boolean</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
 <li><strong>User Property</strong>: <code>micronaut.test.resources.enabled</code></li>
-<li><strong>Default</strong>: <code>false</code></li></ul><hr /></section><a id="testResourcesVersion"></a><section><a id="a.3CtestResourcesVersion.3E"></a>
+<li><strong>Default</strong>: <code>false</code></li></ul><hr /></section><a id="testResourcesSystemProperties"></a><section><a id="a.3CtestResourcesSystemProperties.3E"></a>
+<h3>&lt;testResourcesSystemProperties&gt;</h3>
+<div>System properties that will be passed to the Test Resources service, e.g. 
+<pre>&lt;testResourcesSystemProperties&gt;
+    &lt;docker.check.timeout.seconds&gt;30&lt;/docker.check.timeout.seconds&gt;
+&lt;/testResourcesSystemProperties&gt;
+</pre></div>
+<ul>
+<li><strong>Type</strong>: <code>java.util.Map&lt;java.lang.String, java.lang.String&gt;</code></li>
+<li><strong>Since</strong>: <code>4.7.2</code></li>
+<li><strong>Required</strong>: <code>No</code></li></ul><hr /></section><a id="testResourcesVersion"></a><section><a id="a.3CtestResourcesVersion.3E"></a>
 <h3>&lt;testResourcesVersion&gt;</h3>
 <div>Micronaut Test Resources version. Should be defined by the Micronaut BOM, but this parameter can be used to define a different version.</div>
 <ul>
