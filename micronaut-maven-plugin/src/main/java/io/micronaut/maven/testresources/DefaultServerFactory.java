@@ -24,6 +24,8 @@ import org.apache.maven.toolchain.ToolchainManager;
 import java.io.File;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -45,6 +47,7 @@ public class DefaultServerFactory implements ServerFactory {
     private final String testResourcesVersion;
     private final boolean debugServer;
     private final boolean foreground;
+    private final Map<String, String> testResourcesSystemProperties;
 
     private Process process;
 
@@ -54,7 +57,7 @@ public class DefaultServerFactory implements ServerFactory {
                                 AtomicBoolean serverStarted,
                                 String testResourcesVersion,
                                 boolean debugServer,
-                                boolean foreground) {
+                                boolean foreground, final Map<String, String> testResourcesSystemProperties) {
         this.log = log;
         this.toolchainManager = toolchainManager;
         this.mavenSession = mavenSession;
@@ -62,33 +65,13 @@ public class DefaultServerFactory implements ServerFactory {
         this.testResourcesVersion = testResourcesVersion;
         this.debugServer = debugServer;
         this.foreground = foreground;
+        this.testResourcesSystemProperties = testResourcesSystemProperties;
     }
 
     @Override
     public void startServer(ServerUtils.ProcessParameters processParameters) {
         log.info("Starting Micronaut Test Resources service, version " + testResourcesVersion);
-        var cli = new ArrayList<String>();
-
-        String javaBin = findJavaExecutable(toolchainManager, mavenSession);
-        if (javaBin == null) {
-            throw new IllegalStateException("Java executable not found");
-        }
-        cli.add(javaBin);
-        cli.addAll(processParameters.getJvmArguments());
-        if (debugServer) {
-            cli.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000");
-        }
-        processParameters.getSystemProperties().forEach((key, value) -> cli.add("-D" + key + "=" + value));
-        cli.add("-cp");
-        cli.add(processParameters.getClasspath().stream()
-            .map(File::getAbsolutePath)
-            .collect(Collectors.joining(File.pathSeparator)));
-        String mainClass = processParameters.getMainClass();
-        if (mainClass == null) {
-            throw new IllegalStateException("Main class is not set");
-        }
-        cli.add(mainClass);
-        cli.addAll(processParameters.getArguments());
+        var cli = computeCliArguments(processParameters);
 
         if (log.isDebugEnabled()) {
             log.debug(String.format("Command parameters: %s", String.join(" ", cli)));
@@ -119,6 +102,44 @@ public class DefaultServerFactory implements ServerFactory {
                 }
             }
         }
+    }
+
+    /**
+     * Computes the command-line arguments required to run the server based on the provided process parameters.
+     *
+     * @param processParameters the process parameters containing information about JVM arguments, system properties,
+     *                          classpath, main class, and program arguments
+     * @return a list of command-line arguments as strings
+     * @throws IllegalStateException if the Java executable cannot be found, or if the main class is not set
+     */
+    List<String> computeCliArguments(ServerUtils.ProcessParameters processParameters) {
+        var cli = new ArrayList<String>();
+
+        String javaBin = findJavaExecutable(toolchainManager, mavenSession);
+        if (javaBin == null) {
+            throw new IllegalStateException("Java executable not found");
+        }
+        cli.add(javaBin);
+        cli.addAll(processParameters.getJvmArguments());
+        if (debugServer) {
+            cli.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000");
+        }
+        processParameters.getSystemProperties().forEach((key, value) -> cli.add("-D" + key + "=" + value));
+        if (testResourcesSystemProperties != null && !testResourcesSystemProperties.isEmpty()) {
+            testResourcesSystemProperties.forEach((key, value) -> cli.add("-D" + key + "=" + value));
+        }
+        cli.add("-cp");
+        cli.add(processParameters.getClasspath().stream()
+                .map(File::getAbsolutePath)
+                .collect(Collectors.joining(File.pathSeparator)));
+        String mainClass = processParameters.getMainClass();
+        if (mainClass == null) {
+            throw new IllegalStateException("Main class is not set");
+        }
+        cli.add(mainClass);
+        cli.addAll(processParameters.getArguments());
+
+        return cli;
     }
 
     @Override

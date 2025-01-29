@@ -99,6 +99,8 @@ public class TestResourcesHelper {
 
     private boolean foreground = false;
 
+    private Map<String, String> testResourcesSystemProperties;
+
     public TestResourcesHelper(boolean enabled,
                                boolean shared,
                                File buildDirectory,
@@ -114,7 +116,7 @@ public class TestResourcesHelper {
                                List<Dependency> testResourcesDependencies,
                                String sharedServerNamespace,
                                boolean debugServer,
-                               boolean foreground) {
+                               boolean foreground, final Map<String, String> testResourcesSystemProperties) {
         this(mavenSession, enabled, shared, buildDirectory);
         this.explicitPort = explicitPort;
         this.clientTimeout = clientTimeout;
@@ -128,6 +130,7 @@ public class TestResourcesHelper {
         this.sharedServerNamespace = sharedServerNamespace;
         this.debugServer = debugServer;
         this.foreground = foreground;
+        this.testResourcesSystemProperties = testResourcesSystemProperties;
     }
 
     public TestResourcesHelper(MavenSession mavenSession, boolean enabled, boolean shared, File buildDirectory) {
@@ -168,7 +171,7 @@ public class TestResourcesHelper {
         Path buildDir = buildDirectory.toPath();
         Path serverSettingsDirectory = getServerSettingsDirectory();
         var serverStarted = new AtomicBoolean(false);
-        var serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion, debugServer, foreground);
+        var serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion, debugServer, foreground, testResourcesSystemProperties);
         Optional<ServerSettings> optionalServerSettings = startOrConnectToExistingServer(accessToken, buildDir, serverSettingsDirectory, serverFactory);
         if (optionalServerSettings.isPresent()) {
             ServerSettings serverSettings = optionalServerSettings.get();

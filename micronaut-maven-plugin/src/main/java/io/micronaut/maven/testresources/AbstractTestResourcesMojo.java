@@ -94,6 +94,18 @@ public abstract class AbstractTestResourcesMojo extends TestResourcesConfigurati
     @Parameter(property = CONFIG_PROPERTY_PREFIX + "server-idle-timeout-minutes")
     protected Integer serverIdleTimeoutMinutes = Integer.valueOf(DEFAULT_CLIENT_TIMEOUT);
 
+    /**
+     * System properties that will be passed to the Test Resources service, e.g.
+     * <pre>
+     * &lt;testResourcesSystemProperties&gt;
+     *     &lt;docker.check.timeout.seconds&gt;30&lt;/docker.check.timeout.seconds&gt;
+     * &lt;/testResourcesSystemProperties&gt;
+     * </pre>
+     * @since 4.7.2
+     */
+    @Parameter
+    protected Map<String, String> testResourcesSystemProperties;
+
     public static Path serverSettingsDirectoryOf(Path buildDir) {
         return buildDir.resolve("../.micronaut/test-resources");
     }

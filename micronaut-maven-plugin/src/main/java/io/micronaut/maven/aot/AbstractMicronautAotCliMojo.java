@@ -15,14 +15,18 @@
  */
 package io.micronaut.maven.aot;
 
+import io.micronaut.maven.MojoUtils;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.maven.services.ExecutorService;
+
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.MavenInvocationException;
+import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.util.StringUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.artifact.Artifact;
@@ -74,6 +78,10 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     private final ExecutorService executorService;
 
     private final DependencyResolutionService dependencyResolutionService;
+    
+    private final MavenSession mavenSession;
+    
+    private final ToolchainManager toolchainManager;
 
     @Parameter
     private List<org.apache.maven.model.Dependency> aotDependencies;
@@ -88,10 +96,13 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
 
     @Inject
     public AbstractMicronautAotCliMojo(CompilerService compilerService, ExecutorService executorService,
-                                       MavenProject mavenProject, DependencyResolutionService dependencyResolutionService) {
+                                       MavenProject mavenProject, DependencyResolutionService dependencyResolutionService,
+                                       MavenSession mavenSession, ToolchainManager toolchainManager) {
         super(compilerService, mavenProject);
         this.executorService = executorService;
         this.dependencyResolutionService = dependencyResolutionService;
+        this.mavenSession = mavenSession;
+        this.toolchainManager = toolchainManager;
     }
 
     protected abstract List<String> getExtraArgs() throws MojoExecutionException;
@@ -161,8 +172,11 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
         MojoExecutor.Element[] runnerArgs = Stream.concat(Stream.concat(jvmArgs, mainArgs), getExtraArgs().stream())
             .map(arg -> element("argument", arg))
             .toArray(MojoExecutor.Element[]::new);
+        
+        String javaExecutable = MojoUtils.findJavaExecutable(toolchainManager, mavenSession);
+
         return configuration(
-            element("executable", "java"),
+            element("executable", javaExecutable),
             element("arguments", runnerArgs)
         );
     }

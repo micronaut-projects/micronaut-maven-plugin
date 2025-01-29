@@ -40,7 +40,7 @@ jobs:
           server-password: GH_TOKEN
 
       - name: "🔧 Setup GraalVM CE"
-        uses: graalvm/setup-graalvm@v1.2.7
+        uses: graalvm/setup-graalvm@v1.2.8
         with:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
@@ -70,7 +70,7 @@ jobs:
 
       - name: "📊 Publish Test Report"
         if: always()
-        uses: mikepenz/action-junit-report@v5.1.0
+        uses: mikepenz/action-junit-report@v5.3.0
         with:
           check_name: Java CI / Test Report
           report_paths: '**/target/invoker-reports/TEST-*.xml'
