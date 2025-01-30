@@ -101,8 +101,6 @@ public abstract class JsonSchemaGeneratorMojo extends AbstractMicronautMojo {
     @Parameter(defaultValue = "${project}", readonly = true)
     protected MavenProject project;
 
-    protected abstract void configureBuilder(SourceGeneratorConfigBuilder builder);
-
     private Path getSourceDirectory(String language) {
         return outputDirectory.toPath().resolve("src/main/" + language.toLowerCase());
     }
