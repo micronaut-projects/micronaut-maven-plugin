@@ -18,7 +18,8 @@
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-import-factory,
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-generic,
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-client,
-                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server,
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-jsonschema
                             </generate-sources>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:resources
@@ -71,7 +72,8 @@
                             <generate-sources>
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-generic,
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-client,
-                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server,
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-jsonschema
                             </generate-sources>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:resources
@@ -124,7 +126,8 @@
                             <generate-sources>
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-generic,
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-client,
-                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server,
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-jsonschema
                             </generate-sources>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:resources
@@ -174,7 +177,8 @@
                             <generate-sources>
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-generic,
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-client,
-                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server,
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-jsonschema
                             </generate-sources>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:resources
@@ -223,7 +227,8 @@
                             <generate-sources>
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-generic,
                                 ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-client,
-                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-openapi-server,
+                                ${project.groupId}:${project.artifactId}:${project.version}:generate-jsonschema
                             </generate-sources>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:resources
