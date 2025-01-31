@@ -35,8 +35,11 @@ import io.micronaut.jsonschema.generator.loaders.UrlLoader;
 import javax.inject.Inject;
 
 /**
- * Base class for Json Schema generator mojos. This provides the common
- * parameters for all generators and the invoker logic.
+ * Json Schema generator mojo provides the parameters for all generators and the invoker logic.
+ * <p>
+ * Expects single or multiple schema files as input via a URL, file, or directory;
+ * and generates all required source code representing the validation form in the targeted language.
+ * </p>
  */
 @Mojo(name = JsonSchemaGeneratorMojo.MOJO_NAME, defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class JsonSchemaGeneratorMojo extends AbstractMicronautMojo {
@@ -100,6 +103,9 @@ public class JsonSchemaGeneratorMojo extends AbstractMicronautMojo {
     @Parameter(property = MICRONAUT_SCHEMA_PREFIX + ".accepted-url-patterns")
     private List<String> acceptedUrlPatterns;
 
+    /**
+     * The property that defines if this mojo is used.
+     */
     @Parameter(property = MICRONAUT_SCHEMA_PREFIX + ".enabled", defaultValue = StringUtils.FALSE)
     private boolean enabled;
 
@@ -109,10 +115,6 @@ public class JsonSchemaGeneratorMojo extends AbstractMicronautMojo {
     @Inject
     public JsonSchemaGeneratorMojo(final MavenProject project) {
         this.project = project;
-    }
-
-    private Path getSourceDirectory(String language) {
-        return outputDirectory.toPath().resolve("src/main/" + language.toLowerCase());
     }
 
     @Override
@@ -150,14 +152,14 @@ public class JsonSchemaGeneratorMojo extends AbstractMicronautMojo {
             builder.withInputFolder(inputDirectory.toPath());
             message = message.formatted("directory [" + relativize(inputDirectory.toPath()) + "]", relativePath);
         } else {
-            var msg = new StringBuilder("In the generate-jsonschema goal, one of the following parameters needs to be specified:");
-            msg.append(System.lineSeparator());
-            msg.append("%s.input-file".formatted(MICRONAUT_SCHEMA_PREFIX));
-            msg.append(System.lineSeparator());
-            msg.append("%s.input-url".formatted(MICRONAUT_SCHEMA_PREFIX));
-            msg.append(System.lineSeparator());
-            msg.append("%s.input-directory".formatted(MICRONAUT_SCHEMA_PREFIX));
-            msg.append(System.lineSeparator());
+            var msg = new StringBuilder("In the generate-jsonschema goal, one of the following parameters needs to be specified:")
+                    .append(System.lineSeparator())
+                    .append("%s.input-file".formatted(MICRONAUT_SCHEMA_PREFIX))
+                    .append(System.lineSeparator())
+                    .append("%s.input-url".formatted(MICRONAUT_SCHEMA_PREFIX))
+                    .append(System.lineSeparator())
+                    .append("%s.input-directory".formatted(MICRONAUT_SCHEMA_PREFIX))
+                    .append(System.lineSeparator());
             throw new MojoFailureException(msg.toString());
         }
 
@@ -171,5 +173,9 @@ public class JsonSchemaGeneratorMojo extends AbstractMicronautMojo {
 
     private String relativize(Path path) {
         return project.getBasedir().toPath().relativize(path).toString();
+    }
+
+    private Path getSourceDirectory(String language) {
+        return outputDirectory.toPath().resolve("src/main/" + language.toLowerCase());
     }
 }
