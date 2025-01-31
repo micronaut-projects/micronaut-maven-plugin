@@ -17,7 +17,6 @@
     <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
     <packaging>jar</packaging>
     <micronaut.jsonschema.generator.enabled>true</micronaut.jsonschema.generator.enabled>
-    <micronaut.jsonschema.generator.input-file>src/main/resources/animal.schema.json</micronaut.jsonschema.generator.input-file>
     <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
   </properties>
 

@@ -62,8 +62,8 @@ public class JsonSchemaGeneratorMojo extends AbstractMicronautMojo {
      * The directory containing multiple input files or schema files.
      * The Mojo will process all schema files in this directory.
      */
-    @Parameter(property = MICRONAUT_SCHEMA_PREFIX + ".input-folder")
-    private Path inputDirectory;
+    @Parameter(property = MICRONAUT_SCHEMA_PREFIX + ".input-directory")
+    private File inputDirectory;
 
     /**
      * The programming language to be used for schema generation. Default is "JAVA".
@@ -147,11 +147,18 @@ public class JsonSchemaGeneratorMojo extends AbstractMicronautMojo {
             builder.withJsonFile(inputFile);
             message = message.formatted("file [" + relativize(inputFile.toPath()) + "]", relativePath);
         } else if (inputDirectory != null) {
-            builder.withInputFolder(inputDirectory);
-            message = message.formatted("directory [" + relativize(inputDirectory) + "]", relativePath);
+            builder.withInputFolder(inputDirectory.toPath());
+            message = message.formatted("directory [" + relativize(inputDirectory.toPath()) + "]", relativePath);
         } else {
-            throw new MojoFailureException("In the generate-jsonschema goal, " +
-                    "one of the following parameters needs to be specified: \".input-url\", \".input-file\", or \".input-folder\"");
+            var msg = new StringBuilder("In the generate-jsonschema goal, one of the following parameters needs to be specified:");
+            msg.append(System.lineSeparator());
+            msg.append("%s.input-file".formatted(MICRONAUT_SCHEMA_PREFIX));
+            msg.append(System.lineSeparator());
+            msg.append("%s.input-url".formatted(MICRONAUT_SCHEMA_PREFIX));
+            msg.append(System.lineSeparator());
+            msg.append("%s.input-directory".formatted(MICRONAUT_SCHEMA_PREFIX));
+            msg.append(System.lineSeparator());
+            throw new MojoFailureException(msg.toString());
         }
 
         try {
