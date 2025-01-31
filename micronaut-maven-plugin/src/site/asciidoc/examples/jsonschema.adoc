@@ -2,7 +2,7 @@
 
 This plugins integrates with https://micronaut-projects.github.io/micronaut-json-schema/latest/guide/[Micronaut JSON Schema] in order to provide support for generating beans from https://json-schema.org[JSON Schema].
 
-The link:../generate-jsonschema-mojo.html[mn:generate-jsonschema] goal can be used to generate a sources from a JSON Schema. The code generated will be in your `target` directory and integrated into the build lifecycle.
+The link:../generate-jsonschema-mojo.html[mn:generate-jsonschema] goal is integrated into the `generate-sources` lifecycle phase and, if enabled, will generate sources in the `target` directory.
 
 In order to generate Java Beans, the minimal thing to do is enable the goal and specify an input source.
 
