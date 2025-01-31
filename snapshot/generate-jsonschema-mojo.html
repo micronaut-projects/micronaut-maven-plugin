@@ -10,7 +10,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content="Apache Maven Doxia Site Renderer 2.0.0" />
-    <title>mn:docker-native – Micronaut Maven Plugin - Plugin</title>
+    <title>mn:generate-jsonschema – Micronaut Maven Plugin - Plugin</title>
     <link rel="stylesheet" href="./css/apache-maven-fluido-2.0.0-M11.min.css" />
     <link rel="stylesheet" href="./css/site.css" />
     <link rel="stylesheet" href="./css/print.css" media="print" />
@@ -122,32 +122,19 @@
         </div>
       </header>
         <main id="bodyColumn">
-<section><a id="mn.3Adocker-native"></a>
-<h1>mn:docker-native</h1>
+<section><a id="mn.3Agenerate-jsonschema"></a>
+<h1>mn:generate-jsonschema</h1>
 <p><strong>Full name</strong>:</p>
-<p>io.micronaut.maven:micronaut-maven-plugin:4.8.0-SNAPSHOT:docker-native</p>
+<p>io.micronaut.maven:micronaut-maven-plugin:4.8.0-SNAPSHOT:generate-jsonschema</p>
 <p><strong>Description</strong>:</p>
-<p><p>Implementation of the <code>docker-native</code> packaging.</p>
-<p><strong>WARNING</strong>: this goal is not intended to be executed directly. Instead, specify the packaging type using the <code>packaging</code> property, eg:</p>
-<pre>mvn package -Dpackaging=docker-native</pre></p>
+<p>Json Schema generator mojo provides the parameters for all generators and the invoker logic. 
+<p>Expects single or multiple schema files as input via a URL, file, or directory; and generates all required source code representing the validation form in the targeted language.</p></p>
 <p><strong>Attributes</strong>:</p>
 <ul>
 <li>Requires a Maven project to be executed.</li>
-<li>Requires dependency resolution of artifacts in scope: <code>compile+runtime</code>.</li>
 <li>The goal is not marked as thread-safe and thus does not support parallel builds.</li>
-<li>Since version: <code>1.1</code>.</li></ul><section><a id="Required_Parameters"></a>
-<h2>Required Parameters</h2>
-<table class="table table-striped">
-<tr class="a">
-<th>Name</th>
-<th>Type</th>
-<th>Since</th>
-<th>Description</th></tr>
-<tr class="b">
-<td><a href="#mainClass"><code>&lt;mainClass&gt;</code></a></td>
-<td><code>String</code></td>
-<td><code>-</code></td>
-<td>The main class of the application, as defined in the <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.<br /><strong>Default</strong>: <code>${exec.mainClass}</code></td></tr></table></section><section><a id="Optional_Parameters"></a>
+<li>Since version: <code>4.0.0</code>.</li>
+<li>Binds by default to the <a class="externalLink" href="https://maven.apache.org/ref/current/maven-core/lifecycles.html">lifecycle phase</a>: <code>generate-sources</code>.</li></ul><section><a id="Optional_Parameters"></a>
 <h2>Optional Parameters</h2>
 <table class="table table-striped">
 <tr class="a">
@@ -156,95 +143,108 @@
 <th>Since</th>
 <th>Description</th></tr>
 <tr class="b">
-<td><a href="#appArguments"><code>&lt;appArguments&gt;</code></a></td>
+<td><a href="#acceptedUrlPatterns"><code>&lt;acceptedUrlPatterns&gt;</code></a></td>
 <td><code>List&lt;String&gt;</code></td>
 <td><code>-</code></td>
-<td>List of additional arguments that will be passed to the application.<br /><strong>User Property</strong>: <code>mn.appArgs</code></td></tr>
+<td>A list of accepted URL patterns. Used to filter or validate input resources based on their URL. URLs matching at least one pattern will be accepted. Default value is "^https://.* /.*.json".<br /><strong>User Property</strong>: <code>micronaut.jsonschema.generator.accepted-url-patterns</code></td></tr>
 <tr class="a">
-<td><a href="#baseImageRun"><code>&lt;baseImageRun&gt;</code></a></td>
-<td><code>String</code></td>
-<td><code>1.2</code></td>
-<td>The Docker image used to run the native image.<br /><strong>Default</strong>: <code>cgr.dev/chainguard/wolfi-base:latest</code><br /><strong>User Property</strong>: <code>micronaut.native-image.base-image-run</code></td></tr>
-<tr class="b">
-<td><a href="#micronautRuntime"><code>&lt;micronautRuntime&gt;</code></a></td>
-<td><code>String</code></td>
+<td><a href="#enabled"><code>&lt;enabled&gt;</code></a></td>
+<td><code>boolean</code></td>
 <td><code>-</code></td>
-<td>The target runtime of the application.<br /><strong>Default</strong>: <code>NONE</code><br /><strong>User Property</strong>: <code>micronaut.runtime</code></td></tr>
+<td>The property that defines if this mojo is used.<br /><strong>Default</strong>: <code>false</code><br /><strong>User Property</strong>: <code>micronaut.jsonschema.generator.enabled</code></td></tr>
+<tr class="b">
+<td><a href="#inputDirectory"><code>&lt;inputDirectory&gt;</code></a></td>
+<td><code>File</code></td>
+<td><code>-</code></td>
+<td>The directory containing multiple input files or schema files. The Mojo will process all schema files in this directory.<br /><strong>User Property</strong>: <code>micronaut.jsonschema.generator.input-directory</code></td></tr>
 <tr class="a">
-<td><a href="#nativeImageBuildArgs"><code>&lt;nativeImageBuildArgs&gt;</code></a></td>
-<td><code>List&lt;String&gt;</code></td>
+<td><a href="#inputFile"><code>&lt;inputFile&gt;</code></a></td>
+<td><code>File</code></td>
 <td><code>-</code></td>
-<td>Additional arguments that will be passed to the <code>native-image</code> executable. Note that this will only be used when using a packaging of type <code>docker-native</code>. For <code>native-image</code> packaging you should use the <a href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization"> Native Image Maven Plugin </a> configuration options.<br /><strong>User Property</strong>: <code>micronaut.native-image.args</code></td></tr>
+<td>The input file containing the schema. This file will be used as a source for generating or processing schemas.<br /><strong>User Property</strong>: <code>micronaut.jsonschema.generator.input-file</code></td></tr>
 <tr class="b">
-<td><a href="#networkMode"><code>&lt;networkMode&gt;</code></a></td>
+<td><a href="#inputURL"><code>&lt;inputURL&gt;</code></a></td>
 <td><code>String</code></td>
-<td><code>4.0.0</code></td>
-<td>Networking mode for the RUN instructions during build.<br /><strong>User Property</strong>: <code>docker.networkMode</code></td></tr>
+<td><code>-</code></td>
+<td>The URL to an input resource, pointing to a JSON schema.<br /><strong>User Property</strong>: <code>micronaut.jsonschema.generator.input-url</code></td></tr>
 <tr class="a">
-<td><a href="#oracleLinuxVersion"><code>&lt;oracleLinuxVersion&gt;</code></a></td>
+<td><a href="#language"><code>&lt;language&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>-</code></td>
-<td>The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.<br /><strong>Default</strong>: <code>ol9</code><br /><strong>User Property</strong>: <code>micronaut.native-image.ol.version</code></td></tr>
+<td>The programming language to be used for schema generation. Default is "JAVA". Other values may be supported depending on the version of micronaut-sourcegen module.<br /><strong>Default</strong>: <code>JAVA</code><br /><strong>User Property</strong>: <code>micronaut.jsonschema.generator.language</code></td></tr>
 <tr class="b">
-<td><a href="#staticNativeImage"><code>&lt;staticNativeImage&gt;</code></a></td>
-<td><code>Boolean</code></td>
+<td><a href="#outputDirectory"><code>&lt;outputDirectory&gt;</code></a></td>
+<td><code>File</code></td>
 <td><code>-</code></td>
-<td>Whether to produce a static native image when using <code>docker-native</code> packaging.<br /><strong>Default</strong>: <code>false</code><br /><strong>User Property</strong>: <code>micronaut.native-image.static</code></td></tr></table></section><section><a id="Parameter_Details"></a>
-<h2>Parameter Details</h2><a id="appArguments"></a><section><a id="a.3CappArguments.3E"></a>
-<h3>&lt;appArguments&gt;</h3>
-<div>List of additional arguments that will be passed to the application.</div>
+<td>The output directory where generated sources or files will be placed. By default, this points to `${project.build.directory}/generated-sources/jsonschema`.<br /><strong>Default</strong>: <code>${project.build.directory}/generated-sources/jsonschema</code></td></tr>
+<tr class="a">
+<td><a href="#outputFileName"><code>&lt;outputFileName&gt;</code></a></td>
+<td><code>String</code></td>
+<td><code>-</code></td>
+<td>The name of the output file where the generated schema or data will be saved only if there is a single output source.<br /><strong>User Property</strong>: <code>micronaut.jsonschema.generator.output-file-name</code></td></tr>
+<tr class="b">
+<td><a href="#outputPackageName"><code>&lt;outputPackageName&gt;</code></a></td>
+<td><code>String</code></td>
+<td><code>-</code></td>
+<td>The package name for the generated classes or schemas. Default value is specified as "io.micronaut.jsonschema".<br /><strong>Default</strong>: <code>io.micronaut.jsonschema</code><br /><strong>User Property</strong>: <code>micronaut.jsonschema.generator.output-package-name</code></td></tr></table></section><section><a id="Parameter_Details"></a>
+<h2>Parameter Details</h2><a id="acceptedUrlPatterns"></a><section><a id="a.3CacceptedUrlPatterns.3E"></a>
+<h3>&lt;acceptedUrlPatterns&gt;</h3>
+<div>A list of accepted URL patterns. Used to filter or validate input resources based on their URL. URLs matching at least one pattern will be accepted. Default value is "^https://.* /.*.json".</div>
 <ul>
 <li><strong>Type</strong>: <code>java.util.List&lt;java.lang.String&gt;</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>mn.appArgs</code></li></ul><hr /></section><a id="baseImageRun"></a><section><a id="a.3CbaseImageRun.3E"></a>
-<h3>&lt;baseImageRun&gt;</h3>
-<div>The Docker image used to run the native image.</div>
+<li><strong>User Property</strong>: <code>micronaut.jsonschema.generator.accepted-url-patterns</code></li></ul><hr /></section><a id="enabled"></a><section><a id="a.3Cenabled.3E"></a>
+<h3>&lt;enabled&gt;</h3>
+<div>The property that defines if this mojo is used.</div>
 <ul>
-<li><strong>Type</strong>: <code>java.lang.String</code></li>
-<li><strong>Since</strong>: <code>1.2</code></li>
+<li><strong>Type</strong>: <code>boolean</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>micronaut.native-image.base-image-run</code></li>
-<li><strong>Default</strong>: <code>cgr.dev/chainguard/wolfi-base:latest</code></li></ul><hr /></section><a id="mainClass"></a><section><a id="a.3CmainClass.3E"></a>
-<h3>&lt;mainClass&gt;</h3>
-<div>The main class of the application, as defined in the <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.</div>
+<li><strong>User Property</strong>: <code>micronaut.jsonschema.generator.enabled</code></li>
+<li><strong>Default</strong>: <code>false</code></li></ul><hr /></section><a id="inputDirectory"></a><section><a id="a.3CinputDirectory.3E"></a>
+<h3>&lt;inputDirectory&gt;</h3>
+<div>The directory containing multiple input files or schema files. The Mojo will process all schema files in this directory.</div>
 <ul>
-<li><strong>Type</strong>: <code>java.lang.String</code></li>
-<li><strong>Required</strong>: <code>Yes</code></li>
-<li><strong>Default</strong>: <code>${exec.mainClass}</code></li></ul><hr /></section><a id="micronautRuntime"></a><section><a id="a.3CmicronautRuntime.3E"></a>
-<h3>&lt;micronautRuntime&gt;</h3>
-<div>The target runtime of the application.</div>
-<ul>
-<li><strong>Type</strong>: <code>java.lang.String</code></li>
+<li><strong>Type</strong>: <code>java.io.File</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>micronaut.runtime</code></li>
-<li><strong>Default</strong>: <code>NONE</code></li></ul><hr /></section><a id="nativeImageBuildArgs"></a><section><a id="a.3CnativeImageBuildArgs.3E"></a>
-<h3>&lt;nativeImageBuildArgs&gt;</h3>
-<div>Additional arguments that will be passed to the <code>native-image</code> executable. Note that this will only be used when using a packaging of type <code>docker-native</code>. For <code>native-image</code> packaging you should use the <a href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization"> Native Image Maven Plugin </a> configuration options.</div>
+<li><strong>User Property</strong>: <code>micronaut.jsonschema.generator.input-directory</code></li></ul><hr /></section><a id="inputFile"></a><section><a id="a.3CinputFile.3E"></a>
+<h3>&lt;inputFile&gt;</h3>
+<div>The input file containing the schema. This file will be used as a source for generating or processing schemas.</div>
 <ul>
-<li><strong>Type</strong>: <code>java.util.List&lt;java.lang.String&gt;</code></li>
+<li><strong>Type</strong>: <code>java.io.File</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>micronaut.native-image.args</code></li></ul><hr /></section><a id="networkMode"></a><section><a id="a.3CnetworkMode.3E"></a>
-<h3>&lt;networkMode&gt;</h3>
-<div>Networking mode for the RUN instructions during build.</div>
-<ul>
-<li><strong>Type</strong>: <code>java.lang.String</code></li>
-<li><strong>Since</strong>: <code>4.0.0</code></li>
-<li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>docker.networkMode</code></li></ul><hr /></section><a id="oracleLinuxVersion"></a><section><a id="a.3CoracleLinuxVersion.3E"></a>
-<h3>&lt;oracleLinuxVersion&gt;</h3>
-<div>The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.</div>
+<li><strong>User Property</strong>: <code>micronaut.jsonschema.generator.input-file</code></li></ul><hr /></section><a id="inputURL"></a><section><a id="a.3CinputURL.3E"></a>
+<h3>&lt;inputURL&gt;</h3>
+<div>The URL to an input resource, pointing to a JSON schema.</div>
 <ul>
 <li><strong>Type</strong>: <code>java.lang.String</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>micronaut.native-image.ol.version</code></li>
-<li><strong>Default</strong>: <code>ol9</code></li></ul><hr /></section><a id="staticNativeImage"></a><section><a id="a.3CstaticNativeImage.3E"></a>
-<h3>&lt;staticNativeImage&gt;</h3>
-<div>Whether to produce a static native image when using <code>docker-native</code> packaging.</div>
+<li><strong>User Property</strong>: <code>micronaut.jsonschema.generator.input-url</code></li></ul><hr /></section><a id="language"></a><section><a id="a.3Clanguage.3E"></a>
+<h3>&lt;language&gt;</h3>
+<div>The programming language to be used for schema generation. Default is "JAVA". Other values may be supported depending on the version of micronaut-sourcegen module.</div>
 <ul>
-<li><strong>Type</strong>: <code>java.lang.Boolean</code></li>
+<li><strong>Type</strong>: <code>java.lang.String</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>micronaut.native-image.static</code></li>
-<li><strong>Default</strong>: <code>false</code></li></ul></section></section></section>        </main>
+<li><strong>User Property</strong>: <code>micronaut.jsonschema.generator.language</code></li>
+<li><strong>Default</strong>: <code>JAVA</code></li></ul><hr /></section><a id="outputDirectory"></a><section><a id="a.3CoutputDirectory.3E"></a>
+<h3>&lt;outputDirectory&gt;</h3>
+<div>The output directory where generated sources or files will be placed. By default, this points to `${project.build.directory}/generated-sources/jsonschema`.</div>
+<ul>
+<li><strong>Type</strong>: <code>java.io.File</code></li>
+<li><strong>Required</strong>: <code>No</code></li>
+<li><strong>Default</strong>: <code>${project.build.directory}/generated-sources/jsonschema</code></li></ul><hr /></section><a id="outputFileName"></a><section><a id="a.3CoutputFileName.3E"></a>
+<h3>&lt;outputFileName&gt;</h3>
+<div>The name of the output file where the generated schema or data will be saved only if there is a single output source.</div>
+<ul>
+<li><strong>Type</strong>: <code>java.lang.String</code></li>
+<li><strong>Required</strong>: <code>No</code></li>
+<li><strong>User Property</strong>: <code>micronaut.jsonschema.generator.output-file-name</code></li></ul><hr /></section><a id="outputPackageName"></a><section><a id="a.3CoutputPackageName.3E"></a>
+<h3>&lt;outputPackageName&gt;</h3>
+<div>The package name for the generated classes or schemas. Default value is specified as "io.micronaut.jsonschema".</div>
+<ul>
+<li><strong>Type</strong>: <code>java.lang.String</code></li>
+<li><strong>Required</strong>: <code>No</code></li>
+<li><strong>User Property</strong>: <code>micronaut.jsonschema.generator.output-package-name</code></li>
+<li><strong>Default</strong>: <code>io.micronaut.jsonschema</code></li></ul></section></section></section>        </main>
     </div>
     <hr/>
     <footer>

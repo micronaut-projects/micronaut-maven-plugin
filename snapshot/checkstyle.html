@@ -50,6 +50,7 @@
             <li><a href="examples/test-resources.html">Integration with Micronaut Test Resources</a></li>
             <li><a href="examples/openapi.html">Generating OpenAPI clients or servers</a></li>
             <li><a href="examples/bean-import.html">Importing beans from project dependencies</a></li>
+            <li><a href="examples/jsonschema.html">Generating Sources from JSON Schema</a></li>
         </ul>
       </li>
       <li class="dropdown">
@@ -132,10 +133,10 @@
 <th><img src="images/icon_warning_sml.gif" />&#160;Warnings</th>
 <th><img src="images/icon_error_sml.gif" />&#160;Errors</th></tr>
 <tr class="b">
-<td>36</td>
+<td>37</td>
 <td>0</td>
 <td>0</td>
-<td>1568</td></tr></table></section><section><a id="Files"></a>
+<td>1600</td></tr></table></section><section><a id="Files"></a>
 <h2>Files</h2>
 <table class="table table-striped">
 <tr class="a">
@@ -239,86 +240,91 @@
 <td>0</td>
 <td>7</td></tr>
 <tr class="a">
+<td><a href="#io.2Fmicronaut.2Fmaven.2Fjsonschema.2FJsonSchemaGeneratorMojo.java">io/micronaut/maven/jsonschema/JsonSchemaGeneratorMojo.java</a></td>
+<td>0</td>
+<td>0</td>
+<td>32</td></tr>
+<tr class="b">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Fopenapi.2FAbstractOpenApiMojo.java">io/micronaut/maven/openapi/AbstractOpenApiMojo.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>115</td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Fopenapi.2FOpenApiClientMojo.java">io/micronaut/maven/openapi/OpenApiClientMojo.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>25</td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Fopenapi.2FOpenApiGenericMojo.java">io/micronaut/maven/openapi/OpenApiGenericMojo.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>43</td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Fopenapi.2FOpenApiServerMojo.java">io/micronaut/maven/openapi/OpenApiServerMojo.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>20</td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Fopenapi.2FParameterMapping.java">io/micronaut/maven/openapi/ParameterMapping.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>28</td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Fopenapi.2FResponseBodyMapping.java">io/micronaut/maven/openapi/ResponseBodyMapping.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>15</td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Fservices.2FCompilerService.java">io/micronaut/maven/services/CompilerService.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>27</td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Fservices.2FDependencyResolutionService.java">io/micronaut/maven/services/DependencyResolutionService.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>60</td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Fservices.2FDockerService.java">io/micronaut/maven/services/DockerService.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>73</td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Fservices.2FExecutorService.java">io/micronaut/maven/services/ExecutorService.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>34</td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Ftestresources.2FAbstractTestResourcesMojo.java">io/micronaut/maven/testresources/AbstractTestResourcesMojo.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>37</td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Ftestresources.2FDefaultServerFactory.java">io/micronaut/maven/testresources/DefaultServerFactory.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>43</td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Ftestresources.2FStartTestResourcesServerMojo.java">io/micronaut/maven/testresources/StartTestResourcesServerMojo.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>19</td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Ftestresources.2FStopTestResourcesServerMojo.java">io/micronaut/maven/testresources/StopTestResourcesServerMojo.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>21</td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Ftestresources.2FTestResourcesConfiguration.java">io/micronaut/maven/testresources/TestResourcesConfiguration.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>29</td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Ftestresources.2FTestResourcesHelper.java">io/micronaut/maven/testresources/TestResourcesHelper.java</a></td>
 <td>0</td>
 <td>0</td>
 <td>131</td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#io.2Fmicronaut.2Fmaven.2Ftestresources.2FTestResourcesLifecycleExtension.java">io/micronaut/maven/testresources/TestResourcesLifecycleExtension.java</a></td>
 <td>0</td>
 <td>0</td>
@@ -333,7 +339,7 @@
 <tr class="b">
 <td>coding</td>
 <td><a class="externalLink" href="https://checkstyle.org/checks/coding/hiddenfield.html">HiddenField</a></td>
-<td>85</td>
+<td>87</td>
 <td><img src="images/icon_error_sml.gif" />&#160;Error</td></tr>
 <tr class="a">
 <td></td>
@@ -343,7 +349,7 @@
 <tr class="b">
 <td>design</td>
 <td><a class="externalLink" href="https://checkstyle.org/checks/design/designforextension.html">DesignForExtension</a></td>
-<td>47</td>
+<td>48</td>
 <td><img src="images/icon_error_sml.gif" />&#160;Error</td></tr>
 <tr class="a">
 <td></td>
@@ -360,22 +366,22 @@
 <tr class="a">
 <td>javadoc</td>
 <td><a class="externalLink" href="https://checkstyle.org/checks/javadoc/javadocpackage.html">JavadocPackage</a></td>
-<td>5</td>
+<td>6</td>
 <td><img src="images/icon_error_sml.gif" />&#160;Error</td></tr>
 <tr class="b">
 <td></td>
 <td><a class="externalLink" href="https://checkstyle.org/checks/javadoc/javadocvariable.html">JavadocVariable</a></td>
-<td>210</td>
+<td>214</td>
 <td><img src="images/icon_error_sml.gif" />&#160;Error</td></tr>
 <tr class="a">
 <td></td>
 <td><a class="externalLink" href="https://checkstyle.org/checks/javadoc/missingjavadocmethod.html">MissingJavadocMethod</a></td>
-<td>51</td>
+<td>52</td>
 <td><img src="images/icon_error_sml.gif" />&#160;Error</td></tr>
 <tr class="b">
 <td>misc</td>
 <td><a class="externalLink" href="https://checkstyle.org/checks/misc/finalparameters.html">FinalParameters</a></td>
-<td>293</td>
+<td>295</td>
 <td><img src="images/icon_error_sml.gif" />&#160;Error</td></tr>
 <tr class="a">
 <td>modifier</td>
@@ -397,7 +403,7 @@
 <td><a class="externalLink" href="https://checkstyle.org/checks/sizes/linelength.html">LineLength</a>
 <ul>
 <li>fileExtensions: <code>&quot;java&quot;</code></li></ul></td>
-<td>744</td>
+<td>765</td>
 <td><img src="images/icon_error_sml.gif" />&#160;Error</td></tr>
 <tr class="b">
 <td></td>
@@ -5289,7 +5295,207 @@
 <td>javadoc</td>
 <td>JavadocVariable</td>
 <td>Missing a Javadoc comment.</td>
-<td>54</td></tr></table></section><section><a id="io.2Fmicronaut.2Fmaven.2Fopenapi.2FAbstractOpenApiMojo.java"></a>
+<td>54</td></tr></table></section><section><a id="io.2Fmicronaut.2Fmaven.2Fjsonschema.2FJsonSchemaGeneratorMojo.java"></a>
+<h3>io/micronaut/maven/jsonschema/JsonSchemaGeneratorMojo.java</h3>
+<table class="table table-striped">
+<tr class="a">
+<th>Severity</th>
+<th>Category</th>
+<th>Rule</th>
+<th>Message</th>
+<th>Line</th></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>javadoc</td>
+<td>JavadocPackage</td>
+<td>Missing package-info.java file.</td>
+<td>1</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 95).</td>
+<td>38</td></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 82).</td>
+<td>40</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 100).</td>
+<td>41</td></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 95).</td>
+<td>44</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>javadoc</td>
+<td>JavadocVariable</td>
+<td>Missing a Javadoc comment.</td>
+<td>46</td></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 83).</td>
+<td>48</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>javadoc</td>
+<td>JavadocVariable</td>
+<td>Missing a Javadoc comment.</td>
+<td>48</td></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>javadoc</td>
+<td>JavadocVariable</td>
+<td>Missing a Javadoc comment.</td>
+<td>49</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 84).</td>
+<td>72</td></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 92).</td>
+<td>73</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 87).</td>
+<td>75</td></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 92).</td>
+<td>80</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 88).</td>
+<td>82</td></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 118).</td>
+<td>89</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 124).</td>
+<td>93</td></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 82).</td>
+<td>99</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 97).</td>
+<td>109</td></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>javadoc</td>
+<td>JavadocVariable</td>
+<td>Missing a Javadoc comment.</td>
+<td>112</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>javadoc</td>
+<td>MissingJavadocMethod</td>
+<td>Missing a Javadoc comment.</td>
+<td>114</td></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>coding</td>
+<td>HiddenField</td>
+<td>'project' hides a field.</td>
+<td>116</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>design</td>
+<td>DesignForExtension</td>
+<td>Class 'JsonSchemaGeneratorMojo' looks like designed for extension (can be subclassed), but the method 'execute' does not have javadoc that explains how to do that safely. If class is not designed for extension consider making the class 'JsonSchemaGeneratorMojo' final or making the method 'execute' static/final/abstract/empty, or adding allowed annotation for the method.</td>
+<td>120</td></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 88).</td>
+<td>143</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 103).</td>
+<td>150</td></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 113).</td>
+<td>153</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 130).</td>
+<td>155</td></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 84).</td>
+<td>161</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 85).</td>
+<td>170</td></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>misc</td>
+<td>FinalParameters</td>
+<td>Parameter path should be final.</td>
+<td>174</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>misc</td>
+<td>FinalParameters</td>
+<td>Parameter language should be final.</td>
+<td>178</td></tr>
+<tr class="b">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>coding</td>
+<td>HiddenField</td>
+<td>'language' hides a field.</td>
+<td>178</td></tr>
+<tr class="a">
+<td><img src="images/icon_error_sml.gif" />&#160;Error</td>
+<td>sizes</td>
+<td>LineLength</td>
+<td>Line is longer than 80 characters (found 86).</td>
+<td>179</td></tr></table></section><section><a id="io.2Fmicronaut.2Fmaven.2Fopenapi.2FAbstractOpenApiMojo.java"></a>
 <h3>io/micronaut/maven/openapi/AbstractOpenApiMojo.java</h3>
 <table class="table table-striped">
 <tr class="a">
