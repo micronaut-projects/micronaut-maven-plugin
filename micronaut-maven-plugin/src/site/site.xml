@@ -29,6 +29,7 @@
             <item name="Integration with Micronaut Test Resources" href="examples/test-resources.html"/>
             <item name="Generating OpenAPI clients or servers" href="examples/openapi.html"/>
             <item name="Importing beans from project dependencies" href="examples/bean-import.html"/>
+            <item name="Generating Sources from JSON Schema" href="examples/jsonschema.html"/>
         </menu>
 
         <menu ref="reports"/>

@@ -1,0 +1,24 @@
+=== Integration with Micronaut JSON Schema Generator
+
+This plugins integrates with https://micronaut-projects.github.io/micronaut-json-schema/latest/guide/[Micronaut JSON Schema] in order to provide support for generating beans from https://json-schema.org[JSON Schema].
+
+The link:../generate-jsonschema-mojo.html[mn:generate-jsonschema] goal can be used to generate a sources from a JSON Schema. The code generated will be in your `target` directory and integrated into the build lifecycle.
+
+In order to generate Java Beans, the minimal thing to do is enable the goal and specify an input source.
+
+[source,xml]
+----
+<properties>
+   ...
+   <micronaut.jsonschema.generator.enabled>true</micronaut.jsonschema.generator.enabled>
+   <micronaut.jsonschema.generator.input-file>=src/main/resources/animal.schema.json</micronaut.jsonschema.generator.input-file>
+</properties>
+----
+
+Some important notes on configuration settings:
+
+- Default generation language is JAVA which can be modified. However, only the languages supported by the https://micronaut-projects.github.io/micronaut-sourcegen/latest/guide/[Micronaut SourceGen] framework is supported.
+- The available input values are `input-url`, `input-file`, and `input-directory`. At least one type of input values needs to be provided. If more than one input value is given, only the first non-null value will be used in the aforementioned order.
+- The generator supports all remote references that obey at least one of the pattern rules given in `accepted-url-patterns` parameter. This parameter is configurable, and it's default value is `["^https://.*/.*.json"]`.
+
+The full list of configuration properties can be found link:../generate-jsonschema-mojo.html[here].
