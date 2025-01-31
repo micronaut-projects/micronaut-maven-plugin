@@ -21,4 +21,4 @@ Some important notes on configuration settings:
 - The available input values are `input-url`, `input-file`, and `input-directory`. At least one type of input values needs to be provided. If more than one input value is given, only the first non-null value will be used in the aforementioned order.
 - The generator supports all remote references that obey at least one of the pattern rules given in `accepted-url-patterns` parameter. This parameter is configurable, and it's default value is `["^https://.*/.*.json"]`.
 
-The full list of configuration properties can be found link:../generate-jsonschema-mojo.html[here].
+The full list of configuration properties can be found link:../generate-jsonschema-mojo.html[in the goal documentation].
