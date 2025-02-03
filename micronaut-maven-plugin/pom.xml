@@ -13,12 +13,6 @@
     <packaging>maven-plugin</packaging>
     <name>Micronaut Maven Plugin - Plugin</name>
     <description>Maven plugin to execute and package Micronaut applications</description>
-    <repositories>
-        <repository>
-            <id>snapshot-jsonschema</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-        </repository>
-    </repositories>
 
     <dependencies>
         <!-- Internal dependencies -->
