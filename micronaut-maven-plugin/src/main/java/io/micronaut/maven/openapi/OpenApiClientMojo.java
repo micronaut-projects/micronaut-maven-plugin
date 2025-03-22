@@ -112,7 +112,8 @@ public class OpenApiClientMojo extends AbstractOpenApiMojo {
                     .withGeneratedAnnotation(generatedAnnotation)
                     .withFluxForArrays(fluxForArrays)
                     .withKsp(ksp)
-                    .withClientPath(clientPath);
+                    .withClientPath(clientPath)
+                    .withCoroutines(coroutines);
 
                 if (clientId != null && !clientId.isEmpty()) {
                     spec.withClientId(clientId);

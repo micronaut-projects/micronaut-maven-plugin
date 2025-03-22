@@ -16,8 +16,8 @@
     <description>Custom Enforcer rules for Micronaut applications</description>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
     </properties>
 

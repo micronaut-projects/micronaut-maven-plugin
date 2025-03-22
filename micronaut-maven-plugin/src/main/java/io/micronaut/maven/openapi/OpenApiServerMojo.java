@@ -100,6 +100,7 @@ public class OpenApiServerMojo extends AbstractOpenApiMojo {
                 .withGeneratedAnnotation(generatedAnnotation)
                 .withFluxForArrays(fluxForArrays)
                 .withKsp(ksp)
+                .withCoroutines(coroutines)
             );
         } else if ("java".equalsIgnoreCase(lang)) {
             builder.forJavaServer(spec -> spec

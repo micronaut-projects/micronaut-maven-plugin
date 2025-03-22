@@ -342,6 +342,46 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".prependFormOrBodyParameters")
     protected boolean prependFormOrBodyParameters;
 
+    /**
+     * If set to true, generated code will be with suspend methods. Ony for kotlin generator.
+     *
+     * @since 4.8.0
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".coroutines")
+    protected boolean coroutines;
+
+    /**
+     * Whether to generate sealed model interfaces and classes. Only for java generator.
+     *
+     * @since 4.8.0
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".useSealed")
+    protected boolean useSealed;
+
+    /**
+     * If set to true, {@literal @}JsonInclude annotation will be with value ALWAYS for required properties in POJO's.
+     *
+     * @since 4.8.0
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".jsonIncludeAlwaysForRequiredFields")
+    protected boolean jsonIncludeAlwaysForRequiredFields;
+
+    /**
+     * Generate or not required properties constructor. Only for java generator.
+     *
+     * @since 4.8.0
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".requiredPropertiesInConstructor", defaultValue = "true")
+    protected boolean requiredPropertiesInConstructor = true;
+
+    /**
+     * If true, the generated controller interface will be without `@Controller` annotation.
+     *
+     * @since 4.8.0
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generateControllerAsAbstract")
+    protected boolean generateControllerAsAbstract;
+
     @Parameter(defaultValue = "${project}", readonly = true)
     protected MavenProject project;
 
@@ -442,6 +482,11 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
                 .withEnsureUniqueParams(ensureUniqueParams)
                 .withAllowUnicodeIdentifiers(allowUnicodeIdentifiers)
                 .withPrependFormOrBodyParameters(prependFormOrBodyParameters)
+
+                .withUseSealed(useSealed)
+                .withJsonIncludeAlwaysForRequiredFields(jsonIncludeAlwaysForRequiredFields)
+                .withRequiredPropertiesInConstructor(requiredPropertiesInConstructor)
+                .withGenerateControllerAsAbstract(generateControllerAsAbstract)
             );
         configureBuilder(builder);
         builder.build().generate();
