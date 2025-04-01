@@ -149,10 +149,35 @@
             <artifactId>micronaut-json-schema-generator</artifactId>
             <version>${micronaut.jsonschema.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.micronaut.build.plugin.sourcegen</groupId>
+            <artifactId>micronaut-build-plugin-sourcegen-annotations</artifactId>
+            <version>${micronaut.build.plugin.sourcegen.version}</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths combine.self="append">
+                        <path>
+                            <groupId>io.micronaut.jsonschema</groupId>
+                            <artifactId>micronaut-json-schema-generator</artifactId>
+                            <version>${micronaut.jsonschema.version}</version>
+                        </path>
+                        <path>
+                            <groupId>io.micronaut.build.plugin.sourcegen</groupId>
+                            <artifactId>micronaut-build-plugin-sourcegen-generator</artifactId>
+                            <version>${micronaut.build.plugin.sourcegen.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
