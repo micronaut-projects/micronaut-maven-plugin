@@ -355,111 +355,156 @@
 <span class="source-line-no">342</span><span id="line-342">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".prependFormOrBodyParameters")</span>
 <span class="source-line-no">343</span><span id="line-343">    protected boolean prependFormOrBodyParameters;</span>
 <span class="source-line-no">344</span><span id="line-344"></span>
-<span class="source-line-no">345</span><span id="line-345">    @Parameter(defaultValue = "${project}", readonly = true)</span>
-<span class="source-line-no">346</span><span id="line-346">    protected MavenProject project;</span>
-<span class="source-line-no">347</span><span id="line-347"></span>
-<span class="source-line-no">348</span><span id="line-348">    /**</span>
-<span class="source-line-no">349</span><span id="line-349">     * Determines if this mojo must be executed.</span>
-<span class="source-line-no">350</span><span id="line-350">     *</span>
-<span class="source-line-no">351</span><span id="line-351">     * @return true if the mojo is enabled</span>
-<span class="source-line-no">352</span><span id="line-352">     */</span>
-<span class="source-line-no">353</span><span id="line-353">    protected abstract boolean isEnabled();</span>
-<span class="source-line-no">354</span><span id="line-354"></span>
-<span class="source-line-no">355</span><span id="line-355">    /**</span>
-<span class="source-line-no">356</span><span id="line-356">     * Configures the OpenAPI generator. When this method is called,</span>
-<span class="source-line-no">357</span><span id="line-357">     * common properties shared by all generators have already been</span>
-<span class="source-line-no">358</span><span id="line-358">     * configured, so this method should only take care of configuring</span>
-<span class="source-line-no">359</span><span id="line-359">     * the generator specific parameters.</span>
-<span class="source-line-no">360</span><span id="line-360">     *</span>
-<span class="source-line-no">361</span><span id="line-361">     * @param builder the generator configuration builder</span>
-<span class="source-line-no">362</span><span id="line-362">     */</span>
-<span class="source-line-no">363</span><span id="line-363">    protected abstract void configureBuilder(MicronautCodeGeneratorBuilder builder) throws MojoExecutionException;</span>
-<span class="source-line-no">364</span><span id="line-364"></span>
-<span class="source-line-no">365</span><span id="line-365">    @Override</span>
-<span class="source-line-no">366</span><span id="line-366">    public final void execute() throws MojoExecutionException, MojoFailureException {</span>
-<span class="source-line-no">367</span><span id="line-367">        if (!isEnabled()) {</span>
-<span class="source-line-no">368</span><span id="line-368">            getLog().debug(this.getClass().getSimpleName() + " is disabled");</span>
-<span class="source-line-no">369</span><span id="line-369">            return;</span>
-<span class="source-line-no">370</span><span id="line-370">        }</span>
-<span class="source-line-no">371</span><span id="line-371"></span>
-<span class="source-line-no">372</span><span id="line-372">        project.addCompileSourceRoot(outputDirectory.getAbsolutePath());</span>
-<span class="source-line-no">373</span><span id="line-373">        var builder = MicronautCodeGeneratorEntryPoint.builder()</span>
-<span class="source-line-no">374</span><span id="line-374">            .withDefinitionFile(definitionFile.toURI())</span>
-<span class="source-line-no">375</span><span id="line-375">            .withOutputDirectory(outputDirectory)</span>
-<span class="source-line-no">376</span><span id="line-376">            .withOutputs(</span>
-<span class="source-line-no">377</span><span id="line-377">                outputKinds.stream().map(String::toUpperCase).map(MicronautCodeGeneratorEntryPoint.OutputKind::valueOf).toList().toArray(new MicronautCodeGeneratorEntryPoint.OutputKind[0])</span>
-<span class="source-line-no">378</span><span id="line-378">            )</span>
-<span class="source-line-no">379</span><span id="line-379">            .withOptions(options -&gt; options</span>
-<span class="source-line-no">380</span><span id="line-380">                .withLang(MicronautCodeGeneratorOptionsBuilder.GeneratorLanguage.valueOf(lang.toUpperCase(Locale.ENGLISH)))</span>
-<span class="source-line-no">381</span><span id="line-381">                .withApiPackage(apiPackageName)</span>
-<span class="source-line-no">382</span><span id="line-382">                .withModelPackage(modelPackageName)</span>
-<span class="source-line-no">383</span><span id="line-383">                .withInvokerPackage(invokerPackageName)</span>
-<span class="source-line-no">384</span><span id="line-384">                .withBeanValidation(useBeanValidation)</span>
-<span class="source-line-no">385</span><span id="line-385">                .withUseOneOfInterfaces(useOneOfInterfaces)</span>
-<span class="source-line-no">386</span><span id="line-386">                .withOptional(useOptional)</span>
-<span class="source-line-no">387</span><span id="line-387">                .withReactive(useReactive)</span>
-<span class="source-line-no">388</span><span id="line-388">                .withSerializationLibrary(SerializationLibraryKind.valueOf(serializationFramework.toUpperCase(Locale.ENGLISH)))</span>
-<span class="source-line-no">389</span><span id="line-389">                .withGenerateHttpResponseAlways(alwaysUseGenerateHttpResponse)</span>
-<span class="source-line-no">390</span><span id="line-390">                .withGenerateHttpResponseWhereRequired(generateHttpResponseWhereRequired)</span>
-<span class="source-line-no">391</span><span id="line-391">                .withDateTimeFormat(MicronautCodeGeneratorOptionsBuilder.DateTimeFormat.valueOf(dateTimeFormat.toUpperCase(Locale.ENGLISH)))</span>
-<span class="source-line-no">392</span><span id="line-392">                .withParameterMappings(parameterMappings.stream()</span>
-<span class="source-line-no">393</span><span id="line-393">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ParameterMapping(</span>
-<span class="source-line-no">394</span><span id="line-394">                        mapping.getName(),</span>
-<span class="source-line-no">395</span><span id="line-395">                        io.micronaut.openapi.generator.ParameterMapping.ParameterLocation.valueOf(</span>
-<span class="source-line-no">396</span><span id="line-396">                            mapping.getLocation().name()</span>
-<span class="source-line-no">397</span><span id="line-397">                        ),</span>
-<span class="source-line-no">398</span><span id="line-398">                        mapping.getMappedType(),</span>
-<span class="source-line-no">399</span><span id="line-399">                        mapping.getMappedName(),</span>
-<span class="source-line-no">400</span><span id="line-400">                        mapping.isValidated()</span>
-<span class="source-line-no">401</span><span id="line-401">                    ))</span>
-<span class="source-line-no">402</span><span id="line-402">                    .toList()</span>
-<span class="source-line-no">403</span><span id="line-403">                )</span>
-<span class="source-line-no">404</span><span id="line-404">                .withResponseBodyMappings(responseBodyMappings.stream()</span>
-<span class="source-line-no">405</span><span id="line-405">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ResponseBodyMapping(</span>
-<span class="source-line-no">406</span><span id="line-406">                        mapping.getHeaderName(),</span>
-<span class="source-line-no">407</span><span id="line-407">                        mapping.getMappedBodyType(),</span>
-<span class="source-line-no">408</span><span id="line-408">                        mapping.isListWrapper(),</span>
-<span class="source-line-no">409</span><span id="line-409">                        mapping.isValidated()</span>
-<span class="source-line-no">410</span><span id="line-410">                    ))</span>
-<span class="source-line-no">411</span><span id="line-411">                    .toList()</span>
-<span class="source-line-no">412</span><span id="line-412">                )</span>
-<span class="source-line-no">413</span><span id="line-413">                .withSchemaMapping(schemaMapping)</span>
-<span class="source-line-no">414</span><span id="line-414">                .withImportMapping(importMapping)</span>
-<span class="source-line-no">415</span><span id="line-415">                .withNameMapping(nameMapping)</span>
-<span class="source-line-no">416</span><span id="line-416">                .withTypeMapping(typeMapping)</span>
-<span class="source-line-no">417</span><span id="line-417">                .withEnumNameMapping(enumNameMapping)</span>
-<span class="source-line-no">418</span><span id="line-418">                .withModelNameMapping(modelNameMapping)</span>
-<span class="source-line-no">419</span><span id="line-419">                .withInlineSchemaNameMapping(inlineSchemaNameMapping)</span>
-<span class="source-line-no">420</span><span id="line-420">                .withInlineSchemaOption(inlineSchemaOption)</span>
-<span class="source-line-no">421</span><span id="line-421">                .withOpenapiNormalizer(openapiNormalizer)</span>
-<span class="source-line-no">422</span><span id="line-422">                .withApiNamePrefix(apiNamePrefix != null ? apiNamePrefix : "")</span>
-<span class="source-line-no">423</span><span id="line-423">                .withApiNameSuffix(apiNameSuffix != null ? apiNameSuffix : "")</span>
-<span class="source-line-no">424</span><span id="line-424">                .withModelNamePrefix(modelNamePrefix != null ? modelNamePrefix : "")</span>
-<span class="source-line-no">425</span><span id="line-425">                .withModelNameSuffix(modelNameSuffix != null ? modelNameSuffix : "")</span>
-<span class="source-line-no">426</span><span id="line-426">                .withGenerateSwaggerAnnotations(generateSwaggerAnnotations)</span>
-<span class="source-line-no">427</span><span id="line-427">                .withImplicitHeaders(implicitHeaders)</span>
-<span class="source-line-no">428</span><span id="line-428">                .withImplicitHeadersRegex(implicitHeadersRegex != null ? implicitHeadersRegex : "")</span>
-<span class="source-line-no">429</span><span id="line-429">                .withUseEnumCaseInsensitive(useEnumCaseInsensitive)</span>
-<span class="source-line-no">430</span><span id="line-430">                .withAdditionalEnumTypeAnnotations(additionalEnumTypeAnnotations)</span>
-<span class="source-line-no">431</span><span id="line-431">                .withAdditionalModelTypeAnnotations(additionalModelTypeAnnotations)</span>
-<span class="source-line-no">432</span><span id="line-432">                .withAdditionalOneOfTypeAnnotations(additionalOneOfTypeAnnotations)</span>
-<span class="source-line-no">433</span><span id="line-433">                .withAdditionalProperties(additionalProperties)</span>
-<span class="source-line-no">434</span><span id="line-434"></span>
-<span class="source-line-no">435</span><span id="line-435">                .withUseJakartaEe(useJakartaEe)</span>
-<span class="source-line-no">436</span><span id="line-436">                .withSortParamsByRequiredFlag(sortParamsByRequiredFlag)</span>
-<span class="source-line-no">437</span><span id="line-437">                .withSkipOperationExample(skipOperationExample)</span>
-<span class="source-line-no">438</span><span id="line-438">                .withSkipSortingOperations(skipSortingOperations)</span>
-<span class="source-line-no">439</span><span id="line-439">                .withRemoveOperationIdPrefixDelimiter(removeOperationIdPrefixDelimiter)</span>
-<span class="source-line-no">440</span><span id="line-440">                .withRemoveOperationIdPrefixCount(removeOperationIdPrefixCount)</span>
-<span class="source-line-no">441</span><span id="line-441">                .withSortModelPropertiesByRequiredFlag(sortModelPropertiesByRequiredFlag)</span>
-<span class="source-line-no">442</span><span id="line-442">                .withEnsureUniqueParams(ensureUniqueParams)</span>
-<span class="source-line-no">443</span><span id="line-443">                .withAllowUnicodeIdentifiers(allowUnicodeIdentifiers)</span>
-<span class="source-line-no">444</span><span id="line-444">                .withPrependFormOrBodyParameters(prependFormOrBodyParameters)</span>
-<span class="source-line-no">445</span><span id="line-445">            );</span>
-<span class="source-line-no">446</span><span id="line-446">        configureBuilder(builder);</span>
-<span class="source-line-no">447</span><span id="line-447">        builder.build().generate();</span>
-<span class="source-line-no">448</span><span id="line-448">    }</span>
-<span class="source-line-no">449</span><span id="line-449">}</span>
+<span class="source-line-no">345</span><span id="line-345">    /**</span>
+<span class="source-line-no">346</span><span id="line-346">     * If set to true, generated code will be with suspend methods. Ony for kotlin generator.</span>
+<span class="source-line-no">347</span><span id="line-347">     *</span>
+<span class="source-line-no">348</span><span id="line-348">     * @since 4.8.0</span>
+<span class="source-line-no">349</span><span id="line-349">     */</span>
+<span class="source-line-no">350</span><span id="line-350">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".coroutines")</span>
+<span class="source-line-no">351</span><span id="line-351">    protected boolean coroutines;</span>
+<span class="source-line-no">352</span><span id="line-352"></span>
+<span class="source-line-no">353</span><span id="line-353">    /**</span>
+<span class="source-line-no">354</span><span id="line-354">     * Whether to generate sealed model interfaces and classes. Only for java generator.</span>
+<span class="source-line-no">355</span><span id="line-355">     *</span>
+<span class="source-line-no">356</span><span id="line-356">     * @since 4.8.0</span>
+<span class="source-line-no">357</span><span id="line-357">     */</span>
+<span class="source-line-no">358</span><span id="line-358">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".useSealed")</span>
+<span class="source-line-no">359</span><span id="line-359">    protected boolean useSealed;</span>
+<span class="source-line-no">360</span><span id="line-360"></span>
+<span class="source-line-no">361</span><span id="line-361">    /**</span>
+<span class="source-line-no">362</span><span id="line-362">     * If set to true, {@literal @}JsonInclude annotation will be with value ALWAYS for required properties in POJO's.</span>
+<span class="source-line-no">363</span><span id="line-363">     *</span>
+<span class="source-line-no">364</span><span id="line-364">     * @since 4.8.0</span>
+<span class="source-line-no">365</span><span id="line-365">     */</span>
+<span class="source-line-no">366</span><span id="line-366">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".jsonIncludeAlwaysForRequiredFields")</span>
+<span class="source-line-no">367</span><span id="line-367">    protected boolean jsonIncludeAlwaysForRequiredFields;</span>
+<span class="source-line-no">368</span><span id="line-368"></span>
+<span class="source-line-no">369</span><span id="line-369">    /**</span>
+<span class="source-line-no">370</span><span id="line-370">     * Generate or not required properties constructor. Only for java generator.</span>
+<span class="source-line-no">371</span><span id="line-371">     *</span>
+<span class="source-line-no">372</span><span id="line-372">     * @since 4.8.0</span>
+<span class="source-line-no">373</span><span id="line-373">     */</span>
+<span class="source-line-no">374</span><span id="line-374">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".requiredPropertiesInConstructor", defaultValue = "true")</span>
+<span class="source-line-no">375</span><span id="line-375">    protected boolean requiredPropertiesInConstructor = true;</span>
+<span class="source-line-no">376</span><span id="line-376"></span>
+<span class="source-line-no">377</span><span id="line-377">    /**</span>
+<span class="source-line-no">378</span><span id="line-378">     * If true, the generated controller interface will be without `@Controller` annotation.</span>
+<span class="source-line-no">379</span><span id="line-379">     *</span>
+<span class="source-line-no">380</span><span id="line-380">     * @since 4.8.0</span>
+<span class="source-line-no">381</span><span id="line-381">     */</span>
+<span class="source-line-no">382</span><span id="line-382">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generateControllerAsAbstract")</span>
+<span class="source-line-no">383</span><span id="line-383">    protected boolean generateControllerAsAbstract;</span>
+<span class="source-line-no">384</span><span id="line-384"></span>
+<span class="source-line-no">385</span><span id="line-385">    @Parameter(defaultValue = "${project}", readonly = true)</span>
+<span class="source-line-no">386</span><span id="line-386">    protected MavenProject project;</span>
+<span class="source-line-no">387</span><span id="line-387"></span>
+<span class="source-line-no">388</span><span id="line-388">    /**</span>
+<span class="source-line-no">389</span><span id="line-389">     * Determines if this mojo must be executed.</span>
+<span class="source-line-no">390</span><span id="line-390">     *</span>
+<span class="source-line-no">391</span><span id="line-391">     * @return true if the mojo is enabled</span>
+<span class="source-line-no">392</span><span id="line-392">     */</span>
+<span class="source-line-no">393</span><span id="line-393">    protected abstract boolean isEnabled();</span>
+<span class="source-line-no">394</span><span id="line-394"></span>
+<span class="source-line-no">395</span><span id="line-395">    /**</span>
+<span class="source-line-no">396</span><span id="line-396">     * Configures the OpenAPI generator. When this method is called,</span>
+<span class="source-line-no">397</span><span id="line-397">     * common properties shared by all generators have already been</span>
+<span class="source-line-no">398</span><span id="line-398">     * configured, so this method should only take care of configuring</span>
+<span class="source-line-no">399</span><span id="line-399">     * the generator specific parameters.</span>
+<span class="source-line-no">400</span><span id="line-400">     *</span>
+<span class="source-line-no">401</span><span id="line-401">     * @param builder the generator configuration builder</span>
+<span class="source-line-no">402</span><span id="line-402">     */</span>
+<span class="source-line-no">403</span><span id="line-403">    protected abstract void configureBuilder(MicronautCodeGeneratorBuilder builder) throws MojoExecutionException;</span>
+<span class="source-line-no">404</span><span id="line-404"></span>
+<span class="source-line-no">405</span><span id="line-405">    @Override</span>
+<span class="source-line-no">406</span><span id="line-406">    public final void execute() throws MojoExecutionException, MojoFailureException {</span>
+<span class="source-line-no">407</span><span id="line-407">        if (!isEnabled()) {</span>
+<span class="source-line-no">408</span><span id="line-408">            getLog().debug(this.getClass().getSimpleName() + " is disabled");</span>
+<span class="source-line-no">409</span><span id="line-409">            return;</span>
+<span class="source-line-no">410</span><span id="line-410">        }</span>
+<span class="source-line-no">411</span><span id="line-411"></span>
+<span class="source-line-no">412</span><span id="line-412">        project.addCompileSourceRoot(outputDirectory.getAbsolutePath());</span>
+<span class="source-line-no">413</span><span id="line-413">        var builder = MicronautCodeGeneratorEntryPoint.builder()</span>
+<span class="source-line-no">414</span><span id="line-414">            .withDefinitionFile(definitionFile.toURI())</span>
+<span class="source-line-no">415</span><span id="line-415">            .withOutputDirectory(outputDirectory)</span>
+<span class="source-line-no">416</span><span id="line-416">            .withOutputs(</span>
+<span class="source-line-no">417</span><span id="line-417">                outputKinds.stream().map(String::toUpperCase).map(MicronautCodeGeneratorEntryPoint.OutputKind::valueOf).toList().toArray(new MicronautCodeGeneratorEntryPoint.OutputKind[0])</span>
+<span class="source-line-no">418</span><span id="line-418">            )</span>
+<span class="source-line-no">419</span><span id="line-419">            .withOptions(options -&gt; options</span>
+<span class="source-line-no">420</span><span id="line-420">                .withLang(MicronautCodeGeneratorOptionsBuilder.GeneratorLanguage.valueOf(lang.toUpperCase(Locale.ENGLISH)))</span>
+<span class="source-line-no">421</span><span id="line-421">                .withApiPackage(apiPackageName)</span>
+<span class="source-line-no">422</span><span id="line-422">                .withModelPackage(modelPackageName)</span>
+<span class="source-line-no">423</span><span id="line-423">                .withInvokerPackage(invokerPackageName)</span>
+<span class="source-line-no">424</span><span id="line-424">                .withBeanValidation(useBeanValidation)</span>
+<span class="source-line-no">425</span><span id="line-425">                .withUseOneOfInterfaces(useOneOfInterfaces)</span>
+<span class="source-line-no">426</span><span id="line-426">                .withOptional(useOptional)</span>
+<span class="source-line-no">427</span><span id="line-427">                .withReactive(useReactive)</span>
+<span class="source-line-no">428</span><span id="line-428">                .withSerializationLibrary(SerializationLibraryKind.valueOf(serializationFramework.toUpperCase(Locale.ENGLISH)))</span>
+<span class="source-line-no">429</span><span id="line-429">                .withGenerateHttpResponseAlways(alwaysUseGenerateHttpResponse)</span>
+<span class="source-line-no">430</span><span id="line-430">                .withGenerateHttpResponseWhereRequired(generateHttpResponseWhereRequired)</span>
+<span class="source-line-no">431</span><span id="line-431">                .withDateTimeFormat(MicronautCodeGeneratorOptionsBuilder.DateTimeFormat.valueOf(dateTimeFormat.toUpperCase(Locale.ENGLISH)))</span>
+<span class="source-line-no">432</span><span id="line-432">                .withParameterMappings(parameterMappings.stream()</span>
+<span class="source-line-no">433</span><span id="line-433">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ParameterMapping(</span>
+<span class="source-line-no">434</span><span id="line-434">                        mapping.getName(),</span>
+<span class="source-line-no">435</span><span id="line-435">                        io.micronaut.openapi.generator.ParameterMapping.ParameterLocation.valueOf(</span>
+<span class="source-line-no">436</span><span id="line-436">                            mapping.getLocation().name()</span>
+<span class="source-line-no">437</span><span id="line-437">                        ),</span>
+<span class="source-line-no">438</span><span id="line-438">                        mapping.getMappedType(),</span>
+<span class="source-line-no">439</span><span id="line-439">                        mapping.getMappedName(),</span>
+<span class="source-line-no">440</span><span id="line-440">                        mapping.isValidated()</span>
+<span class="source-line-no">441</span><span id="line-441">                    ))</span>
+<span class="source-line-no">442</span><span id="line-442">                    .toList()</span>
+<span class="source-line-no">443</span><span id="line-443">                )</span>
+<span class="source-line-no">444</span><span id="line-444">                .withResponseBodyMappings(responseBodyMappings.stream()</span>
+<span class="source-line-no">445</span><span id="line-445">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ResponseBodyMapping(</span>
+<span class="source-line-no">446</span><span id="line-446">                        mapping.getHeaderName(),</span>
+<span class="source-line-no">447</span><span id="line-447">                        mapping.getMappedBodyType(),</span>
+<span class="source-line-no">448</span><span id="line-448">                        mapping.isListWrapper(),</span>
+<span class="source-line-no">449</span><span id="line-449">                        mapping.isValidated()</span>
+<span class="source-line-no">450</span><span id="line-450">                    ))</span>
+<span class="source-line-no">451</span><span id="line-451">                    .toList()</span>
+<span class="source-line-no">452</span><span id="line-452">                )</span>
+<span class="source-line-no">453</span><span id="line-453">                .withSchemaMapping(schemaMapping)</span>
+<span class="source-line-no">454</span><span id="line-454">                .withImportMapping(importMapping)</span>
+<span class="source-line-no">455</span><span id="line-455">                .withNameMapping(nameMapping)</span>
+<span class="source-line-no">456</span><span id="line-456">                .withTypeMapping(typeMapping)</span>
+<span class="source-line-no">457</span><span id="line-457">                .withEnumNameMapping(enumNameMapping)</span>
+<span class="source-line-no">458</span><span id="line-458">                .withModelNameMapping(modelNameMapping)</span>
+<span class="source-line-no">459</span><span id="line-459">                .withInlineSchemaNameMapping(inlineSchemaNameMapping)</span>
+<span class="source-line-no">460</span><span id="line-460">                .withInlineSchemaOption(inlineSchemaOption)</span>
+<span class="source-line-no">461</span><span id="line-461">                .withOpenapiNormalizer(openapiNormalizer)</span>
+<span class="source-line-no">462</span><span id="line-462">                .withApiNamePrefix(apiNamePrefix != null ? apiNamePrefix : "")</span>
+<span class="source-line-no">463</span><span id="line-463">                .withApiNameSuffix(apiNameSuffix != null ? apiNameSuffix : "")</span>
+<span class="source-line-no">464</span><span id="line-464">                .withModelNamePrefix(modelNamePrefix != null ? modelNamePrefix : "")</span>
+<span class="source-line-no">465</span><span id="line-465">                .withModelNameSuffix(modelNameSuffix != null ? modelNameSuffix : "")</span>
+<span class="source-line-no">466</span><span id="line-466">                .withGenerateSwaggerAnnotations(generateSwaggerAnnotations)</span>
+<span class="source-line-no">467</span><span id="line-467">                .withImplicitHeaders(implicitHeaders)</span>
+<span class="source-line-no">468</span><span id="line-468">                .withImplicitHeadersRegex(implicitHeadersRegex != null ? implicitHeadersRegex : "")</span>
+<span class="source-line-no">469</span><span id="line-469">                .withUseEnumCaseInsensitive(useEnumCaseInsensitive)</span>
+<span class="source-line-no">470</span><span id="line-470">                .withAdditionalEnumTypeAnnotations(additionalEnumTypeAnnotations)</span>
+<span class="source-line-no">471</span><span id="line-471">                .withAdditionalModelTypeAnnotations(additionalModelTypeAnnotations)</span>
+<span class="source-line-no">472</span><span id="line-472">                .withAdditionalOneOfTypeAnnotations(additionalOneOfTypeAnnotations)</span>
+<span class="source-line-no">473</span><span id="line-473">                .withAdditionalProperties(additionalProperties)</span>
+<span class="source-line-no">474</span><span id="line-474"></span>
+<span class="source-line-no">475</span><span id="line-475">                .withUseJakartaEe(useJakartaEe)</span>
+<span class="source-line-no">476</span><span id="line-476">                .withSortParamsByRequiredFlag(sortParamsByRequiredFlag)</span>
+<span class="source-line-no">477</span><span id="line-477">                .withSkipOperationExample(skipOperationExample)</span>
+<span class="source-line-no">478</span><span id="line-478">                .withSkipSortingOperations(skipSortingOperations)</span>
+<span class="source-line-no">479</span><span id="line-479">                .withRemoveOperationIdPrefixDelimiter(removeOperationIdPrefixDelimiter)</span>
+<span class="source-line-no">480</span><span id="line-480">                .withRemoveOperationIdPrefixCount(removeOperationIdPrefixCount)</span>
+<span class="source-line-no">481</span><span id="line-481">                .withSortModelPropertiesByRequiredFlag(sortModelPropertiesByRequiredFlag)</span>
+<span class="source-line-no">482</span><span id="line-482">                .withEnsureUniqueParams(ensureUniqueParams)</span>
+<span class="source-line-no">483</span><span id="line-483">                .withAllowUnicodeIdentifiers(allowUnicodeIdentifiers)</span>
+<span class="source-line-no">484</span><span id="line-484">                .withPrependFormOrBodyParameters(prependFormOrBodyParameters)</span>
+<span class="source-line-no">485</span><span id="line-485"></span>
+<span class="source-line-no">486</span><span id="line-486">                .withUseSealed(useSealed)</span>
+<span class="source-line-no">487</span><span id="line-487">                .withJsonIncludeAlwaysForRequiredFields(jsonIncludeAlwaysForRequiredFields)</span>
+<span class="source-line-no">488</span><span id="line-488">                .withRequiredPropertiesInConstructor(requiredPropertiesInConstructor)</span>
+<span class="source-line-no">489</span><span id="line-489">                .withGenerateControllerAsAbstract(generateControllerAsAbstract)</span>
+<span class="source-line-no">490</span><span id="line-490">            );</span>
+<span class="source-line-no">491</span><span id="line-491">        configureBuilder(builder);</span>
+<span class="source-line-no">492</span><span id="line-492">        builder.build().generate();</span>
+<span class="source-line-no">493</span><span id="line-493">    }</span>
+<span class="source-line-no">494</span><span id="line-494">}</span>
 
 
 

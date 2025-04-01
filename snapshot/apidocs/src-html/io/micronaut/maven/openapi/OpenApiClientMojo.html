@@ -125,47 +125,48 @@
 <span class="source-line-no">112</span><span id="line-112">                    .withGeneratedAnnotation(generatedAnnotation)</span>
 <span class="source-line-no">113</span><span id="line-113">                    .withFluxForArrays(fluxForArrays)</span>
 <span class="source-line-no">114</span><span id="line-114">                    .withKsp(ksp)</span>
-<span class="source-line-no">115</span><span id="line-115">                    .withClientPath(clientPath);</span>
-<span class="source-line-no">116</span><span id="line-116"></span>
-<span class="source-line-no">117</span><span id="line-117">                if (clientId != null &amp;&amp; !clientId.isEmpty()) {</span>
-<span class="source-line-no">118</span><span id="line-118">                    spec.withClientId(clientId);</span>
-<span class="source-line-no">119</span><span id="line-119">                }</span>
-<span class="source-line-no">120</span><span id="line-120">                if (additionalTypeAnnotations != null) {</span>
-<span class="source-line-no">121</span><span id="line-121">                    spec.withAdditionalClientTypeAnnotations(additionalTypeAnnotations);</span>
-<span class="source-line-no">122</span><span id="line-122">                }</span>
-<span class="source-line-no">123</span><span id="line-123">                if (basePathSeparator != null) {</span>
-<span class="source-line-no">124</span><span id="line-124">                    spec.withBasePathSeparator(basePathSeparator);</span>
-<span class="source-line-no">125</span><span id="line-125">                }</span>
-<span class="source-line-no">126</span><span id="line-126">                if (authorizationFilterPattern != null) {</span>
-<span class="source-line-no">127</span><span id="line-127">                    spec.withAuthorizationFilterPattern(authorizationFilterPattern);</span>
-<span class="source-line-no">128</span><span id="line-128">                }</span>
-<span class="source-line-no">129</span><span id="line-129">            });</span>
-<span class="source-line-no">130</span><span id="line-130">        } else if ("java".equalsIgnoreCase(lang)) {</span>
-<span class="source-line-no">131</span><span id="line-131">            builder.forJavaClient(spec -&gt; {</span>
-<span class="source-line-no">132</span><span id="line-132">                spec.withAuthorization(useAuth)</span>
-<span class="source-line-no">133</span><span id="line-133">                    .withLombok(lombok)</span>
-<span class="source-line-no">134</span><span id="line-134">                    .withGeneratedAnnotation(generatedAnnotation)</span>
-<span class="source-line-no">135</span><span id="line-135">                    .withFluxForArrays(fluxForArrays)</span>
-<span class="source-line-no">136</span><span id="line-136">                    .withClientPath(clientPath);</span>
-<span class="source-line-no">137</span><span id="line-137"></span>
-<span class="source-line-no">138</span><span id="line-138">                if (clientId != null &amp;&amp; !clientId.isEmpty()) {</span>
-<span class="source-line-no">139</span><span id="line-139">                    spec.withClientId(clientId);</span>
-<span class="source-line-no">140</span><span id="line-140">                }</span>
-<span class="source-line-no">141</span><span id="line-141">                if (additionalTypeAnnotations != null) {</span>
-<span class="source-line-no">142</span><span id="line-142">                    spec.withAdditionalClientTypeAnnotations(additionalTypeAnnotations);</span>
-<span class="source-line-no">143</span><span id="line-143">                }</span>
-<span class="source-line-no">144</span><span id="line-144">                if (basePathSeparator != null) {</span>
-<span class="source-line-no">145</span><span id="line-145">                    spec.withBasePathSeparator(basePathSeparator);</span>
-<span class="source-line-no">146</span><span id="line-146">                }</span>
-<span class="source-line-no">147</span><span id="line-147">                if (authorizationFilterPattern != null) {</span>
-<span class="source-line-no">148</span><span id="line-148">                    spec.withAuthorizationFilterPattern(authorizationFilterPattern);</span>
-<span class="source-line-no">149</span><span id="line-149">                }</span>
-<span class="source-line-no">150</span><span id="line-150">            });</span>
-<span class="source-line-no">151</span><span id="line-151">        } else {</span>
-<span class="source-line-no">152</span><span id="line-152">            throw new UnsupportedOperationException("Unsupported language:" + lang);</span>
-<span class="source-line-no">153</span><span id="line-153">        }</span>
-<span class="source-line-no">154</span><span id="line-154">    }</span>
-<span class="source-line-no">155</span><span id="line-155">}</span>
+<span class="source-line-no">115</span><span id="line-115">                    .withClientPath(clientPath)</span>
+<span class="source-line-no">116</span><span id="line-116">                    .withCoroutines(coroutines);</span>
+<span class="source-line-no">117</span><span id="line-117"></span>
+<span class="source-line-no">118</span><span id="line-118">                if (clientId != null &amp;&amp; !clientId.isEmpty()) {</span>
+<span class="source-line-no">119</span><span id="line-119">                    spec.withClientId(clientId);</span>
+<span class="source-line-no">120</span><span id="line-120">                }</span>
+<span class="source-line-no">121</span><span id="line-121">                if (additionalTypeAnnotations != null) {</span>
+<span class="source-line-no">122</span><span id="line-122">                    spec.withAdditionalClientTypeAnnotations(additionalTypeAnnotations);</span>
+<span class="source-line-no">123</span><span id="line-123">                }</span>
+<span class="source-line-no">124</span><span id="line-124">                if (basePathSeparator != null) {</span>
+<span class="source-line-no">125</span><span id="line-125">                    spec.withBasePathSeparator(basePathSeparator);</span>
+<span class="source-line-no">126</span><span id="line-126">                }</span>
+<span class="source-line-no">127</span><span id="line-127">                if (authorizationFilterPattern != null) {</span>
+<span class="source-line-no">128</span><span id="line-128">                    spec.withAuthorizationFilterPattern(authorizationFilterPattern);</span>
+<span class="source-line-no">129</span><span id="line-129">                }</span>
+<span class="source-line-no">130</span><span id="line-130">            });</span>
+<span class="source-line-no">131</span><span id="line-131">        } else if ("java".equalsIgnoreCase(lang)) {</span>
+<span class="source-line-no">132</span><span id="line-132">            builder.forJavaClient(spec -&gt; {</span>
+<span class="source-line-no">133</span><span id="line-133">                spec.withAuthorization(useAuth)</span>
+<span class="source-line-no">134</span><span id="line-134">                    .withLombok(lombok)</span>
+<span class="source-line-no">135</span><span id="line-135">                    .withGeneratedAnnotation(generatedAnnotation)</span>
+<span class="source-line-no">136</span><span id="line-136">                    .withFluxForArrays(fluxForArrays)</span>
+<span class="source-line-no">137</span><span id="line-137">                    .withClientPath(clientPath);</span>
+<span class="source-line-no">138</span><span id="line-138"></span>
+<span class="source-line-no">139</span><span id="line-139">                if (clientId != null &amp;&amp; !clientId.isEmpty()) {</span>
+<span class="source-line-no">140</span><span id="line-140">                    spec.withClientId(clientId);</span>
+<span class="source-line-no">141</span><span id="line-141">                }</span>
+<span class="source-line-no">142</span><span id="line-142">                if (additionalTypeAnnotations != null) {</span>
+<span class="source-line-no">143</span><span id="line-143">                    spec.withAdditionalClientTypeAnnotations(additionalTypeAnnotations);</span>
+<span class="source-line-no">144</span><span id="line-144">                }</span>
+<span class="source-line-no">145</span><span id="line-145">                if (basePathSeparator != null) {</span>
+<span class="source-line-no">146</span><span id="line-146">                    spec.withBasePathSeparator(basePathSeparator);</span>
+<span class="source-line-no">147</span><span id="line-147">                }</span>
+<span class="source-line-no">148</span><span id="line-148">                if (authorizationFilterPattern != null) {</span>
+<span class="source-line-no">149</span><span id="line-149">                    spec.withAuthorizationFilterPattern(authorizationFilterPattern);</span>
+<span class="source-line-no">150</span><span id="line-150">                }</span>
+<span class="source-line-no">151</span><span id="line-151">            });</span>
+<span class="source-line-no">152</span><span id="line-152">        } else {</span>
+<span class="source-line-no">153</span><span id="line-153">            throw new UnsupportedOperationException("Unsupported language:" + lang);</span>
+<span class="source-line-no">154</span><span id="line-154">        }</span>
+<span class="source-line-no">155</span><span id="line-155">    }</span>
+<span class="source-line-no">156</span><span id="line-156">}</span>
 
 
 

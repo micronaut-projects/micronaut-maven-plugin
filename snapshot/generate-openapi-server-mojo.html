@@ -269,25 +269,35 @@
 <td><code>-</code></td>
 <td>Set the api name suffix.<br /><strong>User Property</strong>: <code>micronaut.openapi.apiNameSuffix</code></td></tr>
 <tr class="b">
+<td><a href="#coroutines"><code>&lt;coroutines&gt;</code></a></td>
+<td><code>boolean</code></td>
+<td><code>4.8.0</code></td>
+<td>If set to true, generated code will be with suspend methods. Ony for kotlin generator.<br /><strong>User Property</strong>: <code>micronaut.openapi.coroutines</code></td></tr>
+<tr class="a">
 <td><a href="#enabled"><code>&lt;enabled&gt;</code></a></td>
 <td><code>boolean</code></td>
 <td><code>-</code></td>
 <td>The property that defines if this mojo should be used in configuration.<br /><strong>User Property</strong>: <code>micronaut.openapi.generate.server</code></td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#ensureUniqueParams"><code>&lt;ensureUniqueParams&gt;</code></a></td>
 <td><code>boolean</code></td>
 <td><code>-</code></td>
 <td>Whether to ensure parameter names are unique in an operation (rename parameters that are not).<br /><strong>Default</strong>: <code>true</code><br /><strong>User Property</strong>: <code>micronaut.openapi.ensureUniqueParams</code></td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#enumNameMapping"><code>&lt;enumNameMapping&gt;</code></a></td>
 <td><code>Map&lt;String,String&gt;</code></td>
 <td><code>-</code></td>
 <td>Add the enum name mappings.<br /><strong>User Property</strong>: <code>micronaut.openapi.enumNameMapping</code></td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#fluxForArrays"><code>&lt;fluxForArrays&gt;</code></a></td>
 <td><code>boolean</code></td>
 <td><code>4.2.2</code></td>
 <td>Determines if the server should use flux for arrays.<br /><strong>User Property</strong>: <code>micronaut.openapi.server.flux.for.arrays</code></td></tr>
+<tr class="a">
+<td><a href="#generateControllerAsAbstract"><code>&lt;generateControllerAsAbstract&gt;</code></a></td>
+<td><code>boolean</code></td>
+<td><code>4.8.0</code></td>
+<td>If true, the generated controller interface will be without `@Controller` annotation.<br /><strong>User Property</strong>: <code>micronaut.openapi.generateControllerAsAbstract</code></td></tr>
 <tr class="b">
 <td><a href="#generateSwaggerAnnotations"><code>&lt;generateSwaggerAnnotations&gt;</code></a></td>
 <td><code>boolean</code></td>
@@ -324,60 +334,70 @@
 <td><code>-</code></td>
 <td>Add the inline schema options.<br /><strong>User Property</strong>: <code>micronaut.openapi.inlineSchemaOption</code></td></tr>
 <tr class="a">
+<td><a href="#jsonIncludeAlwaysForRequiredFields"><code>&lt;jsonIncludeAlwaysForRequiredFields&gt;</code></a></td>
+<td><code>boolean</code></td>
+<td><code>4.8.0</code></td>
+<td>If set to true, @JsonInclude annotation will be with value ALWAYS for required properties in POJO's.<br /><strong>User Property</strong>: <code>micronaut.openapi.jsonIncludeAlwaysForRequiredFields</code></td></tr>
+<tr class="b">
 <td><a href="#lang"><code>&lt;lang&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>4.3.0</code></td>
 <td>Allows specifying the language of the generated code.<br /><strong>Default</strong>: <code>java</code><br /><strong>User Property</strong>: <code>micronaut.openapi.lang</code></td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#lombok"><code>&lt;lombok&gt;</code></a></td>
 <td><code>boolean</code></td>
 <td><code>4.2.2</code></td>
 <td>Determines if the server should use lombok.<br /><strong>User Property</strong>: <code>micronaut.openapi.server.lombok</code></td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#modelNameMapping"><code>&lt;modelNameMapping&gt;</code></a></td>
 <td><code>Map&lt;String,String&gt;</code></td>
 <td><code>-</code></td>
 <td>Add the model name mappings.<br /><strong>User Property</strong>: <code>micronaut.openapi.modelNameMapping</code></td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#modelNamePrefix"><code>&lt;modelNamePrefix&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>-</code></td>
 <td>Set the model name prefix.<br /><strong>User Property</strong>: <code>micronaut.openapi.modelNamePrefix</code></td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#modelNameSuffix"><code>&lt;modelNameSuffix&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>-</code></td>
 <td>Set the model name suffix.<br /><strong>User Property</strong>: <code>micronaut.openapi.modelNameSuffix</code></td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#nameMapping"><code>&lt;nameMapping&gt;</code></a></td>
 <td><code>Map&lt;String,String&gt;</code></td>
 <td><code>-</code></td>
 <td>Add the name mappings.<br /><strong>User Property</strong>: <code>micronaut.openapi.nameMapping</code></td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#openapiNormalizer"><code>&lt;openapiNormalizer&gt;</code></a></td>
 <td><code>Map&lt;String,String&gt;</code></td>
 <td><code>-</code></td>
 <td>Add the OpenAPI normalizer options.<br /><strong>User Property</strong>: <code>micronaut.openapi.openapiNormalizer</code></td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#parameterMappings"><code>&lt;parameterMappings&gt;</code></a></td>
 <td><code>List&lt;ParameterMapping&gt;</code></td>
 <td><code>-</code></td>
 <td>Define parameter mappings that allow using custom types for parameter binding. See <code>ParameterMapping</code><!-- no javadoc sites associated --> for details.<br /><strong>User Property</strong>: <code>micronaut.openapi.parameterMappings</code></td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#prependFormOrBodyParameters"><code>&lt;prependFormOrBodyParameters&gt;</code></a></td>
 <td><code>boolean</code></td>
 <td><code>-</code></td>
 <td>Add form or body parameters to the beginning of the parameter list.<br /><strong>User Property</strong>: <code>micronaut.openapi.prependFormOrBodyParameters</code></td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#removeOperationIdPrefixCount"><code>&lt;removeOperationIdPrefixCount&gt;</code></a></td>
 <td><code>int</code></td>
 <td><code>-</code></td>
 <td>Count of delimiter for the prefix. Use -1 for last. Default: 1<br /><strong>Default</strong>: <code>1</code><br /><strong>User Property</strong>: <code>micronaut.openapi.removeOperationIdPrefixCount</code></td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#removeOperationIdPrefixDelimiter"><code>&lt;removeOperationIdPrefixDelimiter&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>-</code></td>
 <td>Character to use as a delimiter for the prefix. Default: '_'<br /><strong>Default</strong>: <code>_</code><br /><strong>User Property</strong>: <code>micronaut.openapi.removeOperationIdPrefixDelimiter</code></td></tr>
+<tr class="a">
+<td><a href="#requiredPropertiesInConstructor"><code>&lt;requiredPropertiesInConstructor&gt;</code></a></td>
+<td><code>boolean</code></td>
+<td><code>4.8.0</code></td>
+<td>Generate or not required properties constructor. Only for java generator.<br /><strong>Default</strong>: <code>true</code><br /><strong>User Property</strong>: <code>micronaut.openapi.requiredPropertiesInConstructor</code></td></tr>
 <tr class="b">
 <td><a href="#responseBodyMappings"><code>&lt;responseBodyMappings&gt;</code></a></td>
 <td><code>List&lt;ResponseBodyMapping&gt;</code></td>
@@ -427,7 +447,12 @@
 <td><a href="#useJakartaEe"><code>&lt;useJakartaEe&gt;</code></a></td>
 <td><code>boolean</code></td>
 <td><code>-</code></td>
-<td>Flag to indicate whether to use the "jakarta" or "javax" package.<br /><strong>Default</strong>: <code>true</code><br /><strong>User Property</strong>: <code>micronaut.openapi.useJakartaEe</code></td></tr></table></section><section><a id="Parameter_Details"></a>
+<td>Flag to indicate whether to use the "jakarta" or "javax" package.<br /><strong>Default</strong>: <code>true</code><br /><strong>User Property</strong>: <code>micronaut.openapi.useJakartaEe</code></td></tr>
+<tr class="b">
+<td><a href="#useSealed"><code>&lt;useSealed&gt;</code></a></td>
+<td><code>boolean</code></td>
+<td><code>4.8.0</code></td>
+<td>Whether to generate sealed model interfaces and classes. Only for java generator.<br /><strong>User Property</strong>: <code>micronaut.openapi.useSealed</code></td></tr></table></section><section><a id="Parameter_Details"></a>
 <h2>Parameter Details</h2><a id="additionalEnumTypeAnnotations"></a><section><a id="a.3CadditionalEnumTypeAnnotations.3E"></a>
 <h3>&lt;additionalEnumTypeAnnotations&gt;</h3>
 <div>Additional annotations for enum type (class level annotations).</div>
@@ -498,7 +523,14 @@
 <li><strong>Type</strong>: <code>java.lang.String</code></li>
 <li><strong>Required</strong>: <code>Yes</code></li>
 <li><strong>User Property</strong>: <code>micronaut.openapi.server.controller.package.name</code></li>
-<li><strong>Default</strong>: <code>io.micronaut.openapi.controller.package.name</code></li></ul><hr /></section><a id="dateTimeFormat"></a><section><a id="a.3CdateTimeFormat.3E"></a>
+<li><strong>Default</strong>: <code>io.micronaut.openapi.controller.package.name</code></li></ul><hr /></section><a id="coroutines"></a><section><a id="a.3Ccoroutines.3E"></a>
+<h3>&lt;coroutines&gt;</h3>
+<div>If set to true, generated code will be with suspend methods. Ony for kotlin generator.</div>
+<ul>
+<li><strong>Type</strong>: <code>boolean</code></li>
+<li><strong>Since</strong>: <code>4.8.0</code></li>
+<li><strong>Required</strong>: <code>No</code></li>
+<li><strong>User Property</strong>: <code>micronaut.openapi.coroutines</code></li></ul><hr /></section><a id="dateTimeFormat"></a><section><a id="a.3CdateTimeFormat.3E"></a>
 <h3>&lt;dateTimeFormat&gt;</h3>
 <div>Configure the date-time format.</div>
 <ul>
@@ -538,7 +570,14 @@
 <li><strong>Type</strong>: <code>boolean</code></li>
 <li><strong>Since</strong>: <code>4.2.2</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
-<li><strong>User Property</strong>: <code>micronaut.openapi.server.flux.for.arrays</code></li></ul><hr /></section><a id="generateHttpResponseWhereRequired"></a><section><a id="a.3CgenerateHttpResponseWhereRequired.3E"></a>
+<li><strong>User Property</strong>: <code>micronaut.openapi.server.flux.for.arrays</code></li></ul><hr /></section><a id="generateControllerAsAbstract"></a><section><a id="a.3CgenerateControllerAsAbstract.3E"></a>
+<h3>&lt;generateControllerAsAbstract&gt;</h3>
+<div>If true, the generated controller interface will be without `@Controller` annotation.</div>
+<ul>
+<li><strong>Type</strong>: <code>boolean</code></li>
+<li><strong>Since</strong>: <code>4.8.0</code></li>
+<li><strong>Required</strong>: <code>No</code></li>
+<li><strong>User Property</strong>: <code>micronaut.openapi.generateControllerAsAbstract</code></li></ul><hr /></section><a id="generateHttpResponseWhereRequired"></a><section><a id="a.3CgenerateHttpResponseWhereRequired.3E"></a>
 <h3>&lt;generateHttpResponseWhereRequired&gt;</h3>
 <div>Wrap the operations response in HttpResponse object where non-200 HTTP status codes or additional headers are defined.</div>
 <ul>
@@ -598,7 +637,14 @@
 <li><strong>Type</strong>: <code>java.lang.String</code></li>
 <li><strong>Required</strong>: <code>Yes</code></li>
 <li><strong>User Property</strong>: <code>micronaut.openapi.invoker.package.name</code></li>
-<li><strong>Default</strong>: <code>io.micronaut.openapi.invoker</code></li></ul><hr /></section><a id="ksp"></a><section><a id="a.3Cksp.3E"></a>
+<li><strong>Default</strong>: <code>io.micronaut.openapi.invoker</code></li></ul><hr /></section><a id="jsonIncludeAlwaysForRequiredFields"></a><section><a id="a.3CjsonIncludeAlwaysForRequiredFields.3E"></a>
+<h3>&lt;jsonIncludeAlwaysForRequiredFields&gt;</h3>
+<div>If set to true, @JsonInclude annotation will be with value ALWAYS for required properties in POJO's.</div>
+<ul>
+<li><strong>Type</strong>: <code>boolean</code></li>
+<li><strong>Since</strong>: <code>4.8.0</code></li>
+<li><strong>Required</strong>: <code>No</code></li>
+<li><strong>User Property</strong>: <code>micronaut.openapi.jsonIncludeAlwaysForRequiredFields</code></li></ul><hr /></section><a id="ksp"></a><section><a id="a.3Cksp.3E"></a>
 <h3>&lt;ksp&gt;</h3>
 <div>If set to true, generated code will be fully compatible with KSP, but not 100% with KAPT.</div>
 <ul>
@@ -696,7 +742,15 @@
 <li><strong>Type</strong>: <code>java.lang.String</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
 <li><strong>User Property</strong>: <code>micronaut.openapi.removeOperationIdPrefixDelimiter</code></li>
-<li><strong>Default</strong>: <code>_</code></li></ul><hr /></section><a id="responseBodyMappings"></a><section><a id="a.3CresponseBodyMappings.3E"></a>
+<li><strong>Default</strong>: <code>_</code></li></ul><hr /></section><a id="requiredPropertiesInConstructor"></a><section><a id="a.3CrequiredPropertiesInConstructor.3E"></a>
+<h3>&lt;requiredPropertiesInConstructor&gt;</h3>
+<div>Generate or not required properties constructor. Only for java generator.</div>
+<ul>
+<li><strong>Type</strong>: <code>boolean</code></li>
+<li><strong>Since</strong>: <code>4.8.0</code></li>
+<li><strong>Required</strong>: <code>No</code></li>
+<li><strong>User Property</strong>: <code>micronaut.openapi.requiredPropertiesInConstructor</code></li>
+<li><strong>Default</strong>: <code>true</code></li></ul><hr /></section><a id="responseBodyMappings"></a><section><a id="a.3CresponseBodyMappings.3E"></a>
 <h3>&lt;responseBodyMappings&gt;</h3>
 <div>Define parameter mappings that allow using custom types for parameter binding. See <code>ResponseBodyMapping</code><!-- no javadoc sites associated --> for details.</div>
 <ul>
@@ -796,7 +850,14 @@
 <li><strong>Type</strong>: <code>boolean</code></li>
 <li><strong>Required</strong>: <code>Yes</code></li>
 <li><strong>User Property</strong>: <code>micronaut.openapi.use.reactive</code></li>
-<li><strong>Default</strong>: <code>true</code></li></ul></section></section></section>        </main>
+<li><strong>Default</strong>: <code>true</code></li></ul><hr /></section><a id="useSealed"></a><section><a id="a.3CuseSealed.3E"></a>
+<h3>&lt;useSealed&gt;</h3>
+<div>Whether to generate sealed model interfaces and classes. Only for java generator.</div>
+<ul>
+<li><strong>Type</strong>: <code>boolean</code></li>
+<li><strong>Since</strong>: <code>4.8.0</code></li>
+<li><strong>Required</strong>: <code>No</code></li>
+<li><strong>User Property</strong>: <code>micronaut.openapi.useSealed</code></li></ul></section></section></section>        </main>
     </div>
     <hr/>
     <footer>
