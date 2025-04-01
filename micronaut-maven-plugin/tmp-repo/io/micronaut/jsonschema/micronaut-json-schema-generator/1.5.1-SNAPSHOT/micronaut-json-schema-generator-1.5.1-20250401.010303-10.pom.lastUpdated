@@ -1,0 +1,9 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Tue Apr 01 14:12:34 EDT 2025
+file\:///Users/andriy/IdeaProjects/micronaut-maven-plugin/micronaut-maven-integration-tests/tmp-repo/.error=
+file\:///Users/andriy/IdeaProjects/micronaut-maven-plugin/micronaut-maven-integration-tests/tmp-repo/.lastUpdated=1743531154666
+https\://raw.githubusercontent.com/graalvm/native-build-tools/snapshots/.error=
+https\://raw.githubusercontent.com/graalvm/native-build-tools/snapshots/.lastUpdated=1743531154759
+https\://repo.maven.apache.org/maven2/.error=
+https\://repo.maven.apache.org/maven2/.lastUpdated=1743531154664
+https\://s01.oss.sonatype.org/content/repositories/snapshots/.lastUpdated=1743531154906

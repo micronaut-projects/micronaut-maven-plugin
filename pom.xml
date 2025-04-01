@@ -113,14 +113,8 @@
 
     <repositories>
         <repository>
-            <id>sonatype-snapshots</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
+            <id>temp</id>
+            <url>file://${project.basedir}/tmp-repo</url>
         </repository>
         <repository>
             <id>graalvm-native-build-tools-snapshots</id>
