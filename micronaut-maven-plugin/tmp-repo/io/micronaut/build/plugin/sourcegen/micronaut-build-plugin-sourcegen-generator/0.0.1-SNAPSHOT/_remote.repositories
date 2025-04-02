@@ -1,4 +1,4 @@
 #NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Tue Apr 01 14:51:38 EDT 2025
-micronaut-build-plugin-sourcegen-generator-0.0.1-20250401.164737-22.jar>sonatype-snapshots=
-micronaut-build-plugin-sourcegen-generator-0.0.1-20250401.164737-22.pom>sonatype-snapshots=
+#Tue Apr 01 14:53:14 EDT 2025
+micronaut-build-plugin-sourcegen-generator-0.0.1-SNAPSHOT.jar>temp=
+micronaut-build-plugin-sourcegen-generator-0.0.1-SNAPSHOT.pom>temp=

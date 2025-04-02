@@ -1,0 +1,185 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "io.micronaut.build.plugin.sourcegen",
+    "module": "micronaut-build-plugin-sourcegen-generator",
+    "version": "0.0.1-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "io.micronaut",
+          "module": "micronaut-inject",
+          "version": {
+            "requires": "4.8.9"
+          }
+        },
+        {
+          "group": "io.micronaut.sourcegen",
+          "module": "micronaut-sourcegen-model",
+          "version": {
+            "requires": "1.7.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "micronaut-build-plugin-sourcegen-generator-0.0.1-SNAPSHOT.jar",
+          "url": "micronaut-build-plugin-sourcegen-generator-0.0.1-SNAPSHOT.jar",
+          "size": 80996,
+          "sha512": "9ee0c2231946ab865e38fdad9154a8784fc4c427b766ec67abda13069ea0a29c06d2f87017ce234ab944cb440ce3c8e3a55155f0589b2451ee95d4a0e73a424e",
+          "sha256": "04d861304c03fc3ffea204775bd2186aefce05e19dece51c9d9c2a0a29bda74f",
+          "sha1": "9fb00a98fa7fee6a1e59aaa8deaba3d723d35c2a",
+          "md5": "2d9344d0eef34b82cdee2bff2da39d74"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "io.micronaut.sourcegen",
+          "module": "micronaut-sourcegen-generator",
+          "version": {
+            "requires": "1.7.2"
+          }
+        },
+        {
+          "group": "io.micronaut.sourcegen",
+          "module": "micronaut-sourcegen-generator-java",
+          "version": {
+            "requires": "1.7.2"
+          }
+        },
+        {
+          "group": "io.micronaut",
+          "module": "micronaut-core-processor",
+          "version": {
+            "requires": "4.8.9"
+          }
+        },
+        {
+          "group": "io.micronaut",
+          "module": "micronaut-inject",
+          "version": {
+            "requires": "4.8.9"
+          }
+        },
+        {
+          "group": "io.micronaut",
+          "module": "micronaut-inject-java",
+          "version": {
+            "requires": "4.8.9"
+          }
+        },
+        {
+          "group": "io.micronaut.build.plugin.sourcegen",
+          "module": "micronaut-build-plugin-sourcegen-annotations",
+          "version": {
+            "requires": "0.0.1-SNAPSHOT"
+          }
+        },
+        {
+          "group": "io.micronaut",
+          "module": "micronaut-inject",
+          "version": {
+            "requires": "4.8.9"
+          }
+        },
+        {
+          "group": "io.micronaut.sourcegen",
+          "module": "micronaut-sourcegen-model",
+          "version": {
+            "requires": "1.7.2"
+          }
+        },
+        {
+          "group": "io.micronaut",
+          "module": "micronaut-core-bom",
+          "version": {
+            "requires": "4.8.9"
+          },
+          "attributes": {
+            "org.gradle.category": "platform"
+          },
+          "endorseStrictVersions": true
+        }
+      ],
+      "files": [
+        {
+          "name": "micronaut-build-plugin-sourcegen-generator-0.0.1-SNAPSHOT.jar",
+          "url": "micronaut-build-plugin-sourcegen-generator-0.0.1-SNAPSHOT.jar",
+          "size": 80996,
+          "sha512": "9ee0c2231946ab865e38fdad9154a8784fc4c427b766ec67abda13069ea0a29c06d2f87017ce234ab944cb440ce3c8e3a55155f0589b2451ee95d4a0e73a424e",
+          "sha256": "04d861304c03fc3ffea204775bd2186aefce05e19dece51c9d9c2a0a29bda74f",
+          "sha1": "9fb00a98fa7fee6a1e59aaa8deaba3d723d35c2a",
+          "md5": "2d9344d0eef34b82cdee2bff2da39d74"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "micronaut-build-plugin-sourcegen-generator-0.0.1-SNAPSHOT-sources.jar",
+          "url": "micronaut-build-plugin-sourcegen-generator-0.0.1-SNAPSHOT-sources.jar",
+          "size": 36842,
+          "sha512": "1e393f7bbbdac45845f8c4e65cd7ade3e692e18b3d9770f9fb00300f7da204e6e275f24b1af33e7bd19a9ca10bc07a348c890761a16b13089abe8caeb4bb5835",
+          "sha256": "0d41faf6835c34dc641455b51175ebb51a6904e0bd2d7c041788d48950608f50",
+          "sha1": "c0c00fded7205c0fe038b85f703b6697aff937f6",
+          "md5": "c3ee508079db69f5bb7d5b195a7c8d39"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "micronaut-build-plugin-sourcegen-generator-0.0.1-SNAPSHOT-javadoc.jar",
+          "url": "micronaut-build-plugin-sourcegen-generator-0.0.1-SNAPSHOT-javadoc.jar",
+          "size": 171006,
+          "sha512": "bfe6e59149a56de3e315f3877d3cc25f54fb5b7749426b01e8d88ff40feb7499b6f2f43ba0406e7bc33d409089c070295bbdac4bfcf1714482602ea355669489",
+          "sha256": "d0884c914db47bcc737420b50fe88d0d871e058d6a3ec3efe37b8abefbb915de",
+          "sha1": "01bfe860d490f92bc01b51b0ee66c7095ec77939",
+          "md5": "e01423c9220bf6b007c140922ef16b9f"
+        }
+      ]
+    }
+  ]
+}

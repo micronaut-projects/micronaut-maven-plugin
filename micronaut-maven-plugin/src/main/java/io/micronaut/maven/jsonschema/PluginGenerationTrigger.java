@@ -22,7 +22,10 @@ import io.micronaut.sourcegen.annotations.GenerateMavenMojo;
         namePrefix = "AbstractJsonSchemaGenerator",
         source = "io.micronaut.jsonschema.generator.plugin.JsonSchemaGeneratorTask",
         parameterPrefix = "micronaut.jsonschema.generator",
-        globalParameters = { "inputURL", "inputFile", "inputDirectory", "outputPackageName", "outputFileName", "language" }
+        globalParameters = {
+                "inputURL=input-url", "inputFile=input-file", "inputDirectory=input-directory",
+                "outputPackageName=output-package-name", "outputFileName=output-file-name", "language"
+        }
 )
 @Internal
 interface PluginGenerationTrigger {
