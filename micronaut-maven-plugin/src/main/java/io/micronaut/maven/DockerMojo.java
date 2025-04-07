@@ -67,7 +67,7 @@ public class DockerMojo extends AbstractDockerMojo {
         var providedDockerfile = new File(mavenProject.getBasedir(), DockerfileMojo.DOCKERFILE);
         if (shouldBuildWithDockerfile(providedDockerfile)) {
             var dockerfile = determineDockerfile(providedDockerfile);
-            buildDockerfile(dockerfile);
+            buildDockerfile(dockerfile, providedDockerfile.exists());
         } else if (jibConfigurationService.getFromImage().isEmpty()) {
             mavenProject.getProperties().setProperty(PropertyNames.FROM_IMAGE, getBaseImage());
         }
@@ -89,10 +89,10 @@ public class DockerMojo extends AbstractDockerMojo {
         return providedDockerfile.exists() || runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION;
     }
 
-    private void buildDockerfile(File dockerfile) throws MojoExecutionException {
+    private void buildDockerfile(File dockerfile, boolean providedDockerfileExists) throws MojoExecutionException {
         try {
             var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
-            if (runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION) {
+            if (runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION && !providedDockerfileExists) {
                 oracleCloudFunctionCmd(dockerfile);
                 DockerfileMojo.processOracleFunctionDockerfile(dockerfile);
             }
