@@ -562,7 +562,7 @@
                     <dependency><!-- add Asciidoctor Doxia Parser Module -->
                         <groupId>org.asciidoctor</groupId>
                         <artifactId>asciidoctor-converter-doxia-module</artifactId>
-                        <version>3.1.1</version>
+                        <version>3.2.0</version>
                     </dependency>
                     <dependency>
                         <groupId>org.apache.maven.doxia</groupId>
