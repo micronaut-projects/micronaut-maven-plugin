@@ -26,6 +26,7 @@ import io.micronaut.maven.testresources.TestResourcesHelper;
 import io.micronaut.testresources.buildtools.ServerSettings;
 import io.micronaut.testresources.buildtools.ServerUtils;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Build;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -57,6 +58,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import static io.micronaut.maven.MojoUtils.findJavaExecutable;
 import static io.micronaut.maven.MojoUtils.hasMicronautMavenPlugin;
@@ -337,6 +339,8 @@ public class RunMojo extends AbstractTestResourcesMojo {
                 fileSet.addInclude("**/*");
                 watches.add(fileSet);
             });
+
+        compileProject();
     }
 
     private boolean isDependencyOfRunnableProject(MavenProject mavenProject) {
@@ -510,7 +514,11 @@ public class RunMojo extends AbstractTestResourcesMojo {
         restartLock.lock();
         try {
             runAotIfNeeded();
-            String classpathArgument = new File(targetDirectory, "classes" + File.pathSeparator).getAbsolutePath() + this.classpath;
+            final String reactorClasses = mavenSession.getAllProjects().stream()
+                    .map(MavenProject::getBuild)
+                    .map(Build::getOutputDirectory)
+                    .collect(Collectors.joining(File.pathSeparator));
+            String classpathArgument = String.join(File.pathSeparator, reactorClasses, this.classpath);
 
             var args = new ArrayList<String>();
             args.add(javaExecutable);

@@ -142,8 +142,21 @@ public class ExecutorService {
      * @throws MavenInvocationException If the goal execution fails
      */
     public InvocationResult invokeGoals(String... goals) throws MavenInvocationException {
+        return invokeGoals(mavenProject, goals);
+    }
+
+    /**
+     * Executes a goal using the Maven shared invoker.
+     *
+     * @param project The Maven project
+     * @param goals The goals to execute
+     * @return The result of the invocation
+     * @throws MavenInvocationException If the goal execution fails
+     */
+
+    public InvocationResult invokeGoals(MavenProject project, String... goals) throws MavenInvocationException {
         var request = new DefaultInvocationRequest();
-        request.setPomFile(mavenProject.getFile());
+        request.setPomFile(project.getFile());
         File settingsFile = mavenSession.getRequest().getUserSettingsFile();
         if (settingsFile.exists()) {
             request.setUserSettingsFile(settingsFile);
@@ -155,6 +168,7 @@ public class ExecutorService {
         request.addArgs(Arrays.asList(goals));
         request.setBatchMode(true);
         request.setQuiet(true);
+        request.setAlsoMake(true);
         request.setErrorHandler(LOG::error);
         request.setOutputHandler(LOG::info);
         request.setProperties(properties);

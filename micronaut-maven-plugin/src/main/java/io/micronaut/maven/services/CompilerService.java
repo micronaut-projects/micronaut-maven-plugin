@@ -26,8 +26,10 @@ import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyFilter;
+import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.util.filter.DependencyFilterUtils;
 
 import javax.inject.Inject;
@@ -78,7 +80,11 @@ public class CompilerService {
             log.debug("Compiling the project");
         }
         try {
-            executorService.invokeGoals(COMPILE_GOAL);
+            MavenProject projectToCompile = mavenSession.getTopLevelProject();
+            if (mavenSession.getAllProjects().contains(mavenSession.getCurrentProject().getParent())) {
+                projectToCompile = mavenSession.getCurrentProject().getParent();
+            }
+            executorService.invokeGoals(projectToCompile, COMPILE_GOAL);
             lastCompilation = System.currentTimeMillis();
         } catch (Exception e) {
             if (log.isErrorEnabled()) {
@@ -97,7 +103,10 @@ public class CompilerService {
      */
     public List<Dependency> resolveDependencies(MavenProject runnableProject, String... scopes) {
         try {
-            DependencyFilter filter = DependencyFilterUtils.classpathFilter(scopes);
+            DependencyFilter filter = DependencyFilterUtils.andFilter(
+                    DependencyFilterUtils.classpathFilter(scopes),
+                    new ReactorProjectsFilter(mavenSession.getAllProjects())
+            );
             RepositorySystemSession session = mavenSession.getRepositorySession();
             DependencyResolutionRequest dependencyResolutionRequest = new DefaultDependencyResolutionRequest(runnableProject, session);
             dependencyResolutionRequest.setResolutionFilter(filter);
@@ -134,4 +143,23 @@ public class CompilerService {
     public InvocationResult packageProject() throws MavenInvocationException {
         return executorService.invokeGoal(MAVEN_JAR_PLUGIN, "jar");
     }
+
+    private record ReactorProjectsFilter(List<MavenProject> reactorProjects) implements DependencyFilter {
+
+        @Override
+            public boolean accept(final DependencyNode node, final List<DependencyNode> parents) {
+                final Artifact nodeArtifact = node.getArtifact();
+                if (nodeArtifact == null) {
+                    return true;
+                }
+                for (MavenProject project : reactorProjects) {
+                    if (project.getGroupId().equals(nodeArtifact.getGroupId()) &&
+                        project.getArtifactId().equals(nodeArtifact.getArtifactId()) &&
+                        project.getVersion().equals(nodeArtifact.getVersion())) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
 }
