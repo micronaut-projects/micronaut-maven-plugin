@@ -3,10 +3,10 @@
   <groupId>io.micronaut.jsonschema</groupId>
   <artifactId>micronaut-json-schema-generator</artifactId>
   <versioning>
-    <latest>1.5.1-SNAPSHOT</latest>
+    <latest>1.5.4-SNAPSHOT</latest>
     <versions>
-      <version>1.5.1-SNAPSHOT</version>
+      <version>1.5.4-SNAPSHOT</version>
     </versions>
-    <lastUpdated>20250401181252</lastUpdated>
+    <lastUpdated>20250422180914</lastUpdated>
   </versioning>
 </metadata>
