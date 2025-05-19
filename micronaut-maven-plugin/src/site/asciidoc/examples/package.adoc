@@ -31,8 +31,7 @@ https://maven.apache.org/plugins/maven-shade-plugin/[Maven Shade Plugin document
 $ mvn package -Dpackaging=native-image
 ----
 
-If the `<packaging>` is set to `native-image`, this plugin will delegate to the official GraalVM Maven Native plugin
-(`org.graalvm.buildtools:native-maven-plugin`) to generate a native image. Note that for this packaging to work,
+If the `<packaging>` is set to `native-image`, this plugin will delegate to the official https://graalvm.github.io/native-build-tools/latest/maven-plugin.html[Maven plugin for GraalVM Native Image] (`org.graalvm.buildtools:native-maven-plugin`) to generate a native image. Note that for this packaging to work,
 you need to run locally a GraalVM JDK.
 
 Refer to the
