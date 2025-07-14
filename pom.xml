@@ -733,6 +733,9 @@
     <profiles>
         <profile>
             <id>release</id>
+            <properties>
+                <gpg.passphrase>${env.GPG_PASSWORD}</gpg.passphrase>
+            </properties>
             <build>
                 <plugins>
                     <plugin>

@@ -73,7 +73,7 @@ jobs:
           TARGET_REPOSITORY: ${{ github.repository }}
 
       - name: Perform release
-        run: ./mvnw --batch-mode release:perform -Darguments="-Dinvoker.skip=true -Dgpg.passphrase="
+        run: ./mvnw --batch-mode release:perform -Darguments="-Dinvoker.skip=true"
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
