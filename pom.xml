@@ -77,7 +77,7 @@
         <native-maven-plugin.version>0.10.6</native-maven-plugin.version>
         <micronaut.aot.version>2.7.0</micronaut.aot.version>
         <micronaut.test.resources.version>2.9.0</micronaut.test.resources.version>
-        <micronaut.openapi.version>6.15.0</micronaut.openapi.version>
+        <micronaut.openapi.version>6.17.3</micronaut.openapi.version>
         <micronaut.jsonschema.version>1.5.2</micronaut.jsonschema.version>
 
         <maven.resources-plugin.version>3.3.1</maven.resources-plugin.version>
