@@ -99,7 +99,7 @@
         <jacoco.version>0.8.13</jacoco.version>
         <junit-jupiter.version>5.13.1</junit-jupiter.version>
         <directory-watcher.version>0.19.1</directory-watcher.version>
-        <testcontainers.version>1.20.6</testcontainers.version>
+        <testcontainers.version>1.21.3</testcontainers.version>
         <jib-maven-plugin.version>3.4.6</jib-maven-plugin.version>
         <snakeyaml.version>2.4</snakeyaml.version>
         <sisu.version>0.9.0.M2</sisu.version>
