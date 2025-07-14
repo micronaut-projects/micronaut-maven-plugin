@@ -150,8 +150,7 @@
                                 </annotationProcessorPath>
                             </annotationProcessorPaths>
                             <annotationProcessorArgs>
-                                <annotationProcessorArg>micronaut.processing.group=io.micronaut.maven.examples
-                                </annotationProcessorArg>
+                                <annotationProcessorArg>micronaut.processing.group=io.micronaut.maven.examples</annotationProcessorArg>
                                 <annotationProcessorArg>micronaut.processing.module=demoKotlin</annotationProcessorArg>
                             </annotationProcessorArgs>
                         </configuration>
