@@ -16,31 +16,17 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GH_TOKEN }}
 
-      - name: Cache Maven packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: 'graalvm'
           java-version: '17'
-          settings-path: /tmp
-
-      - name: Setup Maven settings.xml
-        uses: s4u/maven-settings-action@v3.1.0
-        with:
-          override: true
-          servers: '[{"id": "ossrh", "username": "${{ secrets.SONATYPE_USERNAME }}", "password": "${{ secrets.SONATYPE_PASSWORD }}"}]'
-          properties: '[{"gpg.executable": "gpg"}, {"gpg.passphrase": "${{ secrets.GPG_PASSWORD }}"}]'
-
-      - name: Setup gpg keyring
-        env:
-          GPG_FILE: ${{ secrets.GPG_FILE }}
-        run: mkdir ~/.gnupg && echo "$GPG_FILE" | base64 -d > ~/.gnupg/secring.gpg
+          cache: 'maven'
+          server-id: central
+          server-username: SONATYPE_USERNAME
+          server-password: SONATYPE_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_FILE }}
+          gpg-passphrase: GPG_PASSWORD
 
       - name: Set the current release version
         id: release_version
@@ -87,8 +73,10 @@ jobs:
           TARGET_REPOSITORY: ${{ github.repository }}
 
       - name: Perform release
-        run: ./mvnw --batch-mode release:perform -Darguments="-Dinvoker.skip=true"
+        run: ./mvnw --batch-mode release:perform -Darguments="-Dinvoker.skip=true -Dgpg.passphrase="
         env:
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
 
       - name: Close release
