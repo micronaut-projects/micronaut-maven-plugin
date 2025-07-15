@@ -19,6 +19,9 @@ jobs:
       matrix:
         java: ['17', '21']
     env:
+      SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSWORD }}
       GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
       GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
       GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
@@ -44,7 +47,6 @@ jobs:
           server-username: SONATYPE_USERNAME
           server-password: SONATYPE_PASSWORD
           gpg-private-key: ${{ secrets.GPG_FILE }}
-          gpg-passphrase: GPG_PASSWORD
 
       - name: "🔧 Setup GraalVM CE"
         uses: graalvm/setup-graalvm@v1.3.4
