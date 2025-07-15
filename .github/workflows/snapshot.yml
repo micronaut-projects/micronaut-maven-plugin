@@ -106,31 +106,25 @@ jobs:
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "❓ Determine current version"
-        if: success() && github.event_name == 'push' && matrix.java == '17'
+#        if: success() && github.event_name == 'push' && matrix.java == '17'
         id: release_version
         run: echo ::set-output name=release_version::`./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout`
 
-      - name: "🌎 Generate site"
-        if: success() && github.event_name == 'push' && matrix.java == '17'
-        run: |
-          ./mvnw site:site
-          cp -R target/site/apidocs/* micronaut-maven-plugin/target/site/apidocs
+#      - name: "🌎 Generate site"
+#        if: success() && github.event_name == 'push' && matrix.java == '17'
+#        run: |
+#          ./mvnw site:site
+#          cp -R target/site/apidocs/* micronaut-maven-plugin/target/site/apidocs
 
-      - name: "📑 Publish to Github Pages"
-        if: success() && github.event_name == 'push' && matrix.java == '17'
-        uses: micronaut-projects/github-pages-deploy-action@master
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          BRANCH: gh-pages
-          FOLDER: micronaut-maven-plugin/target/site
-
-      - name: "🛠 Set up Maven"
-        if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') && matrix.java == '17'
-        uses: stCarolas/setup-maven@v4.5
-        with:
-          maven-version: 3.9.0
+#      - name: "📑 Publish to Github Pages"
+#        if: success() && github.event_name == 'push' && matrix.java == '17'
+#        uses: micronaut-projects/github-pages-deploy-action@master
+#        env:
+#          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+#          BRANCH: gh-pages
+#          FOLDER: micronaut-maven-plugin/target/site
 
       - name: "📦 Deploy snapshot"
-        if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') && matrix.java == '17'
+#        if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') && matrix.java == '17'
         run: |
           ./mvnw deploy -Dinvoker.skip
