@@ -778,7 +778,6 @@
             <id>release</id>
             <properties>
                 <altDeploymentRepository>local::file:./target/staging-deploy</altDeploymentRepository>
-                <gpg.passphrase>${env.GPG_PASSWORD}</gpg.passphrase>
             </properties>
             <build>
                 <defaultGoal>deploy</defaultGoal>

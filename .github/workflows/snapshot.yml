@@ -37,6 +37,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: "🔐 Setup GPG keyring"
+        env:
+          GPG_FILE: ${{ secrets.GPG_FILE }}
+        run: |
+          mkdir ~/.gnupg && echo "$GPG_FILE" | base64 -d > ~/.gnupg/secring.gpg
+          
+          # Verify gpg secret key
+          gpg --list-secret-keys --keyid-format LONG
+
       - name: "☕️ Install Java and Maven and set up Apache Maven Central"
         uses: actions/setup-java@v4
         with:
