@@ -519,11 +519,6 @@
                     <artifactId>maven-enforcer-plugin</artifactId>
                     <version>3.6.0</version>
                 </plugin>
-                <plugin>
-                    <groupId>org.jreleaser</groupId>
-                    <artifactId>jreleaser-maven-plugin</artifactId>
-                    <version>1.19.0</version>
-                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -683,40 +678,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>org.jreleaser</groupId>
-                <artifactId>jreleaser-maven-plugin</artifactId>
-                <configuration>
-                    <jreleaser>
-                        <signing>
-                            <active>ALWAYS</active>
-                            <armored>true</armored>
-                        </signing>
-                        <deploy>
-                            <maven>
-                                <mavenCentral>
-                                    <release-deploy>
-                                        <active>RELEASE</active>
-                                        <url>https://central.sonatype.com/api/v1/publisher</url>
-                                        <stagingRepositories>target/staging-deploy</stagingRepositories>
-                                    </release-deploy>
-                                </mavenCentral>
-                                <nexus2>
-                                    <snapshot-deploy>
-                                        <active>SNAPSHOT</active>
-                                        <snapshotUrl>https://central.sonatype.com/repository/maven-snapshots/</snapshotUrl>
-                                        <applyMavenCentralRules>true</applyMavenCentralRules>
-                                        <snapshotSupported>true</snapshotSupported>
-                                        <closeRepository>true</closeRepository>
-                                        <releaseRepository>true</releaseRepository>
-                                        <stagingRepositories>target/staging-deploy</stagingRepositories>
-                                    </snapshot-deploy>
-                                </nexus2>
-                            </maven>
-                        </deploy>
-                    </jreleaser>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
 
@@ -776,11 +737,7 @@
     <profiles>
         <profile>
             <id>release</id>
-            <properties>
-                <altDeploymentRepository>local::file:./target/staging-deploy</altDeploymentRepository>
-            </properties>
             <build>
-                <defaultGoal>deploy</defaultGoal>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -791,9 +748,6 @@
                                 <goals>
                                     <goal>jar-no-fork</goal>
                                 </goals>
-                                <configuration>
-                                    <attach>true</attach>
-                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
@@ -806,9 +760,6 @@
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
-                                <configuration>
-                                    <attach>true</attach>
-                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
