@@ -112,6 +112,6 @@ jobs:
         run: |
           ./mvnw deploy -Dinvoker.skip
         env:
-          SONATYPE_USERNAME: ${{ secrets.OSS_INDEX_USERNAME }}
-          SONATYPE_PASSWORD: ${{ secrets.OSS_INDEX_PASSWORD }}
+          SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
