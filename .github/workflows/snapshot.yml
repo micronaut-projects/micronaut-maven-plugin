@@ -37,7 +37,7 @@ jobs:
       - name: "☕️ Install Java and Maven and set up Apache Maven Central"
         uses: actions/setup-java@v4
         with:
-          distribution: 'graalvm'
+          distribution: 'temurin'
           java-version: ${{ matrix.java }}
           cache: 'maven'
           server-id: central

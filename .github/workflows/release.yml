@@ -19,7 +19,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'graalvm'
+          distribution: 'temurin'
           java-version: '17'
           cache: 'maven'
           server-id: central
