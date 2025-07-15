@@ -14,6 +14,7 @@
 
     <name>Micronaut Maven Plugin - Jib Integration</name>
     <description>Integration with the Jib Maven Plugin</description>
+    <url>https://github.com/micronaut-projects/micronaut-maven-plugin</url>
 
     <dependencies>
         <!-- Internal dependencies -->

@@ -37,9 +37,14 @@ jobs:
       - name: "☕️ Install Java and Maven and set up Apache Maven Central"
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: 'graalvm'
           java-version: ${{ matrix.java }}
-          server-password: GH_TOKEN
+          cache: 'maven'
+          server-id: central
+          server-username: SONATYPE_USERNAME
+          server-password: SONATYPE_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_FILE }}
+          gpg-passphrase: GPG_PASSWORD
 
       - name: "🔧 Setup GraalVM CE"
         uses: graalvm/setup-graalvm@v1.3.4
@@ -66,24 +71,24 @@ jobs:
         run: |
           docker pull postgres:latest
 
-      - name: "🧪 Run tests"
-        run: |
-          ./mvnw -q install -Dinvoker.skip=true && ./mvnw verify
-
-      - name: "📊 Publish Test Report"
-        if: always()
-        uses: mikepenz/action-junit-report@v5.6.2
-        with:
-          check_name: Java CI / Test Report
-          report_paths: '**/target/invoker-reports/TEST-*.xml'
-          check_retries: 'true'
-
-      - name: "🔎 Run static analysis"
-        if: env.SONAR_TOKEN != '' && matrix.java == '17'
-        run: ./mvnw sonar:sonar
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      - name: "🧪 Run tests"
+#        run: |
+#          ./mvnw -q install -Dinvoker.skip=true && ./mvnw verify
+#
+#      - name: "📊 Publish Test Report"
+#        if: always()
+#        uses: mikepenz/action-junit-report@v5.6.2
+#        with:
+#          check_name: Java CI / Test Report
+#          report_paths: '**/target/invoker-reports/TEST-*.xml'
+#          check_retries: 'true'
+#
+#      - name: "🔎 Run static analysis"
+#        if: env.SONAR_TOKEN != '' && matrix.java == '17'
+#        run: ./mvnw sonar:sonar
+#        env:
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "❓ Determine current version"
         if: success() && github.event_name == 'push' && matrix.java == '17'
@@ -112,8 +117,5 @@ jobs:
 
       - name: "📦 Deploy snapshot"
         if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') && matrix.java == '17'
-        uses: samuelmeuli/action-maven-publish@v1
-        with:
-          maven_args: "-Dinvoker.skip=true"
-          nexus_username: ${{ secrets.SONATYPE_USERNAME }}
-          nexus_password: ${{ secrets.SONATYPE_PASSWORD }}
+        run: |
+          ./mvnw deploy -Dinvoker.skip

@@ -14,6 +14,7 @@
 
     <name>Micronaut Maven Plugin - Core</name>
     <description>Core classes for Micronaut Maven Plugin</description>
+    <url>https://github.com/micronaut-projects/micronaut-maven-plugin</url>
 
     <dependencies>
         <dependency>
