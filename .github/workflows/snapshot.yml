@@ -19,9 +19,6 @@ jobs:
       matrix:
         java: ['17', '21']
     env:
-      SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
-      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-      GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
       GRADLE_ENTERPRISE_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
       GRADLE_ENTERPRISE_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
       GRADLE_ENTERPRISE_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
@@ -68,24 +65,10 @@ jobs:
           java-version: ${{ matrix.java }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: "📦 Cache Maven packages"
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
-
-      - name: "🔑 Log into OCIR"
-        if: env.OCI_AUTH_TOKEN != ''
-        uses: oracle-actions/login-ocir@v1.2
-        id: login-ocir
-        with:
-          auth_token: ${{ secrets.OCI_AUTH_TOKEN }}
-
-      - name: "⏬ Eagerly pull Docker images"
-        run: |
-          docker pull postgres:latest
-
+#      - name: "⏬ Eagerly pull Docker images"
+#        run: |
+#          docker pull postgres:latest
+#
 #      - name: "🧪 Run tests"
 #        run: |
 #          ./mvnw -q install -Dinvoker.skip=true && ./mvnw verify
@@ -128,3 +111,7 @@ jobs:
 #        if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') && matrix.java == '17'
         run: |
           ./mvnw deploy -Dinvoker.skip
+        env:
+          SONATYPE_USERNAME: ${{ secrets.OSS_INDEX_USERNAME }}
+          SONATYPE_PASSWORD: ${{ secrets.OSS_INDEX_PASSWORD }}
+          GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
