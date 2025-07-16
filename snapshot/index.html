@@ -10,7 +10,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content="Apache Maven Doxia Site Renderer 2.0.0" />
-    <meta name="date" content="2025-07-16 06:05:55 UTC" />
+    <meta name="date" content="2025-07-16 09:33:05 UTC" />
     <title>[Untitled] – Micronaut Maven Plugin - Plugin</title>
     <link rel="stylesheet" href="./css/apache-maven-fluido-2.0.0-M11.min.css" />
     <link rel="stylesheet" href="./css/site.css" />
@@ -87,7 +87,7 @@
           </nav>
           <div class="nav-collapse">
 <form id="search-form" action="https://www.google.com/search" method="get"  class="navbar-search pull-right">
-  <input value="github.com/micronaut-projects/micronaut-maven-plugin/micronaut-maven-plugin" name="sitesearch" type="hidden" />
+  <input value="github.com/micronaut-projects/micronaut-maven-plugin" name="sitesearch" type="hidden" />
   <input class="search-query" name="q" id="query" type="text" placeholder="Search with Google..." />
 </form>
     <ul class="nav pull-right" style="border:none; margin-top: 7px"><li>
@@ -211,7 +211,7 @@ Since version 4.0.0 of this plugin (which is the version compatible with Microna
 <p>The <code>&lt;packaging&gt;</code> part is important since the plugin support several packaging types. The default is <code>jar</code>.</p>
 </div>
 <div class="paragraph">
-<p>For snapshot versions, you need the Sonatype OSSRH Snapshot repository:</p>
+<p>For snapshot versions, you need the Maven Central Portal Snapshot repository:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -224,8 +224,11 @@ Since version 4.0.0 of this plugin (which is the version compatible with Microna
         <span style="color:#777">&lt;!-- ... --&gt;</span>
 
         <span style="color:#070;font-weight:bold">&lt;pluginRepository&gt;</span>
-            <span style="color:#070;font-weight:bold">&lt;id&gt;</span>ossrh<span style="color:#070;font-weight:bold">&lt;/id&gt;</span>
-            <span style="color:#070;font-weight:bold">&lt;url&gt;</span>https://s01.oss.sonatype.org/content/repositories/snapshots<span style="color:#070;font-weight:bold">&lt;/url&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;id&gt;</span>central-portal-snapshots<span style="color:#070;font-weight:bold">&lt;/id&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;url&gt;</span>https://central.sonatype.com/repository/maven-snapshots/<span style="color:#070;font-weight:bold">&lt;/url&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;releases&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;enabled&gt;</span>false<span style="color:#070;font-weight:bold">&lt;/enabled&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/releases&gt;</span>
             <span style="color:#070;font-weight:bold">&lt;snapshots&gt;</span>
                 <span style="color:#070;font-weight:bold">&lt;enabled&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/enabled&gt;</span>
             <span style="color:#070;font-weight:bold">&lt;/snapshots&gt;</span>
