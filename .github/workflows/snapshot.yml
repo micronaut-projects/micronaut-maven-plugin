@@ -33,6 +33,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
 
       - name: "🔐 Setup GPG keyring"
         env:
@@ -54,10 +55,6 @@ jobs:
           server-password: SONATYPE_PASSWORD
           gpg-passphrase: GPG_PASSWORD
 
-      - name: "✅ Verify settings.xml"
-        run: |
-          cat ~/.m2/settings.xml
-
       - name: "🔧 Setup GraalVM CE"
         uses: graalvm/setup-graalvm@v1.3.4
         with:
@@ -65,53 +62,52 @@ jobs:
           java-version: ${{ matrix.java }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-#      - name: "⏬ Eagerly pull Docker images"
-#        run: |
-#          docker pull postgres:latest
-#
-#      - name: "🧪 Run tests"
-#        run: |
-#          ./mvnw -q install -Dinvoker.skip=true && ./mvnw verify
-#
-#      - name: "📊 Publish Test Report"
-#        if: always()
-#        uses: mikepenz/action-junit-report@v5.6.2
-#        with:
-#          check_name: Java CI / Test Report
-#          report_paths: '**/target/invoker-reports/TEST-*.xml'
-#          check_retries: 'true'
-#
-#      - name: "🔎 Run static analysis"
-#        if: env.SONAR_TOKEN != '' && matrix.java == '17'
-#        run: ./mvnw sonar:sonar
-#        env:
-#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: "⏬ Eagerly pull Docker images"
+        run: |
+          docker pull postgres:latest
+
+      - name: "🧪 Run tests"
+        run: |
+          ./mvnw -q install -Dinvoker.skip=true && ./mvnw verify
+
+      - name: "📊 Publish Test Report"
+        if: always()
+        uses: mikepenz/action-junit-report@v5.6.2
+        with:
+          check_name: Java CI / Test Report
+          report_paths: '**/target/invoker-reports/TEST-*.xml'
+          check_retries: 'true'
+
+      - name: "🔎 Run static analysis"
+        if: env.SONAR_TOKEN != '' && matrix.java == '17'
+        run: ./mvnw sonar:sonar
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "❓ Determine current version"
-#        if: success() && github.event_name == 'push' && matrix.java == '17'
+        if: success() && github.event_name == 'push' && matrix.java == '17'
         id: release_version
         run: echo ::set-output name=release_version::`./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout`
 
-#      - name: "🌎 Generate site"
-#        if: success() && github.event_name == 'push' && matrix.java == '17'
-#        run: |
-#          ./mvnw site:site
-#          cp -R target/site/apidocs/* micronaut-maven-plugin/target/site/apidocs
+      - name: "🌎 Generate site"
+        if: success() && github.event_name == 'push' && matrix.java == '17'
+        run: |
+          ./mvnw site:site
+          cp -R target/site/apidocs/* micronaut-maven-plugin/target/site/apidocs
 
-#      - name: "📑 Publish to Github Pages"
-#        if: success() && github.event_name == 'push' && matrix.java == '17'
-#        uses: micronaut-projects/github-pages-deploy-action@master
-#        env:
-#          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-#          BRANCH: gh-pages
-#          FOLDER: micronaut-maven-plugin/target/site
+      - name: "📑 Publish to Github Pages"
+        if: success() && github.event_name == 'push' && matrix.java == '17'
+        uses: micronaut-projects/github-pages-deploy-action@master
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: micronaut-maven-plugin/target/site
 
       - name: "📦 Deploy snapshot"
-#        if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') && matrix.java == '17'
+        if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') && matrix.java == '17'
         run: |
           ./mvnw deploy -Dinvoker.skip
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-          GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}

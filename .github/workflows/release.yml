@@ -11,28 +11,37 @@ jobs:
       DEVELOCITY_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
       MICRONAUT_CORE_BRANCH: "4.0.x"
     steps:
-      - uses: actions/checkout@v4
+      - name: "📥 Checkout repository"
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_TOKEN }}
 
-      - name: Set up JDK
+      - name: "🔐 Setup GPG keyring"
+        env:
+          GPG_FILE: ${{ secrets.GPG_FILE }}
+        run: |
+          mkdir ~/.gnupg && echo "$GPG_FILE" | base64 -d > ~/.gnupg/secring.gpg
+          
+          # Verify gpg secret key
+          gpg --list-secret-keys --keyid-format LONG
+
+      - name: "☕️ Install Java and Maven and set up Apache Maven Central"
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: ${{ matrix.java }}
           cache: 'maven'
           server-id: central
           server-username: SONATYPE_USERNAME
           server-password: SONATYPE_PASSWORD
-          gpg-private-key: ${{ secrets.GPG_FILE }}
           gpg-passphrase: GPG_PASSWORD
 
-      - name: Set the current release version
+      - name: "🟰 Set the current release version"
         id: release_version
         run: echo "release_version=${GITHUB_REF:11}" >> $GITHUB_OUTPUT
 
-      - name: Setup git
+      - name: "🪾 Setup git"
         env:
           MICRONAUT_BUILD_EMAIL: ${{ secrets.MICRONAUT_BUILD_EMAIL }}
         run: |
@@ -44,12 +53,12 @@ jobs:
           git tag -d v${{ steps.release_version.outputs.release_version }}
           git push origin :refs/tags/v${{ steps.release_version.outputs.release_version }}
 
-      - name: Setup SSH key
+      - name: "🔑 Setup SSH key"
         uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Figure out next version
+      - name: "❓ Figure out next version"
         id: next_version
         run: |
           wget -q https://raw.githubusercontent.com/micronaut-projects/github-actions/master/post-release/increment_version.sh -O /tmp/iv.sh
@@ -57,12 +66,12 @@ jobs:
           NV=`/tmp/iv.sh -p ${{ steps.release_version.outputs.release_version }}`
           echo "next_version=${NV}-SNAPSHOT" >> $GITHUB_OUTPUT
 
-      - name: Prepare release
+      - name: "⚙️ Prepare release"
         run: |
           ./mvnw --batch-mode release:prepare -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }} -Darguments="-Dinvoker.skip=true"
           cp -R target/site/apidocs/* micronaut-maven-plugin/target/site/apidocs
 
-      - name: Publish to Github Pages
+      - name: "📄 Publish to Github Pages"
         uses: micronaut-projects/github-pages-deploy-action@master
         env:
           BETA: ${{ contains(steps.release_version.outputs.release_version, 'M') || contains(steps.release_version.outputs.release_version, 'RC') }}
@@ -72,25 +81,25 @@ jobs:
           VERSION: ${{ steps.release_version.outputs.release_version }}
           TARGET_REPOSITORY: ${{ github.repository }}
 
-      - name: Perform release
+      - name: "📦 Perform release"
         run: ./mvnw --batch-mode release:perform -Darguments="-Dinvoker.skip=true"
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
 
-      - name: Close release
+      - name: "🚪 Close release"
         if: success()
         run: |
           release_url=`cat $GITHUB_EVENT_PATH | jq '.release.url' | sed -e 's/^"\(.*\)"$/\1/g'`
           echo $release_url
           curl -s --request PATCH -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/json" $release_url --data "{\"draft\": false}"
 
-      - name: Rollback release
+      - name: "↩️ Rollback release"
         if: failure()
         run: ./mvnw release:rollback
 
-      - name: Close milestone ${{ steps.release_version.outputs.release_version }}
+      - name: "🚪 Close milestone ${{ steps.release_version.outputs.release_version }}"
         if: success()
         uses: Beakyn/gha-close-milestone@v1.1.1
         env:
