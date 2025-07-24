@@ -19,6 +19,7 @@ import io.micronaut.maven.AbstractMicronautMojo;
 import io.micronaut.maven.Packaging;
 import io.micronaut.maven.services.CompilerService;
 import org.apache.commons.io.FileUtils;
+import org.apache.maven.model.Exclusion;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
@@ -26,6 +27,7 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Abstract Mojo for Micronaut AOT.
@@ -59,6 +61,12 @@ public abstract class AbstractMicronautAotMojo extends AbstractMicronautMojo {
      */
     @Parameter(defaultValue = "${project.build.outputDirectory}", required = true)
     protected File outputDirectory;
+
+    /**
+     * Packages that would be excluded from the AOT processing.
+     */
+    @Parameter(property = "exclusions")
+    protected List<Exclusion> aotExclusions;
 
     public AbstractMicronautAotMojo(CompilerService compilerService, MavenProject mavenProject) {
         this.compilerService = compilerService;
