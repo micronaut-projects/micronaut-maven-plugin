@@ -64,6 +64,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMicronautMojo {
 
     /**
      * Packages that would be excluded from the AOT processing.
+     * @since 4.11.0
      */
     @Parameter(property = "exclusions")
     protected List<Exclusion> aotExclusions;
