@@ -15,6 +15,7 @@
  */
 package io.micronaut.maven.aot;
 
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.maven.MojoUtils;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
@@ -158,6 +159,13 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
         classpath.addAll(aotClasspath);
         classpath.addAll(aotPluginsClasspath);
         classpath.addAll(applicationClasspath);
+
+        if (!CollectionUtils.isEmpty(aotExclusions)) {
+            getLog().info("Using exclusions for the AOT classpath: " +
+                    aotExclusions.stream().map(v -> v.getGroupId() + ":" + v.getArtifactId()).collect(Collectors.joining(", ")));
+            getLog().info("Resulting AOT classpath: " + String.join(", ", classpath));
+        }
+
         Stream<String> jvmArgs = Optional.ofNullable(aotJvmArgs).orElse(List.of()).stream();
         Stream<String> mainArgs = Stream.of(
             "-classpath",
@@ -186,7 +194,9 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
             .getAbsolutePath();
         var result = new ArrayList<String>();
         result.add(projectJar);
-        String classpath = compilerService.buildClasspath(compilerService.resolveDependencies(mavenProject, JavaScopes.RUNTIME));
+        String classpath = compilerService.buildClasspath(compilerService.resolveDependencies(mavenProject, JavaScopes.RUNTIME)
+                .stream().filter(dep -> this.isDependencyIncluded(dep.getArtifact())).toList()
+        );
         result.addAll(Arrays.asList(classpath.split(File.pathSeparator)));
         return result;
     }
@@ -194,17 +204,29 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     private List<String> resolveAotClasspath() throws DependencyResolutionException {
         Stream<Artifact> aotArtifacts = Arrays.stream(AOT_MODULES)
             .map(m -> new DefaultArtifact(MICRONAUT_AOT_GROUP_ID + ":" + MICRONAUT_AOT_ARTIFACT_ID_PREFIX + m + ":" + micronautAotVersion));
-        return toClasspath(dependencyResolutionService.artifactResultsFor(aotArtifacts, false));
+        return toClasspath(dependencyResolutionService.artifactResultsFor(aotArtifacts, false)
+                .stream().filter(r -> this.isDependencyIncluded(r.getArtifact())).toList()
+        );
     }
 
     private List<String> resolveAotPluginsClasspath() throws DependencyResolutionException {
         if (aotDependencies != null && !aotDependencies.isEmpty()) {
             Stream<Artifact> aotPlugins = aotDependencies.stream()
                 .map(d -> new DefaultArtifact(d.getGroupId(), d.getArtifactId(), d.getType(), d.getVersion()));
-            return toClasspath(dependencyResolutionService.artifactResultsFor(aotPlugins, false));
+            return toClasspath(dependencyResolutionService.artifactResultsFor(aotPlugins, false)
+                    .stream().filter(r -> this.isDependencyIncluded(r.getArtifact())).toList()
+            );
         } else {
             return Collections.emptyList();
         }
+    }
+
+    private boolean isDependencyIncluded(Artifact dependency) {
+        if (aotExclusions == null) {
+            return true;
+        }
+        return aotExclusions.stream()
+                .noneMatch(e -> e.getGroupId().equals(dependency.getGroupId()) && e.getArtifactId().equals(dependency.getArtifactId()));
     }
 
 }

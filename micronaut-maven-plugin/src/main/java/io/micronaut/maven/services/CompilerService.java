@@ -95,18 +95,30 @@ public class CompilerService {
     }
 
     /**
+     * Resolves project dependencies for given scopes.
+     *
+     * @param runnableProject The project
+     * @param scopes The scopes
+     * @return The dependencies
+     */
+    public List<Dependency> resolveDependencies(MavenProject runnableProject, String... scopes) {
+        return resolveDependencies(runnableProject, false, scopes);
+    }
+
+    /**
      * Resolves project dependencies for the given scopes.
      *
      * @param runnableProject the project to resolve dependencies for.
+     * @param excludeProjects Whether to exclude projects (of this build) from the dependencies.
      * @param scopes the scopes to resolve dependencies for.
      * @return the list of dependencies.
      */
-    public List<Dependency> resolveDependencies(MavenProject runnableProject, String... scopes) {
+    public List<Dependency> resolveDependencies(MavenProject runnableProject, boolean excludeProjects, String... scopes) {
         try {
-            DependencyFilter filter = DependencyFilterUtils.andFilter(
-                    DependencyFilterUtils.classpathFilter(scopes),
-                    new ReactorProjectsFilter(mavenSession.getAllProjects())
-            );
+            DependencyFilter filter = DependencyFilterUtils.classpathFilter(scopes);
+            if (excludeProjects) {
+                DependencyFilterUtils.andFilter(filter, new ReactorProjectsFilter(mavenSession.getAllProjects()));
+            }
             RepositorySystemSession session = mavenSession.getRepositorySession();
             DependencyResolutionRequest dependencyResolutionRequest = new DefaultDependencyResolutionRequest(runnableProject, session);
             dependencyResolutionRequest.setResolutionFilter(filter);
