@@ -88,3 +88,32 @@ Then, copy the `target/aot/jit/aot.properties` to your root directory, and adapt
 directory, use the `micronaut.aot.config` property to specify its location.
 
 For a full list of configuration options, check the link:../aot-analysis-mojo.html[`aot-analysis` goal documentation].
+
+==== Excluding dependencies
+
+If you want to exclude a dependency from AOT processing, use the `aotExclusions` configuration property.
+For example, to exclude `com.example:example` use the following configuration:
+
+[source,xml]
+----
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.micronaut.maven</groupId>
+        <artifactId>micronaut-maven-plugin</artifactId>
+        <configuration>
+          <aotExclusions>
+            <exclusion>
+              <groupId>com.example</groupId>
+              <artifactId>example</artifactId>
+            </exclusion>
+          </aotExclusions>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+----
+
+NOTE: It is recommended to add AOT exclusions if you are building native imagen and have
+exclusions in the `native-maven-plugin`.
+
