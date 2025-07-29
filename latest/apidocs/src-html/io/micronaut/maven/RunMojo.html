@@ -492,7 +492,7 @@
 <span class="source-line-no">479</span><span id="line-479"></span>
 <span class="source-line-no">480</span><span id="line-480">    private boolean resolveDependencies() {</span>
 <span class="source-line-no">481</span><span id="line-481">        try {</span>
-<span class="source-line-no">482</span><span id="line-482">            List&lt;Dependency&gt; dependencies = compilerService.resolveDependencies(runnableProject, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME);</span>
+<span class="source-line-no">482</span><span id="line-482">            List&lt;Dependency&gt; dependencies = compilerService.resolveDependencies(runnableProject, true, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME);</span>
 <span class="source-line-no">483</span><span id="line-483">            if (dependencies.isEmpty()) {</span>
 <span class="source-line-no">484</span><span id="line-484">                return false;</span>
 <span class="source-line-no">485</span><span id="line-485">            } else {</span>
