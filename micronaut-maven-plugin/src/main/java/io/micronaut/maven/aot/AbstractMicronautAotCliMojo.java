@@ -15,6 +15,7 @@
  */
 package io.micronaut.maven.aot;
 
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.maven.MojoUtils;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
@@ -158,6 +159,13 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
         classpath.addAll(aotClasspath);
         classpath.addAll(aotPluginsClasspath);
         classpath.addAll(applicationClasspath);
+
+        if (!CollectionUtils.isEmpty(aotExclusions)) {
+            getLog().info("Using exclusions for the AOT classpath: " +
+                    aotExclusions.stream().map(v -> v.getGroupId() + ":" + v.getArtifactId()).collect(Collectors.joining(", ")));
+            getLog().info("Resulting AOT classpath: " + String.join(", ", classpath));
+        }
+
         Stream<String> jvmArgs = Optional.ofNullable(aotJvmArgs).orElse(List.of()).stream();
         Stream<String> mainArgs = Stream.of(
             "-classpath",
