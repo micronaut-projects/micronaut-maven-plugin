@@ -89,7 +89,7 @@ loadScripts(document, 'script');</script>
 <dd><code><a href="AbstractMicronautAotCliMojo.html" title="class in io.micronaut.maven.aot">AbstractMicronautAotCliMojo</a></code></dd>
 </dl>
 <hr>
-<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-33">AbstractMicronautAotMojo</a></span>
+<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-35">AbstractMicronautAotMojo</a></span>
 <span class="extends-implements">extends <a href="../AbstractMicronautMojo.html" title="class in io.micronaut.maven">AbstractMicronautMojo</a></span></div>
 <div class="block">Abstract Mojo for Micronaut AOT.</div>
 </section>
@@ -104,30 +104,35 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Field</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color"><code>protected final <a href="../services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a></code></div>
-<div class="col-second even-row-color"><code><a href="#compilerService" class="member-name-link">compilerService</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected boolean</code></div>
-<div class="col-second odd-row-color"><code><a href="#enabled" class="member-name-link">enabled</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.apache.maven.model.Exclusion&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#aotExclusions" class="member-name-link">aotExclusions</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">Packages that would be excluded from the AOT processing.</div>
+</div>
+<div class="col-first odd-row-color"><code>protected final <a href="../services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#compilerService" class="member-name-link">compilerService</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>protected boolean</code></div>
+<div class="col-second even-row-color"><code><a href="#enabled" class="member-name-link">enabled</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Whether to enable or disable Micronaut AOT.</div>
 </div>
-<div class="col-first even-row-color"><code>protected final org.apache.maven.project.MavenProject</code></div>
-<div class="col-second even-row-color"><code><a href="#mavenProject" class="member-name-link">mavenProject</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#micronautAotVersion" class="member-name-link">micronautAotVersion</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first odd-row-color"><code>protected final org.apache.maven.project.MavenProject</code></div>
+<div class="col-second odd-row-color"><code><a href="#mavenProject" class="member-name-link">mavenProject</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#micronautAotVersion" class="member-name-link">micronautAotVersion</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Micronaut AOT version.</div>
 </div>
-<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></code></div>
-<div class="col-second even-row-color"><code><a href="#outputDirectory" class="member-name-link">outputDirectory</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#outputDirectory" class="member-name-link">outputDirectory</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">Directory where compiled application classes are.</div>
 </div>
-<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#runtime" class="member-name-link">runtime</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#runtime" class="member-name-link">runtime</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Micronaut AOT runtime.</div>
 </div>
 </div>
@@ -199,13 +204,13 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="compilerService">
 <h3>compilerService</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="../services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-35">compilerService</a></span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="../services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-37">compilerService</a></span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="mavenProject">
 <h3>mavenProject</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">org.apache.maven.project.MavenProject</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-37">mavenProject</a></span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">org.apache.maven.project.MavenProject</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-39">mavenProject</a></span></div>
 </section>
 </li>
 <li>
@@ -214,7 +219,7 @@ loadScripts(document, 'script');</script>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.aot.runtime",
            required=true,
            defaultValue="jit")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-42">runtime</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-44">runtime</a></span></div>
 <div class="block">Micronaut AOT runtime. Possible values: <code>jit</code>, <code>native</code>.</div>
 </section>
 </li>
@@ -223,7 +228,7 @@ loadScripts(document, 'script');</script>
 <h3>micronautAotVersion</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.aot.version",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-48">micronautAotVersion</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-50">micronautAotVersion</a></span></div>
 <div class="block">Micronaut AOT version.</div>
 </section>
 </li>
@@ -232,7 +237,7 @@ loadScripts(document, 'script');</script>
 <h3>enabled</h3>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.aot.enabled",
            defaultValue="false")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-54">enabled</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-56">enabled</a></span></div>
 <div class="block">Whether to enable or disable Micronaut AOT.</div>
 </section>
 </li>
@@ -241,8 +246,20 @@ loadScripts(document, 'script');</script>
 <h3>outputDirectory</h3>
 <div class="member-signature"><span class="annotations">@Parameter(defaultValue="${project.build.outputDirectory}",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-60">outputDirectory</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-62">outputDirectory</a></span></div>
 <div class="block">Directory where compiled application classes are.</div>
+</section>
+</li>
+<li>
+<section class="detail" id="aotExclusions">
+<h3>aotExclusions</h3>
+<div class="member-signature"><span class="annotations">@Parameter(property="exclusions")
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;org.apache.maven.model.Exclusion&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-69">aotExclusions</a></span></div>
+<div class="block">Packages that would be excluded from the AOT processing.</div>
+<dl class="notes">
+<dt>Since:</dt>
+<dd>4.11.0</dd>
+</dl>
 </section>
 </li>
 </ul>
@@ -256,7 +273,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="&lt;init&gt;(io.micronaut.maven.services.CompilerService,org.apache.maven.project.MavenProject)">
 <h3>AbstractMicronautAotMojo</h3>
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-63">AbstractMicronautAotMojo</a></span><wbr><span class="parameters">(<a href="../services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a>&nbsp;compilerService,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-72">AbstractMicronautAotMojo</a></span><wbr><span class="parameters">(<a href="../services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a>&nbsp;compilerService,
  org.apache.maven.project.MavenProject&nbsp;mavenProject)</span></div>
 </section>
 </li>
@@ -271,19 +288,19 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="getBaseOutputDirectory()">
 <h3>getBaseOutputDirectory</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-70">getBaseOutputDirectory</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-79">getBaseOutputDirectory</a></span>()</div>
 </section>
 </li>
 <li>
 <section class="detail" id="outputFile(java.lang.String)">
 <h3>outputFile</h3>
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-75">outputFile</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-84">outputFile</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
 </section>
 </li>
 <li>
 <section class="detail" id="execute()">
 <h3>execute</h3>
-<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-79">execute</a></span>()
+<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-88">execute</a></span>()
                    throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
 <dt>Throws:</dt>
@@ -294,7 +311,7 @@ loadScripts(document, 'script');</script>
 <li>
 <section class="detail" id="doExecute()">
 <h3>doExecute</h3>
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-129">doExecute</a></span>()
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotMojo.html#line-138">doExecute</a></span>()
                            throws <span class="exceptions">org.eclipse.aether.resolution.DependencyResolutionException,
 org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
