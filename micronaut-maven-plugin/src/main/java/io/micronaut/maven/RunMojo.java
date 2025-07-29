@@ -479,7 +479,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
 
     private boolean resolveDependencies() {
         try {
-            List<Dependency> dependencies = compilerService.resolveDependencies(runnableProject, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME);
+            List<Dependency> dependencies = compilerService.resolveDependencies(runnableProject, true, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME);
             if (dependencies.isEmpty()) {
                 return false;
             } else {
