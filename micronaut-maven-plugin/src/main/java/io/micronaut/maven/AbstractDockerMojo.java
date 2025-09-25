@@ -38,6 +38,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -127,6 +128,33 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      */
     @Parameter(property = "docker.networkMode")
     protected String networkMode;
+
+    /**
+     * HTTP proxy URL for Docker build operations. Used when building behind corporate firewalls.
+     * Example: http://proxy.company.com:8080
+     *
+     * @since 4.10.x
+     */
+    @Parameter(property = "docker.httpProxy")
+    protected String httpProxy;
+
+    /**
+     * HTTPS proxy URL for Docker build operations. Used when building behind corporate firewalls.
+     * Example: http://proxy.company.com:8080
+     *
+     * @since 4.10.x
+     */
+    @Parameter(property = "docker.httpsProxy")
+    protected String httpsProxy;
+
+    /**
+     * Comma-separated list of hosts that should not use proxy. Used when building behind corporate firewalls.
+     * Example: localhost,127.0.0.1,.company.com
+     *
+     * @since 4.10.x
+     */
+    @Parameter(property = "docker.noProxy")
+    protected String noProxy;
 
     protected AbstractDockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
                                  ApplicationConfigurationService applicationConfigurationService,
@@ -280,6 +308,26 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      */
     protected Optional<String> getNetworkMode() {
         return Optional.ofNullable(networkMode);
+    }
+
+    /**
+     * @return Map of proxy-related build arguments for Docker builds.
+     */
+    protected Map<String, String> getProxyBuildArgs() {
+        var proxyArgs = new java.util.HashMap<String, String>();
+        if (httpProxy != null && !httpProxy.trim().isEmpty()) {
+            proxyArgs.put("HTTP_PROXY", httpProxy);
+            proxyArgs.put("http_proxy", httpProxy);
+        }
+        if (httpsProxy != null && !httpsProxy.trim().isEmpty()) {
+            proxyArgs.put("HTTPS_PROXY", httpsProxy);
+            proxyArgs.put("https_proxy", httpsProxy);
+        }
+        if (noProxy != null && !noProxy.trim().isEmpty()) {
+            proxyArgs.put("NO_PROXY", noProxy);
+            proxyArgs.put("no_proxy", noProxy);
+        }
+        return proxyArgs;
     }
 
     /**
