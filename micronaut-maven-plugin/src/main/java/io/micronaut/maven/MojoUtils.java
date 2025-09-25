@@ -51,6 +51,11 @@ public final class MojoUtils {
         if (toolchain != null) {
             executable = toolchain.findTool(JAVA);
         } else {
+            executable = null;
+        }
+        
+        // Fallback to default Java executable if toolchain is not configured or doesn't provide a valid tool
+        if (executable == null) {
             var javaBinariesDir = new File(new File(System.getProperty("java.home")), "bin");
             if (Os.isFamily(Os.FAMILY_UNIX)) {
                 executable = new File(javaBinariesDir, JAVA).getAbsolutePath();

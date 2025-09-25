@@ -1,11 +1,85 @@
 package io.micronaut.maven;
 
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.toolchain.Toolchain;
+import org.apache.maven.toolchain.ToolchainManager;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.codehaus.plexus.util.Os;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.*;
+
+import java.io.File;
 
 class MojoUtilsTest {
+
+    @Test
+    void testFindJavaExecutableWithValidToolchain() {
+        // Arrange
+        ToolchainManager toolchainManager = mock(ToolchainManager.class);
+        MavenSession mavenSession = mock(MavenSession.class);
+        Toolchain toolchain = mock(Toolchain.class);
+        
+        when(toolchainManager.getToolchainFromBuildContext("jdk", mavenSession)).thenReturn(toolchain);
+        when(toolchain.findTool("java")).thenReturn("/custom/path/to/java");
+        
+        // Act
+        String result = MojoUtils.findJavaExecutable(toolchainManager, mavenSession);
+        
+        // Assert
+        assertEquals("/custom/path/to/java", result);
+    }
+
+    @Test
+    void testFindJavaExecutableWithMisconfiguredToolchain() {
+        // Arrange
+        ToolchainManager toolchainManager = mock(ToolchainManager.class);
+        MavenSession mavenSession = mock(MavenSession.class);
+        Toolchain toolchain = mock(Toolchain.class);
+        
+        when(toolchainManager.getToolchainFromBuildContext("jdk", mavenSession)).thenReturn(toolchain);
+        when(toolchain.findTool("java")).thenReturn(null); // Simulates misconfigured toolchain
+        
+        // Act
+        String result = MojoUtils.findJavaExecutable(toolchainManager, mavenSession);
+        
+        // Assert
+        assertNotNull(result);
+        // Should fallback to default Java executable based on OS
+        if (Os.isFamily(Os.FAMILY_UNIX)) {
+            assertEquals(new File(new File(System.getProperty("java.home")), "bin/java").getAbsolutePath(), result);
+        } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            assertEquals(new File(new File(System.getProperty("java.home")), "bin/java.exe").getAbsolutePath(), result);
+        } else {
+            assertEquals("java", result);
+        }
+    }
+
+    @Test
+    void testFindJavaExecutableWithNoToolchain() {
+        // Arrange
+        ToolchainManager toolchainManager = mock(ToolchainManager.class);
+        MavenSession mavenSession = mock(MavenSession.class);
+        
+        when(toolchainManager.getToolchainFromBuildContext("jdk", mavenSession)).thenReturn(null);
+        
+        // Act
+        String result = MojoUtils.findJavaExecutable(toolchainManager, mavenSession);
+        
+        // Assert
+        assertNotNull(result);
+        // Should use default Java executable based on OS
+        if (Os.isFamily(Os.FAMILY_UNIX)) {
+            assertEquals(new File(new File(System.getProperty("java.home")), "bin/java").getAbsolutePath(), result);
+        } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+            assertEquals(new File(new File(System.getProperty("java.home")), "bin/java.exe").getAbsolutePath(), result);
+        } else {
+            assertEquals("java", result);
+        }
+    }
 
     @ParameterizedTest
     @ValueSource(strings = {
