@@ -187,4 +187,35 @@ class DockerNativeMojoTest {
             throw new RuntimeException("Failed to set proxy fields", e);
         }
     }
+
+    @Test
+    void testGetProxyBuildArgsWithEmptyStrings() {
+        var project = mock(MavenProject.class);
+        var session = mock(MavenSession.class);
+        var execution = mock(MojoExecution.class);
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        when(project.getProperties()).thenReturn(new Properties());
+
+        var mojo = new DockerNativeMojo(project, null, null, null, session, execution);
+        
+        // Set empty proxy values using reflection
+        try {
+            var httpProxyField = AbstractDockerMojo.class.getDeclaredField("httpProxy");
+            httpProxyField.setAccessible(true);
+            httpProxyField.set(mojo, "  ");  // whitespace only
+
+            var httpsProxyField = AbstractDockerMojo.class.getDeclaredField("httpsProxy");
+            httpsProxyField.setAccessible(true);
+            httpsProxyField.set(mojo, "");   // empty string
+
+            var proxyArgs = mojo.getProxyBuildArgs();
+
+            // Empty/whitespace-only values should not be included
+            assertEquals(0, proxyArgs.size());
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set proxy fields", e);
+        }
+    }
 }
