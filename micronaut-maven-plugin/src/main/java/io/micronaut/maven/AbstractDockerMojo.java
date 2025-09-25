@@ -16,6 +16,7 @@
 package io.micronaut.maven;
 
 import com.google.common.io.FileWriteMode;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.jib.JibMicronautExtension;
@@ -128,33 +129,6 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      */
     @Parameter(property = "docker.networkMode")
     protected String networkMode;
-
-    /**
-     * HTTP proxy URL for Docker build operations. Used when building behind corporate firewalls.
-     * Example: http://proxy.company.com:8080
-     *
-     * @since 4.10.x
-     */
-    @Parameter(property = "docker.httpProxy")
-    protected String httpProxy;
-
-    /**
-     * HTTPS proxy URL for Docker build operations. Used when building behind corporate firewalls.
-     * Example: http://proxy.company.com:8080
-     *
-     * @since 4.10.x
-     */
-    @Parameter(property = "docker.httpsProxy")
-    protected String httpsProxy;
-
-    /**
-     * Comma-separated list of hosts that should not use proxy. Used when building behind corporate firewalls.
-     * Example: localhost,127.0.0.1,.company.com
-     *
-     * @since 4.10.x
-     */
-    @Parameter(property = "docker.noProxy")
-    protected String noProxy;
 
     protected AbstractDockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
                                  ApplicationConfigurationService applicationConfigurationService,
@@ -315,18 +289,34 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      */
     protected Map<String, String> getProxyBuildArgs() {
         var proxyArgs = new java.util.HashMap<String, String>();
-        if (httpProxy != null && !httpProxy.trim().isEmpty()) {
+        
+        // HTTP proxy configuration from standard JVM properties
+        String httpProxyHost = System.getProperty("http.proxyHost");
+        String httpProxyPort = System.getProperty("http.proxyPort", "80");
+        if (StringUtils.hasText(httpProxyHost)) {
+            String httpProxy = "http://" + httpProxyHost + ":" + httpProxyPort;
             proxyArgs.put("HTTP_PROXY", httpProxy);
             proxyArgs.put("http_proxy", httpProxy);
         }
-        if (httpsProxy != null && !httpsProxy.trim().isEmpty()) {
+        
+        // HTTPS proxy configuration from standard JVM properties
+        String httpsProxyHost = System.getProperty("https.proxyHost");
+        String httpsProxyPort = System.getProperty("https.proxyPort", "443");
+        if (StringUtils.hasText(httpsProxyHost)) {
+            String httpsProxy = "http://" + httpsProxyHost + ":" + httpsProxyPort;
             proxyArgs.put("HTTPS_PROXY", httpsProxy);
             proxyArgs.put("https_proxy", httpsProxy);
         }
-        if (noProxy != null && !noProxy.trim().isEmpty()) {
+        
+        // No proxy configuration from standard JVM properties
+        String nonProxyHosts = System.getProperty("http.nonProxyHosts");
+        if (StringUtils.hasText(nonProxyHosts)) {
+            // Convert Java format (e.g., "*.company.com|localhost") to standard format (e.g., "*.company.com,localhost")
+            String noProxy = nonProxyHosts.replace("|", ",");
             proxyArgs.put("NO_PROXY", noProxy);
             proxyArgs.put("no_proxy", noProxy);
         }
+        
         return proxyArgs;
     }
 
