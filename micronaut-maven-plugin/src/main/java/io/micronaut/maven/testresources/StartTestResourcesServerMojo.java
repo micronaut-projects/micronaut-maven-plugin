@@ -82,20 +82,10 @@ public class StartTestResourcesServerMojo extends AbstractTestResourcesMojo {
             var execution = new MojoExecution(mavenProject.getPlugin(MojoUtils.THIS_PLUGIN), null, null);
             var evaluator = new PluginParameterExpressionEvaluator(mavenSession, execution);
             
-            // Check skipTests property (from maven-surefire-plugin)
-            if (isPropertyTrue(evaluator, "skipTests")) {
-                return true;
-            }
-            
-            // Check maven.test.skip property (skips both compilation and execution)
-            if (isPropertyTrue(evaluator, "maven.test.skip")) {
-                return true;
-            }
-            
-            // Check skipITs property (from maven-failsafe-plugin)
-            if (isPropertyTrue(evaluator, "skipITs")) {
-                return true;
-            }
+            // Check skip properties (from maven-surefire-plugin, maven-compiler-plugin, and maven-failsafe-plugin)
+            return isPropertyTrue(evaluator, "skipTests") ||
+                   isPropertyTrue(evaluator, "maven.test.skip") ||
+                   isPropertyTrue(evaluator, "skipITs");
             
         } catch (ExpressionEvaluationException e) {
             getLog().debug("Could not evaluate test skip properties: " + e.getMessage());

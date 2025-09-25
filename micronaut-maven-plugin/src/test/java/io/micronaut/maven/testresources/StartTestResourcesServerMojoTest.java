@@ -8,6 +8,8 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.toolchain.ToolchainManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -48,46 +50,19 @@ class StartTestResourcesServerMojoTest {
         when(mavenSession.getSystemProperties()).thenReturn(new Properties());
     }
 
-    @Test
-    void shouldSkipWhenSkipTestsIsTrue() {
+    @ParameterizedTest
+    @ValueSource(strings = {"skipTests", "maven.test.skip", "skipITs"})
+    void shouldSkipWhenSkipPropertyIsTrue(String skipProperty) {
         // Given
         Properties userProps = new Properties();
-        userProps.setProperty("skipTests", "true");
+        userProps.setProperty(skipProperty, "true");
         when(mavenSession.getUserProperties()).thenReturn(userProps);
 
         // When
         boolean result = mojo.isTestExecutionSkipped();
 
         // Then
-        assertTrue(result, "Should skip when skipTests is true");
-    }
-
-    @Test
-    void shouldSkipWhenMavenTestSkipIsTrue() {
-        // Given
-        Properties userProps = new Properties();
-        userProps.setProperty("maven.test.skip", "true");
-        when(mavenSession.getUserProperties()).thenReturn(userProps);
-
-        // When
-        boolean result = mojo.isTestExecutionSkipped();
-
-        // Then
-        assertTrue(result, "Should skip when maven.test.skip is true");
-    }
-
-    @Test
-    void shouldSkipWhenSkipITsIsTrue() {
-        // Given
-        Properties userProps = new Properties();
-        userProps.setProperty("skipITs", "true");
-        when(mavenSession.getUserProperties()).thenReturn(userProps);
-
-        // When
-        boolean result = mojo.isTestExecutionSkipped();
-
-        // Then
-        assertTrue(result, "Should skip when skipITs is true");
+        assertTrue(result, "Should skip when " + skipProperty + " is true");
     }
 
     @Test
