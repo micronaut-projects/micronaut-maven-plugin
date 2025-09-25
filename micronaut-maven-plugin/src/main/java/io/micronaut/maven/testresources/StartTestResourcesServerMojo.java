@@ -15,6 +15,7 @@
  */
 package io.micronaut.maven.testresources;
 
+import io.micronaut.maven.MojoUtils;
 import io.micronaut.maven.services.DependencyResolutionService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -72,35 +73,51 @@ public class StartTestResourcesServerMojo extends AbstractTestResourcesMojo {
     }
 
     /**
-     * Checks whether test execution is skipped using either skipTests or maven.test.skip properties.
+     * Checks whether test execution is skipped using either skipTests, maven.test.skip, or skipITs properties.
      *
      * @return true if tests are being skipped, false otherwise
      */
-    private boolean isTestExecutionSkipped() {
+    boolean isTestExecutionSkipped() {
         try {
-            var execution = new MojoExecution(mavenProject.getPlugin("io.micronaut.maven:micronaut-maven-plugin"), null, null);
+            var execution = new MojoExecution(mavenProject.getPlugin(MojoUtils.THIS_PLUGIN), null, null);
             var evaluator = new PluginParameterExpressionEvaluator(mavenSession, execution);
             
             // Check skipTests property (from maven-surefire-plugin)
-            Object skipTests = evaluator.evaluate("${skipTests}");
-            if (skipTests instanceof Boolean && (Boolean) skipTests) {
-                return true;
-            }
-            if (skipTests instanceof String && Boolean.parseBoolean((String) skipTests)) {
+            if (isPropertyTrue(evaluator, "skipTests")) {
                 return true;
             }
             
             // Check maven.test.skip property (skips both compilation and execution)
-            Object mavenTestSkip = evaluator.evaluate("${maven.test.skip}");
-            if (mavenTestSkip instanceof Boolean && (Boolean) mavenTestSkip) {
+            if (isPropertyTrue(evaluator, "maven.test.skip")) {
                 return true;
             }
-            if (mavenTestSkip instanceof String && Boolean.parseBoolean((String) mavenTestSkip)) {
+            
+            // Check skipITs property (from maven-failsafe-plugin)
+            if (isPropertyTrue(evaluator, "skipITs")) {
                 return true;
             }
             
         } catch (ExpressionEvaluationException e) {
             getLog().debug("Could not evaluate test skip properties: " + e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * Checks if a property evaluates to true.
+     *
+     * @param evaluator the expression evaluator
+     * @param propertyName the property name to check
+     * @return true if the property is set to true, false otherwise
+     * @throws ExpressionEvaluationException if the property cannot be evaluated
+     */
+    private boolean isPropertyTrue(PluginParameterExpressionEvaluator evaluator, String propertyName) throws ExpressionEvaluationException {
+        Object propertyValue = evaluator.evaluate("${" + propertyName + "}");
+        if (propertyValue instanceof Boolean) {
+            return (Boolean) propertyValue;
+        }
+        if (propertyValue instanceof String) {
+            return Boolean.parseBoolean((String) propertyValue);
         }
         return false;
     }

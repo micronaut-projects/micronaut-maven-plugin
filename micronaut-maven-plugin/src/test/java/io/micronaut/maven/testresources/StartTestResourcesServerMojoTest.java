@@ -1,45 +1,128 @@
 package io.micronaut.maven.testresources;
 
+import io.micronaut.maven.services.DependencyResolutionService;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.toolchain.ToolchainManager;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-import java.lang.reflect.Method;
+import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
- * Test for StartTestResourcesServerMojo to verify skipTests functionality.
- * This is a simple test that verifies the method exists and is properly structured.
+ * Unit test for StartTestResourcesServerMojo to verify skipTests functionality.
  */
 class StartTestResourcesServerMojoTest {
 
-    @Test
-    void shouldHaveIsTestExecutionSkippedMethod() {
-        // Verify that the method exists and is accessible
-        Class<StartTestResourcesServerMojo> mojoClass = StartTestResourcesServerMojo.class;
+    @Mock
+    private MavenProject mavenProject;
+
+    @Mock
+    private MavenSession mavenSession;
+
+    @Mock
+    private DependencyResolutionService dependencyResolutionService;
+
+    @Mock
+    private ToolchainManager toolchainManager;
+
+    @Mock
+    private Plugin plugin;
+
+    private StartTestResourcesServerMojo mojo;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        mojo = new StartTestResourcesServerMojo(mavenProject, mavenSession, dependencyResolutionService, toolchainManager);
         
-        Method[] methods = mojoClass.getDeclaredMethods();
-        boolean hasSkipMethod = false;
-        
-        for (Method method : methods) {
-            if ("isTestExecutionSkipped".equals(method.getName()) && 
-                method.getReturnType() == boolean.class &&
-                method.getParameterCount() == 0) {
-                hasSkipMethod = true;
-                break;
-            }
-        }
-        
-        assertTrue(hasSkipMethod, "StartTestResourcesServerMojo should have isTestExecutionSkipped() method");
+        when(mavenProject.getPlugin("io.micronaut.maven:micronaut-maven-plugin")).thenReturn(plugin);
+        when(mavenSession.getUserProperties()).thenReturn(new Properties());
+        when(mavenSession.getSystemProperties()).thenReturn(new Properties());
     }
-    
+
     @Test
-    void shouldHaveExecuteMethodThatChecksSkipTests() throws Exception {
-        // Verify that the execute method exists
-        Class<StartTestResourcesServerMojo> mojoClass = StartTestResourcesServerMojo.class;
-        
-        Method executeMethod = mojoClass.getDeclaredMethod("execute");
-        assertNotNull(executeMethod, "execute() method should exist");
-        assertEquals(void.class, executeMethod.getReturnType());
-        assertEquals(0, executeMethod.getParameterCount());
+    void shouldSkipWhenSkipTestsIsTrue() {
+        // Given
+        Properties userProps = new Properties();
+        userProps.setProperty("skipTests", "true");
+        when(mavenSession.getUserProperties()).thenReturn(userProps);
+
+        // When
+        boolean result = mojo.isTestExecutionSkipped();
+
+        // Then
+        assertTrue(result, "Should skip when skipTests is true");
+    }
+
+    @Test
+    void shouldSkipWhenMavenTestSkipIsTrue() {
+        // Given
+        Properties userProps = new Properties();
+        userProps.setProperty("maven.test.skip", "true");
+        when(mavenSession.getUserProperties()).thenReturn(userProps);
+
+        // When
+        boolean result = mojo.isTestExecutionSkipped();
+
+        // Then
+        assertTrue(result, "Should skip when maven.test.skip is true");
+    }
+
+    @Test
+    void shouldSkipWhenSkipITsIsTrue() {
+        // Given
+        Properties userProps = new Properties();
+        userProps.setProperty("skipITs", "true");
+        when(mavenSession.getUserProperties()).thenReturn(userProps);
+
+        // When
+        boolean result = mojo.isTestExecutionSkipped();
+
+        // Then
+        assertTrue(result, "Should skip when skipITs is true");
+    }
+
+    @Test
+    void shouldNotSkipWhenNoSkipPropertiesSet() {
+        // Given - properties already set to empty in setUp()
+
+        // When
+        boolean result = mojo.isTestExecutionSkipped();
+
+        // Then
+        assertFalse(result, "Should not skip when no skip properties are set");
+    }
+
+    @Test
+    void shouldNotSkipWhenSkipPropertiesAreFalse() {
+        // Given
+        Properties userProps = new Properties();
+        userProps.setProperty("skipTests", "false");
+        userProps.setProperty("maven.test.skip", "false");
+        userProps.setProperty("skipITs", "false");
+        when(mavenSession.getUserProperties()).thenReturn(userProps);
+
+        // When
+        boolean result = mojo.isTestExecutionSkipped();
+
+        // Then
+        assertFalse(result, "Should not skip when skip properties are false");
+    }
+
+    @Test
+    void shouldExecuteWithoutExceptionWhenTestsAreNotSkipped() throws MojoExecutionException {
+        // Given
+        mojo.setTestResourcesEnabled(false); // Disable to avoid actual server start
+
+        // When/Then - should not throw exception
+        assertDoesNotThrow(() -> mojo.execute());
     }
 }
