@@ -103,4 +103,116 @@ class DockerNativeMojoTest {
 
         assertEquals("8081", ports);
     }
+
+    @Test
+    void testGetProxyBuildArgsWithAllProxiesSet() {
+        var project = mock(MavenProject.class);
+        var session = mock(MavenSession.class);
+        var execution = mock(MojoExecution.class);
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        when(project.getProperties()).thenReturn(new Properties());
+
+        var mojo = new DockerNativeMojo(project, null, null, null, session, execution);
+        
+        // Set system properties for proxy configuration
+        System.setProperty("http.proxyHost", "proxy.example.com");
+        System.setProperty("http.proxyPort", "8080");
+        System.setProperty("https.proxyHost", "proxy.example.com");
+        System.setProperty("https.proxyPort", "8080");
+        System.setProperty("http.nonProxyHosts", "localhost|127.0.0.1|*.example.com");
+        
+        try {
+            var proxyArgs = mojo.getProxyBuildArgs();
+
+            assertEquals("http://proxy.example.com:8080", proxyArgs.get("HTTP_PROXY"));
+            assertEquals("http://proxy.example.com:8080", proxyArgs.get("http_proxy"));
+            assertEquals("http://proxy.example.com:8080", proxyArgs.get("HTTPS_PROXY"));
+            assertEquals("http://proxy.example.com:8080", proxyArgs.get("https_proxy"));
+            assertEquals("localhost,127.0.0.1,*.example.com", proxyArgs.get("NO_PROXY"));
+            assertEquals("localhost,127.0.0.1,*.example.com", proxyArgs.get("no_proxy"));
+            assertEquals(6, proxyArgs.size());
+        } finally {
+            // Clean up system properties
+            System.clearProperty("http.proxyHost");
+            System.clearProperty("http.proxyPort");
+            System.clearProperty("https.proxyHost");
+            System.clearProperty("https.proxyPort");
+            System.clearProperty("http.nonProxyHosts");
+        }
+    }
+
+    @Test
+    void testGetProxyBuildArgsWithNoProxiesSet() {
+        var project = mock(MavenProject.class);
+        var session = mock(MavenSession.class);
+        var execution = mock(MojoExecution.class);
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        when(project.getProperties()).thenReturn(new Properties());
+
+        var mojo = new DockerNativeMojo(project, null, null, null, session, execution);
+
+        var proxyArgs = mojo.getProxyBuildArgs();
+
+        assertEquals(0, proxyArgs.size());
+    }
+
+    @Test
+    void testGetProxyBuildArgsWithPartialProxiesSet() {
+        var project = mock(MavenProject.class);
+        var session = mock(MavenSession.class);
+        var execution = mock(MojoExecution.class);
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        when(project.getProperties()).thenReturn(new Properties());
+
+        var mojo = new DockerNativeMojo(project, null, null, null, session, execution);
+        
+        // Set only HTTP proxy using system properties
+        System.setProperty("http.proxyHost", "proxy.example.com");
+        System.setProperty("http.proxyPort", "8080");
+        
+        try {
+            var proxyArgs = mojo.getProxyBuildArgs();
+
+            assertEquals("http://proxy.example.com:8080", proxyArgs.get("HTTP_PROXY"));
+            assertEquals("http://proxy.example.com:8080", proxyArgs.get("http_proxy"));
+            assertEquals(2, proxyArgs.size());
+        } finally {
+            // Clean up system properties
+            System.clearProperty("http.proxyHost");
+            System.clearProperty("http.proxyPort");
+        }
+    }
+
+    @Test
+    void testGetProxyBuildArgsWithDefaultPorts() {
+        var project = mock(MavenProject.class);
+        var session = mock(MavenSession.class);
+        var execution = mock(MojoExecution.class);
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        when(project.getProperties()).thenReturn(new Properties());
+
+        var mojo = new DockerNativeMojo(project, null, null, null, session, execution);
+        
+        // Set proxy hosts without ports to test defaults
+        System.setProperty("http.proxyHost", "proxy.example.com");
+        System.setProperty("https.proxyHost", "proxy.example.com");
+        
+        try {
+            var proxyArgs = mojo.getProxyBuildArgs();
+
+            assertEquals("http://proxy.example.com:80", proxyArgs.get("HTTP_PROXY"));
+            assertEquals("http://proxy.example.com:80", proxyArgs.get("http_proxy"));
+            assertEquals("http://proxy.example.com:443", proxyArgs.get("HTTPS_PROXY"));
+            assertEquals("http://proxy.example.com:443", proxyArgs.get("https_proxy"));
+            assertEquals(4, proxyArgs.size());
+        } finally {
+            // Clean up system properties
+            System.clearProperty("http.proxyHost");
+            System.clearProperty("https.proxyHost");
+        }
+    }
 }

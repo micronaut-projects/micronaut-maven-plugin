@@ -148,6 +148,9 @@ public class DockerNativeMojo extends AbstractDockerMojo {
     private void buildDockerNativeLambda() throws IOException {
         var buildImageCmdArguments = new HashMap<String, String>();
 
+        // Add proxy settings if configured
+        buildImageCmdArguments.putAll(getProxyBuildArgs());
+
         // Starter sets the right class in pom.xml:
         //   - For applications: io.micronaut.function.aws.runtime.MicronautLambdaRuntime
         //   - For function apps: com.example.BookLambdaRuntime
@@ -197,6 +200,9 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         oracleCloudFunctionCmd(dockerfile);
 
         var buildImageCmdArguments = new HashMap<String, String>();
+
+        // Add proxy settings if configured
+        buildImageCmdArguments.putAll(getProxyBuildArgs());
 
         if (StringUtils.isNotEmpty(baseImageRun) && Boolean.FALSE.equals(staticNativeImage)) {
             buildImageCmdArguments.put("BASE_IMAGE_RUN", baseImageRun);

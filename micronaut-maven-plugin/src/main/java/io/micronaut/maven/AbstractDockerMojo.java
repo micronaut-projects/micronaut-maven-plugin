@@ -16,6 +16,7 @@
 package io.micronaut.maven;
 
 import com.google.common.io.FileWriteMode;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.jib.JibMicronautExtension;
@@ -38,6 +39,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -280,6 +282,42 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      */
     protected Optional<String> getNetworkMode() {
         return Optional.ofNullable(networkMode);
+    }
+
+    /**
+     * @return Map of proxy-related build arguments for Docker builds.
+     */
+    protected Map<String, String> getProxyBuildArgs() {
+        var proxyArgs = new java.util.HashMap<String, String>();
+        
+        // HTTP proxy configuration from standard JVM properties
+        String httpProxyHost = System.getProperty("http.proxyHost");
+        String httpProxyPort = System.getProperty("http.proxyPort", "80");
+        if (StringUtils.hasText(httpProxyHost)) {
+            String httpProxy = "http://" + httpProxyHost + ":" + httpProxyPort;
+            proxyArgs.put("HTTP_PROXY", httpProxy);
+            proxyArgs.put("http_proxy", httpProxy);
+        }
+        
+        // HTTPS proxy configuration from standard JVM properties
+        String httpsProxyHost = System.getProperty("https.proxyHost");
+        String httpsProxyPort = System.getProperty("https.proxyPort", "443");
+        if (StringUtils.hasText(httpsProxyHost)) {
+            String httpsProxy = "http://" + httpsProxyHost + ":" + httpsProxyPort;
+            proxyArgs.put("HTTPS_PROXY", httpsProxy);
+            proxyArgs.put("https_proxy", httpsProxy);
+        }
+        
+        // No proxy configuration from standard JVM properties
+        String nonProxyHosts = System.getProperty("http.nonProxyHosts");
+        if (StringUtils.hasText(nonProxyHosts)) {
+            // Convert Java format (e.g., "*.company.com|localhost") to standard format (e.g., "*.company.com,localhost")
+            String noProxy = nonProxyHosts.replace("|", ",");
+            proxyArgs.put("NO_PROXY", noProxy);
+            proxyArgs.put("no_proxy", noProxy);
+        }
+        
+        return proxyArgs;
     }
 
     /**
