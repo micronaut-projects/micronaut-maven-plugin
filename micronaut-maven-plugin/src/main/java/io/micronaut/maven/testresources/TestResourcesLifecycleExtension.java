@@ -15,7 +15,6 @@
  */
 package io.micronaut.maven.testresources;
 
-import io.micronaut.maven.RunMojo;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
@@ -39,7 +38,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-import static io.micronaut.maven.RunMojo.THIS_PLUGIN;
+import static io.micronaut.maven.MojoUtils.THIS_PLUGIN;
 import static io.micronaut.maven.testresources.AbstractTestResourcesMojo.CONFIG_PROPERTY_PREFIX;
 import static io.micronaut.maven.testresources.StopTestResourcesServerMojo.MICRONAUT_TEST_RESOURCES_KEEPALIVE;
 
@@ -223,7 +222,7 @@ public class TestResourcesLifecycleExtension extends AbstractMavenLifecycleParti
     private static void withPlugin(Build build, Consumer<? super Plugin> consumer) {
         build.getPlugins()
             .stream()
-            .filter(p -> RunMojo.THIS_PLUGIN.equals(p.getGroupId() + ":" + p.getArtifactId()))
+            .filter(p -> THIS_PLUGIN.equals(p.getGroupId() + ":" + p.getArtifactId()))
             .findFirst()
             .ifPresent(consumer);
     }

@@ -33,13 +33,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.micronaut.maven.AbstractDockerMojo.MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG;
-import static io.micronaut.maven.RunMojo.THIS_PLUGIN;
 
 /**
  * Utility methods for different mojos.
  */
 public final class MojoUtils {
 
+    public static final String THIS_PLUGIN = "io.micronaut.maven:micronaut-maven-plugin";
     private static final String JAVA = "java";
 
     private MojoUtils() {

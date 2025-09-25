@@ -37,7 +37,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 
-import static io.micronaut.maven.RunMojo.THIS_PLUGIN;
+import static io.micronaut.maven.MojoUtils.THIS_PLUGIN;
 
 /**
  * Import beans from project dependencies by generating factories annotated with
