@@ -46,13 +46,13 @@
 <span class="source-line-no">033</span><span id="line-33">import java.util.stream.Stream;</span>
 <span class="source-line-no">034</span><span id="line-34"></span>
 <span class="source-line-no">035</span><span id="line-35">import static io.micronaut.maven.AbstractDockerMojo.MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG;</span>
-<span class="source-line-no">036</span><span id="line-36">import static io.micronaut.maven.RunMojo.THIS_PLUGIN;</span>
-<span class="source-line-no">037</span><span id="line-37"></span>
-<span class="source-line-no">038</span><span id="line-38">/**</span>
-<span class="source-line-no">039</span><span id="line-39"> * Utility methods for different mojos.</span>
-<span class="source-line-no">040</span><span id="line-40"> */</span>
-<span class="source-line-no">041</span><span id="line-41">public final class MojoUtils {</span>
-<span class="source-line-no">042</span><span id="line-42"></span>
+<span class="source-line-no">036</span><span id="line-36"></span>
+<span class="source-line-no">037</span><span id="line-37">/**</span>
+<span class="source-line-no">038</span><span id="line-38"> * Utility methods for different mojos.</span>
+<span class="source-line-no">039</span><span id="line-39"> */</span>
+<span class="source-line-no">040</span><span id="line-40">public final class MojoUtils {</span>
+<span class="source-line-no">041</span><span id="line-41"></span>
+<span class="source-line-no">042</span><span id="line-42">    public static final String THIS_PLUGIN = "io.micronaut.maven:micronaut-maven-plugin";</span>
 <span class="source-line-no">043</span><span id="line-43">    private static final String JAVA = "java";</span>
 <span class="source-line-no">044</span><span id="line-44"></span>
 <span class="source-line-no">045</span><span id="line-45">    private MojoUtils() {</span>
@@ -64,113 +64,118 @@
 <span class="source-line-no">051</span><span id="line-51">        if (toolchain != null) {</span>
 <span class="source-line-no">052</span><span id="line-52">            executable = toolchain.findTool(JAVA);</span>
 <span class="source-line-no">053</span><span id="line-53">        } else {</span>
-<span class="source-line-no">054</span><span id="line-54">            var javaBinariesDir = new File(new File(System.getProperty("java.home")), "bin");</span>
-<span class="source-line-no">055</span><span id="line-55">            if (Os.isFamily(Os.FAMILY_UNIX)) {</span>
-<span class="source-line-no">056</span><span id="line-56">                executable = new File(javaBinariesDir, JAVA).getAbsolutePath();</span>
-<span class="source-line-no">057</span><span id="line-57">            } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {</span>
-<span class="source-line-no">058</span><span id="line-58">                executable = new File(javaBinariesDir, "java.exe").getAbsolutePath();</span>
-<span class="source-line-no">059</span><span id="line-59">            } else {</span>
-<span class="source-line-no">060</span><span id="line-60">                executable = JAVA;</span>
-<span class="source-line-no">061</span><span id="line-61">            }</span>
-<span class="source-line-no">062</span><span id="line-62">        }</span>
-<span class="source-line-no">063</span><span id="line-63">        return executable;</span>
-<span class="source-line-no">064</span><span id="line-64">    }</span>
-<span class="source-line-no">065</span><span id="line-65"></span>
-<span class="source-line-no">066</span><span id="line-66">    public static List&lt;String&gt; computeNativeImageArgs(List&lt;String&gt; nativeImageBuildArgs, String baseImageRun, String argsFile) {</span>
-<span class="source-line-no">067</span><span id="line-67">        var allNativeImageBuildArgs = new ArrayList&lt;String&gt;();</span>
-<span class="source-line-no">068</span><span id="line-68">        if (nativeImageBuildArgs != null &amp;&amp; !nativeImageBuildArgs.isEmpty()) {</span>
-<span class="source-line-no">069</span><span id="line-69">            allNativeImageBuildArgs.addAll(nativeImageBuildArgs);</span>
-<span class="source-line-no">070</span><span id="line-70">        }</span>
-<span class="source-line-no">071</span><span id="line-71">        if (baseImageRun.contains("distroless") &amp;&amp; !allNativeImageBuildArgs.contains(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG)) {</span>
-<span class="source-line-no">072</span><span id="line-72">            allNativeImageBuildArgs.add(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG);</span>
-<span class="source-line-no">073</span><span id="line-73">        }</span>
-<span class="source-line-no">074</span><span id="line-74"></span>
-<span class="source-line-no">075</span><span id="line-75">        List&lt;String&gt; argsFileContent = parseNativeImageArgsFile(argsFile).toList();</span>
-<span class="source-line-no">076</span><span id="line-76">        allNativeImageBuildArgs.addAll(argsFileContent);</span>
-<span class="source-line-no">077</span><span id="line-77">        return allNativeImageBuildArgs;</span>
-<span class="source-line-no">078</span><span id="line-78">    }</span>
+<span class="source-line-no">054</span><span id="line-54">            executable = null;</span>
+<span class="source-line-no">055</span><span id="line-55">        }</span>
+<span class="source-line-no">056</span><span id="line-56">        </span>
+<span class="source-line-no">057</span><span id="line-57">        // Fallback to default Java executable if toolchain is not configured or doesn't provide a valid tool</span>
+<span class="source-line-no">058</span><span id="line-58">        if (executable == null) {</span>
+<span class="source-line-no">059</span><span id="line-59">            var javaBinariesDir = new File(new File(System.getProperty("java.home")), "bin");</span>
+<span class="source-line-no">060</span><span id="line-60">            if (Os.isFamily(Os.FAMILY_UNIX)) {</span>
+<span class="source-line-no">061</span><span id="line-61">                executable = new File(javaBinariesDir, JAVA).getAbsolutePath();</span>
+<span class="source-line-no">062</span><span id="line-62">            } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {</span>
+<span class="source-line-no">063</span><span id="line-63">                executable = new File(javaBinariesDir, "java.exe").getAbsolutePath();</span>
+<span class="source-line-no">064</span><span id="line-64">            } else {</span>
+<span class="source-line-no">065</span><span id="line-65">                executable = JAVA;</span>
+<span class="source-line-no">066</span><span id="line-66">            }</span>
+<span class="source-line-no">067</span><span id="line-67">        }</span>
+<span class="source-line-no">068</span><span id="line-68">        return executable;</span>
+<span class="source-line-no">069</span><span id="line-69">    }</span>
+<span class="source-line-no">070</span><span id="line-70"></span>
+<span class="source-line-no">071</span><span id="line-71">    public static List&lt;String&gt; computeNativeImageArgs(List&lt;String&gt; nativeImageBuildArgs, String baseImageRun, String argsFile) {</span>
+<span class="source-line-no">072</span><span id="line-72">        var allNativeImageBuildArgs = new ArrayList&lt;String&gt;();</span>
+<span class="source-line-no">073</span><span id="line-73">        if (nativeImageBuildArgs != null &amp;&amp; !nativeImageBuildArgs.isEmpty()) {</span>
+<span class="source-line-no">074</span><span id="line-74">            allNativeImageBuildArgs.addAll(nativeImageBuildArgs);</span>
+<span class="source-line-no">075</span><span id="line-75">        }</span>
+<span class="source-line-no">076</span><span id="line-76">        if (baseImageRun.contains("distroless") &amp;&amp; !allNativeImageBuildArgs.contains(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG)) {</span>
+<span class="source-line-no">077</span><span id="line-77">            allNativeImageBuildArgs.add(MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG);</span>
+<span class="source-line-no">078</span><span id="line-78">        }</span>
 <span class="source-line-no">079</span><span id="line-79"></span>
-<span class="source-line-no">080</span><span id="line-80">    private static Stream&lt;String&gt; parseNativeImageArgsFile(String argsFile) {</span>
-<span class="source-line-no">081</span><span id="line-81">        Path argsFilePath = Paths.get(argsFile);</span>
-<span class="source-line-no">082</span><span id="line-82">        if (Files.exists(argsFilePath)) {</span>
-<span class="source-line-no">083</span><span id="line-83">            List&lt;String&gt; args;</span>
-<span class="source-line-no">084</span><span id="line-84">            try {</span>
-<span class="source-line-no">085</span><span id="line-85">                args = Files.readAllLines(argsFilePath);</span>
-<span class="source-line-no">086</span><span id="line-86">            } catch (IOException e) {</span>
-<span class="source-line-no">087</span><span id="line-87">                throw new RuntimeException("Could not read the args file: " + argsFilePath, e);</span>
-<span class="source-line-no">088</span><span id="line-88">            }</span>
-<span class="source-line-no">089</span><span id="line-89">            if (args.contains("-cp")) {</span>
-<span class="source-line-no">090</span><span id="line-90">                int cpPosition = args.indexOf("-cp");</span>
-<span class="source-line-no">091</span><span id="line-91">                args.remove(cpPosition);</span>
-<span class="source-line-no">092</span><span id="line-92">                args.remove(cpPosition);</span>
+<span class="source-line-no">080</span><span id="line-80">        List&lt;String&gt; argsFileContent = parseNativeImageArgsFile(argsFile).toList();</span>
+<span class="source-line-no">081</span><span id="line-81">        allNativeImageBuildArgs.addAll(argsFileContent);</span>
+<span class="source-line-no">082</span><span id="line-82">        return allNativeImageBuildArgs;</span>
+<span class="source-line-no">083</span><span id="line-83">    }</span>
+<span class="source-line-no">084</span><span id="line-84"></span>
+<span class="source-line-no">085</span><span id="line-85">    private static Stream&lt;String&gt; parseNativeImageArgsFile(String argsFile) {</span>
+<span class="source-line-no">086</span><span id="line-86">        Path argsFilePath = Paths.get(argsFile);</span>
+<span class="source-line-no">087</span><span id="line-87">        if (Files.exists(argsFilePath)) {</span>
+<span class="source-line-no">088</span><span id="line-88">            List&lt;String&gt; args;</span>
+<span class="source-line-no">089</span><span id="line-89">            try {</span>
+<span class="source-line-no">090</span><span id="line-90">                args = Files.readAllLines(argsFilePath);</span>
+<span class="source-line-no">091</span><span id="line-91">            } catch (IOException e) {</span>
+<span class="source-line-no">092</span><span id="line-92">                throw new RuntimeException("Could not read the args file: " + argsFilePath, e);</span>
 <span class="source-line-no">093</span><span id="line-93">            }</span>
-<span class="source-line-no">094</span><span id="line-94"></span>
-<span class="source-line-no">095</span><span id="line-95">            return args.stream()</span>
-<span class="source-line-no">096</span><span id="line-96">                .filter(arg -&gt; !arg.startsWith("-H:Name"))</span>
-<span class="source-line-no">097</span><span id="line-97">                .filter(arg -&gt; !arg.startsWith("-H:Class"))</span>
-<span class="source-line-no">098</span><span id="line-98">                .filter(arg -&gt; !arg.startsWith("-H:Path"))</span>
-<span class="source-line-no">099</span><span id="line-99">                .flatMap(arg -&gt; {</span>
-<span class="source-line-no">100</span><span id="line-100">                    if (arg.startsWith("@")) {</span>
-<span class="source-line-no">101</span><span id="line-101">                        String fileName = arg.substring(1);</span>
-<span class="source-line-no">102</span><span id="line-102">                        return parseNativeImageArgsFile(fileName);</span>
-<span class="source-line-no">103</span><span id="line-103">                    } else if (arg.startsWith("\\Q") &amp;&amp; arg.endsWith("\\E")) {</span>
-<span class="source-line-no">104</span><span id="line-104">                        // start the search at length - 3 to skip \Q or \E at the end</span>
-<span class="source-line-no">105</span><span id="line-105">                        int lastIndexOfSlash = arg.lastIndexOf(File.separator, arg.length() - 3);</span>
-<span class="source-line-no">106</span><span id="line-106">                        return Stream.of("\\Q/home/app/libs/" + arg.substring(lastIndexOfSlash + 1));</span>
-<span class="source-line-no">107</span><span id="line-107">                    } else if (arg.startsWith("-H:ConfigurationFileDirectories")) {</span>
-<span class="source-line-no">108</span><span id="line-108">                        return Stream.of(parseConfigurationFilesDirectoriesArg(arg));</span>
-<span class="source-line-no">109</span><span id="line-109">                    } else {</span>
-<span class="source-line-no">110</span><span id="line-110">                        return Stream.of(arg);</span>
-<span class="source-line-no">111</span><span id="line-111">                    }</span>
-<span class="source-line-no">112</span><span id="line-112">                });</span>
-<span class="source-line-no">113</span><span id="line-113">        } else {</span>
-<span class="source-line-no">114</span><span id="line-114">            throw new RuntimeException("Unable to find args file: " + argsFilePath);</span>
-<span class="source-line-no">115</span><span id="line-115">        }</span>
-<span class="source-line-no">116</span><span id="line-116">    }</span>
-<span class="source-line-no">117</span><span id="line-117"></span>
-<span class="source-line-no">118</span><span id="line-118">    static String parseConfigurationFilesDirectoriesArg(String arg) {</span>
-<span class="source-line-no">119</span><span id="line-119">        String[] split = arg.split("=");</span>
-<span class="source-line-no">120</span><span id="line-120">        String[] directories = split[1].split(",");</span>
-<span class="source-line-no">121</span><span id="line-121">        String separator = "/";</span>
-<span class="source-line-no">122</span><span id="line-122">        if (arg.contains("generateResourceConfig") || arg.contains("generateTestResourceConfig")) {</span>
-<span class="source-line-no">123</span><span id="line-123">            return Stream.of(directories)</span>
-<span class="source-line-no">124</span><span id="line-124">                .map(FilenameUtils::separatorsToUnix)</span>
-<span class="source-line-no">125</span><span id="line-125">                .map(directory -&gt; {</span>
-<span class="source-line-no">126</span><span id="line-126">                    String[] splitDirectory = directory.split(separator);</span>
-<span class="source-line-no">127</span><span id="line-127">                    return "/home/app/" + splitDirectory[splitDirectory.length - 1];</span>
-<span class="source-line-no">128</span><span id="line-128">                })</span>
-<span class="source-line-no">129</span><span id="line-129">                .collect(Collectors.joining(","))</span>
-<span class="source-line-no">130</span><span id="line-130">                .transform(s -&gt; "-H:ConfigurationFileDirectories=" + s);</span>
-<span class="source-line-no">131</span><span id="line-131">        } else {</span>
-<span class="source-line-no">132</span><span id="line-132">            return Stream.of(directories)</span>
-<span class="source-line-no">133</span><span id="line-133">                .map(FilenameUtils::separatorsToUnix)</span>
-<span class="source-line-no">134</span><span id="line-134">                .map(directory -&gt; {</span>
-<span class="source-line-no">135</span><span id="line-135">                    String[] splitDirectory = directory.split(separator);</span>
-<span class="source-line-no">136</span><span id="line-136">                    String last4Directories = splitDirectory[splitDirectory.length - 4] + separator +</span>
-<span class="source-line-no">137</span><span id="line-137">                        splitDirectory[splitDirectory.length - 3] + separator +</span>
-<span class="source-line-no">138</span><span id="line-138">                        splitDirectory[splitDirectory.length - 2] + separator +</span>
-<span class="source-line-no">139</span><span id="line-139">                        splitDirectory[splitDirectory.length - 1];</span>
-<span class="source-line-no">140</span><span id="line-140">                    return "/home/app/graalvm-reachability-metadata/" + last4Directories;</span>
-<span class="source-line-no">141</span><span id="line-141">                })</span>
-<span class="source-line-no">142</span><span id="line-142">                .collect(Collectors.joining(","))</span>
-<span class="source-line-no">143</span><span id="line-143">                .transform(s -&gt; "-H:ConfigurationFileDirectories=" + s);</span>
-<span class="source-line-no">144</span><span id="line-144">        }</span>
-<span class="source-line-no">145</span><span id="line-145">    }</span>
-<span class="source-line-no">146</span><span id="line-146"></span>
-<span class="source-line-no">147</span><span id="line-147">    /**</span>
-<span class="source-line-no">148</span><span id="line-148">     * Checks if the project has the Micronaut Maven plugin defined.</span>
-<span class="source-line-no">149</span><span id="line-149">     *</span>
-<span class="source-line-no">150</span><span id="line-150">     * @param project the Maven project</span>
-<span class="source-line-no">151</span><span id="line-151">     * @return true if the project has the Micronaut Maven plugin defined</span>
-<span class="source-line-no">152</span><span id="line-152">     */</span>
-<span class="source-line-no">153</span><span id="line-153">    public static boolean hasMicronautMavenPlugin(MavenProject project) {</span>
-<span class="source-line-no">154</span><span id="line-154">        String[] parts = THIS_PLUGIN.split(":");</span>
-<span class="source-line-no">155</span><span id="line-155">        String groupId = parts[0];</span>
-<span class="source-line-no">156</span><span id="line-156">        String artifactId = parts[1];</span>
-<span class="source-line-no">157</span><span id="line-157">        return project.getBuildPlugins().stream()</span>
-<span class="source-line-no">158</span><span id="line-158">            .anyMatch(p -&gt; p.getGroupId().equals(groupId) &amp;&amp; p.getArtifactId().equals(artifactId));</span>
-<span class="source-line-no">159</span><span id="line-159">    }</span>
-<span class="source-line-no">160</span><span id="line-160">}</span>
+<span class="source-line-no">094</span><span id="line-94">            if (args.contains("-cp")) {</span>
+<span class="source-line-no">095</span><span id="line-95">                int cpPosition = args.indexOf("-cp");</span>
+<span class="source-line-no">096</span><span id="line-96">                args.remove(cpPosition);</span>
+<span class="source-line-no">097</span><span id="line-97">                args.remove(cpPosition);</span>
+<span class="source-line-no">098</span><span id="line-98">            }</span>
+<span class="source-line-no">099</span><span id="line-99"></span>
+<span class="source-line-no">100</span><span id="line-100">            return args.stream()</span>
+<span class="source-line-no">101</span><span id="line-101">                .filter(arg -&gt; !arg.startsWith("-H:Name"))</span>
+<span class="source-line-no">102</span><span id="line-102">                .filter(arg -&gt; !arg.startsWith("-H:Class"))</span>
+<span class="source-line-no">103</span><span id="line-103">                .filter(arg -&gt; !arg.startsWith("-H:Path"))</span>
+<span class="source-line-no">104</span><span id="line-104">                .flatMap(arg -&gt; {</span>
+<span class="source-line-no">105</span><span id="line-105">                    if (arg.startsWith("@")) {</span>
+<span class="source-line-no">106</span><span id="line-106">                        String fileName = arg.substring(1);</span>
+<span class="source-line-no">107</span><span id="line-107">                        return parseNativeImageArgsFile(fileName);</span>
+<span class="source-line-no">108</span><span id="line-108">                    } else if (arg.startsWith("\\Q") &amp;&amp; arg.endsWith("\\E")) {</span>
+<span class="source-line-no">109</span><span id="line-109">                        // start the search at length - 3 to skip \Q or \E at the end</span>
+<span class="source-line-no">110</span><span id="line-110">                        int lastIndexOfSlash = arg.lastIndexOf(File.separator, arg.length() - 3);</span>
+<span class="source-line-no">111</span><span id="line-111">                        return Stream.of("\\Q/home/app/libs/" + arg.substring(lastIndexOfSlash + 1));</span>
+<span class="source-line-no">112</span><span id="line-112">                    } else if (arg.startsWith("-H:ConfigurationFileDirectories")) {</span>
+<span class="source-line-no">113</span><span id="line-113">                        return Stream.of(parseConfigurationFilesDirectoriesArg(arg));</span>
+<span class="source-line-no">114</span><span id="line-114">                    } else {</span>
+<span class="source-line-no">115</span><span id="line-115">                        return Stream.of(arg);</span>
+<span class="source-line-no">116</span><span id="line-116">                    }</span>
+<span class="source-line-no">117</span><span id="line-117">                });</span>
+<span class="source-line-no">118</span><span id="line-118">        } else {</span>
+<span class="source-line-no">119</span><span id="line-119">            throw new RuntimeException("Unable to find args file: " + argsFilePath);</span>
+<span class="source-line-no">120</span><span id="line-120">        }</span>
+<span class="source-line-no">121</span><span id="line-121">    }</span>
+<span class="source-line-no">122</span><span id="line-122"></span>
+<span class="source-line-no">123</span><span id="line-123">    static String parseConfigurationFilesDirectoriesArg(String arg) {</span>
+<span class="source-line-no">124</span><span id="line-124">        String[] split = arg.split("=");</span>
+<span class="source-line-no">125</span><span id="line-125">        String[] directories = split[1].split(",");</span>
+<span class="source-line-no">126</span><span id="line-126">        String separator = "/";</span>
+<span class="source-line-no">127</span><span id="line-127">        if (arg.contains("generateResourceConfig") || arg.contains("generateTestResourceConfig")) {</span>
+<span class="source-line-no">128</span><span id="line-128">            return Stream.of(directories)</span>
+<span class="source-line-no">129</span><span id="line-129">                .map(FilenameUtils::separatorsToUnix)</span>
+<span class="source-line-no">130</span><span id="line-130">                .map(directory -&gt; {</span>
+<span class="source-line-no">131</span><span id="line-131">                    String[] splitDirectory = directory.split(separator);</span>
+<span class="source-line-no">132</span><span id="line-132">                    return "/home/app/" + splitDirectory[splitDirectory.length - 1];</span>
+<span class="source-line-no">133</span><span id="line-133">                })</span>
+<span class="source-line-no">134</span><span id="line-134">                .collect(Collectors.joining(","))</span>
+<span class="source-line-no">135</span><span id="line-135">                .transform(s -&gt; "-H:ConfigurationFileDirectories=" + s);</span>
+<span class="source-line-no">136</span><span id="line-136">        } else {</span>
+<span class="source-line-no">137</span><span id="line-137">            return Stream.of(directories)</span>
+<span class="source-line-no">138</span><span id="line-138">                .map(FilenameUtils::separatorsToUnix)</span>
+<span class="source-line-no">139</span><span id="line-139">                .map(directory -&gt; {</span>
+<span class="source-line-no">140</span><span id="line-140">                    String[] splitDirectory = directory.split(separator);</span>
+<span class="source-line-no">141</span><span id="line-141">                    String last4Directories = splitDirectory[splitDirectory.length - 4] + separator +</span>
+<span class="source-line-no">142</span><span id="line-142">                        splitDirectory[splitDirectory.length - 3] + separator +</span>
+<span class="source-line-no">143</span><span id="line-143">                        splitDirectory[splitDirectory.length - 2] + separator +</span>
+<span class="source-line-no">144</span><span id="line-144">                        splitDirectory[splitDirectory.length - 1];</span>
+<span class="source-line-no">145</span><span id="line-145">                    return "/home/app/graalvm-reachability-metadata/" + last4Directories;</span>
+<span class="source-line-no">146</span><span id="line-146">                })</span>
+<span class="source-line-no">147</span><span id="line-147">                .collect(Collectors.joining(","))</span>
+<span class="source-line-no">148</span><span id="line-148">                .transform(s -&gt; "-H:ConfigurationFileDirectories=" + s);</span>
+<span class="source-line-no">149</span><span id="line-149">        }</span>
+<span class="source-line-no">150</span><span id="line-150">    }</span>
+<span class="source-line-no">151</span><span id="line-151"></span>
+<span class="source-line-no">152</span><span id="line-152">    /**</span>
+<span class="source-line-no">153</span><span id="line-153">     * Checks if the project has the Micronaut Maven plugin defined.</span>
+<span class="source-line-no">154</span><span id="line-154">     *</span>
+<span class="source-line-no">155</span><span id="line-155">     * @param project the Maven project</span>
+<span class="source-line-no">156</span><span id="line-156">     * @return true if the project has the Micronaut Maven plugin defined</span>
+<span class="source-line-no">157</span><span id="line-157">     */</span>
+<span class="source-line-no">158</span><span id="line-158">    public static boolean hasMicronautMavenPlugin(MavenProject project) {</span>
+<span class="source-line-no">159</span><span id="line-159">        String[] parts = THIS_PLUGIN.split(":");</span>
+<span class="source-line-no">160</span><span id="line-160">        String groupId = parts[0];</span>
+<span class="source-line-no">161</span><span id="line-161">        String artifactId = parts[1];</span>
+<span class="source-line-no">162</span><span id="line-162">        return project.getBuildPlugins().stream()</span>
+<span class="source-line-no">163</span><span id="line-163">            .anyMatch(p -&gt; p.getGroupId().equals(groupId) &amp;&amp; p.getArtifactId().equals(artifactId));</span>
+<span class="source-line-no">164</span><span id="line-164">    }</span>
+<span class="source-line-no">165</span><span id="line-165">}</span>
 
 
 
