@@ -21,7 +21,7 @@ JarFile jarFile = new JarFile(fatJar)
 assert jarFile.stream().anyMatch{ e -> e.name == 'io/micronaut/build/examples/generated/AOTApplicationContextConfigurer.class' }
 assert jarFile.stream().anyMatch{ e -> e.name == 'META-INF/native-image/io.micronaut.build.examples.generated/native-image.properties' }
 
-// Resource filtering
-assert jarFile.stream().noneMatch{ e -> e.name == 'application.yml' }
+// Resource filtering - application.yml is preserved in AOT 2.9.0+
+assert jarFile.stream().anyMatch{ e -> e.name == 'application.yml' }
 
 assert log.text.contains("io.micronaut.runtime.Micronaut - Startup completed")
