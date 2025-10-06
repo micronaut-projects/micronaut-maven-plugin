@@ -119,7 +119,7 @@
           </annotationProcessorPaths>
           <compilerArgs>
             <arg>-Amicronaut.processing.group=io.micronaut.build.examples</arg>
-            <arg>-Amicronaut.processing.module=oci</arg>
+            <arg>-Amicronaut.processing.module=app1</arg>
           </compilerArgs>
         </configuration>
       </plugin>

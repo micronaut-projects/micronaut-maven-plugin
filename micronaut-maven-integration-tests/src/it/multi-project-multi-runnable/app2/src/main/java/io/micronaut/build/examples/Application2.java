@@ -5,6 +5,7 @@ import io.micronaut.runtime.Micronaut;
 public class Application2 {
     public static void main(String[] args) {
         Micronaut.run(Application2.class, args);
+        System.out.println("Application2 running");
         System.exit(0);
     }
 }

@@ -8,6 +8,7 @@ import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junitpioneer.jupiter.ClearSystemProperty;
 import org.junitpioneer.jupiter.RestoreSystemProperties;
 import org.junitpioneer.jupiter.SetSystemProperty;
 
@@ -17,8 +18,6 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -28,6 +27,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @RestoreSystemProperties
+@ClearSystemProperty(key = "http.nonProxyHosts")
 class DockerNativeMojoTest {
 
     @ParameterizedTest
