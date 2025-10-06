@@ -13,6 +13,7 @@ JarFile jarFile = new JarFile(fatJar)
 //Generated
 assert jarFile.stream().anyMatch{ e -> e.name == 'io/micronaut/build/examples/generated/AOTApplicationContextConfigurer.class' }
 
-// Resource filtering - logback.xml is converted to Java but application.yml is preserved
-assert jarFile.stream().anyMatch{ e -> e.name == 'application.yml' }
+// Resource filtering - both YAML and properties files are converted to Java with property-source-loader.generate.enabled
+assert jarFile.stream().noneMatch{ e -> e.name == 'application.yml' }
+assert jarFile.stream().noneMatch{ e -> e.name == 'application.properties' }
 assert jarFile.stream().noneMatch{ e -> e.name == 'logback.xml' }
