@@ -515,6 +515,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         try {
             runAotIfNeeded();
             final String reactorClasses = mavenSession.getAllProjects().stream()
+                    .filter(this::isDependencyOfRunnableProject)
                     .map(MavenProject::getBuild)
                     .map(Build::getOutputDirectory)
                     .collect(Collectors.joining(File.pathSeparator));
