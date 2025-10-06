@@ -528,136 +528,137 @@
 <span class="source-line-no">515</span><span id="line-515">        try {</span>
 <span class="source-line-no">516</span><span id="line-516">            runAotIfNeeded();</span>
 <span class="source-line-no">517</span><span id="line-517">            final String reactorClasses = mavenSession.getAllProjects().stream()</span>
-<span class="source-line-no">518</span><span id="line-518">                    .map(MavenProject::getBuild)</span>
-<span class="source-line-no">519</span><span id="line-519">                    .map(Build::getOutputDirectory)</span>
-<span class="source-line-no">520</span><span id="line-520">                    .collect(Collectors.joining(File.pathSeparator));</span>
-<span class="source-line-no">521</span><span id="line-521">            String classpathArgument = String.join(File.pathSeparator, reactorClasses, this.classpath);</span>
-<span class="source-line-no">522</span><span id="line-522"></span>
-<span class="source-line-no">523</span><span id="line-523">            var args = new ArrayList&lt;String&gt;();</span>
-<span class="source-line-no">524</span><span id="line-524">            args.add(javaExecutable);</span>
-<span class="source-line-no">525</span><span id="line-525"></span>
-<span class="source-line-no">526</span><span id="line-526">            if (debug) {</span>
-<span class="source-line-no">527</span><span id="line-527">                String suspend = debugSuspend ? "y" : "n";</span>
-<span class="source-line-no">528</span><span id="line-528">                args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=" + suspend + ",address=" + debugHost + ":" + debugPort);</span>
-<span class="source-line-no">529</span><span id="line-529">            }</span>
-<span class="source-line-no">530</span><span id="line-530"></span>
-<span class="source-line-no">531</span><span id="line-531">            if (testResourcesEnabled) {</span>
-<span class="source-line-no">532</span><span id="line-532">                Path testResourcesSettingsDirectory = shared ? ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace) :</span>
-<span class="source-line-no">533</span><span id="line-533">                    AbstractTestResourcesMojo.serverSettingsDirectoryOf(targetDirectory.toPath());</span>
-<span class="source-line-no">534</span><span id="line-534">                Optional&lt;ServerSettings&gt; serverSettings = ServerUtils.readServerSettings(testResourcesSettingsDirectory);</span>
-<span class="source-line-no">535</span><span id="line-535">                serverSettings.ifPresent(settings -&gt; testResourcesHelper.computeSystemProperties(settings)</span>
-<span class="source-line-no">536</span><span id="line-536">                    .forEach((k, v) -&gt; args.add("-D" + k + "=" + v)));</span>
-<span class="source-line-no">537</span><span id="line-537">            }</span>
-<span class="source-line-no">538</span><span id="line-538"></span>
-<span class="source-line-no">539</span><span id="line-539">            if (jvmArguments != null &amp;&amp; !jvmArguments.isEmpty()) {</span>
-<span class="source-line-no">540</span><span id="line-540">                final String[] strings = CommandLineUtils.translateCommandline(jvmArguments);</span>
-<span class="source-line-no">541</span><span id="line-541">                args.addAll(Arrays.asList(strings));</span>
-<span class="source-line-no">542</span><span id="line-542">            }</span>
-<span class="source-line-no">543</span><span id="line-543"></span>
-<span class="source-line-no">544</span><span id="line-544">            if (!mavenSession.getUserProperties().isEmpty()) {</span>
-<span class="source-line-no">545</span><span id="line-545">                mavenSession.getUserProperties().forEach((k, v) -&gt; args.add("-D" + k + "=" + v));</span>
-<span class="source-line-no">546</span><span id="line-546">            }</span>
-<span class="source-line-no">547</span><span id="line-547"></span>
-<span class="source-line-no">548</span><span id="line-548">            if (mainClass == null) {</span>
-<span class="source-line-no">549</span><span id="line-549">                mainClass = runnableProject.getProperties().getProperty("exec.mainClass");</span>
-<span class="source-line-no">550</span><span id="line-550">            }</span>
-<span class="source-line-no">551</span><span id="line-551"></span>
-<span class="source-line-no">552</span><span id="line-552">            args.add("-classpath");</span>
-<span class="source-line-no">553</span><span id="line-553">            args.add(classpathArgument);</span>
-<span class="source-line-no">554</span><span id="line-554">            args.add("-XX:TieredStopAtLevel=1");</span>
-<span class="source-line-no">555</span><span id="line-555">            args.add("-Dcom.sun.management.jmxremote");</span>
-<span class="source-line-no">556</span><span id="line-556">            args.add(mainClass);</span>
-<span class="source-line-no">557</span><span id="line-557"></span>
-<span class="source-line-no">558</span><span id="line-558">            if (appArguments != null &amp;&amp; !appArguments.isEmpty()) {</span>
-<span class="source-line-no">559</span><span id="line-559">                final String[] strings = CommandLineUtils.translateCommandline(appArguments);</span>
-<span class="source-line-no">560</span><span id="line-560">                args.addAll(Arrays.asList(strings));</span>
-<span class="source-line-no">561</span><span id="line-561">            }</span>
-<span class="source-line-no">562</span><span id="line-562"></span>
-<span class="source-line-no">563</span><span id="line-563">            if (getLog().isDebugEnabled()) {</span>
-<span class="source-line-no">564</span><span id="line-564">                getLog().debug("Running " + String.join(" ", args));</span>
-<span class="source-line-no">565</span><span id="line-565">            }</span>
-<span class="source-line-no">566</span><span id="line-566"></span>
-<span class="source-line-no">567</span><span id="line-567">            killProcess();</span>
-<span class="source-line-no">568</span><span id="line-568">            process = new ProcessBuilder(args)</span>
-<span class="source-line-no">569</span><span id="line-569">                .inheritIO()</span>
-<span class="source-line-no">570</span><span id="line-570">                .directory(targetDirectory)</span>
-<span class="source-line-no">571</span><span id="line-571">                .start();</span>
-<span class="source-line-no">572</span><span id="line-572">        } finally {</span>
-<span class="source-line-no">573</span><span id="line-573">            restartLock.unlock();</span>
-<span class="source-line-no">574</span><span id="line-574">        }</span>
-<span class="source-line-no">575</span><span id="line-575">    }</span>
-<span class="source-line-no">576</span><span id="line-576"></span>
-<span class="source-line-no">577</span><span id="line-577">    private void runAotIfNeeded() {</span>
-<span class="source-line-no">578</span><span id="line-578">        if (aotEnabled) {</span>
-<span class="source-line-no">579</span><span id="line-579">            try {</span>
-<span class="source-line-no">580</span><span id="line-580">                executorService.executeGoal(THIS_PLUGIN, AotAnalysisMojo.NAME);</span>
-<span class="source-line-no">581</span><span id="line-581">            } catch (MojoExecutionException e) {</span>
-<span class="source-line-no">582</span><span id="line-582">                getLog().error(e.getMessage());</span>
-<span class="source-line-no">583</span><span id="line-583">            }</span>
-<span class="source-line-no">584</span><span id="line-584">        }</span>
-<span class="source-line-no">585</span><span id="line-585">    }</span>
-<span class="source-line-no">586</span><span id="line-586"></span>
-<span class="source-line-no">587</span><span id="line-587">    private void maybeStartTestResourcesServer() throws MojoExecutionException {</span>
-<span class="source-line-no">588</span><span id="line-588">        testResourcesHelper.start();</span>
-<span class="source-line-no">589</span><span id="line-589">    }</span>
-<span class="source-line-no">590</span><span id="line-590"></span>
-<span class="source-line-no">591</span><span id="line-591">    private void maybeStopTestResourcesServer() throws MojoExecutionException {</span>
-<span class="source-line-no">592</span><span id="line-592">        testResourcesHelper.stop(false);</span>
-<span class="source-line-no">593</span><span id="line-593">    }</span>
-<span class="source-line-no">594</span><span id="line-594"></span>
-<span class="source-line-no">595</span><span id="line-595">    private boolean compileProject() {</span>
-<span class="source-line-no">596</span><span id="line-596">        // There can be multiple changes detected at the same time, so we want</span>
-<span class="source-line-no">597</span><span id="line-597">        // to keep only one compilation request</span>
-<span class="source-line-no">598</span><span id="line-598">        if (recompileRequested.get()) {</span>
-<span class="source-line-no">599</span><span id="line-599">            return false;</span>
-<span class="source-line-no">600</span><span id="line-600">        }</span>
-<span class="source-line-no">601</span><span id="line-601">        recompileRequested.set(true);</span>
-<span class="source-line-no">602</span><span id="line-602">        try {</span>
-<span class="source-line-no">603</span><span id="line-603">            return doCompile();</span>
-<span class="source-line-no">604</span><span id="line-604">        } finally {</span>
-<span class="source-line-no">605</span><span id="line-605">            recompileRequested.set(false);</span>
-<span class="source-line-no">606</span><span id="line-606">        }</span>
-<span class="source-line-no">607</span><span id="line-607">    }</span>
-<span class="source-line-no">608</span><span id="line-608"></span>
-<span class="source-line-no">609</span><span id="line-609">    private boolean doCompile() {</span>
-<span class="source-line-no">610</span><span id="line-610">        Optional&lt;Long&gt; lastCompilationMillis = compilerService.compileProject();</span>
-<span class="source-line-no">611</span><span id="line-611">        lastCompilationMillis.ifPresent(lc -&gt; this.lastCompilation = lc);</span>
-<span class="source-line-no">612</span><span id="line-612">        return lastCompilationMillis.isPresent();</span>
-<span class="source-line-no">613</span><span id="line-613">    }</span>
-<span class="source-line-no">614</span><span id="line-614"></span>
-<span class="source-line-no">615</span><span id="line-615">    private void killProcess() {</span>
-<span class="source-line-no">616</span><span id="line-616">        if (process != null &amp;&amp; process.isAlive()) {</span>
-<span class="source-line-no">617</span><span id="line-617">            if (getLog().isDebugEnabled()) {</span>
-<span class="source-line-no">618</span><span id="line-618">                getLog().debug("Stopping the background process");</span>
-<span class="source-line-no">619</span><span id="line-619">            }</span>
-<span class="source-line-no">620</span><span id="line-620">            process.destroy();</span>
-<span class="source-line-no">621</span><span id="line-621">            try {</span>
-<span class="source-line-no">622</span><span id="line-622">                process.waitFor();</span>
-<span class="source-line-no">623</span><span id="line-623">            } catch (InterruptedException e) {</span>
-<span class="source-line-no">624</span><span id="line-624">                process.destroyForcibly();</span>
-<span class="source-line-no">625</span><span id="line-625">                Thread.currentThread().interrupt();</span>
-<span class="source-line-no">626</span><span id="line-626">            }</span>
-<span class="source-line-no">627</span><span id="line-627">        }</span>
-<span class="source-line-no">628</span><span id="line-628">    }</span>
-<span class="source-line-no">629</span><span id="line-629"></span>
-<span class="source-line-no">630</span><span id="line-630">    private static String normalize(Path path) {</span>
-<span class="source-line-no">631</span><span id="line-631">        return path.toString().replace('\\', '/');</span>
-<span class="source-line-no">632</span><span id="line-632">    }</span>
-<span class="source-line-no">633</span><span id="line-633"></span>
-<span class="source-line-no">634</span><span id="line-634">    private static boolean pathMatches(String pattern, Path path) {</span>
-<span class="source-line-no">635</span><span id="line-635">        return AbstractScanner.match(pattern, normalize(path));</span>
-<span class="source-line-no">636</span><span id="line-636">    }</span>
-<span class="source-line-no">637</span><span id="line-637"></span>
-<span class="source-line-no">638</span><span id="line-638">    private static boolean patternEquals(Path path, String includePattern, File directory) {</span>
-<span class="source-line-no">639</span><span id="line-639">        try {</span>
-<span class="source-line-no">640</span><span id="line-640">            var testPath = normalize(directory.toPath().resolve(includePattern).toAbsolutePath());</span>
-<span class="source-line-no">641</span><span id="line-641">            return testPath.equals(normalize(path.toAbsolutePath()));</span>
-<span class="source-line-no">642</span><span id="line-642">        } catch (InvalidPathException ex) {</span>
-<span class="source-line-no">643</span><span id="line-643">            return false;</span>
-<span class="source-line-no">644</span><span id="line-644">        }</span>
-<span class="source-line-no">645</span><span id="line-645">    }</span>
-<span class="source-line-no">646</span><span id="line-646"></span>
-<span class="source-line-no">647</span><span id="line-647">}</span>
+<span class="source-line-no">518</span><span id="line-518">                    .filter(this::isDependencyOfRunnableProject)</span>
+<span class="source-line-no">519</span><span id="line-519">                    .map(MavenProject::getBuild)</span>
+<span class="source-line-no">520</span><span id="line-520">                    .map(Build::getOutputDirectory)</span>
+<span class="source-line-no">521</span><span id="line-521">                    .collect(Collectors.joining(File.pathSeparator));</span>
+<span class="source-line-no">522</span><span id="line-522">            String classpathArgument = String.join(File.pathSeparator, reactorClasses, this.classpath);</span>
+<span class="source-line-no">523</span><span id="line-523"></span>
+<span class="source-line-no">524</span><span id="line-524">            var args = new ArrayList&lt;String&gt;();</span>
+<span class="source-line-no">525</span><span id="line-525">            args.add(javaExecutable);</span>
+<span class="source-line-no">526</span><span id="line-526"></span>
+<span class="source-line-no">527</span><span id="line-527">            if (debug) {</span>
+<span class="source-line-no">528</span><span id="line-528">                String suspend = debugSuspend ? "y" : "n";</span>
+<span class="source-line-no">529</span><span id="line-529">                args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=" + suspend + ",address=" + debugHost + ":" + debugPort);</span>
+<span class="source-line-no">530</span><span id="line-530">            }</span>
+<span class="source-line-no">531</span><span id="line-531"></span>
+<span class="source-line-no">532</span><span id="line-532">            if (testResourcesEnabled) {</span>
+<span class="source-line-no">533</span><span id="line-533">                Path testResourcesSettingsDirectory = shared ? ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace) :</span>
+<span class="source-line-no">534</span><span id="line-534">                    AbstractTestResourcesMojo.serverSettingsDirectoryOf(targetDirectory.toPath());</span>
+<span class="source-line-no">535</span><span id="line-535">                Optional&lt;ServerSettings&gt; serverSettings = ServerUtils.readServerSettings(testResourcesSettingsDirectory);</span>
+<span class="source-line-no">536</span><span id="line-536">                serverSettings.ifPresent(settings -&gt; testResourcesHelper.computeSystemProperties(settings)</span>
+<span class="source-line-no">537</span><span id="line-537">                    .forEach((k, v) -&gt; args.add("-D" + k + "=" + v)));</span>
+<span class="source-line-no">538</span><span id="line-538">            }</span>
+<span class="source-line-no">539</span><span id="line-539"></span>
+<span class="source-line-no">540</span><span id="line-540">            if (jvmArguments != null &amp;&amp; !jvmArguments.isEmpty()) {</span>
+<span class="source-line-no">541</span><span id="line-541">                final String[] strings = CommandLineUtils.translateCommandline(jvmArguments);</span>
+<span class="source-line-no">542</span><span id="line-542">                args.addAll(Arrays.asList(strings));</span>
+<span class="source-line-no">543</span><span id="line-543">            }</span>
+<span class="source-line-no">544</span><span id="line-544"></span>
+<span class="source-line-no">545</span><span id="line-545">            if (!mavenSession.getUserProperties().isEmpty()) {</span>
+<span class="source-line-no">546</span><span id="line-546">                mavenSession.getUserProperties().forEach((k, v) -&gt; args.add("-D" + k + "=" + v));</span>
+<span class="source-line-no">547</span><span id="line-547">            }</span>
+<span class="source-line-no">548</span><span id="line-548"></span>
+<span class="source-line-no">549</span><span id="line-549">            if (mainClass == null) {</span>
+<span class="source-line-no">550</span><span id="line-550">                mainClass = runnableProject.getProperties().getProperty("exec.mainClass");</span>
+<span class="source-line-no">551</span><span id="line-551">            }</span>
+<span class="source-line-no">552</span><span id="line-552"></span>
+<span class="source-line-no">553</span><span id="line-553">            args.add("-classpath");</span>
+<span class="source-line-no">554</span><span id="line-554">            args.add(classpathArgument);</span>
+<span class="source-line-no">555</span><span id="line-555">            args.add("-XX:TieredStopAtLevel=1");</span>
+<span class="source-line-no">556</span><span id="line-556">            args.add("-Dcom.sun.management.jmxremote");</span>
+<span class="source-line-no">557</span><span id="line-557">            args.add(mainClass);</span>
+<span class="source-line-no">558</span><span id="line-558"></span>
+<span class="source-line-no">559</span><span id="line-559">            if (appArguments != null &amp;&amp; !appArguments.isEmpty()) {</span>
+<span class="source-line-no">560</span><span id="line-560">                final String[] strings = CommandLineUtils.translateCommandline(appArguments);</span>
+<span class="source-line-no">561</span><span id="line-561">                args.addAll(Arrays.asList(strings));</span>
+<span class="source-line-no">562</span><span id="line-562">            }</span>
+<span class="source-line-no">563</span><span id="line-563"></span>
+<span class="source-line-no">564</span><span id="line-564">            if (getLog().isDebugEnabled()) {</span>
+<span class="source-line-no">565</span><span id="line-565">                getLog().debug("Running " + String.join(" ", args));</span>
+<span class="source-line-no">566</span><span id="line-566">            }</span>
+<span class="source-line-no">567</span><span id="line-567"></span>
+<span class="source-line-no">568</span><span id="line-568">            killProcess();</span>
+<span class="source-line-no">569</span><span id="line-569">            process = new ProcessBuilder(args)</span>
+<span class="source-line-no">570</span><span id="line-570">                .inheritIO()</span>
+<span class="source-line-no">571</span><span id="line-571">                .directory(targetDirectory)</span>
+<span class="source-line-no">572</span><span id="line-572">                .start();</span>
+<span class="source-line-no">573</span><span id="line-573">        } finally {</span>
+<span class="source-line-no">574</span><span id="line-574">            restartLock.unlock();</span>
+<span class="source-line-no">575</span><span id="line-575">        }</span>
+<span class="source-line-no">576</span><span id="line-576">    }</span>
+<span class="source-line-no">577</span><span id="line-577"></span>
+<span class="source-line-no">578</span><span id="line-578">    private void runAotIfNeeded() {</span>
+<span class="source-line-no">579</span><span id="line-579">        if (aotEnabled) {</span>
+<span class="source-line-no">580</span><span id="line-580">            try {</span>
+<span class="source-line-no">581</span><span id="line-581">                executorService.executeGoal(THIS_PLUGIN, AotAnalysisMojo.NAME);</span>
+<span class="source-line-no">582</span><span id="line-582">            } catch (MojoExecutionException e) {</span>
+<span class="source-line-no">583</span><span id="line-583">                getLog().error(e.getMessage());</span>
+<span class="source-line-no">584</span><span id="line-584">            }</span>
+<span class="source-line-no">585</span><span id="line-585">        }</span>
+<span class="source-line-no">586</span><span id="line-586">    }</span>
+<span class="source-line-no">587</span><span id="line-587"></span>
+<span class="source-line-no">588</span><span id="line-588">    private void maybeStartTestResourcesServer() throws MojoExecutionException {</span>
+<span class="source-line-no">589</span><span id="line-589">        testResourcesHelper.start();</span>
+<span class="source-line-no">590</span><span id="line-590">    }</span>
+<span class="source-line-no">591</span><span id="line-591"></span>
+<span class="source-line-no">592</span><span id="line-592">    private void maybeStopTestResourcesServer() throws MojoExecutionException {</span>
+<span class="source-line-no">593</span><span id="line-593">        testResourcesHelper.stop(false);</span>
+<span class="source-line-no">594</span><span id="line-594">    }</span>
+<span class="source-line-no">595</span><span id="line-595"></span>
+<span class="source-line-no">596</span><span id="line-596">    private boolean compileProject() {</span>
+<span class="source-line-no">597</span><span id="line-597">        // There can be multiple changes detected at the same time, so we want</span>
+<span class="source-line-no">598</span><span id="line-598">        // to keep only one compilation request</span>
+<span class="source-line-no">599</span><span id="line-599">        if (recompileRequested.get()) {</span>
+<span class="source-line-no">600</span><span id="line-600">            return false;</span>
+<span class="source-line-no">601</span><span id="line-601">        }</span>
+<span class="source-line-no">602</span><span id="line-602">        recompileRequested.set(true);</span>
+<span class="source-line-no">603</span><span id="line-603">        try {</span>
+<span class="source-line-no">604</span><span id="line-604">            return doCompile();</span>
+<span class="source-line-no">605</span><span id="line-605">        } finally {</span>
+<span class="source-line-no">606</span><span id="line-606">            recompileRequested.set(false);</span>
+<span class="source-line-no">607</span><span id="line-607">        }</span>
+<span class="source-line-no">608</span><span id="line-608">    }</span>
+<span class="source-line-no">609</span><span id="line-609"></span>
+<span class="source-line-no">610</span><span id="line-610">    private boolean doCompile() {</span>
+<span class="source-line-no">611</span><span id="line-611">        Optional&lt;Long&gt; lastCompilationMillis = compilerService.compileProject();</span>
+<span class="source-line-no">612</span><span id="line-612">        lastCompilationMillis.ifPresent(lc -&gt; this.lastCompilation = lc);</span>
+<span class="source-line-no">613</span><span id="line-613">        return lastCompilationMillis.isPresent();</span>
+<span class="source-line-no">614</span><span id="line-614">    }</span>
+<span class="source-line-no">615</span><span id="line-615"></span>
+<span class="source-line-no">616</span><span id="line-616">    private void killProcess() {</span>
+<span class="source-line-no">617</span><span id="line-617">        if (process != null &amp;&amp; process.isAlive()) {</span>
+<span class="source-line-no">618</span><span id="line-618">            if (getLog().isDebugEnabled()) {</span>
+<span class="source-line-no">619</span><span id="line-619">                getLog().debug("Stopping the background process");</span>
+<span class="source-line-no">620</span><span id="line-620">            }</span>
+<span class="source-line-no">621</span><span id="line-621">            process.destroy();</span>
+<span class="source-line-no">622</span><span id="line-622">            try {</span>
+<span class="source-line-no">623</span><span id="line-623">                process.waitFor();</span>
+<span class="source-line-no">624</span><span id="line-624">            } catch (InterruptedException e) {</span>
+<span class="source-line-no">625</span><span id="line-625">                process.destroyForcibly();</span>
+<span class="source-line-no">626</span><span id="line-626">                Thread.currentThread().interrupt();</span>
+<span class="source-line-no">627</span><span id="line-627">            }</span>
+<span class="source-line-no">628</span><span id="line-628">        }</span>
+<span class="source-line-no">629</span><span id="line-629">    }</span>
+<span class="source-line-no">630</span><span id="line-630"></span>
+<span class="source-line-no">631</span><span id="line-631">    private static String normalize(Path path) {</span>
+<span class="source-line-no">632</span><span id="line-632">        return path.toString().replace('\\', '/');</span>
+<span class="source-line-no">633</span><span id="line-633">    }</span>
+<span class="source-line-no">634</span><span id="line-634"></span>
+<span class="source-line-no">635</span><span id="line-635">    private static boolean pathMatches(String pattern, Path path) {</span>
+<span class="source-line-no">636</span><span id="line-636">        return AbstractScanner.match(pattern, normalize(path));</span>
+<span class="source-line-no">637</span><span id="line-637">    }</span>
+<span class="source-line-no">638</span><span id="line-638"></span>
+<span class="source-line-no">639</span><span id="line-639">    private static boolean patternEquals(Path path, String includePattern, File directory) {</span>
+<span class="source-line-no">640</span><span id="line-640">        try {</span>
+<span class="source-line-no">641</span><span id="line-641">            var testPath = normalize(directory.toPath().resolve(includePattern).toAbsolutePath());</span>
+<span class="source-line-no">642</span><span id="line-642">            return testPath.equals(normalize(path.toAbsolutePath()));</span>
+<span class="source-line-no">643</span><span id="line-643">        } catch (InvalidPathException ex) {</span>
+<span class="source-line-no">644</span><span id="line-644">            return false;</span>
+<span class="source-line-no">645</span><span id="line-645">        }</span>
+<span class="source-line-no">646</span><span id="line-646">    }</span>
+<span class="source-line-no">647</span><span id="line-647"></span>
+<span class="source-line-no">648</span><span id="line-648">}</span>
 
 
 
