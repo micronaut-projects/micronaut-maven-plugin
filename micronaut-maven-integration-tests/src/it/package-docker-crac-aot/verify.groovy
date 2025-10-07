@@ -10,7 +10,7 @@ File classes = new File(basedir, "target/classes")
 File aotGenerated = new File(classes, "io/micronaut/build/examples/generated/AOTApplicationContextConfigurer.class")
 assert aotGenerated.exists()
 
-// Resource filtering
+// Resource filtering - both YAML and properties files are converted to Java with property-source-loader.generate.enabled
 def list = []
 classes.eachFileRecurse(groovy.io.FileType.FILES) { file ->
     if (file.name in ['application.yml', 'application.properties']) {
