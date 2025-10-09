@@ -103,14 +103,18 @@ public class DockerService {
     }
 
     private void maybeConfigureBuildAuth(BuildImageCmd buildImageCmd) {
-        Optional<String> fromImage = jibConfigurationService.getFromImage();
-        Optional<Credential> fromCredentials = jibConfigurationService.getFromCredentials();
-        if (fromImage.isPresent() && fromCredentials.isPresent()) {
-            AuthConfig authConfig = getAuthConfigFor(fromImage.get(), fromCredentials.get().getUsername(), fromCredentials.get().getPassword());
-            var authConfigurations = new AuthConfigurations();
-            authConfigurations.addConfig(authConfig);
-            buildImageCmd.withBuildAuthConfigs(authConfigurations);
-        }
+        jibConfigurationService.getFromImage().ifPresent(image -> {
+            Optional<Credential> fromCredentials = jibConfigurationService.getFromCredentials();
+            Optional<Credential> credential = fromCredentials.or(() -> jibConfigurationService.resolveCredentialForImage(image, LOG));
+            credential.ifPresent(cred -> {
+                var username = cred.getUsername();
+                var password = cred.getPassword();
+                AuthConfig authConfig = getAuthConfigFor(image, username, password);
+                var authConfigurations = new AuthConfigurations();
+                authConfigurations.addConfig(authConfig);
+                buildImageCmd.withBuildAuthConfigs(authConfigurations);
+            });
+        });
     }
 
     /**

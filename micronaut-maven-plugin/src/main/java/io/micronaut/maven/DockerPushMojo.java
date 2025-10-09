@@ -18,11 +18,8 @@ package io.micronaut.maven;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.google.cloud.tools.jib.api.Credential;
-import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
-import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
@@ -38,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
 
 /**
  * <p>Implementation of the <code>deploy</code> lifecycle for pushing Docker images</p>
@@ -75,27 +71,14 @@ public class DockerPushMojo extends AbstractDockerMojo {
                 for (String taggedImage : images) {
                     getLog().info("Pushing image: " + taggedImage);
                     try (PushImageCmd pushImageCmd = dockerService.pushImageCmd(taggedImage)) {
-                        ImageReference imageReference = ImageReference.parse(taggedImage);
-                        CredentialRetrieverFactory factory = CredentialRetrieverFactory.forImage(imageReference, this::logEvent);
-                        Credential credentialHelperCredential = Stream
-                            .of(factory.wellKnownCredentialHelpers(), factory.googleApplicationDefaultCredentials())
-                            .map(retriever -> {
-                                try {
-                                    return retriever.retrieve();
-                                } catch (CredentialRetrievalException e) {
-                                    return Optional.<Credential>empty();
-                                }
-                            })
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .findFirst()
-                            .orElse(factory.dockerConfig().retrieve().orElse(null));
-
-                        Credential credential = jibConfigurationService.getToCredentials().orElse(credentialHelperCredential);
-                        if (credential != null) {
-                            AuthConfig authConfig = dockerService.getAuthConfigFor(taggedImage, credential.getUsername(), credential.getPassword());
+                        Optional<Credential> toCredentials = jibConfigurationService.getToCredentials();
+                        Optional<Credential> credential = toCredentials.or(() -> jibConfigurationService.resolveCredentialForImage(taggedImage, LOG));
+                        credential.ifPresent(cred -> {
+                            var username = cred.getUsername();
+                            var password = cred.getPassword();
+                            AuthConfig authConfig = dockerService.getAuthConfigFor(taggedImage, username, password);
                             pushImageCmd.withAuthConfig(authConfig);
-                        }
+                        });
 
                         pushImageCmd.start().awaitCompletion();
                     } catch (InterruptedException e) {
