@@ -40,8 +40,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import static io.micronaut.maven.services.ApplicationConfigurationService.DEFAULT_PORT;
@@ -64,6 +66,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol9";
     public static final String ORACLE_CLOUD_FUNCTION_DEFAULT_CMD = "CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]";
     public static final String GDS_DOWNLOAD_URL = "https://gds.oracle.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz";
+    private static final NavigableSet<Integer> GRAALVM_VERSIONS = new TreeSet<>(Set.of(17, 21, 25));
 
     protected final MavenProject mavenProject;
     protected final JibConfigurationService jibConfigurationService;
@@ -151,18 +154,23 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @return the JVM version to use for GraalVM.
      */
     protected String graalVmJvmVersion() {
-        return javaVersion().getMajorVersion() == 17 ? "17" : "21";
+        return Integer.toString(resolveGraalVersion());
     }
 
     /**
      * @return the GraalVM download URL depending on the Java version.
      */
     protected String graalVmDownloadUrl() {
-        if (javaVersion().getMajorVersion() == 17) {
-            return GDS_DOWNLOAD_URL.formatted(17, 17, graalVmArch());
-        } else {
-            return GDS_DOWNLOAD_URL.formatted(21, 21, graalVmArch());
-        }
+        Integer version = resolveGraalVersion();
+
+        return GDS_DOWNLOAD_URL.formatted(version, version, graalVmArch());
+    }
+
+    private Integer resolveGraalVersion() {
+        int target = javaVersion().getMajorVersion();
+        Integer version = GRAALVM_VERSIONS.floor(target);
+
+        return version != null ? version : GRAALVM_VERSIONS.first();
     }
 
     /**
