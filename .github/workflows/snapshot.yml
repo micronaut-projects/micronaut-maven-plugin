@@ -45,7 +45,7 @@ jobs:
           gpg --list-secret-keys --keyid-format LONG
 
       - name: "☕️ Install Java and Maven and set up Apache Maven Central"
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: ${{ matrix.java }}
