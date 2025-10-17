@@ -16,7 +16,7 @@ jobs:
       matrix:
         java: ['17.0.12']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Cache Maven packages
         uses: actions/cache@v4
         with:
