@@ -55,7 +55,7 @@ jobs:
           gpg-passphrase: GPG_PASSWORD
 
       - name: "🔧 Setup GraalVM CE"
-        uses: graalvm/setup-graalvm@v1.3.6
+        uses: graalvm/setup-graalvm@v1.4.1
         with:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
