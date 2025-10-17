@@ -64,12 +64,12 @@
         <maven.compiler.target>${jdk.version}</maven.compiler.target>
 
         <maven.version>3.9.11</maven.version>
-        <micronaut.version>4.9.11</micronaut.version>
-        <native-maven-plugin.version>0.10.6</native-maven-plugin.version>
-        <micronaut.aot.version>2.8.1</micronaut.aot.version>
+        <micronaut.version>4.10.6</micronaut.version>
+        <native-maven-plugin.version>0.11.1</native-maven-plugin.version>
+        <micronaut.aot.version>2.9.0</micronaut.aot.version>
         <micronaut.test.resources.version>2.9.0</micronaut.test.resources.version>
-        <micronaut.openapi.version>6.17.3</micronaut.openapi.version>
-        <micronaut.jsonschema.version>1.6.0</micronaut.jsonschema.version>
+        <micronaut.openapi.version>6.19.0</micronaut.openapi.version>
+        <micronaut.jsonschema.version>1.7.1</micronaut.jsonschema.version>
 
         <maven.resources-plugin.version>3.3.1</maven.resources-plugin.version>
         <maven.archiver-plugin.version>3.6.0</maven.archiver-plugin.version>
@@ -89,17 +89,17 @@
         <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/micronaut-maven-integration-tests/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
         <jacoco.version>0.8.13</jacoco.version>
-        <junit-jupiter.version>5.13.4</junit-jupiter.version>
+        <junit-jupiter.version>5.14.0</junit-jupiter.version>
         <directory-watcher.version>0.19.1</directory-watcher.version>
-        <testcontainers.version>1.21.3</testcontainers.version>
+        <testcontainers.version>2.0.1</testcontainers.version>
         <jib-maven-plugin.version>3.4.6</jib-maven-plugin.version>
-        <snakeyaml.version>2.4</snakeyaml.version>
+        <snakeyaml.version>2.5</snakeyaml.version>
         <sisu.version>0.9.0.M2</sisu.version>
-        <docker-java.version>3.5.3</docker-java.version>
+        <docker-java.version>3.6.0</docker-java.version>
         <checkstyle.config.dir.path>${maven.multiModuleProjectDirectory}/config/checkstyle</checkstyle.config.dir.path>
         <spotless.licenseHeader.path>${maven.multiModuleProjectDirectory}/config/spotless.license.java</spotless.licenseHeader.path>
         <maven-plugin-tools.version>3.15.1</maven-plugin-tools.version>
-        <jackson.version>2.19.2</jackson.version>
+        <jackson.version>2.20.0</jackson.version>
     </properties>
 
     <dependencyManagement>
@@ -163,7 +163,7 @@
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
-                <version>5.18.0</version>
+                <version>5.20.0</version>
             </dependency>
             <dependency>
                 <groupId>org.junit-pioneer</groupId>
@@ -244,7 +244,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.11.3</version>
+                    <version>3.12.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-site-plugin</artifactId>
@@ -261,7 +261,7 @@
                 <plugin>
                     <groupId>org.sonatype.central</groupId>
                     <artifactId>central-publishing-maven-plugin</artifactId>
-                    <version>0.8.0</version>
+                    <version>0.9.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -279,14 +279,14 @@
                         <dependency>
                             <groupId>com.puppycrawl.tools</groupId>
                             <artifactId>checkstyle</artifactId>
-                            <version>10.26.1</version>
+                            <version>12.0.1</version>
                         </dependency>
                     </dependencies>
                 </plugin>
                 <plugin>
                     <groupId>com.diffplug.spotless</groupId>
                     <artifactId>spotless-maven-plugin</artifactId>
-                    <version>2.46.1</version>
+                    <version>3.0.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>

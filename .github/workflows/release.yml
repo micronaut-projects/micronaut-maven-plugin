@@ -12,7 +12,7 @@ jobs:
       MICRONAUT_CORE_BRANCH: "4.0.x"
     steps:
       - name: "📥 Checkout repository"
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_TOKEN }}
@@ -27,7 +27,7 @@ jobs:
           gpg --list-secret-keys --keyid-format LONG
 
       - name: "☕️ Install Java and Maven and set up Apache Maven Central"
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
