@@ -19,10 +19,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
+import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -42,7 +50,6 @@ import static io.micronaut.maven.jib.JibConfiguration.*;
  */
 @Singleton
 public class JibConfigurationService {
-
     private final Optional<JibConfiguration> configuration;
 
     @Inject
@@ -123,6 +130,40 @@ public class JibConfigurationService {
 
     }
 
+    /**
+     * Resolves effective credentials for a registry hosting the provided image reference.
+     * Precedence: explicit credentials -> well-known credential helpers -> Google ADC -> docker config.
+     *
+     * @param image the image reference (e.g., gcr.io/project/image:tag)
+     * @param logger the logger to use for logging events
+     * @return a Credential if one could be resolved
+     */
+    public Optional<Credential> resolveCredentialForImage(String image, Logger logger) {
+        try {
+            ImageReference imageReference = ImageReference.parse(image);
+            Consumer<LogEvent> logConsumer = logEvent -> logEvent(logEvent, logger);
+            CredentialRetrieverFactory factory = CredentialRetrieverFactory.forImage(imageReference, logConsumer);
+            return Stream.of(
+                    factory.wellKnownCredentialHelpers(),
+                    factory.googleApplicationDefaultCredentials(),
+                    factory.dockerConfig()
+                )
+                .map(retriever -> {
+                    try {
+                        return retriever.retrieve();
+                    } catch (CredentialRetrievalException e) {
+                        return Optional.<Credential>empty();
+                    }
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst();
+        } catch (InvalidImageReferenceException e) {
+            logger.warn("Invalid image reference '{}': {}", image, e.getMessage());
+            return Optional.empty();
+        }
+    }
+
     private Credential getCredentials(AuthConfiguration authConfiguration) {
         return Credential.from(
                 authConfiguration.username().orElse(null),
@@ -169,5 +210,13 @@ public class JibConfigurationService {
             items.add(part.trim());
         }
         return items;
+    }
+
+    private void logEvent(LogEvent logEvent, Logger logger) {
+        if (logEvent.getLevel().equals(LogEvent.Level.DEBUG)) {
+            logger.debug(logEvent.getMessage());
+        } else {
+            logger.info(logEvent.getMessage());
+        }
     }
 }
