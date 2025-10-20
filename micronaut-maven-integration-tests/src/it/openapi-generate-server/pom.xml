@@ -14,7 +14,7 @@
 
   <properties>
     <micronaut.version>@it.micronaut.version@</micronaut.version>
-    <lombok.version>1.18.40</lombok.version>
+    <lombok.version>1.18.42</lombok.version>
     <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
