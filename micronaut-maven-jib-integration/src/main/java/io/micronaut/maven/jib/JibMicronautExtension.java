@@ -51,7 +51,8 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     public static final String DEFAULT_JAVA17_BASE_IMAGE = "eclipse-temurin:17-jre";
     public static final String DEFAULT_JAVA21_BASE_IMAGE = "eclipse-temurin:21-jre";
     private static final String LATEST_TAG = "latest";
-    private static final String JDK_VERSION = "maven.compiler.target";
+    private static final String JDK_TARGET_VERSION = "maven.compiler.target";
+    private static final String JDK_RELEASE_VERSION = "maven.compiler.release";
 
     @Override
     public Optional<Class<Void>> getExtraConfigType() {
@@ -155,7 +156,16 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     }
 
     public static String getJdkVersion(MavenProject project) {
-        return System.getProperty(JDK_VERSION, project.getProperties().getProperty(JDK_VERSION));
+        var releaseVersion = getPropertyValue(project, JDK_RELEASE_VERSION);
+        var targetVersion = getPropertyValue(project, JDK_TARGET_VERSION);
+        return releaseVersion.or(() -> targetVersion).orElse(null);
+    }
+
+    private static Optional<String> getPropertyValue(MavenProject project, String propertName) {
+        var systemProperty = Optional.of(propertName).map(System::getProperty);
+        var properties = project.getProperties();
+        var projectProperty = Optional.of(propertName).map(properties::getProperty);
+        return systemProperty.or(() -> projectProperty);
     }
 
     static LayerObject remapLayer(LayerObject layerObject) {

@@ -68,6 +68,28 @@ class DockerNativeMojoTest {
     }
 
     @Test
+    @SetSystemProperty(key = "os.arch", value = X86_64_ARCH)
+    void testGraalVmDownloadUrlFromReleaseVersion() {
+        var project = mock(MavenProject.class);
+        var session = mock(MavenSession.class);
+        var execution = mock(MojoExecution.class);
+        var properties = new Properties(1);
+        properties.put("maven.compiler.release", "21");
+
+        when(session.getCurrentProject()).thenReturn(project);
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        when(project.getProperties()).thenReturn(properties);
+
+        var mojo = new DockerNativeMojo(project, null, null, null, session, execution);
+
+        var actualUrl = mojo.graalVmDownloadUrl();
+
+        var expectedUrl = "https://gds.oracle.com/download/graal/21/latest-gftc/graalvm-jdk-21_linux-x64_bin.tar.gz";
+        assertEquals(expectedUrl, actualUrl);
+    }
+
+    @Test
     void testGetPortsFromJib() {
         var project = mock(MavenProject.class);
         var session = mock(MavenSession.class);
