@@ -28,6 +28,7 @@ import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -166,6 +167,50 @@ class JibMicronautExtensionTest {
         assertEquals(2, finalPlan.getExposedPorts().size());
         assertTrue(finalPlan.getExposedPorts().contains(Port.tcp(8080)));
         assertTrue(finalPlan.getExposedPorts().contains(Port.tcp(8081)));
+    }
+
+    @Test
+    void testGetJdkVersionPrefersReleaseFromProjectProperties() {
+        MavenProject project = mock(MavenProject.class);
+        Properties props = new Properties();
+        props.setProperty("maven.compiler.release", "17");
+        props.setProperty("maven.compiler.target", "21");
+        when(project.getProperties()).thenReturn(props);
+
+        String version = JibMicronautExtension.getJdkVersion(project);
+        assertEquals("17", version);
+    }
+
+    @Test
+    void testGetJdkVersionFallsBackToTargetWhenReleaseMissing() {
+        MavenProject project = mock(MavenProject.class);
+        Properties props = new Properties();
+        props.setProperty("maven.compiler.target", "21");
+        when(project.getProperties()).thenReturn(props);
+
+        String version = JibMicronautExtension.getJdkVersion(project);
+        assertEquals("21", version);
+    }
+
+    @Test
+    @SetSystemProperty(key = "maven.compiler.release", value = "21")
+    void testGetJdkVersionSystemPropertyOverridesProject() {
+        MavenProject project = mock(MavenProject.class);
+        Properties props = new Properties();
+        props.setProperty("maven.compiler.release", "17");
+        when(project.getProperties()).thenReturn(props);
+
+        String version = JibMicronautExtension.getJdkVersion(project);
+        assertEquals("21", version);
+    }
+
+    @Test
+    void testGetJdkVersionReturnsNullWhenUnset() {
+        MavenProject project = mock(MavenProject.class);
+        when(project.getProperties()).thenReturn(new Properties());
+
+        String version = JibMicronautExtension.getJdkVersion(project);
+        assertNull(version);
     }
 
     private ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan originalPlan) {
