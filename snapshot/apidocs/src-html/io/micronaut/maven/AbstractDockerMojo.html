@@ -53,308 +53,316 @@
 <span class="source-line-no">040</span><span id="line-40">import java.util.HashSet;</span>
 <span class="source-line-no">041</span><span id="line-41">import java.util.List;</span>
 <span class="source-line-no">042</span><span id="line-42">import java.util.Map;</span>
-<span class="source-line-no">043</span><span id="line-43">import java.util.Optional;</span>
-<span class="source-line-no">044</span><span id="line-44">import java.util.Set;</span>
-<span class="source-line-no">045</span><span id="line-45">import java.util.stream.Collectors;</span>
-<span class="source-line-no">046</span><span id="line-46"></span>
-<span class="source-line-no">047</span><span id="line-47">import static io.micronaut.maven.services.ApplicationConfigurationService.DEFAULT_PORT;</span>
+<span class="source-line-no">043</span><span id="line-43">import java.util.NavigableSet;</span>
+<span class="source-line-no">044</span><span id="line-44">import java.util.Optional;</span>
+<span class="source-line-no">045</span><span id="line-45">import java.util.Set;</span>
+<span class="source-line-no">046</span><span id="line-46">import java.util.TreeSet;</span>
+<span class="source-line-no">047</span><span id="line-47">import java.util.stream.Collectors;</span>
 <span class="source-line-no">048</span><span id="line-48"></span>
-<span class="source-line-no">049</span><span id="line-49">/**</span>
-<span class="source-line-no">050</span><span id="line-50"> * Abstract base class for mojos related to Docker files and builds.</span>
-<span class="source-line-no">051</span><span id="line-51"> *</span>
-<span class="source-line-no">052</span><span id="line-52"> * @author Álvaro Sánchez-Mariscal</span>
-<span class="source-line-no">053</span><span id="line-53"> * @author Iván López</span>
-<span class="source-line-no">054</span><span id="line-54"> * @since 1.1</span>
-<span class="source-line-no">055</span><span id="line-55"> */</span>
-<span class="source-line-no">056</span><span id="line-56">public abstract class AbstractDockerMojo extends AbstractMicronautMojo {</span>
-<span class="source-line-no">057</span><span id="line-57"></span>
-<span class="source-line-no">058</span><span id="line-58">    public static final String LATEST_TAG = "latest";</span>
-<span class="source-line-no">059</span><span id="line-59">    // GlibC 2.34 is used by native image 17</span>
-<span class="source-line-no">060</span><span id="line-60">    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "cgr.dev/chainguard/wolfi-base:latest";</span>
-<span class="source-line-no">061</span><span id="line-61">    public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";</span>
-<span class="source-line-no">062</span><span id="line-62">    public static final String ARM_ARCH = "aarch64";</span>
-<span class="source-line-no">063</span><span id="line-63">    public static final String X86_64_ARCH = "x64";</span>
-<span class="source-line-no">064</span><span id="line-64">    public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol9";</span>
-<span class="source-line-no">065</span><span id="line-65">    public static final String ORACLE_CLOUD_FUNCTION_DEFAULT_CMD = "CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]";</span>
-<span class="source-line-no">066</span><span id="line-66">    public static final String GDS_DOWNLOAD_URL = "https://gds.oracle.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz";</span>
-<span class="source-line-no">067</span><span id="line-67"></span>
-<span class="source-line-no">068</span><span id="line-68">    protected final MavenProject mavenProject;</span>
-<span class="source-line-no">069</span><span id="line-69">    protected final JibConfigurationService jibConfigurationService;</span>
-<span class="source-line-no">070</span><span id="line-70">    protected final ApplicationConfigurationService applicationConfigurationService;</span>
-<span class="source-line-no">071</span><span id="line-71">    protected final DockerService dockerService;</span>
-<span class="source-line-no">072</span><span id="line-72">    protected final PluginParameterExpressionEvaluator expressionEvaluator;</span>
-<span class="source-line-no">073</span><span id="line-73"></span>
-<span class="source-line-no">074</span><span id="line-74"></span>
-<span class="source-line-no">075</span><span id="line-75">    /**</span>
-<span class="source-line-no">076</span><span id="line-76">     * Additional arguments that will be passed to the &lt;code&gt;native-image&lt;/code&gt; executable. Note that this will only</span>
-<span class="source-line-no">077</span><span id="line-77">     * be used when using a packaging of type &lt;code&gt;docker-native&lt;/code&gt;. For &lt;code&gt;native-image&lt;/code&gt; packaging</span>
-<span class="source-line-no">078</span><span id="line-78">     * you should use the</span>
-<span class="source-line-no">079</span><span id="line-79">     * &lt;a href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization"&gt;</span>
-<span class="source-line-no">080</span><span id="line-80">     * Native Image Maven Plugin</span>
-<span class="source-line-no">081</span><span id="line-81">     * &lt;/a&gt; configuration options.</span>
-<span class="source-line-no">082</span><span id="line-82">     */</span>
-<span class="source-line-no">083</span><span id="line-83">    @Parameter(property = "micronaut.native-image.args")</span>
-<span class="source-line-no">084</span><span id="line-84">    protected List&lt;String&gt; nativeImageBuildArgs;</span>
-<span class="source-line-no">085</span><span id="line-85"></span>
-<span class="source-line-no">086</span><span id="line-86">    /**</span>
-<span class="source-line-no">087</span><span id="line-87">     * List of additional arguments that will be passed to the application.</span>
-<span class="source-line-no">088</span><span id="line-88">     */</span>
-<span class="source-line-no">089</span><span id="line-89">    @Parameter(property = RunMojo.MN_APP_ARGS)</span>
-<span class="source-line-no">090</span><span id="line-90">    protected List&lt;String&gt; appArguments;</span>
-<span class="source-line-no">091</span><span id="line-91"></span>
-<span class="source-line-no">092</span><span id="line-92">    /**</span>
-<span class="source-line-no">093</span><span id="line-93">     * The main class of the application, as defined in the</span>
-<span class="source-line-no">094</span><span id="line-94">     * &lt;a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass"&gt;Exec Maven Plugin&lt;/a&gt;.</span>
-<span class="source-line-no">095</span><span id="line-95">     */</span>
-<span class="source-line-no">096</span><span id="line-96">    @Parameter(defaultValue = RunMojo.EXEC_MAIN_CLASS, required = true)</span>
-<span class="source-line-no">097</span><span id="line-97">    protected String mainClass;</span>
-<span class="source-line-no">098</span><span id="line-98"></span>
-<span class="source-line-no">099</span><span id="line-99">    /**</span>
-<span class="source-line-no">100</span><span id="line-100">     * Whether to produce a static native image when using &lt;code&gt;docker-native&lt;/code&gt; packaging.</span>
-<span class="source-line-no">101</span><span id="line-101">     */</span>
-<span class="source-line-no">102</span><span id="line-102">    @Parameter(defaultValue = "false", property = "micronaut.native-image.static")</span>
-<span class="source-line-no">103</span><span id="line-103">    protected Boolean staticNativeImage;</span>
-<span class="source-line-no">104</span><span id="line-104"></span>
-<span class="source-line-no">105</span><span id="line-105">    /**</span>
-<span class="source-line-no">106</span><span id="line-106">     * The target runtime of the application.</span>
-<span class="source-line-no">107</span><span id="line-107">     */</span>
-<span class="source-line-no">108</span><span id="line-108">    @Parameter(property = MicronautRuntime.PROPERTY, defaultValue = "NONE")</span>
-<span class="source-line-no">109</span><span id="line-109">    protected String micronautRuntime;</span>
-<span class="source-line-no">110</span><span id="line-110"></span>
-<span class="source-line-no">111</span><span id="line-111">    /**</span>
-<span class="source-line-no">112</span><span id="line-112">     * The Docker image used to run the native image.</span>
-<span class="source-line-no">113</span><span id="line-113">     *</span>
-<span class="source-line-no">114</span><span id="line-114">     * @since 1.2</span>
-<span class="source-line-no">115</span><span id="line-115">     */</span>
-<span class="source-line-no">116</span><span id="line-116">    @Parameter(property = "micronaut.native-image.base-image-run", defaultValue = DEFAULT_BASE_IMAGE_GRAALVM_RUN)</span>
-<span class="source-line-no">117</span><span id="line-117">    protected String baseImageRun;</span>
-<span class="source-line-no">118</span><span id="line-118"></span>
-<span class="source-line-no">119</span><span id="line-119">    /**</span>
-<span class="source-line-no">120</span><span id="line-120">     * The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.</span>
-<span class="source-line-no">121</span><span id="line-121">     */</span>
-<span class="source-line-no">122</span><span id="line-122">    @Parameter(property = "micronaut.native-image.ol.version", defaultValue = DEFAULT_ORACLE_LINUX_VERSION)</span>
-<span class="source-line-no">123</span><span id="line-123">    protected String oracleLinuxVersion;</span>
-<span class="source-line-no">124</span><span id="line-124"></span>
-<span class="source-line-no">125</span><span id="line-125">    /**</span>
-<span class="source-line-no">126</span><span id="line-126">     * Networking mode for the RUN instructions during build.</span>
-<span class="source-line-no">127</span><span id="line-127">     *</span>
-<span class="source-line-no">128</span><span id="line-128">     * @since 4.0.0</span>
-<span class="source-line-no">129</span><span id="line-129">     */</span>
-<span class="source-line-no">130</span><span id="line-130">    @Parameter(property = "docker.networkMode")</span>
-<span class="source-line-no">131</span><span id="line-131">    protected String networkMode;</span>
-<span class="source-line-no">132</span><span id="line-132"></span>
-<span class="source-line-no">133</span><span id="line-133">    protected AbstractDockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,</span>
-<span class="source-line-no">134</span><span id="line-134">                                 ApplicationConfigurationService applicationConfigurationService,</span>
-<span class="source-line-no">135</span><span id="line-135">                                 DockerService dockerService, MavenSession mavenSession, MojoExecution mojoExecution) {</span>
-<span class="source-line-no">136</span><span id="line-136">        this.mavenProject = mavenProject;</span>
-<span class="source-line-no">137</span><span id="line-137">        this.jibConfigurationService = jibConfigurationService;</span>
-<span class="source-line-no">138</span><span id="line-138">        this.applicationConfigurationService = applicationConfigurationService;</span>
-<span class="source-line-no">139</span><span id="line-139">        this.dockerService = dockerService;</span>
-<span class="source-line-no">140</span><span id="line-140">        this.expressionEvaluator = new PluginParameterExpressionEvaluator(mavenSession, mojoExecution);</span>
-<span class="source-line-no">141</span><span id="line-141">    }</span>
-<span class="source-line-no">142</span><span id="line-142"></span>
-<span class="source-line-no">143</span><span id="line-143">    /**</span>
-<span class="source-line-no">144</span><span id="line-144">     * @return the Java version from either the &lt;code&gt;maven.compiler.target&lt;/code&gt; property or the &lt;code&gt;java.version&lt;/code&gt; property.</span>
-<span class="source-line-no">145</span><span id="line-145">     */</span>
-<span class="source-line-no">146</span><span id="line-146">    protected ArtifactVersion javaVersion() {</span>
-<span class="source-line-no">147</span><span id="line-147">        return new DefaultArtifactVersion(Optional.ofNullable(mavenProject.getProperties().getProperty("maven.compiler.target")).orElse(System.getProperty("java.version")));</span>
-<span class="source-line-no">148</span><span id="line-148">    }</span>
-<span class="source-line-no">149</span><span id="line-149"></span>
-<span class="source-line-no">150</span><span id="line-150">    /**</span>
-<span class="source-line-no">151</span><span id="line-151">     * @return the JVM version to use for GraalVM.</span>
-<span class="source-line-no">152</span><span id="line-152">     */</span>
-<span class="source-line-no">153</span><span id="line-153">    protected String graalVmJvmVersion() {</span>
-<span class="source-line-no">154</span><span id="line-154">        return javaVersion().getMajorVersion() == 17 ? "17" : "21";</span>
-<span class="source-line-no">155</span><span id="line-155">    }</span>
-<span class="source-line-no">156</span><span id="line-156"></span>
-<span class="source-line-no">157</span><span id="line-157">    /**</span>
-<span class="source-line-no">158</span><span id="line-158">     * @return the GraalVM download URL depending on the Java version.</span>
-<span class="source-line-no">159</span><span id="line-159">     */</span>
-<span class="source-line-no">160</span><span id="line-160">    protected String graalVmDownloadUrl() {</span>
-<span class="source-line-no">161</span><span id="line-161">        if (javaVersion().getMajorVersion() == 17) {</span>
-<span class="source-line-no">162</span><span id="line-162">            return GDS_DOWNLOAD_URL.formatted(17, 17, graalVmArch());</span>
-<span class="source-line-no">163</span><span id="line-163">        } else {</span>
-<span class="source-line-no">164</span><span id="line-164">            return GDS_DOWNLOAD_URL.formatted(21, 21, graalVmArch());</span>
-<span class="source-line-no">165</span><span id="line-165">        }</span>
-<span class="source-line-no">166</span><span id="line-166">    }</span>
-<span class="source-line-no">167</span><span id="line-167"></span>
-<span class="source-line-no">168</span><span id="line-168">    /**</span>
-<span class="source-line-no">169</span><span id="line-169">     * @return the OS architecture to use for GraalVM depending on the &lt;code&gt;os.arch&lt;/code&gt; system property.</span>
-<span class="source-line-no">170</span><span id="line-170">     */</span>
-<span class="source-line-no">171</span><span id="line-171">    protected String graalVmArch() {</span>
-<span class="source-line-no">172</span><span id="line-172">        return isArm() ? ARM_ARCH : X86_64_ARCH;</span>
-<span class="source-line-no">173</span><span id="line-173">    }</span>
-<span class="source-line-no">174</span><span id="line-174"></span>
-<span class="source-line-no">175</span><span id="line-175">    /**</span>
-<span class="source-line-no">176</span><span id="line-176">     * @return the base FROM image for the native image.</span>
-<span class="source-line-no">177</span><span id="line-177">     */</span>
-<span class="source-line-no">178</span><span id="line-178">    protected String getFrom() {</span>
-<span class="source-line-no">179</span><span id="line-179">        if (Boolean.TRUE.equals(staticNativeImage)) {</span>
-<span class="source-line-no">180</span><span id="line-180">            return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmJvmVersion() + "-muslib-" + oracleLinuxVersion);</span>
-<span class="source-line-no">181</span><span id="line-181">        } else {</span>
-<span class="source-line-no">182</span><span id="line-182">            return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmJvmVersion() + "-" + oracleLinuxVersion);</span>
-<span class="source-line-no">183</span><span id="line-183">        }</span>
-<span class="source-line-no">184</span><span id="line-184">    }</span>
-<span class="source-line-no">185</span><span id="line-185"></span>
-<span class="source-line-no">186</span><span id="line-186">    /**</span>
-<span class="source-line-no">187</span><span id="line-187">     * Check os.arch against known ARM architecture identifiers.</span>
-<span class="source-line-no">188</span><span id="line-188">     *</span>
-<span class="source-line-no">189</span><span id="line-189">     * @return true if we think we're running on an arm JDK</span>
-<span class="source-line-no">190</span><span id="line-190">     */</span>
-<span class="source-line-no">191</span><span id="line-191">    protected boolean isArm() {</span>
-<span class="source-line-no">192</span><span id="line-192">        return switch (System.getProperty("os.arch")) {</span>
-<span class="source-line-no">193</span><span id="line-193">            case ARM_ARCH, "arm64" -&gt; true;</span>
-<span class="source-line-no">194</span><span id="line-194">            default -&gt; false;</span>
-<span class="source-line-no">195</span><span id="line-195">        };</span>
-<span class="source-line-no">196</span><span id="line-196">    }</span>
-<span class="source-line-no">197</span><span id="line-197"></span>
-<span class="source-line-no">198</span><span id="line-198">    /**</span>
-<span class="source-line-no">199</span><span id="line-199">     * @return the base image from the jib configuration (if any).</span>
-<span class="source-line-no">200</span><span id="line-200">     */</span>
-<span class="source-line-no">201</span><span id="line-201">    protected Optional&lt;String&gt; getFromImage() {</span>
-<span class="source-line-no">202</span><span id="line-202">        return jibConfigurationService.getFromImage();</span>
-<span class="source-line-no">203</span><span id="line-203">    }</span>
-<span class="source-line-no">204</span><span id="line-204"></span>
-<span class="source-line-no">205</span><span id="line-205">    /**</span>
-<span class="source-line-no">206</span><span id="line-206">     * @return the Docker image tags by looking at the Jib plugin configuration.</span>
-<span class="source-line-no">207</span><span id="line-207">     */</span>
-<span class="source-line-no">208</span><span id="line-208">    protected Set&lt;String&gt; getTags() {</span>
-<span class="source-line-no">209</span><span id="line-209">        var tags = new HashSet&lt;String&gt;();</span>
-<span class="source-line-no">210</span><span id="line-210">        Optional&lt;String&gt; toImageOptional = jibConfigurationService.getToImage();</span>
-<span class="source-line-no">211</span><span id="line-211">        String imageName = mavenProject.getArtifactId();</span>
-<span class="source-line-no">212</span><span id="line-212">        if (toImageOptional.isPresent()) {</span>
-<span class="source-line-no">213</span><span id="line-213">            String toImage = toImageOptional.get();</span>
-<span class="source-line-no">214</span><span id="line-214">            if (toImage.contains(":")) {</span>
-<span class="source-line-no">215</span><span id="line-215">                tags.add(toImage);</span>
-<span class="source-line-no">216</span><span id="line-216">                imageName = toImageOptional.get().split(":")[0];</span>
-<span class="source-line-no">217</span><span id="line-217">            } else {</span>
-<span class="source-line-no">218</span><span id="line-218">                tags.add(toImage + ":" + LATEST_TAG);</span>
-<span class="source-line-no">219</span><span id="line-219">                imageName = toImage;</span>
-<span class="source-line-no">220</span><span id="line-220">            }</span>
-<span class="source-line-no">221</span><span id="line-221">        } else {</span>
-<span class="source-line-no">222</span><span id="line-222">            tags.add(imageName + ":" + LATEST_TAG);</span>
-<span class="source-line-no">223</span><span id="line-223">        }</span>
-<span class="source-line-no">224</span><span id="line-224">        for (String tag : jibConfigurationService.getTags()) {</span>
-<span class="source-line-no">225</span><span id="line-225">            if (LATEST_TAG.equals(tag) &amp;&amp; tags.stream().anyMatch(t -&gt; t.contains(LATEST_TAG))) {</span>
-<span class="source-line-no">226</span><span id="line-226">                continue;</span>
-<span class="source-line-no">227</span><span id="line-227">            }</span>
-<span class="source-line-no">228</span><span id="line-228">            tags.add(String.format("%s:%s", imageName, tag));</span>
-<span class="source-line-no">229</span><span id="line-229">        }</span>
-<span class="source-line-no">230</span><span id="line-230">        return tags.stream()</span>
-<span class="source-line-no">231</span><span id="line-231">            .map(this::evaluateExpression)</span>
-<span class="source-line-no">232</span><span id="line-232">            .collect(Collectors.toSet());</span>
-<span class="source-line-no">233</span><span id="line-233">    }</span>
-<span class="source-line-no">234</span><span id="line-234"></span>
-<span class="source-line-no">235</span><span id="line-235">    private String evaluateExpression(String expression) {</span>
-<span class="source-line-no">236</span><span id="line-236">        try {</span>
-<span class="source-line-no">237</span><span id="line-237">            return expressionEvaluator.evaluate(expression, String.class).toString();</span>
-<span class="source-line-no">238</span><span id="line-238">        } catch (Exception e) {</span>
-<span class="source-line-no">239</span><span id="line-239">            return expression;</span>
-<span class="source-line-no">240</span><span id="line-240">        }</span>
+<span class="source-line-no">049</span><span id="line-49">import static io.micronaut.maven.services.ApplicationConfigurationService.DEFAULT_PORT;</span>
+<span class="source-line-no">050</span><span id="line-50"></span>
+<span class="source-line-no">051</span><span id="line-51">/**</span>
+<span class="source-line-no">052</span><span id="line-52"> * Abstract base class for mojos related to Docker files and builds.</span>
+<span class="source-line-no">053</span><span id="line-53"> *</span>
+<span class="source-line-no">054</span><span id="line-54"> * @author Álvaro Sánchez-Mariscal</span>
+<span class="source-line-no">055</span><span id="line-55"> * @author Iván López</span>
+<span class="source-line-no">056</span><span id="line-56"> * @since 1.1</span>
+<span class="source-line-no">057</span><span id="line-57"> */</span>
+<span class="source-line-no">058</span><span id="line-58">public abstract class AbstractDockerMojo extends AbstractMicronautMojo {</span>
+<span class="source-line-no">059</span><span id="line-59"></span>
+<span class="source-line-no">060</span><span id="line-60">    public static final String LATEST_TAG = "latest";</span>
+<span class="source-line-no">061</span><span id="line-61">    // GlibC 2.34 is used by native image 17</span>
+<span class="source-line-no">062</span><span id="line-62">    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "cgr.dev/chainguard/wolfi-base:latest";</span>
+<span class="source-line-no">063</span><span id="line-63">    public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";</span>
+<span class="source-line-no">064</span><span id="line-64">    public static final String ARM_ARCH = "aarch64";</span>
+<span class="source-line-no">065</span><span id="line-65">    public static final String X86_64_ARCH = "x64";</span>
+<span class="source-line-no">066</span><span id="line-66">    public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol9";</span>
+<span class="source-line-no">067</span><span id="line-67">    public static final String ORACLE_CLOUD_FUNCTION_DEFAULT_CMD = "CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]";</span>
+<span class="source-line-no">068</span><span id="line-68">    public static final String GDS_DOWNLOAD_URL = "https://gds.oracle.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz";</span>
+<span class="source-line-no">069</span><span id="line-69">    private static final NavigableSet&lt;Integer&gt; GRAALVM_VERSIONS = new TreeSet&lt;&gt;(Set.of(17, 21, 25));</span>
+<span class="source-line-no">070</span><span id="line-70"></span>
+<span class="source-line-no">071</span><span id="line-71">    protected final MavenProject mavenProject;</span>
+<span class="source-line-no">072</span><span id="line-72">    protected final JibConfigurationService jibConfigurationService;</span>
+<span class="source-line-no">073</span><span id="line-73">    protected final ApplicationConfigurationService applicationConfigurationService;</span>
+<span class="source-line-no">074</span><span id="line-74">    protected final DockerService dockerService;</span>
+<span class="source-line-no">075</span><span id="line-75">    protected final PluginParameterExpressionEvaluator expressionEvaluator;</span>
+<span class="source-line-no">076</span><span id="line-76"></span>
+<span class="source-line-no">077</span><span id="line-77"></span>
+<span class="source-line-no">078</span><span id="line-78">    /**</span>
+<span class="source-line-no">079</span><span id="line-79">     * Additional arguments that will be passed to the &lt;code&gt;native-image&lt;/code&gt; executable. Note that this will only</span>
+<span class="source-line-no">080</span><span id="line-80">     * be used when using a packaging of type &lt;code&gt;docker-native&lt;/code&gt;. For &lt;code&gt;native-image&lt;/code&gt; packaging</span>
+<span class="source-line-no">081</span><span id="line-81">     * you should use the</span>
+<span class="source-line-no">082</span><span id="line-82">     * &lt;a href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization"&gt;</span>
+<span class="source-line-no">083</span><span id="line-83">     * Native Image Maven Plugin</span>
+<span class="source-line-no">084</span><span id="line-84">     * &lt;/a&gt; configuration options.</span>
+<span class="source-line-no">085</span><span id="line-85">     */</span>
+<span class="source-line-no">086</span><span id="line-86">    @Parameter(property = "micronaut.native-image.args")</span>
+<span class="source-line-no">087</span><span id="line-87">    protected List&lt;String&gt; nativeImageBuildArgs;</span>
+<span class="source-line-no">088</span><span id="line-88"></span>
+<span class="source-line-no">089</span><span id="line-89">    /**</span>
+<span class="source-line-no">090</span><span id="line-90">     * List of additional arguments that will be passed to the application.</span>
+<span class="source-line-no">091</span><span id="line-91">     */</span>
+<span class="source-line-no">092</span><span id="line-92">    @Parameter(property = RunMojo.MN_APP_ARGS)</span>
+<span class="source-line-no">093</span><span id="line-93">    protected List&lt;String&gt; appArguments;</span>
+<span class="source-line-no">094</span><span id="line-94"></span>
+<span class="source-line-no">095</span><span id="line-95">    /**</span>
+<span class="source-line-no">096</span><span id="line-96">     * The main class of the application, as defined in the</span>
+<span class="source-line-no">097</span><span id="line-97">     * &lt;a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass"&gt;Exec Maven Plugin&lt;/a&gt;.</span>
+<span class="source-line-no">098</span><span id="line-98">     */</span>
+<span class="source-line-no">099</span><span id="line-99">    @Parameter(defaultValue = RunMojo.EXEC_MAIN_CLASS, required = true)</span>
+<span class="source-line-no">100</span><span id="line-100">    protected String mainClass;</span>
+<span class="source-line-no">101</span><span id="line-101"></span>
+<span class="source-line-no">102</span><span id="line-102">    /**</span>
+<span class="source-line-no">103</span><span id="line-103">     * Whether to produce a static native image when using &lt;code&gt;docker-native&lt;/code&gt; packaging.</span>
+<span class="source-line-no">104</span><span id="line-104">     */</span>
+<span class="source-line-no">105</span><span id="line-105">    @Parameter(defaultValue = "false", property = "micronaut.native-image.static")</span>
+<span class="source-line-no">106</span><span id="line-106">    protected Boolean staticNativeImage;</span>
+<span class="source-line-no">107</span><span id="line-107"></span>
+<span class="source-line-no">108</span><span id="line-108">    /**</span>
+<span class="source-line-no">109</span><span id="line-109">     * The target runtime of the application.</span>
+<span class="source-line-no">110</span><span id="line-110">     */</span>
+<span class="source-line-no">111</span><span id="line-111">    @Parameter(property = MicronautRuntime.PROPERTY, defaultValue = "NONE")</span>
+<span class="source-line-no">112</span><span id="line-112">    protected String micronautRuntime;</span>
+<span class="source-line-no">113</span><span id="line-113"></span>
+<span class="source-line-no">114</span><span id="line-114">    /**</span>
+<span class="source-line-no">115</span><span id="line-115">     * The Docker image used to run the native image.</span>
+<span class="source-line-no">116</span><span id="line-116">     *</span>
+<span class="source-line-no">117</span><span id="line-117">     * @since 1.2</span>
+<span class="source-line-no">118</span><span id="line-118">     */</span>
+<span class="source-line-no">119</span><span id="line-119">    @Parameter(property = "micronaut.native-image.base-image-run", defaultValue = DEFAULT_BASE_IMAGE_GRAALVM_RUN)</span>
+<span class="source-line-no">120</span><span id="line-120">    protected String baseImageRun;</span>
+<span class="source-line-no">121</span><span id="line-121"></span>
+<span class="source-line-no">122</span><span id="line-122">    /**</span>
+<span class="source-line-no">123</span><span id="line-123">     * The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.</span>
+<span class="source-line-no">124</span><span id="line-124">     */</span>
+<span class="source-line-no">125</span><span id="line-125">    @Parameter(property = "micronaut.native-image.ol.version", defaultValue = DEFAULT_ORACLE_LINUX_VERSION)</span>
+<span class="source-line-no">126</span><span id="line-126">    protected String oracleLinuxVersion;</span>
+<span class="source-line-no">127</span><span id="line-127"></span>
+<span class="source-line-no">128</span><span id="line-128">    /**</span>
+<span class="source-line-no">129</span><span id="line-129">     * Networking mode for the RUN instructions during build.</span>
+<span class="source-line-no">130</span><span id="line-130">     *</span>
+<span class="source-line-no">131</span><span id="line-131">     * @since 4.0.0</span>
+<span class="source-line-no">132</span><span id="line-132">     */</span>
+<span class="source-line-no">133</span><span id="line-133">    @Parameter(property = "docker.networkMode")</span>
+<span class="source-line-no">134</span><span id="line-134">    protected String networkMode;</span>
+<span class="source-line-no">135</span><span id="line-135"></span>
+<span class="source-line-no">136</span><span id="line-136">    protected AbstractDockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,</span>
+<span class="source-line-no">137</span><span id="line-137">                                 ApplicationConfigurationService applicationConfigurationService,</span>
+<span class="source-line-no">138</span><span id="line-138">                                 DockerService dockerService, MavenSession mavenSession, MojoExecution mojoExecution) {</span>
+<span class="source-line-no">139</span><span id="line-139">        this.mavenProject = mavenProject;</span>
+<span class="source-line-no">140</span><span id="line-140">        this.jibConfigurationService = jibConfigurationService;</span>
+<span class="source-line-no">141</span><span id="line-141">        this.applicationConfigurationService = applicationConfigurationService;</span>
+<span class="source-line-no">142</span><span id="line-142">        this.dockerService = dockerService;</span>
+<span class="source-line-no">143</span><span id="line-143">        this.expressionEvaluator = new PluginParameterExpressionEvaluator(mavenSession, mojoExecution);</span>
+<span class="source-line-no">144</span><span id="line-144">    }</span>
+<span class="source-line-no">145</span><span id="line-145"></span>
+<span class="source-line-no">146</span><span id="line-146">    /**</span>
+<span class="source-line-no">147</span><span id="line-147">     * @return the Java version from either the &lt;code&gt;maven.compiler.target&lt;/code&gt; property or the &lt;code&gt;java.version&lt;/code&gt; property.</span>
+<span class="source-line-no">148</span><span id="line-148">     */</span>
+<span class="source-line-no">149</span><span id="line-149">    protected ArtifactVersion javaVersion() {</span>
+<span class="source-line-no">150</span><span id="line-150">        return new DefaultArtifactVersion(Optional.ofNullable(mavenProject.getProperties().getProperty("maven.compiler.target")).orElse(System.getProperty("java.version")));</span>
+<span class="source-line-no">151</span><span id="line-151">    }</span>
+<span class="source-line-no">152</span><span id="line-152"></span>
+<span class="source-line-no">153</span><span id="line-153">    /**</span>
+<span class="source-line-no">154</span><span id="line-154">     * @return the JVM version to use for GraalVM.</span>
+<span class="source-line-no">155</span><span id="line-155">     */</span>
+<span class="source-line-no">156</span><span id="line-156">    protected String graalVmJvmVersion() {</span>
+<span class="source-line-no">157</span><span id="line-157">        return Integer.toString(resolveGraalVersion());</span>
+<span class="source-line-no">158</span><span id="line-158">    }</span>
+<span class="source-line-no">159</span><span id="line-159"></span>
+<span class="source-line-no">160</span><span id="line-160">    /**</span>
+<span class="source-line-no">161</span><span id="line-161">     * @return the GraalVM download URL depending on the Java version.</span>
+<span class="source-line-no">162</span><span id="line-162">     */</span>
+<span class="source-line-no">163</span><span id="line-163">    protected String graalVmDownloadUrl() {</span>
+<span class="source-line-no">164</span><span id="line-164">        Integer version = resolveGraalVersion();</span>
+<span class="source-line-no">165</span><span id="line-165"></span>
+<span class="source-line-no">166</span><span id="line-166">        return GDS_DOWNLOAD_URL.formatted(version, version, graalVmArch());</span>
+<span class="source-line-no">167</span><span id="line-167">    }</span>
+<span class="source-line-no">168</span><span id="line-168"></span>
+<span class="source-line-no">169</span><span id="line-169">    private Integer resolveGraalVersion() {</span>
+<span class="source-line-no">170</span><span id="line-170">        int target = javaVersion().getMajorVersion();</span>
+<span class="source-line-no">171</span><span id="line-171">        Integer version = GRAALVM_VERSIONS.floor(target);</span>
+<span class="source-line-no">172</span><span id="line-172"></span>
+<span class="source-line-no">173</span><span id="line-173">        return version != null ? version : GRAALVM_VERSIONS.first();</span>
+<span class="source-line-no">174</span><span id="line-174">    }</span>
+<span class="source-line-no">175</span><span id="line-175"></span>
+<span class="source-line-no">176</span><span id="line-176">    /**</span>
+<span class="source-line-no">177</span><span id="line-177">     * @return the OS architecture to use for GraalVM depending on the &lt;code&gt;os.arch&lt;/code&gt; system property.</span>
+<span class="source-line-no">178</span><span id="line-178">     */</span>
+<span class="source-line-no">179</span><span id="line-179">    protected String graalVmArch() {</span>
+<span class="source-line-no">180</span><span id="line-180">        return isArm() ? ARM_ARCH : X86_64_ARCH;</span>
+<span class="source-line-no">181</span><span id="line-181">    }</span>
+<span class="source-line-no">182</span><span id="line-182"></span>
+<span class="source-line-no">183</span><span id="line-183">    /**</span>
+<span class="source-line-no">184</span><span id="line-184">     * @return the base FROM image for the native image.</span>
+<span class="source-line-no">185</span><span id="line-185">     */</span>
+<span class="source-line-no">186</span><span id="line-186">    protected String getFrom() {</span>
+<span class="source-line-no">187</span><span id="line-187">        if (Boolean.TRUE.equals(staticNativeImage)) {</span>
+<span class="source-line-no">188</span><span id="line-188">            return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmJvmVersion() + "-muslib-" + oracleLinuxVersion);</span>
+<span class="source-line-no">189</span><span id="line-189">        } else {</span>
+<span class="source-line-no">190</span><span id="line-190">            return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmJvmVersion() + "-" + oracleLinuxVersion);</span>
+<span class="source-line-no">191</span><span id="line-191">        }</span>
+<span class="source-line-no">192</span><span id="line-192">    }</span>
+<span class="source-line-no">193</span><span id="line-193"></span>
+<span class="source-line-no">194</span><span id="line-194">    /**</span>
+<span class="source-line-no">195</span><span id="line-195">     * Check os.arch against known ARM architecture identifiers.</span>
+<span class="source-line-no">196</span><span id="line-196">     *</span>
+<span class="source-line-no">197</span><span id="line-197">     * @return true if we think we're running on an arm JDK</span>
+<span class="source-line-no">198</span><span id="line-198">     */</span>
+<span class="source-line-no">199</span><span id="line-199">    protected boolean isArm() {</span>
+<span class="source-line-no">200</span><span id="line-200">        return switch (System.getProperty("os.arch")) {</span>
+<span class="source-line-no">201</span><span id="line-201">            case ARM_ARCH, "arm64" -&gt; true;</span>
+<span class="source-line-no">202</span><span id="line-202">            default -&gt; false;</span>
+<span class="source-line-no">203</span><span id="line-203">        };</span>
+<span class="source-line-no">204</span><span id="line-204">    }</span>
+<span class="source-line-no">205</span><span id="line-205"></span>
+<span class="source-line-no">206</span><span id="line-206">    /**</span>
+<span class="source-line-no">207</span><span id="line-207">     * @return the base image from the jib configuration (if any).</span>
+<span class="source-line-no">208</span><span id="line-208">     */</span>
+<span class="source-line-no">209</span><span id="line-209">    protected Optional&lt;String&gt; getFromImage() {</span>
+<span class="source-line-no">210</span><span id="line-210">        return jibConfigurationService.getFromImage();</span>
+<span class="source-line-no">211</span><span id="line-211">    }</span>
+<span class="source-line-no">212</span><span id="line-212"></span>
+<span class="source-line-no">213</span><span id="line-213">    /**</span>
+<span class="source-line-no">214</span><span id="line-214">     * @return the Docker image tags by looking at the Jib plugin configuration.</span>
+<span class="source-line-no">215</span><span id="line-215">     */</span>
+<span class="source-line-no">216</span><span id="line-216">    protected Set&lt;String&gt; getTags() {</span>
+<span class="source-line-no">217</span><span id="line-217">        var tags = new HashSet&lt;String&gt;();</span>
+<span class="source-line-no">218</span><span id="line-218">        Optional&lt;String&gt; toImageOptional = jibConfigurationService.getToImage();</span>
+<span class="source-line-no">219</span><span id="line-219">        String imageName = mavenProject.getArtifactId();</span>
+<span class="source-line-no">220</span><span id="line-220">        if (toImageOptional.isPresent()) {</span>
+<span class="source-line-no">221</span><span id="line-221">            String toImage = toImageOptional.get();</span>
+<span class="source-line-no">222</span><span id="line-222">            if (toImage.contains(":")) {</span>
+<span class="source-line-no">223</span><span id="line-223">                tags.add(toImage);</span>
+<span class="source-line-no">224</span><span id="line-224">                imageName = toImageOptional.get().split(":")[0];</span>
+<span class="source-line-no">225</span><span id="line-225">            } else {</span>
+<span class="source-line-no">226</span><span id="line-226">                tags.add(toImage + ":" + LATEST_TAG);</span>
+<span class="source-line-no">227</span><span id="line-227">                imageName = toImage;</span>
+<span class="source-line-no">228</span><span id="line-228">            }</span>
+<span class="source-line-no">229</span><span id="line-229">        } else {</span>
+<span class="source-line-no">230</span><span id="line-230">            tags.add(imageName + ":" + LATEST_TAG);</span>
+<span class="source-line-no">231</span><span id="line-231">        }</span>
+<span class="source-line-no">232</span><span id="line-232">        for (String tag : jibConfigurationService.getTags()) {</span>
+<span class="source-line-no">233</span><span id="line-233">            if (LATEST_TAG.equals(tag) &amp;&amp; tags.stream().anyMatch(t -&gt; t.contains(LATEST_TAG))) {</span>
+<span class="source-line-no">234</span><span id="line-234">                continue;</span>
+<span class="source-line-no">235</span><span id="line-235">            }</span>
+<span class="source-line-no">236</span><span id="line-236">            tags.add(String.format("%s:%s", imageName, tag));</span>
+<span class="source-line-no">237</span><span id="line-237">        }</span>
+<span class="source-line-no">238</span><span id="line-238">        return tags.stream()</span>
+<span class="source-line-no">239</span><span id="line-239">            .map(this::evaluateExpression)</span>
+<span class="source-line-no">240</span><span id="line-240">            .collect(Collectors.toSet());</span>
 <span class="source-line-no">241</span><span id="line-241">    }</span>
 <span class="source-line-no">242</span><span id="line-242"></span>
-<span class="source-line-no">243</span><span id="line-243">    /**</span>
-<span class="source-line-no">244</span><span id="line-244">     * @return the application ports to expose by looking at the Jib configuration or the application configuration.</span>
-<span class="source-line-no">245</span><span id="line-245">     */</span>
-<span class="source-line-no">246</span><span id="line-246">    protected String getPorts() {</span>
-<span class="source-line-no">247</span><span id="line-247">        return jibConfigurationService.getPorts().orElseGet(() -&gt; {</span>
-<span class="source-line-no">248</span><span id="line-248">            String port = applicationConfigurationService.getServerPort();</span>
-<span class="source-line-no">249</span><span id="line-249">            return "-1".equals(port) ? DEFAULT_PORT : port;</span>
-<span class="source-line-no">250</span><span id="line-250">        });</span>
-<span class="source-line-no">251</span><span id="line-251">    }</span>
-<span class="source-line-no">252</span><span id="line-252"></span>
-<span class="source-line-no">253</span><span id="line-253">    /**</span>
-<span class="source-line-no">254</span><span id="line-254">     * Copy project dependencies to a &lt;code&gt;target/dependency&lt;/code&gt; directory.</span>
-<span class="source-line-no">255</span><span id="line-255">     */</span>
-<span class="source-line-no">256</span><span id="line-256">    @SuppressWarnings("ResultOfMethodCallIgnored")</span>
-<span class="source-line-no">257</span><span id="line-257">    protected void copyDependencies() throws IOException {</span>
-<span class="source-line-no">258</span><span id="line-258">        var imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);</span>
-<span class="source-line-no">259</span><span id="line-259">        mavenProject.setArtifactFilter(artifact -&gt; imageClasspathScopes.contains(artifact.getScope()));</span>
-<span class="source-line-no">260</span><span id="line-260">        var target = new File(mavenProject.getBuild().getDirectory(), "dependency");</span>
-<span class="source-line-no">261</span><span id="line-261">        if (!target.exists()) {</span>
-<span class="source-line-no">262</span><span id="line-262">            target.mkdirs();</span>
-<span class="source-line-no">263</span><span id="line-263">        }</span>
-<span class="source-line-no">264</span><span id="line-264">        for (Artifact dependency : mavenProject.getArtifacts()) {</span>
-<span class="source-line-no">265</span><span id="line-265">            Files.copy(dependency.getFile().toPath(), target.toPath().resolve(dependency.getFile().getName()), StandardCopyOption.REPLACE_EXISTING);</span>
-<span class="source-line-no">266</span><span id="line-266">        }</span>
-<span class="source-line-no">267</span><span id="line-267">    }</span>
-<span class="source-line-no">268</span><span id="line-268"></span>
-<span class="source-line-no">269</span><span id="line-269">    /**</span>
-<span class="source-line-no">270</span><span id="line-270">     * @return the Docker CMD command.</span>
-<span class="source-line-no">271</span><span id="line-271">     */</span>
-<span class="source-line-no">272</span><span id="line-272">    protected String getCmd() {</span>
-<span class="source-line-no">273</span><span id="line-273">        return "CMD [" +</span>
-<span class="source-line-no">274</span><span id="line-274">            appArguments.stream()</span>
-<span class="source-line-no">275</span><span id="line-275">                .map(s -&gt; "\"" + s + "\"")</span>
-<span class="source-line-no">276</span><span id="line-276">                .collect(Collectors.joining(", ")) +</span>
-<span class="source-line-no">277</span><span id="line-277">            "]";</span>
-<span class="source-line-no">278</span><span id="line-278">    }</span>
-<span class="source-line-no">279</span><span id="line-279"></span>
-<span class="source-line-no">280</span><span id="line-280">    /**</span>
-<span class="source-line-no">281</span><span id="line-281">     * @return Networking mode for the RUN instructions during build (if any).</span>
-<span class="source-line-no">282</span><span id="line-282">     */</span>
-<span class="source-line-no">283</span><span id="line-283">    protected Optional&lt;String&gt; getNetworkMode() {</span>
-<span class="source-line-no">284</span><span id="line-284">        return Optional.ofNullable(networkMode);</span>
-<span class="source-line-no">285</span><span id="line-285">    }</span>
-<span class="source-line-no">286</span><span id="line-286"></span>
-<span class="source-line-no">287</span><span id="line-287">    /**</span>
-<span class="source-line-no">288</span><span id="line-288">     * @return Map of proxy-related build arguments for Docker builds.</span>
-<span class="source-line-no">289</span><span id="line-289">     */</span>
-<span class="source-line-no">290</span><span id="line-290">    protected Map&lt;String, String&gt; getProxyBuildArgs() {</span>
-<span class="source-line-no">291</span><span id="line-291">        var proxyArgs = new java.util.HashMap&lt;String, String&gt;();</span>
-<span class="source-line-no">292</span><span id="line-292">        </span>
-<span class="source-line-no">293</span><span id="line-293">        // HTTP proxy configuration from standard JVM properties</span>
-<span class="source-line-no">294</span><span id="line-294">        String httpProxyHost = System.getProperty("http.proxyHost");</span>
-<span class="source-line-no">295</span><span id="line-295">        String httpProxyPort = System.getProperty("http.proxyPort", "80");</span>
-<span class="source-line-no">296</span><span id="line-296">        if (StringUtils.hasText(httpProxyHost)) {</span>
-<span class="source-line-no">297</span><span id="line-297">            String httpProxy = "http://" + httpProxyHost + ":" + httpProxyPort;</span>
-<span class="source-line-no">298</span><span id="line-298">            proxyArgs.put("HTTP_PROXY", httpProxy);</span>
-<span class="source-line-no">299</span><span id="line-299">            proxyArgs.put("http_proxy", httpProxy);</span>
-<span class="source-line-no">300</span><span id="line-300">        }</span>
-<span class="source-line-no">301</span><span id="line-301">        </span>
-<span class="source-line-no">302</span><span id="line-302">        // HTTPS proxy configuration from standard JVM properties</span>
-<span class="source-line-no">303</span><span id="line-303">        String httpsProxyHost = System.getProperty("https.proxyHost");</span>
-<span class="source-line-no">304</span><span id="line-304">        String httpsProxyPort = System.getProperty("https.proxyPort", "443");</span>
-<span class="source-line-no">305</span><span id="line-305">        if (StringUtils.hasText(httpsProxyHost)) {</span>
-<span class="source-line-no">306</span><span id="line-306">            String httpsProxy = "http://" + httpsProxyHost + ":" + httpsProxyPort;</span>
-<span class="source-line-no">307</span><span id="line-307">            proxyArgs.put("HTTPS_PROXY", httpsProxy);</span>
-<span class="source-line-no">308</span><span id="line-308">            proxyArgs.put("https_proxy", httpsProxy);</span>
-<span class="source-line-no">309</span><span id="line-309">        }</span>
-<span class="source-line-no">310</span><span id="line-310">        </span>
-<span class="source-line-no">311</span><span id="line-311">        // No proxy configuration from standard JVM properties</span>
-<span class="source-line-no">312</span><span id="line-312">        String nonProxyHosts = System.getProperty("http.nonProxyHosts");</span>
-<span class="source-line-no">313</span><span id="line-313">        if (StringUtils.hasText(nonProxyHosts)) {</span>
-<span class="source-line-no">314</span><span id="line-314">            // Convert Java format (e.g., "*.company.com|localhost") to standard format (e.g., "*.company.com,localhost")</span>
-<span class="source-line-no">315</span><span id="line-315">            String noProxy = nonProxyHosts.replace("|", ",");</span>
-<span class="source-line-no">316</span><span id="line-316">            proxyArgs.put("NO_PROXY", noProxy);</span>
-<span class="source-line-no">317</span><span id="line-317">            proxyArgs.put("no_proxy", noProxy);</span>
-<span class="source-line-no">318</span><span id="line-318">        }</span>
-<span class="source-line-no">319</span><span id="line-319">        </span>
-<span class="source-line-no">320</span><span id="line-320">        return proxyArgs;</span>
-<span class="source-line-no">321</span><span id="line-321">    }</span>
-<span class="source-line-no">322</span><span id="line-322"></span>
-<span class="source-line-no">323</span><span id="line-323">    /**</span>
-<span class="source-line-no">324</span><span id="line-324">     * @return the base image to use for the Dockerfile.</span>
-<span class="source-line-no">325</span><span id="line-325">     */</span>
-<span class="source-line-no">326</span><span id="line-326">    protected String getBaseImage() {</span>
-<span class="source-line-no">327</span><span id="line-327">        return JibMicronautExtension.determineBaseImage(JibMicronautExtension.getJdkVersion(mavenProject), MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy());</span>
-<span class="source-line-no">328</span><span id="line-328">    }</span>
-<span class="source-line-no">329</span><span id="line-329"></span>
-<span class="source-line-no">330</span><span id="line-330">    /**</span>
-<span class="source-line-no">331</span><span id="line-331">     * Adds cmd to docker oracle cloud function file.</span>
-<span class="source-line-no">332</span><span id="line-332">     *</span>
-<span class="source-line-no">333</span><span id="line-333">     * @param dockerfile the docker file</span>
-<span class="source-line-no">334</span><span id="line-334">     */</span>
-<span class="source-line-no">335</span><span id="line-335">    protected void oracleCloudFunctionCmd(File dockerfile) throws IOException {</span>
-<span class="source-line-no">336</span><span id="line-336">        if (appArguments != null &amp;&amp; !appArguments.isEmpty()) {</span>
-<span class="source-line-no">337</span><span id="line-337">            getLog().info("Using application arguments: " + appArguments);</span>
-<span class="source-line-no">338</span><span id="line-338">            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());</span>
-<span class="source-line-no">339</span><span id="line-339">        } else {</span>
-<span class="source-line-no">340</span><span id="line-340">            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + ORACLE_CLOUD_FUNCTION_DEFAULT_CMD);</span>
-<span class="source-line-no">341</span><span id="line-341">        }</span>
-<span class="source-line-no">342</span><span id="line-342">    }</span>
-<span class="source-line-no">343</span><span id="line-343"></span>
-<span class="source-line-no">344</span><span id="line-344">}</span>
+<span class="source-line-no">243</span><span id="line-243">    private String evaluateExpression(String expression) {</span>
+<span class="source-line-no">244</span><span id="line-244">        try {</span>
+<span class="source-line-no">245</span><span id="line-245">            return expressionEvaluator.evaluate(expression, String.class).toString();</span>
+<span class="source-line-no">246</span><span id="line-246">        } catch (Exception e) {</span>
+<span class="source-line-no">247</span><span id="line-247">            return expression;</span>
+<span class="source-line-no">248</span><span id="line-248">        }</span>
+<span class="source-line-no">249</span><span id="line-249">    }</span>
+<span class="source-line-no">250</span><span id="line-250"></span>
+<span class="source-line-no">251</span><span id="line-251">    /**</span>
+<span class="source-line-no">252</span><span id="line-252">     * @return the application ports to expose by looking at the Jib configuration or the application configuration.</span>
+<span class="source-line-no">253</span><span id="line-253">     */</span>
+<span class="source-line-no">254</span><span id="line-254">    protected String getPorts() {</span>
+<span class="source-line-no">255</span><span id="line-255">        return jibConfigurationService.getPorts().orElseGet(() -&gt; {</span>
+<span class="source-line-no">256</span><span id="line-256">            String port = applicationConfigurationService.getServerPort();</span>
+<span class="source-line-no">257</span><span id="line-257">            return "-1".equals(port) ? DEFAULT_PORT : port;</span>
+<span class="source-line-no">258</span><span id="line-258">        });</span>
+<span class="source-line-no">259</span><span id="line-259">    }</span>
+<span class="source-line-no">260</span><span id="line-260"></span>
+<span class="source-line-no">261</span><span id="line-261">    /**</span>
+<span class="source-line-no">262</span><span id="line-262">     * Copy project dependencies to a &lt;code&gt;target/dependency&lt;/code&gt; directory.</span>
+<span class="source-line-no">263</span><span id="line-263">     */</span>
+<span class="source-line-no">264</span><span id="line-264">    @SuppressWarnings("ResultOfMethodCallIgnored")</span>
+<span class="source-line-no">265</span><span id="line-265">    protected void copyDependencies() throws IOException {</span>
+<span class="source-line-no">266</span><span id="line-266">        var imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);</span>
+<span class="source-line-no">267</span><span id="line-267">        mavenProject.setArtifactFilter(artifact -&gt; imageClasspathScopes.contains(artifact.getScope()));</span>
+<span class="source-line-no">268</span><span id="line-268">        var target = new File(mavenProject.getBuild().getDirectory(), "dependency");</span>
+<span class="source-line-no">269</span><span id="line-269">        if (!target.exists()) {</span>
+<span class="source-line-no">270</span><span id="line-270">            target.mkdirs();</span>
+<span class="source-line-no">271</span><span id="line-271">        }</span>
+<span class="source-line-no">272</span><span id="line-272">        for (Artifact dependency : mavenProject.getArtifacts()) {</span>
+<span class="source-line-no">273</span><span id="line-273">            Files.copy(dependency.getFile().toPath(), target.toPath().resolve(dependency.getFile().getName()), StandardCopyOption.REPLACE_EXISTING);</span>
+<span class="source-line-no">274</span><span id="line-274">        }</span>
+<span class="source-line-no">275</span><span id="line-275">    }</span>
+<span class="source-line-no">276</span><span id="line-276"></span>
+<span class="source-line-no">277</span><span id="line-277">    /**</span>
+<span class="source-line-no">278</span><span id="line-278">     * @return the Docker CMD command.</span>
+<span class="source-line-no">279</span><span id="line-279">     */</span>
+<span class="source-line-no">280</span><span id="line-280">    protected String getCmd() {</span>
+<span class="source-line-no">281</span><span id="line-281">        return "CMD [" +</span>
+<span class="source-line-no">282</span><span id="line-282">            appArguments.stream()</span>
+<span class="source-line-no">283</span><span id="line-283">                .map(s -&gt; "\"" + s + "\"")</span>
+<span class="source-line-no">284</span><span id="line-284">                .collect(Collectors.joining(", ")) +</span>
+<span class="source-line-no">285</span><span id="line-285">            "]";</span>
+<span class="source-line-no">286</span><span id="line-286">    }</span>
+<span class="source-line-no">287</span><span id="line-287"></span>
+<span class="source-line-no">288</span><span id="line-288">    /**</span>
+<span class="source-line-no">289</span><span id="line-289">     * @return Networking mode for the RUN instructions during build (if any).</span>
+<span class="source-line-no">290</span><span id="line-290">     */</span>
+<span class="source-line-no">291</span><span id="line-291">    protected Optional&lt;String&gt; getNetworkMode() {</span>
+<span class="source-line-no">292</span><span id="line-292">        return Optional.ofNullable(networkMode);</span>
+<span class="source-line-no">293</span><span id="line-293">    }</span>
+<span class="source-line-no">294</span><span id="line-294"></span>
+<span class="source-line-no">295</span><span id="line-295">    /**</span>
+<span class="source-line-no">296</span><span id="line-296">     * @return Map of proxy-related build arguments for Docker builds.</span>
+<span class="source-line-no">297</span><span id="line-297">     */</span>
+<span class="source-line-no">298</span><span id="line-298">    protected Map&lt;String, String&gt; getProxyBuildArgs() {</span>
+<span class="source-line-no">299</span><span id="line-299">        var proxyArgs = new java.util.HashMap&lt;String, String&gt;();</span>
+<span class="source-line-no">300</span><span id="line-300">        </span>
+<span class="source-line-no">301</span><span id="line-301">        // HTTP proxy configuration from standard JVM properties</span>
+<span class="source-line-no">302</span><span id="line-302">        String httpProxyHost = System.getProperty("http.proxyHost");</span>
+<span class="source-line-no">303</span><span id="line-303">        String httpProxyPort = System.getProperty("http.proxyPort", "80");</span>
+<span class="source-line-no">304</span><span id="line-304">        if (StringUtils.hasText(httpProxyHost)) {</span>
+<span class="source-line-no">305</span><span id="line-305">            String httpProxy = "http://" + httpProxyHost + ":" + httpProxyPort;</span>
+<span class="source-line-no">306</span><span id="line-306">            proxyArgs.put("HTTP_PROXY", httpProxy);</span>
+<span class="source-line-no">307</span><span id="line-307">            proxyArgs.put("http_proxy", httpProxy);</span>
+<span class="source-line-no">308</span><span id="line-308">        }</span>
+<span class="source-line-no">309</span><span id="line-309">        </span>
+<span class="source-line-no">310</span><span id="line-310">        // HTTPS proxy configuration from standard JVM properties</span>
+<span class="source-line-no">311</span><span id="line-311">        String httpsProxyHost = System.getProperty("https.proxyHost");</span>
+<span class="source-line-no">312</span><span id="line-312">        String httpsProxyPort = System.getProperty("https.proxyPort", "443");</span>
+<span class="source-line-no">313</span><span id="line-313">        if (StringUtils.hasText(httpsProxyHost)) {</span>
+<span class="source-line-no">314</span><span id="line-314">            String httpsProxy = "http://" + httpsProxyHost + ":" + httpsProxyPort;</span>
+<span class="source-line-no">315</span><span id="line-315">            proxyArgs.put("HTTPS_PROXY", httpsProxy);</span>
+<span class="source-line-no">316</span><span id="line-316">            proxyArgs.put("https_proxy", httpsProxy);</span>
+<span class="source-line-no">317</span><span id="line-317">        }</span>
+<span class="source-line-no">318</span><span id="line-318">        </span>
+<span class="source-line-no">319</span><span id="line-319">        // No proxy configuration from standard JVM properties</span>
+<span class="source-line-no">320</span><span id="line-320">        String nonProxyHosts = System.getProperty("http.nonProxyHosts");</span>
+<span class="source-line-no">321</span><span id="line-321">        if (StringUtils.hasText(nonProxyHosts)) {</span>
+<span class="source-line-no">322</span><span id="line-322">            // Convert Java format (e.g., "*.company.com|localhost") to standard format (e.g., "*.company.com,localhost")</span>
+<span class="source-line-no">323</span><span id="line-323">            String noProxy = nonProxyHosts.replace("|", ",");</span>
+<span class="source-line-no">324</span><span id="line-324">            proxyArgs.put("NO_PROXY", noProxy);</span>
+<span class="source-line-no">325</span><span id="line-325">            proxyArgs.put("no_proxy", noProxy);</span>
+<span class="source-line-no">326</span><span id="line-326">        }</span>
+<span class="source-line-no">327</span><span id="line-327">        </span>
+<span class="source-line-no">328</span><span id="line-328">        return proxyArgs;</span>
+<span class="source-line-no">329</span><span id="line-329">    }</span>
+<span class="source-line-no">330</span><span id="line-330"></span>
+<span class="source-line-no">331</span><span id="line-331">    /**</span>
+<span class="source-line-no">332</span><span id="line-332">     * @return the base image to use for the Dockerfile.</span>
+<span class="source-line-no">333</span><span id="line-333">     */</span>
+<span class="source-line-no">334</span><span id="line-334">    protected String getBaseImage() {</span>
+<span class="source-line-no">335</span><span id="line-335">        return JibMicronautExtension.determineBaseImage(JibMicronautExtension.getJdkVersion(mavenProject), MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy());</span>
+<span class="source-line-no">336</span><span id="line-336">    }</span>
+<span class="source-line-no">337</span><span id="line-337"></span>
+<span class="source-line-no">338</span><span id="line-338">    /**</span>
+<span class="source-line-no">339</span><span id="line-339">     * Adds cmd to docker oracle cloud function file.</span>
+<span class="source-line-no">340</span><span id="line-340">     *</span>
+<span class="source-line-no">341</span><span id="line-341">     * @param dockerfile the docker file</span>
+<span class="source-line-no">342</span><span id="line-342">     */</span>
+<span class="source-line-no">343</span><span id="line-343">    protected void oracleCloudFunctionCmd(File dockerfile) throws IOException {</span>
+<span class="source-line-no">344</span><span id="line-344">        if (appArguments != null &amp;&amp; !appArguments.isEmpty()) {</span>
+<span class="source-line-no">345</span><span id="line-345">            getLog().info("Using application arguments: " + appArguments);</span>
+<span class="source-line-no">346</span><span id="line-346">            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());</span>
+<span class="source-line-no">347</span><span id="line-347">        } else {</span>
+<span class="source-line-no">348</span><span id="line-348">            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + ORACLE_CLOUD_FUNCTION_DEFAULT_CMD);</span>
+<span class="source-line-no">349</span><span id="line-349">        }</span>
+<span class="source-line-no">350</span><span id="line-350">    }</span>
+<span class="source-line-no">351</span><span id="line-351"></span>
+<span class="source-line-no">352</span><span id="line-352">}</span>
 
 
 
