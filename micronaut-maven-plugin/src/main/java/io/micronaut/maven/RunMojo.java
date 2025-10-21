@@ -590,7 +590,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
     }
 
     private void maybeStopTestResourcesServer() throws MojoExecutionException {
-        testResourcesHelper.stop(false);
+        testResourcesHelper.stop(true);
     }
 
     private boolean compileProject() {
