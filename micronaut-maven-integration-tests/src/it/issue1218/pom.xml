@@ -19,7 +19,7 @@
     <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
-    <micronaut.runtime>netty</micronaut.runtime>
+    <maven.compiler.release>${java.specification.version}</maven.compiler.release>
   </properties>
 
   <dependencies>
