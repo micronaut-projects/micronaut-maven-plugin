@@ -28,6 +28,7 @@ import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -168,6 +169,53 @@ class JibMicronautExtensionTest {
         assertTrue(finalPlan.getExposedPorts().contains(Port.tcp(8081)));
     }
 
+    @Test
+    void testGetJdkVersionPrefersReleaseFromProjectProperties() {
+        MavenProject project = mock(MavenProject.class);
+        Properties props = new Properties();
+        props.setProperty("maven.compiler.release", "17");
+        props.setProperty("maven.compiler.target", "21");
+        when(project.getProperties()).thenReturn(props);
+
+        String version = JibMicronautExtension.getJdkVersion(mockSessionFor(project));
+        assertEquals("17", version);
+    }
+
+    @Test
+    void testGetJdkVersionFallsBackToTargetWhenReleaseMissing() {
+        MavenProject project = mock(MavenProject.class);
+        Properties props = new Properties();
+        props.setProperty("maven.compiler.target", "21");
+        when(project.getProperties()).thenReturn(props);
+
+        String version = JibMicronautExtension.getJdkVersion(mockSessionFor(project));
+        assertEquals("21", version);
+    }
+
+    @Test
+    @SetSystemProperty(key = "maven.compiler.release", value = "21")
+    void testGetJdkVersionSystemPropertyOverridesProject() {
+        MavenProject project = mock(MavenProject.class);
+        Properties props = new Properties();
+        props.setProperty("maven.compiler.release", "17");
+        when(project.getProperties()).thenReturn(props);
+
+        var session = mockSessionFor(project);
+        when(session.getSystemProperties()).thenReturn(System.getProperties());
+
+        String version = JibMicronautExtension.getJdkVersion(session);
+        assertEquals("21", version);
+    }
+
+    @Test
+    void testGetJdkVersionReturns17WhenUnset() {
+        MavenProject project = mock(MavenProject.class);
+        when(project.getProperties()).thenReturn(new Properties());
+
+        String version = JibMicronautExtension.getJdkVersion(mockSessionFor(project));
+        assertEquals("17", version);
+    }
+
     private ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan originalPlan) {
         var extension = new JibMicronautExtension();
         var mavenData = new MavenData() {
@@ -186,5 +234,13 @@ class JibMicronautExtensionTest {
         ExtensionLogger extensionLogger = (logLevel, s) -> LOG.info(s);
         return extension.extendContainerBuildPlan(originalPlan, Map.of(), Optional.empty(), mavenData, extensionLogger);
 
+    }
+
+    private MavenSession mockSessionFor(MavenProject project) {
+        MavenSession session = mock(MavenSession.class);
+        when(session.getCurrentProject()).thenReturn(project);
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        return session;
     }
 }

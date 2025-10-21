@@ -69,6 +69,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     private static final NavigableSet<Integer> GRAALVM_VERSIONS = new TreeSet<>(Set.of(17, 21, 25));
 
     protected final MavenProject mavenProject;
+    protected final MavenSession mavenSession;
     protected final JibConfigurationService jibConfigurationService;
     protected final ApplicationConfigurationService applicationConfigurationService;
     protected final DockerService dockerService;
@@ -137,6 +138,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
                                  ApplicationConfigurationService applicationConfigurationService,
                                  DockerService dockerService, MavenSession mavenSession, MojoExecution mojoExecution) {
         this.mavenProject = mavenProject;
+        this.mavenSession = mavenSession;
         this.jibConfigurationService = jibConfigurationService;
         this.applicationConfigurationService = applicationConfigurationService;
         this.dockerService = dockerService;
@@ -147,7 +149,20 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @return the Java version from either the <code>maven.compiler.target</code> property or the <code>java.version</code> property.
      */
     protected ArtifactVersion javaVersion() {
-        return new DefaultArtifactVersion(Optional.ofNullable(mavenProject.getProperties().getProperty("maven.compiler.target")).orElse(System.getProperty("java.version")));
+        return new DefaultArtifactVersion(getJdkVersion());
+    }
+
+    private String getJdkVersion() {
+        var releaseVersion = getPropertyValue(mavenProject, "maven.compiler.release");
+        var targetVersion = getPropertyValue(mavenProject, "maven.compiler.target");
+        return releaseVersion.or(() -> targetVersion).orElseGet(() -> System.getProperty("java.version"));
+    }
+
+    private static Optional<String> getPropertyValue(MavenProject project, String propertName) {
+        var systemProperty = Optional.of(propertName).map(System::getProperty);
+        var properties = project.getProperties();
+        var projectProperty = Optional.of(propertName).map(properties::getProperty);
+        return systemProperty.or(() -> projectProperty);
     }
 
     /**
@@ -332,7 +347,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @return the base image to use for the Dockerfile.
      */
     protected String getBaseImage() {
-        return JibMicronautExtension.determineBaseImage(JibMicronautExtension.getJdkVersion(mavenProject), MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy());
+        return JibMicronautExtension.determineBaseImage(JibMicronautExtension.getJdkVersion(mavenSession), MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy());
     }
 
     /**

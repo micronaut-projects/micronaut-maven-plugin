@@ -30,7 +30,13 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.services.ApplicationConfigurationService;
-import org.apache.maven.project.MavenProject;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
+import org.apache.maven.plugin.descriptor.MojoDescriptor;
+import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,7 +57,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     public static final String DEFAULT_JAVA17_BASE_IMAGE = "eclipse-temurin:17-jre";
     public static final String DEFAULT_JAVA21_BASE_IMAGE = "eclipse-temurin:21-jre";
     private static final String LATEST_TAG = "latest";
-    private static final String JDK_VERSION = "maven.compiler.target";
+    private static final String JDK_TARGET_VERSION = "maven.compiler.target";
+    private static final String JDK_RELEASE_VERSION = "maven.compiler.release";
+    private static final String JDK_SOURCE_VERSION = "maven.compiler.source";
+    private static final Logger LOG = LoggerFactory.getLogger(JibMicronautExtension.class);
 
     @Override
     public Optional<Class<Void>> getExtraConfigType() {
@@ -70,7 +79,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
         String baseImage = buildPlan.getBaseImage();
         if (StringUtils.isEmpty(buildPlan.getBaseImage())) {
-            baseImage = determineBaseImage(getJdkVersion(mavenData.getMavenProject()), runtime.getBuildStrategy());
+            baseImage = determineBaseImage(getJdkVersion(mavenData.getMavenSession()), runtime.getBuildStrategy());
             builder.setBaseImage(baseImage);
         }
         logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Using base image: " + baseImage);
@@ -154,8 +163,32 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         };
     }
 
-    public static String getJdkVersion(MavenProject project) {
-        return System.getProperty(JDK_VERSION, project.getProperties().getProperty(JDK_VERSION));
+    public static String getJdkVersion(MavenSession session) {
+        var releaseVersion = getPropertyValue(session, JDK_RELEASE_VERSION);
+        var targetVersion = getPropertyValue(session, JDK_TARGET_VERSION);
+        var sourceVersion = getPropertyValue(session, JDK_SOURCE_VERSION);
+
+        Optional<String> jdkVersionOpt = releaseVersion
+            .or(() -> targetVersion)
+            .or(() -> sourceVersion);
+
+        String jdkVersion = jdkVersionOpt.orElse("17"); // Default to project baseline JDK 17
+        String propertySource = releaseVersion.isPresent() ? JDK_RELEASE_VERSION :
+                               targetVersion.isPresent() ? JDK_TARGET_VERSION :
+                               sourceVersion.isPresent() ? JDK_SOURCE_VERSION : "default (17)";
+
+        LOG.info("Using JDK version {} from {}", jdkVersion, propertySource);
+        return jdkVersion;
+    }
+
+    private static Optional<String> getPropertyValue(MavenSession session, String propertName) {
+        MojoExecution mojoExecution = new MojoExecution(new MojoDescriptor());
+        var evaluator = new PluginParameterExpressionEvaluator(session, mojoExecution);
+        try {
+            return Optional.ofNullable((String) evaluator.evaluate("${" + propertName + "}", String.class));
+        } catch (ExpressionEvaluationException e) {
+            return Optional.empty();
+        }
     }
 
     static LayerObject remapLayer(LayerObject layerObject) {

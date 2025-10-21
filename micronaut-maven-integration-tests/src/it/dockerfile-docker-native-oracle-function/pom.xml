@@ -20,6 +20,7 @@
     <packaging>jar</packaging>
     <micronaut.runtime>oracle_function</micronaut.runtime>
     <function.entrypoint>example.micronaut.Function::handleRequest</function.entrypoint>
+    <maven.compiler.release>${java.specification.version}</maven.compiler.release>
   </properties>
 
   <dependencies>
