@@ -153,16 +153,22 @@ public class TestResourcesHelper {
     }
 
     /**
-     * Starts the Test Resources Service.
+     * Starts the Test Resources Service. If the service is not enabled, this method does nothing.
+     *
+     * @param shouldFailBuild whether to throw a MojoExecutionException if there's an error starting the service.
+     *                        If false, the error will be swallowed and the method will return normally.
+     * @throws MojoExecutionException if there's an error starting the service and shouldFailBuild is true
      */
-    public void start() throws MojoExecutionException {
+    public void start(boolean shouldFailBuild) throws MojoExecutionException {
         if (!enabled) {
             return;
         }
         try {
             doStart();
         } catch (Exception e) {
-            throw new MojoExecutionException("Unable to start test resources server", e);
+            if (shouldFailBuild) {
+                throw new MojoExecutionException("Unable to start test resources server", e);
+            }
         }
     }
 
@@ -319,7 +325,12 @@ public class TestResourcesHelper {
                 }
             }
         } catch (Exception e) {
-            throw new MojoExecutionException("Unable to stop test resources server", e);
+            var message = "Unable to stop test resources server";
+            if (quiet) {
+                log.warn(message, e);
+            } else {
+                throw new MojoExecutionException(message, e);
+            }
         }
     }
 

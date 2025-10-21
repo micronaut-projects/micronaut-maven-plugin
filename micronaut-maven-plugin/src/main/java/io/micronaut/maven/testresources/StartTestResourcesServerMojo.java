@@ -68,7 +68,7 @@ public class StartTestResourcesServerMojo extends AbstractTestResourcesMojo {
                 serverIdleTimeoutMinutes, mavenProject, mavenSession, dependencyResolutionService, toolchainManager,
                 testResourcesVersion, classpathInference, testResourcesDependencies, sharedServerNamespace, debugServer,
                 foreground, testResourcesSystemProperties);
-        helper.start();
+        helper.start(true);
 
     }
 
