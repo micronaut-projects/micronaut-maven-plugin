@@ -177,7 +177,7 @@ class JibMicronautExtensionTest {
         props.setProperty("maven.compiler.target", "21");
         when(project.getProperties()).thenReturn(props);
 
-        String version = JibMicronautExtension.getJdkVersion(project);
+        String version = JibMicronautExtension.getJdkVersion(mockSessionFor(project));
         assertEquals("17", version);
     }
 
@@ -188,7 +188,7 @@ class JibMicronautExtensionTest {
         props.setProperty("maven.compiler.target", "21");
         when(project.getProperties()).thenReturn(props);
 
-        String version = JibMicronautExtension.getJdkVersion(project);
+        String version = JibMicronautExtension.getJdkVersion(mockSessionFor(project));
         assertEquals("21", version);
     }
 
@@ -200,7 +200,10 @@ class JibMicronautExtensionTest {
         props.setProperty("maven.compiler.release", "17");
         when(project.getProperties()).thenReturn(props);
 
-        String version = JibMicronautExtension.getJdkVersion(project);
+        var session = mockSessionFor(project);
+        when(session.getSystemProperties()).thenReturn(System.getProperties());
+
+        String version = JibMicronautExtension.getJdkVersion(session);
         assertEquals("21", version);
     }
 
@@ -209,7 +212,7 @@ class JibMicronautExtensionTest {
         MavenProject project = mock(MavenProject.class);
         when(project.getProperties()).thenReturn(new Properties());
 
-        String version = JibMicronautExtension.getJdkVersion(project);
+        String version = JibMicronautExtension.getJdkVersion(mockSessionFor(project));
         assertNull(version);
     }
 
@@ -231,5 +234,13 @@ class JibMicronautExtensionTest {
         ExtensionLogger extensionLogger = (logLevel, s) -> LOG.info(s);
         return extension.extendContainerBuildPlan(originalPlan, Map.of(), Optional.empty(), mavenData, extensionLogger);
 
+    }
+
+    private MavenSession mockSessionFor(MavenProject project) {
+        MavenSession session = mock(MavenSession.class);
+        when(session.getCurrentProject()).thenReturn(project);
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        return session;
     }
 }

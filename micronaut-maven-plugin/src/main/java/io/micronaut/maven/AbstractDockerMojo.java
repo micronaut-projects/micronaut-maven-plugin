@@ -69,6 +69,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     private static final NavigableSet<Integer> GRAALVM_VERSIONS = new TreeSet<>(Set.of(17, 21, 25));
 
     protected final MavenProject mavenProject;
+    protected final MavenSession mavenSession;
     protected final JibConfigurationService jibConfigurationService;
     protected final ApplicationConfigurationService applicationConfigurationService;
     protected final DockerService dockerService;
@@ -137,6 +138,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
                                  ApplicationConfigurationService applicationConfigurationService,
                                  DockerService dockerService, MavenSession mavenSession, MojoExecution mojoExecution) {
         this.mavenProject = mavenProject;
+        this.mavenSession = mavenSession;
         this.jibConfigurationService = jibConfigurationService;
         this.applicationConfigurationService = applicationConfigurationService;
         this.dockerService = dockerService;
@@ -345,7 +347,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @return the base image to use for the Dockerfile.
      */
     protected String getBaseImage() {
-        return JibMicronautExtension.determineBaseImage(JibMicronautExtension.getJdkVersion(mavenProject), MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy());
+        return JibMicronautExtension.determineBaseImage(JibMicronautExtension.getJdkVersion(mavenSession), MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy());
     }
 
     /**
