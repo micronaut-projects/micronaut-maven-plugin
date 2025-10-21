@@ -20,6 +20,7 @@
     <jib-maven-plugin.version>@jib-maven-plugin.version@</jib-maven-plugin.version>
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
+    <maven.compiler.release>${java.specification.version}</maven.compiler.release>
   </properties>
 
   <dependencies>
