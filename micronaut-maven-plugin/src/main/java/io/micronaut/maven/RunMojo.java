@@ -586,7 +586,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
     }
 
     private void maybeStartTestResourcesServer() throws MojoExecutionException {
-        testResourcesHelper.start(false);
+        testResourcesHelper.start();
     }
 
     private void maybeStopTestResourcesServer() throws MojoExecutionException {
