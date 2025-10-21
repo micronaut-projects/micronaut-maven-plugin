@@ -319,7 +319,12 @@ public class TestResourcesHelper {
                 }
             }
         } catch (Exception e) {
-            throw new MojoExecutionException("Unable to stop test resources server", e);
+            var message = "Unable to stop test resources server";
+            if (quiet) {
+                log.warn(message, e);
+            } else {
+                throw new MojoExecutionException(message, e);
+            }
         }
     }
 
