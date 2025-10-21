@@ -73,10 +73,10 @@ public class DockerService {
 
     private static final Logger LOG = LoggerFactory.getLogger(DockerService.class);
 
-    private final DockerClient dockerClient;
     private final DockerClientConfig config;
     private final MavenProject mavenProject;
     private final JibConfigurationService jibConfigurationService;
+    private DockerClient dockerClient;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -84,11 +84,17 @@ public class DockerService {
         this.mavenProject = mavenProject;
         this.jibConfigurationService = jibConfigurationService;
         this.config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
-        var httpClient = new ZerodepDockerHttpClient.Builder()
-            .dockerHost(config.getDockerHost())
-            .sslConfig(config.getSSLConfig())
-            .build();
-        dockerClient = DockerClientImpl.getInstance(config, httpClient);
+    }
+
+    private DockerClient getDockerClient() {
+        if (dockerClient == null) {
+            var httpClient = new ZerodepDockerHttpClient.Builder()
+                    .dockerHost(config.getDockerHost())
+                    .sslConfig(config.getSSLConfig())
+                    .build();
+            dockerClient = DockerClientImpl.getInstance(config, httpClient);
+        }
+        return dockerClient;
     }
 
     /**
@@ -97,7 +103,7 @@ public class DockerService {
      */
     public BuildImageCmd buildImageCmd(String dockerfileName) throws IOException {
         verifyDockerRunning();
-        BuildImageCmd buildImageCmd = dockerClient.buildImageCmd(loadDockerfileAsResource(dockerfileName));
+        BuildImageCmd buildImageCmd = getDockerClient().buildImageCmd(loadDockerfileAsResource(dockerfileName));
         maybeConfigureBuildAuth(buildImageCmd);
         return buildImageCmd;
     }
@@ -122,7 +128,7 @@ public class DockerService {
      */
     public BuildImageCmd buildImageCmd() {
         verifyDockerRunning();
-        BuildImageCmd buildImageCmd = dockerClient.buildImageCmd();
+        BuildImageCmd buildImageCmd = getDockerClient().buildImageCmd();
         maybeConfigureBuildAuth(buildImageCmd);
         return buildImageCmd;
     }
@@ -166,7 +172,7 @@ public class DockerService {
      */
     public void runPrivilegedImageAndWait(String imageId, Integer timeoutSeconds, String checkpointNetworkName, String... binds) throws IOException {
         verifyDockerRunning();
-        try (CreateContainerCmd create = dockerClient.createContainerCmd(imageId)) {
+        try (CreateContainerCmd create = getDockerClient().createContainerCmd(imageId)) {
             HostConfig hostConfig = create.getHostConfig();
             if (hostConfig == null) {
                 throw new DockerClientException("When setting binds and privileged, hostConfig was null.  Please check your docker installation and try again");
@@ -179,10 +185,10 @@ public class DockerService {
                 hostConfig.withBinds(Bind.parse(bind));
             }
             CreateContainerResponse createResponse = create.exec();
-            try (StartContainerCmd start = dockerClient.startContainerCmd(createResponse.getId())) {
+            try (StartContainerCmd start = getDockerClient().startContainerCmd(createResponse.getId())) {
                 start.exec();
                 LOG.info("Container started: {} {}", createResponse.getId(), start.getContainerId());
-                try (WaitContainerCmd wait = dockerClient.waitContainerCmd(createResponse.getId())) {
+                try (WaitContainerCmd wait = getDockerClient().waitContainerCmd(createResponse.getId())) {
                     WaitContainerResultCallback waitResult = wait.start();
                     LOG.info("Waiting {} seconds for completion", timeoutSeconds);
                     Integer exitCode = waitResult.awaitStatusCode(timeoutSeconds, TimeUnit.SECONDS);
@@ -194,7 +200,7 @@ public class DockerService {
                             callback.addConsumer(OutputFrame.OutputType.STDOUT, stdoutConsumer);
                             callback.addConsumer(OutputFrame.OutputType.STDERR, stderrConsumer);
 
-                            dockerClient.logContainerCmd(start.getContainerId())
+                            getDockerClient().logContainerCmd(start.getContainerId())
                                 .withStdOut(true)
                                 .withStdErr(true)
                                 .exec(callback)
@@ -217,10 +223,10 @@ public class DockerService {
      * @return The temporal file.
      */
     public File copyFromContainer(String imageId, String containerPath) {
-        CreateContainerCmd containerCmd = dockerClient.createContainerCmd(imageId);
+        CreateContainerCmd containerCmd = getDockerClient().createContainerCmd(imageId);
         CreateContainerResponse container = containerCmd.exec();
-        dockerClient.startContainerCmd(container.getId());
-        InputStream nativeImage = dockerClient.copyArchiveFromContainerCmd(container.getId(), containerPath).exec();
+        getDockerClient().startContainerCmd(container.getId());
+        InputStream nativeImage = getDockerClient().copyArchiveFromContainerCmd(container.getId(), containerPath).exec();
 
         try (var fin = new TarArchiveInputStream(nativeImage)) {
             TarArchiveEntry tarEntry = fin.getNextEntry();
@@ -274,7 +280,7 @@ public class DockerService {
      */
     public PushImageCmd pushImageCmd(String imageName) {
         verifyDockerRunning();
-        return dockerClient.pushImageCmd(imageName);
+        return getDockerClient().pushImageCmd(imageName);
     }
 
     /**
@@ -293,7 +299,7 @@ public class DockerService {
         AuthConfig authConfig = registryAuthLocator.lookupAuthConfig(dockerImageName, defaultAuthConfig);
         boolean loginSucceeded = false;
         try {
-            AuthResponse authResponse = dockerClient.authCmd().withAuthConfig(authConfig).exec();
+            AuthResponse authResponse = getDockerClient().authCmd().withAuthConfig(authConfig).exec();
             if (authResponse.getStatus() != null && authResponse.getStatus().equals("Login Succeeded")) {
                 loginSucceeded = true;
             }
@@ -311,7 +317,7 @@ public class DockerService {
 
     private void verifyDockerRunning() {
         try {
-            dockerClient.pingCmd().exec();
+            getDockerClient().pingCmd().exec();
         } catch (DockerException e) {
             throw new IllegalStateException(e.getMessage());
         } catch (RuntimeException e) {
