@@ -18,7 +18,6 @@ package io.micronaut.maven;
 import com.github.dockerjava.api.command.PushImageCmd;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.google.cloud.tools.jib.api.Credential;
-import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.ApplicationConfigurationService;
@@ -95,11 +94,4 @@ public class DockerPushMojo extends AbstractDockerMojo {
         }
     }
 
-    private void logEvent(LogEvent logEvent) {
-        if (logEvent.getLevel().equals(LogEvent.Level.DEBUG)) {
-            LOG.debug(logEvent.getMessage());
-        } else {
-            LOG.info(logEvent.getMessage());
-        }
-    }
 }

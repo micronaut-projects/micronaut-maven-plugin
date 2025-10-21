@@ -1,7 +1,12 @@
 package io.micronaut.maven.jib;
 
+import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.api.CredentialRetriever;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -10,12 +15,19 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RestoreSystemProperties;
 import org.junitpioneer.jupiter.SetSystemProperty;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RestoreSystemProperties
@@ -299,6 +311,51 @@ class JibConfigurationServiceTest {
         assertTrue(service.getPorts().isEmpty());
     }
 
+    @Test
+    void testResolveCredentialForImageInvalidImage() {
+        Logger mockLogger = mock(Logger.class);
+        var service = setupJibConfigurationService();
+
+        Optional<Credential> result = service.resolveCredentialForImage("invalid::image", mockLogger);
+
+        assertTrue(result.isEmpty());
+        verify(mockLogger).warn(eq("Invalid image reference '{}': {}"), eq("invalid::image"), any(String.class));
+    }
+
+    @Test
+    void testResolveCredentialForImageNoCredentials() {
+        Logger mockLogger = mock(Logger.class);
+        var service = setupJibConfigurationService();
+
+        Optional<Credential> result = service.resolveCredentialForImage("localhost:5000/test:tag", mockLogger);
+
+        assertTrue(result.isEmpty());
+        // No specific log verification needed for no-creds case, as it depends on retriever failures
+    }
+
+    @Test
+    void testResolveCredentialForImageWithCredentials() throws CredentialRetrievalException {
+        Logger mockLogger = mock(Logger.class);
+        var service = setupJibConfigurationService();
+
+        try (var mockedStatic = mockStatic(CredentialRetrieverFactory.class)) {
+            var mockFactory = mock(CredentialRetrieverFactory.class);
+            var mockRetriever = mock(CredentialRetriever.class);
+            var mockCredential = Credential.from("testuser", "testpass");
+
+            mockedStatic.when(() -> CredentialRetrieverFactory.forImage(any(ImageReference.class), any(Consumer.class)))
+                .thenReturn(mockFactory);
+            when(mockFactory.wellKnownCredentialHelpers()).thenReturn(mockRetriever);
+            when(mockRetriever.retrieve()).thenReturn(Optional.of(mockCredential));
+
+            Optional<Credential> result = service.resolveCredentialForImage("docker.io/library/nginx:latest", mockLogger);
+
+            assertTrue(result.isPresent());
+            assertEquals("testuser", result.get().getUsername());
+            assertEquals("testpass", result.get().getPassword());
+        }
+    }
+
     private JibConfigurationService setupJibConfigurationService(String xmlConfiguration) throws XmlPullParserException, IOException {
         var configuration = parseConfiguration(xmlConfiguration);
         return setupJibConfigurationService(configuration);
@@ -307,7 +364,6 @@ class JibConfigurationServiceTest {
     private JibConfigurationService setupJibConfigurationService() {
         return setupJibConfigurationService(new Xpp3Dom("configuration"));
     }
-
 
     private JibConfigurationService setupJibConfigurationService(Xpp3Dom configuration) {
         var jibPlugin = mock(Plugin.class);
