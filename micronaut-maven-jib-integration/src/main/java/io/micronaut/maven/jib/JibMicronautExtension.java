@@ -30,7 +30,11 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.services.ApplicationConfigurationService;
-import org.apache.maven.project.MavenProject;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
+import org.apache.maven.plugin.descriptor.MojoDescriptor;
+import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluationException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -71,7 +75,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
         String baseImage = buildPlan.getBaseImage();
         if (StringUtils.isEmpty(buildPlan.getBaseImage())) {
-            baseImage = determineBaseImage(getJdkVersion(mavenData.getMavenProject()), runtime.getBuildStrategy());
+            baseImage = determineBaseImage(getJdkVersion(mavenData.getMavenSession()), runtime.getBuildStrategy());
             builder.setBaseImage(baseImage);
         }
         logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Using base image: " + baseImage);
@@ -155,17 +159,20 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         };
     }
 
-    public static String getJdkVersion(MavenProject project) {
-        var releaseVersion = getPropertyValue(project, JDK_RELEASE_VERSION);
-        var targetVersion = getPropertyValue(project, JDK_TARGET_VERSION);
+    public static String getJdkVersion(MavenSession session) {
+        var releaseVersion = getPropertyValue(session, JDK_RELEASE_VERSION);
+        var targetVersion = getPropertyValue(session, JDK_TARGET_VERSION);
         return releaseVersion.or(() -> targetVersion).orElse(null);
     }
 
-    private static Optional<String> getPropertyValue(MavenProject project, String propertName) {
-        var systemProperty = Optional.of(propertName).map(System::getProperty);
-        var properties = project.getProperties();
-        var projectProperty = Optional.of(propertName).map(properties::getProperty);
-        return systemProperty.or(() -> projectProperty);
+    private static Optional<String> getPropertyValue(MavenSession session, String propertName) {
+        MojoExecution mojoExecution = new MojoExecution(new MojoDescriptor());
+        var evaluator = new PluginParameterExpressionEvaluator(session, mojoExecution);
+        try {
+            return Optional.ofNullable((String) evaluator.evaluate("${" + propertName + "}", String.class));
+        } catch (ExpressionEvaluationException e) {
+            return Optional.empty();
+        }
     }
 
     static LayerObject remapLayer(LayerObject layerObject) {
