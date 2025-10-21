@@ -20,6 +20,7 @@
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
     <graal.oracle.linux.version>ol7</graal.oracle.linux.version>
+    <maven.compiler.release>${java.specification.version}</maven.compiler.release>
   </properties>
 
   <dependencies>
