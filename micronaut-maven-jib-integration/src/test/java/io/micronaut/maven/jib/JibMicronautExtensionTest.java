@@ -208,12 +208,12 @@ class JibMicronautExtensionTest {
     }
 
     @Test
-    void testGetJdkVersionReturnsNullWhenUnset() {
+    void testGetJdkVersionReturns17WhenUnset() {
         MavenProject project = mock(MavenProject.class);
         when(project.getProperties()).thenReturn(new Properties());
 
         String version = JibMicronautExtension.getJdkVersion(mockSessionFor(project));
-        assertNull(version);
+        assertEquals("17", version);
     }
 
     private ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan originalPlan) {
