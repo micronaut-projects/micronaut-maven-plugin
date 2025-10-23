@@ -16,6 +16,8 @@
 package io.micronaut.maven.services;
 
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.maven.InvocationResultWithOutput;
+import io.micronaut.maven.InvocationResultWithOutput.PerGoalOutputHandler;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
@@ -23,7 +25,6 @@ import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
-import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -130,8 +131,21 @@ public class ExecutorService {
      * @return The result of the invocation
      * @throws MavenInvocationException If the goal execution fails
      */
-    public InvocationResult invokeGoal(String pluginKey, String goal) throws MavenInvocationException {
-        return invokeGoals(pluginKey + ":" + goal);
+    public InvocationResultWithOutput invokeGoal(String pluginKey, String goal) throws MavenInvocationException {
+        return invokeGoal(pluginKey, goal, true);
+    }
+
+    /**
+     * Executes a goal using the Maven shared invoker.
+     *
+     * @param pluginKey The plugin coordinates in the format groupId:artifactId
+     * @param goal The goal to execute
+     * @param quiet Whether to run in quiet mode
+     * @return The result of the invocation
+     * @throws MavenInvocationException If the goal execution fails
+     */
+    public InvocationResultWithOutput invokeGoal(String pluginKey, String goal, boolean quiet) throws MavenInvocationException {
+        return invokeGoals(quiet, pluginKey + ":" + goal);
     }
 
     /**
@@ -141,8 +155,20 @@ public class ExecutorService {
      * @return The result of the invocation
      * @throws MavenInvocationException If the goal execution fails
      */
-    public InvocationResult invokeGoals(String... goals) throws MavenInvocationException {
-        return invokeGoals(mavenProject, goals);
+    public InvocationResultWithOutput invokeGoals(String... goals) throws MavenInvocationException {
+        return invokeGoals(true, goals);
+    }
+
+    /**
+     * Executes a goal using the Maven shared invoker.
+     *
+     * @param quiet Whether to run in quiet mode
+     * @param goals The goals to execute
+     * @return The result of the invocation
+     * @throws MavenInvocationException If the goal execution fails
+     */
+    public InvocationResultWithOutput invokeGoals(boolean quiet, String... goals) throws MavenInvocationException {
+        return invokeGoals(mavenProject, quiet, goals);
     }
 
     /**
@@ -153,8 +179,20 @@ public class ExecutorService {
      * @return The result of the invocation
      * @throws MavenInvocationException If the goal execution fails
      */
+    public InvocationResultWithOutput invokeGoals(MavenProject project, String... goals) throws MavenInvocationException {
+        return invokeGoals(project, true, goals);
+    }
 
-    public InvocationResult invokeGoals(MavenProject project, String... goals) throws MavenInvocationException {
+    /**
+     * Executes a goal using the Maven shared invoker.
+     *
+     * @param project The Maven project
+     * @param quiet Whether to invoke Maven with --quiet
+     * @param goals The goals to execute
+     * @return The result of the invocation
+     * @throws MavenInvocationException If the goal execution fails
+     */
+    public InvocationResultWithOutput invokeGoals(MavenProject project, boolean quiet, String... goals) throws MavenInvocationException {
         var request = new DefaultInvocationRequest();
         request.setPomFile(project.getFile());
         File settingsFile = mavenSession.getRequest().getUserSettingsFile();
@@ -162,16 +200,21 @@ public class ExecutorService {
             request.setUserSettingsFile(settingsFile);
         }
         var properties = new Properties();
+        properties.putAll(System.getProperties());
         properties.put(TEST_RESOURCES_ENABLED_PROPERTY, StringUtils.FALSE);
 
         request.setLocalRepositoryDirectory(new File(mavenSession.getLocalRepository().getBasedir()));
         request.addArgs(Arrays.asList(goals));
         request.setBatchMode(true);
-        request.setQuiet(true);
+        request.setQuiet(quiet);
         request.setAlsoMake(true);
-        request.setErrorHandler(LOG::error);
-        request.setOutputHandler(LOG::info);
         request.setProperties(properties);
-        return invoker.execute(request);
+
+        var outputHandler = new PerGoalOutputHandler();
+        request.setOutputHandler(outputHandler);
+        request.setErrorHandler(outputHandler);
+        var result = invoker.execute(request);
+
+        return new InvocationResultWithOutput(result, outputHandler);
     }
 }

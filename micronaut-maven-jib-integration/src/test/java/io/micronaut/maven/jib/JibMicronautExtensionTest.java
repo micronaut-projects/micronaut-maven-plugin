@@ -217,18 +217,19 @@ class JibMicronautExtensionTest {
     }
 
     private ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan originalPlan) {
+        var project = mock(MavenProject.class);
+        when(project.getProperties()).thenReturn(new Properties());
+        var session = mockSessionFor(project);
         var extension = new JibMicronautExtension();
         var mavenData = new MavenData() {
             @Override
             public MavenProject getMavenProject() {
-                var project = mock(MavenProject.class);
-                when(project.getProperties()).thenReturn(new Properties());
                 return project;
             }
 
             @Override
             public MavenSession getMavenSession() {
-                return mock(MavenSession.class);
+                return session;
             }
         };
         ExtensionLogger extensionLogger = (logLevel, s) -> LOG.info(s);
