@@ -58,15 +58,15 @@ public record InvocationResultWithOutput(InvocationResult result,
                 "---\\s+([^:]+):([^:]+):([^\\s]+)\\s+\\(([^\\)]+)\\)\\s+@\\s+([^\\s]+)\\s+---");
 
         // Matches the start or content of the trailing summary (BUILD SUCCESS/FAILURE, Total time, Finished at, etc.)
-        private static final Pattern BUILD_SUMMARY_PATTERN = Pattern.compile(
-                "^-{5,}$|^Build\\s(Success|Failure)|^BUILD\\s(SUCCESS|FAILURE)|^Total time:|^Finished at:|^\\[INFO\\]\\s*-{5,}$",
-                Pattern.CASE_INSENSITIVE);
+        private static final Pattern BUILD_SUMMARY_PATTERN = Pattern.compile("^BUILD\\s(SUCCESS|FAILURE|ERROR)$");
+        private static final Pattern SEPARATOR_PATTERN = Pattern.compile("^-{72}$");
 
         private final Map<String, List<String>> perGoalOutput = new LinkedHashMap<>();
         private final List<String> fullOutput = new ArrayList<>();
 
         private String currentGoal = null;
         private boolean skippingSummary = false;
+        private boolean separatorFoundBefore = false;
         private final Deque<String> recentLines = new ArrayDeque<>(6); // buffer for dashed lines
 
         @Override
@@ -85,16 +85,22 @@ public record InvocationResultWithOutput(InvocationResult result,
             if (skippingSummary) {
                 return;
             }
-            if (BUILD_SUMMARY_PATTERN.matcher(line).find()) {
-                skippingSummary = true;
+
+            if (separatorFoundBefore) {
+                separatorFoundBefore = false;
+                if (BUILD_SUMMARY_PATTERN.matcher(line).matches()) {
+                    skippingSummary = true;
+                    return;
+                }
+            } else if (SEPARATOR_PATTERN.matcher(cleanLine).matches()) {
+                separatorFoundBefore = true;
                 return;
             }
-
 
             Matcher goalMatcher = GOAL_PATTERN.matcher(line);
             if (goalMatcher.find()) {
                 currentGoal = goalMatcher.group(1) + ":" + goalMatcher.group(3); // e.g., compiler:compile
-                perGoalOutput.putIfAbsent(currentGoal, new ArrayList<>());
+                perGoalOutput.computeIfAbsent(currentGoal, k -> new ArrayList<>()).add(cleanLine);
             } else if (currentGoal != null) {
                 perGoalOutput.get(currentGoal).add(cleanLine);
             }
