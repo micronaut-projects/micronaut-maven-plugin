@@ -35,6 +35,7 @@ class PerGoalOutputHandlerTest {
         PerGoalOutputHandler handler = new PerGoalOutputHandler();
         feedLines(handler);
 
+        // First goal
         var output = handler.getOutput("enforcer:enforce");
         assertEquals(8, output.size());
         // First module
@@ -46,11 +47,17 @@ class PerGoalOutputHandlerTest {
         assertEquals("--- enforcer:3.6.2:enforce (default) @ micronaut-maven-core ---",  output.get(3));
         assertEquals("--- enforcer:3.6.2:enforce (default) @ micronaut-maven-enforcer-rules ---",  output.get(4));
 
+        // Goal in the middle
         output = handler.getOutput("jacoco:prepare-agent");
         assertEquals(12, output.size());
         assertEquals("--- jacoco:0.8.14:prepare-agent (prepare-agent) @ micronaut-maven-plugin-parent ---", output.get(0));
         assertTrue(output.get(1).startsWith("argLine set to"));
         assertTrue(output.get(11).startsWith("invoker.mavenOpts set to"));
+
+        // Last goal
+        output = handler.getOutput("surefire:test");
+        assertEquals(77, output.size());
+        assertEquals("No tests to run.", output.get(76));
     }
 
     private static void feedLines(PerGoalOutputHandler handler) throws IOException {

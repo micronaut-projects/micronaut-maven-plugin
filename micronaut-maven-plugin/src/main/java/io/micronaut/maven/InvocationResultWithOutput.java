@@ -19,10 +19,8 @@ import org.apache.maven.shared.invoker.InvocationOutputHandler;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.utils.cli.CommandLineException;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,8 +56,9 @@ public record InvocationResultWithOutput(InvocationResult result,
                 "---\\s+([^:]+):([^:]+):([^\\s]+)\\s+\\(([^\\)]+)\\)\\s+@\\s+([^\\s]+)\\s+---");
 
         // Matches the start or content of the trailing summary (BUILD SUCCESS/FAILURE, Total time, Finished at, etc.)
-        private static final Pattern BUILD_SUMMARY_PATTERN = Pattern.compile("^BUILD\\s(SUCCESS|FAILURE|ERROR)$");
+        private static final Pattern BUILD_SUMMARY_PATTERN = Pattern.compile("^BUILD\\s(SUCCESS|FAILURE|ERROR)|Reactor\\sSummary");
         private static final Pattern SEPARATOR_PATTERN = Pattern.compile("^-{72}$");
+        private static final Pattern PROJECT_HEADER_PATTERN = Pattern.compile("^-+<.*>-+$");
 
         private final Map<String, List<String>> perGoalOutput = new LinkedHashMap<>();
         private final List<String> fullOutput = new ArrayList<>();
@@ -67,7 +66,6 @@ public record InvocationResultWithOutput(InvocationResult result,
         private String currentGoal = null;
         private boolean skippingSummary = false;
         private boolean separatorFoundBefore = false;
-        private final Deque<String> recentLines = new ArrayDeque<>(6); // buffer for dashed lines
 
         @Override
         public void consumeLine(String line) {
@@ -88,7 +86,7 @@ public record InvocationResultWithOutput(InvocationResult result,
 
             if (separatorFoundBefore) {
                 separatorFoundBefore = false;
-                if (BUILD_SUMMARY_PATTERN.matcher(line).matches()) {
+                if (BUILD_SUMMARY_PATTERN.matcher(cleanLine).find()) {
                     skippingSummary = true;
                     return;
                 }
@@ -97,7 +95,11 @@ public record InvocationResultWithOutput(InvocationResult result,
                 return;
             }
 
-            Matcher goalMatcher = GOAL_PATTERN.matcher(line);
+            if (PROJECT_HEADER_PATTERN.matcher(cleanLine).find()) {
+                currentGoal = null;
+            }
+
+            Matcher goalMatcher = GOAL_PATTERN.matcher(cleanLine);
             if (goalMatcher.find()) {
                 currentGoal = goalMatcher.group(1) + ":" + goalMatcher.group(3); // e.g., compiler:compile
                 perGoalOutput.computeIfAbsent(currentGoal, k -> new ArrayList<>()).add(cleanLine);
