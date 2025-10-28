@@ -16,6 +16,7 @@
 package io.micronaut.maven.aot;
 
 import io.micronaut.core.util.CollectionUtils;
+import io.micronaut.maven.InvocationResultWithOutput;
 import io.micronaut.maven.MojoUtils;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
@@ -116,9 +117,12 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
         try {
             getLog().info("Packaging project");
             compilerService.compileProject();
-            InvocationResult packagingResult = compilerService.packageProject();
+            InvocationResultWithOutput packagingResult = compilerService.packageProject();
             if (packagingResult.getExitCode() != 0) {
                 getLog().error("Error when packaging the project: ", packagingResult.getExecutionException());
+                for (String line : packagingResult.outputHandler().getOutput()) {
+                    getLog().error(line);
+                }
             } else {
                 executeAot();
             }

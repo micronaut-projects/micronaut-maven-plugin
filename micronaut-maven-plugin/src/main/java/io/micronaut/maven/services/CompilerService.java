@@ -15,6 +15,7 @@
  */
 package io.micronaut.maven.services;
 
+import io.micronaut.maven.InvocationResultWithOutput;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
@@ -152,7 +153,7 @@ public class CompilerService {
      *
      * @return the invocation result.
      */
-    public InvocationResult packageProject() throws MavenInvocationException {
+    public InvocationResultWithOutput packageProject() throws MavenInvocationException {
         return executorService.invokeGoal(MAVEN_JAR_PLUGIN, "jar");
     }
 
