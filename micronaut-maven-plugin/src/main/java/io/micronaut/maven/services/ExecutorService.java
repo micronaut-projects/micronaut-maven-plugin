@@ -193,6 +193,7 @@ public class ExecutorService {
      * @throws MavenInvocationException If the goal execution fails
      */
     public InvocationResultWithOutput invokeGoals(MavenProject project, boolean quiet, String... goals) throws MavenInvocationException {
+        LOG.info("Invoking goals: " + Arrays.toString(goals));
         var request = new DefaultInvocationRequest();
         request.setPomFile(project.getFile());
         File settingsFile = mavenSession.getRequest().getUserSettingsFile();

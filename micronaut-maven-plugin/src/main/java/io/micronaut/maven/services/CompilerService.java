@@ -84,7 +84,12 @@ public class CompilerService {
             if (mavenSession.getAllProjects().contains(mavenSession.getCurrentProject().getParent())) {
                 projectToCompile = mavenSession.getCurrentProject().getParent();
             }
-            executorService.invokeGoals(projectToCompile, COMPILE_GOAL);
+            InvocationResultWithOutput compilationResult = executorService.invokeGoals(projectToCompile, COMPILE_GOAL);
+            if (compilationResult.getExitCode() != 0) {
+                for (String line : compilationResult.outputHandler().getOutput()) {
+                    log.error(line);
+                }
+            }
             lastCompilation = System.currentTimeMillis();
         } catch (Exception e) {
             if (log.isErrorEnabled()) {
