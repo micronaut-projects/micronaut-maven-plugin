@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.buildplan.UnixPathParser;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.services.ApplicationConfigurationService;
@@ -76,8 +77,11 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
         var jibConfigurationService = new JibConfigurationService(mavenData.getMavenProject());
 
-        String baseImage = determineBaseImage(getJdkVersion(mavenData.getMavenSession()), runtime.getBuildStrategy());
-        builder.setBaseImage(baseImage);
+        String baseImage = buildPlan.getBaseImage();
+        if (StringUtils.isEmpty(buildPlan.getBaseImage())) {
+            baseImage = determineBaseImage(getJdkVersion(mavenData.getMavenSession()), runtime.getBuildStrategy());
+            builder.setBaseImage(baseImage);
+        }
         logger.log(ExtensionLogger.LogLevel.LIFECYCLE, "Using base image: " + baseImage);
 
         if (buildPlan.getExposedPorts() == null || buildPlan.getExposedPorts().isEmpty()) {

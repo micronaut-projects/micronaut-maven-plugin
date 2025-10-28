@@ -74,6 +74,9 @@ public class DockerMojo extends AbstractDockerMojo {
             var dockerfile = determineDockerfile(providedDockerfile);
             buildDockerfile(dockerfile, providedDockerfile.exists());
         } else {
+            if (jibConfigurationService.getFromImage().isEmpty()) {
+                System.setProperty(PropertyNames.FROM_IMAGE, getBaseImage());
+            }
             try {
                 String pluginGoalKey = "jib:" + jibBuildGoal;
                 getLog().info("Invoking " + pluginGoalKey);
