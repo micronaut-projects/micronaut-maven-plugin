@@ -132,20 +132,7 @@ public class ExecutorService {
      * @throws MavenInvocationException If the goal execution fails
      */
     public InvocationResultWithOutput invokeGoal(String pluginKey, String goal) throws MavenInvocationException {
-        return invokeGoal(pluginKey, goal, true);
-    }
-
-    /**
-     * Executes a goal using the Maven shared invoker.
-     *
-     * @param pluginKey The plugin coordinates in the format groupId:artifactId
-     * @param goal The goal to execute
-     * @param quiet Whether to run in quiet mode
-     * @return The result of the invocation
-     * @throws MavenInvocationException If the goal execution fails
-     */
-    public InvocationResultWithOutput invokeGoal(String pluginKey, String goal, boolean quiet) throws MavenInvocationException {
-        return invokeGoals(quiet, pluginKey + ":" + goal);
+        return invokeGoals(pluginKey + ":" + goal);
     }
 
     /**
@@ -156,19 +143,7 @@ public class ExecutorService {
      * @throws MavenInvocationException If the goal execution fails
      */
     public InvocationResultWithOutput invokeGoals(String... goals) throws MavenInvocationException {
-        return invokeGoals(true, goals);
-    }
-
-    /**
-     * Executes a goal using the Maven shared invoker.
-     *
-     * @param quiet Whether to run in quiet mode
-     * @param goals The goals to execute
-     * @return The result of the invocation
-     * @throws MavenInvocationException If the goal execution fails
-     */
-    public InvocationResultWithOutput invokeGoals(boolean quiet, String... goals) throws MavenInvocationException {
-        return invokeGoals(mavenProject, quiet, goals);
+        return invokeGoals(mavenProject, goals);
     }
 
     /**
@@ -180,20 +155,6 @@ public class ExecutorService {
      * @throws MavenInvocationException If the goal execution fails
      */
     public InvocationResultWithOutput invokeGoals(MavenProject project, String... goals) throws MavenInvocationException {
-        return invokeGoals(project, true, goals);
-    }
-
-    /**
-     * Executes a goal using the Maven shared invoker.
-     *
-     * @param project The Maven project
-     * @param quiet Whether to invoke Maven with --quiet
-     * @param goals The goals to execute
-     * @return The result of the invocation
-     * @throws MavenInvocationException If the goal execution fails
-     */
-    public InvocationResultWithOutput invokeGoals(MavenProject project, boolean quiet, String... goals) throws MavenInvocationException {
-        LOG.info("Invoking goals: " + Arrays.toString(goals));
         var request = new DefaultInvocationRequest();
         request.setPomFile(project.getFile());
         File settingsFile = mavenSession.getRequest().getUserSettingsFile();
@@ -207,7 +168,7 @@ public class ExecutorService {
         request.setLocalRepositoryDirectory(new File(mavenSession.getLocalRepository().getBasedir()));
         request.addArgs(Arrays.asList(goals));
         request.setBatchMode(true);
-        request.setQuiet(quiet);
+        request.setQuiet(false);
         request.setAlsoMake(true);
         request.setProperties(properties);
 

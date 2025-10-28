@@ -80,7 +80,7 @@ public class DockerMojo extends AbstractDockerMojo {
             try {
                 String pluginGoalKey = "jib:" + jibBuildGoal;
                 getLog().info("Invoking " + pluginGoalKey);
-                var result = executorService.invokeGoal("com.google.cloud.tools:jib-maven-plugin", jibBuildGoal, false);
+                var result = executorService.invokeGoal("com.google.cloud.tools:jib-maven-plugin", jibBuildGoal);
                 if (result.getExitCode() != 0) {
                     for (String line : result.outputHandler().getOutput()) {
                         getLog().error(line);
