@@ -155,6 +155,8 @@ public class ExecutorService {
      * @throws MavenInvocationException If the goal execution fails
      */
     public InvocationResultWithOutput invokeGoals(MavenProject project, String... goals) throws MavenInvocationException {
+        System.out.println("Invoking goals: " + goals);
+        System.out.println("Project: " + project.getName());
         var request = new DefaultInvocationRequest();
         request.setPomFile(project.getFile());
         File settingsFile = mavenSession.getRequest().getUserSettingsFile();
@@ -162,15 +164,18 @@ public class ExecutorService {
             request.setUserSettingsFile(settingsFile);
         }
         var properties = new Properties();
-        properties.putAll(System.getProperties());
+        var sysProperties = System.getProperties();
+        sysProperties.forEach((key, value) -> System.out.println(key + ": " + value));
+        properties.putAll(sysProperties);
         properties.put(TEST_RESOURCES_ENABLED_PROPERTY, StringUtils.FALSE);
+        request.setProperties(properties);
 
         request.setLocalRepositoryDirectory(new File(mavenSession.getLocalRepository().getBasedir()));
-        request.addArgs(Arrays.asList(goals));
+//        request.addArgs(Arrays.asList(goals));
+        request.setGoals(Arrays.asList(goals));
         request.setBatchMode(true);
         request.setQuiet(false);
         request.setAlsoMake(true);
-        request.setProperties(properties);
 
         var outputHandler = new PerGoalOutputHandler();
         request.setOutputHandler(outputHandler);
