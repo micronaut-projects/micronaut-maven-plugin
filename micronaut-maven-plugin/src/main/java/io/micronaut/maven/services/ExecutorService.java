@@ -24,8 +24,10 @@ import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.invoker.CommandLineConfigurationException;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.Invoker;
+import org.apache.maven.shared.invoker.MavenCommandLineBuilder;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.slf4j.Logger;
@@ -155,7 +157,7 @@ public class ExecutorService {
      * @throws MavenInvocationException If the goal execution fails
      */
     public InvocationResultWithOutput invokeGoals(MavenProject project, String... goals) throws MavenInvocationException {
-        System.out.println("Invoking goals: " + goals);
+        System.out.println("Invoking goals: " + Arrays.toString(goals));
         System.out.println("Project: " + project.getName());
         var request = new DefaultInvocationRequest();
         request.setPomFile(project.getFile());
@@ -163,15 +165,18 @@ public class ExecutorService {
         if (settingsFile.exists()) {
             request.setUserSettingsFile(settingsFile);
         }
+
         var properties = new Properties();
-        var sysProperties = System.getProperties();
-        sysProperties.forEach((key, value) -> System.out.println(key + ": " + value));
-        properties.putAll(sysProperties);
+        //Pass through Jib properties
+        System.getProperties()
+                .entrySet()
+                .stream()
+                .filter(e -> e.getKey().toString().startsWith("jib"))
+                .forEach(e -> properties.put(e.getKey(), e.getValue()));
         properties.put(TEST_RESOURCES_ENABLED_PROPERTY, StringUtils.FALSE);
         request.setProperties(properties);
 
         request.setLocalRepositoryDirectory(new File(mavenSession.getLocalRepository().getBasedir()));
-//        request.addArgs(Arrays.asList(goals));
         request.setGoals(Arrays.asList(goals));
         request.setBatchMode(true);
         request.setQuiet(false);
@@ -180,8 +185,15 @@ public class ExecutorService {
         var outputHandler = new PerGoalOutputHandler();
         request.setOutputHandler(outputHandler);
         request.setErrorHandler(outputHandler);
-        var result = invoker.execute(request);
 
+        try {
+            var cmd = new MavenCommandLineBuilder().build(request).toString();
+            System.out.println("Running command: " + cmd);
+        } catch (CommandLineConfigurationException e) {
+            //no op
+        }
+
+        var result = invoker.execute(request);
         return new InvocationResultWithOutput(result, outputHandler);
     }
 }
