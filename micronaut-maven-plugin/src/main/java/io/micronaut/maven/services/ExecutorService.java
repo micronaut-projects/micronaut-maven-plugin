@@ -24,10 +24,8 @@ import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.shared.invoker.CommandLineConfigurationException;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.Invoker;
-import org.apache.maven.shared.invoker.MavenCommandLineBuilder;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.slf4j.Logger;
@@ -157,8 +155,6 @@ public class ExecutorService {
      * @throws MavenInvocationException If the goal execution fails
      */
     public InvocationResultWithOutput invokeGoals(MavenProject project, String... goals) throws MavenInvocationException {
-        System.out.println("Invoking goals: " + Arrays.toString(goals));
-        System.out.println("Project: " + project.getName());
         var request = new DefaultInvocationRequest();
         request.setPomFile(project.getFile());
         File settingsFile = mavenSession.getRequest().getUserSettingsFile();
@@ -185,13 +181,6 @@ public class ExecutorService {
         var outputHandler = new PerGoalOutputHandler();
         request.setOutputHandler(outputHandler);
         request.setErrorHandler(outputHandler);
-
-        try {
-            var cmd = new MavenCommandLineBuilder().build(request).toString();
-            System.out.println("Running command: " + cmd);
-        } catch (CommandLineConfigurationException e) {
-            //no op
-        }
 
         var result = invoker.execute(request);
         return new InvocationResultWithOutput(result, outputHandler);
