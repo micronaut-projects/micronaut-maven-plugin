@@ -134,6 +134,22 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     @Parameter(property = "docker.networkMode")
     protected String networkMode;
 
+    /**
+     * <p>
+     * jib-maven-plugin goal used to build the Docker image (when Jib is used). Defaults to <code>dockerBuild</code>,
+     * but can be set to <code>build</code> or <code>buildTar</code> to build the image without a Docker daemon.
+     * </p>
+     * <p>
+     * Note that Jib's <code>build</code> goal with also push the image to a container registry. Check the
+     * <a href="https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#quickstart">jib-maven-plugin</a>
+     * documentation for more information.
+     * </p>
+     *
+     * @since 4.11.2
+     */
+    @Parameter(property = "jib.buildGoal", defaultValue = "dockerBuild")
+    protected String jibBuildGoal;
+
     protected AbstractDockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
                                  ApplicationConfigurationService applicationConfigurationService,
                                  DockerService dockerService, MavenSession mavenSession, MojoExecution mojoExecution) {

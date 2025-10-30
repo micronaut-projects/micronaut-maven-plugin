@@ -129,6 +129,7 @@
             <image>
               <name>alvarosanchez/${project.artifactId}:${project.version}</name>
               <run>
+                <platform>linux/amd64</platform>
                 <wait>
                   <log>Startup completed in</log>
                   <time>20000</time>

@@ -15,6 +15,7 @@
  */
 package io.micronaut.maven.services;
 
+import io.micronaut.maven.InvocationResultWithOutput;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
@@ -23,7 +24,6 @@ import org.apache.maven.project.DependencyResolutionRequest;
 import org.apache.maven.project.DependencyResolutionResult;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectDependenciesResolver;
-import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
@@ -84,7 +84,12 @@ public class CompilerService {
             if (mavenSession.getAllProjects().contains(mavenSession.getCurrentProject().getParent())) {
                 projectToCompile = mavenSession.getCurrentProject().getParent();
             }
-            executorService.invokeGoals(projectToCompile, COMPILE_GOAL);
+            InvocationResultWithOutput compilationResult = executorService.invokeGoals(projectToCompile, COMPILE_GOAL);
+            if (compilationResult.getExitCode() != 0) {
+                for (String line : compilationResult.outputHandler().getOutput()) {
+                    log.error(line);
+                }
+            }
             lastCompilation = System.currentTimeMillis();
         } catch (Exception e) {
             if (log.isErrorEnabled()) {
@@ -152,7 +157,7 @@ public class CompilerService {
      *
      * @return the invocation result.
      */
-    public InvocationResult packageProject() throws MavenInvocationException {
+    public InvocationResultWithOutput packageProject() throws MavenInvocationException {
         return executorService.invokeGoal(MAVEN_JAR_PLUGIN, "jar");
     }
 

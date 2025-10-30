@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.micronaut.build.examples</groupId>
-    <artifactId>package-docker</artifactId>
+    <artifactId>package-docker-daemonless</artifactId>
     <version>0.1</version>
     <packaging>${packaging}</packaging>
 
@@ -120,6 +120,9 @@
                     <images>
                         <image>
                             <name>alvarosanchez/${project.artifactId}:${project.version}</name>
+                            <build>
+                                <dockerArchive>${project.build.directory}/jib-image.tar</dockerArchive>
+                            </build>
                             <run>
                                 <platform>linux/amd64</platform>
                                 <wait>

@@ -1,0 +1,309 @@
+[INFO] Scanning for projects...
+[INFO] Inspecting build with total of 6 modules
+[INFO] Installing Central Publishing features
+[WARNING] This build will only read from the build cache, since the clean lifecycle is not part of the build invocation.
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] Micronaut Maven Plugin - Parent                                    [pom]
+[INFO] Micronaut Maven Plugin - Core                                      [jar]
+[INFO] Micronaut Maven Plugin - Enforcer Rules                            [jar]
+[INFO] Micronaut Maven Plugin - Jib Integration                           [jar]
+[INFO] Micronaut Maven Plugin - Plugin                           [maven-plugin]
+[INFO] Micronaut Maven Plugin - Integration Tests                         [jar]
+[INFO] 
+[INFO] ----------< io.micronaut.maven:micronaut-maven-plugin-parent >----------
+[INFO] Building Micronaut Maven Plugin - Parent 4.11.2-SNAPSHOT           [1/6]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.2:enforce (default) @ micronaut-maven-plugin-parent ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] Rule 1: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.14:prepare-agent (prepare-agent) @ micronaut-maven-plugin-parent ---
+[INFO] argLine set to -javaagent:/Users/alvaro/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/target/jacoco.exec
+[INFO] 
+[INFO] --- checkstyle:3.6.0:check (checkstyle-check) @ micronaut-maven-plugin-parent ---
+[INFO] Loaded from the build cache, saving 0.525s
+[INFO] 
+[INFO] --- spotless:3.0.0:check (spotless-check) @ micronaut-maven-plugin-parent ---
+[INFO] 
+[INFO] --------------< io.micronaut.maven:micronaut-maven-core >---------------
+[INFO] Building Micronaut Maven Plugin - Core 4.11.2-SNAPSHOT             [2/6]
+[INFO]   from micronaut-maven-core/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.2:enforce (default) @ micronaut-maven-core ---
+[INFO] 
+[INFO] --- jacoco:0.8.14:prepare-agent (prepare-agent) @ micronaut-maven-core ---
+[INFO] argLine set to -javaagent:/Users/alvaro/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-core/target/jacoco.exec
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ micronaut-maven-core ---
+[INFO] skip non existing resourceDirectory /Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-core/src/main/resources
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ micronaut-maven-core ---
+[INFO] Recompiling the module because of added or removed source files.
+[INFO] Compiling 3 source files with javac [debug target 17] to target/classes
+[INFO] 
+[INFO] --- checkstyle:3.6.0:check (checkstyle-check) @ micronaut-maven-core ---
+[INFO] Loaded from the build cache, saving 0.348s
+[INFO] 
+[INFO] --- spotless:3.0.0:check (spotless-check) @ micronaut-maven-core ---
+[INFO] Spotless.Java is keeping 3 files clean - 0 needs changes to be clean, 0 were already clean, 3 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ micronaut-maven-core ---
+[INFO] skip non existing resourceDirectory /Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-core/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ micronaut-maven-core ---
+[INFO] Loaded from the build cache
+[INFO] 
+[INFO] --- surefire:3.5.4:test (default-test) @ micronaut-maven-core ---
+[INFO] No tests to run.
+[INFO] Loaded from the build cache, saving 0.249s
+[INFO] 
+[INFO] ---------< io.micronaut.maven:micronaut-maven-enforcer-rules >----------
+[INFO] Building Micronaut Maven Plugin - Enforcer Rules 4.11.2-SNAPSHOT   [3/6]
+[INFO]   from micronaut-maven-enforcer-rules/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.2:enforce (default) @ micronaut-maven-enforcer-rules ---
+[INFO] 
+[INFO] --- jacoco:0.8.14:prepare-agent (prepare-agent) @ micronaut-maven-enforcer-rules ---
+[INFO] argLine set to -javaagent:/Users/alvaro/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-enforcer-rules/target/jacoco.exec
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ micronaut-maven-enforcer-rules ---
+[INFO] skip non existing resourceDirectory /Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-enforcer-rules/src/main/resources
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ micronaut-maven-enforcer-rules ---
+[INFO] Recompiling the module because of added or removed source files.
+[INFO] Compiling 1 source file with javac [debug target 17] to target/classes
+[INFO] 
+[INFO] --- checkstyle:3.6.0:check (checkstyle-check) @ micronaut-maven-enforcer-rules ---
+[INFO] Loaded from the build cache, saving 0.137s
+[INFO] 
+[INFO] --- spotless:3.0.0:check (spotless-check) @ micronaut-maven-enforcer-rules ---
+[INFO] Spotless.Java is keeping 1 files clean - 0 needs changes to be clean, 0 were already clean, 1 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ micronaut-maven-enforcer-rules ---
+[INFO] skip non existing resourceDirectory /Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-enforcer-rules/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ micronaut-maven-enforcer-rules ---
+[INFO] Loaded from the build cache
+[INFO] 
+[INFO] --- surefire:3.5.4:test (default-test) @ micronaut-maven-enforcer-rules ---
+[INFO] No tests to run.
+[INFO] Loaded from the build cache
+[INFO] 
+[INFO] ---------< io.micronaut.maven:micronaut-maven-jib-integration >---------
+[INFO] Building Micronaut Maven Plugin - Jib Integration 4.11.2-SNAPSHOT  [4/6]
+[INFO]   from micronaut-maven-jib-integration/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.2:enforce (default) @ micronaut-maven-jib-integration ---
+[INFO] 
+[INFO] --- jacoco:0.8.14:prepare-agent (prepare-agent) @ micronaut-maven-jib-integration ---
+[INFO] argLine set to -javaagent:/Users/alvaro/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-jib-integration/target/jacoco.exec
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ micronaut-maven-jib-integration ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ micronaut-maven-jib-integration ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 3 source files with javac [debug target 17] to target/classes
+[INFO] 
+[INFO] --- checkstyle:3.6.0:check (checkstyle-check) @ micronaut-maven-jib-integration ---
+[INFO] Loaded from the build cache, saving 0.466s
+[INFO] 
+[INFO] --- spotless:3.0.0:check (spotless-check) @ micronaut-maven-jib-integration ---
+[INFO] Spotless.Java is keeping 3 files clean - 0 needs changes to be clean, 0 were already clean, 3 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ micronaut-maven-jib-integration ---
+[INFO] Copying 1 resource from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ micronaut-maven-jib-integration ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 2 source files with javac [debug target 17] to target/test-classes
+[INFO] /Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-jib-integration/src/test/java/io/micronaut/maven/jib/JibConfigurationServiceTest.java: /Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-jib-integration/src/test/java/io/micronaut/maven/jib/JibConfigurationServiceTest.java uses unchecked or unsafe operations.
+[INFO] /Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-jib-integration/src/test/java/io/micronaut/maven/jib/JibConfigurationServiceTest.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- surefire:3.5.4:test (default-test) @ micronaut-maven-jib-integration ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running io.micronaut.maven.jib.JibConfigurationServiceTest
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[INFO] Tests run: 22, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.908 s -- in io.micronaut.maven.jib.JibConfigurationServiceTest
+[INFO] Running io.micronaut.maven.jib.JibMicronautExtensionTest
+15:12:33.832 [main] INFO  i.m.maven.jib.JibMicronautExtension - Using JDK version 17 from default (17)
+15:12:33.835 [main] INFO  i.m.m.jib.JibMicronautExtensionTest - Using base image: eclipse-temurin:17-jre
+15:12:33.846 [main] INFO  i.m.m.jib.JibMicronautExtensionTest - Exposing port: 8080
+15:12:33.897 [main] INFO  i.m.maven.jib.JibMicronautExtension - Using JDK version 17 from default (17)
+15:12:33.905 [main] INFO  i.m.maven.jib.JibMicronautExtension - Using JDK version 21 from maven.compiler.release
+15:12:33.908 [main] INFO  i.m.maven.jib.JibMicronautExtension - Using JDK version 17 from maven.compiler.release
+15:12:33.911 [main] INFO  i.m.maven.jib.JibMicronautExtension - Using JDK version 17 from default (17)
+15:12:33.911 [main] INFO  i.m.m.jib.JibMicronautExtensionTest - Using base image: eclipse-temurin:17-jre
+15:12:33.915 [main] INFO  i.m.maven.jib.JibMicronautExtension - Using JDK version 17 from default (17)
+15:12:33.915 [main] INFO  i.m.m.jib.JibMicronautExtensionTest - Using base image: eclipse-temurin:17-jre
+15:12:33.915 [main] INFO  i.m.m.jib.JibMicronautExtensionTest - Exposing port: 8080
+15:12:33.927 [main] INFO  i.m.maven.jib.JibMicronautExtension - Using JDK version 21 from maven.compiler.target
+15:12:33.930 [main] INFO  i.m.maven.jib.JibMicronautExtension - Using JDK version 17 from default (17)
+15:12:33.930 [main] INFO  i.m.m.jib.JibMicronautExtensionTest - Using base image: eclipse-temurin:17-jre
+15:12:33.931 [main] INFO  i.m.m.jib.JibMicronautExtensionTest - Exposing port: 8080
+[INFO] Tests run: 22, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.175 s -- in io.micronaut.maven.jib.JibMicronautExtensionTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 44, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] -------------< io.micronaut.maven:micronaut-maven-plugin >--------------
+[INFO] Building Micronaut Maven Plugin - Plugin 4.11.2-SNAPSHOT           [5/6]
+[INFO]   from micronaut-maven-plugin/pom.xml
+[INFO] ----------------------------[ maven-plugin ]----------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.2:enforce (default) @ micronaut-maven-plugin ---
+[INFO] 
+[INFO] --- jacoco:0.8.14:prepare-agent (prepare-agent) @ micronaut-maven-plugin ---
+[INFO] argLine set to -javaagent:/Users/alvaro/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-plugin/target/jacoco.exec
+[INFO] 
+[INFO] --- plugin:3.15.1:helpmojo (help-goal) @ micronaut-maven-plugin ---
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ micronaut-maven-plugin ---
+[INFO] Copying 14 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ micronaut-maven-plugin ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 39 source files with javac [debug target 17] to target/classes
+[INFO] /Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-plugin/src/main/java/io/micronaut/maven/services/DockerService.java: Some input files use or override a deprecated API.
+[INFO] /Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-plugin/src/main/java/io/micronaut/maven/services/DockerService.java: Recompile with -Xlint:deprecation for details.
+[INFO] 
+[INFO] --- checkstyle:3.6.0:check (checkstyle-check) @ micronaut-maven-plugin ---
+[INFO] Loaded from the build cache, saving 1.042s
+[INFO] 
+[INFO] --- spotless:3.0.0:check (spotless-check) @ micronaut-maven-plugin ---
+[INFO] Spotless.Java is keeping 38 files clean - 0 needs changes to be clean, 0 were already clean, 38 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] --- plugin:3.15.1:descriptor (default-descriptor) @ micronaut-maven-plugin ---
+[INFO] Using 'UTF-8' encoding to read mojo source files.
+[WARNING] Unresolvable link in javadoc tag with value AbstractMicronautJavaCodegen#optionsBuilder() found in micronaut-maven-plugin/src/main/java/io/micronaut/maven/openapi/OpenApiGenericMojo.java:49: Could not resolve javadoc reference JavadocReference [moduleName=Optional.empty, packageNameClassName=Optional[AbstractMicronautJavaCodegen], member=Optional[optionsBuilder()], label=Optional.empty]
+[WARNING] Unresolvable link in javadoc tag with value FilesMojoV2#collectWatchParameters found in micronaut-maven-plugin/target/maven-plugin-plugin-sources/com.google.cloud.tools/jib-maven-plugin/3.4.6/sources/com/google/cloud/tools/jib/maven/skaffold/SkaffoldConfiguration.java:43: Could not resolve javadoc reference JavadocReference [moduleName=Optional.empty, packageNameClassName=Optional[FilesMojoV2], member=Optional[collectWatchParameters], label=Optional.empty]
+[INFO] java-annotations mojo extractor found 17 mojo descriptors.
+[INFO] java-javadoc mojo extractor found 0 mojo descriptor.
+[INFO] ant mojo extractor found 0 mojo descriptor.
+[INFO] bsh mojo extractor found 0 mojo descriptor.
+[INFO] 
+[INFO] --- plugin:3.15.1:descriptor (mojo-descriptor) @ micronaut-maven-plugin ---
+[INFO] Using 'UTF-8' encoding to read mojo source files.
+[WARNING] Unresolvable link in javadoc tag with value AbstractMicronautJavaCodegen#optionsBuilder() found in micronaut-maven-plugin/src/main/java/io/micronaut/maven/openapi/OpenApiGenericMojo.java:49: Could not resolve javadoc reference JavadocReference [moduleName=Optional.empty, packageNameClassName=Optional[AbstractMicronautJavaCodegen], member=Optional[optionsBuilder()], label=Optional.empty]
+[WARNING] Unresolvable link in javadoc tag with value FilesMojoV2#collectWatchParameters found in micronaut-maven-plugin/target/maven-plugin-plugin-sources/com.google.cloud.tools/jib-maven-plugin/3.4.6/sources/com/google/cloud/tools/jib/maven/skaffold/SkaffoldConfiguration.java:43: Could not resolve javadoc reference JavadocReference [moduleName=Optional.empty, packageNameClassName=Optional[FilesMojoV2], member=Optional[collectWatchParameters], label=Optional.empty]
+[INFO] java-annotations mojo extractor found 17 mojo descriptors.
+[INFO] java-javadoc mojo extractor found 0 mojo descriptor.
+[INFO] ant mojo extractor found 0 mojo descriptor.
+[INFO] bsh mojo extractor found 0 mojo descriptor.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ micronaut-maven-plugin ---
+[INFO] skip non existing resourceDirectory /Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-plugin/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ micronaut-maven-plugin ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 5 source files with javac [debug target 17] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.5.4:test (default-test) @ micronaut-maven-plugin ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running io.micronaut.maven.MojoUtilsTest
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.950 s -- in io.micronaut.maven.MojoUtilsTest
+[INFO] Running io.micronaut.maven.DockerNativeMojoTest
+SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+SLF4J: Defaulting to no-operation (NOP) logger implementation
+SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.985 s -- in io.micronaut.maven.DockerNativeMojoTest
+[INFO] Running io.micronaut.maven.testresources.DefaultServerFactoryTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.043 s -- in io.micronaut.maven.testresources.DefaultServerFactoryTest
+[INFO] Running io.micronaut.maven.testresources.StartTestResourcesServerMojoTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.083 s -- in io.micronaut.maven.testresources.StartTestResourcesServerMojoTest
+[INFO] Running io.micronaut.maven.FileWatchingTest
+[info] 📝 Detected change in src/main/java/Dummy.java. Recompiling/restarting...
+[info] 📝 Detected change in src/main/java/Dummy.java. Recompiling/restarting...
+[info] 📝 Detected change in pom.xml. Recompiling/restarting...
+[info] 📝 Detected change in src/main/resources/application.yml. Recompiling/restarting...
+[info] 📝 Detected change in src/main/resources/META-INF/version.txt. Recompiling/restarting...
+[info] 📝 Detected change in src/main/groovy/Dummy.groovy. Recompiling/restarting...
+[info] 📝 Detected change in src/main/kotlin/Dummy.kotlin. Recompiling/restarting...
+[info] 📝 Detected change in module0/src/main/java/Dummy.java. Recompiling/restarting...
+[info] 📝 Detected change in module0/src/main/java/Dummy.java. Recompiling/restarting...
+[info] 📝 Detected change in module0/pom.xml. Recompiling/restarting...
+[info] 📝 Detected change in module0/src/main/resources/application.yml. Recompiling/restarting...
+[info] 📝 Detected change in module0/src/main/resources/META-INF/version.txt. Recompiling/restarting...
+[info] 📝 Detected change in module0/src/main/groovy/Dummy.groovy. Recompiling/restarting...
+[info] 📝 Detected change in module0/src/main/kotlin/Dummy.kotlin. Recompiling/restarting...
+[info] 📝 Detected change in module1/src/main/java/Dummy.java. Recompiling/restarting...
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.172 s -- in io.micronaut.maven.FileWatchingTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 27, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --------< io.micronaut.maven:micronaut-maven-integration-tests >--------
+[INFO] Building Micronaut Maven Plugin - Integration Tests 4.11.2-SNAPSHOT [6/6]
+[INFO]   from micronaut-maven-integration-tests/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.2:enforce (default) @ micronaut-maven-integration-tests ---
+[INFO] 
+[INFO] --- jacoco:0.8.14:prepare-agent (prepare-agent) @ micronaut-maven-integration-tests ---
+[INFO] invoker.mavenOpts set to -javaagent:/Users/alvaro/.m2/repository/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-runtime.jar=destfile=/Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-integration-tests/target/jacoco.exec
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ micronaut-maven-integration-tests ---
+[INFO] skip non existing resourceDirectory /Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-integration-tests/src/main/resources
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ micronaut-maven-integration-tests ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- checkstyle:3.6.0:check (checkstyle-check) @ micronaut-maven-integration-tests ---
+[INFO] Loaded from the build cache, saving 0.566s
+[INFO] 
+[INFO] --- spotless:3.0.0:check (spotless-check) @ micronaut-maven-integration-tests ---
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ micronaut-maven-integration-tests ---
+[INFO] skip non existing resourceDirectory /Users/alvaro/Dev/micronaut-projects/micronaut-maven-plugin/micronaut-maven-integration-tests/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ micronaut-maven-integration-tests ---
+[INFO] No sources to compile
+[INFO] 
+[INFO] --- surefire:3.5.4:test (default-test) @ micronaut-maven-integration-tests ---
+[INFO] No tests to run.
+[INFO] Using auto detected provider org.apache.maven.surefire.junit.JUnit3Provider
+[INFO] No tests to run.
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for Micronaut Maven Plugin - Parent 4.11.2-SNAPSHOT:
+[INFO] 
+[INFO] Micronaut Maven Plugin - Parent .................... SUCCESS [  1.502 s]
+[INFO] Micronaut Maven Plugin - Core ...................... SUCCESS [  1.293 s]
+[INFO] Micronaut Maven Plugin - Enforcer Rules ............ SUCCESS [  0.430 s]
+[INFO] Micronaut Maven Plugin - Jib Integration ........... SUCCESS [  3.994 s]
+[INFO] Micronaut Maven Plugin - Plugin .................... SUCCESS [  9.108 s]
+[INFO] Micronaut Maven Plugin - Integration Tests ......... SUCCESS [  0.702 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  17.520 s
+[INFO] Finished at: 2025-10-23T15:12:43+02:00
+[INFO] ------------------------------------------------------------------------
+[INFO] 52 goals, 42 executed, 10 from cache, saving at least 3s
+[INFO] 
+[INFO] Publishing Build Scan to Develocity...
+[INFO] https://ge.micronaut.io/s/pdftidqmapwrs
+[INFO]
