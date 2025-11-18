@@ -91,70 +91,81 @@
 <span class="source-line-no">078</span><span id="line-78">                System.setProperty(PropertyNames.FROM_IMAGE, getBaseImage());</span>
 <span class="source-line-no">079</span><span id="line-79">            }</span>
 <span class="source-line-no">080</span><span id="line-80">            try {</span>
-<span class="source-line-no">081</span><span id="line-81">                String pluginGoalKey = "jib:" + jibBuildGoal;</span>
-<span class="source-line-no">082</span><span id="line-82">                getLog().info("Invoking " + pluginGoalKey);</span>
-<span class="source-line-no">083</span><span id="line-83">                var result = executorService.invokeGoal("com.google.cloud.tools:jib-maven-plugin", jibBuildGoal);</span>
-<span class="source-line-no">084</span><span id="line-84">                if (result.getExitCode() != 0) {</span>
-<span class="source-line-no">085</span><span id="line-85">                    for (String line : result.outputHandler().getOutput()) {</span>
-<span class="source-line-no">086</span><span id="line-86">                        getLog().error(line);</span>
-<span class="source-line-no">087</span><span id="line-87">                    }</span>
-<span class="source-line-no">088</span><span id="line-88">                    throw new MojoExecutionException("jib-maven-plugin failed, check logs above for details");</span>
-<span class="source-line-no">089</span><span id="line-89">                } else {</span>
-<span class="source-line-no">090</span><span id="line-90">                    for (String line : result.outputHandler().getOutput(pluginGoalKey)) {</span>
-<span class="source-line-no">091</span><span id="line-91">                        getLog().info(line);</span>
-<span class="source-line-no">092</span><span id="line-92">                    }</span>
-<span class="source-line-no">093</span><span id="line-93">                }</span>
-<span class="source-line-no">094</span><span id="line-94">            } catch (MavenInvocationException e) {</span>
-<span class="source-line-no">095</span><span id="line-95">                throw new MojoExecutionException("Could not build docker image", e);</span>
-<span class="source-line-no">096</span><span id="line-96">            }</span>
-<span class="source-line-no">097</span><span id="line-97">        }</span>
-<span class="source-line-no">098</span><span id="line-98">    }</span>
-<span class="source-line-no">099</span><span id="line-99"></span>
-<span class="source-line-no">100</span><span id="line-100">    private File determineDockerfile(File providedDockerfile) throws MojoExecutionException {</span>
-<span class="source-line-no">101</span><span id="line-101">        if (providedDockerfile.exists()) {</span>
-<span class="source-line-no">102</span><span id="line-102">            return providedDockerfile;</span>
-<span class="source-line-no">103</span><span id="line-103">        }</span>
-<span class="source-line-no">104</span><span id="line-104">        try {</span>
-<span class="source-line-no">105</span><span id="line-105">            return dockerService.loadDockerfileAsResource(DOCKERFILE_ORACLE_CLOUD);</span>
-<span class="source-line-no">106</span><span id="line-106">        } catch (IOException e) {</span>
-<span class="source-line-no">107</span><span id="line-107">            throw new MojoExecutionException("Error loading Dockerfile", e);</span>
+<span class="source-line-no">081</span><span id="line-81">                if (!mavenSession.getCurrentProject().equals(mavenSession.getTopLevelProject())) {</span>
+<span class="source-line-no">082</span><span id="line-82">                    getLog().info("Invoking mvn install");</span>
+<span class="source-line-no">083</span><span id="line-83">                    var result = executorService.invokeGoals(mavenSession.getTopLevelProject(), "install");</span>
+<span class="source-line-no">084</span><span id="line-84">                    handleResult(result, "install:install");</span>
+<span class="source-line-no">085</span><span id="line-85">                }</span>
+<span class="source-line-no">086</span><span id="line-86"></span>
+<span class="source-line-no">087</span><span id="line-87">                String pluginGoalKey = "jib:" + jibBuildGoal;</span>
+<span class="source-line-no">088</span><span id="line-88">                getLog().info("Invoking " + pluginGoalKey);</span>
+<span class="source-line-no">089</span><span id="line-89">                var result = executorService.invokeGoal("com.google.cloud.tools:jib-maven-plugin", jibBuildGoal);</span>
+<span class="source-line-no">090</span><span id="line-90">                handleResult(result, pluginGoalKey);</span>
+<span class="source-line-no">091</span><span id="line-91">            } catch (MavenInvocationException e) {</span>
+<span class="source-line-no">092</span><span id="line-92">                throw new MojoExecutionException("Could not build docker image", e);</span>
+<span class="source-line-no">093</span><span id="line-93">            }</span>
+<span class="source-line-no">094</span><span id="line-94">        }</span>
+<span class="source-line-no">095</span><span id="line-95">    }</span>
+<span class="source-line-no">096</span><span id="line-96"></span>
+<span class="source-line-no">097</span><span id="line-97">    private void handleResult(final InvocationResultWithOutput result, final String pluginGoalKey) throws MojoExecutionException {</span>
+<span class="source-line-no">098</span><span id="line-98">        if (result.getExitCode() != 0) {</span>
+<span class="source-line-no">099</span><span id="line-99">            getLog().error("Invocation of " + pluginGoalKey + " failed");</span>
+<span class="source-line-no">100</span><span id="line-100">            for (String line : result.outputHandler().getOutput()) {</span>
+<span class="source-line-no">101</span><span id="line-101">                getLog().error(line);</span>
+<span class="source-line-no">102</span><span id="line-102">            }</span>
+<span class="source-line-no">103</span><span id="line-103">            throw new MojoExecutionException(pluginGoalKey + " failed, check logs above for details");</span>
+<span class="source-line-no">104</span><span id="line-104">        } else {</span>
+<span class="source-line-no">105</span><span id="line-105">            for (String line : result.outputHandler().getOutput(pluginGoalKey)) {</span>
+<span class="source-line-no">106</span><span id="line-106">                getLog().info(line);</span>
+<span class="source-line-no">107</span><span id="line-107">            }</span>
 <span class="source-line-no">108</span><span id="line-108">        }</span>
 <span class="source-line-no">109</span><span id="line-109">    }</span>
 <span class="source-line-no">110</span><span id="line-110"></span>
-<span class="source-line-no">111</span><span id="line-111">    private boolean shouldBuildWithDockerfile(File providedDockerfile) {</span>
-<span class="source-line-no">112</span><span id="line-112">        var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());</span>
-<span class="source-line-no">113</span><span id="line-113">        return providedDockerfile.exists() || runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION;</span>
-<span class="source-line-no">114</span><span id="line-114">    }</span>
-<span class="source-line-no">115</span><span id="line-115"></span>
-<span class="source-line-no">116</span><span id="line-116">    private void buildDockerfile(File dockerfile, boolean providedDockerfileExists) throws MojoExecutionException {</span>
-<span class="source-line-no">117</span><span id="line-117">        try {</span>
-<span class="source-line-no">118</span><span id="line-118">            var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());</span>
-<span class="source-line-no">119</span><span id="line-119">            if (runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION &amp;&amp; !providedDockerfileExists) {</span>
-<span class="source-line-no">120</span><span id="line-120">                oracleCloudFunctionCmd(dockerfile);</span>
-<span class="source-line-no">121</span><span id="line-121">                DockerfileMojo.processOracleFunctionDockerfile(dockerfile);</span>
-<span class="source-line-no">122</span><span id="line-122">            }</span>
-<span class="source-line-no">123</span><span id="line-123">            getLog().info("Using Dockerfile: " + dockerfile.getAbsolutePath());</span>
-<span class="source-line-no">124</span><span id="line-124">            mavenProject.getProperties().put(PropertyNames.SKIP, "true");</span>
-<span class="source-line-no">125</span><span id="line-125"></span>
-<span class="source-line-no">126</span><span id="line-126">            copyDependencies();</span>
-<span class="source-line-no">127</span><span id="line-127"></span>
-<span class="source-line-no">128</span><span id="line-128">            String targetDir = mavenProject.getBuild().getDirectory();</span>
-<span class="source-line-no">129</span><span id="line-129">            var targetDockerfile = new File(targetDir, dockerfile.getName());</span>
-<span class="source-line-no">130</span><span id="line-130">            Files.copy(dockerfile.toPath(), targetDockerfile.toPath(), LinkOption.NOFOLLOW_LINKS,</span>
-<span class="source-line-no">131</span><span id="line-131">                StandardCopyOption.REPLACE_EXISTING);</span>
-<span class="source-line-no">132</span><span id="line-132"></span>
-<span class="source-line-no">133</span><span id="line-133">            BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
-<span class="source-line-no">134</span><span id="line-134">                .withDockerfile(targetDockerfile)</span>
-<span class="source-line-no">135</span><span id="line-135">                .withTags(getTags())</span>
-<span class="source-line-no">136</span><span id="line-136">                .withBaseDirectory(new File(targetDir));</span>
-<span class="source-line-no">137</span><span id="line-137">            getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
-<span class="source-line-no">138</span><span id="line-138">            dockerService.buildImage(buildImageCmd);</span>
-<span class="source-line-no">139</span><span id="line-139">        } catch (IOException e) {</span>
-<span class="source-line-no">140</span><span id="line-140">            throw new MojoExecutionException(e.getMessage(), e);</span>
-<span class="source-line-no">141</span><span id="line-141">        }</span>
-<span class="source-line-no">142</span><span id="line-142">    }</span>
+<span class="source-line-no">111</span><span id="line-111">    private File determineDockerfile(File providedDockerfile) throws MojoExecutionException {</span>
+<span class="source-line-no">112</span><span id="line-112">        if (providedDockerfile.exists()) {</span>
+<span class="source-line-no">113</span><span id="line-113">            return providedDockerfile;</span>
+<span class="source-line-no">114</span><span id="line-114">        }</span>
+<span class="source-line-no">115</span><span id="line-115">        try {</span>
+<span class="source-line-no">116</span><span id="line-116">            return dockerService.loadDockerfileAsResource(DOCKERFILE_ORACLE_CLOUD);</span>
+<span class="source-line-no">117</span><span id="line-117">        } catch (IOException e) {</span>
+<span class="source-line-no">118</span><span id="line-118">            throw new MojoExecutionException("Error loading Dockerfile", e);</span>
+<span class="source-line-no">119</span><span id="line-119">        }</span>
+<span class="source-line-no">120</span><span id="line-120">    }</span>
+<span class="source-line-no">121</span><span id="line-121"></span>
+<span class="source-line-no">122</span><span id="line-122">    private boolean shouldBuildWithDockerfile(File providedDockerfile) {</span>
+<span class="source-line-no">123</span><span id="line-123">        var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());</span>
+<span class="source-line-no">124</span><span id="line-124">        return providedDockerfile.exists() || runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION;</span>
+<span class="source-line-no">125</span><span id="line-125">    }</span>
+<span class="source-line-no">126</span><span id="line-126"></span>
+<span class="source-line-no">127</span><span id="line-127">    private void buildDockerfile(File dockerfile, boolean providedDockerfileExists) throws MojoExecutionException {</span>
+<span class="source-line-no">128</span><span id="line-128">        try {</span>
+<span class="source-line-no">129</span><span id="line-129">            var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());</span>
+<span class="source-line-no">130</span><span id="line-130">            if (runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION &amp;&amp; !providedDockerfileExists) {</span>
+<span class="source-line-no">131</span><span id="line-131">                oracleCloudFunctionCmd(dockerfile);</span>
+<span class="source-line-no">132</span><span id="line-132">                DockerfileMojo.processOracleFunctionDockerfile(dockerfile);</span>
+<span class="source-line-no">133</span><span id="line-133">            }</span>
+<span class="source-line-no">134</span><span id="line-134">            getLog().info("Using Dockerfile: " + dockerfile.getAbsolutePath());</span>
+<span class="source-line-no">135</span><span id="line-135">            mavenProject.getProperties().put(PropertyNames.SKIP, "true");</span>
+<span class="source-line-no">136</span><span id="line-136"></span>
+<span class="source-line-no">137</span><span id="line-137">            copyDependencies();</span>
+<span class="source-line-no">138</span><span id="line-138"></span>
+<span class="source-line-no">139</span><span id="line-139">            String targetDir = mavenProject.getBuild().getDirectory();</span>
+<span class="source-line-no">140</span><span id="line-140">            var targetDockerfile = new File(targetDir, dockerfile.getName());</span>
+<span class="source-line-no">141</span><span id="line-141">            Files.copy(dockerfile.toPath(), targetDockerfile.toPath(), LinkOption.NOFOLLOW_LINKS,</span>
+<span class="source-line-no">142</span><span id="line-142">                StandardCopyOption.REPLACE_EXISTING);</span>
 <span class="source-line-no">143</span><span id="line-143"></span>
-<span class="source-line-no">144</span><span id="line-144">}</span>
+<span class="source-line-no">144</span><span id="line-144">            BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
+<span class="source-line-no">145</span><span id="line-145">                .withDockerfile(targetDockerfile)</span>
+<span class="source-line-no">146</span><span id="line-146">                .withTags(getTags())</span>
+<span class="source-line-no">147</span><span id="line-147">                .withBaseDirectory(new File(targetDir));</span>
+<span class="source-line-no">148</span><span id="line-148">            getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
+<span class="source-line-no">149</span><span id="line-149">            dockerService.buildImage(buildImageCmd);</span>
+<span class="source-line-no">150</span><span id="line-150">        } catch (IOException e) {</span>
+<span class="source-line-no">151</span><span id="line-151">            throw new MojoExecutionException(e.getMessage(), e);</span>
+<span class="source-line-no">152</span><span id="line-152">        }</span>
+<span class="source-line-no">153</span><span id="line-153">    }</span>
+<span class="source-line-no">154</span><span id="line-154"></span>
+<span class="source-line-no">155</span><span id="line-155">}</span>
 
 
 
