@@ -16,8 +16,6 @@
 package io.micronaut.maven.services;
 
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.maven.InvocationResultWithOutput;
-import io.micronaut.maven.InvocationResultWithOutput.PerGoalOutputHandler;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
@@ -25,6 +23,7 @@ import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
+import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -131,7 +130,7 @@ public class ExecutorService {
      * @return The result of the invocation
      * @throws MavenInvocationException If the goal execution fails
      */
-    public InvocationResultWithOutput invokeGoal(String pluginKey, String goal) throws MavenInvocationException {
+    public InvocationResult invokeGoal(String pluginKey, String goal) throws MavenInvocationException {
         return invokeGoals(pluginKey + ":" + goal);
     }
 
@@ -142,7 +141,7 @@ public class ExecutorService {
      * @return The result of the invocation
      * @throws MavenInvocationException If the goal execution fails
      */
-    public InvocationResultWithOutput invokeGoals(String... goals) throws MavenInvocationException {
+    public InvocationResult invokeGoals(String... goals) throws MavenInvocationException {
         return invokeGoals(mavenProject, goals);
     }
 
@@ -154,35 +153,25 @@ public class ExecutorService {
      * @return The result of the invocation
      * @throws MavenInvocationException If the goal execution fails
      */
-    public InvocationResultWithOutput invokeGoals(MavenProject project, String... goals) throws MavenInvocationException {
+
+    public InvocationResult invokeGoals(MavenProject project, String... goals) throws MavenInvocationException {
         var request = new DefaultInvocationRequest();
         request.setPomFile(project.getFile());
         File settingsFile = mavenSession.getRequest().getUserSettingsFile();
         if (settingsFile.exists()) {
             request.setUserSettingsFile(settingsFile);
         }
-
         var properties = new Properties();
-        //Pass through Jib properties
-        System.getProperties()
-                .entrySet()
-                .stream()
-                .filter(e -> e.getKey().toString().startsWith("jib"))
-                .forEach(e -> properties.put(e.getKey(), e.getValue()));
         properties.put(TEST_RESOURCES_ENABLED_PROPERTY, StringUtils.FALSE);
-        request.setProperties(properties);
 
         request.setLocalRepositoryDirectory(new File(mavenSession.getLocalRepository().getBasedir()));
-        request.setGoals(Arrays.asList(goals));
+        request.addArgs(Arrays.asList(goals));
         request.setBatchMode(true);
-        request.setQuiet(false);
+        request.setQuiet(true);
         request.setAlsoMake(true);
-
-        var outputHandler = new PerGoalOutputHandler();
-        request.setOutputHandler(outputHandler);
-        request.setErrorHandler(outputHandler);
-
-        var result = invoker.execute(request);
-        return new InvocationResultWithOutput(result, outputHandler);
+        request.setErrorHandler(LOG::error);
+        request.setOutputHandler(LOG::info);
+        request.setProperties(properties);
+        return invoker.execute(request);
     }
 }
