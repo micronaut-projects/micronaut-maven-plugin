@@ -78,32 +78,21 @@ public class DockerMojo extends AbstractDockerMojo {
                 System.setProperty(PropertyNames.FROM_IMAGE, getBaseImage());
             }
             try {
-                if (!mavenSession.getCurrentProject().equals(mavenSession.getTopLevelProject())) {
-                    getLog().info("Invoking mvn install");
-                    var result = executorService.invokeGoals(mavenSession.getTopLevelProject(), "install");
-                    handleResult(result, "install:install");
-                }
-
                 String pluginGoalKey = "jib:" + jibBuildGoal;
                 getLog().info("Invoking " + pluginGoalKey);
                 var result = executorService.invokeGoal("com.google.cloud.tools:jib-maven-plugin", jibBuildGoal);
-                handleResult(result, pluginGoalKey);
+                if (result.getExitCode() != 0) {
+                    for (String line : result.outputHandler().getOutput()) {
+                        getLog().error(line);
+                    }
+                    throw new MojoExecutionException("jib-maven-plugin failed, check logs above for details");
+                } else {
+                    for (String line : result.outputHandler().getOutput(pluginGoalKey)) {
+                        getLog().info(line);
+                    }
+                }
             } catch (MavenInvocationException e) {
                 throw new MojoExecutionException("Could not build docker image", e);
-            }
-        }
-    }
-
-    private void handleResult(final InvocationResultWithOutput result, final String pluginGoalKey) throws MojoExecutionException {
-        if (result.getExitCode() != 0) {
-            getLog().error("Invocation of " + pluginGoalKey + " failed");
-            for (String line : result.outputHandler().getOutput()) {
-                getLog().error(line);
-            }
-            throw new MojoExecutionException(pluginGoalKey + " failed, check logs above for details");
-        } else {
-            for (String line : result.outputHandler().getOutput(pluginGoalKey)) {
-                getLog().info(line);
             }
         }
     }
