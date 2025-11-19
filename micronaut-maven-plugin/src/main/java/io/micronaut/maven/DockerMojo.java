@@ -22,14 +22,12 @@ import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
-import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.shared.invoker.MavenInvocationException;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -55,16 +53,13 @@ public class DockerMojo extends AbstractDockerMojo {
 
     public static final String DOCKER_PACKAGING = "docker";
 
-    private final ExecutorService executorService;
-
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     public DockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
                       ApplicationConfigurationService applicationConfigurationService, DockerService dockerService,
-                      MavenSession mavenSession, MojoExecution mojoExecution, ExecutorService executorService) {
+                      MavenSession mavenSession, MojoExecution mojoExecution) {
         super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession,
             mojoExecution);
-        this.executorService = executorService;
     }
 
     @Override
@@ -73,38 +68,8 @@ public class DockerMojo extends AbstractDockerMojo {
         if (shouldBuildWithDockerfile(providedDockerfile)) {
             var dockerfile = determineDockerfile(providedDockerfile);
             buildDockerfile(dockerfile, providedDockerfile.exists());
-        } else {
-            if (jibConfigurationService.getFromImage().isEmpty()) {
-                System.setProperty(PropertyNames.FROM_IMAGE, getBaseImage());
-            }
-            try {
-                if (!mavenSession.getCurrentProject().equals(mavenSession.getTopLevelProject())) {
-                    getLog().info("Invoking mvn install");
-                    var result = executorService.invokeGoals(mavenSession.getTopLevelProject(), "install");
-                    handleResult(result, "install:install");
-                }
-
-                String pluginGoalKey = "jib:" + jibBuildGoal;
-                getLog().info("Invoking " + pluginGoalKey);
-                var result = executorService.invokeGoal("com.google.cloud.tools:jib-maven-plugin", jibBuildGoal);
-                handleResult(result, pluginGoalKey);
-            } catch (MavenInvocationException e) {
-                throw new MojoExecutionException("Could not build docker image", e);
-            }
-        }
-    }
-
-    private void handleResult(final InvocationResultWithOutput result, final String pluginGoalKey) throws MojoExecutionException {
-        if (result.getExitCode() != 0) {
-            getLog().error("Invocation of " + pluginGoalKey + " failed");
-            for (String line : result.outputHandler().getOutput()) {
-                getLog().error(line);
-            }
-            throw new MojoExecutionException(pluginGoalKey + " failed, check logs above for details");
-        } else {
-            for (String line : result.outputHandler().getOutput(pluginGoalKey)) {
-                getLog().info(line);
-            }
+        } else if (jibConfigurationService.getFromImage().isEmpty()) {
+            mavenProject.getProperties().setProperty(PropertyNames.FROM_IMAGE, getBaseImage());
         }
     }
 
