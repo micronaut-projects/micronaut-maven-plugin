@@ -9,6 +9,8 @@ on:
     branches:
       - master
       - '[1-9]+.[0-9]+.x'
+  merge_group:
+    types: [checks_requested]
 jobs:
   build:
     runs-on: windows-latest
