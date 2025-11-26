@@ -12,7 +12,7 @@ jobs:
       MICRONAUT_CORE_BRANCH: "4.0.x"
     steps:
       - name: "📥 Checkout repository"
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_TOKEN }}
