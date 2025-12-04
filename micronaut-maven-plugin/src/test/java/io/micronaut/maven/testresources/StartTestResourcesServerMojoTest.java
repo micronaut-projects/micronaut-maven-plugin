@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit test for StartTestResourcesServerMojo to verify skipTests functionality.
+ * Unit test for StartTestResourcesServerMojo.
  */
 class StartTestResourcesServerMojoTest {
 
@@ -50,19 +50,18 @@ class StartTestResourcesServerMojoTest {
         when(mavenSession.getSystemProperties()).thenReturn(new Properties());
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"skipTests", "maven.test.skip", "skipITs"})
-    void shouldSkipWhenSkipPropertyIsTrue(String skipProperty) {
+    @Test
+    void shouldSkipWhenSkipPropertyIsTrue() {
         // Given
         Properties userProps = new Properties();
-        userProps.setProperty(skipProperty, "true");
+        userProps.setProperty("skipITs", "true");
         when(mavenSession.getUserProperties()).thenReturn(userProps);
 
         // When
         boolean result = mojo.isTestExecutionSkipped();
 
         // Then
-        assertTrue(result, "Should skip when " + skipProperty + " is true");
+        assertTrue(result, "Should skip when skipITs is true");
     }
 
     @Test
@@ -77,11 +76,9 @@ class StartTestResourcesServerMojoTest {
     }
 
     @Test
-    void shouldNotSkipWhenSkipPropertiesAreFalse() {
+    void shouldNotSkipWhenSkipPropertyIsFalse() {
         // Given
         Properties userProps = new Properties();
-        userProps.setProperty("skipTests", "false");
-        userProps.setProperty("maven.test.skip", "false");
         userProps.setProperty("skipITs", "false");
         when(mavenSession.getUserProperties()).thenReturn(userProps);
 

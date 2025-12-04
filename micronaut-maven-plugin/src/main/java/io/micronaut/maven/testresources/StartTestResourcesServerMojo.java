@@ -60,7 +60,7 @@ public class StartTestResourcesServerMojo extends AbstractTestResourcesMojo {
     public final void execute() throws MojoExecutionException {
         // Skip starting test resources if tests are being skipped
         if (isTestExecutionSkipped()) {
-            getLog().debug("Skipping test resources service start because test execution is disabled");
+            getLog().warn("Skipping Test Resources service start because integration test execution is disabled with skipITs");
             return;
         }
         
@@ -73,7 +73,7 @@ public class StartTestResourcesServerMojo extends AbstractTestResourcesMojo {
     }
 
     /**
-     * Checks whether test execution is skipped using either skipTests, maven.test.skip, or skipITs properties.
+     * Checks whether integration test execution is skipped using skipITs properties.
      *
      * @return true if tests are being skipped, false otherwise
      */
@@ -83,9 +83,7 @@ public class StartTestResourcesServerMojo extends AbstractTestResourcesMojo {
             var evaluator = new PluginParameterExpressionEvaluator(mavenSession, execution);
             
             // Check skip properties (from maven-surefire-plugin, maven-compiler-plugin, and maven-failsafe-plugin)
-            return isPropertyTrue(evaluator, "skipTests") ||
-                   isPropertyTrue(evaluator, "maven.test.skip") ||
-                   isPropertyTrue(evaluator, "skipITs");
+            return isPropertyTrue(evaluator, "skipITs");
             
         } catch (ExpressionEvaluationException e) {
             getLog().debug("Could not evaluate test skip properties: " + e.getMessage());
