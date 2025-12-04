@@ -71,7 +71,7 @@
         <micronaut.openapi.version>6.19.3</micronaut.openapi.version>
         <micronaut.jsonschema.version>1.7.3</micronaut.jsonschema.version>
 
-        <maven.resources-plugin.version>3.3.1</maven.resources-plugin.version>
+        <maven.resources-plugin.version>3.4.0</maven.resources-plugin.version>
         <maven.archiver-plugin.version>3.6.0</maven.archiver-plugin.version>
 
         <site.path>${project.artifactId}</site.path>
