@@ -64,14 +64,14 @@
         <maven.compiler.target>${jdk.version}</maven.compiler.target>
 
         <maven.version>3.9.11</maven.version>
-        <micronaut.version>4.10.7</micronaut.version>
-        <native-maven-plugin.version>0.11.2</native-maven-plugin.version>
+        <micronaut.version>4.10.9</micronaut.version>
+        <native-maven-plugin.version>0.11.3</native-maven-plugin.version>
         <micronaut.aot.version>2.9.0</micronaut.aot.version>
         <micronaut.test.resources.version>2.10.1</micronaut.test.resources.version>
-        <micronaut.openapi.version>6.19.1</micronaut.openapi.version>
+        <micronaut.openapi.version>6.19.3</micronaut.openapi.version>
         <micronaut.jsonschema.version>1.7.3</micronaut.jsonschema.version>
 
-        <maven.resources-plugin.version>3.3.1</maven.resources-plugin.version>
+        <maven.resources-plugin.version>3.4.0</maven.resources-plugin.version>
         <maven.archiver-plugin.version>3.6.0</maven.archiver-plugin.version>
 
         <site.path>${project.artifactId}</site.path>
@@ -81,7 +81,7 @@
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <project.build.outputTimestamp>2025-11-19T10:31:36Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2025-11-19T10:54:34Z</project.build.outputTimestamp>
 
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.organization>micronaut-projects</sonar.organization>
@@ -89,17 +89,17 @@
         <sonar.coverage.jacoco.xmlReportPaths>${maven.multiModuleProjectDirectory}/micronaut-maven-integration-tests/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
         <jacoco.version>0.8.14</jacoco.version>
-        <junit-jupiter.version>6.0.0</junit-jupiter.version>
+        <junit-jupiter.version>6.0.1</junit-jupiter.version>
         <directory-watcher.version>0.19.1</directory-watcher.version>
-        <testcontainers.version>2.0.1</testcontainers.version>
-        <jib-maven-plugin.version>3.4.6</jib-maven-plugin.version>
+        <testcontainers.version>2.0.2</testcontainers.version>
+        <jib-maven-plugin.version>3.5.1</jib-maven-plugin.version>
         <snakeyaml.version>2.5</snakeyaml.version>
         <sisu.version>0.9.0.M2</sisu.version>
-        <docker-java.version>3.6.0</docker-java.version>
+        <docker-java.version>3.7.0</docker-java.version>
         <checkstyle.config.dir.path>${maven.multiModuleProjectDirectory}/config/checkstyle</checkstyle.config.dir.path>
         <spotless.licenseHeader.path>${maven.multiModuleProjectDirectory}/config/spotless.license.java</spotless.licenseHeader.path>
-        <maven-plugin-tools.version>3.15.1</maven-plugin-tools.version>
-        <jackson.version>2.20.0</jackson.version>
+        <maven-plugin-tools.version>3.15.2</maven-plugin-tools.version>
+        <jackson.version>2.20.1</jackson.version>
     </properties>
 
     <dependencyManagement>
@@ -196,7 +196,7 @@
                 <!-- see http://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_maven-plugin_packaging -->
                 <plugin>
                     <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.3.1</version>
+                    <version>3.4.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-compiler-plugin</artifactId>
@@ -228,7 +228,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.4.2</version>
+                    <version>3.5.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-install-plugin</artifactId>
@@ -256,7 +256,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-source-plugin</artifactId>
-                    <version>3.3.1</version>
+                    <version>3.4.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.sonatype.central</groupId>
@@ -270,7 +270,7 @@
                 </plugin>
                 <plugin>
                     <artifactId>maven-release-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>3.3.0</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-checkstyle-plugin</artifactId>
@@ -279,14 +279,14 @@
                         <dependency>
                             <groupId>com.puppycrawl.tools</groupId>
                             <artifactId>checkstyle</artifactId>
-                            <version>12.1.2</version>
+                            <version>12.2.0</version>
                         </dependency>
                     </dependencies>
                 </plugin>
                 <plugin>
                     <groupId>com.diffplug.spotless</groupId>
                     <artifactId>spotless-maven-plugin</artifactId>
-                    <version>3.0.0</version>
+                    <version>3.1.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>
