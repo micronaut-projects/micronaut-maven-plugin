@@ -16,7 +16,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        java: ['17.0.12']
+        java: ['21', '25']
     steps:
       - uses: actions/checkout@v5
       - name: Cache Maven packages
