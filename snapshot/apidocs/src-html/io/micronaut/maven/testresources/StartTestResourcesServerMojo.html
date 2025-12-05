@@ -73,7 +73,7 @@
 <span class="source-line-no">060</span><span id="line-60">    public final void execute() throws MojoExecutionException {</span>
 <span class="source-line-no">061</span><span id="line-61">        // Skip starting test resources if tests are being skipped</span>
 <span class="source-line-no">062</span><span id="line-62">        if (isTestExecutionSkipped()) {</span>
-<span class="source-line-no">063</span><span id="line-63">            getLog().warn("Skipping Test Resources service start because integration test execution is disabled with skipITs");</span>
+<span class="source-line-no">063</span><span id="line-63">            getLog().debug("Skipping test resources service start because test execution is disabled");</span>
 <span class="source-line-no">064</span><span id="line-64">            return;</span>
 <span class="source-line-no">065</span><span id="line-65">        }</span>
 <span class="source-line-no">066</span><span id="line-66">        </span>
@@ -86,7 +86,7 @@
 <span class="source-line-no">073</span><span id="line-73">    }</span>
 <span class="source-line-no">074</span><span id="line-74"></span>
 <span class="source-line-no">075</span><span id="line-75">    /**</span>
-<span class="source-line-no">076</span><span id="line-76">     * Checks whether integration test execution is skipped using skipITs properties.</span>
+<span class="source-line-no">076</span><span id="line-76">     * Checks whether test execution is skipped using either skipTests, maven.test.skip, or skipITs properties.</span>
 <span class="source-line-no">077</span><span id="line-77">     *</span>
 <span class="source-line-no">078</span><span id="line-78">     * @return true if tests are being skipped, false otherwise</span>
 <span class="source-line-no">079</span><span id="line-79">     */</span>
@@ -96,34 +96,36 @@
 <span class="source-line-no">083</span><span id="line-83">            var evaluator = new PluginParameterExpressionEvaluator(mavenSession, execution);</span>
 <span class="source-line-no">084</span><span id="line-84">            </span>
 <span class="source-line-no">085</span><span id="line-85">            // Check skip properties (from maven-surefire-plugin, maven-compiler-plugin, and maven-failsafe-plugin)</span>
-<span class="source-line-no">086</span><span id="line-86">            return isPropertyTrue(evaluator, "skipITs");</span>
-<span class="source-line-no">087</span><span id="line-87">            </span>
-<span class="source-line-no">088</span><span id="line-88">        } catch (ExpressionEvaluationException e) {</span>
-<span class="source-line-no">089</span><span id="line-89">            getLog().debug("Could not evaluate test skip properties: " + e.getMessage());</span>
-<span class="source-line-no">090</span><span id="line-90">        }</span>
-<span class="source-line-no">091</span><span id="line-91">        return false;</span>
-<span class="source-line-no">092</span><span id="line-92">    }</span>
-<span class="source-line-no">093</span><span id="line-93"></span>
-<span class="source-line-no">094</span><span id="line-94">    /**</span>
-<span class="source-line-no">095</span><span id="line-95">     * Checks if a property evaluates to true.</span>
-<span class="source-line-no">096</span><span id="line-96">     *</span>
-<span class="source-line-no">097</span><span id="line-97">     * @param evaluator the expression evaluator</span>
-<span class="source-line-no">098</span><span id="line-98">     * @param propertyName the property name to check</span>
-<span class="source-line-no">099</span><span id="line-99">     * @return true if the property is set to true, false otherwise</span>
-<span class="source-line-no">100</span><span id="line-100">     * @throws ExpressionEvaluationException if the property cannot be evaluated</span>
-<span class="source-line-no">101</span><span id="line-101">     */</span>
-<span class="source-line-no">102</span><span id="line-102">    private boolean isPropertyTrue(PluginParameterExpressionEvaluator evaluator, String propertyName) throws ExpressionEvaluationException {</span>
-<span class="source-line-no">103</span><span id="line-103">        Object propertyValue = evaluator.evaluate("${" + propertyName + "}");</span>
-<span class="source-line-no">104</span><span id="line-104">        if (propertyValue instanceof Boolean) {</span>
-<span class="source-line-no">105</span><span id="line-105">            return (Boolean) propertyValue;</span>
-<span class="source-line-no">106</span><span id="line-106">        }</span>
-<span class="source-line-no">107</span><span id="line-107">        if (propertyValue instanceof String) {</span>
-<span class="source-line-no">108</span><span id="line-108">            return Boolean.parseBoolean((String) propertyValue);</span>
-<span class="source-line-no">109</span><span id="line-109">        }</span>
-<span class="source-line-no">110</span><span id="line-110">        return false;</span>
-<span class="source-line-no">111</span><span id="line-111">    }</span>
-<span class="source-line-no">112</span><span id="line-112"></span>
-<span class="source-line-no">113</span><span id="line-113">}</span>
+<span class="source-line-no">086</span><span id="line-86">            return isPropertyTrue(evaluator, "skipTests") ||</span>
+<span class="source-line-no">087</span><span id="line-87">                   isPropertyTrue(evaluator, "maven.test.skip") ||</span>
+<span class="source-line-no">088</span><span id="line-88">                   isPropertyTrue(evaluator, "skipITs");</span>
+<span class="source-line-no">089</span><span id="line-89">            </span>
+<span class="source-line-no">090</span><span id="line-90">        } catch (ExpressionEvaluationException e) {</span>
+<span class="source-line-no">091</span><span id="line-91">            getLog().debug("Could not evaluate test skip properties: " + e.getMessage());</span>
+<span class="source-line-no">092</span><span id="line-92">        }</span>
+<span class="source-line-no">093</span><span id="line-93">        return false;</span>
+<span class="source-line-no">094</span><span id="line-94">    }</span>
+<span class="source-line-no">095</span><span id="line-95"></span>
+<span class="source-line-no">096</span><span id="line-96">    /**</span>
+<span class="source-line-no">097</span><span id="line-97">     * Checks if a property evaluates to true.</span>
+<span class="source-line-no">098</span><span id="line-98">     *</span>
+<span class="source-line-no">099</span><span id="line-99">     * @param evaluator the expression evaluator</span>
+<span class="source-line-no">100</span><span id="line-100">     * @param propertyName the property name to check</span>
+<span class="source-line-no">101</span><span id="line-101">     * @return true if the property is set to true, false otherwise</span>
+<span class="source-line-no">102</span><span id="line-102">     * @throws ExpressionEvaluationException if the property cannot be evaluated</span>
+<span class="source-line-no">103</span><span id="line-103">     */</span>
+<span class="source-line-no">104</span><span id="line-104">    private boolean isPropertyTrue(PluginParameterExpressionEvaluator evaluator, String propertyName) throws ExpressionEvaluationException {</span>
+<span class="source-line-no">105</span><span id="line-105">        Object propertyValue = evaluator.evaluate("${" + propertyName + "}");</span>
+<span class="source-line-no">106</span><span id="line-106">        if (propertyValue instanceof Boolean) {</span>
+<span class="source-line-no">107</span><span id="line-107">            return (Boolean) propertyValue;</span>
+<span class="source-line-no">108</span><span id="line-108">        }</span>
+<span class="source-line-no">109</span><span id="line-109">        if (propertyValue instanceof String) {</span>
+<span class="source-line-no">110</span><span id="line-110">            return Boolean.parseBoolean((String) propertyValue);</span>
+<span class="source-line-no">111</span><span id="line-111">        }</span>
+<span class="source-line-no">112</span><span id="line-112">        return false;</span>
+<span class="source-line-no">113</span><span id="line-113">    }</span>
+<span class="source-line-no">114</span><span id="line-114"></span>
+<span class="source-line-no">115</span><span id="line-115">}</span>
 
 
 
