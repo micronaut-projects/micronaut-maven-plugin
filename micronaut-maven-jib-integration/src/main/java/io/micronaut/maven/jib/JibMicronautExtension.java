@@ -44,7 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Jib extension to support building Docker images.
@@ -61,6 +60,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     private static final String JDK_RELEASE_VERSION = "maven.compiler.release";
     private static final String JDK_SOURCE_VERSION = "maven.compiler.source";
     private static final Logger LOG = LoggerFactory.getLogger(JibMicronautExtension.class);
+    private static final String LINUX = "linux";
 
     @Override
     public Optional<Class<Void>> getExtraConfigType() {
@@ -98,8 +98,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
             }
         }
 
-        if (buildPlan.getPlatforms() == null || buildPlan.getPlatforms().isEmpty()) {
-            builder.setPlatforms(Set.of(detectPlatform()));
+        var detectedPlatform = detectPlatform();
+        if (buildPlan.getPlatforms() == null || buildPlan.getPlatforms().isEmpty() || !buildPlan.getPlatforms().contains(detectedPlatform)) {
+            LOG.info("Adding Detected platform: {}/{}", LINUX, detectedPlatform.getArchitecture());
+            builder.addPlatform(detectedPlatform.getArchitecture(), LINUX);
         }
 
         switch (runtime.getBuildStrategy()) {
@@ -217,7 +219,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
     private Platform detectPlatform() {
         String arch = System.getProperty("os.arch").equals("aarch64") ? "arm64" : "amd64";
-        return new Platform(arch, "linux");
+        return new Platform(arch, LINUX);
     }
 
 }
