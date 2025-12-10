@@ -1,6 +1,6 @@
 File dockerfile = new File("$basedir/target", "Dockerfile")
 File expectedDockerfile = new File(basedir, "Dockerfile")
-String expectedDockerfileText = expectedDockerfile.text.replace("21-ol9", "${System.getProperty("java.specification.version")}-ol9")
+String expectedDockerfileText = expectedDockerfile.text.replace("21-ol10", "${System.getProperty("java.specification.version")}-ol10")
 
 assert dockerfile.text == expectedDockerfileText
 

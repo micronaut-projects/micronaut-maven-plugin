@@ -63,7 +63,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
     public static final String ARM_ARCH = "aarch64";
     public static final String X86_64_ARCH = "x64";
-    public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol9";
+    public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol10";
     public static final String ORACLE_CLOUD_FUNCTION_DEFAULT_CMD = "CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]";
     public static final String GDS_DOWNLOAD_URL = "https://gds.oracle.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz";
     private static final NavigableSet<Integer> GRAALVM_VERSIONS = new TreeSet<>(Set.of(21, 25));
