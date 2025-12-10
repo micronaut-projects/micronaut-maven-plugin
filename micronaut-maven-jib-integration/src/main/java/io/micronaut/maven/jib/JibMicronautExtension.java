@@ -54,8 +54,8 @@ import java.util.Set;
  */
 public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
-    public static final String DEFAULT_JAVA17_BASE_IMAGE = "eclipse-temurin:17-jre";
     public static final String DEFAULT_JAVA21_BASE_IMAGE = "eclipse-temurin:21-jre";
+    public static final String DEFAULT_JAVA25_BASE_IMAGE = "eclipse-temurin:25-jre";
     private static final String LATEST_TAG = "latest";
     private static final String JDK_TARGET_VERSION = "maven.compiler.target";
     private static final String JDK_RELEASE_VERSION = "maven.compiler.release";
@@ -146,10 +146,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
     public static String determineProjectFnVersion(String javaVersion) {
         int majorVersion = Integer.parseInt(javaVersion.split("\\.")[0]);
-        if (majorVersion <= 21 && majorVersion > 17) {
+        if (majorVersion <= 25 && majorVersion > 21) {
+            return "25-jre";
+        } else if (majorVersion == 21) {
             return "21-jre";
-        } else if (majorVersion == 17) {
-            return "17-jre";
         } else {
             return LATEST_TAG;
         }
@@ -159,7 +159,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         int javaVersion = Integer.parseInt(jdkVersion);
         return switch (buildStrategy) {
             case LAMBDA -> "public.ecr.aws/lambda/java:" + javaVersion;
-            default -> javaVersion == 17 ? DEFAULT_JAVA17_BASE_IMAGE : DEFAULT_JAVA21_BASE_IMAGE;
+            default -> javaVersion == 21 ? DEFAULT_JAVA21_BASE_IMAGE : DEFAULT_JAVA25_BASE_IMAGE;
         };
     }
 
@@ -172,10 +172,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
             .or(() -> targetVersion)
             .or(() -> sourceVersion);
 
-        String jdkVersion = jdkVersionOpt.orElse("17"); // Default to project baseline JDK 17
+        String jdkVersion = jdkVersionOpt.orElse("21"); // Default to project baseline JDK 21
         String propertySource = releaseVersion.isPresent() ? JDK_RELEASE_VERSION :
                                targetVersion.isPresent() ? JDK_TARGET_VERSION :
-                               sourceVersion.isPresent() ? JDK_SOURCE_VERSION : "default (17)";
+                               sourceVersion.isPresent() ? JDK_SOURCE_VERSION : "default (21)";
 
         LOG.info("Using JDK version {} from {}", jdkVersion, propertySource);
         return jdkVersion;
