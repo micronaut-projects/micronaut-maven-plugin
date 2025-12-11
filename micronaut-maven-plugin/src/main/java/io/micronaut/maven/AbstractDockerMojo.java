@@ -198,7 +198,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @return the base FROM image for the native image.
      */
     protected String getFrom() {
-        return "ghcr.io/graalvm/native-image-community:" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion);
+        return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion));
     }
 
     /**
