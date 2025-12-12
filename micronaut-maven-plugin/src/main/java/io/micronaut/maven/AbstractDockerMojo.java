@@ -63,10 +63,9 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
     public static final String ARM_ARCH = "aarch64";
     public static final String X86_64_ARCH = "x64";
-    public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol9";
     public static final String ORACLE_CLOUD_FUNCTION_DEFAULT_CMD = "CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]";
     public static final String GDS_DOWNLOAD_URL = "https://gds.oracle.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz";
-    private static final NavigableSet<Integer> GRAALVM_VERSIONS = new TreeSet<>(Set.of(17, 21, 25));
+    private static final NavigableSet<Integer> GRAALVM_VERSIONS = new TreeSet<>(Set.of(21, 25));
 
     protected final MavenProject mavenProject;
     protected final MavenSession mavenSession;
@@ -123,7 +122,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     /**
      * The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.
      */
-    @Parameter(property = "micronaut.native-image.ol.version", defaultValue = DEFAULT_ORACLE_LINUX_VERSION)
+    @Parameter(property = "micronaut.native-image.ol.version")
     protected String oracleLinuxVersion;
 
     /**
@@ -199,11 +198,20 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @return the base FROM image for the native image.
      */
     protected String getFrom() {
-        if (Boolean.TRUE.equals(staticNativeImage)) {
-            return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmJvmVersion() + "-muslib-" + oracleLinuxVersion);
-        } else {
-            return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmJvmVersion() + "-" + oracleLinuxVersion);
-        }
+        return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion));
+    }
+
+    /**
+     * @param graalVmJvmVersion the JVM version string
+     * @param staticNativeImage whether to produce a static native image
+     * @param oracleLinuxVersion the Oracle Linux version to use
+     * @return the GraalVM Docker image tag based on the provided parameters
+     */
+    protected String graalVmTag(String graalVmJvmVersion, Boolean staticNativeImage, String oracleLinuxVersion) {
+        String suffix = Boolean.TRUE.equals(staticNativeImage)
+            ? "-muslib" + (StringUtils.hasText(oracleLinuxVersion) ? "-" + oracleLinuxVersion : "")
+            : (StringUtils.hasText(oracleLinuxVersion) ? "-" + oracleLinuxVersion : "");
+        return graalVmJvmVersion + suffix;
     }
 
     /**

@@ -11,13 +11,15 @@ on:
       - master
       - '[1-9]+.[0-9]+.x'
       - central-portal
+  merge_group:
+    types: [checks_requested]
 
 jobs:
   snapshot:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: ['17', '21']
+        java: ['21', '25']
     env:
       DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
       DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
@@ -29,6 +31,19 @@ jobs:
       OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
       GRAALVM_QUICK_BUILD: true
     steps:
+      - name: "🗑 Remove system JDKs"
+        run: |
+          sudo rm -rf /usr/lib/jvm/*
+          unset JAVA_HOME
+          export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v '/usr/lib/jvm' | paste -sd:)
+
+      - name: "🗑 Free disk space"
+        run: |
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo apt-get clean
+          df -h
+
       - name: "📥 Checkout repository"
         uses: actions/checkout@v6
         with:
@@ -78,25 +93,25 @@ jobs:
           check_retries: 'true'
 
       - name: "🔎 Run static analysis"
-        if: env.SONAR_TOKEN != '' && matrix.java == '17'
+        if: env.SONAR_TOKEN != '' && matrix.java == '21'
         run: ./mvnw sonar:sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "❓ Determine current version"
-        if: success() && github.event_name == 'push' && matrix.java == '17'
+        if: success() && github.event_name == 'push' && matrix.java == '21'
         id: release_version
         run: echo ::set-output name=release_version::`./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout`
 
       - name: "🌎 Generate site"
-        if: success() && github.event_name == 'push' && matrix.java == '17'
+        if: success() && github.event_name == 'push' && matrix.java == '21'
         run: |
           ./mvnw site:site
           cp -R target/site/apidocs/* micronaut-maven-plugin/target/site/apidocs
 
       - name: "📑 Publish to Github Pages"
-        if: success() && github.event_name == 'push' && matrix.java == '17'
+        if: success() && github.event_name == 'push' && matrix.java == '21'
         uses: micronaut-projects/github-pages-deploy-action@master
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -104,7 +119,7 @@ jobs:
           FOLDER: micronaut-maven-plugin/target/site
 
       - name: "📦 Deploy snapshot"
-        if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') && matrix.java == '17'
+        if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') && matrix.java == '21'
         run: |
           ./mvnw deploy -Dinvoker.skip
         env:

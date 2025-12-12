@@ -2,6 +2,7 @@ package io.micronaut.maven;
 
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.ApplicationConfigurationService;
+import io.micronaut.maven.services.DockerService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.project.MavenProject;
@@ -32,7 +33,6 @@ class DockerNativeMojoTest {
 
     @ParameterizedTest
     @CsvSource({
-            "17,https://gds.oracle.com/download/graal/17/latest-gftc/graalvm-jdk-17_linux-x64_bin.tar.gz",
             "21,https://gds.oracle.com/download/graal/21/latest-gftc/graalvm-jdk-21_linux-x64_bin.tar.gz",
             "25,https://gds.oracle.com/download/graal/25/latest-gftc/graalvm-jdk-25_linux-x64_bin.tar.gz"
     })
@@ -219,11 +219,11 @@ class DockerNativeMojoTest {
         when(project.getProperties()).thenReturn(new Properties());
 
         var mojo = new DockerNativeMojo(project, null, null, null, session, execution);
-        
+
         // Set proxy hosts without ports to test defaults
         System.setProperty("http.proxyHost", "proxy.example.com");
         System.setProperty("https.proxyHost", "proxy.example.com");
-        
+
         try {
             var proxyArgs = mojo.getProxyBuildArgs();
 
@@ -238,4 +238,31 @@ class DockerNativeMojoTest {
             System.clearProperty("https.proxyHost");
         }
     }
+
+    @ParameterizedTest
+    @CsvSource({
+            //staticNativeImage,    oracleLinuxVersion, jvmVersion, expectedTag
+            "true,                  ol9,                21,         21-muslib-ol9",
+            "true,                  '',                 21,         21-muslib",
+            "false,                 ol9,                21,         21-ol9",
+            ",                      ol9,                21,         21-ol9",
+            "false,                 '',                 21,         21",
+            ",                      ,                   21,         21",
+            ",                      ,                   25,         25"
+    })
+    void testGraalVmTag(Boolean staticNativeImage, String oracleLinuxVersion, String jvmVersion, String expectedTag) {
+        var project = mock(MavenProject.class);
+        var session = mock(MavenSession.class);
+        var execution = mock(MojoExecution.class);
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        when(project.getProperties()).thenReturn(new Properties());
+
+        var mojo = new DockerNativeMojo(project, null, null, null, session, execution);
+
+        var actualTag = mojo.graalVmTag(jvmVersion, staticNativeImage, oracleLinuxVersion);
+
+        assertEquals(expectedTag, actualTag);
+    }
+
 }

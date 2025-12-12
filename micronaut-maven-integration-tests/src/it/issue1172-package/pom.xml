@@ -107,7 +107,7 @@
         <configuration>
           <from>
             <!-- use the GCR mirror registry to ensure authentication failure -->
-            <image>mirror.gcr.io/eclipse-temurin:17-jre</image>
+            <image>mirror.gcr.io/eclipse-temurin:21-jre</image>
             <auth>
               <username>not-a-valid-user</username>
               <password>not-a-valid-password</password>

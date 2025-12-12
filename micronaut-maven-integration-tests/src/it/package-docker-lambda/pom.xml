@@ -129,6 +129,9 @@
                     <to>
                         <image>docker.io/alvarosanchez/${project.artifactId}:${project.version}</image>
                     </to>
+                    <container>
+                        <mainClass>${exec.mainClass}</mainClass>
+                    </container>
                 </configuration>
             </plugin>
         </plugins>

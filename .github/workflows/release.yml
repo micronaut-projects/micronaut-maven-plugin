@@ -9,8 +9,13 @@ jobs:
       DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
       DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
       DEVELOCITY_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-      MICRONAUT_CORE_BRANCH: "4.0.x"
     steps:
+      - name: "🗑 Remove system JDKs"
+        run: |
+          sudo rm -rf /usr/lib/jvm/*
+          unset JAVA_HOME
+          export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v '/usr/lib/jvm' | paste -sd:)
+
       - name: "📥 Checkout repository"
         uses: actions/checkout@v6
         with:
@@ -30,7 +35,9 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: |
+            21
+            25
           cache: 'maven'
           server-id: central
           server-username: SONATYPE_USERNAME
@@ -71,7 +78,7 @@ jobs:
           ./mvnw --batch-mode release:prepare -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }} -Darguments="-Dinvoker.skip=true"
           cp -R target/site/apidocs/* micronaut-maven-plugin/target/site/apidocs
 
-      - name: "📄 Publish to Github Pages"
+      - name: "📄 Publish docs to Github Pages"
         uses: micronaut-projects/github-pages-deploy-action@master
         env:
           BETA: ${{ contains(steps.release_version.outputs.release_version, 'M') || contains(steps.release_version.outputs.release_version, 'RC') }}

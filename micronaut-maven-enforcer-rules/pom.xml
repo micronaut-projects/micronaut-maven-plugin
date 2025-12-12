@@ -17,8 +17,6 @@
     <url>https://github.com/micronaut-projects/micronaut-maven-plugin</url>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
         <maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
     </properties>
 

@@ -329,17 +329,17 @@ done
 
 ==== Customizing the JDK
 
-By default, the CRaC JDK used to build the image will be for the current system architecture and Java 17.
+By default, the CRaC JDK used to build the image will be for the current system architecture and Java 21.
 These can be overridden by passing properties to the build:
 
 [source,xml]
 .Example setting the CRaC JDK version and architecture
 ----
 <properties>
-    <crac.java.version>17</crac.java.version>
+    <crac.java.version>21</crac.java.version>
     <crac.arch>amd64</crac.arch>
     <crac.os>linux-glibc</crac.os>
 </properties>
 ----
 
-NOTE: Currently only Java 17, and `amd64` and `aarch64` architectures are supported.
+NOTE: Currently only Java 21, and `amd64` and `aarch64` architectures are supported.

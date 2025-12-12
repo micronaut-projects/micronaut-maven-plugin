@@ -9,12 +9,14 @@ on:
     branches:
       - master
       - '[1-9]+.[0-9]+.x'
+  merge_group:
+    types: [checks_requested]
 jobs:
   build:
     runs-on: windows-latest
     strategy:
       matrix:
-        java: ['17.0.12']
+        java: ['21', '25']
     steps:
       - uses: actions/checkout@v6
       - name: Cache Maven packages
