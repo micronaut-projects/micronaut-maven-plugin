@@ -4,7 +4,7 @@
 'UTF-8'
 -protected
 -source
-'17'
+'21'
 -sourcepath
 '/home/runner/work/micronaut-maven-plugin/micronaut-maven-plugin/micronaut-maven-plugin/src/test/java'
 -author
