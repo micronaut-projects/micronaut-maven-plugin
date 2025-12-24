@@ -79,7 +79,7 @@ jobs:
 
       - name: "🔎 Run static analysis"
         if: env.SONAR_TOKEN != '' && matrix.java == '17'
-        run: ./mvnw sonar:sonar
+        run: ./mvnw org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -292,25 +292,23 @@ public class TestResourcesHelper {
 
     /**
      * Contains the logic to stop the Test Resources Service.
-     *
-     * @param quiet Whether to perform logging or not.
      */
-    public void stop(boolean quiet) throws MojoExecutionException {
+    public void stop() throws MojoExecutionException {
         if (!enabled) {
             return;
         }
         if (isKeepAlive()) {
-            log("Keeping Micronaut Test Resources service alive", quiet);
+            log.info("Keeping Micronaut Test Resources service alive");
             return;
         }
         try {
             Optional<ServerSettings> optionalServerSettings = ServerUtils.readServerSettings(getServerSettingsDirectory());
             if (optionalServerSettings.isPresent()) {
                 if (isServerStarted(optionalServerSettings.get().getPort())) {
-                    log("Shutting down Micronaut Test Resources service", quiet);
+                    log.info("Shutting down Micronaut Test Resources service");
                     doStop();
                 } else {
-                    log("Cannot find Micronaut Test Resources service settings, server may already be shutdown", quiet);
+                    log.info("Cannot find Micronaut Test Resources service settings, server may already be shutdown");
                     Files.deleteIfExists(getServerSettingsDirectory().resolve(PROPERTIES_FILE_NAME));
                 }
                 if (shared && sharedServerNamespace != null) {
@@ -319,12 +317,7 @@ public class TestResourcesHelper {
                 }
             }
         } catch (Exception e) {
-            var message = "Unable to stop test resources server";
-            if (quiet) {
-                log.warn(message, e);
-            } else {
-                throw new MojoExecutionException(message, e);
-            }
+            log.error("Unable to stop test resources server", e);
         }
     }
 
@@ -333,16 +326,6 @@ public class TestResourcesHelper {
             return Boolean.getBoolean("test.resources.internal.server.started");
         } else {
             return !SocketUtils.isTcpPortAvailable(port);
-        }
-    }
-
-    private void log(String message, boolean quiet) {
-        if (quiet) {
-            if (log.isDebugEnabled()) {
-                log.debug(message);
-            }
-        } else {
-            log.info(message);
         }
     }
 

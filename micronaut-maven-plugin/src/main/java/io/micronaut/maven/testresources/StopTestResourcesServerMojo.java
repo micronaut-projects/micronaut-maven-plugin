@@ -57,7 +57,7 @@ public class StopTestResourcesServerMojo extends AbstractTestResourcesMojo {
                 serverIdleTimeoutMinutes, mavenProject, mavenSession, dependencyResolutionService, toolchainManager,
                 testResourcesVersion, classpathInference, testResourcesDependencies, sharedServerNamespace, debugServer,
                 foreground, testResourcesSystemProperties);
-        helper.stop(false);
+        helper.stop();
     }
 
 }
