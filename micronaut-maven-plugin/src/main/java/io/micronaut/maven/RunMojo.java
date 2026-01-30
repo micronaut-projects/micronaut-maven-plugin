@@ -339,8 +339,6 @@ public class RunMojo extends AbstractTestResourcesMojo {
                 fileSet.addInclude("**/*");
                 watches.add(fileSet);
             });
-
-        compileProject();
     }
 
     private boolean isDependencyOfRunnableProject(MavenProject mavenProject) {
