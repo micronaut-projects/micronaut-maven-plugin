@@ -21,8 +21,19 @@ import java.util.Locale;
  * Output format for configuration validation reports.
  */
 enum ConfigurationValidationFormat {
+    /**
+     * Generate JSON report ({@code configuration-errors.json}).
+     */
     JSON,
+
+    /**
+     * Generate HTML report ({@code configuration-errors.html}).
+     */
     HTML,
+
+    /**
+     * Generate both JSON and HTML reports.
+     */
     BOTH;
 
     /**
