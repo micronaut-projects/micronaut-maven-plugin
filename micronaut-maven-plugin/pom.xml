@@ -160,6 +160,11 @@
             <artifactId>micronaut-json-schema-generator</artifactId>
             <version>${micronaut.jsonschema.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.micronaut.jsonschema</groupId>
+            <artifactId>micronaut-json-schema-configuration-validator</artifactId>
+            <version>${micronaut.jsonschema.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

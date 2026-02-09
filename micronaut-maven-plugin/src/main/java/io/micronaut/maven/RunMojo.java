@@ -21,6 +21,7 @@ import io.micronaut.maven.aot.AotAnalysisMojo;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.maven.services.ExecutorService;
+import io.micronaut.maven.jsonschema.ValidateDevConfigurationMojo;
 import io.micronaut.maven.testresources.AbstractTestResourcesMojo;
 import io.micronaut.maven.testresources.TestResourcesHelper;
 import io.micronaut.testresources.buildtools.ServerSettings;
@@ -513,6 +514,8 @@ public class RunMojo extends AbstractTestResourcesMojo {
         }
         restartLock.lock();
         try {
+            // Validate Micronaut configuration for the dev environment before starting.
+            executorService.executeGoal(THIS_PLUGIN, ValidateDevConfigurationMojo.MOJO_NAME);
             runAotIfNeeded();
             final String reactorClasses = mavenSession.getAllProjects().stream()
                     .filter(this::isDependencyOfRunnableProject)

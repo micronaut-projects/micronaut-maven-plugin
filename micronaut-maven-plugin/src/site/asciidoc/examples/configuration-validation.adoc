@@ -1,0 +1,118 @@
+= Validating Micronaut configuration
+
+The Micronaut Maven Plugin can validate your application's configuration files (for example `application.yml`) using JSON Schema.
+The build fails when validation reports errors.
+
+== Goals
+
+* `mn:validate-dev-configuration`
+** Validates using the `dev` environment.
+** This goal is automatically executed by `mn:run`.
+* `mn:validate-configuration`
+** Intended for `mvn package` (for example production configuration).
+** Default environments: none.
+* `mn:validate-test-configuration`
+** Intended for `mvn test`.
+** Default environments: `test`.
+
+== Binding to the lifecycle
+
+To run validation as part of `mvn package` and `mvn test`, configure executions:
+
+[source,xml]
+----
+<plugin>
+    <groupId>io.micronaut.maven</groupId>
+    <artifactId>micronaut-maven-plugin</artifactId>
+    <version>${micronaut-maven-plugin.version}</version>
+
+    <executions>
+        <execution>
+            <id>validate-config</id>
+            <goals>
+                <goal>validate-configuration</goal>
+            </goals>
+        </execution>
+        <execution>
+            <id>validate-test-config</id>
+            <goals>
+                <goal>validate-test-configuration</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+----
+
+== Configuration
+
+The mojos share a `configurationValidation` block and expose options equivalent to the validator CLI.
+
+[source,xml]
+----
+<plugin>
+    <groupId>io.micronaut.maven</groupId>
+    <artifactId>micronaut-maven-plugin</artifactId>
+
+    <configuration>
+        <configurationValidation>
+            <enabled>true</enabled>
+
+            <!-- CLI options -->
+            <suppressions>
+                <suppression>.*\.password</suppression>
+            </suppressions>
+            <failOnNotPresent>true</failOnNotPresent>
+            <deduceEnvironments>false</deduceEnvironments>
+            <format>both</format> <!-- json|html|both -->
+            <outputDirectory>${project.build.directory}/micronaut/config-validation</outputDirectory>
+
+            <!-- Per-scenario overrides -->
+            <dev>
+                <environments>
+                    <environment>dev</environment>
+                </environments>
+            </dev>
+            <packageValidation>
+                <environments>
+                    <environment>prod</environment>
+                </environments>
+            </packageValidation>
+            <test>
+                <!-- additional environments are appended; 'test' is enabled by default -->
+                <environments>
+                    <environment>ci</environment>
+                </environments>
+            </test>
+        </configurationValidation>
+    </configuration>
+</plugin>
+----
+
+=== Classpath configuration
+
+Each scenario can be configured independently via:
+
+* `classpathElements`: replaces the default classpath used by the validator
+* `additionalClasspathElements`: entries appended to the default classpath
+
+== Reports
+
+Reports are written under `${project.build.directory}/micronaut/config-validation/<scenario>` by default.
+Depending on `format`, the plugin generates:
+
+* `configuration-errors.json`
+* `configuration-errors.html`
+
+== Caching
+
+Validation results are cached on disk to avoid re-running on every build.
+By default, validation re-runs when `src/main/resources` changes.
+
+Disable caching with:
+
+[source,xml]
+----
+<configurationValidation>
+    <cacheEnabled>false</cacheEnabled>
+</configurationValidation>
+----
