@@ -1,0 +1,4 @@
+micronaut:
+  server:
+    # If the default "test" environment is included, this would fail the build.
+    port: not-a-number
