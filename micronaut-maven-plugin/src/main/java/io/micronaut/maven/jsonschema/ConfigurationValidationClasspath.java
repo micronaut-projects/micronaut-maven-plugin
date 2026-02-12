@@ -40,7 +40,7 @@ final class ConfigurationValidationClasspath {
      */
     static List<String> defaultDevClasspath(MavenProject project) {
         // Requirement: src/main/resources + src/main/java
-        return defaultMainClasspath(project, true);
+        return defaultMainSourceClasspath(project);
     }
 
     /**
@@ -50,8 +50,8 @@ final class ConfigurationValidationClasspath {
      * @return Classpath elements
      */
     static List<String> defaultPackageClasspath(MavenProject project) {
-        // Default to main classpath.
-        return defaultMainClasspath(project, true);
+        // Requirement: allow validating during package using main source classpath.
+        return defaultMainSourceClasspath(project);
     }
 
     /**
@@ -62,25 +62,22 @@ final class ConfigurationValidationClasspath {
      */
     static List<String> defaultTestClasspath(MavenProject project) {
         Set<String> result = new LinkedHashSet<>();
-        result.addAll(defaultMainClasspath(project, true));
-        addIfExists(result, project.getBuild().getTestOutputDirectory());
+        result.addAll(defaultMainSourceClasspath(project));
         addResources(result, project.getBuild().getTestResources());
         // Requirement mentions src/test/resources and src/test/classes; also include src/test/java for completeness.
         addIfExists(result, project.getBasedir().toPath().resolve("src/test/resources").toString());
         addIfExists(result, project.getBasedir().toPath().resolve("src/test/java").toString());
         addIfExists(result, project.getBasedir().toPath().resolve("src/test/classes").toString());
+        addIfExists(result, project.getBuild().getTestOutputDirectory());
         return new ArrayList<>(result);
     }
 
-    private static List<String> defaultMainClasspath(MavenProject project, boolean includeSourceDirs) {
+    private static List<String> defaultMainSourceClasspath(MavenProject project) {
         Set<String> result = new LinkedHashSet<>();
-        addIfExists(result, project.getBuild().getOutputDirectory());
         addResources(result, project.getBuild().getResources());
-        if (includeSourceDirs) {
-            Path basedir = project.getBasedir().toPath();
-            addIfExists(result, basedir.resolve("src/main/resources").toString());
-            addIfExists(result, basedir.resolve("src/main/java").toString());
-        }
+        Path basedir = project.getBasedir().toPath();
+        addIfExists(result, basedir.resolve("src/main/resources").toString());
+        addIfExists(result, basedir.resolve("src/main/java").toString());
         return new ArrayList<>(result);
     }
 
