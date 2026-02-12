@@ -69,7 +69,7 @@
         <micronaut.aot.version>3.0.0-M1</micronaut.aot.version>
         <micronaut.test.resources.version>3.0.0-M5</micronaut.test.resources.version>
         <micronaut.openapi.version>6.19.3</micronaut.openapi.version>
-        <micronaut.jsonschema.version>2.0.0-SNAPSHOT</micronaut.jsonschema.version>
+        <micronaut.jsonschema.version>2.0.0-M2</micronaut.jsonschema.version>
 
         <maven.resources-plugin.version>3.4.0</maven.resources-plugin.version>
         <maven.archiver-plugin.version>3.6.0</maven.archiver-plugin.version>
