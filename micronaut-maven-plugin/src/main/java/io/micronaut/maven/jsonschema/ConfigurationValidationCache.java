@@ -95,10 +95,18 @@ final class ConfigurationValidationCache {
                     Path rel = mainResourcesDir.relativize(p);
                     update(digest, rel.toString());
                     try {
+                        // Include contents to avoid false cache hits when timestamps don't change (coarse FS resolution).
                         update(digest, Long.toString(Files.size(p)));
-                        update(digest, Long.toString(Files.getLastModifiedTime(p).toMillis()));
+                        try (InputStream is = Files.newInputStream(p)) {
+                            byte[] buffer = new byte[8192];
+                            int len;
+                            while ((len = is.read(buffer)) > -1) {
+                                digest.update(buffer, 0, len);
+                            }
+                        }
                     } catch (IOException ignored) {
                         // best effort
+                        update(digest, "<unreadable>");
                     }
                 });
         }

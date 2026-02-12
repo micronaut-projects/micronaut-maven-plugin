@@ -1,0 +1,5 @@
+micronaut:
+  application:
+    name: configuration-validation-cache-invalidation
+  server:
+    port: 8080
