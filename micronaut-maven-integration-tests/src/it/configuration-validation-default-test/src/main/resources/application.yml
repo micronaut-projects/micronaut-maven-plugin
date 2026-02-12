@@ -1,0 +1,5 @@
+micronaut:
+  application:
+    name: configuration-validation-default-test
+  server:
+    port: 8080
