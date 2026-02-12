@@ -41,6 +41,12 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
 
     static final String CONFIG_PREFIX = "micronaut.jsonschema.configuration.validation";
 
+    private static final List<String> DEFAULT_CACHE_IGNORE = List.of(
+        "META-INF/*",
+        "logback.xml",
+        "logback-test.xml"
+    );
+
     protected final MavenProject project;
     protected final CompilerService compilerService;
 
@@ -130,13 +136,20 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
             format.name(),
             classpath
         );
-        String mainResourcesFingerprint = ConfigurationValidationCache.fingerprintMainResources(mainResourcesDir());
+        List<String> cacheIgnore = cfg.getCacheIgnore() == null ? DEFAULT_CACHE_IGNORE : cfg.getCacheIgnore();
+        String mainResourcesFingerprint = ConfigurationValidationCache.fingerprintMainResources(mainResourcesDir(), cacheIgnore);
 
-        if (cacheEnabled && ConfigurationValidationCache.isUpToDate(cacheFile, inputsFingerprint, mainResourcesFingerprint)) {
-            if (getLog().isDebugEnabled()) {
-                getLog().debug("Skipping configuration validation (cache hit) for scenario: " + scenarioName());
+        if (cacheEnabled) {
+            ConfigurationValidationCache.CacheEntry entry = ConfigurationValidationCache.readIfUpToDate(cacheFile, inputsFingerprint, mainResourcesFingerprint);
+            if (entry != null) {
+                if (entry.lastResult() == ConfigurationValidationCache.LastResult.FAILURE) {
+                    throw cachedFailure(outputDir);
+                }
+                if (getLog().isDebugEnabled()) {
+                    getLog().debug("Skipping configuration validation (cache hit) for scenario: " + scenarioName());
+                }
+                return;
             }
-            return;
         }
 
         if (getLog().isInfoEnabled()) {
@@ -157,12 +170,31 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         );
 
         if (cacheEnabled) {
-            ConfigurationValidationCache.write(cacheFile, inputsFingerprint, mainResourcesFingerprint);
+            ConfigurationValidationCache.write(
+                cacheFile,
+                inputsFingerprint,
+                mainResourcesFingerprint,
+                result.hasErrors() ? ConfigurationValidationCache.LastResult.FAILURE : ConfigurationValidationCache.LastResult.SUCCESS
+            );
         }
 
         if (result.hasErrors()) {
             throw new MojoFailureException("Micronaut configuration is not valid. See reports in: " + result.outputDirectory());
         }
+    }
+
+    private MojoFailureException cachedFailure(Path outputDir) {
+        Path html = outputDir.resolve("configuration-errors.html");
+        Path json = outputDir.resolve("configuration-errors.json");
+        String report;
+        if (Files.isRegularFile(html)) {
+            report = html.toAbsolutePath().normalize().toUri().toString();
+        } else if (Files.isRegularFile(json)) {
+            report = json.toAbsolutePath().normalize().toUri().toString();
+        } else {
+            report = outputDir.toAbsolutePath().normalize().toUri().toString();
+        }
+        return new MojoFailureException("Micronaut configuration is not valid (cached). Report: " + report);
     }
 
     private boolean isEnabled(ConfigurationValidationConfiguration cfg) {

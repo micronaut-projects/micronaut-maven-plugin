@@ -61,6 +61,11 @@ public final class ConfigurationValidationConfiguration {
     private Boolean cacheEnabled;
 
     /**
+     * List of resource patterns to ignore when computing cache fingerprints.
+     */
+    private List<String> cacheIgnore;
+
+    /**
      * If {@code true}, cache invalidation only considers changes under src/main/resources.
      */
     private Boolean cacheMainResourcesOnly;
@@ -176,6 +181,24 @@ public final class ConfigurationValidationConfiguration {
      */
     public void setCacheEnabled(Boolean cacheEnabled) {
         this.cacheEnabled = cacheEnabled;
+    }
+
+    /**
+     * Resource patterns to ignore when computing cache fingerprints.
+     * <p>
+     * Patterns are evaluated against paths relative to {@code src/main/resources} using {@code glob} syntax.
+     *
+     * @return Ignore patterns, or {@code null} to use defaults
+     */
+    public List<String> getCacheIgnore() {
+        return cacheIgnore;
+    }
+
+    /**
+     * @param cacheIgnore Ignore patterns
+     */
+    public void setCacheIgnore(List<String> cacheIgnore) {
+        this.cacheIgnore = cacheIgnore;
     }
 
     /**
