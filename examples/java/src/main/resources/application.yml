@@ -1,6 +1,3 @@
 micronaut:
   application:
     name: java-maven-junit
-
-  server:
-    port: junk
