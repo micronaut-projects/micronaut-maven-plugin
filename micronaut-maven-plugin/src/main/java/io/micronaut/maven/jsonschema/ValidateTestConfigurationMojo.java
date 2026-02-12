@@ -23,6 +23,7 @@ import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.util.artifact.JavaScopes;
 
 import javax.inject.Inject;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -64,5 +65,10 @@ public class ValidateTestConfigurationMojo extends AbstractConfigurationValidati
     @Override
     protected String[] dependencyScopes() {
         return new String[] { JavaScopes.TEST };
+    }
+
+    @Override
+    protected List<Path> defaultResourceDirectories() {
+        return List.of(Path.of("src/main/resources"), Path.of("src/test/resources"));
     }
 }

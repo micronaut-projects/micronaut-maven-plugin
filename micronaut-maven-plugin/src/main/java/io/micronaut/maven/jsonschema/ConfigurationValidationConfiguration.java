@@ -271,6 +271,11 @@ public final class ConfigurationValidationConfiguration {
         private File outputDirectory;
 
         /**
+         * Resource directories used to resolve and render relative origins.
+         */
+        private List<File> resourceDirectories;
+
+        /**
          * @return Whether this validation scenario is enabled. If {@code null}, the scenario is enabled.
          */
         public Boolean getEnabled() {
@@ -357,6 +362,28 @@ public final class ConfigurationValidationConfiguration {
          */
         public void setOutputDirectory(File outputDirectory) {
             this.outputDirectory = outputDirectory;
+        }
+
+        /**
+         * Resource directories used to resolve and render relative origin paths in error output.
+         * <p>
+         * If not specified, defaults are:
+         * <ul>
+         *     <li>dev/package: {@code src/main/resources}</li>
+         *     <li>test: {@code src/main/resources} + {@code src/test/resources}</li>
+         * </ul>
+         *
+         * @return Resource directories, or {@code null} to use scenario defaults
+         */
+        public List<File> getResourceDirectories() {
+            return resourceDirectories;
+        }
+
+        /**
+         * @param resourceDirectories Resource directories used to resolve and render relative origin paths
+         */
+        public void setResourceDirectories(List<File> resourceDirectories) {
+            this.resourceDirectories = resourceDirectories;
         }
     }
 }

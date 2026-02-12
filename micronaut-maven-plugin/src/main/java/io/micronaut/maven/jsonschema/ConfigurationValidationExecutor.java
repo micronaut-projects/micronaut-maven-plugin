@@ -61,6 +61,8 @@ final class ConfigurationValidationExecutor {
         boolean deduceEnvironments,
         Path outputDir,
         ConfigurationValidationFormat format,
+        Path projectBaseDir,
+        List<Path> resourcesDirs,
         PrintStream err
     ) throws IOException {
         Files.createDirectories(outputDir);
@@ -94,7 +96,7 @@ final class ConfigurationValidationExecutor {
             }
         }
 
-        new SystemErrConfigurationErrorReporter(err, htmlFile, jsonFile).report(errors);
+        new SystemErrConfigurationErrorReporter(err, htmlFile, jsonFile, projectBaseDir, resourcesDirs).report(errors);
 
         boolean hasErrors = errors.stream().anyMatch(e -> e.type() == ConfigurationError.Type.ERROR);
         return new ValidationResult(errors, hasErrors, outputDir.toFile());

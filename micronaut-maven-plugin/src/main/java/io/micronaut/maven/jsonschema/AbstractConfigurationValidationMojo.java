@@ -26,6 +26,7 @@ import org.eclipse.aether.graph.Dependency;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -86,6 +87,13 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
 
     protected abstract String[] dependencyScopes();
 
+    /**
+     * Default resource directories for origin rewriting.
+     *
+     * @return Resource directories (typically relative to the project base directory)
+     */
+    protected abstract List<Path> defaultResourceDirectories();
+
     private void doValidate(ConfigurationValidationConfiguration cfg, ConfigurationValidationConfiguration.ValidationSet set)
         throws MojoExecutionException, MojoFailureException, IOException {
 
@@ -143,6 +151,8 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
             deduceEnvironments,
             outputDir,
             format,
+            project.getBasedir().toPath(),
+            resolveResourceDirectories(set),
             System.err
         );
 
@@ -227,5 +237,42 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
 
     private Path mainResourcesDir() {
         return project.getBasedir().toPath().resolve("src/main/resources");
+    }
+
+    private List<Path> resolveResourceDirectories(ConfigurationValidationConfiguration.ValidationSet set) {
+        if (set != null && set.getResourceDirectories() != null && !set.getResourceDirectories().isEmpty()) {
+            List<Path> result = new ArrayList<>(set.getResourceDirectories().size());
+            for (File f : set.getResourceDirectories()) {
+                if (f == null) {
+                    continue;
+                }
+                Path p = f.toPath();
+                if (!p.isAbsolute()) {
+                    p = project.getBasedir().toPath().resolve(p);
+                }
+                p = p.normalize();
+                if (Files.exists(p)) {
+                    result.add(p);
+                }
+            }
+            return List.copyOf(result);
+        }
+        List<Path> defaults = defaultResourceDirectories();
+        if (defaults == null || defaults.isEmpty()) {
+            return List.of();
+        }
+        List<Path> result = new ArrayList<>(defaults.size());
+        Path baseDir = project.getBasedir().toPath();
+        for (Path p : defaults) {
+            if (p == null) {
+                continue;
+            }
+            Path resolved = p.isAbsolute() ? p : baseDir.resolve(p);
+            resolved = resolved.normalize();
+            if (Files.exists(resolved)) {
+                result.add(resolved);
+            }
+        }
+        return List.copyOf(result);
     }
 }
