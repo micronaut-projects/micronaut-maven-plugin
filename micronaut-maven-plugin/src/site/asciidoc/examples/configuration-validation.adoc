@@ -17,7 +17,13 @@ The build fails when validation reports errors.
 
 == Binding to the lifecycle
 
-To run validation as part of `mvn package` and `mvn test`, configure executions:
+Configuration validation runs automatically when using Micronaut packaging types (`jar`, `native-image`, `docker`, `docker-native`, `docker-crac`):
+
+* `validate-configuration` runs during the `prepare-package` phase (before `mvn package`)
+* `validate-test-configuration` runs during the `test` phase (as part of `mvn test`)
+* `validate-dev-configuration` is automatically executed by `mn:run`
+
+If you are not using Micronaut packaging or want to customize the phase bindings, you can configure explicit executions:
 
 [source,xml]
 ----
@@ -32,12 +38,14 @@ To run validation as part of `mvn package` and `mvn test`, configure executions:
             <goals>
                 <goal>validate-configuration</goal>
             </goals>
+            <phase>process-resources</phase> <!-- optional: customize phase -->
         </execution>
         <execution>
             <id>validate-test-config</id>
             <goals>
                 <goal>validate-test-configuration</goal>
             </goals>
+            <phase>test-compile</phase> <!-- optional: customize phase -->
         </execution>
     </executions>
 </plugin>
