@@ -49,6 +49,8 @@ final class ConfigurationValidationExecutor {
      * @param deduceEnvironments Whether to allow Micronaut to deduce environments
      * @param outputDir Output directory
      * @param format Report format
+     * @param projectBaseDir Project base directory for relative path resolution in error reports
+     * @param resourcesDirs Resource directories used to resolve and render relative origin paths in error output
      * @param err Error stream for reporting
      * @return The validation result
      * @throws IOException If validation or report writing fails

@@ -39,8 +39,6 @@ import java.util.Set;
  */
 abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo {
 
-    static final String CONFIG_PREFIX = "micronaut.jsonschema.configuration.validation";
-
     private static final List<String> DEFAULT_CACHE_IGNORE = List.of(
         "META-INF/*",
         "logback.xml",
@@ -118,11 +116,6 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         Path cacheFile = outputDir.resolve(".cache.properties");
 
         boolean cacheEnabled = cfg.getCacheEnabled() == null || cfg.getCacheEnabled();
-        boolean cacheMainResourcesOnly = cfg.getCacheMainResourcesOnly() == null || cfg.getCacheMainResourcesOnly();
-        if (!cacheMainResourcesOnly) {
-            // reserved for future extension; required behavior is main resources only.
-            cacheMainResourcesOnly = true;
-        }
 
         List<String> classpathElements = computeClasspathElements(set);
         String classpath = String.join(File.pathSeparator, classpathElements);
