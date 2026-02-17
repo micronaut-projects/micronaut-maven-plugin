@@ -46,10 +46,10 @@ final class ConfigurationValidationCache {
     /**
      * @param cacheFile The cache file path
      * @param inputsFingerprint Fingerprint of all inputs (options + computed classpath)
-     * @param mainResourcesFingerprint Fingerprint of {@code src/main/resources}
+     * @param resourcesFingerprint Fingerprint of resource directories relevant to this scenario
      * @return The cache entry if it matches the provided fingerprints, otherwise {@code null}
      */
-    static CacheEntry readIfUpToDate(Path cacheFile, String inputsFingerprint, String mainResourcesFingerprint) {
+    static CacheEntry readIfUpToDate(Path cacheFile, String inputsFingerprint, String resourcesFingerprint) {
         if (!Files.isRegularFile(cacheFile)) {
             return null;
         }
@@ -60,7 +60,7 @@ final class ConfigurationValidationCache {
             return null;
         }
         boolean matches = Objects.equals(inputsFingerprint, props.getProperty(KEY_INPUTS_FINGERPRINT))
-            && Objects.equals(mainResourcesFingerprint, props.getProperty(KEY_MAIN_RESOURCES_FINGERPRINT));
+            && Objects.equals(resourcesFingerprint, props.getProperty(KEY_MAIN_RESOURCES_FINGERPRINT));
         if (!matches) {
             return null;
         }
@@ -80,18 +80,38 @@ final class ConfigurationValidationCache {
      *
      * @param cacheFile The cache file path
      * @param inputsFingerprint Fingerprint of all inputs (options + computed classpath)
-     * @param mainResourcesFingerprint Fingerprint of {@code src/main/resources}
+     * @param resourcesFingerprint Fingerprint of resource directories relevant to this scenario
      * @throws IOException If writing fails
      */
-    static void write(Path cacheFile, String inputsFingerprint, String mainResourcesFingerprint, LastResult lastResult) throws IOException {
+    static void write(Path cacheFile, String inputsFingerprint, String resourcesFingerprint, LastResult lastResult) throws IOException {
         Files.createDirectories(cacheFile.getParent());
         Properties props = new Properties();
         props.setProperty(KEY_INPUTS_FINGERPRINT, inputsFingerprint);
-        props.setProperty(KEY_MAIN_RESOURCES_FINGERPRINT, mainResourcesFingerprint);
+        props.setProperty(KEY_MAIN_RESOURCES_FINGERPRINT, resourcesFingerprint);
         props.setProperty(KEY_LAST_RESULT, lastResult.name());
         try (OutputStream os = Files.newOutputStream(cacheFile)) {
             props.store(os, "Micronaut configuration validation cache");
         }
+    }
+
+    /**
+     * Computes a fingerprint for multiple resource directories.
+     *
+     * @param resourceDirs The resource directories to fingerprint
+     * @param ignorePatterns Resource patterns to ignore (glob syntax, relative to each resource directory)
+     * @return A combined SHA-256 hex digest
+     * @throws IOException If walking directories fails
+     */
+    static String fingerprintResources(List<Path> resourceDirs, @Nullable Iterable<String> ignorePatterns) throws IOException {
+        if (resourceDirs == null || resourceDirs.isEmpty()) {
+            return "no-resources";
+        }
+        MessageDigest digest = sha256();
+        for (Path dir : resourceDirs) {
+            update(digest, dir.toString());
+            update(digest, fingerprintMainResources(dir, ignorePatterns));
+        }
+        return HexFormat.of().formatHex(digest.digest());
     }
 
     /**
