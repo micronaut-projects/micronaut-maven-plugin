@@ -46,7 +46,7 @@ Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module pl
 - Root POM owns shared plugin and quality configuration; module POMs stay lean.
 - Feature packages under `io.micronaut.maven` are explicit (`openapi`, `aot`, `testresources`, `services`, `jsonschema`).
 - Integration tests are isolated scenarios under `src/it/<scenario>` with per-scenario `invoker.properties` and optional `verify.groovy`.
-- CI matrix is intentional: snapshot on Java 21 + 25, windows on Java 17, release workflow handles tagging + publish.
+- CI matrix is intentional: snapshot on Java 25, windows on Java 25, release workflow handles tagging + publish.
 
 ## ANTI-PATTERNS (THIS PROJECT)
 - Do not add new plugin behavior only in examples; behavior must live in real modules and be covered by `src/it` scenarios.
