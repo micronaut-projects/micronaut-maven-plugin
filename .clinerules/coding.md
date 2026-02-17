@@ -11,7 +11,7 @@ Modules:
 - micronaut-maven-integration-tests
 
 Tech baseline:
-- Java: JDK 17 (maven.compiler.source/target = 17)
+- Java: JDK 21 (maven.compiler.source/target = 21)
 - Maven: 3.9.11
 - Micronaut: 4.9.x (managed via parent POM properties)
 
