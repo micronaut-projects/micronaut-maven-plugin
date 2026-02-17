@@ -51,7 +51,7 @@ enum ConfigurationValidationFormat {
             case "json" -> JSON;
             case "html" -> HTML;
             case "both" -> BOTH;
-            default -> throw new IllegalArgumentException("Invalid format: " + value);
+            default -> throw new IllegalArgumentException("Invalid format: " + value + ". Supported values: json, html, both");
         };
     }
 }

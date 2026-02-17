@@ -65,11 +65,6 @@ public final class ConfigurationValidationConfiguration {
      */
     private List<String> cacheIgnore;
 
-    /**
-     * If {@code true}, cache invalidation only considers changes under src/main/resources.
-     */
-    private Boolean cacheMainResourcesOnly;
-
     private ValidationSet dev;
     private ValidationSet packageValidation;
     private ValidationSet test;
@@ -199,22 +194,6 @@ public final class ConfigurationValidationConfiguration {
      */
     public void setCacheIgnore(List<String> cacheIgnore) {
         this.cacheIgnore = cacheIgnore;
-    }
-
-    /**
-     * Controls whether cache invalidation only considers changes under {@code src/main/resources}.
-     *
-     * @return Whether cache invalidation is based on {@code src/main/resources}. If {@code null}, defaults to {@code true}.
-     */
-    public Boolean getCacheMainResourcesOnly() {
-        return cacheMainResourcesOnly;
-    }
-
-    /**
-     * @param cacheMainResourcesOnly Whether cache invalidation only considers changes under {@code src/main/resources}.
-     */
-    public void setCacheMainResourcesOnly(Boolean cacheMainResourcesOnly) {
-        this.cacheMainResourcesOnly = cacheMainResourcesOnly;
     }
 
     /**

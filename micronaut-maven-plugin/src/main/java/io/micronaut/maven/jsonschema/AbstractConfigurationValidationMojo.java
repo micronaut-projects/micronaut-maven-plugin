@@ -39,8 +39,6 @@ import java.util.Set;
  */
 abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo {
 
-    static final String CONFIG_PREFIX = "micronaut.jsonschema.configuration.validation";
-
     private static final List<String> DEFAULT_CACHE_IGNORE = List.of(
         "META-INF/*",
         "logback.xml",
@@ -118,11 +116,6 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         Path cacheFile = outputDir.resolve(".cache.properties");
 
         boolean cacheEnabled = cfg.getCacheEnabled() == null || cfg.getCacheEnabled();
-        boolean cacheMainResourcesOnly = cfg.getCacheMainResourcesOnly() == null || cfg.getCacheMainResourcesOnly();
-        if (!cacheMainResourcesOnly) {
-            // reserved for future extension; required behavior is main resources only.
-            cacheMainResourcesOnly = true;
-        }
 
         List<String> classpathElements = computeClasspathElements(set);
         String classpath = String.join(File.pathSeparator, classpathElements);
@@ -137,10 +130,13 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
             classpath
         );
         List<String> cacheIgnore = cfg.getCacheIgnore() == null ? DEFAULT_CACHE_IGNORE : cfg.getCacheIgnore();
-        String mainResourcesFingerprint = ConfigurationValidationCache.fingerprintMainResources(mainResourcesDir(), cacheIgnore);
+        
+        // Compute fingerprint for resource directories relevant to this scenario
+        List<Path> cacheResourceDirs = computeCacheResourceDirectories();
+        String resourcesFingerprint = ConfigurationValidationCache.fingerprintResources(cacheResourceDirs, cacheIgnore);
 
         if (cacheEnabled) {
-            ConfigurationValidationCache.CacheEntry entry = ConfigurationValidationCache.readIfUpToDate(cacheFile, inputsFingerprint, mainResourcesFingerprint);
+            ConfigurationValidationCache.CacheEntry entry = ConfigurationValidationCache.readIfUpToDate(cacheFile, inputsFingerprint, resourcesFingerprint);
             if (entry != null) {
                 if (entry.lastResult() == ConfigurationValidationCache.LastResult.FAILURE) {
                     throw cachedFailure(outputDir);
@@ -155,6 +151,9 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         if (getLog().isInfoEnabled()) {
             getLog().info("Validating Micronaut configuration (" + scenarioName() + ")");
         }
+
+        // Clean up reports that won't be generated for the current format to avoid stale files
+        cleanupStaleReports(outputDir, format);
 
         ConfigurationValidationExecutor.ValidationResult result = ConfigurationValidationExecutor.validate(
             classpath,
@@ -173,13 +172,33 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
             ConfigurationValidationCache.write(
                 cacheFile,
                 inputsFingerprint,
-                mainResourcesFingerprint,
+                resourcesFingerprint,
                 result.hasErrors() ? ConfigurationValidationCache.LastResult.FAILURE : ConfigurationValidationCache.LastResult.SUCCESS
             );
         }
 
         if (result.hasErrors()) {
             throw new MojoFailureException("Micronaut configuration is not valid. See reports in: " + result.outputDirectory());
+        }
+    }
+
+    private void cleanupStaleReports(Path outputDir, ConfigurationValidationFormat format) {
+        // Remove reports that won't be generated in the current format to avoid pointing users to stale files
+        Path html = outputDir.resolve("configuration-errors.html");
+        Path json = outputDir.resolve("configuration-errors.json");
+        
+        try {
+            if (format != ConfigurationValidationFormat.HTML && format != ConfigurationValidationFormat.BOTH) {
+                Files.deleteIfExists(html);
+            }
+            if (format != ConfigurationValidationFormat.JSON && format != ConfigurationValidationFormat.BOTH) {
+                Files.deleteIfExists(json);
+            }
+        } catch (IOException e) {
+            // Best effort cleanup; log at debug level if needed
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Failed to clean up stale reports", e);
+            }
         }
     }
 
@@ -258,7 +277,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
             }
         }
 
-        List<Dependency> deps = compilerService.resolveDependencies(project, true, dependencyScopes());
+        List<Dependency> deps = compilerService.resolveDependencies(project, false, dependencyScopes());
         String depsClasspath = compilerService.buildClasspath(deps);
         if (depsClasspath != null && !depsClasspath.isBlank()) {
             Collections.addAll(elements, depsClasspath.split(java.util.regex.Pattern.quote(File.pathSeparator)));
@@ -267,8 +286,29 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         return new ArrayList<>(elements);
     }
 
-    private Path mainResourcesDir() {
-        return project.getBasedir().toPath().resolve("src/main/resources");
+    /**
+     * Compute resource directories to fingerprint for cache invalidation.
+     * This uses the scenario's default resource directories (same as used for error reporting).
+     *
+     * @return Resource directories to fingerprint for cache purposes
+     */
+    private List<Path> computeCacheResourceDirectories() {
+        List<Path> defaults = defaultResourceDirectories();
+        if (defaults == null || defaults.isEmpty()) {
+            return List.of();
+        }
+        List<Path> result = new ArrayList<>(defaults.size());
+        Path baseDir = project.getBasedir().toPath();
+        for (Path p : defaults) {
+            if (p == null) {
+                continue;
+            }
+            Path resolved = p.isAbsolute() ? p : baseDir.resolve(p);
+            resolved = resolved.normalize();
+            // Include in fingerprint even if it doesn't exist yet (to detect when it appears)
+            result.add(resolved);
+        }
+        return List.copyOf(result);
     }
 
     private List<Path> resolveResourceDirectories(ConfigurationValidationConfiguration.ValidationSet set) {
