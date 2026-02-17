@@ -121,6 +121,7 @@
                 <artifactId>micronaut-maven-plugin</artifactId>
                 <configuration>
                     <configFile>aot-${packaging}.properties</configFile>
+                    <nativeImageBuildArgs>--initialize-at-build-time=io.micronaut.security.authentication.AuthenticationMode</nativeImageBuildArgs>
                 </configuration>
             </plugin>
 

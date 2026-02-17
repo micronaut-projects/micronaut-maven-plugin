@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * <p>Implementation of the <code>deploy</code> lifecycle for pushing Docker images</p>
@@ -61,7 +60,7 @@ public class DockerPushMojo extends AbstractDockerMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         Packaging packaging = Packaging.of(mavenProject.getPackaging());
         if (packaging == Packaging.DOCKER || packaging == Packaging.DOCKER_NATIVE || packaging == Packaging.DOCKER_CRAC) {
-            Set<String> images = getTags();
+            var images = getTags();
 
             // getTags() will automatically generate an image name if none is specified
             // To maintain error compatibility, check that an image name has been

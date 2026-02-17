@@ -32,9 +32,9 @@ class DockerNativeMojoTest {
 
     @ParameterizedTest
     @CsvSource({
-            "17,https://gds.oracle.com/download/graal/17/latest-gftc/graalvm-jdk-17_linux-x64_bin.tar.gz",
-            "21,https://gds.oracle.com/download/graal/21/latest-gftc/graalvm-jdk-21_linux-x64_bin.tar.gz",
-            "25,https://gds.oracle.com/download/graal/25/latest-gftc/graalvm-jdk-25_linux-x64_bin.tar.gz"
+            "24,https://gds.oracle.com/download/graal/25/latest-gftc/graalvm-jdk-25_linux-x64_bin.tar.gz",
+            "25,https://gds.oracle.com/download/graal/25/latest-gftc/graalvm-jdk-25_linux-x64_bin.tar.gz",
+            "26,https://gds.oracle.com/download/graal/25/latest-gftc/graalvm-jdk-25_linux-x64_bin.tar.gz"
     })
     @SetSystemProperty(key = "os.arch", value = X86_64_ARCH)
     void testGraalVmDownloadUrl(String javaVersion, String expectedUrl) throws URISyntaxException, IOException, InterruptedException {
@@ -74,7 +74,7 @@ class DockerNativeMojoTest {
         var session = mock(MavenSession.class);
         var execution = mock(MojoExecution.class);
         var properties = new Properties(1);
-        properties.put("maven.compiler.release", "21");
+        properties.put("maven.compiler.release", "25");
 
         when(session.getCurrentProject()).thenReturn(project);
         when(session.getUserProperties()).thenReturn(new Properties());
@@ -85,7 +85,7 @@ class DockerNativeMojoTest {
 
         var actualUrl = mojo.graalVmDownloadUrl();
 
-        var expectedUrl = "https://gds.oracle.com/download/graal/21/latest-gftc/graalvm-jdk-21_linux-x64_bin.tar.gz";
+        var expectedUrl = "https://gds.oracle.com/download/graal/25/latest-gftc/graalvm-jdk-25_linux-x64_bin.tar.gz";
         assertEquals(expectedUrl, actualUrl);
     }
 

@@ -58,7 +58,6 @@ import static io.micronaut.maven.services.ApplicationConfigurationService.DEFAUL
 public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
 
     public static final String LATEST_TAG = "latest";
-    // GlibC 2.34 is used by native image 17
     public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "cgr.dev/chainguard/wolfi-base:latest";
     public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
     public static final String ARM_ARCH = "aarch64";
@@ -66,7 +65,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     public static final String DEFAULT_ORACLE_LINUX_VERSION = "ol9";
     public static final String ORACLE_CLOUD_FUNCTION_DEFAULT_CMD = "CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]";
     public static final String GDS_DOWNLOAD_URL = "https://gds.oracle.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz";
-    private static final NavigableSet<Integer> GRAALVM_VERSIONS = new TreeSet<>(Set.of(17, 21, 25));
+    private static final NavigableSet<Integer> GRAALVM_VERSIONS = new TreeSet<>(Set.of(25));
 
     protected final MavenProject mavenProject;
     protected final MavenSession mavenSession;

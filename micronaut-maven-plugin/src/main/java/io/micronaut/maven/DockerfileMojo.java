@@ -88,7 +88,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
         var packaging = Packaging.of(mavenProject.getPackaging());
         try {
             copyDependencies();
-            Optional<File> dockerfile = switch (packaging) {
+            var dockerfile = switch (packaging) {
                 case DOCKER_NATIVE -> buildDockerfileNative(runtime);
                 case DOCKER -> buildDockerfile(runtime);
                 case DOCKER_CRAC -> buildCracDockerfile(runtime);

@@ -103,11 +103,11 @@ public class StartTestResourcesServerMojo extends AbstractTestResourcesMojo {
      */
     private boolean isPropertyTrue(PluginParameterExpressionEvaluator evaluator, String propertyName) throws ExpressionEvaluationException {
         Object propertyValue = evaluator.evaluate("${" + propertyName + "}");
-        if (propertyValue instanceof Boolean) {
-            return (Boolean) propertyValue;
+        if (propertyValue instanceof Boolean b) {
+            return b;
         }
-        if (propertyValue instanceof String) {
-            return Boolean.parseBoolean((String) propertyValue);
+        if (propertyValue instanceof String s) {
+            return Boolean.parseBoolean(s);
         }
         return false;
     }
