@@ -53,7 +53,8 @@ import java.util.Optional;
  */
 public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
-    public static final String DEFAULT_JAVA25_BASE_IMAGE = "eclipse-temurin:25-jre";
+    private static final int SUPPORTED_JDK_VERSION = 25;
+    public static final String DEFAULT_JAVA25_BASE_IMAGE = "eclipse-temurin:" + SUPPORTED_JDK_VERSION + "-jre";
     private static final String LATEST_TAG = "latest";
     private static final String JDK_TARGET_VERSION = "maven.compiler.target";
     private static final String JDK_RELEASE_VERSION = "maven.compiler.release";
@@ -158,7 +159,13 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         int javaVersion = Integer.parseInt(jdkVersion);
         return switch (buildStrategy) {
             case LAMBDA -> "public.ecr.aws/lambda/java:" + javaVersion;
-            default -> DEFAULT_JAVA25_BASE_IMAGE;
+            default -> {
+                if (javaVersion > SUPPORTED_JDK_VERSION) {
+                    throw new IllegalArgumentException("Unsupported JDK version for Docker base image: " + javaVersion
+                        + ". Maximum supported version is " + SUPPORTED_JDK_VERSION + ".");
+                }
+                yield DEFAULT_JAVA25_BASE_IMAGE;
+            }
         };
     }
 
@@ -171,10 +178,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
             .or(() -> targetVersion)
             .or(() -> sourceVersion);
 
-        String jdkVersion = jdkVersionOpt.orElse("25");
+        String jdkVersion = jdkVersionOpt.orElse(String.valueOf(SUPPORTED_JDK_VERSION));
         String propertySource = releaseVersion.isPresent() ? JDK_RELEASE_VERSION :
-                               targetVersion.isPresent() ? JDK_TARGET_VERSION :
-                               sourceVersion.isPresent() ? JDK_SOURCE_VERSION : "default (25)";
+                                targetVersion.isPresent() ? JDK_TARGET_VERSION :
+                                sourceVersion.isPresent() ? JDK_SOURCE_VERSION : "default (" + SUPPORTED_JDK_VERSION + ")";
 
         LOG.info("Using JDK version {} from {}", jdkVersion, propertySource);
         return jdkVersion;
@@ -215,7 +222,8 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     }
 
     private Platform detectPlatform() {
-        String arch = System.getProperty("os.arch").equals("aarch64") ? "arm64" : "amd64";
+        String osArchitecture = System.getProperty("os.arch");
+        String arch = "aarch64".equals(osArchitecture) || "arm64".equals(osArchitecture) ? "arm64" : "amd64";
         return new Platform(arch, LINUX);
     }
 

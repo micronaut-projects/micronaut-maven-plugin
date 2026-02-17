@@ -121,7 +121,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     /**
      * The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.
      */
-    @Parameter(property = "micronaut.native-image.ol.version")
+    @Parameter(property = "micronaut.native-image.ol.version", defaultValue = "ol9")
     protected String oracleLinuxVersion;
 
     /**

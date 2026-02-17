@@ -29,6 +29,7 @@ import java.util.Properties;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -110,6 +111,16 @@ class JibMicronautExtensionTest {
     }
 
     @Test
+    void testDetermineBaseImageFailsWhenJdkIsHigherThanSupported() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> JibMicronautExtension.determineBaseImage("26", DockerBuildStrategy.DEFAULT)
+        );
+
+        assertTrue(exception.getMessage().contains("26"));
+    }
+
+    @Test
     @SetSystemProperty(key = "os.arch", value = "x64")
     void testDetectPlatforms() {
         var originalPlan = ContainerBuildPlan.builder().build();
@@ -120,6 +131,16 @@ class JibMicronautExtensionTest {
         var platform = finalPlan.getPlatforms().iterator().next();
         assertEquals("amd64", platform.getArchitecture());
         assertEquals("linux", platform.getOs());
+    }
+
+    @Test
+    @SetSystemProperty(key = "os.arch", value = "arm64")
+    void testDetectPlatformsForArm64() {
+        var originalPlan = ContainerBuildPlan.builder().build();
+        var finalPlan = extendContainerBuildPlan(originalPlan);
+
+        assertTrue(finalPlan.getPlatforms().stream().anyMatch(platform ->
+                "arm64".equals(platform.getArchitecture()) && "linux".equals(platform.getOs())));
     }
 
     @Test
