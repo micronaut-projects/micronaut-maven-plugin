@@ -15,7 +15,6 @@
  */
 package io.micronaut.maven.aot;
 
-import io.micronaut.aot.std.sourcegen.AbstractStaticServiceLoaderSourceGenerator;
 import io.micronaut.aot.std.sourcegen.KnownMissingTypesSourceGenerator;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
@@ -106,8 +105,6 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
         if (!props.containsKey(KnownMissingTypesSourceGenerator.OPTION.key())) {
             props.put(KnownMissingTypesSourceGenerator.OPTION.key(), String.join(",", Constants.TYPES_TO_CHECK));
         }
-        props.computeIfAbsent(AbstractStaticServiceLoaderSourceGenerator.SERVICE_TYPES,
-            key -> String.join(",", Constants.SERVICE_TYPES));
         File effectiveConfig = outputFile("effective-" + AOT_PROPERTIES_FILE_NAME);
         try (OutputStream out = Files.newOutputStream(effectiveConfig.toPath())) {
             props.store(out, "Effective AOT configuration");

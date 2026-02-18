@@ -19,7 +19,8 @@
     <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
-    <graal.oracle.linux.version>ol7</graal.oracle.linux.version>
+    <graal.oracle.linux.version>ol9</graal.oracle.linux.version>
+    <jib-maven-plugin.version>@jib-maven-plugin.version@</jib-maven-plugin.version>
     <maven.compiler.release>${java.specification.version}</maven.compiler.release>
   </properties>
 
@@ -114,6 +115,7 @@
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
+        <version>${jib-maven-plugin.version}</version>
         <configuration>
           <to>
             <image>alvarosanchez/${project.artifactId}:${project.version}</image>

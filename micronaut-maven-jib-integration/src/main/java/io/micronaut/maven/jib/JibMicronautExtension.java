@@ -53,8 +53,8 @@ import java.util.Optional;
  */
 public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
-    public static final String DEFAULT_JAVA21_BASE_IMAGE = "eclipse-temurin:21-jre";
-    public static final String DEFAULT_JAVA25_BASE_IMAGE = "eclipse-temurin:25-jre";
+    private static final int SUPPORTED_JDK_VERSION = 25;
+    public static final String DEFAULT_JAVA25_BASE_IMAGE = "eclipse-temurin:" + SUPPORTED_JDK_VERSION + "-jre";
     private static final String LATEST_TAG = "latest";
     private static final String JDK_TARGET_VERSION = "maven.compiler.target";
     private static final String JDK_RELEASE_VERSION = "maven.compiler.release";
@@ -106,9 +106,9 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION -> {
-                List<? extends LayerObject> originalLayers = buildPlan.getLayers();
+                var originalLayers = buildPlan.getLayers();
                 builder.setLayers(originalLayers.stream().map(JibMicronautExtension::remapLayer).toList());
-                List<String> cmd = jibConfigurationService.getArgs();
+                var cmd = jibConfigurationService.getArgs();
                 if (cmd.isEmpty()) {
                     cmd = Collections.singletonList("io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest");
                 }
@@ -121,7 +121,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
                 // https://docs.aws.amazon.com/lambda/latest/dg/java-image.html
                 // https://docs.aws.amazon.com/lambda/latest/dg/images-create.html
                 // https://docs.aws.amazon.com/lambda/latest/dg/images-test.html
-                List<String> entrypoint = buildPlan.getEntrypoint();
+                var entrypoint = buildPlan.getEntrypoint();
                 Objects.requireNonNull(entrypoint).set(entrypoint.size() - 1, "io.micronaut.function.aws.runtime.MicronautLambdaRuntime");
                 builder.setEntrypoint(entrypoint);
             }
@@ -148,10 +148,8 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
 
     public static String determineProjectFnVersion(String javaVersion) {
         int majorVersion = Integer.parseInt(javaVersion.split("\\.")[0]);
-        if (majorVersion <= 25 && majorVersion > 21) {
+        if (majorVersion >= 25) {
             return "25-jre";
-        } else if (majorVersion == 21) {
-            return "21-jre";
         } else {
             return LATEST_TAG;
         }
@@ -161,7 +159,13 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         int javaVersion = Integer.parseInt(jdkVersion);
         return switch (buildStrategy) {
             case LAMBDA -> "public.ecr.aws/lambda/java:" + javaVersion;
-            default -> javaVersion == 21 ? DEFAULT_JAVA21_BASE_IMAGE : DEFAULT_JAVA25_BASE_IMAGE;
+            default -> {
+                if (javaVersion > SUPPORTED_JDK_VERSION) {
+                    throw new IllegalArgumentException("Unsupported JDK version for Docker base image: " + javaVersion
+                        + ". Maximum supported version is " + SUPPORTED_JDK_VERSION + ".");
+                }
+                yield DEFAULT_JAVA25_BASE_IMAGE;
+            }
         };
     }
 
@@ -174,10 +178,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
             .or(() -> targetVersion)
             .or(() -> sourceVersion);
 
-        String jdkVersion = jdkVersionOpt.orElse("21"); // Default to project baseline JDK 21
+        String jdkVersion = jdkVersionOpt.orElse(String.valueOf(SUPPORTED_JDK_VERSION));
         String propertySource = releaseVersion.isPresent() ? JDK_RELEASE_VERSION :
-                               targetVersion.isPresent() ? JDK_TARGET_VERSION :
-                               sourceVersion.isPresent() ? JDK_SOURCE_VERSION : "default (21)";
+                                targetVersion.isPresent() ? JDK_TARGET_VERSION :
+                                sourceVersion.isPresent() ? JDK_SOURCE_VERSION : "default (" + SUPPORTED_JDK_VERSION + ")";
 
         LOG.info("Using JDK version {} from {}", jdkVersion, propertySource);
         return jdkVersion;
@@ -204,7 +208,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     }
 
     static FileEntry remapEntry(FileEntry originalEntry, String layerName) {
-        List<String> pathComponents = UnixPathParser.parse(originalEntry.getExtractionPath().toString());
+        var pathComponents = UnixPathParser.parse(originalEntry.getExtractionPath().toString());
         AbsoluteUnixPath newPath;
         if (layerName.contains("dependencies")) {
             newPath = AbsoluteUnixPath.get("/function/app/libs/" + pathComponents.get(pathComponents.size() - 1));
@@ -218,7 +222,8 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     }
 
     private Platform detectPlatform() {
-        String arch = System.getProperty("os.arch").equals("aarch64") ? "arm64" : "amd64";
+        String osArchitecture = System.getProperty("os.arch");
+        String arch = "aarch64".equals(osArchitecture) || "arm64".equals(osArchitecture) ? "arm64" : "amd64";
         return new Platform(arch, LINUX);
     }
 

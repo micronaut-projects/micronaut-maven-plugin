@@ -1,4 +1,4 @@
-FROM ghcr.io/graalvm/native-image-community:21 AS builder
+FROM ghcr.io/graalvm/native-image-community:25-ol9 AS builder
 WORKDIR /home/app
 
 COPY classes /home/app/classes
@@ -15,4 +15,5 @@ WORKDIR /function
 COPY --from=builder /home/app/application /function/func
 COPY --from=fnfdk /function/runtime/lib/* .
 ENTRYPOINT ["./func", "-XX:MaximumHeapSizePercent=80", "-Dio.netty.allocator.numDirectArenas=0", "-Dio.netty.noPreferDirect=true", "-Djava.library.path=/function"]
+
 CMD ["example.micronaut.Function::handleRequest"]
