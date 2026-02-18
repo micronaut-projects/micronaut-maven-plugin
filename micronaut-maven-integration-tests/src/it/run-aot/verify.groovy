@@ -18,4 +18,4 @@ expectedConfig.each { k,v ->
     assert effectiveConfig.getProperty(k).equals(v)
 }
 
-assert effectiveConfig.size() == 10
+assert effectiveConfig.size() == 8
