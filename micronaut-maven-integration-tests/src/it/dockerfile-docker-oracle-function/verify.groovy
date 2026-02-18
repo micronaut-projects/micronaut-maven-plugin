@@ -7,5 +7,5 @@ assert dockerfile.text == expectedDockerfileText
 
 File log = new File(basedir, 'build.log')
 assert log.exists()
-assert log.text.contains("fnproject/fn-java-fdk:jre17-1.1.5@sha256:d4d50652bf27c3f66fa1f146a09d872ef686ed39307e121b621e7741d05ff593")
+assert log.text.contains("fnproject/fn-java-fdk:jre17-latest")
 assert log.text.contains("Successfully tagged alvarosanchez/dockerfile-docker-oracle-function:0.1")

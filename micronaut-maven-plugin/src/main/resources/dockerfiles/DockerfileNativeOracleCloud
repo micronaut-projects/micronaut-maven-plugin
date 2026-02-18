@@ -10,7 +10,7 @@ COPY nativ[e]/generated /home/app/
 COPY *.args /home/app/graalvm-native-image.args
 RUN native-image @/home/app/graalvm-native-image.args --report-unsupported-elements-at-runtime -H:PageSize=64k -H:Class=com.fnproject.fn.runtime.EntryPoint -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
 
-FROM fnproject/fn-java-fdk:jre17-1.1.5@sha256:d4d50652bf27c3f66fa1f146a09d872ef686ed39307e121b621e7741d05ff593 AS fnfdk
+FROM fnproject/fn-java-fdk:jre17-latest AS fnfdk
 
 FROM ${BASE_IMAGE_RUN}
 WORKDIR /function
