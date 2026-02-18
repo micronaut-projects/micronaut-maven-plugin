@@ -1,1 +1,1 @@
-/opt/hostedtoolcache/graalvm-jdk-17.0.12_linux-x64_bin/17.0.12/x64/graalvm-jdk-17.0.12+8.1/bin/javadoc -J-Xmx512m -J-Xms128m -J-Duser.language= -J-Duser.country= @options @packages
+/opt/hostedtoolcache/graalvm-jdk-25_linux-x64_bin/25.0.0/x64/graalvm-jdk-25.0.2+10.1/bin/javadoc -J-Xmx512m -J-Xms128m -J-Duser.language= -J-Duser.country= @options @packages
