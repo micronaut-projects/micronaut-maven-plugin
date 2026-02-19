@@ -19,6 +19,7 @@
         <packaging>jar</packaging>
         <micronaut.runtime>netty</micronaut.runtime>
         <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
+        <jib-maven-plugin.version>@jib-maven-plugin.version@</jib-maven-plugin.version>
         <maven.compiler.release>${java.specification.version}</maven.compiler.release>
     </properties>
 
@@ -101,12 +102,13 @@
                 </configuration>
             </plugin>
 
-            <plugin>
-                <groupId>com.google.cloud.tools</groupId>
-                <artifactId>jib-maven-plugin</artifactId>
-                <configuration>
-                    <to>
-                        <image>docker.io/alvarosanchez/${project.artifactId}:${project.version}</image>
+        <plugin>
+            <groupId>com.google.cloud.tools</groupId>
+            <artifactId>jib-maven-plugin</artifactId>
+            <version>${jib-maven-plugin.version}</version>
+            <configuration>
+                <to>
+                    <image>docker.io/alvarosanchez/${project.artifactId}:${project.version}</image>
                     </to>
                     <container>
                         <mainClass>${exec.mainClass}</mainClass>
@@ -117,7 +119,7 @@
             <plugin>
                 <groupId>io.fabric8</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
-                <version>0.48.0</version>
+                <version>0.48.1</version>
                 <configuration>
                     <showLogs>true</showLogs>
                     <images>

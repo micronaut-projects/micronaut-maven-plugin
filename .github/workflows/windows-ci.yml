@@ -16,17 +16,17 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        java: ['21', '25']
+        java: ['25']
     steps:
       - uses: actions/checkout@v6
       - name: Cache Maven packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       - name: Setup GraalVM
-        uses: graalvm/setup-graalvm@v1.4.4
+        uses: graalvm/setup-graalvm@v1.4.5
         with:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
@@ -40,6 +40,5 @@ jobs:
           DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
           DEVELOCITY_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-
 
 

@@ -49,7 +49,6 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Properties;
-import java.util.Set;
 
 /**
  * <p>Implementation of the <code>docker-crac</code> packaging.</p>
@@ -230,7 +229,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
     }
 
     private void buildFinalDockerfile(String checkpointContainerId) throws IOException, InvalidImageReferenceException, MavenFilteringException {
-        Set<String> tags = getTags();
+        var tags = getTags();
         for (String tag : tags) {
             ImageReference.parse(tag);
         }

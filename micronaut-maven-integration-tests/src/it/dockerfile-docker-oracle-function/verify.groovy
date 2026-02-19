@@ -1,7 +1,7 @@
 File dockerfile = new File("$basedir/target", "Dockerfile")
 File expectedDockerfile = new File(basedir, "Dockerfile")
 
-String expectedDockerfileText = expectedDockerfile.text.replace("eclipse-temurin:21-jre", "eclipse-temurin:${System.getProperty("java.specification.version")}-jre")
+String expectedDockerfileText = expectedDockerfile.text.replace("eclipse-temurin:25-jre", "eclipse-temurin:${System.getProperty("java.specification.version")}-jre")
 
 assert dockerfile.text == expectedDockerfileText
 

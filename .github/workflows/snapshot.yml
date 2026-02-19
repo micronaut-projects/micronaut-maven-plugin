@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: ['21', '25']
+        java: ['25']
     env:
       DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
       DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
@@ -70,7 +70,7 @@ jobs:
           gpg-passphrase: GPG_PASSWORD
 
       - name: "🔧 Setup GraalVM CE"
-        uses: graalvm/setup-graalvm@v1.4.4
+        uses: graalvm/setup-graalvm@v1.4.5
         with:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
@@ -86,32 +86,32 @@ jobs:
 
       - name: "📊 Publish Test Report"
         if: always()
-        uses: mikepenz/action-junit-report@v6.0.1
+        uses: mikepenz/action-junit-report@v6.2.0
         with:
           check_name: Java CI / Test Report
           report_paths: '**/target/invoker-reports/TEST-*.xml'
           check_retries: 'true'
 
       - name: "🔎 Run static analysis"
-        if: env.SONAR_TOKEN != '' && matrix.java == '21'
+        if: env.SONAR_TOKEN != '' && matrix.java == '25'
         run: ./mvnw sonar:sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: "❓ Determine current version"
-        if: success() && github.event_name == 'push' && matrix.java == '21'
+        if: success() && github.event_name == 'push' && matrix.java == '25'
         id: release_version
         run: echo ::set-output name=release_version::`./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout`
 
       - name: "🌎 Generate site"
-        if: success() && github.event_name == 'push' && matrix.java == '21'
+        if: success() && github.event_name == 'push' && matrix.java == '25'
         run: |
           ./mvnw site:site
           cp -R target/site/apidocs/* micronaut-maven-plugin/target/site/apidocs
 
       - name: "📑 Publish to Github Pages"
-        if: success() && github.event_name == 'push' && matrix.java == '21'
+        if: success() && github.event_name == 'push' && matrix.java == '25'
         uses: micronaut-projects/github-pages-deploy-action@master
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -119,7 +119,7 @@ jobs:
           FOLDER: micronaut-maven-plugin/target/site
 
       - name: "📦 Deploy snapshot"
-        if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') && matrix.java == '21'
+        if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') && matrix.java == '25'
         run: |
           ./mvnw deploy -Dinvoker.skip
         env:

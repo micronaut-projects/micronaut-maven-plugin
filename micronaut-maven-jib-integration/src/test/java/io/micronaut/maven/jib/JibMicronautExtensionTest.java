@@ -29,6 +29,7 @@ import java.util.Properties;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -39,9 +40,9 @@ class JibMicronautExtensionTest {
 
     @ParameterizedTest
     @CsvSource({
-            "21.0.4.1,  21-jre",
-            "23.0.1,    25-jre",
-            "21.0.1,    21-jre"
+            "24.0.1, latest",
+            "25.0.1, 25-jre",
+            "26.0.0, 25-jre"
     })
     void testDetermineJavaVersion(String javaVersion, String expectedFnVersion) {
         String fnVersion = JibMicronautExtension.determineProjectFnVersion(javaVersion);
@@ -100,10 +101,6 @@ class JibMicronautExtensionTest {
 
     @ParameterizedTest
     @CsvSource({
-            "DEFAULT,           21, eclipse-temurin:21-jre",
-            "ORACLE_FUNCTION,   21, eclipse-temurin:21-jre",
-            "LAMBDA,            21, public.ecr.aws/lambda/java:21",
-
             "DEFAULT,           25, eclipse-temurin:25-jre",
             "ORACLE_FUNCTION,   25, eclipse-temurin:25-jre",
             "LAMBDA,            25, public.ecr.aws/lambda/java:25"
@@ -111,6 +108,16 @@ class JibMicronautExtensionTest {
     void testDetermineBaseImage(String dockerBuildStrategy, String jdkVersion, String expectedImage) {
         String baseImage = JibMicronautExtension.determineBaseImage(jdkVersion, DockerBuildStrategy.valueOf(dockerBuildStrategy));
         assertEquals(expectedImage, baseImage);
+    }
+
+    @Test
+    void testDetermineBaseImageFailsWhenJdkIsHigherThanSupported() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> JibMicronautExtension.determineBaseImage("26", DockerBuildStrategy.DEFAULT)
+        );
+
+        assertTrue(exception.getMessage().contains("26"));
     }
 
     @Test
@@ -124,6 +131,16 @@ class JibMicronautExtensionTest {
         var platform = finalPlan.getPlatforms().iterator().next();
         assertEquals("amd64", platform.getArchitecture());
         assertEquals("linux", platform.getOs());
+    }
+
+    @Test
+    @SetSystemProperty(key = "os.arch", value = "arm64")
+    void testDetectPlatformsForArm64() {
+        var originalPlan = ContainerBuildPlan.builder().build();
+        var finalPlan = extendContainerBuildPlan(originalPlan);
+
+        assertTrue(finalPlan.getPlatforms().stream().anyMatch(platform ->
+                "arm64".equals(platform.getArchitecture()) && "linux".equals(platform.getOs())));
     }
 
     @Test
@@ -172,47 +189,47 @@ class JibMicronautExtensionTest {
     void testGetJdkVersionPrefersReleaseFromProjectProperties() {
         MavenProject project = mock(MavenProject.class);
         Properties props = new Properties();
-        props.setProperty("maven.compiler.release", "21");
-        props.setProperty("maven.compiler.target", "25");
+        props.setProperty("maven.compiler.release", "25");
+        props.setProperty("maven.compiler.target", "24");
         when(project.getProperties()).thenReturn(props);
 
         String version = JibMicronautExtension.getJdkVersion(mockSessionFor(project));
-        assertEquals("21", version);
+        assertEquals("25", version);
     }
 
     @Test
     void testGetJdkVersionFallsBackToTargetWhenReleaseMissing() {
         MavenProject project = mock(MavenProject.class);
         Properties props = new Properties();
-        props.setProperty("maven.compiler.target", "21");
+        props.setProperty("maven.compiler.target", "25");
         when(project.getProperties()).thenReturn(props);
 
         String version = JibMicronautExtension.getJdkVersion(mockSessionFor(project));
-        assertEquals("21", version);
+        assertEquals("25", version);
     }
 
     @Test
-    @SetSystemProperty(key = "maven.compiler.release", value = "25")
+    @SetSystemProperty(key = "maven.compiler.release", value = "26")
     void testGetJdkVersionSystemPropertyOverridesProject() {
         MavenProject project = mock(MavenProject.class);
         Properties props = new Properties();
-        props.setProperty("maven.compiler.release", "21");
+        props.setProperty("maven.compiler.release", "25");
         when(project.getProperties()).thenReturn(props);
 
         var session = mockSessionFor(project);
         when(session.getSystemProperties()).thenReturn(System.getProperties());
 
         String version = JibMicronautExtension.getJdkVersion(session);
-        assertEquals("25", version);
+        assertEquals("26", version);
     }
 
     @Test
-    void testGetJdkVersionReturns21WhenUnset() {
+    void testGetJdkVersionReturns25WhenUnset() {
         MavenProject project = mock(MavenProject.class);
         when(project.getProperties()).thenReturn(new Properties());
 
         String version = JibMicronautExtension.getJdkVersion(mockSessionFor(project));
-        assertEquals("21", version);
+        assertEquals("25", version);
     }
 
     private ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan originalPlan) {
