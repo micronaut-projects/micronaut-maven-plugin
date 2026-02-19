@@ -5,18 +5,22 @@ assert reportJson.exists()
 assert cacheFile.exists()
 assert cacheFile.text.contains('lastResult=SUCCESS')
 
-File mvnw = new File(basedir, '../../../mvnw')
+boolean windows = System.getProperty('os.name').toLowerCase().contains('windows')
+File mvnw = new File(basedir, windows ? '../../../mvnw.cmd' : '../../../mvnw')
 File localRepo = new File(basedir, '../../../target/local-repo')
 assert mvnw.exists()
 assert localRepo.exists()
 
-def pb = new ProcessBuilder(
-        mvnw.absolutePath,
+def command = windows ? ['cmd.exe', '/c', mvnw.absolutePath] : [mvnw.absolutePath]
+command = command.collect { it.toString() }
+command.addAll([
         '-ntp',
         '-q',
         "-Dmaven.repo.local=${localRepo.absolutePath}",
         'mn:validate-configuration'
-)
+].collect { it.toString() })
+
+def pb = new ProcessBuilder(command)
         .directory(basedir as File)
         .redirectErrorStream(true)
 
