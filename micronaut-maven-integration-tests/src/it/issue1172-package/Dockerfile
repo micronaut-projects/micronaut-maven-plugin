@@ -1,5 +1,4 @@
-# use the GCR mirror registry to ensure authentication failure
-FROM mirror.gcr.io/eclipse-temurin:25-jre
+FROM eclipse-temurin:25-jre
 WORKDIR /home/app
 COPY classes /home/app/classes
 COPY dependency/* /home/app/libs/

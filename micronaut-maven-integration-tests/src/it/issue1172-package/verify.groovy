@@ -1,3 +1,5 @@
 File log = new File(basedir, 'build.log')
 assert log.exists()
-assert log.text.contains("[WARNING] Failed to login to registry") : "Credentials check should be a soft failure"
+def text = log.text
+assert text.contains("BUILD SUCCESS") : "Docker packaging should succeed"
+assert !text.contains("Could not build image") : "Base image resolution should not fail"

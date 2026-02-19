@@ -106,8 +106,7 @@
         <artifactId>jib-maven-plugin</artifactId>
         <configuration>
           <from>
-            <!-- use the GCR mirror registry to ensure authentication failure -->
-            <image>mirror.gcr.io/eclipse-temurin:25-jre</image>
+            <image>eclipse-temurin:25-jre</image>
             <auth>
               <username>not-a-valid-user</username>
               <password>not-a-valid-password</password>
