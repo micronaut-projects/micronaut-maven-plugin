@@ -29,7 +29,6 @@ import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.twdata.maven.mojoexecutor.MojoExecutor;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -57,7 +56,7 @@ public class ExecutorService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ExecutorService.class);
 
-    private final MojoExecutor.ExecutionEnvironment executionEnvironment;
+    private final BuildPluginManager pluginManager;
     private final MavenProject mavenProject;
     private final MavenSession mavenSession;
     private final Invoker invoker;
@@ -66,7 +65,7 @@ public class ExecutorService {
     @Inject
     public ExecutorService(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager,
                            Invoker invoker) {
-        this.executionEnvironment = executionEnvironment(mavenProject, mavenSession, pluginManager);
+        this.pluginManager = pluginManager;
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
         this.invoker = invoker;
@@ -80,13 +79,23 @@ public class ExecutorService {
      * @throws MojoExecutionException If the goal execution fails
      */
     public void executeGoal(String pluginKey, String goal) throws MojoExecutionException {
-        final Plugin plugin = mavenProject.getPlugin(pluginKey);
+        executeGoal(mavenProject, pluginKey, goal, null);
+    }
+
+    public final void executeGoal(MavenProject project, String pluginKey, String goal) throws MojoExecutionException {
+        executeGoal(project, pluginKey, goal, null);
+    }
+
+    public final void executeGoal(MavenProject project, String pluginKey, String goal, Xpp3Dom overriddenConfiguration) throws MojoExecutionException {
+        MavenProject targetProject = project == null ? mavenProject : project;
+        final Plugin plugin = targetProject.getPlugin(pluginKey);
         if (plugin != null) {
-            var executionId = new AtomicReference<>(goal);
-            if (goal != null && goal.indexOf('#') > -1) {
-                int pos = goal.indexOf('#');
+            String goalName = goal;
+            var executionId = new AtomicReference<>(goalName);
+            if (goalName != null && goalName.indexOf('#') > -1) {
+                int pos = goalName.indexOf('#');
                 executionId.set(goal.substring(pos + 1));
-                goal = goal.substring(0, pos);
+                goalName = goalName.substring(0, pos);
             }
             Optional<PluginExecution> execution = plugin
                 .getExecutions()
@@ -94,14 +103,16 @@ public class ExecutorService {
                 .filter(e -> e.getId().equals(executionId.get()))
                 .findFirst();
             Xpp3Dom configuration;
-            if (execution.isPresent()) {
+            if (overriddenConfiguration != null) {
+                configuration = overriddenConfiguration;
+            } else if (execution.isPresent()) {
                 configuration = (Xpp3Dom) execution.get().getConfiguration();
             } else if (plugin.getConfiguration() != null) {
                 configuration = (Xpp3Dom) plugin.getConfiguration();
             } else {
                 configuration = configuration();
             }
-            executeMojo(plugin, goal(goal), configuration, executionEnvironment);
+            executeMojo(plugin, goal(goalName), configuration, executionEnvironment(targetProject, mavenSession, pluginManager));
         } else {
             throw new MojoExecutionException("Plugin not found: " + pluginKey);
         }
@@ -119,7 +130,7 @@ public class ExecutorService {
      */
     public void executeGoal(String pluginGroup, String pluginArtifact, String pluginVersion, String goal, Xpp3Dom configuration) throws MojoExecutionException {
         final Plugin plugin = plugin(pluginGroup, pluginArtifact, pluginVersion);
-        executeMojo(plugin, goal(goal), configuration, executionEnvironment);
+        executeMojo(plugin, goal(goal), configuration, executionEnvironment(mavenProject, mavenSession, pluginManager));
     }
 
     /**
