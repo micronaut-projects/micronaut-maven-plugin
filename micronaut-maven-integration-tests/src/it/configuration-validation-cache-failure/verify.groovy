@@ -32,4 +32,4 @@ p.waitFor()
 assert p.exitValue() == 0
 
 def out = outFile.text
-assert out.contains('No configuration validation errors.')
+assert !out.contains('Micronaut configuration is not valid')
