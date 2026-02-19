@@ -130,7 +130,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         List<Path> cacheResourceDirs = computeCacheResourceDirectories();
         String resourcesFingerprint = ConfigurationValidationCache.fingerprintResources(cacheResourceDirs, cacheIgnore);
 
-        if (cacheEnabled && handleCacheHit(cacheFile, inputsFingerprint, resourcesFingerprint, outputDir)) {
+        if (cacheEnabled && handleCacheHit(cacheFile, inputsFingerprint, resourcesFingerprint, outputDir, format)) {
             return;
         }
 
@@ -178,13 +178,14 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
     private boolean handleCacheHit(Path cacheFile,
                                    String inputsFingerprint,
                                    String resourcesFingerprint,
-                                   Path outputDir) throws MojoFailureException {
+                                   Path outputDir,
+                                   ConfigurationValidationFormat format) throws MojoFailureException {
         ConfigurationValidationCache.CacheEntry entry = ConfigurationValidationCache.readIfUpToDate(cacheFile, inputsFingerprint, resourcesFingerprint);
         if (entry == null) {
             return false;
         }
         if (entry.lastResult() == ConfigurationValidationCache.LastResult.FAILURE) {
-            throw cachedFailure(outputDir);
+            throw cachedFailure(outputDir, format);
         }
         if (getLog().isDebugEnabled()) {
             getLog().debug("Skipping configuration validation (cache hit) for scenario: " + scenarioName());
@@ -212,11 +213,15 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         }
     }
 
-    private MojoFailureException cachedFailure(Path outputDir) {
+    private MojoFailureException cachedFailure(Path outputDir, ConfigurationValidationFormat format) {
         Path html = outputDir.resolve("configuration-errors.html");
         Path json = outputDir.resolve("configuration-errors.json");
         String report;
-        if (Files.isRegularFile(html)) {
+        if (format == ConfigurationValidationFormat.JSON && Files.isRegularFile(json)) {
+            report = json.toAbsolutePath().normalize().toUri().toString();
+        } else if (format == ConfigurationValidationFormat.HTML && Files.isRegularFile(html)) {
+            report = html.toAbsolutePath().normalize().toUri().toString();
+        } else if (Files.isRegularFile(html)) {
             report = html.toAbsolutePath().normalize().toUri().toString();
         } else if (Files.isRegularFile(json)) {
             report = json.toAbsolutePath().normalize().toUri().toString();

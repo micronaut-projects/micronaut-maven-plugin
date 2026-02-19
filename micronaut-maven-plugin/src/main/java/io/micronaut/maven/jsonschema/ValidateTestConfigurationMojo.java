@@ -31,7 +31,7 @@ import java.util.List;
  */
 @Mojo(
     name = ValidateTestConfigurationMojo.MOJO_NAME,
-    defaultPhase = LifecyclePhase.TEST_COMPILE,
+    defaultPhase = LifecyclePhase.TEST,
     requiresDependencyResolution = ResolutionScope.TEST
 )
 public class ValidateTestConfigurationMojo extends AbstractConfigurationValidationMojo {

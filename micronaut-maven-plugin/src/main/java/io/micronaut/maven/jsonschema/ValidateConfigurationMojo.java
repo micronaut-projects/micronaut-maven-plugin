@@ -31,7 +31,7 @@ import java.util.List;
  */
 @Mojo(
     name = ValidateConfigurationMojo.MOJO_NAME,
-    defaultPhase = LifecyclePhase.PROCESS_RESOURCES,
+    defaultPhase = LifecyclePhase.PREPARE_PACKAGE,
     requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME
 )
 public class ValidateConfigurationMojo extends AbstractConfigurationValidationMojo {

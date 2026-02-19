@@ -64,10 +64,7 @@ final class ConfigurationValidationClasspath {
         Set<String> result = new LinkedHashSet<>();
         result.addAll(defaultMainSourceClasspath(project));
         addResources(result, project.getBuild().getTestResources());
-        // Requirement mentions src/test/resources and src/test/classes; also include src/test/java for completeness.
         addIfExists(result, project.getBasedir().toPath().resolve("src/test/resources").toString());
-        addIfExists(result, project.getBasedir().toPath().resolve("src/test/java").toString());
-        addIfExists(result, project.getBasedir().toPath().resolve("src/test/classes").toString());
         addIfExists(result, project.getBuild().getTestOutputDirectory());
         return new ArrayList<>(result);
     }
@@ -77,7 +74,7 @@ final class ConfigurationValidationClasspath {
         addResources(result, project.getBuild().getResources());
         Path basedir = project.getBasedir().toPath();
         addIfExists(result, basedir.resolve("src/main/resources").toString());
-        addIfExists(result, basedir.resolve("src/main/java").toString());
+        addIfExists(result, project.getBuild().getOutputDirectory());
         return new ArrayList<>(result);
     }
 
