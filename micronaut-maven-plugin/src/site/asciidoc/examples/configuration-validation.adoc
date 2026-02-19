@@ -38,14 +38,14 @@ If you are not using Micronaut packaging or want to customize the phase bindings
             <goals>
                 <goal>validate-configuration</goal>
             </goals>
-            <phase>process-resources</phase> <!-- optional: customize phase -->
+            <phase>prepare-package</phase> <!-- optional: customize phase -->
         </execution>
         <execution>
             <id>validate-test-config</id>
             <goals>
                 <goal>validate-test-configuration</goal>
             </goals>
-            <phase>test-compile</phase> <!-- optional: customize phase -->
+            <phase>test</phase> <!-- optional: customize phase -->
         </execution>
     </executions>
 </plugin>
