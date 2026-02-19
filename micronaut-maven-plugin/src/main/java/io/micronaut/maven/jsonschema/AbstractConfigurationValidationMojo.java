@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -105,12 +106,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         List<String> suppressions = cfg.getSuppressions() == null ? List.of() : List.copyOf(cfg.getSuppressions());
         boolean failOnNotPresent = cfg.getFailOnNotPresent() == null || cfg.getFailOnNotPresent();
         boolean deduceEnvironments = cfg.getDeduceEnvironments() != null && cfg.getDeduceEnvironments();
-        ConfigurationValidationFormat format;
-        try {
-            format = ConfigurationValidationFormat.parse(cfg.getFormat());
-        } catch (IllegalArgumentException e) {
-            throw new MojoFailureException(e.getMessage());
-        }
+        ConfigurationValidationFormat format = parseFormat(cfg.getFormat());
 
         Path outputDir = determineOutputDir(cfg, set);
         Path cacheFile = outputDir.resolve(".cache.properties");
@@ -130,29 +126,18 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
             classpath
         );
         List<String> cacheIgnore = cfg.getCacheIgnore() == null ? DEFAULT_CACHE_IGNORE : cfg.getCacheIgnore();
-        
-        // Compute fingerprint for resource directories relevant to this scenario
+
         List<Path> cacheResourceDirs = computeCacheResourceDirectories();
         String resourcesFingerprint = ConfigurationValidationCache.fingerprintResources(cacheResourceDirs, cacheIgnore);
 
-        if (cacheEnabled) {
-            ConfigurationValidationCache.CacheEntry entry = ConfigurationValidationCache.readIfUpToDate(cacheFile, inputsFingerprint, resourcesFingerprint);
-            if (entry != null) {
-                if (entry.lastResult() == ConfigurationValidationCache.LastResult.FAILURE) {
-                    throw cachedFailure(outputDir);
-                }
-                if (getLog().isDebugEnabled()) {
-                    getLog().debug("Skipping configuration validation (cache hit) for scenario: " + scenarioName());
-                }
-                return;
-            }
+        if (cacheEnabled && handleCacheHit(cacheFile, inputsFingerprint, resourcesFingerprint, outputDir)) {
+            return;
         }
 
         if (getLog().isInfoEnabled()) {
             getLog().info("Validating Micronaut configuration (" + scenarioName() + ")");
         }
 
-        // Clean up reports that won't be generated for the current format to avoid stale files
         cleanupStaleReports(outputDir, format);
 
         ConfigurationValidationExecutor.ValidationResult result = ConfigurationValidationExecutor.validate(
@@ -180,6 +165,31 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         if (result.hasErrors()) {
             throw new MojoFailureException("Micronaut configuration is not valid. See reports in: " + result.outputDirectory());
         }
+    }
+
+    private ConfigurationValidationFormat parseFormat(String format) throws MojoFailureException {
+        try {
+            return ConfigurationValidationFormat.parse(format);
+        } catch (IllegalArgumentException e) {
+            throw new MojoFailureException(e.getMessage());
+        }
+    }
+
+    private boolean handleCacheHit(Path cacheFile,
+                                   String inputsFingerprint,
+                                   String resourcesFingerprint,
+                                   Path outputDir) throws MojoFailureException {
+        ConfigurationValidationCache.CacheEntry entry = ConfigurationValidationCache.readIfUpToDate(cacheFile, inputsFingerprint, resourcesFingerprint);
+        if (entry == null) {
+            return false;
+        }
+        if (entry.lastResult() == ConfigurationValidationCache.LastResult.FAILURE) {
+            throw cachedFailure(outputDir);
+        }
+        if (getLog().isDebugEnabled()) {
+            getLog().debug("Skipping configuration validation (cache hit) for scenario: " + scenarioName());
+        }
+        return true;
     }
 
     private void cleanupStaleReports(Path outputDir, ConfigurationValidationFormat format) {
@@ -258,32 +268,39 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
     private List<String> computeClasspathElements(ConfigurationValidationConfiguration.ValidationSet set) {
         Set<String> elements = new LinkedHashSet<>();
 
-        List<String> base;
-        if (set != null && set.getClasspathElements() != null && !set.getClasspathElements().isEmpty()) {
-            base = set.getClasspathElements();
-        } else {
-            base = defaultClasspath(project);
-        }
-        for (String p : base) {
-            if (p != null && !p.isBlank()) {
-                elements.add(p);
-            }
-        }
-        if (set != null && set.getAdditionalClasspathElements() != null) {
-            for (String p : set.getAdditionalClasspathElements()) {
-                if (p != null && !p.isBlank()) {
-                    elements.add(p);
-                }
-            }
-        }
+        addNonBlankElements(elements, chooseBaseClasspath(set));
+        addNonBlankElements(elements, set == null ? null : set.getAdditionalClasspathElements());
 
-        List<Dependency> deps = compilerService.resolveDependencies(project, false, dependencyScopes());
-        String depsClasspath = compilerService.buildClasspath(deps);
-        if (depsClasspath != null && !depsClasspath.isBlank()) {
-            Collections.addAll(elements, depsClasspath.split(java.util.regex.Pattern.quote(File.pathSeparator)));
-        }
+        addDependencyClasspath(elements);
 
         return new ArrayList<>(elements);
+    }
+
+    private List<String> chooseBaseClasspath(ConfigurationValidationConfiguration.ValidationSet set) {
+        if (set != null && set.getClasspathElements() != null && !set.getClasspathElements().isEmpty()) {
+            return set.getClasspathElements();
+        }
+        return defaultClasspath(project);
+    }
+
+    private void addNonBlankElements(Set<String> elements, List<String> candidates) {
+        if (candidates == null) {
+            return;
+        }
+        for (String candidate : candidates) {
+            if (candidate != null && !candidate.isBlank()) {
+                elements.add(candidate);
+            }
+        }
+    }
+
+    private void addDependencyClasspath(Set<String> elements) {
+        List<Dependency> deps = compilerService.resolveDependencies(project, false, dependencyScopes());
+        String depsClasspath = compilerService.buildClasspath(deps);
+        if (depsClasspath == null || depsClasspath.isBlank()) {
+            return;
+        }
+        Collections.addAll(elements, depsClasspath.split(java.util.regex.Pattern.quote(File.pathSeparator)));
     }
 
     /**
@@ -313,32 +330,28 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
 
     private List<Path> resolveResourceDirectories(ConfigurationValidationConfiguration.ValidationSet set) {
         if (set != null && set.getResourceDirectories() != null && !set.getResourceDirectories().isEmpty()) {
-            List<Path> result = new ArrayList<>(set.getResourceDirectories().size());
-            for (File f : set.getResourceDirectories()) {
-                if (f == null) {
-                    continue;
-                }
-                Path p = f.toPath();
-                if (!p.isAbsolute()) {
-                    p = project.getBasedir().toPath().resolve(p);
-                }
-                p = p.normalize();
-                if (Files.exists(p)) {
-                    result.add(p);
-                }
-            }
-            return List.copyOf(result);
+            return existingPathsFromFiles(set.getResourceDirectories());
         }
         List<Path> defaults = defaultResourceDirectories();
         if (defaults == null || defaults.isEmpty()) {
             return List.of();
         }
-        List<Path> result = new ArrayList<>(defaults.size());
+
+        return existingPathsFromPaths(defaults);
+    }
+
+    private List<Path> existingPathsFromFiles(List<File> files) {
+        return existingPaths(files.stream().filter(Objects::nonNull).map(File::toPath).toList());
+    }
+
+    private List<Path> existingPathsFromPaths(List<Path> paths) {
+        return existingPaths(paths.stream().filter(Objects::nonNull).toList());
+    }
+
+    private List<Path> existingPaths(List<Path> paths) {
+        List<Path> result = new ArrayList<>(paths.size());
         Path baseDir = project.getBasedir().toPath();
-        for (Path p : defaults) {
-            if (p == null) {
-                continue;
-            }
+        for (Path p : paths) {
             Path resolved = p.isAbsolute() ? p : baseDir.resolve(p);
             resolved = resolved.normalize();
             if (Files.exists(resolved)) {
