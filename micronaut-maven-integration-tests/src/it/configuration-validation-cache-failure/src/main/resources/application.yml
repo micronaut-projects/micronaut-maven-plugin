@@ -1,0 +1,6 @@
+micronaut:
+  application:
+    name: configuration-validation-cache-failure
+  server:
+    ssl:
+      enabled: definitely-not-bool

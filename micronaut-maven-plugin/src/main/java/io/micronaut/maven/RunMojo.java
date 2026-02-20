@@ -21,6 +21,7 @@ import io.micronaut.maven.aot.AotAnalysisMojo;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.maven.services.ExecutorService;
+import io.micronaut.maven.jsonschema.ValidateDevConfigurationMojo;
 import io.micronaut.maven.testresources.AbstractTestResourcesMojo;
 import io.micronaut.maven.testresources.TestResourcesHelper;
 import io.micronaut.testresources.buildtools.ServerSettings;
@@ -43,6 +44,7 @@ import org.apache.maven.project.ProjectBuildingResult;
 import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.util.AbstractScanner;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.util.artifact.JavaScopes;
 
@@ -513,6 +515,8 @@ public class RunMojo extends AbstractTestResourcesMojo {
         }
         restartLock.lock();
         try {
+            // Validate Micronaut configuration for the dev environment before starting.
+            executorService.executeGoal(runnableProject, THIS_PLUGIN, ValidateDevConfigurationMojo.MOJO_NAME, configurationValidationConfiguration());
             runAotIfNeeded();
             final String reactorClasses = mavenSession.getAllProjects().stream()
                     .filter(this::isDependencyOfRunnableProject)
@@ -578,11 +582,28 @@ public class RunMojo extends AbstractTestResourcesMojo {
     private void runAotIfNeeded() {
         if (aotEnabled) {
             try {
-                executorService.executeGoal(THIS_PLUGIN, AotAnalysisMojo.NAME);
+                executorService.executeGoal(runnableProject, THIS_PLUGIN, AotAnalysisMojo.NAME);
             } catch (MojoExecutionException e) {
                 getLog().error(e.getMessage());
             }
         }
+    }
+
+    private Xpp3Dom configurationValidationConfiguration() {
+        Xpp3Dom configuration = new Xpp3Dom("configuration");
+        var plugin = runnableProject.getPlugin(THIS_PLUGIN);
+        if (plugin == null) {
+            return configuration;
+        }
+        Object pluginConfiguration = plugin.getConfiguration();
+        if (!(pluginConfiguration instanceof Xpp3Dom pluginDom)) {
+            return configuration;
+        }
+        Xpp3Dom validationConfiguration = pluginDom.getChild("configurationValidation");
+        if (validationConfiguration != null) {
+            configuration.addChild(new Xpp3Dom(validationConfiguration));
+        }
+        return configuration;
     }
 
     private void maybeStartTestResourcesServer() throws MojoExecutionException {

@@ -9,19 +9,19 @@
   <parent>
     <groupId>io.micronaut.platform</groupId>
     <artifactId>micronaut-parent</artifactId>
-    <version>4.0.0-SNAPSHOT</version>
+    <version>4.10.8</version>
   </parent>
 
   <properties>
-    <micronaut.version>4.6.2</micronaut.version>
-    <micronaut-maven-plugin.version>4.6.3</micronaut-maven-plugin.version>
+    <micronaut.version>5.0.0-SNAPSHOT</micronaut.version>
+    <micronaut-maven-plugin.version>5.0.0-SNAPSHOT</micronaut-maven-plugin.version>
     <exec.mainClass>io.micronaut.maven.examples.Application</exec.mainClass>
     <packaging>jar</packaging>
     <micronaut.runtime>netty</micronaut.runtime>
     <micronaut.aot.enabled>false</micronaut.aot.enabled>
     <micronaut.aot.packageName>io.micronaut.maven.examples</micronaut.aot.packageName>
     <micronaut.test.resources.enabled>false</micronaut.test.resources.enabled>
-    <micronaut.test.resources.version>2.0.0-SNAPSHOT</micronaut.test.resources.version>
+    <micronaut.test.resources.version>3.0.0-M5</micronaut.test.resources.version>
   </properties>
 
   <repositories>

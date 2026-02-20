@@ -1,0 +1,4 @@
+micronaut:
+  server:
+    # This would normally be an error, but is suppressed for the "package" scenario.
+    port: not-a-number

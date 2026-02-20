@@ -1,0 +1,6 @@
+micronaut:
+  application:
+    name: configuration-validation-invalid
+  server:
+    ssl:
+      enabled: definitely-not-bool

@@ -35,10 +35,12 @@
                             </test-compile>
                             <test>
                                 ${project.groupId}:${project.artifactId}:${project.version}:start-testresources-service,
+                                ${project.groupId}:${project.artifactId}:${project.version}:validate-test-configuration,
                                 org.apache.maven.plugins:maven-surefire-plugin:test,
                                 ${project.groupId}:${project.artifactId}:${project.version}:stop-testresources-service
                             </test>
                             <prepare-package>
+                                ${project.groupId}:${project.artifactId}:${project.version}:validate-configuration,
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
                             </prepare-package>
                             <package>
@@ -95,10 +97,12 @@
                             </process-test-classes>
                             <test>
                                 ${project.groupId}:${project.artifactId}:${project.version}:start-testresources-service,
+                                ${project.groupId}:${project.artifactId}:${project.version}:validate-test-configuration,
                                 org.apache.maven.plugins:maven-surefire-plugin:test,
                                 ${project.groupId}:${project.artifactId}:${project.version}:stop-testresources-service
                             </test>
                             <prepare-package>
+                                ${project.groupId}:${project.artifactId}:${project.version}:validate-configuration,
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
                                 org.apache.maven.plugins:maven-jar-plugin:jar
                             </prepare-package>
@@ -143,10 +147,12 @@
                             </test-compile>
                             <test>
                                 ${project.groupId}:${project.artifactId}:${project.version}:start-testresources-service,
+                                ${project.groupId}:${project.artifactId}:${project.version}:validate-test-configuration,
                                 org.apache.maven.plugins:maven-surefire-plugin:test,
                                 ${project.groupId}:${project.artifactId}:${project.version}:stop-testresources-service
                             </test>
                             <prepare-package>
+                                ${project.groupId}:${project.artifactId}:${project.version}:validate-configuration,
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
                             </prepare-package>
                             <package>
@@ -194,10 +200,12 @@
                             </test-compile>
                             <test>
                                 ${project.groupId}:${project.artifactId}:${project.version}:start-testresources-service,
+                                ${project.groupId}:${project.artifactId}:${project.version}:validate-test-configuration,
                                 org.apache.maven.plugins:maven-surefire-plugin:test,
                                 ${project.groupId}:${project.artifactId}:${project.version}:stop-testresources-service
                             </test>
                             <prepare-package>
+                                ${project.groupId}:${project.artifactId}:${project.version}:validate-configuration,
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
                             </prepare-package>
                             <package>
@@ -250,10 +258,12 @@
                             </process-test-classes>
                             <test>
                                 ${project.groupId}:${project.artifactId}:${project.version}:start-testresources-service,
+                                ${project.groupId}:${project.artifactId}:${project.version}:validate-test-configuration,
                                 org.apache.maven.plugins:maven-surefire-plugin:test,
                                 ${project.groupId}:${project.artifactId}:${project.version}:stop-testresources-service
                             </test>
                             <prepare-package>
+                                ${project.groupId}:${project.artifactId}:${project.version}:validate-configuration,
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
                                 org.graalvm.buildtools:native-maven-plugin:write-args-file
                             </prepare-package>
