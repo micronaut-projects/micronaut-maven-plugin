@@ -15,7 +15,7 @@
 
     <properties>
         <packaging>jar</packaging>
-        <micronaut.version>@it.micronaut.core.version@</micronaut.version>
+        <micronaut.version>@it.micronaut.version@</micronaut.version>
         <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
         <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
     </properties>

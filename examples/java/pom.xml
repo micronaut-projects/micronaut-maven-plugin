@@ -14,7 +14,6 @@
 
   <properties>
     <micronaut.version>5.0.0-SNAPSHOT</micronaut.version>
-    <micronaut.core.version>5.0.0-SNAPSHOT</micronaut.core.version>
     <micronaut-maven-plugin.version>5.0.0-SNAPSHOT</micronaut-maven-plugin.version>
     <exec.mainClass>io.micronaut.maven.examples.Application</exec.mainClass>
     <packaging>jar</packaging>
