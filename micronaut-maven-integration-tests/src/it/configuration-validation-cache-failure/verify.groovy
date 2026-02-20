@@ -3,7 +3,9 @@ File reportJson = new File(reportDir, 'configuration-errors.json')
 File cacheFile = new File(reportDir, '.cache.properties')
 assert reportJson.exists()
 assert cacheFile.exists()
-assert cacheFile.text.contains('lastResult=SUCCESS')
+assert cacheFile.text.contains('lastResult=FAILURE')
+assert reportJson.text.contains('"micronaut.server.ssl.enabled"')
+assert reportJson.text.contains('"Expected boolean"')
 
 boolean windows = System.getProperty('os.name').toLowerCase().contains('windows')
 File mvnw = new File(basedir, windows ? '../../../mvnw.cmd' : '../../../mvnw')
@@ -29,7 +31,7 @@ pb.redirectOutput(outFile)
 
 Process p = pb.start()
 p.waitFor()
-assert p.exitValue() == 0
+assert p.exitValue() != 0
 
 def out = outFile.text
-assert !out.contains('Micronaut configuration is not valid')
+assert out.contains('Micronaut configuration is not valid')

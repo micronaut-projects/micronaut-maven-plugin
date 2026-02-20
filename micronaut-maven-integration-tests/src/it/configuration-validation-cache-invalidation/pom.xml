@@ -45,6 +45,16 @@
                 <artifactId>micronaut-maven-plugin</artifactId>
                 <version>${micronaut-maven-plugin.version}</version>
 
+                <configuration>
+                    <configurationValidation>
+                        <packageValidation>
+                            <resourceDirectories>
+                                <resourceDirectory>${project.basedir}/src/main/custom-resources</resourceDirectory>
+                            </resourceDirectories>
+                        </packageValidation>
+                    </configurationValidation>
+                </configuration>
+
                 <executions>
                     <execution>
                         <id>validate-config-1</id>
@@ -76,7 +86,7 @@
                         </goals>
                         <configuration>
                             <target>
-                                <echo file="${project.basedir}/src/main/resources/cache-buster.txt" append="false">bumped</echo>
+                                <echo file="${project.basedir}/src/main/custom-resources/cache-buster.txt" append="false">bumped</echo>
                             </target>
                         </configuration>
                     </execution>

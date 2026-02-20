@@ -2,4 +2,5 @@ micronaut:
   application:
     name: configuration-validation-invalid
   server:
-    port: not-a-number
+    ssl:
+      enabled: definitely-not-bool
