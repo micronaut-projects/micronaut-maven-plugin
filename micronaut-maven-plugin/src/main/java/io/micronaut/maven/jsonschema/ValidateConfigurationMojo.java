@@ -16,7 +16,6 @@
 package io.micronaut.maven.jsonschema;
 
 import io.micronaut.maven.services.CompilerService;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
@@ -31,7 +30,6 @@ import java.util.List;
  */
 @Mojo(
     name = ValidateConfigurationMojo.MOJO_NAME,
-    defaultPhase = LifecyclePhase.PREPARE_PACKAGE,
     requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME
 )
 public class ValidateConfigurationMojo extends AbstractConfigurationValidationMojo {

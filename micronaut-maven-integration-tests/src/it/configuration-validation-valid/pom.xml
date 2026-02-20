@@ -60,20 +60,6 @@
                         <format>json</format>
                     </configurationValidation>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>validate-config</id>
-                        <goals>
-                            <goal>validate-configuration</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>validate-test-config</id>
-                        <goals>
-                            <goal>validate-test-configuration</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
