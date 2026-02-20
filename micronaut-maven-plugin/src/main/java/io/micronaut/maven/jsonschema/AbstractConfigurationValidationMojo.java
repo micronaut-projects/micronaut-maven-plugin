@@ -127,7 +127,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         );
         List<String> cacheIgnore = cfg.getCacheIgnore() == null ? DEFAULT_CACHE_IGNORE : cfg.getCacheIgnore();
 
-        List<Path> cacheResourceDirs = computeCacheResourceDirectories();
+        List<Path> cacheResourceDirs = computeCacheResourceDirectories(set);
         String resourcesFingerprint = ConfigurationValidationCache.fingerprintResources(cacheResourceDirs, cacheIgnore);
 
         if (cacheEnabled && handleCacheHit(cacheFile, inputsFingerprint, resourcesFingerprint, outputDir, format)) {
@@ -308,29 +308,15 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         Collections.addAll(elements, depsClasspath.split(java.util.regex.Pattern.quote(File.pathSeparator)));
     }
 
-    /**
-     * Compute resource directories to fingerprint for cache invalidation.
-     * This uses the scenario's default resource directories (same as used for error reporting).
-     *
-     * @return Resource directories to fingerprint for cache purposes
-     */
-    private List<Path> computeCacheResourceDirectories() {
+    private List<Path> computeCacheResourceDirectories(ConfigurationValidationConfiguration.ValidationSet set) {
+        if (set != null && set.getResourceDirectories() != null && !set.getResourceDirectories().isEmpty()) {
+            return resolvedPaths(set.getResourceDirectories().stream().filter(Objects::nonNull).map(File::toPath).toList(), false);
+        }
         List<Path> defaults = defaultResourceDirectories();
         if (defaults == null || defaults.isEmpty()) {
             return List.of();
         }
-        List<Path> result = new ArrayList<>(defaults.size());
-        Path baseDir = project.getBasedir().toPath();
-        for (Path p : defaults) {
-            if (p == null) {
-                continue;
-            }
-            Path resolved = p.isAbsolute() ? p : baseDir.resolve(p);
-            resolved = resolved.normalize();
-            // Include in fingerprint even if it doesn't exist yet (to detect when it appears)
-            result.add(resolved);
-        }
-        return List.copyOf(result);
+        return resolvedPaths(defaults.stream().filter(Objects::nonNull).toList(), false);
     }
 
     private List<Path> resolveResourceDirectories(ConfigurationValidationConfiguration.ValidationSet set) {
@@ -354,12 +340,19 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
     }
 
     private List<Path> existingPaths(List<Path> paths) {
+        return resolvedPaths(paths, true);
+    }
+
+    private List<Path> resolvedPaths(List<Path> paths, boolean existingOnly) {
+        if (paths.isEmpty()) {
+            return List.of();
+        }
         List<Path> result = new ArrayList<>(paths.size());
         Path baseDir = project.getBasedir().toPath();
         for (Path p : paths) {
             Path resolved = p.isAbsolute() ? p : baseDir.resolve(p);
             resolved = resolved.normalize();
-            if (Files.exists(resolved)) {
+            if (!existingOnly || Files.exists(resolved)) {
                 result.add(resolved);
             }
         }

@@ -181,7 +181,8 @@ public final class ConfigurationValidationConfiguration {
     /**
      * Resource patterns to ignore when computing cache fingerprints.
      * <p>
-     * Patterns are evaluated against paths relative to {@code src/main/resources} using {@code glob} syntax.
+     * Patterns are evaluated using {@code glob} syntax against paths relative to each configured resource directory
+     * for the active scenario.
      *
      * @return Ignore patterns, or {@code null} to use defaults
      */
