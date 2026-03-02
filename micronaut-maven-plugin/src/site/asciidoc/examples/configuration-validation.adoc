@@ -69,6 +69,9 @@ The mojos share a `configurationValidation` block and expose options equivalent 
             <suppressions>
                 <suppression>.*\.password</suppression>
             </suppressions>
+            <suppressInjectErrors>
+                <suppressInjectError>com.example.internal.*</suppressInjectError>
+            </suppressInjectErrors>
             <failOnNotPresent>true</failOnNotPresent>
             <deduceEnvironments>false</deduceEnvironments>
             <validateDependencyInjection>false</validateDependencyInjection>

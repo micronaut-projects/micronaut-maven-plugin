@@ -104,6 +104,9 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
 
         List<String> environments = computeEnvironments(set, defaultEnvironments());
         List<String> suppressions = cfg.getSuppressions() == null ? List.of() : List.copyOf(cfg.getSuppressions());
+        List<String> suppressInjectErrors = cfg.getSuppressInjectErrors() == null
+            ? List.of()
+            : List.copyOf(cfg.getSuppressInjectErrors());
         boolean failOnNotPresent = cfg.getFailOnNotPresent() == null || cfg.getFailOnNotPresent();
         boolean deduceEnvironments = cfg.getDeduceEnvironments() != null && cfg.getDeduceEnvironments();
         boolean validateDependencyInjection = cfg.getValidateDependencyInjection() != null && cfg.getValidateDependencyInjection();
@@ -124,6 +127,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
             scenarioName(),
             environments.toString(),
             suppressions.toString(),
+            suppressInjectErrors.toString(),
             Boolean.toString(failOnNotPresent),
             Boolean.toString(deduceEnvironments),
             Boolean.toString(validateDependencyInjection),
@@ -150,6 +154,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
             classpath,
             environments,
             suppressions,
+            suppressInjectErrors,
             failOnNotPresent,
             deduceEnvironments,
             validateDependencyInjection,

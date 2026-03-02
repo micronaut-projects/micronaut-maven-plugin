@@ -29,10 +29,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Executes Micronaut configuration validation using the Micronaut JSON Schema configuration validator.
@@ -47,6 +51,7 @@ final class ConfigurationValidationExecutor {
      * @param classpath Path-separator separated classpath to validate
      * @param environments Environments to enable
      * @param suppressions Suppression patterns
+     * @param suppressInjectErrors Dependency-injection suppression patterns
      * @param failOnNotPresent Whether to fail when properties are not present in schema
      * @param deduceEnvironments Whether to allow Micronaut to deduce environments
      * @param validateDependencyInjection Whether to validate dependency injection
@@ -62,6 +67,7 @@ final class ConfigurationValidationExecutor {
         String classpath,
         List<String> environments,
         List<String> suppressions,
+        List<String> suppressInjectErrors,
         boolean failOnNotPresent,
         boolean deduceEnvironments,
         boolean validateDependencyInjection,
@@ -88,11 +94,12 @@ final class ConfigurationValidationExecutor {
         Set<DependencyInjectionError> dependencyInjectionErrors = Set.of();
 
         if (validateDependencyInjection) {
-            dependencyInjectionErrors = DependencyInjectionConfigurationValidator.forClasspath(
+            dependencyInjectionErrors = validateDependencyInjection(
                 classpath,
                 environments,
-                deduceEnvironments
-            ).validate();
+                deduceEnvironments,
+                suppressInjectErrors
+            );
         }
 
         Path jsonFile = null;
@@ -116,6 +123,120 @@ final class ConfigurationValidationExecutor {
         boolean hasErrors = errors.stream().anyMatch(e -> e.type() == ConfigurationError.Type.ERROR);
         hasErrors = hasErrors || !dependencyInjectionErrors.isEmpty();
         return new ValidationResult(errors, hasErrors, outputDir.toFile());
+    }
+
+    private static Set<DependencyInjectionError> validateDependencyInjection(
+        String classpath,
+        List<String> environments,
+        boolean deduceEnvironments,
+        List<String> suppressInjectErrors
+    ) {
+        Set<DependencyInjectionError> errors = validateWithSuppressionAwareValidator(
+            classpath,
+            environments,
+            deduceEnvironments,
+            suppressInjectErrors
+        );
+        if (errors != null) {
+            return errors;
+        }
+        Set<DependencyInjectionError> legacyErrors = DependencyInjectionConfigurationValidator.forClasspath(
+            classpath,
+            environments,
+            deduceEnvironments
+        ).validate();
+        return applyLegacySuppressions(legacyErrors, suppressInjectErrors);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Set<DependencyInjectionError> validateWithSuppressionAwareValidator(
+        String classpath,
+        List<String> environments,
+        boolean deduceEnvironments,
+        List<String> suppressInjectErrors
+    ) {
+        try {
+            Method forClasspath = DependencyInjectionConfigurationValidator.class.getMethod(
+                "forClasspath",
+                String.class,
+                List.class,
+                boolean.class,
+                List.class
+            );
+            Object validator = forClasspath.invoke(null, classpath, environments, deduceEnvironments, suppressInjectErrors);
+            return ((DependencyInjectionConfigurationValidator) validator).validate();
+        } catch (NoSuchMethodException e) {
+            return null;
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new IllegalStateException("Dependency injection validation failed", e);
+        }
+    }
+
+    private static Set<DependencyInjectionError> applyLegacySuppressions(
+        Set<DependencyInjectionError> errors,
+        List<String> suppressInjectErrors
+    ) {
+        if (suppressInjectErrors.isEmpty() || errors.isEmpty()) {
+            return errors;
+        }
+        List<Pattern> patterns = compileSuppressionPatterns(suppressInjectErrors);
+        if (patterns.isEmpty()) {
+            return errors;
+        }
+        return errors.stream()
+            .filter(error -> !isSuppressed(error, patterns))
+            .collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
+    }
+
+    private static List<Pattern> compileSuppressionPatterns(List<String> suppressInjectErrors) {
+        List<Pattern> patterns = new ArrayList<>(suppressInjectErrors.size());
+        for (String rawPattern : suppressInjectErrors) {
+            if (rawPattern == null || rawPattern.isBlank()) {
+                continue;
+            }
+            String pattern = rawPattern.trim();
+            if (pattern.indexOf('*') > -1) {
+                patterns.add(Pattern.compile(wildcardToRegex(pattern)));
+            } else {
+                patterns.add(Pattern.compile("^" + Pattern.quote(pattern) + "$"));
+            }
+        }
+        return patterns;
+    }
+
+    private static boolean isSuppressed(DependencyInjectionError error, List<Pattern> patterns) {
+        return matches(error.rootBean(), patterns)
+            || matches(error.bean(), patterns)
+            || matches(error.injectionPoint(), patterns);
+    }
+
+    private static boolean matches(String value, List<Pattern> patterns) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        for (Pattern pattern : patterns) {
+            if (pattern.matcher(value).find()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String wildcardToRegex(String wildcardPattern) {
+        StringBuilder out = new StringBuilder(wildcardPattern.length() + 16);
+        out.append('^');
+        for (int i = 0; i < wildcardPattern.length(); i++) {
+            char c = wildcardPattern.charAt(i);
+            if (c == '*') {
+                out.append(".*");
+            } else if ("\\.[]{}()+-^$|?".indexOf(c) >= 0) {
+                out.append('\\').append(c);
+            } else {
+                out.append(c);
+            }
+        }
+        out.append('$');
+        return out.toString();
     }
 
     /**
