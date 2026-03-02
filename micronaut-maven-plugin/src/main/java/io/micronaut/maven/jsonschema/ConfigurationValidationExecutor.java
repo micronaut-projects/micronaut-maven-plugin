@@ -18,6 +18,8 @@ package io.micronaut.maven.jsonschema;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.jsonschema.configuration.validator.ConfigurationError;
 import io.micronaut.jsonschema.configuration.validator.ConfigurationJsonSchemaValidator;
+import io.micronaut.jsonschema.configuration.validator.DependencyInjectionError;
+import io.micronaut.jsonschema.configuration.validator.cli.DependencyInjectionConfigurationValidator;
 import io.micronaut.jsonschema.configuration.validator.cli.JsonSchemaConfigurationValidator;
 import io.micronaut.jsonschema.configuration.validator.report.HtmlConfigurationErrorReporter;
 import io.micronaut.jsonschema.configuration.validator.report.JsonConfigurationErrorReporter;
@@ -47,6 +49,7 @@ final class ConfigurationValidationExecutor {
      * @param suppressions Suppression patterns
      * @param failOnNotPresent Whether to fail when properties are not present in schema
      * @param deduceEnvironments Whether to allow Micronaut to deduce environments
+     * @param validateDependencyInjection Whether to validate dependency injection
      * @param outputDir Output directory
      * @param format Report format
      * @param projectBaseDir Project base directory for relative path resolution in error reports
@@ -61,6 +64,7 @@ final class ConfigurationValidationExecutor {
         List<String> suppressions,
         boolean failOnNotPresent,
         boolean deduceEnvironments,
+        boolean validateDependencyInjection,
         Path outputDir,
         ConfigurationValidationFormat format,
         Path projectBaseDir,
@@ -81,6 +85,15 @@ final class ConfigurationValidationExecutor {
         );
 
         Set<ConfigurationError> errors = facade.validate();
+        Set<DependencyInjectionError> dependencyInjectionErrors = Set.of();
+
+        if (validateDependencyInjection) {
+            dependencyInjectionErrors = DependencyInjectionConfigurationValidator.forClasspath(
+                classpath,
+                environments,
+                deduceEnvironments
+            ).validate();
+        }
 
         Path jsonFile = null;
         Path htmlFile = null;
@@ -88,19 +101,20 @@ final class ConfigurationValidationExecutor {
         if (format == ConfigurationValidationFormat.JSON || format == ConfigurationValidationFormat.BOTH) {
             jsonFile = outputDir.resolve("configuration-errors.json");
             try (OutputStream os = Files.newOutputStream(jsonFile)) {
-                new JsonConfigurationErrorReporter(JsonMapper.createDefault(), os).report(errors);
+                new JsonConfigurationErrorReporter(JsonMapper.createDefault(), os).report(errors, dependencyInjectionErrors);
             }
         }
         if (format == ConfigurationValidationFormat.HTML || format == ConfigurationValidationFormat.BOTH) {
             htmlFile = outputDir.resolve("configuration-errors.html");
             try (OutputStream os = Files.newOutputStream(htmlFile)) {
-                new HtmlConfigurationErrorReporter(os).report(errors);
+                new HtmlConfigurationErrorReporter(os).report(errors, dependencyInjectionErrors);
             }
         }
 
-        new SystemErrConfigurationErrorReporter(err, htmlFile, jsonFile, projectBaseDir, resourcesDirs).report(errors);
+        new SystemErrConfigurationErrorReporter(err, htmlFile, jsonFile, projectBaseDir, resourcesDirs).report(errors, dependencyInjectionErrors);
 
         boolean hasErrors = errors.stream().anyMatch(e -> e.type() == ConfigurationError.Type.ERROR);
+        hasErrors = hasErrors || !dependencyInjectionErrors.isEmpty();
         return new ValidationResult(errors, hasErrors, outputDir.toFile());
     }
 

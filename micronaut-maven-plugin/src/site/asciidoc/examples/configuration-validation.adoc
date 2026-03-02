@@ -71,6 +71,7 @@ The mojos share a `configurationValidation` block and expose options equivalent 
             </suppressions>
             <failOnNotPresent>true</failOnNotPresent>
             <deduceEnvironments>false</deduceEnvironments>
+            <validateDependencyInjection>false</validateDependencyInjection>
             <format>both</format> <!-- json|html|both -->
             <outputDirectory>${project.build.directory}/micronaut/config-validation</outputDirectory>
 
@@ -115,6 +116,7 @@ Depending on `format`, the plugin generates:
 
 Validation results are cached on disk to avoid re-running on every build.
 By default, validation re-runs when `src/main/resources` changes.
+When `validateDependencyInjection` is enabled, classpath entry metadata/content is also fingerprinted for cache invalidation.
 
 Disable caching with:
 

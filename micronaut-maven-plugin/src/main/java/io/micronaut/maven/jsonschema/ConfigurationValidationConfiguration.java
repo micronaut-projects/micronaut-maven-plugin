@@ -46,6 +46,11 @@ public final class ConfigurationValidationConfiguration {
     private Boolean deduceEnvironments;
 
     /**
+     * Whether to run dependency-injection validation in addition to configuration validation.
+     */
+    private Boolean validateDependencyInjection;
+
+    /**
      * Report format: json|html|both.
      */
     private String format;
@@ -129,6 +134,22 @@ public final class ConfigurationValidationConfiguration {
      */
     public void setDeduceEnvironments(Boolean deduceEnvironments) {
         this.deduceEnvironments = deduceEnvironments;
+    }
+
+    /**
+     * Controls whether dependency-injection validation should be executed.
+     *
+     * @return Whether to validate dependency injection. If {@code null}, defaults to {@code false}.
+     */
+    public Boolean getValidateDependencyInjection() {
+        return validateDependencyInjection;
+    }
+
+    /**
+     * @param validateDependencyInjection Whether to run dependency-injection validation.
+     */
+    public void setValidateDependencyInjection(Boolean validateDependencyInjection) {
+        this.validateDependencyInjection = validateDependencyInjection;
     }
 
     /**

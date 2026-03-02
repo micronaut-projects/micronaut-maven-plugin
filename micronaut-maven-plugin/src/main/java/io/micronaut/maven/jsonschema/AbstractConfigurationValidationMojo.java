@@ -106,6 +106,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         List<String> suppressions = cfg.getSuppressions() == null ? List.of() : List.copyOf(cfg.getSuppressions());
         boolean failOnNotPresent = cfg.getFailOnNotPresent() == null || cfg.getFailOnNotPresent();
         boolean deduceEnvironments = cfg.getDeduceEnvironments() != null && cfg.getDeduceEnvironments();
+        boolean validateDependencyInjection = cfg.getValidateDependencyInjection() != null && cfg.getValidateDependencyInjection();
         ConfigurationValidationFormat format = parseFormat(cfg.getFormat());
 
         Path outputDir = determineOutputDir(cfg, set);
@@ -115,6 +116,9 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
 
         List<String> classpathElements = computeClasspathElements(set);
         String classpath = String.join(File.pathSeparator, classpathElements);
+        String classpathFingerprint = validateDependencyInjection
+            ? ConfigurationValidationCache.fingerprintClasspath(classpathElements)
+            : "classpath-fingerprint-disabled";
 
         String inputsFingerprint = String.join("|",
             scenarioName(),
@@ -122,8 +126,10 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
             suppressions.toString(),
             Boolean.toString(failOnNotPresent),
             Boolean.toString(deduceEnvironments),
+            Boolean.toString(validateDependencyInjection),
             format.name(),
-            classpath
+            classpath,
+            classpathFingerprint
         );
         List<String> cacheIgnore = cfg.getCacheIgnore() == null ? DEFAULT_CACHE_IGNORE : cfg.getCacheIgnore();
 
@@ -146,6 +152,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
             suppressions,
             failOnNotPresent,
             deduceEnvironments,
+            validateDependencyInjection,
             outputDir,
             format,
             project.getBasedir().toPath(),

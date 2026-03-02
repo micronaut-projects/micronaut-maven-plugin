@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
@@ -110,6 +111,48 @@ final class ConfigurationValidationCache {
         for (Path dir : resourceDirs) {
             update(digest, dir.toString());
             update(digest, fingerprintMainResources(dir, ignorePatterns));
+        }
+        return HexFormat.of().formatHex(digest.digest());
+    }
+
+    /**
+     * Computes a fingerprint for classpath entries and their content metadata.
+     *
+     * @param classpathElements The classpath entries used by validation
+     * @return A combined SHA-256 hex digest
+     */
+    static String fingerprintClasspath(List<String> classpathElements) {
+        if (classpathElements == null || classpathElements.isEmpty()) {
+            return "no-classpath";
+        }
+        MessageDigest digest = sha256();
+        for (String classpathElement : classpathElements) {
+            if (classpathElement == null || classpathElement.isBlank()) {
+                continue;
+            }
+            Path path;
+            try {
+                path = Path.of(classpathElement).normalize();
+            } catch (Exception e) {
+                update(digest, "invalid:" + classpathElement);
+                continue;
+            }
+            update(digest, path.toString());
+            if (!Files.exists(path)) {
+                update(digest, "missing");
+                continue;
+            }
+            try {
+                if (Files.isDirectory(path)) {
+                    update(digest, fingerprintMainResources(path));
+                } else {
+                    update(digest, Long.toString(Files.size(path)));
+                    FileTime lastModifiedTime = Files.getLastModifiedTime(path);
+                    update(digest, Long.toString(lastModifiedTime.toMillis()));
+                }
+            } catch (IOException ignored) {
+                update(digest, "unreadable");
+            }
         }
         return HexFormat.of().formatHex(digest.digest());
     }
