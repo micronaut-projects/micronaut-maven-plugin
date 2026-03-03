@@ -122,7 +122,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
 
         List<String> classpathElements = computeClasspathElements(set);
         String classpath = String.join(File.pathSeparator, classpathElements);
-        String classpathFingerprint = validateDependencyInjection
+        String classpathFingerprint = cacheEnabled && validateDependencyInjection
             ? ConfigurationValidationCache.fingerprintClasspath(classpathElements)
             : "classpath-fingerprint-disabled";
 
