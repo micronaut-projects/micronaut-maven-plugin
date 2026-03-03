@@ -117,6 +117,8 @@ final class ConfigurationValidationCache {
 
     /**
      * Computes a fingerprint for classpath entries and their content metadata.
+     * Uses cheap metadata (size + last-modified time) for directories to avoid
+     * excessive I/O overhead on large compiled output directories.
      *
      * @param classpathElements The classpath entries used by validation
      * @return A combined SHA-256 hex digest
@@ -144,15 +146,44 @@ final class ConfigurationValidationCache {
             }
             try {
                 if (Files.isDirectory(path)) {
-                    update(digest, fingerprintMainResources(path));
+                    update(digest, fingerprintDirectoryContents(path));
                 } else {
                     update(digest, Long.toString(Files.size(path)));
                     FileTime lastModifiedTime = Files.getLastModifiedTime(path);
                     update(digest, Long.toString(lastModifiedTime.toMillis()));
                 }
             } catch (IOException ignored) {
-                update(digest, "unreadable");
+                update(digest, "<unreadable>");
             }
+        }
+        return HexFormat.of().formatHex(digest.digest());
+    }
+
+    /**
+     * Computes a cheap fingerprint for a directory by hashing relative file paths,
+     * sizes, and last-modified times. Does not read file contents.
+     *
+     * @param dir The directory to fingerprint
+     * @return A SHA-256 hex digest, or "missing" if the directory is absent
+     * @throws IOException If walking the directory fails
+     */
+    static String fingerprintDirectoryContents(Path dir) throws IOException {
+        if (dir == null || !Files.isDirectory(dir)) {
+            return "missing";
+        }
+        MessageDigest digest = sha256();
+        try (Stream<Path> s = Files.walk(dir)) {
+            s.filter(Files::isRegularFile)
+                .sorted()
+                .forEach(p -> {
+                    update(digest, dir.relativize(p).toString());
+                    try {
+                        update(digest, Long.toString(Files.size(p)));
+                        update(digest, Long.toString(Files.getLastModifiedTime(p).toMillis()));
+                    } catch (IOException ignored) {
+                        update(digest, "<unreadable>");
+                    }
+                });
         }
         return HexFormat.of().formatHex(digest.digest());
     }
