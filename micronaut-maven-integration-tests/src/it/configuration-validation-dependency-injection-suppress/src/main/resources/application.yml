@@ -1,3 +1,0 @@
-micronaut:
-  application:
-    name: configuration-validation-dependency-injection-suppress
