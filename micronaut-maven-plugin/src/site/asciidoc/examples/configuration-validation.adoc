@@ -107,6 +107,36 @@ Each scenario can be configured independently via:
 * `classpathElements`: replaces the default classpath used by the validator
 * `additionalClasspathElements`: entries appended to the default classpath
 
+== Dependency injection validation
+
+By default, configuration validation checks configuration keys and values only.
+You can also validate Micronaut dependency injection wiring (missing beans, unsatisfied injections, etc.) by enabling:
+
+[source,xml]
+----
+<configurationValidation>
+    <validateDependencyInjection>true</validateDependencyInjection>
+</configurationValidation>
+----
+
+When enabled, dependency-injection issues are included in the generated reports and cause the build to fail.
+
+If you need to suppress known dependency-injection issues (for example optional integrations in test fixtures), use
+`suppressInjectErrors`:
+
+[source,xml]
+----
+<configurationValidation>
+    <validateDependencyInjection>true</validateDependencyInjection>
+    <suppressInjectErrors>
+        <suppressInjectError>com.example.optional.MissingBean</suppressInjectError>
+        <suppressInjectError>com.example.experimental.*</suppressInjectError>
+    </suppressInjectErrors>
+</configurationValidation>
+----
+
+`suppressInjectError` supports exact class names and `*` wildcard patterns.
+
 == Reports
 
 Reports are written under `${project.build.directory}/micronaut/config-validation/<scenario>` by default.

@@ -11,7 +11,7 @@ This plugin has the following features:
 7. link:examples/openapi.html[Integration with Micronaut OpenAPI].
 8. link:examples/bean-import.html[Importing beans from project dependencies].
 9. link:examples/jsonschema.html[Generating Sources from JSON Schema]
-10. link:examples/configuration-validation.html[Validating Micronaut configuration]
+10. link:examples/configuration-validation.html[Validating Micronaut configuration and dependency injection]
 
 === Usage
 
