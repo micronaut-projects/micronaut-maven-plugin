@@ -1,6 +1,11 @@
 File log = new File(basedir, 'build.log')
 assert log.exists()
 assert log.text.contains('Micronaut configuration is not valid')
+assert log.text.contains('If these dependency injection errors can be ignored, add the following to your pom.xml:')
+assert log.text.contains('<configurationValidation>')
+assert log.text.contains('<validateDependencyInjection>true</validateDependencyInjection>')
+assert log.text.contains('<suppressInjectErrors>')
+assert log.text.contains('<suppressInjectError>io.micronaut.build.examples.MissingDependency</suppressInjectError>')
 
 File report = new File(basedir, 'target/micronaut/config-validation/test/configuration-errors.json')
 assert report.exists()

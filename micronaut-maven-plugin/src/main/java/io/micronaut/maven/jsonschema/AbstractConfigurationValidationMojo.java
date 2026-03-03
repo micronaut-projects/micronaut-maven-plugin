@@ -15,6 +15,7 @@
  */
 package io.micronaut.maven.jsonschema;
 
+import io.micronaut.jsonschema.configuration.validator.DependencyInjectionError;
 import io.micronaut.maven.AbstractMicronautMojo;
 import io.micronaut.maven.services.CompilerService;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -34,6 +35,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Base mojo for validating Micronaut configuration using JSON Schema.
@@ -175,8 +178,45 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         }
 
         if (result.hasErrors()) {
-            throw new MojoFailureException("Micronaut configuration is not valid. See reports in: " + result.outputDirectory());
+            String message = "Micronaut configuration is not valid. See reports in: " + result.outputDirectory();
+            if (!result.dependencyInjectionErrors().isEmpty()) {
+                String suppressionHint = buildDependencyInjectionSuppressionHint(result.dependencyInjectionErrors());
+                if (!suppressionHint.isEmpty()) {
+                    message += suppressionHint;
+                }
+            }
+            throw new MojoFailureException(message);
         }
+    }
+
+    private String buildDependencyInjectionSuppressionHint(Set<DependencyInjectionError> dependencyInjectionErrors) {
+        Set<String> suppressionCandidates = new TreeSet<>();
+        for (DependencyInjectionError error : dependencyInjectionErrors) {
+            if (error.rootBean() != null && !error.rootBean().isBlank()) {
+                suppressionCandidates.add(error.rootBean());
+            }
+            if (error.bean() != null && !error.bean().isBlank()) {
+                suppressionCandidates.add(error.bean());
+            }
+        }
+
+        if (suppressionCandidates.isEmpty()) {
+            return "";
+        }
+
+        String suppressions = suppressionCandidates.stream()
+            .map(suppressionCandidate -> "        <suppressInjectError>" + suppressionCandidate + "</suppressInjectError>")
+            .collect(Collectors.joining(System.lineSeparator()));
+
+        return """
+
+            If these dependency injection errors can be ignored, add the following to your pom.xml:
+            <configurationValidation>
+                <validateDependencyInjection>true</validateDependencyInjection>
+                <suppressInjectErrors>
+            %s
+                </suppressInjectErrors>
+            </configurationValidation>""".formatted(suppressions);
     }
 
     private ConfigurationValidationFormat parseFormat(String format) throws MojoFailureException {

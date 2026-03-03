@@ -122,7 +122,7 @@ final class ConfigurationValidationExecutor {
 
         boolean hasErrors = errors.stream().anyMatch(e -> e.type() == ConfigurationError.Type.ERROR);
         hasErrors = hasErrors || !dependencyInjectionErrors.isEmpty();
-        return new ValidationResult(errors, hasErrors, outputDir.toFile());
+        return new ValidationResult(errors, dependencyInjectionErrors, hasErrors, outputDir.toFile());
     }
 
     private static Set<DependencyInjectionError> validateDependencyInjection(
@@ -243,9 +243,13 @@ final class ConfigurationValidationExecutor {
      * Result of a validation run.
      *
      * @param errors All errors and warnings
+     * @param dependencyInjectionErrors Dependency injection errors detected during validation
      * @param hasErrors Whether any error-level entries are present
      * @param outputDirectory Output directory where reports were written
      */
-    record ValidationResult(Set<ConfigurationError> errors, boolean hasErrors, File outputDirectory) {
+    record ValidationResult(Set<ConfigurationError> errors,
+                            Set<DependencyInjectionError> dependencyInjectionErrors,
+                            boolean hasErrors,
+                            File outputDirectory) {
     }
 }
