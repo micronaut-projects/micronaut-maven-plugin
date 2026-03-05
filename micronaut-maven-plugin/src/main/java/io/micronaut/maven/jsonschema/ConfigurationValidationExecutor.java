@@ -165,7 +165,7 @@ final class ConfigurationValidationExecutor {
             );
             Object validator = forClasspath.invoke(null, classpath, environments, deduceEnvironments, suppressInjectErrors);
             return Optional.of(((DependencyInjectionConfigurationValidator) validator).validate());
-        } catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException _) {
             return Optional.empty();
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new IllegalStateException("Dependency injection validation failed", e);

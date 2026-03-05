@@ -72,7 +72,7 @@ final class ConfigurationValidationCache {
         LastResult parsed;
         try {
             parsed = lastResult != null ? LastResult.valueOf(lastResult) : LastResult.SUCCESS;
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             parsed = LastResult.SUCCESS;
         }
         return new CacheEntry(parsed);
@@ -131,35 +131,38 @@ final class ConfigurationValidationCache {
         }
         MessageDigest digest = sha256();
         for (String classpathElement : classpathElements) {
-            if (classpathElement == null || classpathElement.isBlank()) {
-                continue;
-            }
-            Path path = null;
-            try {
-                path = Path.of(classpathElement).normalize();
-            } catch (Exception e) {
-                update(digest, "invalid:" + classpathElement);
-            }
-            if (path != null) {
-                update(digest, path.toString());
-                if (!Files.exists(path)) {
-                    update(digest, MISSING);
-                } else {
-                    try {
-                        if (Files.isDirectory(path)) {
-                            update(digest, fingerprintDirectoryContents(path));
-                        } else {
-                            update(digest, Long.toString(Files.size(path)));
-                            FileTime lastModifiedTime = Files.getLastModifiedTime(path);
-                            update(digest, Long.toString(lastModifiedTime.toMillis()));
-                        }
-                    } catch (IOException e) {
-                        update(digest, UNREADABLE);
-                    }
-                }
-            }
+            fingerprintClasspathElement(digest, classpathElement);
         }
         return HexFormat.of().formatHex(digest.digest());
+    }
+
+    private static void fingerprintClasspathElement(MessageDigest digest, String classpathElement) {
+        if (classpathElement == null || classpathElement.isBlank()) {
+            return;
+        }
+        Path path;
+        try {
+            path = Path.of(classpathElement).normalize();
+        } catch (Exception _) {
+            update(digest, "invalid:" + classpathElement);
+            return;
+        }
+        update(digest, path.toString());
+        if (!Files.exists(path)) {
+            update(digest, MISSING);
+            return;
+        }
+        try {
+            if (Files.isDirectory(path)) {
+                update(digest, fingerprintDirectoryContents(path));
+            } else {
+                update(digest, Long.toString(Files.size(path)));
+                FileTime lastModifiedTime = Files.getLastModifiedTime(path);
+                update(digest, Long.toString(lastModifiedTime.toMillis()));
+            }
+        } catch (IOException _) {
+            update(digest, UNREADABLE);
+        }
     }
 
     /**
@@ -183,7 +186,7 @@ final class ConfigurationValidationCache {
                     try {
                         update(digest, Long.toString(Files.size(p)));
                         update(digest, Long.toString(Files.getLastModifiedTime(p).toMillis()));
-                    } catch (IOException e) {
+                    } catch (IOException _) {
                         update(digest, UNREADABLE);
                     }
                 });
@@ -235,7 +238,7 @@ final class ConfigurationValidationCache {
                                 digest.update(buffer, 0, len);
                             }
                         }
-                    } catch (IOException e) {
+                    } catch (IOException _) {
                         // best effort
                         update(digest, UNREADABLE);
                     }

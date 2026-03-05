@@ -107,10 +107,8 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         throws MojoExecutionException, MojoFailureException, IOException {
 
         List<String> environments = computeEnvironments(set, defaultEnvironments());
-        List<String> suppressions = cfg.getSuppressions() == null ? List.of() : List.copyOf(cfg.getSuppressions());
-        List<String> suppressInjectErrors = cfg.getSuppressInjectErrors() == null
-            ? List.of()
-            : List.copyOf(cfg.getSuppressInjectErrors());
+        List<String> suppressions = copyList(cfg.getSuppressions());
+        List<String> suppressInjectErrors = copyList(cfg.getSuppressInjectErrors());
         boolean failOnNotPresent = cfg.getFailOnNotPresent() == null || cfg.getFailOnNotPresent();
         boolean deduceEnvironments = cfg.getDeduceEnvironments() != null && cfg.getDeduceEnvironments();
         boolean validateDependencyInjection = cfg.getValidateDependencyInjection() != null && cfg.getValidateDependencyInjection();
@@ -123,19 +121,16 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
 
         List<String> classpathElements = computeClasspathElements(set);
         String classpath = String.join(File.pathSeparator, classpathElements);
-        String classpathFingerprint = cacheEnabled && validateDependencyInjection
-            ? ConfigurationValidationCache.fingerprintClasspath(classpathElements)
-            : "classpath-fingerprint-disabled";
+        String classpathFingerprint = computeClasspathFingerprint(cacheEnabled, validateDependencyInjection, classpathElements);
 
-        String inputsFingerprint = String.join("|",
-            scenarioName(),
-            environments.toString(),
-            suppressions.toString(),
-            suppressInjectErrors.toString(),
-            Boolean.toString(failOnNotPresent),
-            Boolean.toString(deduceEnvironments),
-            Boolean.toString(validateDependencyInjection),
-            format.name(),
+        String inputsFingerprint = computeInputsFingerprint(
+            environments,
+            suppressions,
+            suppressInjectErrors,
+            failOnNotPresent,
+            deduceEnvironments,
+            validateDependencyInjection,
+            format,
             classpath,
             classpathFingerprint
         );
@@ -148,9 +143,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
             return;
         }
 
-        if (getLog().isInfoEnabled()) {
-            getLog().info("Validating Micronaut configuration (" + scenarioName() + ")");
-        }
+        logValidationStart();
 
         cleanupStaleReports(outputDir, format);
 
@@ -169,25 +162,80 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
             System.err
         );
 
-        if (cacheEnabled) {
-            ConfigurationValidationCache.write(
-                cacheFile,
-                inputsFingerprint,
-                resourcesFingerprint,
-                result.hasErrors() ? ConfigurationValidationCache.LastResult.FAILURE : ConfigurationValidationCache.LastResult.SUCCESS
-            );
-        }
+        writeCache(cacheEnabled, cacheFile, inputsFingerprint, resourcesFingerprint, result);
+        throwIfValidationFailed(result);
+    }
 
-        if (result.hasErrors()) {
-            String message = "Micronaut configuration is not valid. See reports in: " + result.outputDirectory();
-            if (!result.dependencyInjectionErrors().isEmpty()) {
-                String suppressionHint = buildDependencyInjectionSuppressionHint(result.dependencyInjectionErrors());
-                if (!suppressionHint.isEmpty()) {
-                    message += suppressionHint;
-                }
-            }
-            throw new MojoFailureException(message);
+    private static <T> List<T> copyList(List<T> values) {
+        return values == null ? List.of() : List.copyOf(values);
+    }
+
+    private String computeClasspathFingerprint(boolean cacheEnabled,
+                                               boolean validateDependencyInjection,
+                                               List<String> classpathElements) throws IOException {
+        if (!cacheEnabled || !validateDependencyInjection) {
+            return "classpath-fingerprint-disabled";
         }
+        return ConfigurationValidationCache.fingerprintClasspath(classpathElements);
+    }
+
+    private String computeInputsFingerprint(List<String> environments,
+                                            List<String> suppressions,
+                                            List<String> suppressInjectErrors,
+                                            boolean failOnNotPresent,
+                                            boolean deduceEnvironments,
+                                            boolean validateDependencyInjection,
+                                            ConfigurationValidationFormat format,
+                                            String classpath,
+                                            String classpathFingerprint) {
+        return String.join("|",
+            scenarioName(),
+            environments.toString(),
+            suppressions.toString(),
+            suppressInjectErrors.toString(),
+            Boolean.toString(failOnNotPresent),
+            Boolean.toString(deduceEnvironments),
+            Boolean.toString(validateDependencyInjection),
+            format.name(),
+            classpath,
+            classpathFingerprint
+        );
+    }
+
+    private void logValidationStart() {
+        if (getLog().isInfoEnabled()) {
+            getLog().info("Validating Micronaut configuration (" + scenarioName() + ")");
+        }
+    }
+
+    private static void writeCache(boolean cacheEnabled,
+                                   Path cacheFile,
+                                   String inputsFingerprint,
+                                   String resourcesFingerprint,
+                                   ConfigurationValidationExecutor.ValidationResult result) throws IOException {
+        if (!cacheEnabled) {
+            return;
+        }
+        ConfigurationValidationCache.write(
+            cacheFile,
+            inputsFingerprint,
+            resourcesFingerprint,
+            result.hasErrors() ? ConfigurationValidationCache.LastResult.FAILURE : ConfigurationValidationCache.LastResult.SUCCESS
+        );
+    }
+
+    private void throwIfValidationFailed(ConfigurationValidationExecutor.ValidationResult result) throws MojoFailureException {
+        if (!result.hasErrors()) {
+            return;
+        }
+        String message = "Micronaut configuration is not valid. See reports in: " + result.outputDirectory();
+        if (!result.dependencyInjectionErrors().isEmpty()) {
+            String suppressionHint = buildDependencyInjectionSuppressionHint(result.dependencyInjectionErrors());
+            if (!suppressionHint.isEmpty()) {
+                message += suppressionHint;
+            }
+        }
+        throw new MojoFailureException(message);
     }
 
     private String buildDependencyInjectionSuppressionHint(Set<DependencyInjectionError> dependencyInjectionErrors) {
