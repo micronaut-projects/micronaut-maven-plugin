@@ -37,6 +37,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Base mojo for validating Micronaut configuration using JSON Schema.
@@ -190,15 +191,10 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
     }
 
     private String buildDependencyInjectionSuppressionHint(Set<DependencyInjectionError> dependencyInjectionErrors) {
-        Set<String> suppressionCandidates = new TreeSet<>();
-        for (DependencyInjectionError error : dependencyInjectionErrors) {
-            if (error.rootBean() != null && !error.rootBean().isBlank()) {
-                suppressionCandidates.add(error.rootBean());
-            }
-            if (error.bean() != null && !error.bean().isBlank()) {
-                suppressionCandidates.add(error.bean());
-            }
-        }
+        Set<String> suppressionCandidates = dependencyInjectionErrors.stream()
+            .flatMap(AbstractConfigurationValidationMojo::suppressionCandidates)
+            .filter(candidate -> !candidate.isBlank())
+            .collect(Collectors.toCollection(TreeSet::new));
 
         if (suppressionCandidates.isEmpty()) {
             return "";
@@ -217,6 +213,10 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
             %s
                 </suppressInjectErrors>
             </configurationValidation>""".formatted(suppressions);
+    }
+
+    private static Stream<String> suppressionCandidates(DependencyInjectionError error) {
+        return Stream.of(error.rootBean(), error.bean());
     }
 
     private ConfigurationValidationFormat parseFormat(String format) throws MojoFailureException {

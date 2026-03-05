@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -131,14 +132,14 @@ final class ConfigurationValidationExecutor {
         boolean deduceEnvironments,
         List<String> suppressInjectErrors
     ) {
-        Set<DependencyInjectionError> errors = validateWithSuppressionAwareValidator(
+        Optional<Set<DependencyInjectionError>> errors = validateWithSuppressionAwareValidator(
             classpath,
             environments,
             deduceEnvironments,
             suppressInjectErrors
         );
-        if (errors != null) {
-            return errors;
+        if (errors.isPresent()) {
+            return errors.get();
         }
         Set<DependencyInjectionError> legacyErrors = DependencyInjectionConfigurationValidator.forClasspath(
             classpath,
@@ -148,8 +149,7 @@ final class ConfigurationValidationExecutor {
         return applyLegacySuppressions(legacyErrors, suppressInjectErrors);
     }
 
-    @SuppressWarnings("unchecked")
-    private static Set<DependencyInjectionError> validateWithSuppressionAwareValidator(
+    private static Optional<Set<DependencyInjectionError>> validateWithSuppressionAwareValidator(
         String classpath,
         List<String> environments,
         boolean deduceEnvironments,
@@ -164,9 +164,9 @@ final class ConfigurationValidationExecutor {
                 List.class
             );
             Object validator = forClasspath.invoke(null, classpath, environments, deduceEnvironments, suppressInjectErrors);
-            return ((DependencyInjectionConfigurationValidator) validator).validate();
+            return Optional.of(((DependencyInjectionConfigurationValidator) validator).validate());
         } catch (NoSuchMethodException e) {
-            return null;
+            return Optional.empty();
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new IllegalStateException("Dependency injection validation failed", e);
         }

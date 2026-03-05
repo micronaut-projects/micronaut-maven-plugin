@@ -40,6 +40,8 @@ final class ConfigurationValidationCache {
     private static final String KEY_INPUTS_FINGERPRINT = "inputsFingerprint";
     private static final String KEY_MAIN_RESOURCES_FINGERPRINT = "mainResourcesFingerprint";
     private static final String KEY_LAST_RESULT = "lastResult";
+    private static final String MISSING = "missing";
+    private static final String UNREADABLE = "<unreadable>";
 
     private ConfigurationValidationCache() {
     }
@@ -70,7 +72,7 @@ final class ConfigurationValidationCache {
         LastResult parsed;
         try {
             parsed = lastResult != null ? LastResult.valueOf(lastResult) : LastResult.SUCCESS;
-        } catch (IllegalArgumentException ignored) {
+        } catch (IllegalArgumentException e) {
             parsed = LastResult.SUCCESS;
         }
         return new CacheEntry(parsed);
@@ -132,28 +134,29 @@ final class ConfigurationValidationCache {
             if (classpathElement == null || classpathElement.isBlank()) {
                 continue;
             }
-            Path path;
+            Path path = null;
             try {
                 path = Path.of(classpathElement).normalize();
             } catch (Exception e) {
                 update(digest, "invalid:" + classpathElement);
-                continue;
             }
-            update(digest, path.toString());
-            if (!Files.exists(path)) {
-                update(digest, "missing");
-                continue;
-            }
-            try {
-                if (Files.isDirectory(path)) {
-                    update(digest, fingerprintDirectoryContents(path));
+            if (path != null) {
+                update(digest, path.toString());
+                if (!Files.exists(path)) {
+                    update(digest, MISSING);
                 } else {
-                    update(digest, Long.toString(Files.size(path)));
-                    FileTime lastModifiedTime = Files.getLastModifiedTime(path);
-                    update(digest, Long.toString(lastModifiedTime.toMillis()));
+                    try {
+                        if (Files.isDirectory(path)) {
+                            update(digest, fingerprintDirectoryContents(path));
+                        } else {
+                            update(digest, Long.toString(Files.size(path)));
+                            FileTime lastModifiedTime = Files.getLastModifiedTime(path);
+                            update(digest, Long.toString(lastModifiedTime.toMillis()));
+                        }
+                    } catch (IOException e) {
+                        update(digest, UNREADABLE);
+                    }
                 }
-            } catch (IOException ignored) {
-                update(digest, "<unreadable>");
             }
         }
         return HexFormat.of().formatHex(digest.digest());
@@ -169,7 +172,7 @@ final class ConfigurationValidationCache {
      */
     static String fingerprintDirectoryContents(Path dir) throws IOException {
         if (dir == null || !Files.isDirectory(dir)) {
-            return "missing";
+            return MISSING;
         }
         MessageDigest digest = sha256();
         try (Stream<Path> s = Files.walk(dir)) {
@@ -180,8 +183,8 @@ final class ConfigurationValidationCache {
                     try {
                         update(digest, Long.toString(Files.size(p)));
                         update(digest, Long.toString(Files.getLastModifiedTime(p).toMillis()));
-                    } catch (IOException ignored) {
-                        update(digest, "<unreadable>");
+                    } catch (IOException e) {
+                        update(digest, UNREADABLE);
                     }
                 });
         }
@@ -209,7 +212,7 @@ final class ConfigurationValidationCache {
      */
     static String fingerprintMainResources(Path mainResourcesDir, @Nullable Iterable<String> ignorePatterns) throws IOException {
         if (mainResourcesDir == null || !Files.isDirectory(mainResourcesDir)) {
-            return "missing";
+            return MISSING;
         }
         List<Glob> globs = Glob.compile(ignorePatterns);
         MessageDigest digest = sha256();
@@ -232,9 +235,9 @@ final class ConfigurationValidationCache {
                                 digest.update(buffer, 0, len);
                             }
                         }
-                    } catch (IOException ignored) {
+                    } catch (IOException e) {
                         // best effort
-                        update(digest, "<unreadable>");
+                        update(digest, UNREADABLE);
                     }
                 });
         }
