@@ -2,9 +2,13 @@ package io.micronaut.maven.jsonschema;
 
 import io.micronaut.jsonschema.configuration.validator.DependencyInjectionError;
 import io.micronaut.maven.services.CompilerService;
+import org.apache.maven.model.Build;
+import org.apache.maven.model.Resource;
 import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.List;
@@ -50,6 +54,56 @@ class AbstractConfigurationValidationMojoTest {
         assertTrue(hint.contains("<suppressInjectError>z.Bean</suppressInjectError>"));
         assertTrue(hint.indexOf("a.Bean") < hint.indexOf("m.Bean"));
         assertTrue(hint.indexOf("m.Bean") < hint.indexOf("z.Bean"));
+    }
+
+    @Test
+    void defaultPackageClasspathExcludesOutputDirectory(@TempDir Path tempDir) throws Exception {
+        Path mainResources = tempDir.resolve("src/main/resources");
+        Path outputDirectory = tempDir.resolve("target/classes");
+        java.nio.file.Files.createDirectories(mainResources);
+        java.nio.file.Files.createDirectories(outputDirectory);
+
+        MavenProject project = new MavenProject();
+        project.setFile(tempDir.resolve("pom.xml").toFile());
+
+        Build build = new Build();
+        build.setOutputDirectory(outputDirectory.toString());
+
+        Resource resource = new Resource();
+        resource.setDirectory(mainResources.toString());
+        build.setResources(List.of(resource));
+        build.setTestOutputDirectory(tempDir.resolve("target/test-classes").toString());
+        project.setBuild(build);
+
+        List<String> classpath = ConfigurationValidationClasspath.defaultPackageClasspath(project);
+
+        assertEquals(List.of(outputDirectory.toString()), classpath);
+    }
+
+    @Test
+    void defaultTestClasspathUsesCompiledOutputsWithoutDuplicatingMainResources(@TempDir Path tempDir) throws Exception {
+        Path mainResources = tempDir.resolve("src/main/resources");
+        Path outputDirectory = tempDir.resolve("target/classes");
+        Path testOutputDirectory = tempDir.resolve("target/test-classes");
+        java.nio.file.Files.createDirectories(mainResources);
+        java.nio.file.Files.createDirectories(outputDirectory);
+        java.nio.file.Files.createDirectories(testOutputDirectory);
+
+        MavenProject project = new MavenProject();
+        project.setFile(tempDir.resolve("pom.xml").toFile());
+
+        Build build = new Build();
+        build.setOutputDirectory(outputDirectory.toString());
+        build.setTestOutputDirectory(testOutputDirectory.toString());
+
+        Resource resource = new Resource();
+        resource.setDirectory(mainResources.toString());
+        build.setResources(List.of(resource));
+        project.setBuild(build);
+
+        List<String> classpath = ConfigurationValidationClasspath.defaultTestClasspath(project);
+
+        assertEquals(List.of(outputDirectory.toString(), testOutputDirectory.toString()), classpath);
     }
 
     private static String invokeSuppressionHint(AbstractConfigurationValidationMojo mojo,
