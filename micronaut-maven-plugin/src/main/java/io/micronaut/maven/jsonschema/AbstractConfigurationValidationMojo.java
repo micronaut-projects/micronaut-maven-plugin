@@ -172,7 +172,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
 
     private String computeClasspathFingerprint(boolean cacheEnabled,
                                                boolean validateDependencyInjection,
-                                               List<String> classpathElements) throws IOException {
+                                               List<String> classpathElements) {
         if (!cacheEnabled || !validateDependencyInjection) {
             return "classpath-fingerprint-disabled";
         }
@@ -297,7 +297,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         // Remove reports that won't be generated in the current format to avoid pointing users to stale files
         Path html = outputDir.resolve("configuration-errors.html");
         Path json = outputDir.resolve("configuration-errors.json");
-        
+
         try {
             if (format != ConfigurationValidationFormat.HTML && format != ConfigurationValidationFormat.BOTH) {
                 Files.deleteIfExists(html);

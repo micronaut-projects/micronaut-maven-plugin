@@ -59,7 +59,7 @@ final class ConfigurationValidationCache {
         Properties props = new Properties();
         try (InputStream is = Files.newInputStream(cacheFile)) {
             props.load(is);
-        } catch (IOException e) {
+        } catch (IOException _) {
             return null;
         }
         boolean matches = Objects.equals(inputsFingerprint, props.getProperty(KEY_INPUTS_FINGERPRINT))

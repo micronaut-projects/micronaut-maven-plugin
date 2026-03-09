@@ -29,8 +29,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -38,6 +36,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Executes Micronaut configuration validation using the Micronaut JSON Schema configuration validator.
@@ -155,21 +154,8 @@ final class ConfigurationValidationExecutor {
         boolean deduceEnvironments,
         List<String> suppressInjectErrors
     ) {
-        try {
-            Method forClasspath = DependencyInjectionConfigurationValidator.class.getMethod(
-                "forClasspath",
-                String.class,
-                List.class,
-                boolean.class,
-                List.class
-            );
-            Object validator = forClasspath.invoke(null, classpath, environments, deduceEnvironments, suppressInjectErrors);
-            return Optional.of(((DependencyInjectionConfigurationValidator) validator).validate());
-        } catch (NoSuchMethodException _) {
-            return Optional.empty();
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new IllegalStateException("Dependency injection validation failed", e);
-        }
+        var validator = DependencyInjectionConfigurationValidator.forClasspath(classpath, environments, deduceEnvironments, suppressInjectErrors);
+        return Optional.of(validator.validate());
     }
 
     private static Set<DependencyInjectionError> applyLegacySuppressions(
@@ -185,7 +171,7 @@ final class ConfigurationValidationExecutor {
         }
         return errors.stream()
             .filter(error -> !isSuppressed(error, patterns))
-            .collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
+            .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
     }
 
     private static List<Pattern> compileSuppressionPatterns(List<String> suppressInjectErrors) {
