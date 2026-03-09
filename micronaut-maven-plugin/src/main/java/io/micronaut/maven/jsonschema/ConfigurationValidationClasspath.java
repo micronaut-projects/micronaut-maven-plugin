@@ -39,8 +39,7 @@ final class ConfigurationValidationClasspath {
      * @return Classpath elements
      */
     static List<String> defaultDevClasspath(MavenProject project) {
-        // Requirement: src/main/resources + src/main/java
-        return defaultMainSourceClasspath(project);
+        return defaultPackageClasspath(project);
     }
 
     /**
@@ -69,9 +68,12 @@ final class ConfigurationValidationClasspath {
     static List<String> defaultTestClasspath(MavenProject project) {
         Set<String> result = new LinkedHashSet<>();
         result.addAll(defaultPackageClasspath(project));
-        addResources(result, project.getBuild().getTestResources());
-        addIfExists(result, project.getBasedir().toPath().resolve("src/test/resources").toString());
         addIfExists(result, project.getBuild().getTestOutputDirectory());
+        if (project.getBuild().getTestOutputDirectory() == null || project.getBuild().getTestOutputDirectory().isBlank()
+            || !new File(project.getBuild().getTestOutputDirectory()).exists()) {
+            addResources(result, project.getBuild().getTestResources());
+            addIfExists(result, project.getBasedir().toPath().resolve("src/test/resources").toString());
+        }
         return new ArrayList<>(result);
     }
 
