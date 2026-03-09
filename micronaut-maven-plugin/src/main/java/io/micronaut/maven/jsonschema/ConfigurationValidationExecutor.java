@@ -18,6 +18,8 @@ package io.micronaut.maven.jsonschema;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.jsonschema.configuration.validator.ConfigurationError;
 import io.micronaut.jsonschema.configuration.validator.ConfigurationJsonSchemaValidator;
+import io.micronaut.jsonschema.configuration.validator.DependencyInjectionError;
+import io.micronaut.jsonschema.configuration.validator.cli.DependencyInjectionConfigurationValidator;
 import io.micronaut.jsonschema.configuration.validator.cli.JsonSchemaConfigurationValidator;
 import io.micronaut.jsonschema.configuration.validator.report.HtmlConfigurationErrorReporter;
 import io.micronaut.jsonschema.configuration.validator.report.JsonConfigurationErrorReporter;
@@ -29,8 +31,12 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Executes Micronaut configuration validation using the Micronaut JSON Schema configuration validator.
@@ -45,8 +51,10 @@ final class ConfigurationValidationExecutor {
      * @param classpath Path-separator separated classpath to validate
      * @param environments Environments to enable
      * @param suppressions Suppression patterns
+     * @param suppressInjectErrors Dependency-injection suppression patterns
      * @param failOnNotPresent Whether to fail when properties are not present in schema
      * @param deduceEnvironments Whether to allow Micronaut to deduce environments
+     * @param validateDependencyInjection Whether to validate dependency injection
      * @param outputDir Output directory
      * @param format Report format
      * @param projectBaseDir Project base directory for relative path resolution in error reports
@@ -59,8 +67,10 @@ final class ConfigurationValidationExecutor {
         String classpath,
         List<String> environments,
         List<String> suppressions,
+        List<String> suppressInjectErrors,
         boolean failOnNotPresent,
         boolean deduceEnvironments,
+        boolean validateDependencyInjection,
         Path outputDir,
         ConfigurationValidationFormat format,
         Path projectBaseDir,
@@ -81,6 +91,16 @@ final class ConfigurationValidationExecutor {
         );
 
         Set<ConfigurationError> errors = facade.validate();
+        Set<DependencyInjectionError> dependencyInjectionErrors = Set.of();
+
+        if (validateDependencyInjection) {
+            dependencyInjectionErrors = validateDependencyInjection(
+                classpath,
+                environments,
+                deduceEnvironments,
+                suppressInjectErrors
+            );
+        }
 
         Path jsonFile = null;
         Path htmlFile = null;
@@ -88,29 +108,134 @@ final class ConfigurationValidationExecutor {
         if (format == ConfigurationValidationFormat.JSON || format == ConfigurationValidationFormat.BOTH) {
             jsonFile = outputDir.resolve("configuration-errors.json");
             try (OutputStream os = Files.newOutputStream(jsonFile)) {
-                new JsonConfigurationErrorReporter(JsonMapper.createDefault(), os).report(errors);
+                new JsonConfigurationErrorReporter(JsonMapper.createDefault(), os).report(errors, dependencyInjectionErrors);
             }
         }
         if (format == ConfigurationValidationFormat.HTML || format == ConfigurationValidationFormat.BOTH) {
             htmlFile = outputDir.resolve("configuration-errors.html");
             try (OutputStream os = Files.newOutputStream(htmlFile)) {
-                new HtmlConfigurationErrorReporter(os).report(errors);
+                new HtmlConfigurationErrorReporter(os).report(errors, dependencyInjectionErrors);
             }
         }
 
-        new SystemErrConfigurationErrorReporter(err, htmlFile, jsonFile, projectBaseDir, resourcesDirs).report(errors);
+        new SystemErrConfigurationErrorReporter(err, htmlFile, jsonFile, projectBaseDir, resourcesDirs).report(errors, dependencyInjectionErrors);
 
         boolean hasErrors = errors.stream().anyMatch(e -> e.type() == ConfigurationError.Type.ERROR);
-        return new ValidationResult(errors, hasErrors, outputDir.toFile());
+        hasErrors = hasErrors || !dependencyInjectionErrors.isEmpty();
+        return new ValidationResult(errors, dependencyInjectionErrors, hasErrors, outputDir.toFile());
+    }
+
+    private static Set<DependencyInjectionError> validateDependencyInjection(
+        String classpath,
+        List<String> environments,
+        boolean deduceEnvironments,
+        List<String> suppressInjectErrors
+    ) {
+        Optional<Set<DependencyInjectionError>> errors = validateWithSuppressionAwareValidator(
+            classpath,
+            environments,
+            deduceEnvironments,
+            suppressInjectErrors
+        );
+        if (errors.isPresent()) {
+            return errors.get();
+        }
+        Set<DependencyInjectionError> legacyErrors = DependencyInjectionConfigurationValidator.forClasspath(
+            classpath,
+            environments,
+            deduceEnvironments
+        ).validate();
+        return applyLegacySuppressions(legacyErrors, suppressInjectErrors);
+    }
+
+    private static Optional<Set<DependencyInjectionError>> validateWithSuppressionAwareValidator(
+        String classpath,
+        List<String> environments,
+        boolean deduceEnvironments,
+        List<String> suppressInjectErrors
+    ) {
+        var validator = DependencyInjectionConfigurationValidator.forClasspath(classpath, environments, deduceEnvironments, suppressInjectErrors);
+        return Optional.of(validator.validate());
+    }
+
+    private static Set<DependencyInjectionError> applyLegacySuppressions(
+        Set<DependencyInjectionError> errors,
+        List<String> suppressInjectErrors
+    ) {
+        if (suppressInjectErrors.isEmpty() || errors.isEmpty()) {
+            return errors;
+        }
+        List<Pattern> patterns = compileSuppressionPatterns(suppressInjectErrors);
+        if (patterns.isEmpty()) {
+            return errors;
+        }
+        return errors.stream()
+            .filter(error -> !isSuppressed(error, patterns))
+            .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
+    }
+
+    private static List<Pattern> compileSuppressionPatterns(List<String> suppressInjectErrors) {
+        List<Pattern> patterns = new ArrayList<>(suppressInjectErrors.size());
+        for (String rawPattern : suppressInjectErrors) {
+            if (rawPattern == null || rawPattern.isBlank()) {
+                continue;
+            }
+            String pattern = rawPattern.trim();
+            if (pattern.indexOf('*') > -1) {
+                patterns.add(Pattern.compile(wildcardToRegex(pattern)));
+            } else {
+                patterns.add(Pattern.compile("^" + Pattern.quote(pattern) + "$"));
+            }
+        }
+        return patterns;
+    }
+
+    private static boolean isSuppressed(DependencyInjectionError error, List<Pattern> patterns) {
+        return matches(error.rootBean(), patterns)
+            || matches(error.bean(), patterns)
+            || matches(error.injectionPoint(), patterns);
+    }
+
+    private static boolean matches(String value, List<Pattern> patterns) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        for (Pattern pattern : patterns) {
+            if (pattern.matcher(value).find()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String wildcardToRegex(String wildcardPattern) {
+        StringBuilder out = new StringBuilder(wildcardPattern.length() + 16);
+        out.append('^');
+        for (int i = 0; i < wildcardPattern.length(); i++) {
+            char c = wildcardPattern.charAt(i);
+            if (c == '*') {
+                out.append(".*");
+            } else if ("\\.[]{}()+-^$|?".indexOf(c) >= 0) {
+                out.append('\\').append(c);
+            } else {
+                out.append(c);
+            }
+        }
+        out.append('$');
+        return out.toString();
     }
 
     /**
      * Result of a validation run.
      *
      * @param errors All errors and warnings
+     * @param dependencyInjectionErrors Dependency injection errors detected during validation
      * @param hasErrors Whether any error-level entries are present
      * @param outputDirectory Output directory where reports were written
      */
-    record ValidationResult(Set<ConfigurationError> errors, boolean hasErrors, File outputDirectory) {
+    record ValidationResult(Set<ConfigurationError> errors,
+                            Set<DependencyInjectionError> dependencyInjectionErrors,
+                            boolean hasErrors,
+                            File outputDirectory) {
     }
 }

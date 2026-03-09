@@ -35,3 +35,4 @@ assert p.exitValue() != 0
 
 def out = outFile.text
 assert out.contains('Micronaut configuration is not valid')
+assert !out.contains('If these dependency injection errors can be ignored, add the following to your pom.xml:')

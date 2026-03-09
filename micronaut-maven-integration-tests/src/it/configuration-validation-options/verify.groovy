@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 File log = new File(basedir, 'build.log')
 assert log.exists()
 
@@ -12,8 +14,9 @@ File packageHtml = new File(basedir, 'target/validation-reports/package/configur
 assert packageJson.exists()
 assert !packageHtml.exists()
 
-def packageJsonText = packageJson.text
-assert packageJsonText.contains('[]')
+def packageJsonData = new JsonSlurper().parseText(packageJson.text)
+assert packageJsonData instanceof Map
+assert packageJsonData.isEmpty()
 
 File testHtml = new File(basedir, 'target/validation-reports/test/configuration-errors.html')
 File testJson = new File(basedir, 'target/validation-reports/test/configuration-errors.json')

@@ -46,6 +46,16 @@ public final class ConfigurationValidationConfiguration {
     private Boolean deduceEnvironments;
 
     /**
+     * Whether to run dependency-injection validation in addition to configuration validation.
+     */
+    private Boolean validateDependencyInjection;
+
+    /**
+     * Suppression patterns for dependency-injection errors (same as CLI {@code --suppress-inject-errors}).
+     */
+    private List<String> suppressInjectErrors;
+
+    /**
      * Report format: json|html|both.
      */
     private String format;
@@ -129,6 +139,38 @@ public final class ConfigurationValidationConfiguration {
      */
     public void setDeduceEnvironments(Boolean deduceEnvironments) {
         this.deduceEnvironments = deduceEnvironments;
+    }
+
+    /**
+     * Controls whether dependency-injection validation should be executed.
+     *
+     * @return Whether to validate dependency injection. If {@code null}, defaults to {@code false}.
+     */
+    public Boolean getValidateDependencyInjection() {
+        return validateDependencyInjection;
+    }
+
+    /**
+     * @param validateDependencyInjection Whether to run dependency-injection validation.
+     */
+    public void setValidateDependencyInjection(Boolean validateDependencyInjection) {
+        this.validateDependencyInjection = validateDependencyInjection;
+    }
+
+    /**
+     * Suppression patterns applied only to dependency-injection validation errors.
+     *
+     * @return Suppression patterns, or {@code null} to apply none.
+     */
+    public List<String> getSuppressInjectErrors() {
+        return suppressInjectErrors;
+    }
+
+    /**
+     * @param suppressInjectErrors Suppression patterns for dependency-injection errors.
+     */
+    public void setSuppressInjectErrors(List<String> suppressInjectErrors) {
+        this.suppressInjectErrors = suppressInjectErrors;
     }
 
     /**

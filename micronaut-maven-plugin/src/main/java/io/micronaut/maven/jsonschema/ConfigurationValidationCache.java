@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
@@ -39,6 +40,8 @@ final class ConfigurationValidationCache {
     private static final String KEY_INPUTS_FINGERPRINT = "inputsFingerprint";
     private static final String KEY_MAIN_RESOURCES_FINGERPRINT = "mainResourcesFingerprint";
     private static final String KEY_LAST_RESULT = "lastResult";
+    private static final String MISSING = "missing";
+    private static final String UNREADABLE = "<unreadable>";
 
     private ConfigurationValidationCache() {
     }
@@ -56,7 +59,7 @@ final class ConfigurationValidationCache {
         Properties props = new Properties();
         try (InputStream is = Files.newInputStream(cacheFile)) {
             props.load(is);
-        } catch (IOException e) {
+        } catch (IOException _) {
             return null;
         }
         boolean matches = Objects.equals(inputsFingerprint, props.getProperty(KEY_INPUTS_FINGERPRINT))
@@ -69,7 +72,7 @@ final class ConfigurationValidationCache {
         LastResult parsed;
         try {
             parsed = lastResult != null ? LastResult.valueOf(lastResult) : LastResult.SUCCESS;
-        } catch (IllegalArgumentException ignored) {
+        } catch (IllegalArgumentException _) {
             parsed = LastResult.SUCCESS;
         }
         return new CacheEntry(parsed);
@@ -115,6 +118,83 @@ final class ConfigurationValidationCache {
     }
 
     /**
+     * Computes a fingerprint for classpath entries and their content metadata.
+     * Uses cheap metadata (size + last-modified time) for directories to avoid
+     * excessive I/O overhead on large compiled output directories.
+     *
+     * @param classpathElements The classpath entries used by validation
+     * @return A combined SHA-256 hex digest
+     */
+    static String fingerprintClasspath(List<String> classpathElements) {
+        if (classpathElements == null || classpathElements.isEmpty()) {
+            return "no-classpath";
+        }
+        MessageDigest digest = sha256();
+        for (String classpathElement : classpathElements) {
+            fingerprintClasspathElement(digest, classpathElement);
+        }
+        return HexFormat.of().formatHex(digest.digest());
+    }
+
+    private static void fingerprintClasspathElement(MessageDigest digest, String classpathElement) {
+        if (classpathElement == null || classpathElement.isBlank()) {
+            return;
+        }
+        Path path;
+        try {
+            path = Path.of(classpathElement).normalize();
+        } catch (Exception _) {
+            update(digest, "invalid:" + classpathElement);
+            return;
+        }
+        update(digest, path.toString());
+        if (!Files.exists(path)) {
+            update(digest, MISSING);
+            return;
+        }
+        try {
+            if (Files.isDirectory(path)) {
+                update(digest, fingerprintDirectoryContents(path));
+            } else {
+                update(digest, Long.toString(Files.size(path)));
+                FileTime lastModifiedTime = Files.getLastModifiedTime(path);
+                update(digest, Long.toString(lastModifiedTime.toMillis()));
+            }
+        } catch (IOException _) {
+            update(digest, UNREADABLE);
+        }
+    }
+
+    /**
+     * Computes a cheap fingerprint for a directory by hashing relative file paths,
+     * sizes, and last-modified times. Does not read file contents.
+     *
+     * @param dir The directory to fingerprint
+     * @return A SHA-256 hex digest, or "missing" if the directory is absent
+     * @throws IOException If walking the directory fails
+     */
+    static String fingerprintDirectoryContents(Path dir) throws IOException {
+        if (dir == null || !Files.isDirectory(dir)) {
+            return MISSING;
+        }
+        MessageDigest digest = sha256();
+        try (Stream<Path> s = Files.walk(dir)) {
+            s.filter(Files::isRegularFile)
+                .sorted()
+                .forEach(p -> {
+                    update(digest, dir.relativize(p).toString());
+                    try {
+                        update(digest, Long.toString(Files.size(p)));
+                        update(digest, Long.toString(Files.getLastModifiedTime(p).toMillis()));
+                    } catch (IOException _) {
+                        update(digest, UNREADABLE);
+                    }
+                });
+        }
+        return HexFormat.of().formatHex(digest.digest());
+    }
+
+    /**
      * Computes a best-effort fingerprint for the directory contents.
      *
      * @param mainResourcesDir The main resources directory
@@ -135,7 +215,7 @@ final class ConfigurationValidationCache {
      */
     static String fingerprintMainResources(Path mainResourcesDir, @Nullable Iterable<String> ignorePatterns) throws IOException {
         if (mainResourcesDir == null || !Files.isDirectory(mainResourcesDir)) {
-            return "missing";
+            return MISSING;
         }
         List<Glob> globs = Glob.compile(ignorePatterns);
         MessageDigest digest = sha256();
@@ -158,9 +238,9 @@ final class ConfigurationValidationCache {
                                 digest.update(buffer, 0, len);
                             }
                         }
-                    } catch (IOException ignored) {
+                    } catch (IOException _) {
                         // best effort
-                        update(digest, "<unreadable>");
+                        update(digest, UNREADABLE);
                     }
                 });
         }
