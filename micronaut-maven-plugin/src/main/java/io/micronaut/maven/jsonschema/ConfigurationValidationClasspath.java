@@ -50,8 +50,14 @@ final class ConfigurationValidationClasspath {
      * @return Classpath elements
      */
     static List<String> defaultPackageClasspath(MavenProject project) {
-        // Requirement: allow validating during package using main source classpath.
-        return defaultMainSourceClasspath(project);
+        Set<String> result = new LinkedHashSet<>();
+        addIfExists(result, project.getBuild().getOutputDirectory());
+        if (result.isEmpty()) {
+            addResources(result, project.getBuild().getResources());
+            Path basedir = project.getBasedir().toPath();
+            addIfExists(result, basedir.resolve("src/main/resources").toString());
+        }
+        return new ArrayList<>(result);
     }
 
     /**
@@ -62,7 +68,7 @@ final class ConfigurationValidationClasspath {
      */
     static List<String> defaultTestClasspath(MavenProject project) {
         Set<String> result = new LinkedHashSet<>();
-        result.addAll(defaultMainSourceClasspath(project));
+        result.addAll(defaultPackageClasspath(project));
         addResources(result, project.getBuild().getTestResources());
         addIfExists(result, project.getBasedir().toPath().resolve("src/test/resources").toString());
         addIfExists(result, project.getBuild().getTestOutputDirectory());
