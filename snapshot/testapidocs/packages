@@ -1,2 +1,3 @@
 io.micronaut.maven
+io.micronaut.maven.jsonschema
 io.micronaut.maven.testresources
