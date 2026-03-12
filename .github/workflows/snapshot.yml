@@ -49,13 +49,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: "🔐 Setup GPG keyring"
+      - name: "🔐 Import GPG key"
         env:
           GPG_FILE: ${{ secrets.GPG_FILE }}
         run: |
-          mkdir ~/.gnupg && echo "$GPG_FILE" | base64 -d > ~/.gnupg/secring.gpg
-          
-          # Verify gpg secret key
+          mkdir -p ~/.gnupg
+          chmod 700 ~/.gnupg
+          echo "$GPG_FILE" | base64 -d | gpg --batch --import
           gpg --list-secret-keys --keyid-format LONG
 
       - name: "☕️ Install Java and Maven and set up Apache Maven Central"
@@ -67,7 +67,6 @@ jobs:
           server-id: central
           server-username: SONATYPE_USERNAME
           server-password: SONATYPE_PASSWORD
-          gpg-passphrase: GPG_PASSWORD
 
       - name: "🔧 Setup GraalVM CE"
         uses: graalvm/setup-graalvm@v1.4.5
@@ -83,6 +82,13 @@ jobs:
       - name: "🧪 Run tests"
         run: |
           ./mvnw -q install -Dinvoker.skip=true && ./mvnw verify
+
+      - name: "🔏 Verify release signing setup"
+        if: matrix.java == '25'
+        run: |
+          ./mvnw --batch-mode -Prelease verify -DskipTests -Dinvoker.skip=true -DskipITs
+        env:
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSWORD }}
 
       - name: "📊 Publish Test Report"
         if: always()
@@ -125,3 +131,4 @@ jobs:
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSWORD }}
