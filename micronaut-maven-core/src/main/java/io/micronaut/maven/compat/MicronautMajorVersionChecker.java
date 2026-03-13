@@ -54,8 +54,8 @@ public final class MicronautMajorVersionChecker {
     ) {
         return Stream.of(
                 collectMicronautParent(parent),
-                collectDirectCompatibilitySignals(dependencies, "dependency"),
-                collectDirectCompatibilitySignals(dependencyManagementDependencies, "dependencyManagement")
+                collectLifecycleBaselineSignals(dependencyManagementDependencies),
+                collectDirectCompatibilitySignals(dependencies, "dependency")
             )
             .flatMap(List::stream)
             .filter(coordinate -> coordinate.majorVersion().isPresent())
@@ -65,7 +65,7 @@ public final class MicronautMajorVersionChecker {
 
     public MicronautMajorVersionAnalysis analyzeForLifecycle(List<MicronautMajorVersionCoordinate> coordinates) {
         OptionalInt baselineMajor = coordinates.stream()
-            .filter(coordinate -> "parent".equals(coordinate.source()) || "dependencymanagement".equals(coordinate.source()))
+            .filter(this::isMicronautBaselineCoordinate)
             .map(MicronautMajorVersionCoordinate::majorVersion)
             .filter(OptionalInt::isPresent)
             .mapToInt(OptionalInt::getAsInt)
@@ -134,7 +134,7 @@ public final class MicronautMajorVersionChecker {
         int baselineMajor = analysis.baselineMajor().orElseThrow();
         String baseline = analysis.coordinates().stream()
             .filter(coordinate -> coordinate.majorVersion().isPresent() && coordinate.majorVersion().getAsInt() == baselineMajor)
-            .filter(coordinate -> "parent".equals(coordinate.source()) || "dependencymanagement".equals(coordinate.source()))
+            .filter(this::isMicronautBaselineCoordinate)
             .findFirst()
             .map(coordinate -> coordinate.groupId() + ':' + coordinate.artifactId() + ':' + coordinate.version() + " [" + coordinate.source() + ']')
             .orElse("major " + baselineMajor);
@@ -178,6 +178,20 @@ public final class MicronautMajorVersionChecker {
             .toList();
     }
 
+    public List<MicronautMajorVersionCoordinate> collectLifecycleBaselineSignals(List<Dependency> dependencies) {
+        return dependencies.stream()
+            .filter(Objects::nonNull)
+            .filter(this::isLifecycleBaselineSignal)
+            .map(dependency -> new MicronautMajorVersionCoordinate(
+                dependency.getGroupId(),
+                dependency.getArtifactId(),
+                dependency.getVersion(),
+                "dependencyManagement",
+                parseMajorVersion(dependency.getVersion())
+            ))
+            .toList();
+    }
+
     public List<MicronautMajorVersionCoordinate> collectMicronautParent(Parent parent) {
         if (parent == null || parent.getGroupId() == null || parent.getArtifactId() == null) {
             return List.of();
@@ -192,6 +206,22 @@ public final class MicronautMajorVersionChecker {
             "parent",
             parseMajorVersion(parent.getVersion())
         ));
+    }
+
+    private boolean isLifecycleBaselineSignal(Dependency dependency) {
+        return dependency.getGroupId() != null
+            && dependency.getArtifactId() != null
+            && dependency.getVersion() != null
+            && (("io.micronaut.platform".equals(dependency.getGroupId())
+                && ("micronaut-parent".equals(dependency.getArtifactId()) || "micronaut-platform".equals(dependency.getArtifactId())))
+                || ("io.micronaut".equals(dependency.getGroupId()) && "micronaut-core-bom".equals(dependency.getArtifactId())));
+    }
+
+    private boolean isMicronautBaselineCoordinate(MicronautMajorVersionCoordinate coordinate) {
+        return ("parent".equals(coordinate.source()) || "dependencymanagement".equals(coordinate.source()))
+            && (("io.micronaut.platform".equals(coordinate.groupId())
+                && ("micronaut-parent".equals(coordinate.artifactId()) || "micronaut-platform".equals(coordinate.artifactId())))
+                || ("io.micronaut".equals(coordinate.groupId()) && "micronaut-core-bom".equals(coordinate.artifactId())));
     }
 
     private boolean isMicronautDependency(Dependency dependency) {
