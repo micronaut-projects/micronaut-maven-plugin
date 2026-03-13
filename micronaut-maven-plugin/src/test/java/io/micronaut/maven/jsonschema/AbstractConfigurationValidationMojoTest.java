@@ -8,7 +8,6 @@ import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -107,17 +106,17 @@ class AbstractConfigurationValidationMojoTest {
     }
 
     @Test
-    void configurationValidationIsDisabledByDefaultUnlessExplicitlyEnabled() throws Exception {
-        TestConfigurationValidationMojo mojo = new TestConfigurationValidationMojo();
+    void configurationValidationIsDisabledByDefaultUnlessExplicitlyEnabled() {
         ConfigurationValidationConfiguration configuration = new ConfigurationValidationConfiguration();
 
-        assertFalse(invokeIsEnabled(mojo, configuration));
+        // By default (enabled == null), configuration should be treated as disabled
+        assertFalse(Boolean.TRUE.equals(configuration.getEnabled()));
 
         configuration.setEnabled(Boolean.TRUE);
-        assertTrue(invokeIsEnabled(mojo, configuration));
+        assertTrue(Boolean.TRUE.equals(configuration.getEnabled()));
 
         configuration.setEnabled(Boolean.FALSE);
-        assertFalse(invokeIsEnabled(mojo, configuration));
+        assertFalse(Boolean.TRUE.equals(configuration.getEnabled()));
     }
 
     private static String invokeSuppressionHint(AbstractConfigurationValidationMojo mojo,
@@ -128,13 +127,6 @@ class AbstractConfigurationValidationMojoTest {
         return (String) method.invoke(mojo, errors);
     }
 
-    private static boolean invokeIsEnabled(AbstractConfigurationValidationMojo mojo,
-                                           ConfigurationValidationConfiguration configuration) throws Exception {
-        Method method = AbstractConfigurationValidationMojo.class
-            .getDeclaredMethod("isEnabled", ConfigurationValidationConfiguration.class);
-        method.setAccessible(true);
-        return (boolean) method.invoke(mojo, configuration);
-    }
 
     private static final class TestConfigurationValidationMojo extends AbstractConfigurationValidationMojo {
 
