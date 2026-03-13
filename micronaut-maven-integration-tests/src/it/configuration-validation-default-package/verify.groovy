@@ -3,6 +3,8 @@ assert log.exists()
 
 def text = log.text
 
-// Ensure validate-configuration is executed by default when running mvn package
 assert text.contains('validate-configuration')
-assert text.contains('Validating Micronaut configuration (package)')
+assert !text.contains('Validating Micronaut configuration (package)')
+
+File report = new File(basedir, 'target/micronaut/config-validation/package/configuration-errors.json')
+assert !report.exists()

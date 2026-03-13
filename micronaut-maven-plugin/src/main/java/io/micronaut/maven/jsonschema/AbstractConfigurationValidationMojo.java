@@ -256,6 +256,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
 
             If these dependency injection errors can be ignored, add the following to your pom.xml:
             <configurationValidation>
+                <enabled>true</enabled>
                 <validateDependencyInjection>true</validateDependencyInjection>
                 <suppressInjectErrors>
             %s
@@ -332,7 +333,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
     }
 
     private boolean isEnabled(ConfigurationValidationConfiguration cfg) {
-        return cfg.getEnabled() == null || cfg.getEnabled();
+        return Boolean.TRUE.equals(cfg.getEnabled());
     }
 
     private Path determineOutputDir(ConfigurationValidationConfiguration cfg, ConfigurationValidationConfiguration.ValidationSet set) {

@@ -47,6 +47,7 @@
 
                 <configuration>
                     <configurationValidation>
+                        <enabled>true</enabled>
                         <validateDependencyInjection>true</validateDependencyInjection>
                     </configurationValidation>
                 </configuration>

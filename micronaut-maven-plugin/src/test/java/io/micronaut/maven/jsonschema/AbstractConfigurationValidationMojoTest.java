@@ -8,13 +8,13 @@ import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -106,12 +106,34 @@ class AbstractConfigurationValidationMojoTest {
         assertEquals(List.of(outputDirectory.toString(), testOutputDirectory.toString()), classpath);
     }
 
+    @Test
+    void configurationValidationIsDisabledByDefaultUnlessExplicitlyEnabled() throws Exception {
+        TestConfigurationValidationMojo mojo = new TestConfigurationValidationMojo();
+        ConfigurationValidationConfiguration configuration = new ConfigurationValidationConfiguration();
+
+        assertFalse(invokeIsEnabled(mojo, configuration));
+
+        configuration.setEnabled(Boolean.TRUE);
+        assertTrue(invokeIsEnabled(mojo, configuration));
+
+        configuration.setEnabled(Boolean.FALSE);
+        assertFalse(invokeIsEnabled(mojo, configuration));
+    }
+
     private static String invokeSuppressionHint(AbstractConfigurationValidationMojo mojo,
                                                 Set<DependencyInjectionError> errors) throws Exception {
         Method method = AbstractConfigurationValidationMojo.class
             .getDeclaredMethod("buildDependencyInjectionSuppressionHint", Set.class);
         method.setAccessible(true);
         return (String) method.invoke(mojo, errors);
+    }
+
+    private static boolean invokeIsEnabled(AbstractConfigurationValidationMojo mojo,
+                                           ConfigurationValidationConfiguration configuration) throws Exception {
+        Method method = AbstractConfigurationValidationMojo.class
+            .getDeclaredMethod("isEnabled", ConfigurationValidationConfiguration.class);
+        method.setAccessible(true);
+        return (boolean) method.invoke(mojo, configuration);
     }
 
     private static final class TestConfigurationValidationMojo extends AbstractConfigurationValidationMojo {

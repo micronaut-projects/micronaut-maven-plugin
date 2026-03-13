@@ -47,6 +47,7 @@
 
                 <configuration>
                     <configurationValidation>
+                        <enabled>true</enabled>
                         <packageValidation>
                             <resourceDirectories>
                                 <resourceDirectory>${project.basedir}/src/main/custom-resources</resourceDirectory>

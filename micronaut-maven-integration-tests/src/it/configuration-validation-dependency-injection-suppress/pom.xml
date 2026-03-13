@@ -57,6 +57,7 @@
                 <version>${micronaut-maven-plugin.version}</version>
                 <configuration>
                     <configurationValidation>
+                        <enabled>true</enabled>
                         <format>json</format>
                         <validateDependencyInjection>true</validateDependencyInjection>
                         <suppressInjectErrors>
