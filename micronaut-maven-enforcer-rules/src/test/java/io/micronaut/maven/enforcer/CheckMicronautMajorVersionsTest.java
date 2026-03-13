@@ -16,12 +16,9 @@
 package io.micronaut.maven.enforcer;
 
 import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
-import org.apache.maven.model.Build;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.DependencyManagement;
-import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -83,37 +80,7 @@ class CheckMicronautMajorVersionsTest {
     private MavenProject projectWithDependencies(List<Dependency> dependencies) {
         MavenProject project = new MavenProject();
         project.setDependencies(dependencies);
-        project.setBuild(new Build());
         return project;
-    }
-
-    private Build buildWithCompilerPlugin(Xpp3Dom configuration) {
-        Plugin plugin = new Plugin();
-        plugin.setGroupId("org.apache.maven.plugins");
-        plugin.setArtifactId("maven-compiler-plugin");
-        plugin.setConfiguration(configuration);
-
-        Build build = new Build();
-        build.setPlugins(List.of(plugin));
-        return build;
-    }
-
-    private Xpp3Dom annotationProcessorPaths(Dependency... dependencies) {
-        Xpp3Dom annotationProcessorPaths = new Xpp3Dom("annotationProcessorPaths");
-        for (Dependency dependency : dependencies) {
-            Xpp3Dom path = new Xpp3Dom("path");
-            path.addChild(node("groupId", dependency.getGroupId()));
-            path.addChild(node("artifactId", dependency.getArtifactId()));
-            path.addChild(node("version", dependency.getVersion()));
-            annotationProcessorPaths.addChild(path);
-        }
-        return annotationProcessorPaths;
-    }
-
-    private Xpp3Dom node(String name, String value) {
-        Xpp3Dom node = new Xpp3Dom(name);
-        node.setValue(value);
-        return node;
     }
 
     private Dependency dependency(String groupId, String artifactId, String version) {

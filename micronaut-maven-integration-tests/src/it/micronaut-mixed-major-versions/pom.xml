@@ -58,6 +58,7 @@
         <executions>
           <execution>
             <id>micronaut-enforce</id>
+            <phase>validate</phase>
             <goals>
               <goal>enforce</goal>
             </goals>

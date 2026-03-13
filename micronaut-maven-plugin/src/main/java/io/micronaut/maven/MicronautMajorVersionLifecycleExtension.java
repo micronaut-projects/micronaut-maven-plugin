@@ -20,12 +20,10 @@ import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.component.annotations.Component;
 
 /**
  * Lifecycle extension that fails fast when Micronaut major versions are mixed in project models.
  */
-@Component(role = AbstractMavenLifecycleParticipant.class, hint = "micronaut-major-version-check")
 public final class MicronautMajorVersionLifecycleExtension extends AbstractMavenLifecycleParticipant {
 
     private final MicronautMajorVersionChecker checker = new MicronautMajorVersionChecker();
