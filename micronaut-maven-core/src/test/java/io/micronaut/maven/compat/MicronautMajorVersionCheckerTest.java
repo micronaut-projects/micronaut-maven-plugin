@@ -48,10 +48,24 @@ class MicronautMajorVersionCheckerTest {
     }
 
     @Test
-    void detectsMixedMajorsForEnforcerCoordinates() {
+    void ignoresSiblingMicronautRepositoryMajorsForEnforcerCoordinates() {
         var coordinates = checker.collectEnforcerCoordinates(
             List.of(dependency("io.micronaut", "micronaut-inject", "5.0.0")),
             List.of(dependency("io.micronaut.validation", "micronaut-validation", "4.9.1")),
+            List.of()
+        );
+
+        assertFalse(checker.hasMixedMajors(coordinates));
+    }
+
+    @Test
+    void detectsMixedMajorsWithinIoMicronautFamily() {
+        var coordinates = checker.collectEnforcerCoordinates(
+            List.of(
+                dependency("io.micronaut", "micronaut-inject", "5.0.0"),
+                dependency("io.micronaut", "micronaut-runtime", "4.9.1")
+            ),
+            List.of(),
             List.of()
         );
 

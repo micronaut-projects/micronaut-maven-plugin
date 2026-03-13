@@ -85,12 +85,8 @@ public final class MicronautMajorVersionChecker {
     }
 
     public boolean hasMixedMajors(List<MicronautMajorVersionCoordinate> coordinates) {
-        return coordinates.stream()
-            .map(MicronautMajorVersionCoordinate::majorVersion)
-            .filter(OptionalInt::isPresent)
-            .mapToInt(OptionalInt::getAsInt)
-            .distinct()
-            .count() > 1;
+        return hasMixedMajorsInFamily(coordinates, "io.micronaut.platform")
+            || hasMixedMajorsInFamily(coordinates, "io.micronaut");
     }
 
     public OptionalInt parseMajorVersion(String version) {
@@ -109,18 +105,9 @@ public final class MicronautMajorVersionChecker {
     }
 
     public String buildEnforcerFailureMessage(List<MicronautMajorVersionCoordinate> coordinates) {
-        String details = coordinates.stream()
-            .filter(coordinate -> coordinate.majorVersion().isPresent())
-            .collect(Collectors.groupingBy(
-                coordinate -> coordinate.majorVersion().orElseThrow(),
-                java.util.LinkedHashMap::new,
-                Collectors.toList()
-            ))
-            .entrySet().stream()
-            .map(entry -> "- major " + entry.getKey() + ':' + System.lineSeparator() + entry.getValue().stream()
-                .sorted(defaultOrdering())
-                .map(coordinate -> "  - " + coordinate.groupId() + ':' + coordinate.artifactId() + ':' + coordinate.version() + " [" + coordinate.source() + ']')
-                .collect(Collectors.joining(System.lineSeparator())))
+        String details = Stream.of("io.micronaut.platform", "io.micronaut")
+            .map(family -> buildFamilyMismatchDetails(coordinates, family))
+            .filter(familyDetails -> !familyDetails.isBlank())
             .collect(Collectors.joining(System.lineSeparator()));
 
         return "Mixed Micronaut major versions detected in the build configuration. "
@@ -153,7 +140,7 @@ public final class MicronautMajorVersionChecker {
     public List<MicronautMajorVersionCoordinate> collectMicronautDependencies(List<Dependency> dependencies, String source) {
         return dependencies.stream()
             .filter(Objects::nonNull)
-            .filter(this::isMicronautDependency)
+            .filter(this::isMicronautFamilyDependency)
             .map(dependency -> new MicronautMajorVersionCoordinate(
                 dependency.getGroupId(),
                 dependency.getArtifactId(),
@@ -225,10 +212,10 @@ public final class MicronautMajorVersionChecker {
                 || ("io.micronaut".equals(coordinate.groupId()) && "micronaut-core-bom".equals(coordinate.artifactId())));
     }
 
-    private boolean isMicronautDependency(Dependency dependency) {
+    private boolean isMicronautFamilyDependency(Dependency dependency) {
         return dependency.getGroupId() != null
             && dependency.getArtifactId() != null
-            && isMicronautGroup(dependency.getGroupId());
+            && ("io.micronaut".equals(dependency.getGroupId()) || "io.micronaut.platform".equals(dependency.getGroupId()));
     }
 
     private boolean isDirectCompatibilitySignal(Dependency dependency) {
@@ -241,8 +228,36 @@ public final class MicronautMajorVersionChecker {
                 || (dependency.getGroupId().equals("io.micronaut") && dependency.getArtifactId().startsWith("micronaut-")));
     }
 
-    private boolean isMicronautGroup(String groupId) {
-        return groupId != null && groupId.startsWith("io.micronaut");
+    private boolean hasMixedMajorsInFamily(List<MicronautMajorVersionCoordinate> coordinates, String familyGroupId) {
+        return coordinates.stream()
+            .filter(coordinate -> familyGroupId.equals(coordinate.groupId()))
+            .map(MicronautMajorVersionCoordinate::majorVersion)
+            .filter(OptionalInt::isPresent)
+            .mapToInt(OptionalInt::getAsInt)
+            .distinct()
+            .count() > 1;
+    }
+
+    private String buildFamilyMismatchDetails(List<MicronautMajorVersionCoordinate> coordinates, String familyGroupId) {
+        var byMajor = coordinates.stream()
+            .filter(coordinate -> familyGroupId.equals(coordinate.groupId()))
+            .filter(coordinate -> coordinate.majorVersion().isPresent())
+            .collect(Collectors.groupingBy(
+                coordinate -> coordinate.majorVersion().orElseThrow(),
+                java.util.LinkedHashMap::new,
+                Collectors.toList()
+            ));
+
+        if (byMajor.size() <= 1) {
+            return "";
+        }
+
+        return "- family " + familyGroupId + ':' + System.lineSeparator() + byMajor.entrySet().stream()
+            .map(entry -> "  - major " + entry.getKey() + ':' + System.lineSeparator() + entry.getValue().stream()
+                .sorted(defaultOrdering())
+                .map(coordinate -> "    - " + coordinate.groupId() + ':' + coordinate.artifactId() + ':' + coordinate.version() + " [" + coordinate.source() + ']')
+                .collect(Collectors.joining(System.lineSeparator())))
+            .collect(Collectors.joining(System.lineSeparator()));
     }
 
     private Comparator<MicronautMajorVersionCoordinate> defaultOrdering() {

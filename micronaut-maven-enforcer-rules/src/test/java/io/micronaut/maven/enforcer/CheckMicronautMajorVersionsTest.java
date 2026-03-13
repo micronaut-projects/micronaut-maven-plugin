@@ -40,24 +40,35 @@ class CheckMicronautMajorVersionsTest {
     }
 
     @Test
-    void failsWhenProjectDependenciesMixMicronautMajorVersions() {
+    void passesWhenSiblingMicronautRepositoriesUseDifferentMajorVersions() {
         MavenProject project = projectWithDependencies(List.of(
             dependency("io.micronaut", "micronaut-inject", "5.0.0"),
             dependency("io.micronaut.validation", "micronaut-validation", "4.9.1")
         ));
 
-        assertThrows(EnforcerRuleException.class, () -> new CheckMicronautMajorVersions(project).execute());
+        assertDoesNotThrow(() -> new CheckMicronautMajorVersions(project).execute());
     }
 
 
     @Test
-    void failsWhenMicronautVersionsAreProvidedViaProperties() {
+    void passesWhenPropertyDrivenSiblingMicronautRepositoriesUseDifferentMajorVersions() {
         MavenProject project = projectWithDependencies(List.of(
             dependency("io.micronaut", "micronaut-inject", "${micronaut.version}"),
             dependency("io.micronaut.validation", "micronaut-validation", "${micronaut.validation.version}")
         ));
         project.getProperties().setProperty("micronaut.version", "5.0.0");
         project.getProperties().setProperty("micronaut.validation.version", "4.9.1");
+
+        assertDoesNotThrow(() -> new CheckMicronautMajorVersions(project).execute());
+    }
+
+
+    @Test
+    void failsWhenIoMicronautDependenciesUseDifferentMajorVersions() {
+        MavenProject project = projectWithDependencies(List.of(
+            dependency("io.micronaut", "micronaut-inject", "5.0.0"),
+            dependency("io.micronaut", "micronaut-runtime", "4.9.1")
+        ));
 
         assertThrows(EnforcerRuleException.class, () -> new CheckMicronautMajorVersions(project).execute());
     }
