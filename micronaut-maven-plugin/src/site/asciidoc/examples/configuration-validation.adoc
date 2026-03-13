@@ -101,7 +101,7 @@ The mojos share a `configurationValidation` block and expose options equivalent 
 </plugin>
 ----
 
-The `<enabled>` flag defaults to `false`, so you must set it to `true` to run validation.
+If `<enabled>` is not set (or is set to `false`), validation does not run; set it to `true` to enable validation.
 
 === Classpath configuration
 
