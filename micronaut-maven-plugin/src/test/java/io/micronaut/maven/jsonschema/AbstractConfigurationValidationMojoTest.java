@@ -14,8 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -107,17 +106,22 @@ class AbstractConfigurationValidationMojoTest {
     }
 
     @Test
-    void configurationValidationIsDisabledByDefaultUnlessExplicitlyEnabled() {
+    void configurationValidationEnabledIsNullByDefault() {
         ConfigurationValidationConfiguration configuration = new ConfigurationValidationConfiguration();
 
-        // By default (enabled == null), configuration should be treated as disabled
-        assertFalse(Boolean.TRUE.equals(configuration.getEnabled()));
+        // By default, enabled is null (unset), not explicitly false
+        assertNull(configuration.getEnabled());
+    }
+
+    @Test
+    void configurationValidationEnabledReflectsExplicitlySetValue() {
+        ConfigurationValidationConfiguration configuration = new ConfigurationValidationConfiguration();
 
         configuration.setEnabled(Boolean.TRUE);
-        assertTrue(Boolean.TRUE.equals(configuration.getEnabled()));
+        assertEquals(Boolean.TRUE, configuration.getEnabled());
 
         configuration.setEnabled(Boolean.FALSE);
-        assertFalse(Boolean.TRUE.equals(configuration.getEnabled()));
+        assertEquals(Boolean.FALSE, configuration.getEnabled());
     }
 
     private static String invokeSuppressionHint(AbstractConfigurationValidationMojo mojo,
