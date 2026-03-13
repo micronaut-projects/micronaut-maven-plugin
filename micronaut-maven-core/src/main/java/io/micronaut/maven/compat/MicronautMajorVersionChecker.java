@@ -53,7 +53,7 @@ public final class MicronautMajorVersionChecker {
         List<Dependency> dependencyManagementDependencies
     ) {
         return Stream.of(
-                collectMicronautParent(parent),
+                collectLifecycleParent(parent),
                 collectLifecycleBaselineSignals(dependencyManagementDependencies),
                 collectDirectCompatibilitySignals(dependencies, "dependency")
             )
@@ -192,11 +192,12 @@ public final class MicronautMajorVersionChecker {
             .toList();
     }
 
-    public List<MicronautMajorVersionCoordinate> collectMicronautParent(Parent parent) {
+    public List<MicronautMajorVersionCoordinate> collectLifecycleParent(Parent parent) {
         if (parent == null || parent.getGroupId() == null || parent.getArtifactId() == null) {
             return List.of();
         }
-        if (!isMicronautGroup(parent.getGroupId())) {
+        if (!("io.micronaut.platform".equals(parent.getGroupId())
+            && ("micronaut-parent".equals(parent.getArtifactId()) || "micronaut-platform".equals(parent.getArtifactId())))) {
             return List.of();
         }
         return List.of(new MicronautMajorVersionCoordinate(
