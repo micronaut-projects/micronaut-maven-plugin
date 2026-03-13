@@ -15,6 +15,7 @@
  */
 package io.micronaut.maven.enforcer;
 
+import io.micronaut.maven.compat.MicronautMajorVersionChecker;
 import org.apache.maven.enforcer.rule.api.AbstractEnforcerRule;
 import org.apache.maven.enforcer.rule.api.EnforcerRuleException;
 import org.apache.maven.model.Dependency;
@@ -25,19 +26,9 @@ import org.codehaus.plexus.util.xml.Xpp3Dom;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
 import java.util.Objects;
-import java.util.OptionalInt;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import java.util.Properties;
 import java.util.stream.Stream;
 
 /**
@@ -50,9 +41,9 @@ import java.util.stream.Stream;
 public class CheckMicronautMajorVersions extends AbstractEnforcerRule {
 
     private static final String MAVEN_COMPILER_PLUGIN_ARTIFACT_ID = "maven-compiler-plugin";
-    private static final Pattern LEADING_MAJOR_PATTERN = Pattern.compile("^(\\d+)");
 
     private final MavenProject project;
+    private final MicronautMajorVersionChecker checker = new MicronautMajorVersionChecker();
 
     @Inject
     public CheckMicronautMajorVersions(MavenProject project) {
@@ -61,25 +52,14 @@ public class CheckMicronautMajorVersions extends AbstractEnforcerRule {
 
     @Override
     public void execute() throws EnforcerRuleException {
-        List<MicronautCoordinate> coordinates = Stream.of(
-                micronautDependencies(project.getDependencies(), "dependency"),
-                micronautDependencies(project.getDependencyManagement() != null ? project.getDependencyManagement().getDependencies() : List.of(), "dependencyManagement"),
-                micronautDependencies(compilerAnnotationProcessorPaths(), "annotationProcessorPath")
-            )
-            .flatMap(List::stream)
-            .filter(coordinate -> coordinate.majorVersion().isPresent())
-            .distinct()
-            .toList();
+        var coordinates = checker.collectEnforcerCoordinates(
+            resolveVersions(project.getDependencies()),
+            resolveVersions(project.getDependencyManagement() != null ? project.getDependencyManagement().getDependencies() : List.of()),
+            resolveVersions(compilerAnnotationProcessorPaths())
+        );
 
-        Set<Integer> detectedMajors = coordinates.stream()
-            .map(MicronautCoordinate::majorVersion)
-            .filter(OptionalInt::isPresent)
-            .mapToInt(OptionalInt::getAsInt)
-            .boxed()
-            .collect(Collectors.toCollection(LinkedHashSet::new));
-
-        if (detectedMajors.size() > 1) {
-            throw new EnforcerRuleException(buildFailureMessage(coordinates));
+        if (checker.hasMixedMajors(coordinates)) {
+            throw new EnforcerRuleException(checker.buildEnforcerFailureMessage(coordinates));
         }
     }
 
@@ -124,42 +104,17 @@ public class CheckMicronautMajorVersions extends AbstractEnforcerRule {
         return child != null ? child.getValue() : null;
     }
 
-    private List<MicronautCoordinate> micronautDependencies(List<Dependency> dependencies, String source) {
+    private List<Dependency> resolveVersions(List<Dependency> dependencies) {
         return dependencies.stream()
             .filter(Objects::nonNull)
-            .filter(this::isMicronautDependency)
             .map(dependency -> {
-                String resolvedVersion = resolveVersion(dependency.getVersion());
-                return new MicronautCoordinate(
-                    dependency.getGroupId(),
-                    dependency.getArtifactId(),
-                    resolvedVersion,
-                    source,
-                    parseMajorVersion(resolvedVersion)
-                );
+                Dependency resolved = new Dependency();
+                resolved.setGroupId(dependency.getGroupId());
+                resolved.setArtifactId(dependency.getArtifactId());
+                resolved.setVersion(resolveVersion(dependency.getVersion()));
+                return resolved;
             })
             .toList();
-    }
-
-    private boolean isMicronautDependency(Dependency dependency) {
-        return dependency.getGroupId() != null
-            && dependency.getArtifactId() != null
-            && dependency.getGroupId().startsWith("io.micronaut");
-    }
-
-    private OptionalInt parseMajorVersion(String version) {
-        if (version == null) {
-            return OptionalInt.empty();
-        }
-        Matcher matcher = LEADING_MAJOR_PATTERN.matcher(version);
-        if (!matcher.find()) {
-            return OptionalInt.empty();
-        }
-        try {
-            return OptionalInt.of(Integer.parseInt(matcher.group(1)));
-        } catch (NumberFormatException e) {
-            return OptionalInt.empty();
-        }
     }
 
     private String resolveVersion(String version) {
@@ -178,48 +133,8 @@ public class CheckMicronautMajorVersions extends AbstractEnforcerRule {
         return project.getModel().getProperties().getProperty(propertyName, version);
     }
 
-    private String buildFailureMessage(List<MicronautCoordinate> coordinates) {
-        Map<Integer, List<MicronautCoordinate>> byMajor = coordinates.stream()
-            .filter(coordinate -> coordinate.majorVersion().isPresent())
-            .sorted(Comparator
-                .comparingInt((MicronautCoordinate coordinate) -> coordinate.majorVersion().orElseThrow())
-                .thenComparing(MicronautCoordinate::groupId)
-                .thenComparing(MicronautCoordinate::artifactId)
-                .thenComparing(MicronautCoordinate::source))
-            .collect(Collectors.groupingBy(
-                coordinate -> coordinate.majorVersion().orElseThrow(),
-                LinkedHashMap::new,
-                Collectors.toList()
-            ));
-
-        String details = byMajor.entrySet().stream()
-            .map(entry -> "- major " + entry.getKey() + ':' + System.lineSeparator() + entry.getValue().stream()
-                .map(coordinate -> "  - " + coordinate.groupId() + ':' + coordinate.artifactId() + ':' + coordinate.version() + " [" + coordinate.source() + ']')
-                .collect(Collectors.joining(System.lineSeparator())))
-            .collect(Collectors.joining(System.lineSeparator()));
-
-        return "Mixed Micronaut major versions detected in the build configuration. "
-            + "Make sure dependencies, dependencyManagement entries, and annotation processor paths all use the same Micronaut major version."
-            + System.lineSeparator()
-            + System.lineSeparator()
-            + details;
-    }
-
     @Override
     public String toString() {
         return "CheckMicronautMajorVersions";
-    }
-
-    private record MicronautCoordinate(
-        String groupId,
-        String artifactId,
-        String version,
-        String source,
-        OptionalInt majorVersion
-    ) {
-        private MicronautCoordinate {
-            version = version == null ? "<unknown>" : version;
-            source = source.toLowerCase(Locale.ROOT);
-        }
     }
 }
