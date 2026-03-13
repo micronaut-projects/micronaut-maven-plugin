@@ -83,7 +83,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>validate-test-config</id>
+                        <id>default-validate-test-configuration</id>
                         <phase>test-compile</phase>
                         <goals>
                             <goal>validate-test-configuration</goal>
