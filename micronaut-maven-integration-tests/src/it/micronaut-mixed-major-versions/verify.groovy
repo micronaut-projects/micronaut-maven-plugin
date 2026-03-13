@@ -1,0 +1,6 @@
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains("BUILD FAILURE")
+assert log.text.contains("io.micronaut.maven.enforcer.CheckMicronautMajorVersions failed with message")
+assert log.text.contains("Mixed Micronaut major versions detected in the build configuration")
+assert log.text.contains("io.micronaut.validation:micronaut-validation-processor:4.7.0 [annotationprocessorpath]")
