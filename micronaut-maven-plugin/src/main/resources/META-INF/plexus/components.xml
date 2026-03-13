@@ -279,6 +279,14 @@
             </configuration>
         </component>
 
+        <component>
+            <role>org.apache.maven.AbstractMavenLifecycleParticipant</role>
+            <role-hint>micronaut-major-version-check</role-hint>
+            <implementation>io.micronaut.maven.MicronautMajorVersionLifecycleExtension</implementation>
+            <description>Micronaut major version compatibility extension</description>
+            <isolated-realm>false</isolated-realm>
+        </component>
+
         <!-- Test resources lifecycle management -->
         <component>
             <role>org.apache.maven.AbstractMavenLifecycleParticipant</role>
