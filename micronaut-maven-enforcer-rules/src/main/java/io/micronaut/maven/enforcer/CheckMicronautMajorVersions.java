@@ -31,6 +31,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Objects;
 import java.util.OptionalInt;
 import java.util.Set;
@@ -127,13 +128,16 @@ public class CheckMicronautMajorVersions extends AbstractEnforcerRule {
         return dependencies.stream()
             .filter(Objects::nonNull)
             .filter(this::isMicronautDependency)
-            .map(dependency -> new MicronautCoordinate(
-                dependency.getGroupId(),
-                dependency.getArtifactId(),
-                dependency.getVersion(),
-                source,
-                parseMajorVersion(dependency.getVersion())
-            ))
+            .map(dependency -> {
+                String resolvedVersion = resolveVersion(dependency.getVersion());
+                return new MicronautCoordinate(
+                    dependency.getGroupId(),
+                    dependency.getArtifactId(),
+                    resolvedVersion,
+                    source,
+                    parseMajorVersion(resolvedVersion)
+                );
+            })
             .toList();
     }
 
@@ -151,7 +155,27 @@ public class CheckMicronautMajorVersions extends AbstractEnforcerRule {
         if (!matcher.find()) {
             return OptionalInt.empty();
         }
-        return OptionalInt.of(Integer.parseInt(matcher.group(1)));
+        try {
+            return OptionalInt.of(Integer.parseInt(matcher.group(1)));
+        } catch (NumberFormatException e) {
+            return OptionalInt.empty();
+        }
+    }
+
+    private String resolveVersion(String version) {
+        if (version == null) {
+            return null;
+        }
+        if (!version.startsWith("${") || !version.endsWith("}")) {
+            return version;
+        }
+        String propertyName = version.substring(2, version.length() - 1);
+        Properties properties = project.getProperties();
+        String propertyValue = properties.getProperty(propertyName);
+        if (propertyValue != null) {
+            return propertyValue;
+        }
+        return project.getModel().getProperties().getProperty(propertyName, version);
     }
 
     private String buildFailureMessage(List<MicronautCoordinate> coordinates) {

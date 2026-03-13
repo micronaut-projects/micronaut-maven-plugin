@@ -52,6 +52,19 @@ class CheckMicronautMajorVersionsTest {
         assertThrows(EnforcerRuleException.class, () -> new CheckMicronautMajorVersions(project).execute());
     }
 
+
+    @Test
+    void failsWhenMicronautVersionsAreProvidedViaProperties() {
+        MavenProject project = projectWithDependencies(List.of(
+            dependency("io.micronaut", "micronaut-inject", "${micronaut.version}"),
+            dependency("io.micronaut.validation", "micronaut-validation", "${micronaut.validation.version}")
+        ));
+        project.getProperties().setProperty("micronaut.version", "5.0.0");
+        project.getProperties().setProperty("micronaut.validation.version", "4.9.1");
+
+        assertThrows(EnforcerRuleException.class, () -> new CheckMicronautMajorVersions(project).execute());
+    }
+
     @Test
     void failsWhenDependencyManagementMixesMicronautMajorVersions() {
         MavenProject project = projectWithDependencies(List.of(
