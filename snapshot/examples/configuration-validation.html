@@ -10,7 +10,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content="Apache Maven Doxia Site Renderer 2.0.0" />
-    <meta name="date" content="2026-03-16 11:22:38 UTC" />
+    <meta name="date" content="2026-03-16 11:26:50 UTC" />
     <title>Validating Micronaut configuration – Micronaut Maven Plugin - Plugin</title>
     <link rel="stylesheet" href="../css/apache-maven-fluido-2.0.0-M11.min.css" />
     <link rel="stylesheet" href="../css/site.css" />
@@ -128,7 +128,8 @@
 <div class="sectionbody">
 <div class="paragraph">
 <p>The Micronaut Maven Plugin can validate your application&#8217;s configuration files (for example <code>application.yml</code>) using JSON Schema.
-The build fails when validation reports errors.</p>
+The build fails when validation reports errors.
+Validation is disabled by default and must be explicitly enabled.</p>
 </div>
 </div>
 </div>
@@ -145,7 +146,7 @@ The build fails when validation reports errors.</p>
 <p>Validates using the <code>dev</code> environment.</p>
 </li>
 <li>
-<p>This goal is automatically executed by <code>mn:run</code>.</p>
+<p>This goal is invoked by <code>mn:run</code> and runs validation only when explicitly enabled.</p>
 </li>
 </ul>
 </div>
@@ -184,7 +185,7 @@ The build fails when validation reports errors.</p>
 <h2 id="binding_to_the_lifecycle">Binding to the lifecycle</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Configuration validation runs automatically when using Micronaut packaging types (<code>jar</code>, <code>native-image</code>, <code>docker</code>, <code>docker-native</code>, <code>docker-crac</code>):</p>
+<p>Configuration validation goals are wired when using Micronaut packaging types (<code>jar</code>, <code>native-image</code>, <code>docker</code>, <code>docker-native</code>, <code>docker-crac</code>), but validation only executes when explicitly enabled:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -195,7 +196,7 @@ The build fails when validation reports errors.</p>
 <p><code>validate-test-configuration</code> runs during the <code>test</code> phase (as part of <code>mvn test</code>)</p>
 </li>
 <li>
-<p><code>validate-dev-configuration</code> is automatically executed by <code>mn:run</code></p>
+<p><code>validate-dev-configuration</code> is invoked by <code>mn:run</code></p>
 </li>
 </ul>
 </div>
@@ -271,7 +272,7 @@ The build fails when validation reports errors.</p>
                 <span style="color:#070;font-weight:bold">&lt;/environments&gt;</span>
             <span style="color:#070;font-weight:bold">&lt;/packageValidation&gt;</span>
             <span style="color:#070;font-weight:bold">&lt;test&gt;</span>
-                <span style="color:#777">&lt;!-- additional environments are appended; 'test' is enabled by default --&gt;</span>
+                <span style="color:#777">&lt;!-- additional environments are appended; 'test' environment is included by default when validation runs --&gt;</span>
                 <span style="color:#070;font-weight:bold">&lt;environments&gt;</span>
                     <span style="color:#070;font-weight:bold">&lt;environment&gt;</span>ci<span style="color:#070;font-weight:bold">&lt;/environment&gt;</span>
                 <span style="color:#070;font-weight:bold">&lt;/environments&gt;</span>
@@ -280,6 +281,9 @@ The build fails when validation reports errors.</p>
     <span style="color:#070;font-weight:bold">&lt;/configuration&gt;</span>
 <span style="color:#070;font-weight:bold">&lt;/plugin&gt;</span></code></pre>
 </div>
+</div>
+<div class="paragraph">
+<p>If <code>&lt;enabled&gt;</code> is not set (or is set to <code>false</code>), validation does not run; set it to <code>true</code> to enable validation.</p>
 </div>
 <div class="sect2">
 <h3 id="classpath_configuration">Classpath configuration</h3>
@@ -309,6 +313,7 @@ You can also validate Micronaut dependency injection wiring (missing beans, unsa
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;configurationValidation&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;enabled&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/enabled&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;validateDependencyInjection&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/validateDependencyInjection&gt;</span>
 <span style="color:#070;font-weight:bold">&lt;/configurationValidation&gt;</span></code></pre>
 </div>
@@ -323,6 +328,7 @@ You can also validate Micronaut dependency injection wiring (missing beans, unsa
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;configurationValidation&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;enabled&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/enabled&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;validateDependencyInjection&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/validateDependencyInjection&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;suppressInjectErrors&gt;</span>
         <span style="color:#070;font-weight:bold">&lt;suppressInjectError&gt;</span>com.example.optional.MissingBean<span style="color:#070;font-weight:bold">&lt;/suppressInjectError&gt;</span>
@@ -369,6 +375,7 @@ When <code>validateDependencyInjection</code> is enabled, classpath entry metada
 <div class="listingblock">
 <div class="content">
 <pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;configurationValidation&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;enabled&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/enabled&gt;</span>
     <span style="color:#070;font-weight:bold">&lt;cacheEnabled&gt;</span>false<span style="color:#070;font-weight:bold">&lt;/cacheEnabled&gt;</span>
 <span style="color:#070;font-weight:bold">&lt;/configurationValidation&gt;</span></code></pre>
 </div>
