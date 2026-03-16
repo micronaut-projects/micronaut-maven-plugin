@@ -80,7 +80,7 @@ public final class ConfigurationValidationConfiguration {
     private ValidationSet test;
 
     /**
-     * @return Whether configuration validation is enabled. If {@code null}, validation is enabled.
+     * @return Whether configuration validation is enabled. If {@code null}, validation is disabled.
      */
     public Boolean getEnabled() {
         return enabled;
@@ -321,7 +321,9 @@ public final class ConfigurationValidationConfiguration {
         private List<File> resourceDirectories;
 
         /**
-         * @return Whether this validation scenario is enabled. If {@code null}, the scenario is enabled.
+         * @return Whether this validation scenario is enabled. If {@code null}, the scenario follows the global
+         * {@link ConfigurationValidationConfiguration#getEnabled()} setting. This flag cannot force execution if
+         * global validation is disabled.
          */
         public Boolean getEnabled() {
             return enabled;

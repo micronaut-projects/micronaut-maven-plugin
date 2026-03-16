@@ -44,6 +44,11 @@
                 <groupId>io.micronaut.maven</groupId>
                 <artifactId>micronaut-maven-plugin</artifactId>
                 <version>${micronaut-maven-plugin.version}</version>
+                <configuration>
+                    <configurationValidation>
+                        <enabled>true</enabled>
+                    </configurationValidation>
+                </configuration>
             </plugin>
         </plugins>
     </build>

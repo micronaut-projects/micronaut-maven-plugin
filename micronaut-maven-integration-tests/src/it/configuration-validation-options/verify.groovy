@@ -7,7 +7,7 @@ def text = log.text
 
 // cacheEnabled=false => validation should run on both invocations
 assert (text.count('Validating Micronaut configuration (package)') == 2)
-assert (text.count('Validating Micronaut configuration (test)') == 3)
+assert (text.count('Validating Micronaut configuration (test)') == 2)
 
 File packageJson = new File(basedir, 'target/validation-reports/package/configuration-errors.json')
 File packageHtml = new File(basedir, 'target/validation-reports/package/configuration-errors.html')

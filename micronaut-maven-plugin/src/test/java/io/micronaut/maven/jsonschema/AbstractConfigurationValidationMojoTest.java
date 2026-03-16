@@ -8,13 +8,13 @@ import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.File;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -106,6 +106,25 @@ class AbstractConfigurationValidationMojoTest {
         assertEquals(List.of(outputDirectory.toString(), testOutputDirectory.toString()), classpath);
     }
 
+    @Test
+    void configurationValidationEnabledIsNullByDefault() {
+        ConfigurationValidationConfiguration configuration = new ConfigurationValidationConfiguration();
+
+        // By default, enabled is null (unset), not explicitly false
+        assertNull(configuration.getEnabled());
+    }
+
+    @Test
+    void configurationValidationEnabledReflectsExplicitlySetValue() {
+        ConfigurationValidationConfiguration configuration = new ConfigurationValidationConfiguration();
+
+        configuration.setEnabled(Boolean.TRUE);
+        assertEquals(Boolean.TRUE, configuration.getEnabled());
+
+        configuration.setEnabled(Boolean.FALSE);
+        assertEquals(Boolean.FALSE, configuration.getEnabled());
+    }
+
     private static String invokeSuppressionHint(AbstractConfigurationValidationMojo mojo,
                                                 Set<DependencyInjectionError> errors) throws Exception {
         Method method = AbstractConfigurationValidationMojo.class
@@ -113,6 +132,7 @@ class AbstractConfigurationValidationMojoTest {
         method.setAccessible(true);
         return (String) method.invoke(mojo, errors);
     }
+
 
     private static final class TestConfigurationValidationMojo extends AbstractConfigurationValidationMojo {
 

@@ -2,12 +2,13 @@
 
 The Micronaut Maven Plugin can validate your application's configuration files (for example `application.yml`) using JSON Schema.
 The build fails when validation reports errors.
+Validation is disabled by default and must be explicitly enabled.
 
 == Goals
 
 * `mn:validate-dev-configuration`
 ** Validates using the `dev` environment.
-** This goal is automatically executed by `mn:run`.
+** This goal is invoked by `mn:run` and runs validation only when explicitly enabled.
 * `mn:validate-configuration`
 ** Intended for `mvn package` (for example production configuration).
 ** Default environments: none.
@@ -17,11 +18,11 @@ The build fails when validation reports errors.
 
 == Binding to the lifecycle
 
-Configuration validation runs automatically when using Micronaut packaging types (`jar`, `native-image`, `docker`, `docker-native`, `docker-crac`):
+Configuration validation goals are wired when using Micronaut packaging types (`jar`, `native-image`, `docker`, `docker-native`, `docker-crac`), but validation only executes when explicitly enabled:
 
 * `validate-configuration` runs during the `prepare-package` phase (before `mvn package`)
 * `validate-test-configuration` runs during the `test` phase (as part of `mvn test`)
-* `validate-dev-configuration` is automatically executed by `mn:run`
+* `validate-dev-configuration` is invoked by `mn:run`
 
 If you are not using Micronaut packaging or want to customize the phase bindings, you can configure explicit executions:
 
@@ -90,7 +91,7 @@ The mojos share a `configurationValidation` block and expose options equivalent 
                 </environments>
             </packageValidation>
             <test>
-                <!-- additional environments are appended; 'test' is enabled by default -->
+                <!-- additional environments are appended; 'test' environment is included by default when validation runs -->
                 <environments>
                     <environment>ci</environment>
                 </environments>
@@ -99,6 +100,8 @@ The mojos share a `configurationValidation` block and expose options equivalent 
     </configuration>
 </plugin>
 ----
+
+If `<enabled>` is not set (or is set to `false`), validation does not run; set it to `true` to enable validation.
 
 === Classpath configuration
 
@@ -115,6 +118,7 @@ You can also validate Micronaut dependency injection wiring (missing beans, unsa
 [source,xml]
 ----
 <configurationValidation>
+    <enabled>true</enabled>
     <validateDependencyInjection>true</validateDependencyInjection>
 </configurationValidation>
 ----
@@ -127,6 +131,7 @@ If you need to suppress known dependency-injection issues (for example optional 
 [source,xml]
 ----
 <configurationValidation>
+    <enabled>true</enabled>
     <validateDependencyInjection>true</validateDependencyInjection>
     <suppressInjectErrors>
         <suppressInjectError>com.example.optional.MissingBean</suppressInjectError>
@@ -156,6 +161,7 @@ Disable caching with:
 [source,xml]
 ----
 <configurationValidation>
+    <enabled>true</enabled>
     <cacheEnabled>false</cacheEnabled>
 </configurationValidation>
 ----
