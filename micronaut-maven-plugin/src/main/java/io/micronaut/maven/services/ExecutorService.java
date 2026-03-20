@@ -167,7 +167,7 @@ public class ExecutorService {
 
     public InvocationResult invokeGoals(MavenProject project, String... goals) throws MavenInvocationException {
         var request = new DefaultInvocationRequest();
-        request.setPomFile(project.getFile());
+        request.setPomFile(resolveOriginalPom(project));
         File settingsFile = mavenSession.getRequest().getUserSettingsFile();
         if (settingsFile.exists()) {
             request.setUserSettingsFile(settingsFile);
@@ -184,5 +184,40 @@ public class ExecutorService {
         request.setOutputHandler(LOG::info);
         request.setProperties(properties);
         return invoker.execute(request);
+    }
+
+    /**
+     * Resolves the original pom.xml for a project. Plugins like the flatten-maven-plugin
+     * may modify the project's POM file to point to a processed POM (e.g., in the target
+     * directory). When the Maven invoker uses such a POM, {@code <module>} paths are resolved
+     * relative to the POM file's location, which causes module resolution failures in
+     * multi-module projects.
+     *
+     * @param project The Maven project
+     * @return The original pom.xml file, or the project's file if the original cannot be found
+     */
+    static File resolveOriginalPom(MavenProject project) {
+        File projectFile = project.getFile();
+        if (projectFile == null) {
+            return null;
+        }
+        if ("pom.xml".equals(projectFile.getName())) {
+            return projectFile;
+        }
+        // The build directory (typically {basedir}/target) is resolved from the original
+        // project directory during model building, so its parent should be the original
+        // project directory.
+        String buildDirectory = project.getBuild().getDirectory();
+        if (buildDirectory != null) {
+            File buildDir = new File(buildDirectory);
+            File projectDirectory = buildDir.getParentFile();
+            if (projectDirectory != null) {
+                File originalPom = new File(projectDirectory, "pom.xml");
+                if (originalPom.isFile()) {
+                    return originalPom;
+                }
+            }
+        }
+        return projectFile;
     }
 }
