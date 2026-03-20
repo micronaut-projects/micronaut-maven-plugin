@@ -86,6 +86,37 @@ class ExecutorServiceTest {
         assertEquals(originalPom, result);
     }
 
+    @Test
+    void resolveOriginalPomPreservesLegitimateNonStandardPomFilename() throws IOException {
+        // Simulate a legitimate alternate POM filename provided via maven -f
+        File alternatePom = tempDir.resolve("parent.xml").toFile();
+        Files.writeString(alternatePom.toPath(), "<project/>");
+
+        // Even if a pom.xml exists, the alternate POM should not be overridden
+        File pomXml = tempDir.resolve("pom.xml").toFile();
+        Files.writeString(pomXml.toPath(), "<project/>");
+
+        MavenProject project = mockProject(alternatePom, tempDir.resolve("target").toString());
+
+        File result = ExecutorService.resolveOriginalPom(project);
+        assertEquals(alternatePom, result);
+    }
+
+    @Test
+    void resolveOriginalPomHandlesDependencyReducedPom() throws IOException {
+        // Simulate maven-shade-plugin with dependency-reduced-pom.xml in basedir
+        File reducedPom = tempDir.resolve("dependency-reduced-pom.xml").toFile();
+        Files.writeString(reducedPom.toPath(), "<project/>");
+
+        File originalPom = tempDir.resolve("pom.xml").toFile();
+        Files.writeString(originalPom.toPath(), "<project/>");
+
+        MavenProject project = mockProject(reducedPom, tempDir.resolve("target").toString());
+
+        File result = ExecutorService.resolveOriginalPom(project);
+        assertEquals(originalPom, result);
+    }
+
     private static MavenProject mockProject(File pomFile, String buildDirectory) {
         Build build = mock(Build.class);
         when(build.getDirectory()).thenReturn(buildDirectory);

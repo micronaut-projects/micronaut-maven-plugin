@@ -204,20 +204,56 @@ public class ExecutorService {
         if ("pom.xml".equals(projectFile.getName())) {
             return projectFile;
         }
-        // The build directory (typically {basedir}/target) is resolved from the original
-        // project directory during model building, so its parent should be the original
-        // project directory.
-        String buildDirectory = project.getBuild().getDirectory();
+        // Only attempt to resolve an "original" pom.xml when the current project file
+        // looks like a processed POM produced during the build (for example, by the
+        // flatten-maven-plugin or maven-shade-plugin). This avoids overriding legitimate
+        // non-standard POM file names that may have been provided explicitly (e.g. via -f).
+        String buildDirectory = project.getBuild() != null ? project.getBuild().getDirectory() : null;
         if (buildDirectory != null) {
             File buildDir = new File(buildDirectory);
-            File projectDirectory = buildDir.getParentFile();
-            if (projectDirectory != null) {
-                File originalPom = new File(projectDirectory, "pom.xml");
-                if (originalPom.isFile()) {
-                    return originalPom;
+            if (isInDirectory(projectFile, buildDir) || isKnownProcessedPom(projectFile)) {
+                // The build directory (typically {basedir}/target) is resolved from the original
+                // project directory during model building, so its parent should be the original
+                // project directory.
+                File projectDirectory = buildDir.getParentFile();
+                if (projectDirectory != null) {
+                    File originalPom = new File(projectDirectory, "pom.xml");
+                    if (originalPom.isFile()) {
+                        return originalPom;
+                    }
                 }
             }
         }
         return projectFile;
+    }
+
+    /**
+     * Returns true if {@code file} is located in {@code directory} or one of its subdirectories.
+     */
+    private static boolean isInDirectory(File file, File directory) {
+        if (file == null || directory == null) {
+            return false;
+        }
+        File current = file.getParentFile();
+        while (current != null) {
+            if (current.equals(directory)) {
+                return true;
+            }
+            current = current.getParentFile();
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if the given project file name matches a known processed/rewritten POM name.
+     */
+    private static boolean isKnownProcessedPom(File projectFile) {
+        if (projectFile == null) {
+            return false;
+        }
+        String name = projectFile.getName();
+        return "flattened-pom.xml".equals(name)
+            || ".flattened-pom.xml".equals(name)
+            || "dependency-reduced-pom.xml".equals(name);
     }
 }
