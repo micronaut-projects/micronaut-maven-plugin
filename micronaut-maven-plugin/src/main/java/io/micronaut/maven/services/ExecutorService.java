@@ -167,7 +167,7 @@ public class ExecutorService {
 
     public InvocationResult invokeGoals(MavenProject project, String... goals) throws MavenInvocationException {
         var request = new DefaultInvocationRequest();
-        request.setPomFile(project.getFile());
+        request.setPomFile(resolveOriginalPom(project));
         File settingsFile = mavenSession.getRequest().getUserSettingsFile();
         if (settingsFile.exists()) {
             request.setUserSettingsFile(settingsFile);
@@ -184,5 +184,76 @@ public class ExecutorService {
         request.setOutputHandler(LOG::info);
         request.setProperties(properties);
         return invoker.execute(request);
+    }
+
+    /**
+     * Resolves the original pom.xml for a project. Plugins like the flatten-maven-plugin
+     * may modify the project's POM file to point to a processed POM (e.g., in the target
+     * directory). When the Maven invoker uses such a POM, {@code <module>} paths are resolved
+     * relative to the POM file's location, which causes module resolution failures in
+     * multi-module projects.
+     *
+     * @param project The Maven project
+     * @return The original pom.xml file, or the project's file if the original cannot be found
+     */
+    static File resolveOriginalPom(MavenProject project) {
+        File projectFile = project.getFile();
+        if (projectFile == null) {
+            return null;
+        }
+        if ("pom.xml".equals(projectFile.getName())) {
+            return projectFile;
+        }
+        // Only attempt to resolve an "original" pom.xml when the current project file
+        // looks like a processed POM produced during the build (for example, by the
+        // flatten-maven-plugin or maven-shade-plugin). This avoids overriding legitimate
+        // non-standard POM file names that may have been provided explicitly (e.g. via -f).
+        String buildDirectory = project.getBuild() != null ? project.getBuild().getDirectory() : null;
+        if (buildDirectory != null) {
+            File buildDir = new File(buildDirectory);
+            if (isInDirectory(projectFile, buildDir) || isKnownProcessedPom(projectFile)) {
+                // The build directory (typically {basedir}/target) is resolved from the original
+                // project directory during model building, so its parent should be the original
+                // project directory.
+                File projectDirectory = buildDir.getParentFile();
+                if (projectDirectory != null) {
+                    File originalPom = new File(projectDirectory, "pom.xml");
+                    if (originalPom.isFile()) {
+                        return originalPom;
+                    }
+                }
+            }
+        }
+        return projectFile;
+    }
+
+    /**
+     * Returns true if {@code file} is located in {@code directory} or one of its subdirectories.
+     */
+    private static boolean isInDirectory(File file, File directory) {
+        if (file == null || directory == null) {
+            return false;
+        }
+        File current = file.getParentFile();
+        while (current != null) {
+            if (current.equals(directory)) {
+                return true;
+            }
+            current = current.getParentFile();
+        }
+        return false;
+    }
+
+    /**
+     * Returns true if the given project file name matches a known processed/rewritten POM name.
+     */
+    private static boolean isKnownProcessedPom(File projectFile) {
+        if (projectFile == null) {
+            return false;
+        }
+        String name = projectFile.getName();
+        return "flattened-pom.xml".equals(name)
+            || ".flattened-pom.xml".equals(name)
+            || "dependency-reduced-pom.xml".equals(name);
     }
 }
