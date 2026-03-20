@@ -1,3 +1,4 @@
 io.micronaut.maven
+io.micronaut.maven.services
 io.micronaut.maven.jsonschema
 io.micronaut.maven.testresources
