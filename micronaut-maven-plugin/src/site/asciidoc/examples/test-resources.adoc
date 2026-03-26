@@ -50,7 +50,7 @@ server, separate of the others.
 
 However, you might want to run the consumer in one terminal, and the producer in another, and still want them to talk to
 the same Kafka cluster. For this you can use a shared test server, by passing the `micronaut.test.resources.shared`
-system property, or setting `<shared>true<shared>` in the Micronaut Maven Plugin configuration.
+system property, or setting `<shared>true</shared>` in the Micronaut Maven Plugin configuration.
 
 ==== Test Resource Service lifecycle
 
@@ -148,4 +148,3 @@ https://micronaut-projects.github.io/micronaut-test-resources/latest/guide/#modu
 
 You can see all the additional configuration options in the
 link:../start-testresources-service-mojo.html[`start-testresources-service` goal documentation].
-
