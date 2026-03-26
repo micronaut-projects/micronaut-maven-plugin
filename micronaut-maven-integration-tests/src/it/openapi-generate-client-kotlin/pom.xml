@@ -21,7 +21,7 @@
     <micronaut.openapi.lang>kotlin</micronaut.openapi.lang>
     <micronaut.openapi.generate.client>true</micronaut.openapi.generate.client>
     <micronaut.openapi.client.generated.annotation>false</micronaut.openapi.client.generated.annotation>
-    <kotlin.version>2.3.10</kotlin.version>
+    <kotlin.version>2.3.20</kotlin.version>
     <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
   </properties>
 
