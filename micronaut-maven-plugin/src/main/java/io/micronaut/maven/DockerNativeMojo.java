@@ -169,6 +169,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
     }
 
     private void buildDockerNative() throws IOException, InvalidImageReferenceException {
+        String baseImageRun = getBaseImageRun();
         String dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE;
         if (Boolean.TRUE.equals(staticNativeImage)) {
             getLog().info("Generating a static native image");
@@ -192,6 +193,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         }
 
         String from = getFrom();
+        String baseImageRun = getBaseImageRun();
         String ports = getPorts();
         getLog().info("Exposing port(s): " + ports);
 
@@ -223,7 +225,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
     private BuildImageCmd addNativeImageBuildArgs(Map<String, String> buildImageCmdArguments, Supplier<BuildImageCmd> buildImageCmdSupplier) throws IOException {
         String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);
-        List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);
+        List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, getBaseImageRun(), argsFile);
         //Remove extra main class argument
         allNativeImageBuildArgs.remove(mainClass);
         getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);

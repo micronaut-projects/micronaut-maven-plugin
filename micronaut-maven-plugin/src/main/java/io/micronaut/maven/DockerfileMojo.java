@@ -159,6 +159,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
         getLog().info("Generating GraalVM args file");
         executorService.invokeGoal(NATIVE_BUILD_TOOLS_MAVEN_PLUGIN, "write-args-file");
         File dockerfile;
+        String baseImageRun = getBaseImageRun();
         switch (runtime.getBuildStrategy()) {
             case LAMBDA -> dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS_CUSTOM_RUNTIME);
             case ORACLE_FUNCTION -> {
@@ -183,6 +184,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     private void processDockerfile(File dockerfile) throws IOException {
+        String baseImageRun = getBaseImageRun();
 
         if (dockerfile != null) {
             var allLines = Files.readAllLines(dockerfile.toPath());

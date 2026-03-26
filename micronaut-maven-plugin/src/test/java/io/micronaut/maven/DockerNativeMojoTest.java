@@ -22,6 +22,8 @@ import java.net.http.HttpResponse;
 import java.util.Optional;
 import java.util.Properties;
 
+import static io.micronaut.maven.AbstractDockerMojo.DEFAULT_BASE_IMAGE_GRAALVM_RUN;
+import static io.micronaut.maven.AbstractDockerMojo.ORACLE_FUNCTION_BASE_IMAGE_RUN;
 import static io.micronaut.maven.AbstractDockerMojo.X86_64_ARCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -126,6 +128,50 @@ class DockerNativeMojoTest {
         var ports = mojo.getPorts();
 
         assertEquals("8081", ports);
+    }
+
+    @Test
+    void testOracleFunctionDefaultsUseOracleImages() {
+        var project = mock(MavenProject.class);
+        var session = mock(MavenSession.class);
+        var execution = mock(MojoExecution.class);
+        var properties = new Properties(1);
+        properties.put("maven.compiler.target", "25");
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        when(project.getProperties()).thenReturn(properties);
+
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.empty());
+
+        var mojo = new DockerNativeMojo(project, jibConfigurationService, null, null, session, execution);
+        mojo.micronautRuntime = "oracle_function";
+        mojo.baseImageRun = DEFAULT_BASE_IMAGE_GRAALVM_RUN;
+
+        assertEquals("container-registry.oracle.com/graalvm/native-image:25-ol8", mojo.getFrom());
+        assertEquals(ORACLE_FUNCTION_BASE_IMAGE_RUN, mojo.getBaseImageRun());
+    }
+
+    @Test
+    void testOracleFunctionOverridesStillWin() {
+        var project = mock(MavenProject.class);
+        var session = mock(MavenSession.class);
+        var execution = mock(MojoExecution.class);
+        var properties = new Properties(1);
+        properties.put("maven.compiler.target", "25");
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        when(project.getProperties()).thenReturn(properties);
+
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.of("example.com/custom-builder:1"));
+
+        var mojo = new DockerNativeMojo(project, jibConfigurationService, null, null, session, execution);
+        mojo.micronautRuntime = "oracle_function";
+        mojo.baseImageRun = "example.com/custom-run:1";
+
+        assertEquals("example.com/custom-builder:1", mojo.getFrom());
+        assertEquals("example.com/custom-run:1", mojo.getBaseImageRun());
     }
 
     @Test

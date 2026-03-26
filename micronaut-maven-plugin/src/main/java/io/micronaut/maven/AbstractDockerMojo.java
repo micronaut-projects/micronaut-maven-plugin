@@ -59,6 +59,10 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
 
     public static final String LATEST_TAG = "latest";
     public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "cgr.dev/chainguard/wolfi-base:latest";
+    public static final String DEFAULT_NATIVE_IMAGE_BUILDER = "ghcr.io/graalvm/native-image-community:";
+    public static final String ORACLE_FUNCTION_BASE_IMAGE_RUN = "container-registry.oracle.com/os/oraclelinux:8-slim";
+    public static final String ORACLE_FUNCTION_NATIVE_IMAGE_BUILDER = "container-registry.oracle.com/graalvm/native-image:";
+    public static final String ORACLE_FUNCTION_ORACLE_LINUX_VERSION = "ol8";
     public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
     public static final String ARM_ARCH = "aarch64";
     public static final String X86_64_ARCH = "x64";
@@ -68,6 +72,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
 
     protected final MavenProject mavenProject;
     protected final MavenSession mavenSession;
+    protected final MojoExecution mojoExecution;
     protected final JibConfigurationService jibConfigurationService;
     protected final ApplicationConfigurationService applicationConfigurationService;
     protected final DockerService dockerService;
@@ -137,6 +142,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
                                  DockerService dockerService, MavenSession mavenSession, MojoExecution mojoExecution) {
         this.mavenProject = mavenProject;
         this.mavenSession = mavenSession;
+        this.mojoExecution = mojoExecution;
         this.jibConfigurationService = jibConfigurationService;
         this.applicationConfigurationService = applicationConfigurationService;
         this.dockerService = dockerService;
@@ -197,7 +203,19 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @return the base FROM image for the native image.
      */
     protected String getFrom() {
-        return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion));
+        return getFromImage().orElseGet(() -> isOracleFunctionRuntime()
+            ? ORACLE_FUNCTION_NATIVE_IMAGE_BUILDER + graalVmTag(graalVmJvmVersion(), false, ORACLE_FUNCTION_ORACLE_LINUX_VERSION)
+            : DEFAULT_NATIVE_IMAGE_BUILDER + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion));
+    }
+
+    /**
+     * @return the runtime image to use for the native image.
+     */
+    protected String getBaseImageRun() {
+        if (isOracleFunctionRuntime() && DEFAULT_BASE_IMAGE_GRAALVM_RUN.equals(baseImageRun)) {
+            return ORACLE_FUNCTION_BASE_IMAGE_RUN;
+        }
+        return baseImageRun;
     }
 
     /**
@@ -230,6 +248,10 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      */
     protected Optional<String> getFromImage() {
         return jibConfigurationService.getFromImage();
+    }
+
+    private boolean isOracleFunctionRuntime() {
+        return MicronautRuntime.ORACLE_FUNCTION.name().equalsIgnoreCase(micronautRuntime);
     }
 
     /**

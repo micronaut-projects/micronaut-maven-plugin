@@ -1,4 +1,4 @@
-FROM ghcr.io/graalvm/native-image-community:25-ol9 AS builder
+FROM container-registry.oracle.com/graalvm/native-image:25-ol8 AS builder
 WORKDIR /home/app
 
 COPY classes /home/app/classes
@@ -10,7 +10,7 @@ RUN native-image @/home/app/graalvm-native-image.args --report-unsupported-eleme
 
 FROM fnproject/fn-java-fdk:jre17-latest AS fnfdk
 
-FROM cgr.dev/chainguard/wolfi-base:latest
+FROM container-registry.oracle.com/os/oraclelinux:8-slim
 WORKDIR /function
 COPY --from=builder /home/app/application /function/func
 COPY --from=fnfdk /function/runtime/lib/* .
