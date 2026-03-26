@@ -123,14 +123,17 @@ public final class MojoUtils {
 
     private static Path resolveNestedArgsFilePath(Path argsFilePath, String fileName) {
         Path nestedArgsFilePath = Paths.get(FilenameUtils.separatorsToSystem(fileName)).normalize();
-        if (nestedArgsFilePath.isAbsolute() || Files.exists(nestedArgsFilePath)) {
+        if (nestedArgsFilePath.isAbsolute()) {
             return nestedArgsFilePath;
         }
         Path parent = argsFilePath.getParent();
-        if (parent == null) {
-            return nestedArgsFilePath;
+        if (parent != null) {
+            Path resolved = parent.resolve(nestedArgsFilePath).normalize();
+            if (Files.exists(resolved)) {
+                return resolved;
+            }
         }
-        return parent.resolve(nestedArgsFilePath).normalize();
+        return nestedArgsFilePath;
     }
 
     private static String parseQuotedClasspathArg(String arg) {
