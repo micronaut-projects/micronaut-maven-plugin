@@ -18,7 +18,7 @@ To see the documentation of a particular version, replace `latest` or `snapshot`
 
 ## Snapshots and Releases
 
-Snaphots and releases are automatically published to Maven Central using [GitHub Actions](https://github.com/micronaut-projects/micronaut-maven-plugin/actions).
+Snapshots and releases are automatically published to Maven Central using [GitHub Actions](https://github.com/micronaut-projects/micronaut-maven-plugin/actions).
 
 A release is performed with the following steps:
 
@@ -46,10 +46,11 @@ $ mvn install
 You can skip execution of integration tests by adding `-Dinvoker.skip=true` to the command line.
 
 Then you need a sample application. The one at `examples/java` is the most up-to-date, but you can in principle generate
-a new one from Micronaut Starter. Then, change its `pom.xml` to set the following property:
+a new one from Micronaut Starter. Then, change its `pom.xml` to set the following property. For the current `5.0.x`
+branch, a locally built snapshot would typically use:
 
 ```xml
-<micronaut-maven-plugin.version>1.1.5-SNAPSHOT</micronaut-maven-plugin.version>
+<micronaut-maven-plugin.version>5.0.0-SNAPSHOT</micronaut-maven-plugin.version>
 ```
 
 Pointing to whatever snapshot version you published before.
