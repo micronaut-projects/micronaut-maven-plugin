@@ -83,7 +83,10 @@ public final class MojoUtils {
     }
 
     private static Stream<String> parseNativeImageArgsFile(String argsFile) {
-        Path argsFilePath = Paths.get(argsFile);
+        return parseNativeImageArgsFile(Paths.get(FilenameUtils.separatorsToSystem(argsFile)));
+    }
+
+    private static Stream<String> parseNativeImageArgsFile(Path argsFilePath) {
         if (Files.exists(argsFilePath)) {
             List<String> args;
             try {
@@ -104,11 +107,9 @@ public final class MojoUtils {
                 .flatMap(arg -> {
                     if (arg.startsWith("@")) {
                         String fileName = arg.substring(1);
-                        return parseNativeImageArgsFile(fileName);
+                        return parseNativeImageArgsFile(resolveNestedArgsFilePath(argsFilePath, fileName));
                     } else if (arg.startsWith("\\Q") && arg.endsWith("\\E")) {
-                        // start the search at length - 3 to skip \Q or \E at the end
-                        int lastIndexOfSlash = arg.lastIndexOf(File.separator, arg.length() - 3);
-                        return Stream.of("\\Q/home/app/libs/" + arg.substring(lastIndexOfSlash + 1));
+                        return Stream.of(parseQuotedClasspathArg(arg));
                     } else if (arg.startsWith("-H:ConfigurationFileDirectories")) {
                         return Stream.of(parseConfigurationFilesDirectoriesArg(arg));
                     } else {
@@ -118,6 +119,23 @@ public final class MojoUtils {
         } else {
             throw new RuntimeException("Unable to find args file: " + argsFilePath);
         }
+    }
+
+    private static Path resolveNestedArgsFilePath(Path argsFilePath, String fileName) {
+        Path nestedArgsFilePath = Paths.get(FilenameUtils.separatorsToSystem(fileName)).normalize();
+        if (nestedArgsFilePath.isAbsolute() || Files.exists(nestedArgsFilePath)) {
+            return nestedArgsFilePath;
+        }
+        Path parent = argsFilePath.getParent();
+        if (parent == null) {
+            return nestedArgsFilePath;
+        }
+        return parent.resolve(nestedArgsFilePath).normalize();
+    }
+
+    private static String parseQuotedClasspathArg(String arg) {
+        String quotedPath = arg.substring(2, arg.length() - 2);
+        return "\\Q/home/app/libs/" + FilenameUtils.getName(quotedPath) + "\\E";
     }
 
     static String parseConfigurationFilesDirectoriesArg(String arg) {
