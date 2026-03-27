@@ -4,15 +4,22 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.toolchain.Toolchain;
 import org.apache.maven.toolchain.ToolchainManager;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.codehaus.plexus.util.Os;
 
+import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.*;
-
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+
+import static org.mockito.Mockito.*;
 
 class MojoUtilsTest {
 
@@ -105,5 +112,54 @@ class MojoUtilsTest {
         String result = MojoUtils.parseConfigurationFilesDirectoriesArg(arg);
 
         assertEquals("-H:ConfigurationFileDirectories=/home/app/generateTestResourceConfig,/home/app/generateResourceConfig", result);
+    }
+
+    @Test
+    void testComputeNativeImageArgsExpandsWindowsStyleNestedArgsFile(@TempDir Path tempDir) throws IOException {
+        Path nestedArgsFile = tempDir.resolve("target/tmp/native-image-generated.args");
+        Files.createDirectories(nestedArgsFile.getParent());
+        Files.write(nestedArgsFile, List.of(
+            "\\QC:\\Users\\My User\\.m2\\repository\\com\\example\\demo.jar\\E",
+            "-H:ConfigurationFileDirectories=C:\\Users\\My User\\graalvm-reachability-metadata\\metadata\\io.netty\\netty-common\\4.1.80.Final,C:\\Users\\My User\\graalvm-reachability-metadata\\metadata\\io.netty\\netty-buffer\\4.1.80.Final",
+            "-H:ConfigurationFileDirectories=C:\\Users\\My User\\workspace\\target\\native\\generated\\generateTestResourceConfig,C:\\Users\\My User\\workspace\\target\\native\\generated\\generateResourceConfig"
+        ));
+
+        Path argsFile = tempDir.resolve("graalvm-native-image.args");
+        Files.write(argsFile, List.of(
+            "--no-fallback",
+            "@target\\tmp\\native-image-generated.args"
+        ));
+
+        List<String> result = MojoUtils.computeNativeImageArgs(List.of(), "oraclelinux:9", argsFile.toString());
+
+        assertIterableEquals(List.of(
+            "--no-fallback",
+            "\\Q/home/app/libs/demo.jar\\E",
+            "-H:ConfigurationFileDirectories=/home/app/graalvm-reachability-metadata/metadata/io.netty/netty-common/4.1.80.Final,/home/app/graalvm-reachability-metadata/metadata/io.netty/netty-buffer/4.1.80.Final",
+            "-H:ConfigurationFileDirectories=/home/app/generateTestResourceConfig,/home/app/generateResourceConfig"
+        ), result);
+    }
+
+    @Test
+    void testComputeNativeImageArgsPrefersParentRelativeNestedArgsFile(@TempDir Path tempDir) throws IOException {
+        Path nestedArgsFile = tempDir.resolve("target/cwd-collision/native-image-generated.args");
+        Files.createDirectories(nestedArgsFile.getParent());
+        Files.write(nestedArgsFile, List.of("\\QC:\\parent\\demo.jar\\E"));
+
+        Path cwdCollision = Paths.get("target/cwd-collision/native-image-generated.args");
+        Files.createDirectories(cwdCollision.getParent());
+        Files.write(cwdCollision, List.of("\\QC:\\cwd\\wrong.jar\\E"));
+
+        Path argsFile = tempDir.resolve("graalvm-native-image.args");
+        Files.write(argsFile, List.of("@target\\cwd-collision\\native-image-generated.args"));
+
+        try {
+            List<String> result = MojoUtils.computeNativeImageArgs(List.of(), "oraclelinux:9", argsFile.toString());
+
+            assertIterableEquals(List.of("\\Q/home/app/libs/demo.jar\\E"), result);
+        } finally {
+            Files.deleteIfExists(cwdCollision);
+            Files.deleteIfExists(cwdCollision.getParent());
+        }
     }
 }
