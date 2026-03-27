@@ -35,15 +35,23 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -58,12 +66,18 @@ public class TestResourcesHelper {
 
     private static final String TEST_RESOURCES_PROPERTIES = "test-resources.properties";
     private static final String PORT_FILE_NAME = "test-resources-port.txt";
+    private static final String APPLICATION_TEST_PROPERTIES = "application-test.properties";
+    private static final String TEST_RESOURCES_SCOPE_PROPERTY = "micronaut.test.resources.scope";
+    private static final String SCOPE_PREFIX = "mvn";
 
     private static final String TEST_RESOURCES_CLIENT_SYSTEM_PROP_PREFIX = "micronaut.test.resources.";
 
     private static final String TEST_RESOURCES_PROP_SERVER_URI = TEST_RESOURCES_CLIENT_SYSTEM_PROP_PREFIX + "server.uri";
     private static final String TEST_RESOURCES_PROP_ACCESS_TOKEN = TEST_RESOURCES_CLIENT_SYSTEM_PROP_PREFIX + "server.access.token";
     private static final String TEST_RESOURCES_PROP_CLIENT_READ_TIMEOUT = TEST_RESOURCES_CLIENT_SYSTEM_PROP_PREFIX + "server.client.read.timeout";
+    private static final Object SESSION_STATE_MONITOR = new Object();
+    private static final Map<MavenSession, SessionState> SESSION_STATES = new WeakHashMap<>();
+    private static final Map<Path, Object> SHARED_SERVER_LOCKS = new ConcurrentHashMap<>();
 
     private final boolean enabled;
 
@@ -172,47 +186,38 @@ public class TestResourcesHelper {
         Path serverSettingsDirectory = getServerSettingsDirectory();
         var serverStarted = new AtomicBoolean(false);
         var serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion, debugServer, foreground, testResourcesSystemProperties);
+        if (shared) {
+            synchronized (sharedServerLock(serverSettingsDirectory)) {
+                doStart(accessToken, buildDir, serverSettingsDirectory, serverFactory, serverStarted);
+            }
+            return;
+        }
+        doStart(accessToken, buildDir, serverSettingsDirectory, serverFactory, serverStarted);
+    }
+
+    private void doStart(String accessToken,
+                         Path buildDir,
+                         Path serverSettingsDirectory,
+                         ServerFactory serverFactory,
+                         AtomicBoolean serverStarted) throws IOException {
         Optional<ServerSettings> optionalServerSettings = startOrConnectToExistingServer(accessToken, buildDir, serverSettingsDirectory, serverFactory);
-        if (optionalServerSettings.isPresent()) {
-            ServerSettings serverSettings = optionalServerSettings.get();
-            if (shared) {
-                if (sharedServerNamespace != null) {
-                    log.info("Test Resources is configured in shared mode with the namespace: " + sharedServerNamespace);
-                    //Copy the server settings to the default location so that TR Client can find it
-                    Path projectSettingsDirectory = serverSettingsDirectoryOf(buildDirectory.toPath());
-                    Files.createDirectories(projectSettingsDirectory);
-
-                    Path source = serverSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES);
-                    Path target = projectSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES);
-                    Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-
-                } else {
-                    log.info("Test Resources is configured in shared mode");
-                }
+        if (optionalServerSettings.isEmpty()) {
+            return;
+        }
+        ServerSettings serverSettings = optionalServerSettings.get();
+        boolean sessionOwnedSharedServer = shared && registerSharedServerUse(serverSettingsDirectory, serverSettings.getPort(), serverStarted.get());
+        if (shared) {
+            logSharedMode(serverSettingsDirectory);
+            writeSharedScopeConfiguration();
+        }
+        setSystemProperties(serverSettings);
+        if (serverStarted.get()) {
+            if (isKeepAlive()) {
+                log.info("Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:" + StopTestResourcesServerMojo.NAME + "'");
             }
-            setSystemProperties(serverSettings);
-            if (serverStarted.get()) {
-                if (isKeepAlive()) {
-                    log.info("Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:" + StopTestResourcesServerMojo.NAME + "'");
-                }
-            } else {
-                // A server was already listening, which means it was running before
-                // the build was started, so we put a file to indicate to the stop
-                // mojo that it should not stop the server.
-                Path keepalive = getKeepAliveFile();
-                // Test is because we may be running in watch mode
-                if (!Files.exists(keepalive)) {
-                    Files.write(keepalive, "true".getBytes());
-                    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                        // Make sure that if the build is interrupted, e.g using CTRL+C, the keepalive file is deleted
-                        try {
-                            deleteKeepAliveFile();
-                        } catch (MojoExecutionException e) {
-                            // ignore, we're in a shutdown hook
-                        }
-                    }));
-                }
-            }
+        } else if (!sessionOwnedSharedServer) {
+            // A server was already listening before this build started, so leave it running.
+            createKeepAliveFile();
         }
     }
 
@@ -299,6 +304,24 @@ public class TestResourcesHelper {
         if (!enabled) {
             return;
         }
+        if (shared) {
+            synchronized (sharedServerLock(getServerSettingsDirectory())) {
+                stopSharedServer(quiet);
+            }
+            return;
+        }
+        stopServer(quiet);
+    }
+
+    private void stopSharedServer(boolean quiet) throws MojoExecutionException {
+        if (releaseSharedServerUse(getServerSettingsDirectory())) {
+            log("Keeping Micronaut Test Resources service alive for another parallel reactor module", quiet);
+            return;
+        }
+        stopServer(quiet);
+    }
+
+    private void stopServer(boolean quiet) throws MojoExecutionException {
         if (isKeepAlive()) {
             log("Keeping Micronaut Test Resources service alive", quiet);
             return;
@@ -325,6 +348,149 @@ public class TestResourcesHelper {
             } else {
                 throw new MojoExecutionException(message, e);
             }
+        }
+    }
+
+    private void logSharedMode(Path serverSettingsDirectory) throws IOException {
+        if (sharedServerNamespace != null) {
+            log.info("Test Resources is configured in shared mode with the namespace: " + sharedServerNamespace);
+            Path projectSettingsDirectory = serverSettingsDirectoryOf(buildDirectory.toPath());
+            Files.createDirectories(projectSettingsDirectory);
+            Path source = serverSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES);
+            Path target = projectSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES);
+            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+        } else {
+            log.info("Test Resources is configured in shared mode");
+        }
+    }
+
+    private void writeSharedScopeConfiguration() throws IOException {
+        String scope = sharedScope();
+        if (scope == null) {
+            return;
+        }
+        System.setProperty(TEST_RESOURCES_SCOPE_PROPERTY, scope);
+        Path testClassesDirectory = buildDirectory.toPath().resolve("test-classes");
+        Files.createDirectories(testClassesDirectory);
+        updateApplicationTestProperties(testClassesDirectory.resolve(APPLICATION_TEST_PROPERTIES), scope);
+        log.info("Using Micronaut Test Resources scope " + scope + " for " + moduleKey());
+    }
+
+    static void updateApplicationTestProperties(Path file, String scope) throws IOException {
+        Properties properties = new Properties();
+        if (Files.exists(file)) {
+            try (InputStream input = Files.newInputStream(file)) {
+                properties.load(input);
+            }
+        }
+        properties.setProperty(TEST_RESOURCES_SCOPE_PROPERTY, scope);
+        try (OutputStream output = Files.newOutputStream(file)) {
+            properties.store(output, "Generated by micronaut-maven-plugin");
+        }
+    }
+
+    static String sanitizeScopeSegment(String value) {
+        String sanitized = value.replace(File.separatorChar, '.')
+            .replaceAll("[^A-Za-z0-9_.-]", "-")
+            .replaceAll("[.]{2,}", ".")
+            .replaceAll("-{2,}", "-")
+            .replaceAll("^[.-]+|[.-]+$", "");
+        return sanitized.isEmpty() ? "root" : sanitized;
+    }
+
+    private String sharedScope() {
+        if (!shared || mavenProject == null) {
+            return null;
+        }
+        Path multiModuleDirectory = mavenSession.getRequest().getMultiModuleProjectDirectory() == null
+            ? null
+            : mavenSession.getRequest().getMultiModuleProjectDirectory().toPath().toAbsolutePath().normalize();
+        Path projectDirectory = mavenProject.getBasedir() == null
+            ? null
+            : mavenProject.getBasedir().toPath().toAbsolutePath().normalize();
+        String projectSegment = mavenProject.getArtifactId();
+        if (multiModuleDirectory != null && projectDirectory != null && projectDirectory.startsWith(multiModuleDirectory)) {
+            Path relativePath = multiModuleDirectory.relativize(projectDirectory);
+            if (relativePath.getNameCount() > 0) {
+                projectSegment = relativePath.toString();
+            }
+        }
+        return sessionState().scopePrefix + "." + sanitizeScopeSegment(projectSegment);
+    }
+
+    private boolean registerSharedServerUse(Path serverSettingsDirectory, int port, boolean serverStarted) {
+        if (mavenProject == null) {
+            return false;
+        }
+        synchronized (SESSION_STATE_MONITOR) {
+            Path key = normalize(serverSettingsDirectory);
+            SessionState sessionState = sessionState();
+            SharedServerState sharedServerState = sessionState.sharedServers.get(key);
+            if (serverStarted) {
+                sharedServerState = new SharedServerState(port);
+                sessionState.sharedServers.put(key, sharedServerState);
+            } else if (sharedServerState == null || sharedServerState.port != port) {
+                return false;
+            }
+            sharedServerState.owners.add(moduleKey());
+            return true;
+        }
+    }
+
+    private boolean releaseSharedServerUse(Path serverSettingsDirectory) {
+        if (mavenProject == null) {
+            return false;
+        }
+        synchronized (SESSION_STATE_MONITOR) {
+            SessionState sessionState = SESSION_STATES.get(mavenSession);
+            if (sessionState == null) {
+                return false;
+            }
+            SharedServerState sharedServerState = sessionState.sharedServers.get(normalize(serverSettingsDirectory));
+            if (sharedServerState == null) {
+                return false;
+            }
+            sharedServerState.owners.remove(moduleKey());
+            if (!sharedServerState.owners.isEmpty()) {
+                return true;
+            }
+            sessionState.sharedServers.remove(normalize(serverSettingsDirectory));
+            return false;
+        }
+    }
+
+    private SessionState sessionState() {
+        synchronized (SESSION_STATE_MONITOR) {
+            return SESSION_STATES.computeIfAbsent(mavenSession, ignored -> new SessionState());
+        }
+    }
+
+    private String moduleKey() {
+        if (mavenProject == null || mavenProject.getBasedir() == null) {
+            return buildDirectory.toPath().toAbsolutePath().normalize().toString();
+        }
+        return mavenProject.getBasedir().toPath().toAbsolutePath().normalize().toString();
+    }
+
+    private static Path normalize(Path path) {
+        return path.toAbsolutePath().normalize();
+    }
+
+    private static Object sharedServerLock(Path serverSettingsDirectory) {
+        return SHARED_SERVER_LOCKS.computeIfAbsent(normalize(serverSettingsDirectory), ignored -> new Object());
+    }
+
+    private void createKeepAliveFile() throws IOException {
+        Path keepalive = getKeepAliveFile();
+        if (!Files.exists(keepalive)) {
+            Files.write(keepalive, "true".getBytes());
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    deleteKeepAliveFile();
+                } catch (MojoExecutionException e) {
+                    // ignore, we're in a shutdown hook
+                }
+            }));
         }
     }
 
@@ -386,5 +552,19 @@ public class TestResourcesHelper {
      */
     public void setSharedServerNamespace(String sharedServerNamespace) {
         this.sharedServerNamespace = sharedServerNamespace;
+    }
+
+    private static final class SessionState {
+        private final String scopePrefix = SCOPE_PREFIX + "-" + UUID.randomUUID();
+        private final Map<Path, SharedServerState> sharedServers = new LinkedHashMap<>();
+    }
+
+    private static final class SharedServerState {
+        private final int port;
+        private final Set<String> owners = new HashSet<>();
+
+        private SharedServerState(int port) {
+            this.port = port;
+        }
     }
 }
