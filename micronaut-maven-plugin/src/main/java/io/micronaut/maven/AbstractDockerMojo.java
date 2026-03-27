@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -45,6 +46,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.micronaut.maven.services.ApplicationConfigurationService.DEFAULT_PORT;
 
@@ -64,7 +66,14 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     public static final String X86_64_ARCH = "x64";
     public static final String ORACLE_CLOUD_FUNCTION_DEFAULT_CMD = "CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]";
     public static final String GDS_DOWNLOAD_URL = "https://gds.oracle.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz";
+    public static final String LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER = "${LAMBDA_BOOTSTRAP_DOCKER_COMMAND}";
     private static final NavigableSet<Integer> GRAALVM_VERSIONS = new TreeSet<>(Set.of(25));
+    private static final List<String> DEFAULT_LAMBDA_BOOTSTRAP_ARGUMENTS = List.of(
+        "-XX:MaximumHeapSizePercent=80",
+        "-Dio.netty.allocator.numDirectArenas=0",
+        "-Dio.netty.noPreferDirect=true",
+        "-Djava.library.path=$(pwd)"
+    );
 
     protected final MavenProject mavenProject;
     protected final MavenSession mavenSession;
@@ -90,6 +99,12 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      */
     @Parameter(property = RunMojo.MN_APP_ARGS)
     protected List<String> appArguments;
+
+    /**
+     * Additional arguments that will be appended to the generated AWS Lambda native bootstrap command.
+     */
+    @Parameter(property = "micronaut.lambda.bootstrap.args")
+    protected List<String> lambdaBootstrapArguments;
 
     /**
      * The main class of the application, as defined in the
@@ -318,6 +333,79 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
                 .map(s -> "\"" + s + "\"")
                 .collect(Collectors.joining(", ")) +
             "]";
+    }
+
+    /**
+     * @return the generated AWS Lambda bootstrap command.
+     */
+    protected String getLambdaBootstrapCommand() {
+        var command = new StringBuilder("./func");
+        for (String bootstrapArgument : DEFAULT_LAMBDA_BOOTSTRAP_ARGUMENTS) {
+            command.append(' ').append(bootstrapArgument);
+        }
+        if (lambdaBootstrapArguments != null && !lambdaBootstrapArguments.isEmpty()) {
+            for (String lambdaBootstrapArgument : lambdaBootstrapArguments) {
+                command.append(' ').append(escapeBootstrapArgument(lambdaBootstrapArgument));
+            }
+        }
+        return command.toString();
+    }
+
+    /**
+     * Applies the generated AWS Lambda bootstrap script to a dockerfile template.
+     *
+     * @param dockerfile the docker file
+     */
+    protected void lambdaBootstrapCommand(File dockerfile) throws IOException {
+        if (dockerfile == null) {
+            return;
+        }
+        if (lambdaBootstrapArguments != null && !lambdaBootstrapArguments.isEmpty()) {
+            getLog().info("Using AWS Lambda bootstrap arguments: " + lambdaBootstrapArguments);
+        }
+        var allLines = Files.readAllLines(dockerfile.toPath());
+        var result = new ArrayList<String>(allLines.size());
+        for (String line : allLines) {
+            if (line.contains(LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER)) {
+                result.add(line.replace(LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER, getLambdaBootstrapDockerCommand()));
+            } else {
+                result.add(line);
+            }
+        }
+        Files.write(dockerfile.toPath(), result);
+    }
+
+    private String getLambdaBootstrapDockerCommand() {
+        return "printf '%s\\n' "
+            + Stream.of("#!/bin/sh", "set -euo pipefail", getLambdaBootstrapCommand())
+            .map(AbstractDockerMojo::quoteShellLiteral)
+            .collect(Collectors.joining(" "))
+            + " > bootstrap";
+    }
+
+    private static String escapeBootstrapArgument(String argument) {
+        if (isShellSafe(argument)) {
+            return argument;
+        }
+        return quoteShellLiteral(argument);
+    }
+
+    private static boolean isShellSafe(String argument) {
+        if (argument == null || argument.isEmpty()) {
+            return false;
+        }
+        for (int i = 0; i < argument.length(); i++) {
+            char c = argument.charAt(i);
+            if (!Character.isLetterOrDigit(c)
+                && "_@%+=:,./-".indexOf(c) == -1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static String quoteShellLiteral(String value) {
+        return "'" + value.replace("'", "'\"'\"'") + "'";
     }
 
     /**

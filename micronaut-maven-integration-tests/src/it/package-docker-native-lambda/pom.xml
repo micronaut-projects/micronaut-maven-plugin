@@ -87,6 +87,10 @@
         <artifactId>micronaut-maven-plugin</artifactId>
         <configuration>
           <configFile>aot-${packaging}.properties</configFile>
+          <lambdaBootstrapArguments>
+            <arg>-Dio.netty.noUnsafe=true</arg>
+            <arg>-Dio.netty.noPreferDirect=false</arg>
+          </lambdaBootstrapArguments>
         </configuration>
       </plugin>
       <plugin>

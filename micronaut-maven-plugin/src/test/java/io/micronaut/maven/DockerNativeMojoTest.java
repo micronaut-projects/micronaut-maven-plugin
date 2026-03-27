@@ -19,6 +19,7 @@ import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -264,6 +265,23 @@ class DockerNativeMojoTest {
         var actualTag = mojo.graalVmTag(jvmVersion, staticNativeImage, oracleLinuxVersion);
 
         assertEquals(expectedTag, actualTag);
+    }
+
+    @Test
+    void testLambdaBootstrapCommandAppendsCustomArguments() {
+        var project = mock(MavenProject.class);
+        var session = mock(MavenSession.class);
+        var execution = mock(MojoExecution.class);
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        when(project.getProperties()).thenReturn(new Properties());
+
+        var mojo = new DockerNativeMojo(project, null, null, null, session, execution);
+        mojo.lambdaBootstrapArguments = List.of("-Dio.netty.noUnsafe=true", "-Dcustom.message=hello world");
+
+        var command = mojo.getLambdaBootstrapCommand();
+
+        assertEquals("./func -XX:MaximumHeapSizePercent=80 -Dio.netty.allocator.numDirectArenas=0 -Dio.netty.noPreferDirect=true -Djava.library.path=$(pwd) -Dio.netty.noUnsafe=true '-Dcustom.message=hello world'", command);
     }
 
 }

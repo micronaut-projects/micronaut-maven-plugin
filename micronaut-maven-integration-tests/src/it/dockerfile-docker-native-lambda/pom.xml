@@ -88,6 +88,10 @@
         <version>${micronaut-maven-plugin.version}</version>
         <configuration>
           <nativeImageBuildArgs>-Ob</nativeImageBuildArgs>
+          <lambdaBootstrapArguments>
+            <arg>-Dio.netty.noUnsafe=true</arg>
+            <arg>-Dio.netty.noPreferDirect=false</arg>
+          </lambdaBootstrapArguments>
         </configuration>
       </plugin>
       <plugin>

@@ -160,7 +160,10 @@ public class DockerfileMojo extends AbstractDockerMojo {
         executorService.invokeGoal(NATIVE_BUILD_TOOLS_MAVEN_PLUGIN, "write-args-file");
         File dockerfile;
         switch (runtime.getBuildStrategy()) {
-            case LAMBDA -> dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS_CUSTOM_RUNTIME);
+            case LAMBDA -> {
+                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS_CUSTOM_RUNTIME);
+                lambdaBootstrapCommand(dockerfile);
+            }
             case ORACLE_FUNCTION -> {
                 dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_NATIVE_ORACLE_CLOUD);
                 oracleCloudFunctionCmd(dockerfile);
