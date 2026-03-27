@@ -2,7 +2,10 @@ package io.micronaut.maven.testresources;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.apache.maven.model.Build;
+import org.apache.maven.project.MavenProject;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,6 +44,29 @@ class TestResourcesHelperTest {
         assertEquals("app.1", TestResourcesHelper.sanitizeScopeSegment("---app.1---"));
         assertEquals("root", TestResourcesHelper.sanitizeScopeSegment("///"));
         assertEquals("root", TestResourcesHelper.sanitizeScopeSegment("\\\\\\"));
+    }
+
+    @Test
+    void testOutputDirectoryUsesMavenBuildConfigurationWhenPresent() {
+        MavenProject project = new MavenProject();
+        Build build = new Build();
+        build.setTestOutputDirectory(tempDir.resolve("custom-test-output").toString());
+        project.setBuild(build);
+
+        assertEquals(
+            tempDir.resolve("custom-test-output"),
+            TestResourcesHelper.testOutputDirectory(project, tempDir.toFile())
+        );
+    }
+
+    @Test
+    void testOutputDirectoryFallsBackToBuildDirectoryTestClasses() {
+        MavenProject project = new MavenProject();
+
+        assertEquals(
+            tempDir.resolve("test-classes"),
+            TestResourcesHelper.testOutputDirectory(project, tempDir.toFile())
+        );
     }
 
     @Test

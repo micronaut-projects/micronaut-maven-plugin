@@ -378,10 +378,20 @@ public class TestResourcesHelper {
         if (scope == null) {
             return;
         }
-        Path testClassesDirectory = buildDirectory.toPath().resolve("test-classes");
+        Path testClassesDirectory = testOutputDirectory(mavenProject, buildDirectory);
         Files.createDirectories(testClassesDirectory);
         updateApplicationTestProperties(testClassesDirectory.resolve(APPLICATION_TEST_PROPERTIES), scope);
         log.info("Using Micronaut Test Resources scope " + scope + " for " + moduleKey());
+    }
+
+    static Path testOutputDirectory(MavenProject mavenProject, File buildDirectory) {
+        if (mavenProject != null && mavenProject.getBuild() != null) {
+            String testOutputDirectory = mavenProject.getBuild().getTestOutputDirectory();
+            if (testOutputDirectory != null && !testOutputDirectory.isBlank()) {
+                return Path.of(testOutputDirectory);
+            }
+        }
+        return buildDirectory.toPath().resolve("test-classes");
     }
 
     static void updateApplicationTestProperties(Path file, String scope) throws IOException {
