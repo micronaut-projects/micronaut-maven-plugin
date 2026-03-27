@@ -503,7 +503,6 @@ public class TestResourcesHelper {
     static SharedServerLock sharedServerLock(Path serverSettingsDirectory) {
         Path key = normalize(serverSettingsDirectory);
         ReentrantLock lock = SHARED_SERVER_LOCKS.computeIfAbsent(key, ignored -> new ReentrantLock());
-        lock.lock();
         return new SharedServerLock(key, lock);
     }
 
@@ -620,6 +619,7 @@ public class TestResourcesHelper {
         private SharedServerLock(Path key, ReentrantLock lock) {
             this.key = key;
             this.lock = lock;
+            this.lock.lock();
         }
 
         @Override
