@@ -27,14 +27,15 @@ assert app1Properties.getProperty("micronaut.test.resources.scope")
 assert app2Properties.getProperty("micronaut.test.resources.scope")
 assert app1Properties.getProperty("micronaut.test.resources.scope") != app2Properties.getProperty("micronaut.test.resources.scope")
 
-def matcher = (log.text =~ /A Micronaut Test Resources server is listening on port (\d+)/)
-assert matcher.find()
-String lastPort = matcher.group(1)
-while (matcher.find()) {
-    lastPort = matcher.group(1)
-}
+File app1PortFile = new File(basedir, "modules/app1/target/test-resources-port.txt")
+File app2PortFile = new File(basedir, "modules/app2/target/test-resources-port.txt")
+List<File> portFiles = [app1PortFile, app2PortFile].findAll { it.exists() }
+assert !portFiles.isEmpty()
+List<Integer> ports = portFiles.collect { Integer.parseInt(it.text.trim()) }
+assert ports.toSet().size() == 1
+int lastPort = ports.first()
 
-try (ServerSocket socket = new ServerSocket(lastPort as int)) {
+try (ServerSocket socket = new ServerSocket(lastPort)) {
     assert socket != null
 } catch (IOException e) {
     assert false : "Shared test-resources port was not released"

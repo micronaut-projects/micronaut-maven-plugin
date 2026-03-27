@@ -315,6 +315,11 @@ public class TestResourcesHelper {
 
     private void stopSharedServer(boolean quiet) throws MojoExecutionException {
         if (releaseSharedServerUse(getServerSettingsDirectory())) {
+            try {
+                cleanupSharedProjectSettings();
+            } catch (IOException e) {
+                throw new MojoExecutionException("Unable to clean shared test resources settings", e);
+            }
             log("Keeping Micronaut Test Resources service alive for another parallel reactor module", quiet);
             return;
         }
@@ -336,10 +341,7 @@ public class TestResourcesHelper {
                     log("Cannot find Micronaut Test Resources service settings, server may already be shutdown", quiet);
                     Files.deleteIfExists(getServerSettingsDirectory().resolve(PROPERTIES_FILE_NAME));
                 }
-                if (shared && sharedServerNamespace != null) {
-                    Path projectSettingsDirectory = serverSettingsDirectoryOf(buildDirectory.toPath());
-                    Files.deleteIfExists(projectSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES));
-                }
+                cleanupSharedProjectSettings();
             }
         } catch (Exception e) {
             var message = "Unable to stop test resources server";
@@ -369,7 +371,6 @@ public class TestResourcesHelper {
         if (scope == null) {
             return;
         }
-        System.setProperty(TEST_RESOURCES_SCOPE_PROPERTY, scope);
         Path testClassesDirectory = buildDirectory.toPath().resolve("test-classes");
         Files.createDirectories(testClassesDirectory);
         updateApplicationTestProperties(testClassesDirectory.resolve(APPLICATION_TEST_PROPERTIES), scope);
@@ -390,7 +391,7 @@ public class TestResourcesHelper {
     }
 
     static String sanitizeScopeSegment(String value) {
-        String sanitized = value.replace(File.separatorChar, '.')
+        String sanitized = value.replaceAll("[/\\\\]+", ".")
             .replaceAll("[^A-Za-z0-9_.-]", "-")
             .replaceAll("[.]{2,}", ".")
             .replaceAll("-{2,}", "-")
@@ -541,6 +542,13 @@ public class TestResourcesHelper {
     private Path getKeepAliveFile() {
         var tmpDir = Path.of(System.getProperty("java.io.tmpdir"));
         return tmpDir.resolve("keepalive-" + mavenSession.getRequest().getBuilderId());
+    }
+
+    private void cleanupSharedProjectSettings() throws IOException {
+        if (shared && sharedServerNamespace != null) {
+            Path projectSettingsDirectory = serverSettingsDirectoryOf(buildDirectory.toPath());
+            Files.deleteIfExists(projectSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES));
+        }
     }
 
     private Path serverSettingsDirectoryOf(Path buildDir) {

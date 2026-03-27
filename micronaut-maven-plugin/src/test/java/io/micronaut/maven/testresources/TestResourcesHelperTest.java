@@ -33,6 +33,8 @@ class TestResourcesHelperTest {
     @Test
     void sanitizeScopeSegmentNormalizesRelativePaths() {
         assertEquals("modules.app-1", TestResourcesHelper.sanitizeScopeSegment("modules/app 1"));
+        assertEquals("modules.app-1", TestResourcesHelper.sanitizeScopeSegment("modules\\app 1"));
         assertEquals("root", TestResourcesHelper.sanitizeScopeSegment("///"));
+        assertEquals("root", TestResourcesHelper.sanitizeScopeSegment("\\\\\\"));
     }
 }
