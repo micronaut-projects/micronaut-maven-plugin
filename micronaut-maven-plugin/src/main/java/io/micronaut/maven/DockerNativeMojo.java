@@ -195,7 +195,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         getLog().info("Exposing port(s): " + ports);
 
         File providedDockerfile = new File(mavenProject.getBasedir(), DockerfileMojo.DOCKERFILE);
-        if (providedDockerfile.exists()) {
+        if (providedDockerfile.isFile()) {
             buildProvidedDockerfile(providedDockerfile, passClassName, from, ports);
             return;
         }
