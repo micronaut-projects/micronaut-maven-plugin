@@ -35,6 +35,11 @@ public enum MicronautRuntime {
     NETTY(),
 
     /**
+     * Starter compatibility alias for the JDK HTTP server runtime.
+     */
+    HTTP_SERVER_JDK(),
+
+    /**
      * Tomcat server.
      */
     TOMCAT(),

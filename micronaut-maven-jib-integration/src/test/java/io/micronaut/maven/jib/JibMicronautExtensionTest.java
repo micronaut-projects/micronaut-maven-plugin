@@ -186,6 +186,19 @@ class JibMicronautExtensionTest {
     }
 
     @Test
+    void testSupportsHttpServerJdkRuntimeProperty() {
+        var originalPlan = ContainerBuildPlan.builder()
+                .setBaseImage("")
+                .build();
+        var properties = new Properties();
+        properties.setProperty("micronaut.runtime", "http_server_jdk");
+
+        var finalPlan = extendContainerBuildPlan(originalPlan, properties);
+
+        assertEquals("eclipse-temurin:25-jre", finalPlan.getBaseImage());
+    }
+
+    @Test
     void testGetJdkVersionPrefersReleaseFromProjectProperties() {
         MavenProject project = mock(MavenProject.class);
         Properties props = new Properties();
@@ -233,18 +246,22 @@ class JibMicronautExtensionTest {
     }
 
     private ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan originalPlan) {
+        return extendContainerBuildPlan(originalPlan, new Properties());
+    }
+
+    private ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan originalPlan, Properties properties) {
         var extension = new JibMicronautExtension();
+        var project = mock(MavenProject.class);
+        when(project.getProperties()).thenReturn(properties);
         var mavenData = new MavenData() {
             @Override
             public MavenProject getMavenProject() {
-                var project = mock(MavenProject.class);
-                when(project.getProperties()).thenReturn(new Properties());
                 return project;
             }
 
             @Override
             public MavenSession getMavenSession() {
-                return mock(MavenSession.class);
+                return mockSessionFor(getMavenProject());
             }
         };
         ExtensionLogger extensionLogger = (logLevel, s) -> LOG.info(s);
