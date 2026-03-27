@@ -22,6 +22,7 @@ import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
+import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
 
 import static io.micronaut.maven.DockerfileMojo.DOCKERFILE_ORACLE_CLOUD;
 
@@ -52,14 +54,18 @@ import static io.micronaut.maven.DockerfileMojo.DOCKERFILE_ORACLE_CLOUD;
 public class DockerMojo extends AbstractDockerMojo {
 
     public static final String DOCKER_PACKAGING = "docker";
+    private static final List<String> SUPPORTED_JIB_BUILD_GOALS = List.of("dockerBuild", "build", "buildTar");
+
+    private final ExecutorService executorService;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     public DockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
                       ApplicationConfigurationService applicationConfigurationService, DockerService dockerService,
-                      MavenSession mavenSession, MojoExecution mojoExecution) {
+                      MavenSession mavenSession, MojoExecution mojoExecution, ExecutorService executorService) {
         super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession,
             mojoExecution);
+        this.executorService = executorService;
     }
 
     @Override
@@ -68,8 +74,19 @@ public class DockerMojo extends AbstractDockerMojo {
         if (shouldBuildWithDockerfile(providedDockerfile)) {
             var dockerfile = determineDockerfile(providedDockerfile);
             buildDockerfile(dockerfile, providedDockerfile.exists());
-        } else if (jibConfigurationService.getFromImage().isEmpty()) {
-            mavenProject.getProperties().setProperty(PropertyNames.FROM_IMAGE, getBaseImage());
+        } else {
+            validateJibBuildGoal();
+            if (jibConfigurationService.getFromImage().isEmpty()) {
+                mavenProject.getProperties().setProperty(PropertyNames.FROM_IMAGE, getBaseImage());
+            }
+            executorService.executeGoal(mavenProject, "com.google.cloud.tools:jib-maven-plugin", jibBuildGoal);
+        }
+    }
+
+    private void validateJibBuildGoal() throws MojoExecutionException {
+        if (!SUPPORTED_JIB_BUILD_GOALS.contains(jibBuildGoal)) {
+            throw new MojoExecutionException("Unsupported jib.buildGoal '" + jibBuildGoal
+                + "'. Supported values are: " + String.join(", ", SUPPORTED_JIB_BUILD_GOALS));
         }
     }
 

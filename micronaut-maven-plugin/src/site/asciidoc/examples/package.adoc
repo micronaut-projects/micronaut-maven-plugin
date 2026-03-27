@@ -114,9 +114,14 @@ Docker image with the application artifacts (compiled classes, resources, depend
 
 The Docker image is built to a local Docker daemon (the equivalent of executing the `jib::dockerBuild` goal).
 
+If you want daemonless packaging, set `-Djib.buildGoal=buildTar` to produce the standard Jib tarball at
+`target/jib-image.tar`, or `-Djib.buildGoal=build` to publish directly to the configured registry during the `package`
+phase.
+
 Depending on the `micronaut.runtime` property, the image built might be different. Options are:
 
 * Default runtime: `mvn package -Dpackaging=docker`.
+* Daemonless tarball: `mvn package -Dpackaging=docker -Djib.buildGoal=buildTar`.
 * Oracle Cloud Function: `mvn package -Dpackaging=docker -Dmicronaut.runtime=oracle_function`.
 * AWS Lambda (Java runtimes): `mvn package -Dpackaging=docker -Dmicronaut.runtime=lambda`.
 
@@ -212,6 +217,11 @@ command line:
 * `jib.to.auth.username`.
 * `jib.to.auth.password`.
 * `jib.to.credHelper`.
+
+When using `jib.buildGoal=buildTar` or `jib.buildGoal=build`, only the `package` phase becomes daemonless. `deploy` for
+`docker` packaging still goes through `mn:docker-push`, which expects an image to exist in the local Docker daemon. As a
+result, `mvn deploy -Dpackaging=docker -Djib.buildGoal=buildTar` and `... -Djib.buildGoal=build` are not supported; for
+deployments, either omit `jib.buildGoal` or set it to `dockerBuild`.
 
 Note that changing the base image to a totally different one than the default might break image building, since the rest
 of the build steps expect a certain base image. By default, the native images are built from an `ghcr.io/graalvm/native-image-community` image.
