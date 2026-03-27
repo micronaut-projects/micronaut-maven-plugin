@@ -63,6 +63,7 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#NONE" tabindex="0">NONE</a></li>
 <li><a href="#NETTY" tabindex="0">NETTY</a></li>
+<li><a href="#HTTP_SERVER_JDK" tabindex="0">HTTP_SERVER_JDK</a></li>
 <li><a href="#TOMCAT" tabindex="0">TOMCAT</a></li>
 <li><a href="#JETTY" tabindex="0">JETTY</a></li>
 <li><a href="#UNDERTOW" tabindex="0">UNDERTOW</a></li>
@@ -141,32 +142,36 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color">
 <div class="block">Google Cloud Function, packaged as a Fat JAR.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="#JETTY" class="member-name-link">JETTY</a></code></div>
+<div class="col-first even-row-color"><code><a href="#HTTP_SERVER_JDK" class="member-name-link">HTTP_SERVER_JDK</a></code></div>
 <div class="col-last even-row-color">
+<div class="block">Starter compatibility alias for the JDK HTTP server runtime.</div>
+</div>
+<div class="col-first odd-row-color"><code><a href="#JETTY" class="member-name-link">JETTY</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">Jetty server.</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="#LAMBDA" class="member-name-link">LAMBDA</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code><a href="#LAMBDA" class="member-name-link">LAMBDA</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">AWS lambda packaged as a Jar file.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="#NETTY" class="member-name-link">NETTY</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code><a href="#NETTY" class="member-name-link">NETTY</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">Default packaging.</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="#NONE" class="member-name-link">NONE</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code><a href="#NONE" class="member-name-link">NONE</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">No specific runtime specified.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="#ORACLE_FUNCTION" class="member-name-link">ORACLE_FUNCTION</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code><a href="#ORACLE_FUNCTION" class="member-name-link">ORACLE_FUNCTION</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">Oracle Cloud Function, packaged as a docker container.</div>
 </div>
-<div class="col-first odd-row-color"><code><a href="#TOMCAT" class="member-name-link">TOMCAT</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code><a href="#TOMCAT" class="member-name-link">TOMCAT</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Tomcat server.</div>
 </div>
-<div class="col-first even-row-color"><code><a href="#UNDERTOW" class="member-name-link">UNDERTOW</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code><a href="#UNDERTOW" class="member-name-link">UNDERTOW</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">Undertow server.</div>
 </div>
 </div>
@@ -251,10 +256,19 @@ the order they are declared.</div>
 </section>
 </li>
 <li>
+<section class="detail" id="HTTP_SERVER_JDK">
+<h3>HTTP_SERVER_JDK</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-40">HTTP_SERVER_JDK</a></span></div>
+<div class="block">Starter compatibility alias for the JDK HTTP server runtime.</div>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="TOMCAT">
 <h3>TOMCAT</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-40">TOMCAT</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-45">TOMCAT</a></span></div>
 <div class="block">Tomcat server.</div>
 </div>
 </section>
@@ -263,7 +277,7 @@ the order they are declared.</div>
 <section class="detail" id="JETTY">
 <h3>JETTY</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-45">JETTY</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-50">JETTY</a></span></div>
 <div class="block">Jetty server.</div>
 </div>
 </section>
@@ -272,7 +286,7 @@ the order they are declared.</div>
 <section class="detail" id="UNDERTOW">
 <h3>UNDERTOW</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-50">UNDERTOW</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-55">UNDERTOW</a></span></div>
 <div class="block">Undertow server.</div>
 </div>
 </section>
@@ -281,7 +295,7 @@ the order they are declared.</div>
 <section class="detail" id="LAMBDA">
 <h3>LAMBDA</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-55">LAMBDA</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-60">LAMBDA</a></span></div>
 <div class="block">AWS lambda packaged as a Jar file.</div>
 </div>
 </section>
@@ -290,7 +304,7 @@ the order they are declared.</div>
 <section class="detail" id="ORACLE_FUNCTION">
 <h3>ORACLE_FUNCTION</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-60">ORACLE_FUNCTION</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-65">ORACLE_FUNCTION</a></span></div>
 <div class="block">Oracle Cloud Function, packaged as a docker container.</div>
 </div>
 </section>
@@ -299,7 +313,7 @@ the order they are declared.</div>
 <section class="detail" id="GOOGLE_FUNCTION">
 <h3>GOOGLE_FUNCTION</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-65">GOOGLE_FUNCTION</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-70">GOOGLE_FUNCTION</a></span></div>
 <div class="block">Google Cloud Function, packaged as a Fat JAR.</div>
 </div>
 </section>
@@ -308,7 +322,7 @@ the order they are declared.</div>
 <section class="detail" id="AZURE_FUNCTION">
 <h3>AZURE_FUNCTION</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-70">AZURE_FUNCTION</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-75">AZURE_FUNCTION</a></span></div>
 <div class="block">Azure Cloud Function.</div>
 </div>
 </section>
@@ -325,7 +339,7 @@ the order they are declared.</div>
 <section class="detail" id="PROPERTY">
 <h3>PROPERTY</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-72">PROPERTY</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-77">PROPERTY</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -384,7 +398,7 @@ not permitted.)</div>
 <section class="detail" id="getBuildStrategy()">
 <h3>getBuildStrategy</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="DockerBuildStrategy.html" title="enum class in io.micronaut.maven.core">DockerBuildStrategy</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-87">getBuildStrategy</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="DockerBuildStrategy.html" title="enum class in io.micronaut.maven.core">DockerBuildStrategy</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/core/MicronautRuntime.html#line-92">getBuildStrategy</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>The docker build strategy</dd>
