@@ -400,9 +400,25 @@ public class TestResourcesHelper {
         String sanitized = value.replaceAll("[/\\\\]+", ".")
             .replaceAll("[^A-Za-z0-9_.-]", "-")
             .replaceAll("[.]{2,}", ".")
-            .replaceAll("-{2,}", "-")
-            .replaceAll("^[.-]+|[.-]+$", "");
+            .replaceAll("-{2,}", "-");
+        sanitized = trimScopeDelimiters(sanitized);
         return sanitized.isEmpty() ? "root" : sanitized;
+    }
+
+    private static String trimScopeDelimiters(String value) {
+        int start = 0;
+        int end = value.length();
+        while (start < end && isScopeDelimiter(value.charAt(start))) {
+            start++;
+        }
+        while (end > start && isScopeDelimiter(value.charAt(end - 1))) {
+            end--;
+        }
+        return value.substring(start, end);
+    }
+
+    private static boolean isScopeDelimiter(char c) {
+        return c == '.' || c == '-';
     }
 
     private String sharedScope() {
