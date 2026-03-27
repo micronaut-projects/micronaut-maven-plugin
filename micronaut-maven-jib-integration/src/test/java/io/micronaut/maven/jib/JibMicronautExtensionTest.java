@@ -9,6 +9,7 @@ import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
+import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.core.DockerBuildStrategy;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
@@ -191,7 +192,7 @@ class JibMicronautExtensionTest {
                 .setBaseImage("")
                 .build();
         var properties = new Properties();
-        properties.setProperty("micronaut.runtime", "http_server_jdk");
+        properties.setProperty(MicronautRuntime.PROPERTY, "http_server_jdk");
 
         var finalPlan = extendContainerBuildPlan(originalPlan, properties);
 
