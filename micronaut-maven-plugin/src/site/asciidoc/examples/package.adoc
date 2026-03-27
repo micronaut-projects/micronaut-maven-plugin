@@ -25,6 +25,53 @@ configuration is defined in the `io.micronaut:micronaut-parent` POM, and the def
 to customize how to produce the JAR file, refer to the
 https://maven.apache.org/plugins/maven-shade-plugin/[Maven Shade Plugin documentation].
 
+==== Classpath-sensitive libraries and shaded JARs
+
+Shaded JARs are convenient for single-file deployments, but they are not a good fit for every runtime. Libraries that
+expect to discover resources, languages, or services from separate classpath entries can fail once everything is merged
+into one archive. GraalVM Truffle or polyglot language deployments are a common example of this limitation.
+
+For those applications, disable the Shade execution and deploy the application as separate artifacts instead of as a
+single fat JAR:
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-shade-plugin</artifactId>
+  <configuration>
+    <skip>true</skip>
+  </configuration>
+</plugin>
+----
+
+When shading is disabled, prefer one of these deployment models:
+
+* `mvn package -Dpackaging=docker` to build a JVM Docker image with classes, resources, and dependencies kept as
+  separate artifacts instead of as a shaded JAR.
+* A custom `Dockerfile` or launcher script that starts the application from an explicit classpath.
+
+If you provide your own `Dockerfile`, Micronaut Maven Plugin prepares the runtime dependencies under
+`target/dependency`, so you can launch the application with a regular classpath instead of `java -jar`:
+
+[source,dockerfile]
+----
+FROM ...
+
+...
+
+COPY classes /home/app/classes
+COPY dependency/* /home/app/libs/
+
+...
+
+ENTRYPOINT ["java", "-cp", "/home/app/libs/*:/home/app/classes/", "com.example.app.Application"]
+----
+
+The plugin does not currently provide a dedicated non-shaded launcher for plain `jar` packaging, so if your runtime
+depends on separate classpath entries, prefer `docker` packaging or your own classpath-based launch script over the
+default shaded JAR.
+
 === Generating GraalVM native images
 
 ----
