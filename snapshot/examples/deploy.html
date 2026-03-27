@@ -10,7 +10,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content="Apache Maven Doxia Site Renderer 2.0.0" />
-    <meta name="date" content="2026-03-27 12:35:03 UTC" />
+    <meta name="date" content="2026-03-27 15:03:24 UTC" />
     <title>[Untitled] – Micronaut Maven Plugin - Plugin</title>
     <link rel="stylesheet" href="../css/apache-maven-fluido-2.0.0-M11.min.css" />
     <link rel="stylesheet" href="../css/site.css" />
@@ -162,6 +162,12 @@ to see what are the configuration options that can be used.</p>
 </div>
 <div class="paragraph">
 <p>Then, you can execute <code>mvn deploy -Dpackaging=docker</code> or <code>mvn deploy -Dpackaging=docker-native</code>.</p>
+</div>
+<div class="paragraph">
+<p>For <code>docker</code> packaging, setting <code>-Djib.buildGoal=buildTar</code> or <code>-Djib.buildGoal=build</code> only affects the earlier
+<code>package</code> phase and prevents Jib from creating a local Docker-daemon image. The <code>deploy</code> phase still uses
+<code>mn:docker-push</code> to publish an image from the local Docker daemon, so <code>mvn deploy -Dpackaging=docker</code> currently
+requires <code>-Djib.buildGoal=dockerBuild</code> or the default behavior with no <code>jib.buildGoal</code> override.</p>
 </div>
 <div class="paragraph">
 <p>You can also omit the plugin declaration in your POM, and execute directly:</p>

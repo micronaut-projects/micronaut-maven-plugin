@@ -10,7 +10,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content="Apache Maven Doxia Site Renderer 2.0.0" />
-    <meta name="date" content="2026-03-27 12:35:04 UTC" />
+    <meta name="date" content="2026-03-27 15:03:25 UTC" />
     <title>[Untitled] – Micronaut Maven Plugin - Plugin</title>
     <link rel="stylesheet" href="../css/apache-maven-fluido-2.0.0-M11.min.css" />
     <link rel="stylesheet" href="../css/site.css" />
@@ -166,6 +166,66 @@ configuration is defined in the <code>io.micronaut:micronaut-parent</code> POM, 
 to customize how to produce the JAR file, refer to the
 <a href="https://maven.apache.org/plugins/maven-shade-plugin/">Maven Shade Plugin documentation</a>.</p>
 </div>
+<div class="sect3">
+<h4 id="classpath_sensitive_libraries_and_shaded_jars">Classpath-sensitive libraries and shaded JARs</h4>
+<div class="paragraph">
+<p>Shaded JARs are convenient for single-file deployments, but they are not a good fit for every runtime. Libraries that
+expect to discover resources, languages, or services from separate classpath entries can fail once everything is merged
+into one archive. GraalVM Truffle or polyglot language deployments are a common example of this limitation.</p>
+</div>
+<div class="paragraph">
+<p>For those applications, disable the Shade execution and deploy the application as separate artifacts instead of as a
+single fat JAR:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;plugin&gt;</span>
+  <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>org.apache.maven.plugins<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
+  <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>maven-shade-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
+  <span style="color:#070;font-weight:bold">&lt;configuration&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;skip&gt;</span>true<span style="color:#070;font-weight:bold">&lt;/skip&gt;</span>
+  <span style="color:#070;font-weight:bold">&lt;/configuration&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/plugin&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When shading is disabled, prefer one of these deployment models:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>mvn package -Dpackaging=docker</code> to build a JVM Docker image with classes, resources, and dependencies kept as
+separate artifacts instead of as a shaded JAR.</p>
+</li>
+<li>
+<p>A custom <code>Dockerfile</code> or launcher script that starts the application from an explicit classpath.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If you provide your own <code>Dockerfile</code>, Micronaut Maven Plugin prepares the runtime dependencies under
+<code>target/dependency</code>, so you can launch the application with a regular classpath instead of <code>java -jar</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="dockerfile">FROM ...
+
+...
+
+COPY classes /home/app/classes
+COPY dependency/* /home/app/libs/
+
+...
+
+ENTRYPOINT [&quot;java&quot;, &quot;-cp&quot;, &quot;/home/app/libs/*:/home/app/classes/&quot;, &quot;com.example.app.Application&quot;]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The plugin does not currently provide a dedicated non-shaded launcher for plain <code>jar</code> packaging, so if your runtime
+depends on separate classpath entries, prefer <code>docker</code> packaging or your own classpath-based launch script over the
+default shaded JAR.</p>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="generating_graalvm_native_images">Generating GraalVM native images</h3>
@@ -277,12 +337,20 @@ Docker image with the application artifacts (compiled classes, resources, depend
 <p>The Docker image is built to a local Docker daemon (the equivalent of executing the <code>jib::dockerBuild</code> goal).</p>
 </div>
 <div class="paragraph">
+<p>If you want daemonless packaging, set <code>-Djib.buildGoal=buildTar</code> to produce the standard Jib tarball at
+<code>target/jib-image.tar</code>, or <code>-Djib.buildGoal=build</code> to publish directly to the configured registry during the <code>package</code>
+phase.</p>
+</div>
+<div class="paragraph">
 <p>Depending on the <code>micronaut.runtime</code> property, the image built might be different. Options are:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
 <p>Default runtime: <code>mvn package -Dpackaging=docker</code>.</p>
+</li>
+<li>
+<p>Daemonless tarball: <code>mvn package -Dpackaging=docker -Djib.buildGoal=buildTar</code>.</p>
 </li>
 <li>
 <p>Oracle Cloud Function: <code>mvn package -Dpackaging=docker -Dmicronaut.runtime=oracle_function</code>.</p>
@@ -441,6 +509,12 @@ command line:</p>
 <p><code>jib.to.credHelper</code>.</p>
 </li>
 </ul>
+</div>
+<div class="paragraph">
+<p>When using <code>jib.buildGoal=buildTar</code> or <code>jib.buildGoal=build</code>, only the <code>package</code> phase becomes daemonless. <code>deploy</code> for
+<code>docker</code> packaging still goes through <code>mn:docker-push</code>, which expects an image to exist in the local Docker daemon. As a
+result, <code>mvn deploy -Dpackaging=docker -Djib.buildGoal=buildTar</code> and <code>&#8230;&#8203; -Djib.buildGoal=build</code> are not supported; for
+deployments, either omit <code>jib.buildGoal</code> or set it to <code>dockerBuild</code>.</p>
 </div>
 <div class="paragraph">
 <p>Note that changing the base image to a totally different one than the default might break image building, since the rest

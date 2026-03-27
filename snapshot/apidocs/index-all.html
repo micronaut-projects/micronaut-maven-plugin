@@ -487,7 +487,7 @@ properties.</div>
 <dd>
 <div class="block">Allows using a provided Dockerfile.</div>
 </dd>
-<dt><a href="io/micronaut/maven/DockerMojo.html#%3Cinit%3E(org.apache.maven.project.MavenProject,io.micronaut.maven.jib.JibConfigurationService,io.micronaut.maven.services.ApplicationConfigurationService,io.micronaut.maven.services.DockerService,org.apache.maven.execution.MavenSession,org.apache.maven.plugin.MojoExecution)" class="member-name-link">DockerMojo(MavenProject, JibConfigurationService, ApplicationConfigurationService, DockerService, MavenSession, MojoExecution)</a> - Constructor for class io.micronaut.maven.<a href="io/micronaut/maven/DockerMojo.html" title="class in io.micronaut.maven">DockerMojo</a></dt>
+<dt><a href="io/micronaut/maven/DockerMojo.html#%3Cinit%3E(org.apache.maven.project.MavenProject,io.micronaut.maven.jib.JibConfigurationService,io.micronaut.maven.services.ApplicationConfigurationService,io.micronaut.maven.services.DockerService,org.apache.maven.execution.MavenSession,org.apache.maven.plugin.MojoExecution,io.micronaut.maven.services.ExecutorService)" class="member-name-link">DockerMojo(MavenProject, JibConfigurationService, ApplicationConfigurationService, DockerService, MavenSession, MojoExecution, ExecutorService)</a> - Constructor for class io.micronaut.maven.<a href="io/micronaut/maven/DockerMojo.html" title="class in io.micronaut.maven">DockerMojo</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/DockerNativeMojo.html" class="type-name-link" title="class in io.micronaut.maven">DockerNativeMojo</a> - Class in <a href="io/micronaut/maven/package-summary.html">io.micronaut.maven</a></dt>
 <dd>
@@ -1019,6 +1019,11 @@ Call <code>mvn mn:help -Ddetail=true -Dgoal=&lt;goal-name&gt;</code> to display 
 <dt><a href="io/micronaut/maven/core/MicronautRuntime.html#JETTY" class="member-name-link">JETTY</a> - Enum constant in enum class io.micronaut.maven.core.<a href="io/micronaut/maven/core/MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></dt>
 <dd>
 <div class="block">Jetty server.</div>
+</dd>
+<dt><a href="io/micronaut/maven/AbstractDockerMojo.html#jibBuildGoal" class="member-name-link">jibBuildGoal</a> - Variable in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></dt>
+<dd>
+<div class="block">
+Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 </dd>
 <dt><a href="io/micronaut/maven/jib/JibConfiguration.html" class="type-name-link" title="class in io.micronaut.maven.jib">JibConfiguration</a> - Record Class in <a href="io/micronaut/maven/jib/package-summary.html">io.micronaut.maven.jib</a></dt>
 <dd>
