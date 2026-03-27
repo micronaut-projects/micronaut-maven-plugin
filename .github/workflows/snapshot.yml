@@ -49,7 +49,8 @@ jobs:
         run: |
           sudo rm -rf /usr/lib/jvm/*
           unset JAVA_HOME
-          export PATH=$(echo "$PATH" | tr ':' '\n' | grep -v '/usr/lib/jvm' | paste -sd:)
+          filtered_path=$(echo "$PATH" | tr ':' '\n' | grep -v '/usr/lib/jvm' | paste -sd:)
+          export PATH="$filtered_path"
 
       - name: "🗑 Free disk space"
         run: |
@@ -122,7 +123,9 @@ jobs:
       - name: "❓ Determine current version"
         if: success() && github.event_name == 'push' && matrix.java == '25'
         id: release_version
-        run: echo ::set-output name=release_version::`./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout`
+        run: |
+          release_version=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "release_version=$release_version" >> "$GITHUB_OUTPUT"
 
       - name: "🌎 Generate site"
         if: success() && github.event_name == 'push' && matrix.java == '25'
@@ -130,13 +133,13 @@ jobs:
           ./mvnw site:site
           cp -R target/site/apidocs/* micronaut-maven-plugin/target/site/apidocs
 
-      - name: "📑 Publish to Github Pages"
+      - name: "📤 Upload snapshot site"
         if: success() && github.event_name == 'push' && matrix.java == '25'
-        uses: micronaut-projects/github-pages-deploy-action@76d63aafbab7108d74e83be4e5b3b0501382e829
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          BRANCH: gh-pages
-          FOLDER: micronaut-maven-plugin/target/site
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: snapshot-site
+          path: micronaut-maven-plugin/target/site
+          if-no-files-found: error
 
       - name: "📦 Deploy snapshot"
         if: success() && github.event_name == 'push' && endsWith(steps.release_version.outputs.release_version, 'SNAPSHOT') && matrix.java == '25'
@@ -146,3 +149,54 @@ jobs:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSWORD }}
+
+  publish_snapshot_docs:
+    if: github.event_name == 'push'
+    needs: snapshot
+    runs-on: ubuntu-latest
+    concurrency:
+      group: snapshot-pages-${{ github.repository }}-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: "📥 Checkout repository"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 1
+
+      - name: "🔎 Check branch freshness"
+        id: branch_freshness
+        run: |
+          remote_sha=$(git ls-remote origin "refs/heads/${GITHUB_REF_NAME}" | cut -f1)
+          if [ -z "$remote_sha" ]; then
+            echo "fresh=false" >> "$GITHUB_OUTPUT"
+            echo "reason=missing_remote_ref" >> "$GITHUB_OUTPUT"
+            echo "Unable to resolve refs/heads/${GITHUB_REF_NAME}; skipping Pages publish."
+            exit 0
+          fi
+
+          echo "remote_sha=$remote_sha" >> "$GITHUB_OUTPUT"
+
+          if [ "$remote_sha" != "$GITHUB_SHA" ]; then
+            echo "fresh=false" >> "$GITHUB_OUTPUT"
+            echo "reason=stale_head" >> "$GITHUB_OUTPUT"
+            echo "Superseded by newer branch head ${remote_sha}; skipping Pages publish for ${GITHUB_SHA}."
+            exit 0
+          fi
+
+          echo "fresh=true" >> "$GITHUB_OUTPUT"
+          echo "reason=current_head" >> "$GITHUB_OUTPUT"
+
+      - name: "📥 Download snapshot site"
+        if: steps.branch_freshness.outputs.fresh == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: snapshot-site
+          path: micronaut-maven-plugin/target/site
+
+      - name: "📑 Publish to Github Pages"
+        if: steps.branch_freshness.outputs.fresh == 'true'
+        uses: micronaut-projects/github-pages-deploy-action@76d63aafbab7108d74e83be4e5b3b0501382e829
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          BRANCH: gh-pages
+          FOLDER: micronaut-maven-plugin/target/site
