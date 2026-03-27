@@ -8,8 +8,10 @@ import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -23,8 +25,8 @@ import static org.mockito.Mockito.when;
 class DockerMojoTest {
 
     @Test
-    void executesConfiguredJibGoalWithinCurrentBuild() throws MojoExecutionException {
-        var project = mockProject();
+    void executesConfiguredJibGoalWithinCurrentBuild(@TempDir Path tempDir) throws MojoExecutionException {
+        var project = mockProject(tempDir);
         var jibConfigurationService = mock(JibConfigurationService.class);
         when(jibConfigurationService.getFromImage()).thenReturn(Optional.empty());
         var executorService = mock(ExecutorService.class);
@@ -41,8 +43,8 @@ class DockerMojoTest {
     }
 
     @Test
-    void rejectsUnknownJibGoal() throws MojoExecutionException {
-        var project = mockProject();
+    void rejectsUnknownJibGoal(@TempDir Path tempDir) throws MojoExecutionException {
+        var project = mockProject(tempDir);
         var jibConfigurationService = mock(JibConfigurationService.class);
         when(jibConfigurationService.getFromImage()).thenReturn(Optional.empty());
         var executorService = mock(ExecutorService.class);
@@ -62,13 +64,13 @@ class DockerMojoTest {
         verify(executorService, never()).executeGoal(project, "com.google.cloud.tools:jib-maven-plugin", "buildDirectory");
     }
 
-    private static MavenProject mockProject() {
+    private static MavenProject mockProject(Path tempDir) {
         var project = mock(MavenProject.class);
         var build = mock(Build.class);
-        when(project.getBasedir()).thenReturn(new File("target/docker-mojo-test"));
+        when(project.getBasedir()).thenReturn(tempDir.toFile());
         when(project.getProperties()).thenReturn(new Properties());
         when(project.getBuild()).thenReturn(build);
-        when(build.getDirectory()).thenReturn("target");
+        when(build.getDirectory()).thenReturn(tempDir.resolve("target").toString());
         return project;
     }
 

@@ -27,8 +27,10 @@ For example, to push an image to Docker Hub:
 
 Then, you can execute `mvn deploy -Dpackaging=docker` or `mvn deploy -Dpackaging=docker-native`.
 
-For `docker` packaging, `-Djib.buildGoal=buildTar` only affects the earlier `package` phase. The `deploy` phase still
-uses `mn:docker-push` to publish the image.
+For `docker` packaging, setting `-Djib.buildGoal=buildTar` or `-Djib.buildGoal=build` only affects the earlier
+`package` phase and prevents Jib from creating a local Docker-daemon image. The `deploy` phase still uses
+`mn:docker-push` to publish an image from the local Docker daemon, so `mvn deploy -Dpackaging=docker` currently
+requires `-Djib.buildGoal=dockerBuild` or the default behavior with no `jib.buildGoal` override.
 
 You can also omit the plugin declaration in your POM, and execute directly:
 
