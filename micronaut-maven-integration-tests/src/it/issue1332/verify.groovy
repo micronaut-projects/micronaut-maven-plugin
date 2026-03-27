@@ -34,9 +34,23 @@ assert !portFiles.isEmpty()
 List<Integer> ports = portFiles.collect { Integer.parseInt(it.text.trim()) }
 assert ports.toSet().size() == 1
 int lastPort = ports.first()
+int maxAttempts = 10
+long delayMillis = 500L
+boolean portReleased = false
 
-try (ServerSocket socket = new ServerSocket(lastPort)) {
-    assert socket != null
-} catch (IOException e) {
-    assert false : "Shared test-resources port was not released"
+for (int attempt = 1; attempt <= maxAttempts && !portReleased; attempt++) {
+    try (ServerSocket socket = new ServerSocket(lastPort)) {
+        assert socket != null
+        portReleased = true
+    } catch (IOException e) {
+        if (attempt == maxAttempts) {
+            assert false : "Shared test-resources port was not released after ${maxAttempts} attempts: ${e.message}"
+        }
+        try {
+            Thread.sleep(delayMillis)
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt()
+            assert false : "Interrupted while waiting for shared test-resources port to be released"
+        }
+    }
 }

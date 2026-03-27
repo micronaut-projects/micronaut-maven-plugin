@@ -53,6 +53,7 @@ import java.util.WeakHashMap;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
 import static io.micronaut.maven.services.DependencyResolutionService.toClasspathFiles;
@@ -64,7 +65,7 @@ import static java.util.stream.Stream.concat;
  */
 public class TestResourcesHelper {
 
-    private static final String TEST_RESOURCES_PROPERTIES = "test-resources.properties";
+    private static final String TEST_RESOURCES_PROPERTIES = PROPERTIES_FILE_NAME;
     private static final String PORT_FILE_NAME = "test-resources-port.txt";
     private static final String APPLICATION_TEST_PROPERTIES = "application-test.properties";
     private static final String TEST_RESOURCES_SCOPE_PROPERTY = "micronaut.test.resources.scope";
@@ -77,7 +78,7 @@ public class TestResourcesHelper {
     private static final String TEST_RESOURCES_PROP_CLIENT_READ_TIMEOUT = TEST_RESOURCES_CLIENT_SYSTEM_PROP_PREFIX + "server.client.read.timeout";
     private static final Object SESSION_STATE_MONITOR = new Object();
     private static final Map<MavenSession, SessionState> SESSION_STATES = new WeakHashMap<>();
-    private static final Map<Path, Object> SHARED_SERVER_LOCKS = new ConcurrentHashMap<>();
+    private static final Map<Path, ReentrantLock> SHARED_SERVER_LOCKS = new ConcurrentHashMap<>();
 
     private final boolean enabled;
 
@@ -187,7 +188,7 @@ public class TestResourcesHelper {
         var serverStarted = new AtomicBoolean(false);
         var serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion, debugServer, foreground, testResourcesSystemProperties);
         if (shared) {
-            synchronized (sharedServerLock(serverSettingsDirectory)) {
+            try (var ignored = sharedServerLock(serverSettingsDirectory)) {
                 doStart(accessToken, buildDir, serverSettingsDirectory, serverFactory, serverStarted);
             }
             return;
@@ -311,7 +312,7 @@ public class TestResourcesHelper {
             return;
         }
         if (shared) {
-            synchronized (sharedServerLock(getServerSettingsDirectory())) {
+            try (var ignored = sharedServerLock(getServerSettingsDirectory())) {
                 stopSharedServer(quiet);
             }
             return;
@@ -499,8 +500,22 @@ public class TestResourcesHelper {
         return path.toAbsolutePath().normalize();
     }
 
-    private static Object sharedServerLock(Path serverSettingsDirectory) {
-        return SHARED_SERVER_LOCKS.computeIfAbsent(normalize(serverSettingsDirectory), ignored -> new Object());
+    static SharedServerLock sharedServerLock(Path serverSettingsDirectory) {
+        Path key = normalize(serverSettingsDirectory);
+        ReentrantLock lock = SHARED_SERVER_LOCKS.computeIfAbsent(key, ignored -> new ReentrantLock());
+        lock.lock();
+        return new SharedServerLock(key, lock);
+    }
+
+    static int sharedServerLockCount() {
+        return SHARED_SERVER_LOCKS.size();
+    }
+
+    private static void releaseSharedServerLock(Path key, ReentrantLock lock) {
+        lock.unlock();
+        if (!lock.isLocked() && !lock.hasQueuedThreads()) {
+            SHARED_SERVER_LOCKS.remove(key, lock);
+        }
     }
 
     private void createKeepAliveFile() throws IOException {
@@ -595,6 +610,21 @@ public class TestResourcesHelper {
 
         private SharedServerState(int port) {
             this.port = port;
+        }
+    }
+
+    static final class SharedServerLock implements AutoCloseable {
+        private final Path key;
+        private final ReentrantLock lock;
+
+        private SharedServerLock(Path key, ReentrantLock lock) {
+            this.key = key;
+            this.lock = lock;
+        }
+
+        @Override
+        public void close() {
+            releaseSharedServerLock(key, lock);
         }
     }
 }

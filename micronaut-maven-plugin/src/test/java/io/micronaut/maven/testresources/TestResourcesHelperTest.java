@@ -7,8 +7,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestResourcesHelperTest {
 
@@ -37,5 +41,30 @@ class TestResourcesHelperTest {
         assertEquals("app.1", TestResourcesHelper.sanitizeScopeSegment("---app.1---"));
         assertEquals("root", TestResourcesHelper.sanitizeScopeSegment("///"));
         assertEquals("root", TestResourcesHelper.sanitizeScopeSegment("\\\\\\"));
+    }
+
+    @Test
+    void sharedServerLockBlocksSamePathAndCleansUpAfterRelease() throws Exception {
+        Path serverSettingsDirectory = tempDir.resolve("shared-settings");
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch acquired = new CountDownLatch(1);
+        Thread worker;
+
+        try (var ignored = TestResourcesHelper.sharedServerLock(serverSettingsDirectory)) {
+            worker = new Thread(() -> {
+                started.countDown();
+                try (var ignoredWorker = TestResourcesHelper.sharedServerLock(serverSettingsDirectory)) {
+                    acquired.countDown();
+                }
+            });
+            worker.start();
+
+            assertTrue(started.await(5, TimeUnit.SECONDS));
+            assertFalse(acquired.await(200, TimeUnit.MILLISECONDS));
+        }
+
+        assertTrue(acquired.await(5, TimeUnit.SECONDS));
+        worker.join();
+        assertEquals(0, TestResourcesHelper.sharedServerLockCount());
     }
 }
