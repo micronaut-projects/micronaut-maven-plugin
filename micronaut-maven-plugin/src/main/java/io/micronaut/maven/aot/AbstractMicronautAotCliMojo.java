@@ -131,6 +131,7 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     private void executeAot() throws DependencyResolutionException, MojoExecutionException {
         getLog().info("Executing Micronaut AOT analysis");
         AotJavaExecution execution = createJavaExecution();
+        boolean executionSucceeded = false;
 
         try {
             executorService.executeGoal(
@@ -140,12 +141,16 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
                 "exec",
                 execution.config
             );
+            executionSucceeded = true;
         } catch (MojoExecutionException e) {
             getLog().error("Error when executing Micronaut AOT: " + e.getMessage());
             getLog().error("Command line was: java @" + execution.argumentFile.getAbsolutePath());
+            getLog().error("Micronaut AOT argument file retained at: " + execution.argumentFile.getAbsolutePath());
             throw e;
         } finally {
-            deleteArgumentFile(execution.argumentFile);
+            if (executionSucceeded) {
+                deleteArgumentFile(execution.argumentFile);
+            }
         }
 
     }
