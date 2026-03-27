@@ -244,6 +244,24 @@ images. In this case, the `micronaut.runtime` property will also determine how t
 * Oracle Cloud Function: `mvn package -Dpackaging=docker-native -Dmicronaut.runtime=oracle_function`.
 * AWS Lambda (custom runtime): `mvn package -Dpackaging=docker-native -Dmicronaut.runtime=lambda`.
 
+For builds behind an HTTP or HTTPS proxy, `docker-native` automatically forwards the standard JVM proxy
+properties as Docker build arguments. The plugin maps `http.proxyHost`, `http.proxyPort`, `https.proxyHost`,
+`https.proxyPort`, and `http.nonProxyHosts` to the corresponding `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY`
+build args, including their lowercase variants.
+
+[source,bash]
+----
+$ mvn package -Dpackaging=docker-native \
+    -Dhttp.proxyHost=proxy.example.com \
+    -Dhttp.proxyPort=8080 \
+    -Dhttps.proxyHost=proxy.example.com \
+    -Dhttps.proxyPort=8080 \
+    '-Dhttp.nonProxyHosts=localhost|127.0.0.1|*.example.com'
+----
+
+Prefer passing credential-bearing proxy values from the command line or CI secrets rather than committing them to
+the project POM.
+
 The image built can be customised using
 https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration[Jib]. In particular, you can set:
 
