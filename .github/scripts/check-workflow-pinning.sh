@@ -8,9 +8,9 @@ workflow_files=(.github/workflows/*.yml .github/workflows/*.yaml)
 failures=0
 
 for file in "${workflow_files[@]}"; do
-  if rg -n 'raw\.githubusercontent\.com' "$file" >/dev/null; then
+  if grep -nE 'raw\.githubusercontent\.com' "$file" >/dev/null; then
     echo "::error file=$file::Remote raw.githubusercontent.com downloads are not allowed in workflows. Vendor the script into this repository or pin the source to an audited commit outside the workflow."
-    rg -n 'raw\.githubusercontent\.com' "$file"
+    grep -nE 'raw\.githubusercontent\.com' "$file"
     failures=1
   fi
 
@@ -31,7 +31,7 @@ for file in "${workflow_files[@]}"; do
 
     echo "::error file=$file,line=$lineno::GitHub Actions must use a full 40-character commit SHA: $ref"
     failures=1
-  done < <(rg -n '^[[:space:]-]*uses:[[:space:]]*' "$file")
+  done < <(grep -nE '^[[:space:]-]*uses:[[:space:]]*' "$file")
 done
 
 exit "$failures"
