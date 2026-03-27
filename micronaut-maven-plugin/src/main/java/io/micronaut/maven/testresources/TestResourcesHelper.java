@@ -205,6 +205,7 @@ public class TestResourcesHelper {
             return;
         }
         ServerSettings serverSettings = optionalServerSettings.get();
+        writePortFile(buildDir.resolve(PORT_FILE_NAME), serverSettings.getPort());
         boolean sessionOwnedSharedServer = shared && registerSharedServerUse(serverSettingsDirectory, serverSettings.getPort(), serverStarted.get());
         if (shared) {
             logSharedMode(serverSettingsDirectory);
@@ -238,6 +239,11 @@ public class TestResourcesHelper {
 
     private void setSystemProperties(ServerSettings serverSettings) {
         computeSystemProperties(serverSettings).forEach(System::setProperty);
+    }
+
+    private static void writePortFile(Path file, int port) throws IOException {
+        Files.createDirectories(file.getParent());
+        Files.writeString(file, Integer.toString(port));
     }
 
     private Optional<ServerSettings> startOrConnectToExistingServer(String accessToken, Path buildDir, Path serverSettingsDirectory, ServerFactory serverFactory) {
