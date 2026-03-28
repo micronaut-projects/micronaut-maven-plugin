@@ -138,7 +138,9 @@ public final class MojoUtils {
 
     private static String parseQuotedClasspathArg(String arg) {
         String quotedPath = arg.substring(2, arg.length() - 2);
-        return "\\Q/home/app/libs/" + FilenameUtils.getName(quotedPath) + "\\E";
+        String fileName = FilenameUtils.getName(quotedPath);
+        String layerDirectory = fileName.contains("SNAPSHOT") ? "snapshot" : "release";
+        return "\\Q/home/app/libs/" + layerDirectory + "/" + fileName + "\\E";
     }
 
     static String parseConfigurationFilesDirectoriesArg(String arg) {

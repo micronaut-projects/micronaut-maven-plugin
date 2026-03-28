@@ -53,7 +53,7 @@ class JibMicronautExtensionTest {
     @Test
     void testBuildProjectFnEntrypoint() {
         String entrypoint = String.join(" ", JibMicronautExtension.buildProjectFnEntrypoint());
-        String expectedEntrypoint = "java -XX:-UsePerfData -XX:+UseSerialGC -Xshare:auto -Djava.awt.headless=true -Djava.library.path=/function/runtime/lib -cp /function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/* com.fnproject.fn.runtime.EntryPoint";
+        String expectedEntrypoint = "java -XX:-UsePerfData -XX:+UseSerialGC -Xshare:auto -Djava.awt.headless=true -Djava.library.path=/function/runtime/lib -cp /function/app/classes:/function/app/libs/release/*:/function/app/libs/snapshot/*:/function/app/resources:/function/runtime/* com.fnproject.fn.runtime.EntryPoint";
         assertEquals(expectedEntrypoint, entrypoint);
     }
 
@@ -67,7 +67,7 @@ class JibMicronautExtensionTest {
         );
         FileEntry remappedEntry = JibMicronautExtension.remapEntry(entry, "dependencies");
 
-        assertEquals("/function/app/libs/app.jar", remappedEntry.getExtractionPath().toString());
+        assertEquals("/function/app/libs/release/app.jar", remappedEntry.getExtractionPath().toString());
     }
 
     @Test
@@ -80,7 +80,7 @@ class JibMicronautExtensionTest {
         );
         FileEntry remappedEntry = JibMicronautExtension.remapEntry(entry, "snapshot-dependencies");
 
-        assertEquals("/function/app/libs/app.jar", remappedEntry.getExtractionPath().toString());
+        assertEquals("/function/app/libs/snapshot/app.jar", remappedEntry.getExtractionPath().toString());
     }
 
     @Test
