@@ -102,6 +102,8 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
 
     /**
      * Additional arguments that will be appended to the generated AWS Lambda native bootstrap command.
+     *
+     * @since 5.0.0
      */
     @Parameter(property = "micronaut.lambda.bootstrap.args")
     protected List<String> lambdaBootstrapArguments;
