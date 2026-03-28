@@ -71,6 +71,19 @@ class JibMicronautExtensionTest {
     }
 
     @Test
+    void testRemapEntryForSnapshotDependencies() {
+        FileEntry entry = new FileEntry(
+                Paths.get("app.jar"),
+                AbsoluteUnixPath.get("/foo/bar/app.jar"),
+                FilePermissions.DEFAULT_FILE_PERMISSIONS,
+                Instant.now()
+        );
+        FileEntry remappedEntry = JibMicronautExtension.remapEntry(entry, "snapshot-dependencies");
+
+        assertEquals("/function/app/libs/app.jar", remappedEntry.getExtractionPath().toString());
+    }
+
+    @Test
     void testRemapEntryForResources() {
         FileEntry entry = new FileEntry(
                 Paths.get("app.yml"),

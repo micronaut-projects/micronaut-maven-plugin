@@ -2,7 +2,8 @@ FROM ghcr.io/graalvm/native-image-community:25-ol8 AS builder
 WORKDIR /home/app
 
 COPY classes /home/app/classes
-COPY dependency/* /home/app/libs/
+COPY dependency/release/ /home/app/libs/
+COPY dependency/snapshot/ /home/app/libs/
 COPY graalvm-reachability-metadat[a] /home/app/graalvm-reachability-metadata
 COPY nativ[e]/generated /home/app/
 COPY *.args /home/app/graalvm-native-image.args

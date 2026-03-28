@@ -2,6 +2,7 @@ ARG BASE_JAVA_IMAGE
 FROM ${BASE_JAVA_IMAGE}
 WORKDIR /home/app
 COPY classes /home/app/classes
-COPY dependency/* /home/app/libs/
+COPY dependency/release/ /home/app/libs/
+COPY dependency/snapshot/ /home/app/libs/
 EXPOSE ${PORTS}
 ENTRYPOINT ["java", "-cp", "/home/app/libs/*:/home/app/classes/", "io.micronaut.function.aws.runtime.MicronautLambdaRuntime"]

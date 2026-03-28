@@ -6,4 +6,5 @@ FROM ${BASE_JAVA_IMAGE}
 COPY --from=fnfdk /function /function
 WORKDIR /function
 COPY classes /function/app/classes
-COPY dependency/* /function/app/libs/
+COPY dependency/release/ /function/app/libs/
+COPY dependency/snapshot/ /function/app/libs/
