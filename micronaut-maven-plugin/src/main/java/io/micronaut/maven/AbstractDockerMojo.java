@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -316,10 +317,8 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     /**
      * Copy project dependencies to a <code>target/dependency</code> directory.
      */
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     protected void copyDependencies() throws IOException {
         var imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
-        mavenProject.setArtifactFilter(artifact -> imageClasspathScopes.contains(artifact.getScope()));
         var target = new File(mavenProject.getBuild().getDirectory(), DEPENDENCY_DIRECTORY).toPath();
         Files.createDirectories(target);
         Files.createDirectories(target.resolve(RELEASE_DEPENDENCY_DIRECTORY));
@@ -330,12 +329,18 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
             }
             var dependencyFile = dependency.getFile().toPath();
             var dependencyName = dependency.getFile().getName();
-            Files.copy(dependencyFile, target.resolve(dependencyName), StandardCopyOption.REPLACE_EXISTING);
-            Files.copy(
-                dependencyFile,
-                target.resolve(dependencyLayerDirectory(dependency)).resolve(dependencyName),
-                StandardCopyOption.REPLACE_EXISTING
-            );
+            var layeredPath = target.resolve(dependencyLayerDirectory(dependency)).resolve(dependencyName);
+            Files.copy(dependencyFile, layeredPath, StandardCopyOption.REPLACE_EXISTING);
+            copyDependencyToFlatLayout(dependencyFile, layeredPath, target.resolve(dependencyName));
+        }
+    }
+
+    private static void copyDependencyToFlatLayout(Path dependencyFile, Path layeredPath, Path flatPath) throws IOException {
+        try {
+            Files.deleteIfExists(flatPath);
+            Files.createLink(flatPath, layeredPath);
+        } catch (UnsupportedOperationException | IOException | SecurityException e) {
+            Files.copy(dependencyFile, flatPath, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 

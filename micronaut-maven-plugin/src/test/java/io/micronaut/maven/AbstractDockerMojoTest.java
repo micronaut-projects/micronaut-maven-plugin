@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.Properties;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -29,6 +30,7 @@ class AbstractDockerMojoTest {
         var releaseJar = Files.writeString(tempDir.resolve("release.jar"), "release");
         var snapshotJar = Files.writeString(tempDir.resolve("snapshot.jar"), "snapshot");
         var testJar = Files.writeString(tempDir.resolve("test.jar"), "test");
+        var hardLinksSupported = supportsHardLinks(tempDir);
 
         var releaseDependency = mockDependency(Artifact.SCOPE_RUNTIME, false, releaseJar);
         var snapshotDependency = mockDependency(Artifact.SCOPE_COMPILE, true, snapshotJar);
@@ -40,14 +42,40 @@ class AbstractDockerMojoTest {
         mojo.copyDependencies();
 
         var dependencyDirectory = tempDir.resolve("target").resolve("dependency");
-        assertTrue(Files.exists(dependencyDirectory.resolve("release.jar")));
-        assertTrue(Files.exists(dependencyDirectory.resolve("snapshot.jar")));
+        var flatReleaseJar = dependencyDirectory.resolve("release.jar");
+        var flatSnapshotJar = dependencyDirectory.resolve("snapshot.jar");
+        var layeredReleaseJar = dependencyDirectory.resolve("release").resolve("release.jar");
+        var layeredSnapshotJar = dependencyDirectory.resolve("snapshot").resolve("snapshot.jar");
+
+        assertTrue(Files.exists(flatReleaseJar));
+        assertTrue(Files.exists(flatSnapshotJar));
         assertFalse(Files.exists(dependencyDirectory.resolve("test.jar")));
 
-        assertTrue(Files.exists(dependencyDirectory.resolve("release").resolve("release.jar")));
-        assertTrue(Files.exists(dependencyDirectory.resolve("snapshot").resolve("snapshot.jar")));
+        assertTrue(Files.exists(layeredReleaseJar));
+        assertTrue(Files.exists(layeredSnapshotJar));
         assertFalse(Files.exists(dependencyDirectory.resolve("release").resolve("snapshot.jar")));
         assertFalse(Files.exists(dependencyDirectory.resolve("snapshot").resolve("release.jar")));
+        assertEquals("release", Files.readString(flatReleaseJar));
+        assertEquals("snapshot", Files.readString(flatSnapshotJar));
+
+        if (hardLinksSupported) {
+            assertTrue(Files.isSameFile(flatReleaseJar, layeredReleaseJar));
+            assertTrue(Files.isSameFile(flatSnapshotJar, layeredSnapshotJar));
+        }
+    }
+
+    private static boolean supportsHardLinks(Path tempDir) throws IOException {
+        var source = Files.writeString(tempDir.resolve("hard-link-probe-source"), "probe");
+        var link = tempDir.resolve("hard-link-probe-link");
+        try {
+            Files.createLink(link, source);
+            return Files.isSameFile(source, link);
+        } catch (UnsupportedOperationException | IOException | SecurityException e) {
+            return false;
+        } finally {
+            Files.deleteIfExists(link);
+            Files.deleteIfExists(source);
+        }
     }
 
     private static Artifact mockDependency(String scope, boolean snapshot, Path file) {
