@@ -16,7 +16,6 @@
 package io.micronaut.maven;
 
 import com.github.dockerjava.api.command.BuildImageCmd;
-import com.github.dockerjava.api.exception.DockerClientException;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import io.micronaut.core.util.StringUtils;
@@ -151,17 +150,15 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         // Add proxy settings if configured
         buildImageCmdArguments.putAll(getProxyBuildArgs());
 
+        File dockerfile = dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_AWS_CUSTOM_RUNTIME);
+        lambdaBootstrapCommand(dockerfile);
+
         // Starter sets the right class in pom.xml:
         //   - For applications: io.micronaut.function.aws.runtime.MicronautLambdaRuntime
         //   - For function apps: com.example.BookLambdaRuntime
-        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, () -> {
-            try {
-                return dockerService.buildImageCmd(DockerfileMojo.DOCKERFILE_AWS_CUSTOM_RUNTIME)
-                    .withBuildArg("GRAALVM_DOWNLOAD_URL", graalVmDownloadUrl());
-            } catch (IOException e) {
-                throw new DockerClientException(e.getMessage(), e);
-            }
-        });
+        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, () -> dockerService.buildImageCmd()
+            .withDockerfile(dockerfile)
+            .withBuildArg("GRAALVM_DOWNLOAD_URL", graalVmDownloadUrl()));
         buildImageCmd.withBuildArg("CLASS_NAME", mainClass);
         String imageId = dockerService.buildImage(buildImageCmd);
         File functionZip = dockerService.copyFromContainer(imageId, "/function/function.zip");
