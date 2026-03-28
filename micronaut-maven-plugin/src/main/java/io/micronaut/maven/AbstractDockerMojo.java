@@ -35,7 +35,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -331,16 +330,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
             var dependencyName = dependency.getFile().getName();
             var layeredPath = target.resolve(dependencyLayerDirectory(dependency)).resolve(dependencyName);
             Files.copy(dependencyFile, layeredPath, StandardCopyOption.REPLACE_EXISTING);
-            copyDependencyToFlatLayout(dependencyFile, layeredPath, target.resolve(dependencyName));
-        }
-    }
-
-    private static void copyDependencyToFlatLayout(Path dependencyFile, Path layeredPath, Path flatPath) throws IOException {
-        try {
-            Files.deleteIfExists(flatPath);
-            Files.createLink(flatPath, layeredPath);
-        } catch (UnsupportedOperationException | IOException | SecurityException e) {
-            Files.copy(dependencyFile, flatPath, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(dependencyFile, target.resolve(dependencyName), StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
