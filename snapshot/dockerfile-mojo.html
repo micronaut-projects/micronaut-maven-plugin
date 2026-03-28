@@ -172,26 +172,31 @@
 <td><p>Jib goal used to build Docker images for <code>docker</code> packaging.</p>
 <p>Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>build</code> to avoid talking to a local Docker daemon during <code>package</code>.</p><br /><strong>Default</strong>: <code>dockerBuild</code><br /><strong>User Property</strong>: <code>jib.buildGoal</code></td></tr>
 <tr class="a">
+<td><a href="#lambdaBootstrapArguments"><code>&lt;lambdaBootstrapArguments&gt;</code></a></td>
+<td><code>List&lt;String&gt;</code></td>
+<td><code>5.0.0</code></td>
+<td>Additional arguments that will be appended to the generated AWS Lambda native bootstrap command.<br /><strong>User Property</strong>: <code>micronaut.lambda.bootstrap.args</code></td></tr>
+<tr class="b">
 <td><a href="#micronautRuntime"><code>&lt;micronautRuntime&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>-</code></td>
 <td>The target runtime of the application.<br /><strong>Default</strong>: <code>NONE</code><br /><strong>User Property</strong>: <code>micronaut.runtime</code></td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#nativeImageBuildArgs"><code>&lt;nativeImageBuildArgs&gt;</code></a></td>
 <td><code>List&lt;String&gt;</code></td>
 <td><code>-</code></td>
 <td>Additional arguments that will be passed to the <code>native-image</code> executable. Note that this will only be used when using a packaging of type <code>docker-native</code>. For <code>native-image</code> packaging you should use the <a href="https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization"> Native Image Maven Plugin </a> configuration options.<br /><strong>User Property</strong>: <code>micronaut.native-image.args</code></td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#networkMode"><code>&lt;networkMode&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>4.0.0</code></td>
 <td>Networking mode for the RUN instructions during build.<br /><strong>User Property</strong>: <code>docker.networkMode</code></td></tr>
-<tr class="b">
+<tr class="a">
 <td><a href="#oracleLinuxVersion"><code>&lt;oracleLinuxVersion&gt;</code></a></td>
 <td><code>String</code></td>
 <td><code>-</code></td>
 <td>The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.<br /><strong>Default</strong>: <code>ol9</code><br /><strong>User Property</strong>: <code>micronaut.native-image.ol.version</code></td></tr>
-<tr class="a">
+<tr class="b">
 <td><a href="#staticNativeImage"><code>&lt;staticNativeImage&gt;</code></a></td>
 <td><code>Boolean</code></td>
 <td><code>-</code></td>
@@ -219,7 +224,14 @@
 <li><strong>Since</strong>: <code>5.0.0</code></li>
 <li><strong>Required</strong>: <code>No</code></li>
 <li><strong>User Property</strong>: <code>jib.buildGoal</code></li>
-<li><strong>Default</strong>: <code>dockerBuild</code></li></ul><hr /></section><a id="mainClass"></a><section><a id="a.3CmainClass.3E"></a>
+<li><strong>Default</strong>: <code>dockerBuild</code></li></ul><hr /></section><a id="lambdaBootstrapArguments"></a><section><a id="a.3ClambdaBootstrapArguments.3E"></a>
+<h3>&lt;lambdaBootstrapArguments&gt;</h3>
+<div>Additional arguments that will be appended to the generated AWS Lambda native bootstrap command.</div>
+<ul>
+<li><strong>Type</strong>: <code>java.util.List&lt;java.lang.String&gt;</code></li>
+<li><strong>Since</strong>: <code>5.0.0</code></li>
+<li><strong>Required</strong>: <code>No</code></li>
+<li><strong>User Property</strong>: <code>micronaut.lambda.bootstrap.args</code></li></ul><hr /></section><a id="mainClass"></a><section><a id="a.3CmainClass.3E"></a>
 <h3>&lt;mainClass&gt;</h3>
 <div>The main class of the application, as defined in the <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.</div>
 <ul>

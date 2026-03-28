@@ -756,6 +756,8 @@ by using this parameter.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/jib/JibMicronautExtension.html#getJdkVersion(org.apache.maven.execution.MavenSession)" class="member-name-link">getJdkVersion(MavenSession)</a> - Static method in class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibMicronautExtension.html" title="class in io.micronaut.maven.jib">JibMicronautExtension</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/maven/AbstractDockerMojo.html#getLambdaBootstrapCommand()" class="member-name-link">getLambdaBootstrapCommand()</a> - Method in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/openapi/ParameterMapping.html#getLocation()" class="member-name-link">getLocation()</a> - Method in class io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/ParameterMapping.html" title="class in io.micronaut.maven.openapi">ParameterMapping</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/testresources/AbstractTestResourcesMojo.html#getLog()" class="member-name-link">getLog()</a> - Method in class io.micronaut.maven.testresources.<a href="io/micronaut/maven/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.maven.testresources">AbstractTestResourcesMojo</a></dt>
@@ -1096,6 +1098,16 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <dt><a href="io/micronaut/maven/core/MicronautRuntime.html#LAMBDA" class="member-name-link">LAMBDA</a> - Enum constant in enum class io.micronaut.maven.core.<a href="io/micronaut/maven/core/MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></dt>
 <dd>
 <div class="block">AWS lambda packaged as a Jar file.</div>
+</dd>
+<dt><a href="io/micronaut/maven/AbstractDockerMojo.html#LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER" class="member-name-link">LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER</a> - Static variable in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/maven/AbstractDockerMojo.html#lambdaBootstrapArguments" class="member-name-link">lambdaBootstrapArguments</a> - Variable in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></dt>
+<dd>
+<div class="block">Additional arguments that will be appended to the generated AWS Lambda native bootstrap command.</div>
+</dd>
+<dt><a href="io/micronaut/maven/AbstractDockerMojo.html#lambdaBootstrapCommand(java.io.File)" class="member-name-link">lambdaBootstrapCommand(File)</a> - Method in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></dt>
+<dd>
+<div class="block">Applies the generated AWS Lambda bootstrap script to a dockerfile template.</div>
 </dd>
 <dt><a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html#lang" class="member-name-link">lang</a> - Variable in class io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html" title="class in io.micronaut.maven.openapi">AbstractOpenApiMojo</a></dt>
 <dd>
