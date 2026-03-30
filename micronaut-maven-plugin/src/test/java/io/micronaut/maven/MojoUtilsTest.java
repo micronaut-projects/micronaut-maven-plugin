@@ -134,7 +134,7 @@ class MojoUtilsTest {
 
         assertIterableEquals(List.of(
             "--no-fallback",
-            "\\Q/home/app/libs/demo.jar\\E",
+            "\\Q/home/app/libs/release/demo.jar\\E",
             "-H:ConfigurationFileDirectories=/home/app/graalvm-reachability-metadata/metadata/io.netty/netty-common/4.1.80.Final,/home/app/graalvm-reachability-metadata/metadata/io.netty/netty-buffer/4.1.80.Final",
             "-H:ConfigurationFileDirectories=/home/app/generateTestResourceConfig,/home/app/generateResourceConfig"
         ), result);
@@ -156,10 +156,30 @@ class MojoUtilsTest {
         try {
             List<String> result = MojoUtils.computeNativeImageArgs(List.of(), "oraclelinux:9", argsFile.toString());
 
-            assertIterableEquals(List.of("\\Q/home/app/libs/demo.jar\\E"), result);
+            assertIterableEquals(List.of("\\Q/home/app/libs/release/demo.jar\\E"), result);
         } finally {
             Files.deleteIfExists(cwdCollision);
             Files.deleteIfExists(cwdCollision.getParent());
         }
+    }
+
+    @Test
+    void testComputeNativeImageArgsMapsSnapshotDependenciesToSnapshotLayer(@TempDir Path tempDir) throws IOException {
+        Path argsFile = tempDir.resolve("graalvm-native-image.args");
+        Files.write(argsFile, List.of("\\QC:\\Users\\My User\\.m2\\repository\\com\\example\\demo-1.0-SNAPSHOT.jar\\E"));
+
+        List<String> result = MojoUtils.computeNativeImageArgs(List.of(), "oraclelinux:9", argsFile.toString());
+
+        assertIterableEquals(List.of("\\Q/home/app/libs/snapshot/demo-1.0-SNAPSHOT.jar\\E"), result);
+    }
+
+    @Test
+    void testComputeNativeImageArgsMapsTimestampedSnapshotDependenciesToSnapshotLayer(@TempDir Path tempDir) throws IOException {
+        Path argsFile = tempDir.resolve("graalvm-native-image.args");
+        Files.write(argsFile, List.of("\\QC:\\Users\\My User\\.m2\\repository\\com\\example\\demo\\1.0-SNAPSHOT\\demo-1.0-20260330.123456-1.jar\\E"));
+
+        List<String> result = MojoUtils.computeNativeImageArgs(List.of(), "oraclelinux:9", argsFile.toString());
+
+        assertIterableEquals(List.of("\\Q/home/app/libs/snapshot/demo-1.0-20260330.123456-1.jar\\E"), result);
     }
 }

@@ -1,5 +1,8 @@
 File log = new File(basedir, 'build.log')
 assert log.exists()
+File checkpointScript = new File(basedir, 'target/scripts/checkpoint.sh')
+assert checkpointScript.exists()
+assert checkpointScript.text.contains('-cp /home/app/classes:/home/app/libs/release/*:/home/app/libs/snapshot/*')
 assert log.text.contains("Successfully tagged package-docker-crac-crac-checkpoint:latest")
 assert log.text.contains("Successfully tagged alvarosanchez/package-docker-crac:0.1")
 assert log.text.contains("[WARNING]  CRaC checkpoint files may contain sensitive information.")

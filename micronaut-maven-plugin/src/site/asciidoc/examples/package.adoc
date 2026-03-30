@@ -52,7 +52,10 @@ When shading is disabled, prefer one of these deployment models:
 * A custom `Dockerfile` or launcher script that starts the application from an explicit classpath.
 
 If you provide your own `Dockerfile`, Micronaut Maven Plugin prepares the runtime dependencies under
-`target/dependency`, so you can launch the application with a regular classpath instead of `java -jar`:
+`target/dependency`, so you can launch the application with a regular classpath instead of `java -jar`.
+For compatibility with existing custom Dockerfiles, the flat `target/dependency/*` layout is still produced even
+though the plugin-managed Dockerfile templates now also stage `target/dependency/release/` and
+`target/dependency/snapshot/` as separate layers:
 
 [source,dockerfile]
 ----
@@ -172,8 +175,10 @@ Depending on the `micronaut.runtime` property, the image built might be differen
 * Oracle Cloud Function: `mvn package -Dpackaging=docker -Dmicronaut.runtime=oracle_function`.
 * AWS Lambda (Java runtimes): `mvn package -Dpackaging=docker -Dmicronaut.runtime=lambda`.
 
-You can use the link:../dockerfile-mojo.html[`mn:dockerfile`] goal to generate the equivalent `Dockerfile`. For example,
-to generate the `Dockerfile` for AWS Lambda, run `mvn mn:dockerfile -Dpackaging=docker -Dmicronaut.runtime=lambda`.
+You can use the link:../dockerfile-mojo.html[`mn:dockerfile`] goal to generate the equivalent `Dockerfile`. Generated
+Dockerfiles copy `dependency/release/` and `dependency/snapshot/` separately so Docker layer caching can reuse
+non-SNAPSHOT dependencies more effectively. For example, to generate the `Dockerfile` for AWS Lambda, run
+`mvn mn:dockerfile -Dpackaging=docker -Dmicronaut.runtime=lambda`.
 
 Refer to the
 https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration[Jib Maven Plugin documentation]
@@ -210,7 +215,9 @@ $ mvn package -Dpackaging=docker
 
 If there is a `Dockerfile` in the project's root directory, it will be used to build the image. The image will be built
 using the `target` folder as the context directory. This plugin will also prepare all the `compile` and `runtime`
-dependency JARs in the `target/dependency` folder, so that in your `Dockerfile` you can leverage this and do:
+dependency JARs in the `target/dependency` folder. Custom Dockerfiles can continue to use the flat
+`target/dependency/*` layout, while generated Dockerfiles use split `dependency/release/` and
+`dependency/snapshot/` directories for finer-grained image layers. For a custom `Dockerfile`, you can still do:
 
 ----
 FROM ...

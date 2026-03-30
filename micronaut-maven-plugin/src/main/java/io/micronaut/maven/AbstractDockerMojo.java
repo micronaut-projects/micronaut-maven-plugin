@@ -67,6 +67,9 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     public static final String ORACLE_CLOUD_FUNCTION_DEFAULT_CMD = "CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]";
     public static final String GDS_DOWNLOAD_URL = "https://gds.oracle.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz";
     public static final String LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER = "${LAMBDA_BOOTSTRAP_DOCKER_COMMAND}";
+    private static final String DEPENDENCY_DIRECTORY = "dependency";
+    private static final String RELEASE_DEPENDENCY_DIRECTORY = "release";
+    private static final String SNAPSHOT_DEPENDENCY_DIRECTORY = "snapshot";
     private static final NavigableSet<Integer> GRAALVM_VERSIONS = new TreeSet<>(Set.of(25));
     private static final List<String> DEFAULT_LAMBDA_BOOTSTRAP_ARGUMENTS = List.of(
         "-XX:MaximumHeapSizePercent=80",
@@ -313,17 +316,26 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     /**
      * Copy project dependencies to a <code>target/dependency</code> directory.
      */
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     protected void copyDependencies() throws IOException {
         var imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
-        mavenProject.setArtifactFilter(artifact -> imageClasspathScopes.contains(artifact.getScope()));
-        var target = new File(mavenProject.getBuild().getDirectory(), "dependency");
-        if (!target.exists()) {
-            target.mkdirs();
-        }
+        var target = new File(mavenProject.getBuild().getDirectory(), DEPENDENCY_DIRECTORY).toPath();
+        Files.createDirectories(target);
+        Files.createDirectories(target.resolve(RELEASE_DEPENDENCY_DIRECTORY));
+        Files.createDirectories(target.resolve(SNAPSHOT_DEPENDENCY_DIRECTORY));
         for (Artifact dependency : mavenProject.getArtifacts()) {
-            Files.copy(dependency.getFile().toPath(), target.toPath().resolve(dependency.getFile().getName()), StandardCopyOption.REPLACE_EXISTING);
+            if (!imageClasspathScopes.contains(dependency.getScope())) {
+                continue;
+            }
+            var dependencyFile = dependency.getFile().toPath();
+            var dependencyName = dependency.getFile().getName();
+            var layeredPath = target.resolve(dependencyLayerDirectory(dependency)).resolve(dependencyName);
+            Files.copy(dependencyFile, layeredPath, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(dependencyFile, target.resolve(dependencyName), StandardCopyOption.REPLACE_EXISTING);
         }
+    }
+
+    private static String dependencyLayerDirectory(Artifact dependency) {
+        return dependency.isSnapshot() ? SNAPSHOT_DEPENDENCY_DIRECTORY : RELEASE_DEPENDENCY_DIRECTORY;
     }
 
     /**
