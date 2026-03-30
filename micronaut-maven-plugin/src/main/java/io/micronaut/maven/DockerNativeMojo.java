@@ -201,8 +201,9 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         }
 
         File dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);
-
-        oracleCloudFunctionCmd(dockerfile);
+        if (DockerfileMojo.DOCKERFILE_NATIVE_ORACLE_CLOUD.equals(dockerfileName)) {
+            oracleCloudFunctionCmd(dockerfile);
+        }
 
         BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments(passClassName), () -> dockerService.buildImageCmd()
             .withDockerfile(dockerfile)

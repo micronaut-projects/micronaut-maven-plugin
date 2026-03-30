@@ -268,11 +268,16 @@ the project POM.
 $ mvn package -Dpackaging=docker-native
 ----
 
-If there is a `Dockerfile` in the project's root directory, it will be copied into `target/` and used to build the
-native image with `target/` as the Docker build context.
+If there is a `Dockerfile` in the project's root directory and the selected `docker-native` path produces a Docker
+container image, the file will be copied into `target/` and used to build that image with `target/` as the Docker
+build context.
 
-The plugin still prepares the native-image inputs under `target/` and passes the same build arguments as the bundled
-native Dockerfiles where applicable. Depending on the runtime and image mode, it may provide:
+AWS Lambda and other `docker-native` modes that only produce ZIP artifacts such as `function.zip` do not consult the
+project-root `Dockerfile` and continue to use the plugin's bundled native Dockerfiles for the native-image build step.
+
+For image-building `docker-native` modes, the plugin still prepares the native-image inputs under `target/` and passes
+the same build arguments as the bundled native Dockerfiles where applicable. Depending on the runtime and image mode,
+it may provide:
 
 * `BASE_IMAGE`
 * `BASE_IMAGE_RUN` when `micronaut.native-image.static` is not `true`
