@@ -6,4 +6,4 @@ assert dockerfile.text == expectedDockerfile.text
 File log = new File(basedir, 'build.log')
 assert log.exists()
 assert log.text.contains("Using Dockerfile:")
-assert log.text.contains("io.micronaut.runtime.Micronaut - Startup completed")
+assert log.text.contains("Startup completed in")
