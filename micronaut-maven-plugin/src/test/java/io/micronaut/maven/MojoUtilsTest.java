@@ -172,4 +172,14 @@ class MojoUtilsTest {
 
         assertIterableEquals(List.of("\\Q/home/app/libs/snapshot/demo-1.0-SNAPSHOT.jar\\E"), result);
     }
+
+    @Test
+    void testComputeNativeImageArgsMapsTimestampedSnapshotDependenciesToSnapshotLayer(@TempDir Path tempDir) throws IOException {
+        Path argsFile = tempDir.resolve("graalvm-native-image.args");
+        Files.write(argsFile, List.of("\\QC:\\Users\\My User\\.m2\\repository\\com\\example\\demo\\1.0-SNAPSHOT\\demo-1.0-20260330.123456-1.jar\\E"));
+
+        List<String> result = MojoUtils.computeNativeImageArgs(List.of(), "oraclelinux:9", argsFile.toString());
+
+        assertIterableEquals(List.of("\\Q/home/app/libs/snapshot/demo-1.0-20260330.123456-1.jar\\E"), result);
+    }
 }
