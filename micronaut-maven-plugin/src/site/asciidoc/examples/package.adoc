@@ -272,15 +272,16 @@ If there is a `Dockerfile` in the project's root directory, it will be copied in
 native image with `target/` as the Docker build context.
 
 The plugin still prepares the native-image inputs under `target/` and passes the same build arguments as the bundled
-native Dockerfiles, including:
+native Dockerfiles where applicable. Depending on the runtime and image mode, it may provide:
 
 * `BASE_IMAGE`
-* `BASE_IMAGE_RUN`
-* `CLASS_NAME`
+* `BASE_IMAGE_RUN` when `micronaut.native-image.static` is not `true`
+* `CLASS_NAME` when the runtime still needs an application entrypoint
 * `PORTS`
 
-If your custom `Dockerfile` needs those values, declare the matching `ARG` instructions and copy the generated native
-build inputs from the `target/` context. For example:
+For example, Oracle Cloud Function images disable `CLASS_NAME`, and static native images do not pass `BASE_IMAGE_RUN`.
+If your custom `Dockerfile` needs those values, declare the matching `ARG` instructions only for the arguments used by
+your build and copy the generated native build inputs from the `target/` context. For example:
 
 [source,dockerfile]
 ----
