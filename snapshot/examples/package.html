@@ -10,7 +10,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content="Apache Maven Doxia Site Renderer 2.0.0" />
-    <meta name="date" content="2026-03-30 09:52:11 UTC" />
+    <meta name="date" content="2026-03-30 13:31:17 UTC" />
     <title>[Untitled] – Micronaut Maven Plugin - Plugin</title>
     <link rel="stylesheet" href="../css/apache-maven-fluido-2.0.0-M11.min.css" />
     <link rel="stylesheet" href="../css/site.css" />
@@ -353,6 +353,9 @@ phase.</p>
 <p>Default runtime: <code>mvn package -Dpackaging=docker</code>.</p>
 </li>
 <li>
+<p>JDK HTTP server runtime (Starter compatibility alias; same Docker image as the default runtime): <code>mvn package -Dpackaging=docker -Dmicronaut.runtime=http_server_jdk</code>.</p>
+</li>
+<li>
 <p>Daemonless tarball: <code>mvn package -Dpackaging=docker -Djib.buildGoal=buildTar</code>.</p>
 </li>
 <li>
@@ -447,6 +450,9 @@ images. In this case, the <code>micronaut.runtime</code> property will also dete
 <ul>
 <li>
 <p>Default image (dynamic): <code>mvn package -Dpackaging=docker-native</code>.</p>
+</li>
+<li>
+<p>JDK HTTP server runtime (Starter compatibility alias for the default runtime; same behavior as the default image): <code>mvn package -Dpackaging=docker-native -Dmicronaut.runtime=http_server_jdk</code>.</p>
 </li>
 <li>
 <p>Static image: <code>mvn package -Dpackaging=docker-native -Dmicronaut.native-image.static=true</code>. This uses GraalVM&#8217;s
