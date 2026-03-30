@@ -151,52 +151,57 @@
 <span class="source-line-no">138</span><span id="line-138"></span>
 <span class="source-line-no">139</span><span id="line-139">    private static String parseQuotedClasspathArg(String arg) {</span>
 <span class="source-line-no">140</span><span id="line-140">        String quotedPath = arg.substring(2, arg.length() - 2);</span>
-<span class="source-line-no">141</span><span id="line-141">        return "\\Q/home/app/libs/" + FilenameUtils.getName(quotedPath) + "\\E";</span>
-<span class="source-line-no">142</span><span id="line-142">    }</span>
-<span class="source-line-no">143</span><span id="line-143"></span>
-<span class="source-line-no">144</span><span id="line-144">    static String parseConfigurationFilesDirectoriesArg(String arg) {</span>
-<span class="source-line-no">145</span><span id="line-145">        String[] split = arg.split("=");</span>
-<span class="source-line-no">146</span><span id="line-146">        String[] directories = split[1].split(",");</span>
-<span class="source-line-no">147</span><span id="line-147">        String separator = "/";</span>
-<span class="source-line-no">148</span><span id="line-148">        if (arg.contains("generateResourceConfig") || arg.contains("generateTestResourceConfig")) {</span>
-<span class="source-line-no">149</span><span id="line-149">            return Stream.of(directories)</span>
-<span class="source-line-no">150</span><span id="line-150">                .map(FilenameUtils::separatorsToUnix)</span>
-<span class="source-line-no">151</span><span id="line-151">                .map(directory -&gt; {</span>
-<span class="source-line-no">152</span><span id="line-152">                    String[] splitDirectory = directory.split(separator);</span>
-<span class="source-line-no">153</span><span id="line-153">                    return "/home/app/" + splitDirectory[splitDirectory.length - 1];</span>
-<span class="source-line-no">154</span><span id="line-154">                })</span>
-<span class="source-line-no">155</span><span id="line-155">                .collect(Collectors.joining(","))</span>
-<span class="source-line-no">156</span><span id="line-156">                .transform(s -&gt; "-H:ConfigurationFileDirectories=" + s);</span>
-<span class="source-line-no">157</span><span id="line-157">        } else {</span>
-<span class="source-line-no">158</span><span id="line-158">            return Stream.of(directories)</span>
-<span class="source-line-no">159</span><span id="line-159">                .map(FilenameUtils::separatorsToUnix)</span>
-<span class="source-line-no">160</span><span id="line-160">                .map(directory -&gt; {</span>
-<span class="source-line-no">161</span><span id="line-161">                    String[] splitDirectory = directory.split(separator);</span>
-<span class="source-line-no">162</span><span id="line-162">                    String last4Directories = splitDirectory[splitDirectory.length - 4] + separator +</span>
-<span class="source-line-no">163</span><span id="line-163">                        splitDirectory[splitDirectory.length - 3] + separator +</span>
-<span class="source-line-no">164</span><span id="line-164">                        splitDirectory[splitDirectory.length - 2] + separator +</span>
-<span class="source-line-no">165</span><span id="line-165">                        splitDirectory[splitDirectory.length - 1];</span>
-<span class="source-line-no">166</span><span id="line-166">                    return "/home/app/graalvm-reachability-metadata/" + last4Directories;</span>
-<span class="source-line-no">167</span><span id="line-167">                })</span>
-<span class="source-line-no">168</span><span id="line-168">                .collect(Collectors.joining(","))</span>
-<span class="source-line-no">169</span><span id="line-169">                .transform(s -&gt; "-H:ConfigurationFileDirectories=" + s);</span>
-<span class="source-line-no">170</span><span id="line-170">        }</span>
-<span class="source-line-no">171</span><span id="line-171">    }</span>
-<span class="source-line-no">172</span><span id="line-172"></span>
-<span class="source-line-no">173</span><span id="line-173">    /**</span>
-<span class="source-line-no">174</span><span id="line-174">     * Checks if the project has the Micronaut Maven plugin defined.</span>
-<span class="source-line-no">175</span><span id="line-175">     *</span>
-<span class="source-line-no">176</span><span id="line-176">     * @param project the Maven project</span>
-<span class="source-line-no">177</span><span id="line-177">     * @return true if the project has the Micronaut Maven plugin defined</span>
-<span class="source-line-no">178</span><span id="line-178">     */</span>
-<span class="source-line-no">179</span><span id="line-179">    public static boolean hasMicronautMavenPlugin(MavenProject project) {</span>
-<span class="source-line-no">180</span><span id="line-180">        String[] parts = THIS_PLUGIN.split(":");</span>
-<span class="source-line-no">181</span><span id="line-181">        String groupId = parts[0];</span>
-<span class="source-line-no">182</span><span id="line-182">        String artifactId = parts[1];</span>
-<span class="source-line-no">183</span><span id="line-183">        return project.getBuildPlugins().stream()</span>
-<span class="source-line-no">184</span><span id="line-184">            .anyMatch(p -&gt; p.getGroupId().equals(groupId) &amp;&amp; p.getArtifactId().equals(artifactId));</span>
-<span class="source-line-no">185</span><span id="line-185">    }</span>
-<span class="source-line-no">186</span><span id="line-186">}</span>
+<span class="source-line-no">141</span><span id="line-141">        String normalizedPath = FilenameUtils.separatorsToUnix(quotedPath);</span>
+<span class="source-line-no">142</span><span id="line-142">        String fileName = FilenameUtils.getName(quotedPath);</span>
+<span class="source-line-no">143</span><span id="line-143">        String layerDirectory = normalizedPath.contains("-SNAPSHOT/") || fileName.contains("SNAPSHOT")</span>
+<span class="source-line-no">144</span><span id="line-144">            ? "snapshot"</span>
+<span class="source-line-no">145</span><span id="line-145">            : "release";</span>
+<span class="source-line-no">146</span><span id="line-146">        return "\\Q/home/app/libs/" + layerDirectory + "/" + fileName + "\\E";</span>
+<span class="source-line-no">147</span><span id="line-147">    }</span>
+<span class="source-line-no">148</span><span id="line-148"></span>
+<span class="source-line-no">149</span><span id="line-149">    static String parseConfigurationFilesDirectoriesArg(String arg) {</span>
+<span class="source-line-no">150</span><span id="line-150">        String[] split = arg.split("=");</span>
+<span class="source-line-no">151</span><span id="line-151">        String[] directories = split[1].split(",");</span>
+<span class="source-line-no">152</span><span id="line-152">        String separator = "/";</span>
+<span class="source-line-no">153</span><span id="line-153">        if (arg.contains("generateResourceConfig") || arg.contains("generateTestResourceConfig")) {</span>
+<span class="source-line-no">154</span><span id="line-154">            return Stream.of(directories)</span>
+<span class="source-line-no">155</span><span id="line-155">                .map(FilenameUtils::separatorsToUnix)</span>
+<span class="source-line-no">156</span><span id="line-156">                .map(directory -&gt; {</span>
+<span class="source-line-no">157</span><span id="line-157">                    String[] splitDirectory = directory.split(separator);</span>
+<span class="source-line-no">158</span><span id="line-158">                    return "/home/app/" + splitDirectory[splitDirectory.length - 1];</span>
+<span class="source-line-no">159</span><span id="line-159">                })</span>
+<span class="source-line-no">160</span><span id="line-160">                .collect(Collectors.joining(","))</span>
+<span class="source-line-no">161</span><span id="line-161">                .transform(s -&gt; "-H:ConfigurationFileDirectories=" + s);</span>
+<span class="source-line-no">162</span><span id="line-162">        } else {</span>
+<span class="source-line-no">163</span><span id="line-163">            return Stream.of(directories)</span>
+<span class="source-line-no">164</span><span id="line-164">                .map(FilenameUtils::separatorsToUnix)</span>
+<span class="source-line-no">165</span><span id="line-165">                .map(directory -&gt; {</span>
+<span class="source-line-no">166</span><span id="line-166">                    String[] splitDirectory = directory.split(separator);</span>
+<span class="source-line-no">167</span><span id="line-167">                    String last4Directories = splitDirectory[splitDirectory.length - 4] + separator +</span>
+<span class="source-line-no">168</span><span id="line-168">                        splitDirectory[splitDirectory.length - 3] + separator +</span>
+<span class="source-line-no">169</span><span id="line-169">                        splitDirectory[splitDirectory.length - 2] + separator +</span>
+<span class="source-line-no">170</span><span id="line-170">                        splitDirectory[splitDirectory.length - 1];</span>
+<span class="source-line-no">171</span><span id="line-171">                    return "/home/app/graalvm-reachability-metadata/" + last4Directories;</span>
+<span class="source-line-no">172</span><span id="line-172">                })</span>
+<span class="source-line-no">173</span><span id="line-173">                .collect(Collectors.joining(","))</span>
+<span class="source-line-no">174</span><span id="line-174">                .transform(s -&gt; "-H:ConfigurationFileDirectories=" + s);</span>
+<span class="source-line-no">175</span><span id="line-175">        }</span>
+<span class="source-line-no">176</span><span id="line-176">    }</span>
+<span class="source-line-no">177</span><span id="line-177"></span>
+<span class="source-line-no">178</span><span id="line-178">    /**</span>
+<span class="source-line-no">179</span><span id="line-179">     * Checks if the project has the Micronaut Maven plugin defined.</span>
+<span class="source-line-no">180</span><span id="line-180">     *</span>
+<span class="source-line-no">181</span><span id="line-181">     * @param project the Maven project</span>
+<span class="source-line-no">182</span><span id="line-182">     * @return true if the project has the Micronaut Maven plugin defined</span>
+<span class="source-line-no">183</span><span id="line-183">     */</span>
+<span class="source-line-no">184</span><span id="line-184">    public static boolean hasMicronautMavenPlugin(MavenProject project) {</span>
+<span class="source-line-no">185</span><span id="line-185">        String[] parts = THIS_PLUGIN.split(":");</span>
+<span class="source-line-no">186</span><span id="line-186">        String groupId = parts[0];</span>
+<span class="source-line-no">187</span><span id="line-187">        String artifactId = parts[1];</span>
+<span class="source-line-no">188</span><span id="line-188">        return project.getBuildPlugins().stream()</span>
+<span class="source-line-no">189</span><span id="line-189">            .anyMatch(p -&gt; p.getGroupId().equals(groupId) &amp;&amp; p.getArtifactId().equals(artifactId));</span>
+<span class="source-line-no">190</span><span id="line-190">    }</span>
+<span class="source-line-no">191</span><span id="line-191">}</span>
 
 
 

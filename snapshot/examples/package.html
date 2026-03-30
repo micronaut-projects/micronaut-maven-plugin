@@ -10,7 +10,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content="Apache Maven Doxia Site Renderer 2.0.0" />
-    <meta name="date" content="2026-03-30 08:08:35 UTC" />
+    <meta name="date" content="2026-03-30 09:52:11 UTC" />
     <title>[Untitled] – Micronaut Maven Plugin - Plugin</title>
     <link rel="stylesheet" href="../css/apache-maven-fluido-2.0.0-M11.min.css" />
     <link rel="stylesheet" href="../css/site.css" />
@@ -204,7 +204,10 @@ separate artifacts instead of as a shaded JAR.</p>
 </div>
 <div class="paragraph">
 <p>If you provide your own <code>Dockerfile</code>, Micronaut Maven Plugin prepares the runtime dependencies under
-<code>target/dependency</code>, so you can launch the application with a regular classpath instead of <code>java -jar</code>:</p>
+<code>target/dependency</code>, so you can launch the application with a regular classpath instead of <code>java -jar</code>.
+For compatibility with existing custom Dockerfiles, the flat <code>target/dependency/*</code> layout is still produced even
+though the plugin-managed Dockerfile templates now also stage <code>target/dependency/release/</code> and
+<code>target/dependency/snapshot/</code> as separate layers:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -361,8 +364,10 @@ phase.</p>
 </ul>
 </div>
 <div class="paragraph">
-<p>You can use the <a href="../dockerfile-mojo.html"><code>mn:dockerfile</code></a> goal to generate the equivalent <code>Dockerfile</code>. For example,
-to generate the <code>Dockerfile</code> for AWS Lambda, run <code>mvn mn:dockerfile -Dpackaging=docker -Dmicronaut.runtime=lambda</code>.</p>
+<p>You can use the <a href="../dockerfile-mojo.html"><code>mn:dockerfile</code></a> goal to generate the equivalent <code>Dockerfile</code>. Generated
+Dockerfiles copy <code>dependency/release/</code> and <code>dependency/snapshot/</code> separately so Docker layer caching can reuse
+non-SNAPSHOT dependencies more effectively. For example, to generate the <code>Dockerfile</code> for AWS Lambda, run
+<code>mvn mn:dockerfile -Dpackaging=docker -Dmicronaut.runtime=lambda</code>.</p>
 </div>
 <div class="paragraph">
 <p>Refer to the
@@ -404,7 +409,9 @@ to see what are the configuration options that can be used.</p>
 <div class="paragraph">
 <p>If there is a <code>Dockerfile</code> in the project&#8217;s root directory, it will be used to build the image. The image will be built
 using the <code>target</code> folder as the context directory. This plugin will also prepare all the <code>compile</code> and <code>runtime</code>
-dependency JARs in the <code>target/dependency</code> folder, so that in your <code>Dockerfile</code> you can leverage this and do:</p>
+dependency JARs in the <code>target/dependency</code> folder. Custom Dockerfiles can continue to use the flat
+<code>target/dependency/*</code> layout, while generated Dockerfiles use split <code>dependency/release/</code> and
+<code>dependency/snapshot/</code> directories for finer-grained image layers. For a custom <code>Dockerfile</code>, you can still do:</p>
 </div>
 <div class="listingblock">
 <div class="content">

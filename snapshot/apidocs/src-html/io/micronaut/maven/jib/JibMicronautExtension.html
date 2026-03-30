@@ -154,7 +154,7 @@
 <span class="source-line-no">141</span><span id="line-141">        entrypoint.add("-Djava.awt.headless=true");</span>
 <span class="source-line-no">142</span><span id="line-142">        entrypoint.add("-Djava.library.path=/function/runtime/lib");</span>
 <span class="source-line-no">143</span><span id="line-143">        entrypoint.add("-cp");</span>
-<span class="source-line-no">144</span><span id="line-144">        entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");</span>
+<span class="source-line-no">144</span><span id="line-144">        entrypoint.add("/function/app/classes:/function/app/libs/release/*:/function/app/libs/snapshot/*:/function/app/resources:/function/runtime/*");</span>
 <span class="source-line-no">145</span><span id="line-145">        entrypoint.add("com.fnproject.fn.runtime.EntryPoint");</span>
 <span class="source-line-no">146</span><span id="line-146">        return entrypoint;</span>
 <span class="source-line-no">147</span><span id="line-147">    }</span>
@@ -223,24 +223,26 @@
 <span class="source-line-no">210</span><span id="line-210">    static FileEntry remapEntry(FileEntry originalEntry, String layerName) {</span>
 <span class="source-line-no">211</span><span id="line-211">        var pathComponents = UnixPathParser.parse(originalEntry.getExtractionPath().toString());</span>
 <span class="source-line-no">212</span><span id="line-212">        AbsoluteUnixPath newPath;</span>
-<span class="source-line-no">213</span><span id="line-213">        if (layerName.contains("dependencies")) {</span>
-<span class="source-line-no">214</span><span id="line-214">            newPath = AbsoluteUnixPath.get("/function/app/libs/" + pathComponents.get(pathComponents.size() - 1));</span>
-<span class="source-line-no">215</span><span id="line-215">        } else {</span>
-<span class="source-line-no">216</span><span id="line-216">            //classes or resources</span>
-<span class="source-line-no">217</span><span id="line-217">            newPath = AbsoluteUnixPath.get("/function" + originalEntry.getExtractionPath());</span>
-<span class="source-line-no">218</span><span id="line-218">        }</span>
-<span class="source-line-no">219</span><span id="line-219"></span>
-<span class="source-line-no">220</span><span id="line-220">        return new FileEntry(originalEntry.getSourceFile(), newPath, originalEntry.getPermissions(),</span>
-<span class="source-line-no">221</span><span id="line-221">            originalEntry.getModificationTime(), originalEntry.getOwnership());</span>
-<span class="source-line-no">222</span><span id="line-222">    }</span>
-<span class="source-line-no">223</span><span id="line-223"></span>
-<span class="source-line-no">224</span><span id="line-224">    private Platform detectPlatform() {</span>
-<span class="source-line-no">225</span><span id="line-225">        String osArchitecture = System.getProperty("os.arch");</span>
-<span class="source-line-no">226</span><span id="line-226">        String arch = "aarch64".equals(osArchitecture) || "arm64".equals(osArchitecture) ? "arm64" : "amd64";</span>
-<span class="source-line-no">227</span><span id="line-227">        return new Platform(arch, LINUX);</span>
-<span class="source-line-no">228</span><span id="line-228">    }</span>
-<span class="source-line-no">229</span><span id="line-229"></span>
-<span class="source-line-no">230</span><span id="line-230">}</span>
+<span class="source-line-no">213</span><span id="line-213">        if ("dependencies".equals(layerName)) {</span>
+<span class="source-line-no">214</span><span id="line-214">            newPath = AbsoluteUnixPath.get("/function/app/libs/release/" + pathComponents.get(pathComponents.size() - 1));</span>
+<span class="source-line-no">215</span><span id="line-215">        } else if ("snapshot-dependencies".equals(layerName)) {</span>
+<span class="source-line-no">216</span><span id="line-216">            newPath = AbsoluteUnixPath.get("/function/app/libs/snapshot/" + pathComponents.get(pathComponents.size() - 1));</span>
+<span class="source-line-no">217</span><span id="line-217">        } else {</span>
+<span class="source-line-no">218</span><span id="line-218">            //classes or resources</span>
+<span class="source-line-no">219</span><span id="line-219">            newPath = AbsoluteUnixPath.get("/function" + originalEntry.getExtractionPath());</span>
+<span class="source-line-no">220</span><span id="line-220">        }</span>
+<span class="source-line-no">221</span><span id="line-221"></span>
+<span class="source-line-no">222</span><span id="line-222">        return new FileEntry(originalEntry.getSourceFile(), newPath, originalEntry.getPermissions(),</span>
+<span class="source-line-no">223</span><span id="line-223">            originalEntry.getModificationTime(), originalEntry.getOwnership());</span>
+<span class="source-line-no">224</span><span id="line-224">    }</span>
+<span class="source-line-no">225</span><span id="line-225"></span>
+<span class="source-line-no">226</span><span id="line-226">    private Platform detectPlatform() {</span>
+<span class="source-line-no">227</span><span id="line-227">        String osArchitecture = System.getProperty("os.arch");</span>
+<span class="source-line-no">228</span><span id="line-228">        String arch = "aarch64".equals(osArchitecture) || "arm64".equals(osArchitecture) ? "arm64" : "amd64";</span>
+<span class="source-line-no">229</span><span id="line-229">        return new Platform(arch, LINUX);</span>
+<span class="source-line-no">230</span><span id="line-230">    }</span>
+<span class="source-line-no">231</span><span id="line-231"></span>
+<span class="source-line-no">232</span><span id="line-232">}</span>
 
 
 
