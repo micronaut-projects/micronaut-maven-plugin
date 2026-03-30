@@ -10,7 +10,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content="Apache Maven Doxia Site Renderer 2.0.0" />
-    <meta name="date" content="2026-03-30 13:31:15 UTC" />
+    <meta name="date" content="2026-03-30 15:03:26 UTC" />
     <title>[Untitled] – Micronaut Maven Plugin - Plugin</title>
     <link rel="stylesheet" href="../css/apache-maven-fluido-2.0.0-M11.min.css" />
     <link rel="stylesheet" href="../css/site.css" />
@@ -298,6 +298,97 @@ it like this:</p>
 </div>
 <div class="paragraph">
 <p>The versions of those dependencies will be resolved against the Micronaut BOM.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="using_a_sibling_reactor_module_for_custom_resolvers">Using a sibling reactor module for custom resolvers</h4>
+<div class="paragraph">
+<p>If you want to implement a custom <code>TestResourcesResolver</code> in the same multi-module Maven build as the application which
+uses it, put the resolver in a dedicated sibling module and add that module to <code>&lt;testResourcesDependencies&gt;</code> in the
+consumer module.</p>
+</div>
+<div class="paragraph">
+<p>This is the Maven-native equivalent of Gradle&#8217;s <code>src/testResources/**</code> convenience source set: the resolver stays in a
+normal Java module, participates in the same reactor build, and is added explicitly to the Test Resources service
+classpath.</p>
+</div>
+<div class="paragraph">
+<p>The dedicated resolver module should include:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The custom <code>TestResourcesResolver</code> implementation.</p>
+</li>
+<li>
+<p>A <code>META-INF/services/io.micronaut.testresources.core.TestResourcesResolver</code> file listing the implementation class.</p>
+</li>
+<li>
+<p>A dependency on <code>micronaut-test-resources-core</code>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For example, the parent POM can define separate <code>resolver</code> and <code>app</code> modules:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;modules&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;module&gt;</span>resolver<span style="color:#070;font-weight:bold">&lt;/module&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;module&gt;</span>app<span style="color:#070;font-weight:bold">&lt;/module&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/modules&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The resolver module can package the implementation and service loader metadata as a normal JAR:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;project&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;parent&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>io.micronaut.build.examples<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>test-resources-custom-reactor-dependency-parent<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;version&gt;</span>0.1<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/parent&gt;</span>
+
+    <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>custom-reactor-resolver<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
+
+    <span style="color:#070;font-weight:bold">&lt;dependencies&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;dependency&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>io.micronaut.testresources<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>micronaut-test-resources-core<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;/dependency&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/dependencies&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/project&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then the consuming module can expose that sibling artifact to the Test Resources service:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="CodeRay highlight"><code data-lang="xml"><span style="color:#070;font-weight:bold">&lt;build&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;plugins&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;plugin&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>io.micronaut.maven<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>micronaut-maven-plugin<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;configuration&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;testResourcesDependencies&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;dependency&gt;</span>
+                        <span style="color:#070;font-weight:bold">&lt;groupId&gt;</span>${project.groupId}<span style="color:#070;font-weight:bold">&lt;/groupId&gt;</span>
+                        <span style="color:#070;font-weight:bold">&lt;artifactId&gt;</span>custom-reactor-resolver<span style="color:#070;font-weight:bold">&lt;/artifactId&gt;</span>
+                        <span style="color:#070;font-weight:bold">&lt;version&gt;</span>${project.version}<span style="color:#070;font-weight:bold">&lt;/version&gt;</span>
+                    <span style="color:#070;font-weight:bold">&lt;/dependency&gt;</span>
+                <span style="color:#070;font-weight:bold">&lt;/testResourcesDependencies&gt;</span>
+            <span style="color:#070;font-weight:bold">&lt;/configuration&gt;</span>
+        <span style="color:#070;font-weight:bold">&lt;/plugin&gt;</span>
+    <span style="color:#070;font-weight:bold">&lt;/plugins&gt;</span>
+<span style="color:#070;font-weight:bold">&lt;/build&gt;</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When you run <code>mvn test</code> or <code>mvn verify</code> from the parent project, Maven builds the sibling resolver module in the same
+reactor and the plugin adds that artifact to the Test Resources service classpath for the consuming module.</p>
 </div>
 <div class="paragraph">
 <p>The list of supported modules is described in the
