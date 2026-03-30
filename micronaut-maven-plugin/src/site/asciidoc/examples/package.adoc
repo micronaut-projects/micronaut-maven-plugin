@@ -262,6 +262,49 @@ $ mvn package -Dpackaging=docker-native \
 Prefer passing credential-bearing proxy values from the command line or CI secrets rather than committing them to
 the project POM.
 
+==== Bringing your own native `Dockerfile`
+
+----
+$ mvn package -Dpackaging=docker-native
+----
+
+If there is a `Dockerfile` in the project's root directory, it will be copied into `target/` and used to build the
+native image with `target/` as the Docker build context.
+
+The plugin still prepares the native-image inputs under `target/` and passes the same build arguments as the bundled
+native Dockerfiles, including:
+
+* `BASE_IMAGE`
+* `BASE_IMAGE_RUN`
+* `CLASS_NAME`
+* `PORTS`
+
+If your custom `Dockerfile` needs those values, declare the matching `ARG` instructions and copy the generated native
+build inputs from the `target/` context. For example:
+
+[source,dockerfile]
+----
+ARG BASE_IMAGE
+ARG BASE_IMAGE_RUN
+FROM ${BASE_IMAGE} AS builder
+WORKDIR /home/app
+
+COPY classes /home/app/classes
+COPY dependency/* /home/app/libs/
+COPY graalvm-reachability-metadat[a] /home/app/graalvm-reachability-metadata
+COPY nativ[e]/generated /home/app/
+COPY *.args /home/app/graalvm-native-image.args
+ARG CLASS_NAME
+RUN native-image @/home/app/graalvm-native-image.args -H:Class=${CLASS_NAME} -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
+
+FROM ${BASE_IMAGE_RUN}
+COPY --from=builder /home/app/application /app/application
+
+ARG PORTS=8080
+EXPOSE ${PORTS}
+ENTRYPOINT ["/app/application"]
+----
+
 The image built can be customised using
 https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration[Jib]. In particular, you can set:
 
