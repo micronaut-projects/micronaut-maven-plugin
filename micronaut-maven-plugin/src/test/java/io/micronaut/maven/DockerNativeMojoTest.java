@@ -300,11 +300,11 @@ class DockerNativeMojoTest {
         Path dockerfile = tempDir.resolve("DockerfileNative");
         Files.writeString(dockerfile, "FROM builder\nENTRYPOINT [\"/app/application\"]\n");
 
-        invokeBuildDockerfile(tempDir, dockerfile, DockerfileMojo.DOCKERFILE_NATIVE, true);
+        Fixtures fixtures = invokeBuildDockerfile(tempDir, dockerfile, DockerfileMojo.DOCKERFILE_NATIVE, true);
 
         String dockerfileContents = Files.readString(dockerfile);
         assertFalse(dockerfileContents.contains(AbstractDockerMojo.ORACLE_CLOUD_FUNCTION_DEFAULT_CMD));
-        verify(Fixtures.dockerService).buildImage(Fixtures.buildImageCmd);
+        verify(fixtures.dockerService).buildImage(fixtures.buildImageCmd);
     }
 
     @Test
@@ -312,17 +312,37 @@ class DockerNativeMojoTest {
         Path dockerfile = tempDir.resolve("DockerfileNativeOracleCloud");
         Files.writeString(dockerfile, "FROM builder\nENTRYPOINT [\"./func\"]\n");
 
-        invokeBuildDockerfile(tempDir, dockerfile, DockerfileMojo.DOCKERFILE_NATIVE_ORACLE_CLOUD, false);
+        Fixtures fixtures = invokeBuildDockerfile(tempDir, dockerfile, DockerfileMojo.DOCKERFILE_NATIVE_ORACLE_CLOUD, false);
 
         String dockerfileContents = Files.readString(dockerfile);
         assertTrue(dockerfileContents.contains(AbstractDockerMojo.ORACLE_CLOUD_FUNCTION_DEFAULT_CMD));
-        verify(Fixtures.dockerService).buildImage(Fixtures.buildImageCmd);
+        verify(fixtures.dockerService).buildImage(fixtures.buildImageCmd);
     }
 
-    private void invokeBuildDockerfile(Path tempDir, Path dockerfile, String dockerfileName, boolean passClassName) throws Exception {
-        Fixtures fixtures = new Fixtures(tempDir, dockerfile);
-        DockerNativeMojo mojo = fixtures.mojo;
+    @Test
+    void testBuildDockerfileCopiesProvidedDockerfileSymlinkContents(@TempDir Path tempDir) throws Exception {
+        Path linkedDockerfileTarget = tempDir.resolve("Dockerfile-custom");
+        Files.writeString(linkedDockerfileTarget, "FROM builder\nENTRYPOINT [\"/custom/application\"]\n");
+        Path providedDockerfile = tempDir.resolve(DockerfileMojo.DOCKERFILE);
+        Files.createSymbolicLink(providedDockerfile, linkedDockerfileTarget.getFileName());
 
+        Fixtures fixtures = new Fixtures(tempDir, tempDir.resolve("DockerfileNative"));
+        invokeBuildDockerfile(fixtures.mojo, DockerfileMojo.DOCKERFILE_NATIVE, true);
+
+        Path copiedDockerfile = tempDir.resolve("target").resolve(DockerfileMojo.DOCKERFILE);
+        assertTrue(Files.isRegularFile(copiedDockerfile));
+        assertFalse(Files.isSymbolicLink(copiedDockerfile));
+        assertEquals(Files.readString(linkedDockerfileTarget), Files.readString(copiedDockerfile));
+        verify(fixtures.dockerService).buildImage(fixtures.buildImageCmd);
+    }
+
+    private Fixtures invokeBuildDockerfile(Path tempDir, Path dockerfile, String dockerfileName, boolean passClassName) throws Exception {
+        Fixtures fixtures = new Fixtures(tempDir, dockerfile);
+        invokeBuildDockerfile(fixtures.mojo, dockerfileName, passClassName);
+        return fixtures;
+    }
+
+    private void invokeBuildDockerfile(DockerNativeMojo mojo, String dockerfileName, boolean passClassName) throws Exception {
         Method buildDockerfile = DockerNativeMojo.class.getDeclaredMethod("buildDockerfile", String.class, boolean.class);
         buildDockerfile.setAccessible(true);
         try {
@@ -341,8 +361,8 @@ class DockerNativeMojoTest {
     }
 
     private static final class Fixtures {
-        private static DockerService dockerService;
-        private static BuildImageCmd buildImageCmd;
+        private final DockerService dockerService;
+        private final BuildImageCmd buildImageCmd;
         private final DockerNativeMojo mojo;
 
         private Fixtures(Path tempDir, Path dockerfile) throws IOException {

@@ -35,7 +35,6 @@ import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
@@ -219,7 +218,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
         File targetDir = new File(mavenProject.getBuild().getDirectory());
         File targetDockerfile = new File(targetDir, providedDockerfile.getName());
-        Files.copy(providedDockerfile.toPath(), targetDockerfile.toPath(), LinkOption.NOFOLLOW_LINKS, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(providedDockerfile.toPath(), targetDockerfile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments(passClassName), () -> dockerService.buildImageCmd()
             .withDockerfile(targetDockerfile)
