@@ -171,6 +171,7 @@ phase.
 Depending on the `micronaut.runtime` property, the image built might be different. Options are:
 
 * Default runtime: `mvn package -Dpackaging=docker`.
+* JDK HTTP server runtime (Starter compatibility alias; same Docker image as the default runtime): `mvn package -Dpackaging=docker -Dmicronaut.runtime=http_server_jdk`.
 * Daemonless tarball: `mvn package -Dpackaging=docker -Djib.buildGoal=buildTar`.
 * Oracle Cloud Function: `mvn package -Dpackaging=docker -Dmicronaut.runtime=oracle_function`.
 * AWS Lambda (Java runtimes): `mvn package -Dpackaging=docker -Dmicronaut.runtime=lambda`.
@@ -243,6 +244,7 @@ images. In this case, the `micronaut.runtime` property will also determine how t
 
 * Default runtime.
 ** Default image (dynamic): `mvn package -Dpackaging=docker-native`.
+** JDK HTTP server runtime (Starter compatibility alias for the default runtime; same behavior as the default image): `mvn package -Dpackaging=docker-native -Dmicronaut.runtime=http_server_jdk`.
 ** Static image: `mvn package -Dpackaging=docker-native -Dmicronaut.native-image.static=true`. This uses GraalVM's
    `--static --libc=musl` flags and then puts the binary in a `scratch` image.
 ** Mostly static image: `mvn package -Dpackaging=docker-native -Dmicronaut.native-image.base-image-run=gcr.io/distroless/cc-debian12 -Pgraalvm`.
