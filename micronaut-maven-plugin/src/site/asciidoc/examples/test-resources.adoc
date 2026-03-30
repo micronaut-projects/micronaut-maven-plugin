@@ -184,7 +184,6 @@ The resolver module can package the implementation and service loader metadata a
         <dependency>
             <groupId>io.micronaut.testresources</groupId>
             <artifactId>micronaut-test-resources-core</artifactId>
-            <version>${micronaut.test.resources.version}</version>
         </dependency>
     </dependencies>
 </project>
