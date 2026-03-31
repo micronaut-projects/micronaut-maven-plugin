@@ -8,6 +8,7 @@ import org.apache.maven.model.Build;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.project.MavenProject;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -321,6 +322,8 @@ class DockerNativeMojoTest {
 
     @Test
     void testBuildDockerfileCopiesProvidedDockerfileSymlinkContents(@TempDir Path tempDir) throws Exception {
+        Assumptions.assumeTrue(supportsSymbolicLinks(tempDir), "Symbolic links are not supported in this test environment");
+
         Path linkedDockerfileTarget = tempDir.resolve("Dockerfile-custom");
         Files.writeString(linkedDockerfileTarget, "FROM builder\nENTRYPOINT [\"/custom/application\"]\n");
         Path providedDockerfile = tempDir.resolve(DockerfileMojo.DOCKERFILE);
@@ -334,6 +337,21 @@ class DockerNativeMojoTest {
         assertFalse(Files.isSymbolicLink(copiedDockerfile));
         assertEquals(Files.readString(linkedDockerfileTarget), Files.readString(copiedDockerfile));
         verify(fixtures.dockerService).buildImage(fixtures.buildImageCmd);
+    }
+
+    private boolean supportsSymbolicLinks(Path tempDir) throws IOException {
+        Path probeTarget = tempDir.resolve("symlink-probe-target");
+        Path probeLink = tempDir.resolve("symlink-probe-link");
+        Files.writeString(probeTarget, "probe");
+        try {
+            Files.createSymbolicLink(probeLink, probeTarget.getFileName());
+            return Files.isSymbolicLink(probeLink);
+        } catch (IOException | UnsupportedOperationException | SecurityException e) {
+            return false;
+        } finally {
+            Files.deleteIfExists(probeLink);
+            Files.deleteIfExists(probeTarget);
+        }
     }
 
     private Fixtures invokeBuildDockerfile(Path tempDir, Path dockerfile, String dockerfileName, boolean passClassName) throws Exception {
