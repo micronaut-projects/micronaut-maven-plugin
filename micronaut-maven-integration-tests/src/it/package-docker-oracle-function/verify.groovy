@@ -1,6 +1,6 @@
 File log = new File(basedir, 'build.log')
 assert log.exists()
-assert log.text.contains("fnproject/fn-java-fdk:jre17-latest")
+assert log.text.contains("fnproject/fn-java-fdk:jre17-1.1.7@sha256:50a0b8138fec3dde64aaedbe66406da6c2c17fc88446726c75446cb4c4fc681f")
 assert log.text.contains("Successfully tagged alvarosanchez/dockerfile-docker-oracle-function:0.1")
 assert log.text.contains("ENTRYPOINT [\"java\", \"-XX:-UsePerfData\", \"-XX:+UseSerialGC\", \"-Xshare:auto\", \"-Djava.awt.headless=true\", \"-Djava.library.path=/function/runtime/lib\", \"-cp\", \"/function/app/classes:/function/app/libs/release/*:/function/app/libs/snapshot/*:/function/app/resources:/function/runtime/*\", \"com.fnproject.fn.runtime.EntryPoint\"]")
 assert log.text.contains("CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]")
