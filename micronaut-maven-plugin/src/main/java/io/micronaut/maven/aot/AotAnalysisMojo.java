@@ -118,12 +118,18 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
     protected void onSuccess(File outputDir) throws MojoExecutionException {
         Path generated = outputDir.toPath().resolve("generated");
         Path generatedClasses = generated.resolve("classes");
+        Path targetOutputDirectory = outputDirectory.toPath().toAbsolutePath().normalize();
         try {
             FileUtils.copyDirectory(generatedClasses.toFile(), outputDirectory);
             try (Stream<String> linesStream = Files.lines(generated.resolve("logs").resolve("resource-filter.txt"))) {
                 linesStream.forEach(toRemove -> {
+                    Path candidate = targetOutputDirectory.resolve(toRemove).normalize();
+                    if (!candidate.startsWith(targetOutputDirectory)) {
+                        getLog().warn("Skipping deletion outside output directory: " + toRemove);
+                        return;
+                    }
                     try {
-                        Files.delete(outputDirectory.toPath().resolve(toRemove));
+                        Files.delete(candidate);
                         getLog().debug("Removed " + toRemove);
                     } catch (IOException e) {
                         if (!(e instanceof NoSuchFileException)) {
