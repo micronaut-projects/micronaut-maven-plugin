@@ -10,10 +10,12 @@ import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junitpioneer.jupiter.RestoreSystemProperties;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 
@@ -23,7 +25,45 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@RestoreSystemProperties
 class AbstractDockerMojoTest {
+
+    @Test
+    void getFromUsesDefaultCommunityImageWhenNoOverridesExist(@TempDir Path tempDir) {
+        var project = mockProject(tempDir, Set.of());
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.empty());
+
+        var mojo = new TestDockerMojo(project, mockSession(project), jibConfigurationService);
+
+        assertEquals(mojo.defaultBuilderImage(), mojo.from());
+    }
+
+    @Test
+    void getFromUsesMicronautBaseImageBeforeJibPomConfiguration(@TempDir Path tempDir) {
+        var project = mockProject(tempDir, Set.of());
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.of("ghcr.io/graalvm/native-image-community:25-ol9"));
+
+        var mojo = new TestDockerMojo(project, mockSession(project), jibConfigurationService);
+        mojo.baseImage = "container-registry.oracle.com/graalvm/native-image:21-ol8";
+
+        assertEquals("container-registry.oracle.com/graalvm/native-image:21-ol8", mojo.from());
+    }
+
+    @Test
+    void getFromKeepsJibSystemPropertyAsHighestPrecedence(@TempDir Path tempDir) {
+        System.setProperty(AbstractDockerMojo.JIB_FROM_IMAGE_PROPERTY, "container-registry.oracle.com/graalvm/native-image-ee:latest");
+
+        var project = mockProject(tempDir, Set.of());
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.of("ghcr.io/graalvm/native-image-community:25-ol9"));
+
+        var mojo = new TestDockerMojo(project, mockSession(project), jibConfigurationService);
+        mojo.baseImage = "container-registry.oracle.com/graalvm/native-image:21-ol8";
+
+        assertEquals("container-registry.oracle.com/graalvm/native-image-ee:latest", mojo.from());
+    }
 
     @Test
     void copyDependenciesKeepsFlatLayoutAndAddsReleaseAndSnapshotLayers(@TempDir Path tempDir) throws IOException {
@@ -36,7 +76,7 @@ class AbstractDockerMojoTest {
         var testDependency = mockDependency(Artifact.SCOPE_TEST, false, testJar);
         var project = mockProject(tempDir, Set.of(releaseDependency, snapshotDependency, testDependency));
 
-        var mojo = new TestDockerMojo(project, mockSession(project));
+        var mojo = new TestDockerMojo(project, mockSession(project), mock(JibConfigurationService.class));
 
         mojo.copyDependencies();
 
@@ -86,15 +126,23 @@ class AbstractDockerMojoTest {
 
     private static final class TestDockerMojo extends AbstractDockerMojo {
 
-        private TestDockerMojo(MavenProject mavenProject, MavenSession mavenSession) {
+        private TestDockerMojo(MavenProject mavenProject, MavenSession mavenSession, JibConfigurationService jibConfigurationService) {
             super(
                 mavenProject,
-                mock(JibConfigurationService.class),
+                jibConfigurationService,
                 mock(ApplicationConfigurationService.class),
                 mock(DockerService.class),
                 mavenSession,
                 mock(MojoExecution.class)
             );
+        }
+
+        private String from() {
+            return getFrom();
+        }
+
+        private String defaultBuilderImage() {
+            return "ghcr.io/graalvm/native-image-community:" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion);
         }
 
         @Override
