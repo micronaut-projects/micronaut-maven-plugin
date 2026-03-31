@@ -541,10 +541,20 @@ public class RunMojo extends AbstractTestResourcesMojo {
                     .forEach((k, v) -> args.add("-D" + k + "=" + v)));
             }
 
+            List<String> translatedJvmArguments = List.of();
             if (jvmArguments != null && !jvmArguments.isEmpty()) {
                 final String[] strings = CommandLineUtils.translateCommandline(jvmArguments);
-                args.addAll(Arrays.asList(strings));
+                translatedJvmArguments = Arrays.asList(strings);
             }
+
+            List<String> nativeImageAgentArguments = NativeImageAgentSupport.computeJvmArguments(mavenSession, runnableProject, targetDirectory, translatedJvmArguments);
+            if (!nativeImageAgentArguments.isEmpty()) {
+                if (watchForChanges) {
+                    getLog().warn("Native image agent metadata collection is intended for one-shot runs. Prefer mn:run -Dagent=true -Dmn.watch=false");
+                }
+                args.addAll(nativeImageAgentArguments);
+            }
+            args.addAll(translatedJvmArguments);
 
             if (!mavenSession.getUserProperties().isEmpty()) {
                 mavenSession.getUserProperties().forEach((k, v) -> args.add("-D" + k + "=" + v));
