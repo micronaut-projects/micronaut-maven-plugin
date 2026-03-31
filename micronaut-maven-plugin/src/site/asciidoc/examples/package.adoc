@@ -243,7 +243,7 @@ If the `<packaging>` is set to `docker-native`, this plugin will use a Docker cl
 images. In this case, the `micronaut.runtime` property will also determine how the image is prepared.
 
 * Default runtime.
-** Default image (dynamic): `mvn package -Dpackaging=docker-native`.
+** Default image (pinned immutable base): `mvn package -Dpackaging=docker-native`.
 ** JDK HTTP server runtime (Starter compatibility alias for the default runtime; same behavior as the default image): `mvn package -Dpackaging=docker-native -Dmicronaut.runtime=http_server_jdk`.
 ** Static image: `mvn package -Dpackaging=docker-native -Dmicronaut.native-image.static=true`. This uses GraalVM's
    `--static --libc=musl` flags and then puts the binary in a `scratch` image.

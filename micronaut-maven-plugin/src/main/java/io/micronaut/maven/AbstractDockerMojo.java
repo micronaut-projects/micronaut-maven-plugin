@@ -60,7 +60,7 @@ import static io.micronaut.maven.services.ApplicationConfigurationService.DEFAUL
 public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
 
     public static final String LATEST_TAG = "latest";
-    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "cgr.dev/chainguard/wolfi-base:latest";
+    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "cgr.dev/chainguard/wolfi-base@sha256:a5a619c1793039dcf92f02178f37c94bb3d6001403716da59d6092dfe8d9b502";
     public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
     public static final String ARM_ARCH = "aarch64";
     public static final String X86_64_ARCH = "x64";
