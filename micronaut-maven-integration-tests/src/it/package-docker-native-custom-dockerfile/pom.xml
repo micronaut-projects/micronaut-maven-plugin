@@ -34,11 +34,6 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>ch.qos.logback</groupId>
-      <artifactId>logback-classic</artifactId>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
       <scope>runtime</scope>
@@ -127,7 +122,12 @@
               <name>alvarosanchez/${project.artifactId}:${project.version}</name>
               <run>
                 <wait>
-                  <log>Startup completed in</log>
+                  <tcp>
+                    <mode>direct</mode>
+                    <ports>
+                      <port>8080</port>
+                    </ports>
+                  </tcp>
                   <time>20000</time>
                 </wait>
               </run>
