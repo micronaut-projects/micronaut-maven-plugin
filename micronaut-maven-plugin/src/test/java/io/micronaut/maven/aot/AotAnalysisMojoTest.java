@@ -19,20 +19,11 @@ class AotAnalysisMojoTest {
 
     @Test
     void onSuccessDoesNotDeleteFilesOutsideOutputDirectoryWhenResourceFilterContainsTraversal(@TempDir Path tempDir) throws Exception {
-        var mojo = new AotAnalysisMojo(
-            mock(CompilerService.class),
-            mock(ExecutorService.class),
-            mock(MavenProject.class),
-            mock(DependencyResolutionService.class),
-            mock(MavenSession.class),
-            mock(ToolchainManager.class)
-        );
         Path outputDirectory = tempDir.resolve("target/classes");
         Path generatedDirectory = tempDir.resolve("aot/jit/generated");
         Path outsideFile = tempDir.resolve("outside.txt");
 
-        mojo.outputDirectory = outputDirectory.toFile();
-        Files.createDirectories(outputDirectory);
+        AotAnalysisMojo mojo = newMojo(outputDirectory);
         Files.createDirectories(generatedDirectory.resolve("classes"));
         Files.createDirectories(generatedDirectory.resolve("logs"));
         Files.writeString(generatedDirectory.resolve("logs/resource-filter.txt"), "../../outside.txt");
@@ -41,5 +32,38 @@ class AotAnalysisMojoTest {
         mojo.onSuccess(tempDir.resolve("aot/jit").toFile());
 
         assertTrue(Files.exists(outsideFile));
+    }
+
+    @Test
+    void onSuccessIgnoresBlankAndSelfDeletionEntries(@TempDir Path tempDir) throws Exception {
+        Path outputDirectory = tempDir.resolve("target/classes");
+        Path generatedDirectory = tempDir.resolve("aot/jit/generated");
+        Path insideFile = outputDirectory.resolve("keep.txt");
+
+        AotAnalysisMojo mojo = newMojo(outputDirectory);
+        Files.createDirectories(generatedDirectory.resolve("classes"));
+        Files.createDirectories(generatedDirectory.resolve("logs"));
+        Files.createDirectories(outputDirectory);
+        Files.writeString(generatedDirectory.resolve("logs/resource-filter.txt"), "\n   \n.\n");
+        Files.writeString(insideFile, "inside");
+
+        mojo.onSuccess(tempDir.resolve("aot/jit").toFile());
+
+        assertTrue(Files.exists(insideFile));
+    }
+
+    private static AotAnalysisMojo newMojo(Path outputDirectory) throws Exception {
+        var mojo = new AotAnalysisMojo(
+            mock(CompilerService.class),
+            mock(ExecutorService.class),
+            mock(MavenProject.class),
+            mock(DependencyResolutionService.class),
+            mock(MavenSession.class),
+            mock(ToolchainManager.class)
+        );
+
+        mojo.outputDirectory = outputDirectory.toFile();
+        Files.createDirectories(outputDirectory);
+        return mojo;
     }
 }
