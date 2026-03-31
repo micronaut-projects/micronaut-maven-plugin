@@ -106,6 +106,9 @@
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
         <configuration>
+          <from>
+            <image>ghcr.io/graalvm/native-image-community:25.0.1-ol9</image>
+          </from>
           <to>
             <image>docker.io/alvarosanchez/${project.artifactId}:${project.version}</image>
           </to>
