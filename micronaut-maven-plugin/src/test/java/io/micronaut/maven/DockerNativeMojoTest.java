@@ -5,6 +5,7 @@ import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -268,7 +269,7 @@ class DockerNativeMojoTest {
     }
 
     @Test
-    void testLambdaBootstrapCommandAppendsCustomArguments() {
+    void testLambdaBootstrapCommandAppendsCustomArguments() throws MojoExecutionException {
         var project = mock(MavenProject.class);
         var session = mock(MavenSession.class);
         var execution = mock(MojoExecution.class);

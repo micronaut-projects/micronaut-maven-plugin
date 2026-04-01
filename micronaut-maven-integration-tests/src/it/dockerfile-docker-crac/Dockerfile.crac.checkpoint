@@ -1,5 +1,8 @@
 FROM ubuntu:18.04
 
+ARG CRAC_ARCH
+ARG CRAC_JDK_VERSION
+ARG CRAC_OS
 WORKDIR /home/app
 
 # Add required libraries

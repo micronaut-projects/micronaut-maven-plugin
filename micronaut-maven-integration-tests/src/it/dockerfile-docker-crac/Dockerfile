@@ -1,3 +1,4 @@
+ARG CHECKPOINT_IMAGE
 FROM ${CHECKPOINT_IMAGE} AS crac-checkpoint
 
 FROM ubuntu:18.04

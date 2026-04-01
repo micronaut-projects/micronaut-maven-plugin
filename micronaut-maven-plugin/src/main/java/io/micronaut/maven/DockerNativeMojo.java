@@ -144,7 +144,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         }
     }
 
-    private void buildDockerNativeLambda() throws IOException {
+    private void buildDockerNativeLambda() throws IOException, MojoExecutionException {
         var buildImageCmdArguments = new HashMap<String, String>();
 
         // Add proxy settings if configured
@@ -165,7 +165,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         getLog().info("AWS Lambda Custom Runtime ZIP: " + functionZip.getPath());
     }
 
-    private void buildDockerNative() throws IOException, InvalidImageReferenceException {
+    private void buildDockerNative() throws IOException, InvalidImageReferenceException, MojoExecutionException {
         String dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE;
         if (Boolean.TRUE.equals(staticNativeImage)) {
             getLog().info("Generating a static native image");
@@ -178,11 +178,11 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         buildDockerfile(dockerfileName, true);
     }
 
-    private void buildOracleCloud() throws IOException, InvalidImageReferenceException {
+    private void buildOracleCloud() throws IOException, InvalidImageReferenceException, MojoExecutionException {
         buildDockerfile(DockerfileMojo.DOCKERFILE_NATIVE_ORACLE_CLOUD, false);
     }
 
-    private void buildDockerfile(String dockerfileName, boolean passClassName) throws IOException, InvalidImageReferenceException {
+    private void buildDockerfile(String dockerfileName, boolean passClassName) throws IOException, InvalidImageReferenceException, MojoExecutionException {
         Set<String> tags = getTags();
         for (String tag : tags) {
             ImageReference.parse(tag);
