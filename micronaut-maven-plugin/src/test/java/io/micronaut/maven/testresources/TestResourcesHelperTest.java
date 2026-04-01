@@ -4,6 +4,7 @@ import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.apache.maven.model.Build;
 import org.apache.maven.project.MavenProject;
 
@@ -28,7 +29,9 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ResourceLock("java.io.tmpdir")
 class TestResourcesHelperTest {
+    private static final String JAVA_IO_TMPDIR_PROPERTY = "java.io.tmpdir";
 
     @TempDir
     Path tempDir;
@@ -109,9 +112,7 @@ class TestResourcesHelperTest {
     void keepAliveFileUsesSessionScopedRandomizedDirectory() throws Exception {
         Path scopedTmpDir = Files.createDirectory(tempDir.resolve("tmp"));
 
-        String previousTmpDir = System.getProperty("java.io.tmpdir");
-        System.setProperty("java.io.tmpdir", scopedTmpDir.toString());
-        try {
+        withTmpDir(scopedTmpDir, () -> {
             TestResourcesHelper firstHelper = helper("builder-123");
             TestResourcesHelper secondHelper = helper("builder-123");
 
@@ -125,13 +126,7 @@ class TestResourcesHelperTest {
             assertTrue(firstKeepAlive.getParent().getFileName().toString().startsWith("mn-test-resources-"));
             assertFalse(firstKeepAlive.getParent().equals(scopedTmpDir));
             assertFalse(firstKeepAlive.getParent().equals(secondKeepAlive.getParent()));
-        } finally {
-            if (previousTmpDir == null) {
-                System.clearProperty("java.io.tmpdir");
-            } else {
-                System.setProperty("java.io.tmpdir", previousTmpDir);
-            }
-        }
+        });
     }
 
     @Test
@@ -139,9 +134,7 @@ class TestResourcesHelperTest {
         Path scopedTmpDir = Files.createDirectory(tempDir.resolve("tmp"));
         Path protectedFile = tempDir.resolve("protected.txt");
 
-        String previousTmpDir = System.getProperty("java.io.tmpdir");
-        System.setProperty("java.io.tmpdir", scopedTmpDir.toString());
-        try {
+        withTmpDir(scopedTmpDir, () -> {
             TestResourcesHelper helper = helper("builder-123");
             Path keepAliveFile = invokeGetKeepAliveFile(helper);
             Files.createDirectories(keepAliveFile.getParent());
@@ -154,22 +147,14 @@ class TestResourcesHelperTest {
             assertFalse(Files.exists(protectedFile));
             assertFalse(invokeIsKeepAlive(helper));
             assertTrue(Files.isSymbolicLink(keepAliveFile));
-        } finally {
-            if (previousTmpDir == null) {
-                System.clearProperty("java.io.tmpdir");
-            } else {
-                System.setProperty("java.io.tmpdir", previousTmpDir);
-            }
-        }
+        });
     }
 
     @Test
     void deleteKeepAliveFileRemovesEmptyKeepAliveDirectory() throws Exception {
         Path scopedTmpDir = Files.createDirectory(tempDir.resolve("tmp"));
 
-        String previousTmpDir = System.getProperty("java.io.tmpdir");
-        System.setProperty("java.io.tmpdir", scopedTmpDir.toString());
-        try {
+        withTmpDir(scopedTmpDir, () -> {
             TestResourcesHelper helper = helper("builder-123");
             Path keepAliveFile = invokeGetKeepAliveFile(helper);
 
@@ -178,22 +163,14 @@ class TestResourcesHelperTest {
 
             assertFalse(Files.exists(keepAliveFile, LinkOption.NOFOLLOW_LINKS));
             assertFalse(Files.exists(keepAliveFile.getParent(), LinkOption.NOFOLLOW_LINKS));
-        } finally {
-            if (previousTmpDir == null) {
-                System.clearProperty("java.io.tmpdir");
-            } else {
-                System.setProperty("java.io.tmpdir", previousTmpDir);
-            }
-        }
+        });
     }
 
     @Test
     void createKeepAliveDirectoryRejectsExistingNonDirectoryPath() throws Exception {
         Path scopedTmpDir = Files.createDirectory(tempDir.resolve("tmp"));
 
-        String previousTmpDir = System.getProperty("java.io.tmpdir");
-        System.setProperty("java.io.tmpdir", scopedTmpDir.toString());
-        try {
+        withTmpDir(scopedTmpDir, () -> {
             TestResourcesHelper helper = helper("builder-123");
             Path keepAliveDirectory = invokeGetKeepAliveFile(helper).getParent();
             Files.writeString(keepAliveDirectory, "not-a-directory");
@@ -201,22 +178,14 @@ class TestResourcesHelperTest {
             InvocationTargetException exception = assertThrows(InvocationTargetException.class, () -> invokeCreateKeepAliveDirectory(helper));
 
             assertInstanceOf(IOException.class, exception.getCause());
-        } finally {
-            if (previousTmpDir == null) {
-                System.clearProperty("java.io.tmpdir");
-            } else {
-                System.setProperty("java.io.tmpdir", previousTmpDir);
-            }
-        }
+        });
     }
 
     @Test
     void deleteKeepAliveFileLeavesDirectoryWhenOtherFilesRemain() throws Exception {
         Path scopedTmpDir = Files.createDirectory(tempDir.resolve("tmp"));
 
-        String previousTmpDir = System.getProperty("java.io.tmpdir");
-        System.setProperty("java.io.tmpdir", scopedTmpDir.toString());
-        try {
+        withTmpDir(scopedTmpDir, () -> {
             TestResourcesHelper helper = helper("builder-123");
             Path keepAliveFile = invokeGetKeepAliveFile(helper);
             Path siblingFile = keepAliveFile.getParent().resolve("sibling.txt");
@@ -229,13 +198,7 @@ class TestResourcesHelperTest {
             assertFalse(Files.exists(keepAliveFile, LinkOption.NOFOLLOW_LINKS));
             assertTrue(Files.exists(keepAliveFile.getParent(), LinkOption.NOFOLLOW_LINKS));
             assertTrue(Files.exists(siblingFile, LinkOption.NOFOLLOW_LINKS));
-        } finally {
-            if (previousTmpDir == null) {
-                System.clearProperty("java.io.tmpdir");
-            } else {
-                System.setProperty("java.io.tmpdir", previousTmpDir);
-            }
-        }
+        });
     }
 
     @Test
@@ -300,9 +263,32 @@ class TestResourcesHelperTest {
         }
     }
 
+    private static void withTmpDir(Path scopedTmpDir, ThrowingRunnable action) throws Exception {
+        String previousTmpDir = System.getProperty(JAVA_IO_TMPDIR_PROPERTY);
+        System.setProperty(JAVA_IO_TMPDIR_PROPERTY, scopedTmpDir.toString());
+        try {
+            action.run();
+        } finally {
+            restoreSystemProperty(JAVA_IO_TMPDIR_PROPERTY, previousTmpDir);
+        }
+    }
+
+    private static void restoreSystemProperty(String propertyName, String previousValue) {
+        if (previousValue == null) {
+            System.clearProperty(propertyName);
+        } else {
+            System.setProperty(propertyName, previousValue);
+        }
+    }
+
     private static FileAttribute<?>[] invokeKeepAliveDirectoryAttributes(Path directory) throws Exception {
         Method method = TestResourcesHelper.class.getDeclaredMethod("keepAliveDirectoryAttributes", Path.class);
         method.setAccessible(true);
         return (FileAttribute<?>[]) method.invoke(null, directory);
+    }
+
+    @FunctionalInterface
+    private interface ThrowingRunnable {
+        void run() throws Exception;
     }
 }
