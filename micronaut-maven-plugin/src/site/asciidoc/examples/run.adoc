@@ -97,3 +97,23 @@ Debugging options can be specified on the command line directly:
 ==== Other options
 
 For a full list of configuration options, check the link:../run-mojo.html[mn:run] goal documentation.
+
+==== Collecting native-image metadata during `mn:run`
+
+`mn:run` can launch the application with the GraalVM native-image tracing agent by using the same `-Dagent=true`
+switch that `org.graalvm.buildtools:native-maven-plugin` understands:
+
+[source,bash]
+----
+$ mvn mn:run -Dagent=true -Dmn.watch=false
+----
+
+This generates metadata under `target/native/agent-output/main`.
+
+Use this when you want to exercise the application on the JVM and then feed the collected metadata back into the
+upstream native-image workflow. Micronaut still delegates native-image packaging to
+`org.graalvm.buildtools:native-maven-plugin`; `mn:run` only covers the application-run tracing step.
+
+The initial `mn:run` integration supports the upstream standard agent mode. Advanced workflows such as direct mode,
+conditional mode, and metadata copy orchestration should continue to use the upstream native-build-tools Maven plugin
+workflow directly.

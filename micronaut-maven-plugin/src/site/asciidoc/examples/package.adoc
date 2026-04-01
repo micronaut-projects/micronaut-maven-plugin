@@ -88,6 +88,11 @@ Refer to the
 https://graalvm.github.io/native-build-tools/latest/[Native Maven Plugin documentation]
 for more information about how to customize the generated native image.
 
+If you want to collect native-image metadata before packaging, you can run the application with
+`mvn mn:run -Dagent=true -Dmn.watch=false`. That generates tracing output in `target/native/agent-output/main`, which
+you can then review or process with the upstream native-build-tools workflow before running
+`mvn package -Dpackaging=native-image`.
+
 For example, to add `--verbose` to the native image args, you should define:
 
 [source,xml]
