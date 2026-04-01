@@ -12,6 +12,8 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -23,6 +25,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -47,27 +50,52 @@ class DockerfileMojoTest {
             mock(MojoExecution.class)
         );
         mojo.micronautRuntime = "netty";
-        mojo.mainClass = "example.App\"Quoted";
+        mojo.mainClass = "example.App$USER `touch /tmp/pwned` \"Quoted\" \\\\";
         mojo.baseImageRun = "cgr.dev/chainguard/wolfi-base:latest";
 
         var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), String.join(System.lineSeparator(),
             "FROM ${BASE_IMAGE}",
             "EXPOSE ${PORTS}",
             "ENTRYPOINT [\"java\", \"-cp\", \"/app\", \"${CLASS_NAME}\"]",
-            "RUN native-image -H:Class=${CLASS_NAME}"
+            "RUN echo ${CLASS_NAME}",
+            "RUN native-image -H:Class=\"${CLASS_NAME}\""
         ));
 
         invokeProcessDockerfile(mojo, dockerfile);
+
+        var jsonClassName = AbstractDockerMojo.escapeJsonString("exec.mainClass", mojo.mainClass);
+        var shellLiteralClassName = AbstractDockerMojo.shellLiteral("exec.mainClass", mojo.mainClass);
+        var doubleQuotedClassName = mojo.mainClass
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("$", "\\$")
+            .replace("`", "\\`");
 
         assertEquals(
             java.util.List.of(
                 "FROM ghcr.io/example/builder:1.0",
                 "EXPOSE 8080 8443/tcp",
-                "ENTRYPOINT [\"java\", \"-cp\", \"/app\", \"example.App\\\"Quoted\"]",
-                "RUN native-image -H:Class='example.App\"Quoted'"
+                "ENTRYPOINT [\"java\", \"-cp\", \"/app\", \"" + jsonClassName + "\"]",
+                "RUN echo " + shellLiteralClassName,
+                "RUN native-image -H:Class=\"" + doubleQuotedClassName + "\""
             ),
             Files.readAllLines(dockerfile)
         );
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "DockerfileNative",
+        "DockerfileNativeDistroless",
+        "DockerfileNativeStatic",
+        "DockerfileNativeLambda"
+    })
+    void nativeDockerfileTemplatesQuoteClassNameExpansion(String dockerfileName) throws IOException {
+        var dockerfile = Path.of("src", "main", "resources", "dockerfiles", dockerfileName);
+        var content = Files.readString(dockerfile);
+
+        assertEquals(1, content.lines().filter(line -> line.contains("-H:Class=\"${CLASS_NAME}\"")).count());
+        assertFalse(content.contains("-H:Class=${CLASS_NAME}"));
     }
 
     @Test

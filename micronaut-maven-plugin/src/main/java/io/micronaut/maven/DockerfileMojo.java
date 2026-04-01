@@ -247,8 +247,18 @@ public class DockerfileMojo extends AbstractDockerMojo {
     private String replaceClassName(String line) throws MojoExecutionException {
         String className = line.contains("ENTRYPOINT [")
             ? escapeJsonString("exec.mainClass", mainClass)
+            : line.contains("\"${CLASS_NAME}\"")
+                ? escapeShellDoubleQuoted(mainClass)
             : shellLiteral("exec.mainClass", mainClass);
         return line.replace("${CLASS_NAME}", className);
+    }
+
+    private static String escapeShellDoubleQuoted(String value) {
+        return value
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("$", "\\$")
+            .replace("`", "\\`");
     }
 
     private String findArgsFile() throws IOException {
