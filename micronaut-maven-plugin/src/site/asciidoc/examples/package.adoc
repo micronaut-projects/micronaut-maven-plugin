@@ -291,8 +291,15 @@ $ mvn package -Dpackaging=docker-native \
 ----
 
 Use `micronaut.native-image.base-image` for the native builder stage and `micronaut.native-image.base-image-run` for
-the final runtime image. If both `jib.from.image` and `micronaut.native-image.base-image` are configured, the Jib
-system property wins so existing automation keeps working unchanged.
+the final runtime image. The native builder-stage image is resolved in this order:
+
+* `jib.from.image`.
+* `micronaut.native-image.base-image`.
+* Jib `<from><image>`.
+* The plugin-computed default Oracle GraalVM GFTC builder image.
+
+That keeps `jib.from.image` as the highest-precedence override so existing automation keeps working unchanged, while
+still letting Micronaut-specific configuration win over the Jib POM builder image.
 
 You can also use some
 https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#system-properties[system properties] from the
