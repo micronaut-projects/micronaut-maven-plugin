@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
+import static io.micronaut.maven.AbstractDockerMojo.ARM_ARCH;
 import static io.micronaut.maven.AbstractDockerMojo.X86_64_ARCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -34,12 +35,12 @@ class DockerNativeMojoTest {
 
     @ParameterizedTest
     @CsvSource({
-            "24,https://gds.oracle.com/download/graal/25/latest-gftc/graalvm-jdk-25_linux-x64_bin.tar.gz",
-            "25,https://gds.oracle.com/download/graal/25/latest-gftc/graalvm-jdk-25_linux-x64_bin.tar.gz",
-            "26,https://gds.oracle.com/download/graal/25/latest-gftc/graalvm-jdk-25_linux-x64_bin.tar.gz"
+            "24,https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-25.0.2/graalvm-community-jdk-25.0.2_linux-x64_bin.tar.gz,e0be791c8fda4d03b6b0a0cb824fef3149736170057b3a515252b44419606af0",
+            "25,https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-25.0.2/graalvm-community-jdk-25.0.2_linux-x64_bin.tar.gz,e0be791c8fda4d03b6b0a0cb824fef3149736170057b3a515252b44419606af0",
+            "26,https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-25.0.2/graalvm-community-jdk-25.0.2_linux-x64_bin.tar.gz,e0be791c8fda4d03b6b0a0cb824fef3149736170057b3a515252b44419606af0"
     })
     @SetSystemProperty(key = "os.arch", value = X86_64_ARCH)
-    void testGraalVmDownloadUrl(String javaVersion, String expectedUrl) throws URISyntaxException, IOException, InterruptedException {
+    void testGraalVmDownloadUrl(String javaVersion, String expectedUrl, String expectedSha256) throws URISyntaxException, IOException, InterruptedException {
         var project = mock(MavenProject.class);
         var session = mock(MavenSession.class);
         var execution = mock(MojoExecution.class);
@@ -54,8 +55,10 @@ class DockerNativeMojoTest {
         var mojo = new DockerNativeMojo(project, null, null, null, session, execution);
 
         var actualUrl = mojo.graalVmDownloadUrl();
+        var actualSha256 = mojo.graalVmDownloadSha256();
 
         assertEquals(expectedUrl, actualUrl);
+        assertEquals(expectedSha256, actualSha256);
 
         var client = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
@@ -86,9 +89,32 @@ class DockerNativeMojoTest {
         var mojo = new DockerNativeMojo(project, null, null, null, session, execution);
 
         var actualUrl = mojo.graalVmDownloadUrl();
+        var actualSha256 = mojo.graalVmDownloadSha256();
 
-        var expectedUrl = "https://gds.oracle.com/download/graal/25/latest-gftc/graalvm-jdk-25_linux-x64_bin.tar.gz";
+        var expectedUrl = "https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-25.0.2/graalvm-community-jdk-25.0.2_linux-x64_bin.tar.gz";
+        var expectedSha256 = "e0be791c8fda4d03b6b0a0cb824fef3149736170057b3a515252b44419606af0";
         assertEquals(expectedUrl, actualUrl);
+        assertEquals(expectedSha256, actualSha256);
+    }
+
+    @Test
+    @SetSystemProperty(key = "os.arch", value = ARM_ARCH)
+    void testGraalVmDownloadUrlForArm() {
+        var project = mock(MavenProject.class);
+        var session = mock(MavenSession.class);
+        var execution = mock(MojoExecution.class);
+        when(session.getCurrentProject()).thenReturn(project);
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        when(project.getProperties()).thenReturn(new Properties());
+
+        var mojo = new DockerNativeMojo(project, null, null, null, session, execution);
+
+        var actualUrl = mojo.graalVmDownloadUrl();
+        var actualSha256 = mojo.graalVmDownloadSha256();
+
+        assertEquals("https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-25.0.2/graalvm-community-jdk-25.0.2_linux-aarch64_bin.tar.gz", actualUrl);
+        assertEquals("b4580d9f223d0a4b3a1757e58b18ff4c1db950e67e105fc5cb741457d2384a71", actualSha256);
     }
 
     @Test
