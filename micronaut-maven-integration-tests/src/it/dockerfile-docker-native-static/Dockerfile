@@ -7,7 +7,7 @@ COPY dependency/snapshot/ /home/app/libs/snapshot/
 COPY graalvm-reachability-metadat[a] /home/app/graalvm-reachability-metadata
 COPY nativ[e]/generated /home/app/
 COPY *.args /home/app/graalvm-native-image.args
-RUN native-image @/home/app/graalvm-native-image.args --static --target=linux-amd64 --libc=musl -H:Class='io.micronaut.build.examples.Application' -H:Name=application -cp "/home/app/libs/release/*:/home/app/libs/snapshot/*:/home/app/classes/"
+RUN native-image @/home/app/graalvm-native-image.args --static --target=linux-amd64 --libc=musl -H:Class="io.micronaut.build.examples.Application" -H:Name=application -cp "/home/app/libs/release/*:/home/app/libs/snapshot/*:/home/app/classes/"
 
 FROM scratch
 COPY --from=builder /home/app/application /app/application
