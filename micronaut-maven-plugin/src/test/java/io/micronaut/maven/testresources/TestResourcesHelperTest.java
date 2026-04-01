@@ -1,5 +1,7 @@
 package io.micronaut.maven.testresources;
 
+import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.execution.MavenSession;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.apache.maven.model.Build;
@@ -7,6 +9,7 @@ import org.apache.maven.project.MavenProject;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -16,6 +19,9 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class TestResourcesHelperTest {
 
@@ -92,5 +98,97 @@ class TestResourcesHelperTest {
         assertTrue(acquired.await(5, TimeUnit.SECONDS));
         worker.join();
         assertEquals(0, TestResourcesHelper.sharedServerLockCount());
+    }
+
+    @Test
+    void keepAliveFileUsesSessionScopedRandomizedDirectory() throws Exception {
+        Path scopedTmpDir = Files.createDirectory(tempDir.resolve("tmp"));
+
+        String previousTmpDir = System.getProperty("java.io.tmpdir");
+        System.setProperty("java.io.tmpdir", scopedTmpDir.toString());
+        try {
+            TestResourcesHelper firstHelper = helper("builder-123");
+            TestResourcesHelper secondHelper = helper("builder-123");
+
+            Path firstKeepAlive = invokeGetKeepAliveFile(firstHelper);
+            Path secondKeepAlive = invokeGetKeepAliveFile(secondHelper);
+            Path firstKeepAliveAgain = invokeGetKeepAliveFile(firstHelper);
+
+            assertEquals(firstKeepAlive, firstKeepAliveAgain);
+            assertTrue(firstKeepAlive.startsWith(scopedTmpDir));
+            assertEquals("keepalive-builder-123", firstKeepAlive.getFileName().toString());
+            assertTrue(firstKeepAlive.getParent().getFileName().toString().startsWith("mn-test-resources-"));
+            assertFalse(firstKeepAlive.getParent().equals(scopedTmpDir));
+            assertFalse(firstKeepAlive.getParent().equals(secondKeepAlive.getParent()));
+        } finally {
+            if (previousTmpDir == null) {
+                System.clearProperty("java.io.tmpdir");
+            } else {
+                System.setProperty("java.io.tmpdir", previousTmpDir);
+            }
+        }
+    }
+
+    @Test
+    void createKeepAliveFileDoesNotWriteThroughExistingSymlink() throws Exception {
+        Path scopedTmpDir = Files.createDirectory(tempDir.resolve("tmp"));
+        Path protectedFile = tempDir.resolve("protected.txt");
+
+        String previousTmpDir = System.getProperty("java.io.tmpdir");
+        System.setProperty("java.io.tmpdir", scopedTmpDir.toString());
+        try {
+            TestResourcesHelper helper = helper("builder-123");
+            Path keepAliveFile = invokeGetKeepAliveFile(helper);
+
+            assumeTrue(createSymlinkIfSupported(keepAliveFile, protectedFile), "Symbolic links are not available");
+
+            invokeCreateKeepAliveFile(helper);
+
+            assertFalse(Files.exists(protectedFile));
+            assertFalse(invokeIsKeepAlive(helper));
+        } finally {
+            if (previousTmpDir == null) {
+                System.clearProperty("java.io.tmpdir");
+            } else {
+                System.setProperty("java.io.tmpdir", previousTmpDir);
+            }
+        }
+    }
+
+    private static TestResourcesHelper helper(String builderId) {
+        MavenExecutionRequest request = mock(MavenExecutionRequest.class);
+        when(request.getBuilderId()).thenReturn(builderId);
+
+        MavenSession mavenSession = mock(MavenSession.class);
+        when(mavenSession.getRequest()).thenReturn(request);
+
+        return new TestResourcesHelper(mavenSession, true, false, new File("."));
+    }
+
+    private static Path invokeGetKeepAliveFile(TestResourcesHelper helper) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod("getKeepAliveFile");
+        method.setAccessible(true);
+        return (Path) method.invoke(helper);
+    }
+
+    private static void invokeCreateKeepAliveFile(TestResourcesHelper helper) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod("createKeepAliveFile");
+        method.setAccessible(true);
+        method.invoke(helper);
+    }
+
+    private static boolean invokeIsKeepAlive(TestResourcesHelper helper) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod("isKeepAlive");
+        method.setAccessible(true);
+        return (boolean) method.invoke(helper);
+    }
+
+    private static boolean createSymlinkIfSupported(Path link, Path target) {
+        try {
+            Files.createSymbolicLink(link, target);
+            return true;
+        } catch (UnsupportedOperationException | IOException e) {
+            return false;
+        }
     }
 }

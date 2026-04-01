@@ -38,8 +38,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -157,7 +159,7 @@ public class TestResourcesHelper {
     }
 
     private boolean isKeepAlive() {
-        boolean hasKeepAliveFile = Files.exists(getKeepAliveFile());
+        boolean hasKeepAliveFile = Files.isRegularFile(getKeepAliveFile(), LinkOption.NOFOLLOW_LINKS);
         return hasKeepAliveFile || isStartExplicitlyInvoked();
     }
 
@@ -529,8 +531,13 @@ public class TestResourcesHelper {
 
     private void createKeepAliveFile() throws IOException {
         Path keepalive = getKeepAliveFile();
-        if (!Files.exists(keepalive)) {
-            Files.write(keepalive, "true".getBytes());
+        createKeepAliveDirectory();
+        if (Files.exists(keepalive, LinkOption.NOFOLLOW_LINKS)) {
+            if (!Files.isRegularFile(keepalive, LinkOption.NOFOLLOW_LINKS)) {
+                throw new IOException("Keepalive path exists but is not a regular file: " + keepalive);
+            }
+        } else {
+            Files.writeString(keepalive, "true", StandardOpenOption.CREATE_NEW);
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 try {
                     deleteKeepAliveFile();
@@ -539,6 +546,17 @@ public class TestResourcesHelper {
                 }
             }));
         }
+    }
+
+    private void createKeepAliveDirectory() throws IOException {
+        Path keepAliveDirectory = sessionState().keepAliveDirectory;
+        if (Files.exists(keepAliveDirectory, LinkOption.NOFOLLOW_LINKS)) {
+            if (!Files.isDirectory(keepAliveDirectory, LinkOption.NOFOLLOW_LINKS)) {
+                throw new IOException("Keepalive directory exists but is not a directory: " + keepAliveDirectory);
+            }
+            return;
+        }
+        Files.createDirectory(keepAliveDirectory);
     }
 
     private static boolean isServerStarted(int port) {
@@ -569,7 +587,7 @@ public class TestResourcesHelper {
     }
 
     private void deleteKeepAliveFile() throws MojoExecutionException {
-        if (Files.exists(getKeepAliveFile())) {
+        if (Files.exists(getKeepAliveFile(), LinkOption.NOFOLLOW_LINKS)) {
             try {
                 Files.delete(getKeepAliveFile());
             } catch (IOException e) {
@@ -586,8 +604,7 @@ public class TestResourcesHelper {
     }
 
     private Path getKeepAliveFile() {
-        var tmpDir = Path.of(System.getProperty("java.io.tmpdir"));
-        return tmpDir.resolve("keepalive-" + mavenSession.getRequest().getBuilderId());
+        return sessionState().keepAliveDirectory.resolve("keepalive-" + mavenSession.getRequest().getBuilderId());
     }
 
     private void cleanupSharedProjectSettings() throws IOException {
@@ -610,6 +627,8 @@ public class TestResourcesHelper {
 
     private static final class SessionState {
         private final String scopePrefix = SCOPE_PREFIX + "-" + UUID.randomUUID();
+        private final Path keepAliveDirectory = Path.of(System.getProperty("java.io.tmpdir"))
+            .resolve("mn-test-resources-" + UUID.randomUUID());
         private final Map<Path, SharedServerState> sharedServers = new LinkedHashMap<>();
     }
 
