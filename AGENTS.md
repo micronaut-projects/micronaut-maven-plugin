@@ -1,7 +1,7 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-02-17 13:31:24 CET
-**Commit:** 520ced668
+**Generated:** 2026-04-01 14:32:56 UTC
+**Commit:** 9060c5303841
 **Branch:** 5.0.x
 
 ## OVERVIEW
@@ -28,7 +28,9 @@ Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module pl
 | AOT integration changes | `micronaut-maven-plugin/src/main/java/io/micronaut/maven/aot` | Analysis + sample config generation |
 | Test resources lifecycle | `micronaut-maven-plugin/src/main/java/io/micronaut/maven/testresources` | Start/stop lifecycle + helper |
 | Shared compile/dependency logic | `micronaut-maven-plugin/src/main/java/io/micronaut/maven/services` | Used by heavy mojos like `RunMojo` |
+| Enforcer policy checks | `micronaut-maven-enforcer-rules/src/main/java/io/micronaut/maven/enforcer` | Currently centered on `CheckSnakeYaml`; keep cross-module policy here |
 | Cross-module integration behavior | `micronaut-maven-integration-tests/src/it` | Scenario-per-directory invoker tests |
+| CI/release delivery changes | `.github/workflows` | `snapshot.yml`, `windows-ci.yml`, and `release.yml` must stay aligned |
 | Formatting and style rules | `config/checkstyle`, `config/spotless.license.java` | Enforced in compile phase |
 
 ## CODE MAP
@@ -72,4 +74,5 @@ Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module pl
 
 ## NOTES
 - If touching CI expectations, update `.github/workflows/snapshot.yml`, `.github/workflows/windows-ci.yml`, and/or `.github/workflows/release.yml` consistently.
+- Paperclip worktrees may surface an untracked `.agents/` directory as local runtime scaffolding; ignore it unless the task is explicitly about agent assets or skills.
 - Keep child AGENTS.md files scoped: local rules only, no repeated root-level guidance.
