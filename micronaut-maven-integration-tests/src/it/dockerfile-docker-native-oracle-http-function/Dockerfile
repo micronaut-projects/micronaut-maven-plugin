@@ -1,11 +1,11 @@
-FROM ghcr.io/graalvm/native-image-community:25-ol9 AS builder
+FROM container-registry.oracle.com/graalvm/native-image:25-ol9 AS builder
 WORKDIR /home/app
 
 COPY classes /home/app/classes
 COPY dependency/release/ /home/app/libs/release/
 COPY dependency/snapshot/ /home/app/libs/snapshot/
-COPY graalvm-reachability-metadat[a] /home/app/graalvm-reachability-metadata
-COPY nativ[e]/generated /home/app/
+COPY graalvm-reachability-metadata /home/app/graalvm-reachability-metadata
+COPY native/generated /home/app/
 COPY *.args /home/app/graalvm-native-image.args
 RUN native-image @/home/app/graalvm-native-image.args --report-unsupported-elements-at-runtime -H:PageSize=64k -H:Class=com.fnproject.fn.runtime.EntryPoint -H:Name=application -cp "/home/app/libs/release/*:/home/app/libs/snapshot/*:/home/app/classes/"
 

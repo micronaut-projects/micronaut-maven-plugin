@@ -254,7 +254,7 @@ images. In this case, the `micronaut.runtime` property will also determine how t
    `--static --libc=musl` flags and then puts the binary in a `scratch` image.
 ** Mostly static image: `mvn package -Dpackaging=docker-native -Dmicronaut.native-image.base-image-run=gcr.io/distroless/cc-debian12 -Pgraalvm`.
    This will create a "mostly" static native image and adds automatically `-H:+StaticExecutableWithDynamicLibC` flag.
-** Custom image: `mvn package -Dpackaging=docker-native -Dmicronaut.native-image.base-image-run=your-own-image-for-run-the-native-image`
+** Custom runtime image: `mvn package -Dpackaging=docker-native -Dmicronaut.native-image.base-image-run=your-own-image-for-run-the-native-image`
 * Oracle Cloud Function: `mvn package -Dpackaging=docker-native -Dmicronaut.runtime=oracle_function`.
 * AWS Lambda (custom runtime): `mvn package -Dpackaging=docker-native -Dmicronaut.runtime=lambda`.
 
@@ -279,16 +279,38 @@ the project POM.
 The image built can be customised using
 https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration[Jib]. In particular, you can set:
 
-* The base image, using `<from><image>`. If the base image comes from a registry that requires authentication, you can
-  use `<from><auth><username>` and `<from><auth><password>`. Chek the
+* The builder image, using `<from><image>`. If the builder image comes from a registry that requires authentication, you can
+  use `<from><auth><username>` and `<from><auth><password>`. Check the
   https://github.com/GoogleContainerTools/jib/blob/master/jib-maven-plugin/README.md#using-specific-credentials[Jib documentation]
   for more details.
 * The image name/tags that will be used for building, using either `<to><image>` and/or `<to><tags>`.
+
+You can also override the native build-stage image with the Micronaut-specific `micronaut.native-image.base-image`
+property. This is the preferred override when you want to stay within Micronaut Maven Plugin configuration instead of
+using Jib-specific `<from><image>` or `jib.from.image`.
+
+[source,shell]
+----
+$ mvn package -Dpackaging=docker-native \
+    -Dmicronaut.native-image.base-image=container-registry.oracle.com/graalvm/native-image:21-ol8
+----
+
+Use `micronaut.native-image.base-image` for the native builder stage and `micronaut.native-image.base-image-run` for
+the final runtime image. The native builder-stage image is resolved in this order:
+
+* `jib.from.image`.
+* `micronaut.native-image.base-image`.
+* Jib `<from><image>`.
+* The plugin-computed default Oracle GraalVM GFTC builder image.
+
+That keeps `jib.from.image` as the highest-precedence override so existing automation keeps working unchanged, while
+still letting Micronaut-specific configuration win over the Jib POM builder image.
 
 You can also use some
 https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#system-properties[system properties] from the
 command line:
 
+* `jib.from.image`.
 * `jib.from.auth.username`.
 * `jib.from.auth.password`.
 * `jib.to.image`.
@@ -302,8 +324,13 @@ When using `jib.buildGoal=buildTar` or `jib.buildGoal=build`, only the `package`
 result, `mvn deploy -Dpackaging=docker -Djib.buildGoal=buildTar` and `... -Djib.buildGoal=build` are not supported; for
 deployments, either omit `jib.buildGoal` or set it to `dockerBuild`.
 
-Note that changing the base image to a totally different one than the default might break image building, since the rest
-of the build steps expect a certain base image. By default, the native images are built from an `ghcr.io/graalvm/native-image-community` image.
+Note that changing the builder image to a totally different one than the default might break image building, since the rest
+of the build steps expect a certain builder-stage base image. By default, that builder-stage base image comes from
+`container-registry.oracle.com/graalvm/native-image`.
+If you need a stricter reproducibility guarantee than a moving image tag provides, override the builder-stage image with a
+digest-pinned reference via `micronaut.native-image.base-image` or `jib.from.image`.
+If the selected builder image requires authentication, continue using Jib auth configuration such as
+`jib.from.auth.username` and `jib.from.auth.password`.
 
 In the case of AWS custom runtime, it starts from `amazonlinux:2023`, and this cannot be changed. Also, in this case the
 result is not a tagged Docker image, but a `function.zip` archive that contains the bootstrap launch script and the native binary.

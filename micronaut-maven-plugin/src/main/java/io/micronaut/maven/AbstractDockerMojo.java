@@ -61,12 +61,14 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
 
     public static final String LATEST_TAG = "latest";
     public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "cgr.dev/chainguard/wolfi-base@sha256:a5a619c1793039dcf92f02178f37c94bb3d6001403716da59d6092dfe8d9b502";
+    public static final String DEFAULT_BASE_IMAGE_GRAALVM_BUILD = "container-registry.oracle.com/graalvm/native-image";
     public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
     public static final String ARM_ARCH = "aarch64";
     public static final String X86_64_ARCH = "x64";
     public static final String ORACLE_CLOUD_FUNCTION_DEFAULT_CMD = "CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]";
     public static final String GDS_DOWNLOAD_URL = "https://gds.oracle.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz";
     public static final String LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER = "${LAMBDA_BOOTSTRAP_DOCKER_COMMAND}";
+    static final String JIB_FROM_IMAGE_PROPERTY = "jib.from.image";
     private static final String DEPENDENCY_DIRECTORY = "dependency";
     private static final String RELEASE_DEPENDENCY_DIRECTORY = "release";
     private static final String SNAPSHOT_DEPENDENCY_DIRECTORY = "snapshot";
@@ -137,6 +139,14 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      */
     @Parameter(property = "micronaut.native-image.base-image-run", defaultValue = DEFAULT_BASE_IMAGE_GRAALVM_RUN)
     protected String baseImageRun;
+
+    /**
+     * The builder-stage base image used to build the native image for docker-native packaging variants.
+     *
+     * @since 5.0.0
+     */
+    @Parameter(property = "micronaut.native-image.base-image")
+    protected String baseImage;
 
     /**
      * The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.
@@ -230,7 +240,10 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @return the base FROM image for the native image.
      */
     protected String getFrom() {
-        return getFromImage().orElse("ghcr.io/graalvm/native-image-community:" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion));
+        return getJibFromImageSystemProperty()
+            .or(() -> Optional.ofNullable(baseImage).filter(StringUtils::hasText))
+            .or(() -> getFromImage().filter(StringUtils::hasText))
+            .orElse(DEFAULT_BASE_IMAGE_GRAALVM_BUILD + ":" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion));
     }
 
     /**
@@ -263,6 +276,14 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      */
     protected Optional<String> getFromImage() {
         return jibConfigurationService.getFromImage();
+    }
+
+    /**
+     * @return the base image from the Jib system property override, if any.
+     */
+    protected Optional<String> getJibFromImageSystemProperty() {
+        return Optional.ofNullable(System.getProperty(JIB_FROM_IMAGE_PROPERTY))
+            .filter(StringUtils::hasText);
     }
 
     /**
