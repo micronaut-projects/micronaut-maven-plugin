@@ -188,11 +188,67 @@ class TestResourcesHelperTest {
     }
 
     @Test
+    void createKeepAliveDirectoryRejectsExistingNonDirectoryPath() throws Exception {
+        Path scopedTmpDir = Files.createDirectory(tempDir.resolve("tmp"));
+
+        String previousTmpDir = System.getProperty("java.io.tmpdir");
+        System.setProperty("java.io.tmpdir", scopedTmpDir.toString());
+        try {
+            TestResourcesHelper helper = helper("builder-123");
+            Path keepAliveDirectory = invokeGetKeepAliveFile(helper).getParent();
+            Files.writeString(keepAliveDirectory, "not-a-directory");
+
+            InvocationTargetException exception = assertThrows(InvocationTargetException.class, () -> invokeCreateKeepAliveDirectory(helper));
+
+            assertInstanceOf(IOException.class, exception.getCause());
+        } finally {
+            if (previousTmpDir == null) {
+                System.clearProperty("java.io.tmpdir");
+            } else {
+                System.setProperty("java.io.tmpdir", previousTmpDir);
+            }
+        }
+    }
+
+    @Test
+    void deleteKeepAliveFileLeavesDirectoryWhenOtherFilesRemain() throws Exception {
+        Path scopedTmpDir = Files.createDirectory(tempDir.resolve("tmp"));
+
+        String previousTmpDir = System.getProperty("java.io.tmpdir");
+        System.setProperty("java.io.tmpdir", scopedTmpDir.toString());
+        try {
+            TestResourcesHelper helper = helper("builder-123");
+            Path keepAliveFile = invokeGetKeepAliveFile(helper);
+            Path siblingFile = keepAliveFile.getParent().resolve("sibling.txt");
+
+            invokeCreateKeepAliveFile(helper);
+            Files.writeString(siblingFile, "keep");
+
+            invokeDeleteKeepAliveFile(helper);
+
+            assertFalse(Files.exists(keepAliveFile, LinkOption.NOFOLLOW_LINKS));
+            assertTrue(Files.exists(keepAliveFile.getParent(), LinkOption.NOFOLLOW_LINKS));
+            assertTrue(Files.exists(siblingFile, LinkOption.NOFOLLOW_LINKS));
+        } finally {
+            if (previousTmpDir == null) {
+                System.clearProperty("java.io.tmpdir");
+            } else {
+                System.setProperty("java.io.tmpdir", previousTmpDir);
+            }
+        }
+    }
+
+    @Test
     void keepAliveDirectoryAttributesOnlyUsePosixPermissionsWhenSupported() throws Exception {
         FileAttribute<?>[] attributes = invokeKeepAliveDirectoryAttributes(tempDir);
         boolean posixSupported = Files.getFileStore(tempDir).supportsFileAttributeView("posix");
 
         assertEquals(posixSupported ? 1 : 0, attributes.length);
+    }
+
+    @Test
+    void keepAliveDirectoryAttributesReturnsEmptyArrayForNullDirectory() throws Exception {
+        assertEquals(0, invokeKeepAliveDirectoryAttributes(null).length);
     }
 
     private static TestResourcesHelper helper(String builderId) {
@@ -225,6 +281,12 @@ class TestResourcesHelperTest {
 
     private static void invokeDeleteKeepAliveFile(TestResourcesHelper helper) throws Exception {
         Method method = TestResourcesHelper.class.getDeclaredMethod("deleteKeepAliveFile");
+        method.setAccessible(true);
+        method.invoke(helper);
+    }
+
+    private static void invokeCreateKeepAliveDirectory(TestResourcesHelper helper) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod("createKeepAliveDirectory");
         method.setAccessible(true);
         method.invoke(helper);
     }
