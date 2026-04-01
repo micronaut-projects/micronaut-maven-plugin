@@ -141,7 +141,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     protected String baseImageRun;
 
     /**
-     * The Docker image used to build the native image for the standard docker-native path.
+     * The builder-stage base image used to build the native image for docker-native packaging variants.
      *
      * @since 5.1.0
      */

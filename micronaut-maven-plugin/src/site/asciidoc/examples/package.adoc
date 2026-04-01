@@ -322,6 +322,8 @@ deployments, either omit `jib.buildGoal` or set it to `dockerBuild`.
 Note that changing the builder image to a totally different one than the default might break image building, since the rest
 of the build steps expect a certain builder-stage base image. By default, that builder-stage base image comes from
 `container-registry.oracle.com/graalvm/native-image`.
+If you need a stricter reproducibility guarantee than a moving image tag provides, override the builder-stage image with a
+digest-pinned reference via `micronaut.native-image.base-image` or `jib.from.image`.
 If the selected builder image requires authentication, continue using Jib auth configuration such as
 `jib.from.auth.username` and `jib.from.auth.password`.
 
