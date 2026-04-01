@@ -547,9 +547,9 @@ public class RunMojo extends AbstractTestResourcesMojo {
         args.add(javaExecutable);
         addDebugArguments(args);
         addTestResourcesArguments(args);
-        addNativeImageAgentArguments(args, translatedJvmArguments);
         args.addAll(translatedJvmArguments);
         addUserProperties(args);
+        addNativeImageAgentArguments(args, translatedJvmArguments);
         args.add("-classpath");
         args.add(classpathArgument);
         args.add("-XX:TieredStopAtLevel=1");

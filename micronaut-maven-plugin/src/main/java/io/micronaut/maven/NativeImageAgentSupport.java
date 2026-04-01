@@ -33,6 +33,7 @@ import java.util.Properties;
 final class NativeImageAgentSupport {
 
     static final String AGENT_PROPERTY = "agent";
+    static final String IMAGECODE_PROPERTY = "org.graalvm.nativeimage.imagecode";
     static final String NATIVE_IMAGE_AGENTLIB = "-agentlib:native-image-agent";
     static final String NATIVE_IMAGE_IMAGECODE = "-Dorg.graalvm.nativeimage.imagecode=agent";
     static final String NATIVE_MAVEN_PLUGIN = DockerfileMojo.NATIVE_BUILD_TOOLS_MAVEN_PLUGIN;
@@ -50,6 +51,9 @@ final class NativeImageAgentSupport {
         }
         if (containsNativeImageAgent(existingJvmArguments)) {
             throw new MojoExecutionException("Native image agent support is enabled through native-build-tools, so mn.jvmArgs must not define -agentlib:native-image-agent manually");
+        }
+        if (containsNativeImageImagecode(session, existingJvmArguments)) {
+            throw new MojoExecutionException("Native image agent support is enabled through native-build-tools, so mn.jvmArgs and Maven properties must not define org.graalvm.nativeimage.imagecode manually");
         }
         String outputDirectory = new File(targetDirectory, SharedConstants.AGENT_OUTPUT_FOLDER + File.separator + "main").getAbsolutePath();
         String agentArgument = NATIVE_IMAGE_AGENTLIB + "=" + configuration.getAgentCommandLine().stream()
@@ -162,5 +166,19 @@ final class NativeImageAgentSupport {
 
     private static boolean containsNativeImageAgent(List<String> jvmArguments) {
         return jvmArguments.stream().anyMatch(argument -> argument.startsWith(NATIVE_IMAGE_AGENTLIB));
+    }
+
+    private static boolean containsNativeImageImagecode(MavenSession session, List<String> jvmArguments) {
+        return jvmArguments.stream().anyMatch(NativeImageAgentSupport::isNativeImageImagecodeArgument)
+            || hasProperty(session.getUserProperties(), IMAGECODE_PROPERTY)
+            || hasProperty(session.getSystemProperties(), IMAGECODE_PROPERTY);
+    }
+
+    private static boolean isNativeImageImagecodeArgument(String argument) {
+        return argument.startsWith("-D" + IMAGECODE_PROPERTY + "=");
+    }
+
+    private static boolean hasProperty(Properties properties, String key) {
+        return properties != null && properties.containsKey(key);
     }
 }

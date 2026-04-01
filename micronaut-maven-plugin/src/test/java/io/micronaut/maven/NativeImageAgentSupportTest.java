@@ -56,6 +56,36 @@ class NativeImageAgentSupportTest {
     }
 
     @Test
+    void rejectsManualImagecodeJvmArgumentWhenNativeBuildToolsAgentIsEnabled() {
+        var userProperties = new Properties();
+        userProperties.setProperty(NativeImageAgentSupport.AGENT_PROPERTY, "true");
+
+        var exception = assertThrows(MojoExecutionException.class, () ->
+            NativeImageAgentSupport.computeJvmArguments(
+                session(userProperties, new Properties()),
+                project(null),
+                targetDirectory(),
+                List.of("-Dorg.graalvm.nativeimage.imagecode=buildtime")
+            )
+        );
+
+        assertTrue(exception.getMessage().contains(NativeImageAgentSupport.IMAGECODE_PROPERTY));
+    }
+
+    @Test
+    void rejectsManualImagecodeUserPropertyWhenNativeBuildToolsAgentIsEnabled() {
+        var userProperties = new Properties();
+        userProperties.setProperty(NativeImageAgentSupport.AGENT_PROPERTY, "true");
+        userProperties.setProperty(NativeImageAgentSupport.IMAGECODE_PROPERTY, "buildtime");
+
+        var exception = assertThrows(MojoExecutionException.class, () ->
+            NativeImageAgentSupport.computeJvmArguments(session(userProperties, new Properties()), project(null), targetDirectory(), List.of())
+        );
+
+        assertTrue(exception.getMessage().contains(NativeImageAgentSupport.IMAGECODE_PROPERTY));
+    }
+
+    @Test
     void addsAgentArgumentsWhenEnabledInPomConfiguration() throws MojoExecutionException {
         var arguments = NativeImageAgentSupport.computeJvmArguments(session(new Properties(), new Properties()), project(agentConfiguration("true", "standard")), targetDirectory(), List.of());
 
