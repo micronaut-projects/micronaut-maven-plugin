@@ -195,7 +195,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
         File providedDockerfile = new File(mavenProject.getBasedir(), DockerfileMojo.DOCKERFILE);
         if (providedDockerfile.isFile()) {
-            buildProvidedDockerfile(providedDockerfile, passClassName, from, ports);
+            buildProvidedDockerfile(providedDockerfile, tags, passClassName, from, ports);
             return;
         }
 
@@ -206,14 +206,14 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
         BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments(passClassName), () -> dockerService.buildImageCmd()
             .withDockerfile(dockerfile)
-            .withTags(getTags())
+            .withTags(tags)
             .withBuildArg("BASE_IMAGE", from)
             .withBuildArg("PORTS", ports));
 
         dockerService.buildImage(buildImageCmd);
     }
 
-    private void buildProvidedDockerfile(File providedDockerfile, boolean passClassName, String from, String ports) throws IOException {
+    private void buildProvidedDockerfile(File providedDockerfile, Set<String> tags, boolean passClassName, String from, String ports) throws IOException {
         getLog().info("Using Dockerfile: " + providedDockerfile.getAbsolutePath());
 
         File targetDir = new File(mavenProject.getBuild().getDirectory());
@@ -222,7 +222,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
         BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments(passClassName), () -> dockerService.buildImageCmd()
             .withDockerfile(targetDockerfile)
-            .withTags(getTags())
+            .withTags(tags)
             .withBaseDirectory(targetDir)
             .withBuildArg("BASE_IMAGE", from)
             .withBuildArg("PORTS", ports));
