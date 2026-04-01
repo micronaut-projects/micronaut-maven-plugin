@@ -198,7 +198,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
                         result.add(line.replace("${BASE_IMAGE}", getFrom()));
                     } else if (line.contains("BASE_JAVA_IMAGE")) {
                         result.add(line.replace("${BASE_JAVA_IMAGE}", getBaseImage()));
-                    } else if (line.contains("GRAALVM_DOWNLOAD_SHA256")) {
+                    } else if (line.contains("${GRAALVM_DOWNLOAD_SHA256}")) {
                         result.add(line.replace("${GRAALVM_DOWNLOAD_SHA256}", graalVmDownloadSha256()));
                     } else if (line.contains("GRAALVM_DOWNLOAD_URL")) {
                         result.add(line.replace("${GRAALVM_DOWNLOAD_URL}", graalVmDownloadUrl()));

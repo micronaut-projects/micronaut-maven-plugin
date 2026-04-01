@@ -239,7 +239,12 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     }
 
     private GraalVmRelease resolveGraalVmRelease() {
-        return GRAALVM_RELEASES.get(resolveGraalVersion());
+        Integer graalVersion = resolveGraalVersion();
+        GraalVmRelease release = GRAALVM_RELEASES.get(graalVersion);
+        if (release == null) {
+            throw new IllegalStateException("Unsupported GraalVM version: " + graalVersion + ". Supported versions are: " + GRAALVM_RELEASES.keySet());
+        }
+        return release;
     }
 
     /**
