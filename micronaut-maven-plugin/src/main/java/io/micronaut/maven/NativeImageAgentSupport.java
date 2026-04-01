@@ -62,10 +62,10 @@ final class NativeImageAgentSupport {
     private static AgentConfiguration resolveAgentConfiguration(MavenSession session, MavenProject project) throws MojoExecutionException {
         Plugin plugin = project.getPlugin(NATIVE_MAVEN_PLUGIN);
         Xpp3Dom configurationRoot = plugin != null && plugin.getConfiguration() instanceof Xpp3Dom dom ? dom : null;
-        Xpp3Dom agentNode = child(configurationRoot, "agent");
-        Boolean commandLineOverride = readAgentOverride(session);
-        if (commandLineOverride != null) {
-            if (!commandLineOverride) {
+        Xpp3Dom agentNode = child(configurationRoot, AGENT_PROPERTY);
+        Optional<Boolean> commandLineOverride = readAgentOverride(session);
+        if (commandLineOverride.isPresent()) {
+            if (!commandLineOverride.get()) {
                 return new AgentConfiguration();
             }
             if (agentNode == null) {
@@ -89,11 +89,11 @@ final class NativeImageAgentSupport {
         return new AgentConfiguration(
             filterFiles(project, options, "callerFilterFiles"),
             filterFiles(project, options, "accessFilterFiles"),
-            parseBoolean(options, "builtinCallerFilter"),
-            parseBoolean(options, "builtinHeuristicFilter"),
-            parseBoolean(options, "enableExperimentalPredefinedClasses"),
-            parseBoolean(options, "enableExperimentalUnsafeAllocationTracing"),
-            parseBoolean(options, "trackReflectionMetadata"),
+            parseBoolean(options, "builtinCallerFilter").orElse(null),
+            parseBoolean(options, "builtinHeuristicFilter").orElse(null),
+            parseBoolean(options, "enableExperimentalPredefinedClasses").orElse(null),
+            parseBoolean(options, "enableExperimentalUnsafeAllocationTracing").orElse(null),
+            parseBoolean(options, "trackReflectionMetadata").orElse(null),
             new StandardAgentMode()
         );
     }
@@ -118,18 +118,16 @@ final class NativeImageAgentSupport {
         if (agentNode == null) {
             return false;
         }
-        Boolean enabled = parseBoolean(agentNode, "enabled");
-        return Boolean.TRUE.equals(enabled);
+        return parseBoolean(agentNode, "enabled").orElse(false);
     }
 
-    private static Boolean readAgentOverride(MavenSession session) throws MojoExecutionException {
-        String value = readProperty(session.getUserProperties(), AGENT_PROPERTY)
-            .or(() -> readProperty(session.getSystemProperties(), AGENT_PROPERTY))
-            .orElse(null);
-        if (value == null) {
-            return null;
+    private static Optional<Boolean> readAgentOverride(MavenSession session) throws MojoExecutionException {
+        Optional<String> value = readProperty(session.getUserProperties(), AGENT_PROPERTY)
+            .or(() -> readProperty(session.getSystemProperties(), AGENT_PROPERTY));
+        if (value.isEmpty()) {
+            return Optional.empty();
         }
-        return parseBoolean(AGENT_PROPERTY, value);
+        return Optional.of(parseBoolean(AGENT_PROPERTY, value.get()));
     }
 
     private static Optional<String> readProperty(Properties properties, String key) {
@@ -139,12 +137,12 @@ final class NativeImageAgentSupport {
         return Optional.ofNullable(properties.getProperty(key));
     }
 
-    private static Boolean parseBoolean(Xpp3Dom parent, String childName) throws MojoExecutionException {
+    private static Optional<Boolean> parseBoolean(Xpp3Dom parent, String childName) throws MojoExecutionException {
         Xpp3Dom child = child(parent, childName);
         if (child == null || child.getValue() == null) {
-            return null;
+            return Optional.empty();
         }
-        return parseBoolean("<" + childName + ">", child.getValue());
+        return Optional.of(parseBoolean("<" + childName + ">", child.getValue()));
     }
 
     private static Boolean parseBoolean(String name, String value) throws MojoExecutionException {

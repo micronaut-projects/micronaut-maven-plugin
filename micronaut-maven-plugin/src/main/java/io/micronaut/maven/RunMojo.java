@@ -518,62 +518,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
             // Validate Micronaut configuration for the dev environment before starting.
             executorService.executeGoal(runnableProject, THIS_PLUGIN, ValidateDevConfigurationMojo.MOJO_NAME, configurationValidationConfiguration());
             runAotIfNeeded();
-            final String reactorClasses = mavenSession.getAllProjects().stream()
-                    .filter(this::isDependencyOfRunnableProject)
-                    .map(MavenProject::getBuild)
-                    .map(Build::getOutputDirectory)
-                    .collect(Collectors.joining(File.pathSeparator));
-            String classpathArgument = String.join(File.pathSeparator, reactorClasses, this.classpath);
-
-            var args = new ArrayList<String>();
-            args.add(javaExecutable);
-
-            if (debug) {
-                String suspend = debugSuspend ? "y" : "n";
-                args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=" + suspend + ",address=" + debugHost + ":" + debugPort);
-            }
-
-            if (testResourcesEnabled) {
-                Path testResourcesSettingsDirectory = shared ? ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace) :
-                    AbstractTestResourcesMojo.serverSettingsDirectoryOf(targetDirectory.toPath());
-                Optional<ServerSettings> serverSettings = ServerUtils.readServerSettings(testResourcesSettingsDirectory);
-                serverSettings.ifPresent(settings -> testResourcesHelper.computeSystemProperties(settings)
-                    .forEach((k, v) -> args.add("-D" + k + "=" + v)));
-            }
-
-            List<String> translatedJvmArguments = List.of();
-            if (jvmArguments != null && !jvmArguments.isEmpty()) {
-                final String[] strings = CommandLineUtils.translateCommandline(jvmArguments);
-                translatedJvmArguments = Arrays.asList(strings);
-            }
-
-            List<String> nativeImageAgentArguments = NativeImageAgentSupport.computeJvmArguments(mavenSession, runnableProject, targetDirectory, translatedJvmArguments);
-            if (!nativeImageAgentArguments.isEmpty()) {
-                if (watchForChanges) {
-                    getLog().warn("Native image agent metadata collection is intended for one-shot runs. Prefer mn:run -Dagent=true -Dmn.watch=false");
-                }
-                args.addAll(nativeImageAgentArguments);
-            }
-            args.addAll(translatedJvmArguments);
-
-            if (!mavenSession.getUserProperties().isEmpty()) {
-                mavenSession.getUserProperties().forEach((k, v) -> args.add("-D" + k + "=" + v));
-            }
-
-            if (mainClass == null) {
-                mainClass = runnableProject.getProperties().getProperty("exec.mainClass");
-            }
-
-            args.add("-classpath");
-            args.add(classpathArgument);
-            args.add("-XX:TieredStopAtLevel=1");
-            args.add("-Dcom.sun.management.jmxremote");
-            args.add(mainClass);
-
-            if (appArguments != null && !appArguments.isEmpty()) {
-                final String[] strings = CommandLineUtils.translateCommandline(appArguments);
-                args.addAll(Arrays.asList(strings));
-            }
+            List<String> args = buildRunArguments();
 
             if (getLog().isDebugEnabled()) {
                 getLog().debug("Running " + String.join(" ", args));
@@ -587,6 +532,78 @@ public class RunMojo extends AbstractTestResourcesMojo {
         } finally {
             restartLock.unlock();
         }
+    }
+
+    private List<String> buildRunArguments() throws Exception {
+        final String reactorClasses = mavenSession.getAllProjects().stream()
+            .filter(this::isDependencyOfRunnableProject)
+            .map(MavenProject::getBuild)
+            .map(Build::getOutputDirectory)
+            .collect(Collectors.joining(File.pathSeparator));
+        String classpathArgument = String.join(File.pathSeparator, reactorClasses, this.classpath);
+        List<String> translatedJvmArguments = translateArguments(jvmArguments);
+
+        var args = new ArrayList<String>();
+        args.add(javaExecutable);
+        addDebugArguments(args);
+        addTestResourcesArguments(args);
+        addNativeImageAgentArguments(args, translatedJvmArguments);
+        args.addAll(translatedJvmArguments);
+        addUserProperties(args);
+        args.add("-classpath");
+        args.add(classpathArgument);
+        args.add("-XX:TieredStopAtLevel=1");
+        args.add("-Dcom.sun.management.jmxremote");
+        args.add(resolveMainClass());
+        args.addAll(translateArguments(appArguments));
+        return args;
+    }
+
+    private void addDebugArguments(List<String> args) {
+        if (debug) {
+            String suspend = debugSuspend ? "y" : "n";
+            args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=" + suspend + ",address=" + debugHost + ":" + debugPort);
+        }
+    }
+
+    private void addTestResourcesArguments(List<String> args) {
+        if (testResourcesEnabled) {
+            Path testResourcesSettingsDirectory = shared ? ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace) :
+                AbstractTestResourcesMojo.serverSettingsDirectoryOf(targetDirectory.toPath());
+            Optional<ServerSettings> serverSettings = ServerUtils.readServerSettings(testResourcesSettingsDirectory);
+            serverSettings.ifPresent(settings -> testResourcesHelper.computeSystemProperties(settings)
+                .forEach((k, v) -> args.add("-D" + k + "=" + v)));
+        }
+    }
+
+    private void addNativeImageAgentArguments(List<String> args, List<String> translatedJvmArguments) throws MojoExecutionException {
+        List<String> nativeImageAgentArguments = NativeImageAgentSupport.computeJvmArguments(mavenSession, runnableProject, targetDirectory, translatedJvmArguments);
+        if (!nativeImageAgentArguments.isEmpty()) {
+            if (watchForChanges) {
+                getLog().warn("Native image agent metadata collection is intended for one-shot runs. Prefer mn:run -Dagent=true -Dmn.watch=false");
+            }
+            args.addAll(nativeImageAgentArguments);
+        }
+    }
+
+    private void addUserProperties(List<String> args) {
+        if (!mavenSession.getUserProperties().isEmpty()) {
+            mavenSession.getUserProperties().forEach((k, v) -> args.add("-D" + k + "=" + v));
+        }
+    }
+
+    private String resolveMainClass() {
+        if (mainClass == null) {
+            mainClass = runnableProject.getProperties().getProperty("exec.mainClass");
+        }
+        return mainClass;
+    }
+
+    private List<String> translateArguments(String arguments) throws Exception {
+        if (arguments == null || arguments.isEmpty()) {
+            return List.of();
+        }
+        return Arrays.asList(CommandLineUtils.translateCommandline(arguments));
     }
 
     private void runAotIfNeeded() {
