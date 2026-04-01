@@ -84,7 +84,7 @@ jobs:
           server-password: SONATYPE_PASSWORD
 
       - name: "🔧 Setup GraalVM CE"
-        uses: graalvm/setup-graalvm@54b4f5a65c1a84b2fdfdc2078fe43df32819e4b1
+        uses: graalvm/setup-graalvm@2149f395d36ce12ad4ee5d7f334b26bf081fa555
         with:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
