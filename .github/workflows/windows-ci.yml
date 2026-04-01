@@ -19,6 +19,8 @@ concurrency:
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         java: ['25']
@@ -35,8 +37,17 @@ jobs:
         with:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build with Maven
+          github-token: ${{ github.token }}
+      - name: Build with Maven (PR and merge queue)
+        if: github.event_name != 'push'
+        shell: cmd
+        run: |
+          .\mvnw install -Dinvoker.skip=true && .\mvnw verify
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: true
+
+      - name: Build with Maven (trusted push)
+        if: github.event_name == 'push'
         shell: cmd
         run: |
           .\mvnw install -Dinvoker.skip=true && .\mvnw verify

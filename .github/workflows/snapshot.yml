@@ -21,6 +21,8 @@ concurrency:
 jobs:
   workflow-hardening:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: "📥 Checkout repository"
         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
@@ -31,18 +33,13 @@ jobs:
     needs:
       - workflow-hardening
     runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      contents: read
     strategy:
       matrix:
         java: ['25']
     env:
-      DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
-      DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
-      DEVELOCITY_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
-      OCI_CLI_USER: ${{ secrets.OCI_CLI_USER }}
-      OCI_CLI_TENANCY: ${{ secrets.OCI_CLI_TENANCY }}
-      OCI_CLI_FINGERPRINT: ${{ secrets.OCI_CLI_FINGERPRINT }}
-      OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_CLI_KEY_CONTENT }}
-      OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
       GRAALVM_QUICK_BUILD: true
     steps:
       - name: "🗑 Remove system JDKs"
@@ -65,6 +62,7 @@ jobs:
           fetch-depth: 0
 
       - name: "🔐 Import GPG key"
+        if: github.event_name == 'push'
         env:
           GPG_FILE: ${{ secrets.GPG_FILE }}
         run: |
@@ -73,7 +71,16 @@ jobs:
           echo "$GPG_FILE" | base64 -d | gpg --batch --import
           gpg --list-secret-keys --keyid-format LONG
 
+      - name: "☕️ Install Java and Maven"
+        if: github.event_name != 'push'
+        uses: actions/setup-java@1d018f9b8b9b505bb578a83b230fabcce01af93b
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
+          cache: 'maven'
+
       - name: "☕️ Install Java and Maven and set up Apache Maven Central"
+        if: github.event_name == 'push'
         uses: actions/setup-java@1d018f9b8b9b505bb578a83b230fabcce01af93b
         with:
           distribution: 'temurin'
@@ -88,18 +95,33 @@ jobs:
         with:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ github.token }}
 
       - name: "⏬ Eagerly pull Docker images"
         run: |
           docker pull postgres:latest
 
-      - name: "🧪 Run tests"
+      - name: "🧪 Run tests (PR and merge queue)"
+        if: github.event_name != 'push'
         run: |
           ./mvnw -q install -Dinvoker.skip=true && ./mvnw verify
 
+      - name: "🧪 Run tests (trusted push)"
+        if: github.event_name == 'push'
+        run: |
+          ./mvnw -q install -Dinvoker.skip=true && ./mvnw verify
+        env:
+          DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
+          DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
+          DEVELOCITY_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+          OCI_CLI_USER: ${{ secrets.OCI_CLI_USER }}
+          OCI_CLI_TENANCY: ${{ secrets.OCI_CLI_TENANCY }}
+          OCI_CLI_FINGERPRINT: ${{ secrets.OCI_CLI_FINGERPRINT }}
+          OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_CLI_KEY_CONTENT }}
+          OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
+
       - name: "🔏 Verify release signing setup"
-        if: matrix.java == '25'
+        if: github.event_name == 'push' && matrix.java == '25'
         run: |
           ./mvnw --batch-mode -Prelease verify -DskipTests -Dinvoker.skip=true -DskipITs
         env:
@@ -114,11 +136,16 @@ jobs:
           check_retries: 'true'
 
       - name: "🔎 Run static analysis"
-        if: env.SONAR_TOKEN != '' && matrix.java == '25'
-        run: ./mvnw sonar:sonar
+        if: github.event_name == 'push' && matrix.java == '25'
+        run: |
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "SONAR_TOKEN is not configured; skipping static analysis."
+            exit 0
+          fi
+          ./mvnw sonar:sonar
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
 
       - name: "❓ Determine current version"
         if: success() && github.event_name == 'push' && matrix.java == '25'
