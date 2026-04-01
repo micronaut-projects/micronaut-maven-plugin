@@ -143,7 +143,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     /**
      * The builder-stage base image used to build the native image for docker-native packaging variants.
      *
-     * @since 5.1.0
+     * @since 5.0.0
      */
     @Parameter(property = "micronaut.native-image.base-image")
     protected String baseImage;
