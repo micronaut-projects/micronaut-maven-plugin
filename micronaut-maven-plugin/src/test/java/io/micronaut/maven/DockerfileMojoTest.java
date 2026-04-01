@@ -125,6 +125,32 @@ class DockerfileMojoTest {
     }
 
     @Test
+    void processDockerfileRejectsInjectedMainClassInDoubleQuotedNativeImageBranch(@TempDir Path tempDir) throws IOException {
+        var project = mockProject(tempDir);
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.of("ghcr.io/example/builder:1.0"));
+        when(jibConfigurationService.getPorts()).thenReturn(Optional.of("8080"));
+
+        var mojo = new DockerfileMojo(
+            project,
+            mock(DockerService.class),
+            jibConfigurationService,
+            mock(ApplicationConfigurationService.class),
+            mock(ExecutorService.class),
+            mockSession(project),
+            mock(MojoExecution.class)
+        );
+        mojo.micronautRuntime = "netty";
+        mojo.mainClass = "example.App\nRUN echo injected";
+
+        var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), "RUN native-image -H:Class=\"${CLASS_NAME}\"");
+
+        var exception = assertThrows(MojoExecutionException.class, () -> invokeProcessDockerfile(mojo, dockerfile));
+
+        assertTrue(exception.getMessage().contains("exec.mainClass contains an unsupported control character"));
+    }
+
+    @Test
     void processDockerfileRejectsInvalidBaseImageReference(@TempDir Path tempDir) throws IOException {
         var project = mockProject(tempDir);
         var jibConfigurationService = mock(JibConfigurationService.class);

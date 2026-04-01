@@ -248,13 +248,13 @@ public class DockerfileMojo extends AbstractDockerMojo {
         String className = line.contains("ENTRYPOINT [")
             ? escapeJsonString("exec.mainClass", mainClass)
             : line.contains("\"${CLASS_NAME}\"")
-                ? escapeShellDoubleQuoted(mainClass)
+                ? escapeShellDoubleQuoted("exec.mainClass", mainClass)
             : shellLiteral("exec.mainClass", mainClass);
         return line.replace("${CLASS_NAME}", className);
     }
 
-    private static String escapeShellDoubleQuoted(String value) {
-        return value
+    private static String escapeShellDoubleQuoted(String source, String value) throws MojoExecutionException {
+        return validateDockerfileValue(source, value)
             .replace("\\", "\\\\")
             .replace("\"", "\\\"")
             .replace("$", "\\$")
