@@ -5,6 +5,8 @@ This plugin supports different `<packaging>` types:
 * `jar` (default): produces a runnable fat JAR.
 * `native-image`: generates a GraalVM native image.
 * `docker`: builds a Docker image with the application artifacts (compiled classes, resources, dependencies, etc).
+* `jkube-k8s`: delegates `package` and `deploy` to Eclipse JKube's Kubernetes Maven plugin.
+* `jkube-oc`: delegates `package` and `deploy` to Eclipse JKube's OpenShift Maven plugin.
 * `docker-native`: builds a Docker image with a GraalVM native image inside.
 * `docker-crac`: builds a Docker image containing a CRaC checkpointed application.
 
@@ -207,6 +209,43 @@ For example, you can define the `jib-maven-plugin` in your POM as follows to pas
   </configuration>
 </plugin>
 ----
+
+=== Building JVM-based Kubernetes and OpenShift images with Eclipse JKube
+
+----
+$ mvn package -Dpackaging=jkube-k8s
+----
+
+Micronaut Maven Plugin also recognizes two JKube-oriented JVM packagings:
+
+* `jkube-k8s`: binds `package` to `org.eclipse.jkube:kubernetes-maven-plugin:build`
+* `jkube-oc`: binds `package` to `org.eclipse.jkube:openshift-maven-plugin:build`
+
+These packagings only contribute lifecycle bindings. Your application POM must still declare the matching JKube plugin
+and the plugin version explicitly. For example:
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.eclipse.jkube</groupId>
+  <artifactId>kubernetes-maven-plugin</artifactId>
+  <version>1.19.0</version>
+  <configuration>
+    <images>
+      <image>
+        <name>docker.io/my-company/${project.artifactId}:${project.version}</name>
+      </image>
+    </images>
+  </configuration>
+</plugin>
+----
+
+For OpenShift packaging, replace the artifact id with `openshift-maven-plugin` and invoke
+`mvn package -Dpackaging=jkube-oc`.
+
+JKube packaging follows the same JVM/JIT AOT semantics as `jar`, `docker`, and `docker-crac`. It does not enable
+native-image behavior, and Docker-specific helper goals such as link:../dockerfile-mojo.html[`mn:dockerfile`] remain
+unsupported for JKube packagings.
 
 === Bringing your own `Dockerfile`
 

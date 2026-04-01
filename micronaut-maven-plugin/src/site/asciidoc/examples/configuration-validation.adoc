@@ -18,7 +18,7 @@ Validation is disabled by default and must be explicitly enabled.
 
 == Binding to the lifecycle
 
-Configuration validation goals are wired when using Micronaut packaging types (`jar`, `native-image`, `docker`, `docker-native`, `docker-crac`), but validation only executes when explicitly enabled:
+Configuration validation goals are wired when using Micronaut packaging types (`jar`, `native-image`, `docker`, `jkube-k8s`, `jkube-oc`, `docker-native`, `docker-crac`), but validation only executes when explicitly enabled:
 
 * `validate-configuration` runs during the `prepare-package` phase (before `mvn package`)
 * `validate-test-configuration` runs during the `test` phase (as part of `mvn test`)

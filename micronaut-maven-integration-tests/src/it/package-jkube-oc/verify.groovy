@@ -1,0 +1,7 @@
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains("--- oc:1.19.0:build")
+assert log.text.contains("Running generator micronaut")
+assert log.text.contains("JIB image build started")
+File tarball = new File(basedir, 'target/docker/docker.io/alvarosanchez/package-jkube-oc/0.1/tmp/jib-image.linux-amd64.tar')
+assert tarball.exists()

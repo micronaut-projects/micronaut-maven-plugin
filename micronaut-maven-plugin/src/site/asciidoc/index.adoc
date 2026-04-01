@@ -3,9 +3,9 @@
 This plugin has the following features:
 
 1. link:examples/run.html[Running in development mode].
-2. link:examples/package.html[Packaging] an application into different formats: fat JAR, native image, Docker, etc.
+2. link:examples/package.html[Packaging] an application into different formats: fat JAR, native image, Docker, JKube, etc.
 3. link:dockerfile-mojo.html[Generating `Dockerfile`]s.
-4. link:examples/deploy.html[Deploying] Docker images to different registries.
+4. link:examples/deploy.html[Deploying] Docker or JKube-managed images to different registries.
 5. link:examples/aot.html[Using Micronaut AOT].
 6. link:examples/test-resources.html[Integration with Micronaut Test Resources].
 7. link:examples/openapi.html[Integration with Micronaut OpenAPI].
@@ -48,7 +48,8 @@ Then, declare the plugin to your `build/plugins` section:
 WARNING: Since version 4.0.0 of this plugin (which is the version compatible with Micronaut 4.x), the group id is
 `io.micronaut.maven`. Earlier versions compatible with Micronaut 3.x used `io.micronaut.build`.
 
-The `<packaging>` part is important since the plugin support several packaging types. The default is `jar`.
+The `<packaging>` part is important since the plugin support several packaging types. The default is `jar`, and
+supported Micronaut packagings include `docker`, `jkube-k8s`, `jkube-oc`, `docker-native`, and `docker-crac`.
 
 For snapshot versions, you need the Maven Central Portal Snapshot repository:
 

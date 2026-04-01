@@ -24,6 +24,8 @@ public enum Packaging {
     JAR("jar"),
     NATIVE_IMAGE("native-image"),
     DOCKER("docker"),
+    JKUBE_K8S("jkube-k8s"),
+    JKUBE_OC("jkube-oc"),
     DOCKER_NATIVE("docker-native"),
     DOCKER_CRAC("docker-crac");
 

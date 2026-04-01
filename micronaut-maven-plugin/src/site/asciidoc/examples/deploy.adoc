@@ -5,6 +5,7 @@ required to deploy an application that, depending on the `<packaging>`:
 
 * `jar` (default): will deploy the artifact to a remote repository using `org.apache.maven.plugins:maven-deploy-plugin:deploy`.
 * `docker` or `docker-native`: will push the Docker image to the configured Docker registry.
+* `jkube-k8s` or `jkube-oc`: will delegate image push to the matching Eclipse JKube plugin.
 
 You can use Jib to configure which registry should the image be pushed to. Refer to the
 https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration[Jib Maven Plugin documentation]
@@ -27,10 +28,28 @@ For example, to push an image to Docker Hub:
 
 Then, you can execute `mvn deploy -Dpackaging=docker` or `mvn deploy -Dpackaging=docker-native`.
 
+For JKube-based deployments, declare the corresponding JKube plugin in your POM and use the JKube packaging:
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.eclipse.jkube</groupId>
+  <artifactId>kubernetes-maven-plugin</artifactId>
+  <version>1.19.0</version>
+</plugin>
+----
+
+Then invoke either `mvn deploy -Dpackaging=jkube-k8s` or `mvn deploy -Dpackaging=jkube-oc`.
+Micronaut Maven Plugin binds those packagings to `k8s:push` and `oc:push` respectively, while the actual registry,
+cluster, and manifest behavior remains owned by JKube.
+
 For `docker` packaging, setting `-Djib.buildGoal=buildTar` or `-Djib.buildGoal=build` only affects the earlier
 `package` phase and prevents Jib from creating a local Docker-daemon image. The `deploy` phase still uses
 `mn:docker-push` to publish an image from the local Docker daemon, so `mvn deploy -Dpackaging=docker` currently
 requires `-Djib.buildGoal=dockerBuild` or the default behavior with no `jib.buildGoal` override.
+
+Docker-specific helper goals such as `mn:dockerfile` and `mn:docker-push` are still limited to Docker packagings and
+should not be used with `jkube-k8s` or `jkube-oc`.
 
 You can also omit the plugin declaration in your POM, and execute directly:
 
