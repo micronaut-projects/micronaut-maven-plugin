@@ -15,14 +15,18 @@ public class RunCommandTest {
     @Test
     public void testWithCommandLineOption() throws Exception {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(baos));
+        PrintStream originalOut = System.out;
 
-        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+        try (PrintStream output = new PrintStream(baos);
+             ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            System.setOut(output);
             String[] args = new String[] { "-v" };
             PicocliRunner.run(RunCommand.class, ctx, args);
 
             // run2
             assertTrue(baos.toString().contains("Hi!"));
+        } finally {
+            System.setOut(originalOut);
         }
     }
 }
