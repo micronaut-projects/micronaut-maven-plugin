@@ -61,6 +61,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
 
     public static final String LATEST_TAG = "latest";
     public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = "cgr.dev/chainguard/wolfi-base@sha256:a5a619c1793039dcf92f02178f37c94bb3d6001403716da59d6092dfe8d9b502";
+    public static final String DEFAULT_BASE_IMAGE_GRAALVM_BUILD = "container-registry.oracle.com/graalvm/native-image";
     public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
     public static final String ARM_ARCH = "aarch64";
     public static final String X86_64_ARCH = "x64";
@@ -242,7 +243,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
         return getJibFromImageSystemProperty()
             .or(() -> Optional.ofNullable(baseImage).filter(StringUtils::hasText))
             .or(() -> getFromImage().filter(StringUtils::hasText))
-            .orElse("ghcr.io/graalvm/native-image-community:" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion));
+            .orElse(DEFAULT_BASE_IMAGE_GRAALVM_BUILD + ":" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion));
     }
 
     /**

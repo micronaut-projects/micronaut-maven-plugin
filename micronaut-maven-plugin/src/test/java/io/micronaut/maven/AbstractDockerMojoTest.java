@@ -29,7 +29,7 @@ import static org.mockito.Mockito.when;
 class AbstractDockerMojoTest {
 
     @Test
-    void getFromUsesDefaultCommunityImageWhenNoOverridesExist(@TempDir Path tempDir) {
+    void getFromUsesDefaultOracleImageWhenNoOverridesExist(@TempDir Path tempDir) {
         var project = mockProject(tempDir, Set.of());
         var jibConfigurationService = mock(JibConfigurationService.class);
         when(jibConfigurationService.getFromImage()).thenReturn(Optional.empty());
@@ -154,7 +154,7 @@ class AbstractDockerMojoTest {
         }
 
         private String defaultBuilderImage() {
-            return "ghcr.io/graalvm/native-image-community:" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion);
+            return DEFAULT_BASE_IMAGE_GRAALVM_BUILD + ":" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion);
         }
 
         @Override
