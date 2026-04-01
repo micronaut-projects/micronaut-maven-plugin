@@ -84,6 +84,16 @@ class NativeImageAgentSupportTest {
     }
 
     @Test
+    void commandLineTrueOverridesDisabledPomConfiguration() throws MojoExecutionException {
+        var userProperties = new Properties();
+        userProperties.setProperty(NativeImageAgentSupport.AGENT_PROPERTY, "true");
+
+        var arguments = NativeImageAgentSupport.computeJvmArguments(session(userProperties, new Properties()), project(agentConfiguration("false", "standard")), targetDirectory(), List.of());
+
+        assertEquals(2, arguments.size());
+    }
+
+    @Test
     void resolvesConfiguredFilterFilesToAbsolutePaths() throws MojoExecutionException {
         File absoluteAccessFilter = tempDir.resolve("filters/access-filter.json").toFile();
         var arguments = NativeImageAgentSupport.computeJvmArguments(session(new Properties(), new Properties()), project(agentConfigurationWithFilterFiles(absoluteAccessFilter)), targetDirectory(), List.of());

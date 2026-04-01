@@ -68,14 +68,10 @@ final class NativeImageAgentSupport {
             if (!commandLineOverride.get()) {
                 return new AgentConfiguration();
             }
-            if (agentNode == null) {
-                return new AgentConfiguration(new StandardAgentMode());
-            }
-        } else if (!isEnabledInPom(agentNode)) {
-            return new AgentConfiguration();
+            return agentNode == null ? new AgentConfiguration(new StandardAgentMode()) : parseAgentConfiguration(project, agentNode);
         }
-        if (agentNode == null) {
-            return new AgentConfiguration(new StandardAgentMode());
+        if (!isEnabledInPom(agentNode)) {
+            return new AgentConfiguration();
         }
         return parseAgentConfiguration(project, agentNode);
     }
