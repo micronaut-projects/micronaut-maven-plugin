@@ -11,10 +11,18 @@ fi
 distribution_url=""
 distribution_sha256_sum=""
 
-while IFS='=' read -r key value; do
-  case "$key" in
-    distributionUrl) distribution_url="${value}" ;;
-    distributionSha256Sum) distribution_sha256_sum="${value}" ;;
+while IFS= read -r line || [[ -n "$line" ]]; do
+  # GitHub Windows runners can check out this properties file with CRLF endings.
+  # Normalize the parsed line so the checksum regex still validates the real value.
+  line="${line%$'\r'}"
+
+  case "$line" in
+    distributionUrl=*)
+      distribution_url="${line#distributionUrl=}"
+      ;;
+    distributionSha256Sum=*)
+      distribution_sha256_sum="${line#distributionSha256Sum=}"
+      ;;
   esac
 done <"$properties_file"
 
