@@ -36,7 +36,7 @@ class AbstractDockerMojoTest {
 
         var mojo = new TestDockerMojo(project, mockSession(project), jibConfigurationService);
 
-        assertEquals("ghcr.io/graalvm/native-image-community:25-ol9", mojo.from());
+        assertEquals(mojo.defaultBuilderImage(), mojo.from());
     }
 
     @Test
@@ -47,7 +47,7 @@ class AbstractDockerMojoTest {
 
         var mojo = new TestDockerMojo(project, mockSession(project), jibConfigurationService);
 
-        assertEquals("ghcr.io/graalvm/native-image-community:25-ol9", mojo.from());
+        assertEquals(mojo.defaultBuilderImage(), mojo.from());
     }
 
     @Test
@@ -151,6 +151,10 @@ class AbstractDockerMojoTest {
 
         private String from() {
             return getFrom();
+        }
+
+        private String defaultBuilderImage() {
+            return "ghcr.io/graalvm/native-image-community:" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion);
         }
 
         @Override

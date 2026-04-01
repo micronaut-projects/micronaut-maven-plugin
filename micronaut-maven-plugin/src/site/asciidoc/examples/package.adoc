@@ -313,7 +313,8 @@ result, `mvn deploy -Dpackaging=docker -Djib.buildGoal=buildTar` and `... -Djib.
 deployments, either omit `jib.buildGoal` or set it to `dockerBuild`.
 
 Note that changing the builder image to a totally different one than the default might break image building, since the rest
-of the build steps expect a certain base image. By default, the native images are built from a `ghcr.io/graalvm/native-image-community` image.
+of the build steps expect a certain builder-stage base image. By default, that builder-stage base image is
+`ghcr.io/graalvm/native-image-community`.
 If the selected builder image requires authentication, continue using Jib auth configuration such as
 `jib.from.auth.username` and `jib.from.auth.password`.
 
