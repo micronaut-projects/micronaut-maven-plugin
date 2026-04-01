@@ -1,8 +1,12 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-04-01 14:32:56 UTC
-**Commit:** 9060c5303841
-**Branch:** 5.0.x
+This file is durable project guidance, not a point-in-time repository snapshot.
+Primary owners: Micronaut Maven Plugin maintainers (backup: release engineer on duty).
+Keep the sections below current, and review/update this file when:
+- cutting a release or changing supported Java, Micronaut, or Maven baselines
+- adding, renaming, or removing modules or major directories
+- changing CI workflows in `.github/workflows/` or the unit/invoker test strategy
+- moving core plugin behavior or shared logic between modules or major packages
 
 ## OVERVIEW
 Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module plus shared core, Jib integration, enforcer rules, and a large invoker-based integration-test harness.
