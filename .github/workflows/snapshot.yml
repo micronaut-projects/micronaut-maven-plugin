@@ -26,6 +26,8 @@ jobs:
         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
       - name: "🛡 Verify workflow pinning"
         run: bash .github/scripts/check-workflow-pinning.sh
+      - name: "🛡 Verify Maven wrapper checksum"
+        run: bash .github/scripts/verify-maven-wrapper-checksum.sh
 
   snapshot:
     needs:

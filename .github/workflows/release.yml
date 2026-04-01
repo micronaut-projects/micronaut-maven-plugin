@@ -22,6 +22,9 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GH_TOKEN }}
 
+      - name: "🛡 Verify Maven wrapper checksum"
+        run: bash .github/scripts/verify-maven-wrapper-checksum.sh
+
       - name: "🔐 Import GPG key"
         env:
           GPG_FILE: ${{ secrets.GPG_FILE }}
