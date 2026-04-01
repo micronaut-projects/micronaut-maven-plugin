@@ -36,7 +36,18 @@ class AbstractDockerMojoTest {
 
         var mojo = new TestDockerMojo(project, mockSession(project), jibConfigurationService);
 
-        assertEquals(mojo.defaultBuilderImage(), mojo.from());
+        assertEquals("ghcr.io/graalvm/native-image-community:25-ol9", mojo.from());
+    }
+
+    @Test
+    void getFromIgnoresBlankJibPomConfiguration(@TempDir Path tempDir) {
+        var project = mockProject(tempDir, Set.of());
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.of(""));
+
+        var mojo = new TestDockerMojo(project, mockSession(project), jibConfigurationService);
+
+        assertEquals("ghcr.io/graalvm/native-image-community:25-ol9", mojo.from());
     }
 
     @Test
@@ -135,14 +146,11 @@ class AbstractDockerMojoTest {
                 mavenSession,
                 mock(MojoExecution.class)
             );
+            oracleLinuxVersion = "ol9";
         }
 
         private String from() {
             return getFrom();
-        }
-
-        private String defaultBuilderImage() {
-            return "ghcr.io/graalvm/native-image-community:" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion);
         }
 
         @Override

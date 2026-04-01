@@ -241,7 +241,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     protected String getFrom() {
         return getJibFromImageSystemProperty()
             .or(() -> Optional.ofNullable(baseImage).filter(StringUtils::hasText))
-            .or(this::getFromImage)
+            .or(() -> getFromImage().filter(StringUtils::hasText))
             .orElse("ghcr.io/graalvm/native-image-community:" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion));
     }
 
