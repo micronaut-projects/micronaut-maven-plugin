@@ -1,23 +1,37 @@
 package io.micronaut.maven.testresources;
 
+import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.execution.MavenSession;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.apache.maven.model.Build;
 import org.apache.maven.project.MavenProject;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+@ResourceLock("java.io.tmpdir")
 class TestResourcesHelperTest {
+    private static final String JAVA_IO_TMPDIR_PROPERTY = "java.io.tmpdir";
 
     @TempDir
     Path tempDir;
@@ -92,5 +106,189 @@ class TestResourcesHelperTest {
         assertTrue(acquired.await(5, TimeUnit.SECONDS));
         worker.join();
         assertEquals(0, TestResourcesHelper.sharedServerLockCount());
+    }
+
+    @Test
+    void keepAliveFileUsesSessionScopedRandomizedDirectory() throws Exception {
+        Path scopedTmpDir = Files.createDirectory(tempDir.resolve("tmp"));
+
+        withTmpDir(scopedTmpDir, () -> {
+            TestResourcesHelper firstHelper = helper("builder-123");
+            TestResourcesHelper secondHelper = helper("builder-123");
+
+            Path firstKeepAlive = invokeGetKeepAliveFile(firstHelper);
+            Path secondKeepAlive = invokeGetKeepAliveFile(secondHelper);
+            Path firstKeepAliveAgain = invokeGetKeepAliveFile(firstHelper);
+
+            assertEquals(firstKeepAlive, firstKeepAliveAgain);
+            assertTrue(firstKeepAlive.startsWith(scopedTmpDir));
+            assertEquals("keepalive-builder-123", firstKeepAlive.getFileName().toString());
+            assertTrue(firstKeepAlive.getParent().getFileName().toString().startsWith("mn-test-resources-"));
+            assertFalse(firstKeepAlive.getParent().equals(scopedTmpDir));
+            assertFalse(firstKeepAlive.getParent().equals(secondKeepAlive.getParent()));
+        });
+    }
+
+    @Test
+    void createKeepAliveFileDoesNotWriteThroughExistingSymlink() throws Exception {
+        Path scopedTmpDir = Files.createDirectory(tempDir.resolve("tmp"));
+        Path protectedFile = tempDir.resolve("protected.txt");
+
+        withTmpDir(scopedTmpDir, () -> {
+            TestResourcesHelper helper = helper("builder-123");
+            Path keepAliveFile = invokeGetKeepAliveFile(helper);
+            Files.createDirectories(keepAliveFile.getParent());
+
+            assumeTrue(createSymlinkIfSupported(keepAliveFile, protectedFile), "Symbolic links are not available");
+
+            InvocationTargetException exception = assertThrows(InvocationTargetException.class, () -> invokeCreateKeepAliveFile(helper));
+
+            assertInstanceOf(IOException.class, exception.getCause());
+            assertFalse(Files.exists(protectedFile));
+            assertFalse(invokeIsKeepAlive(helper));
+            assertTrue(Files.isSymbolicLink(keepAliveFile));
+        });
+    }
+
+    @Test
+    void deleteKeepAliveFileRemovesEmptyKeepAliveDirectory() throws Exception {
+        Path scopedTmpDir = Files.createDirectory(tempDir.resolve("tmp"));
+
+        withTmpDir(scopedTmpDir, () -> {
+            TestResourcesHelper helper = helper("builder-123");
+            Path keepAliveFile = invokeGetKeepAliveFile(helper);
+
+            invokeCreateKeepAliveFile(helper);
+            invokeDeleteKeepAliveFile(helper);
+
+            assertFalse(Files.exists(keepAliveFile, LinkOption.NOFOLLOW_LINKS));
+            assertFalse(Files.exists(keepAliveFile.getParent(), LinkOption.NOFOLLOW_LINKS));
+        });
+    }
+
+    @Test
+    void createKeepAliveDirectoryRejectsExistingNonDirectoryPath() throws Exception {
+        Path scopedTmpDir = Files.createDirectory(tempDir.resolve("tmp"));
+
+        withTmpDir(scopedTmpDir, () -> {
+            TestResourcesHelper helper = helper("builder-123");
+            Path keepAliveDirectory = invokeGetKeepAliveFile(helper).getParent();
+            Files.writeString(keepAliveDirectory, "not-a-directory");
+
+            InvocationTargetException exception = assertThrows(InvocationTargetException.class, () -> invokeCreateKeepAliveDirectory(helper));
+
+            assertInstanceOf(IOException.class, exception.getCause());
+        });
+    }
+
+    @Test
+    void deleteKeepAliveFileLeavesDirectoryWhenOtherFilesRemain() throws Exception {
+        Path scopedTmpDir = Files.createDirectory(tempDir.resolve("tmp"));
+
+        withTmpDir(scopedTmpDir, () -> {
+            TestResourcesHelper helper = helper("builder-123");
+            Path keepAliveFile = invokeGetKeepAliveFile(helper);
+            Path siblingFile = keepAliveFile.getParent().resolve("sibling.txt");
+
+            invokeCreateKeepAliveFile(helper);
+            Files.writeString(siblingFile, "keep");
+
+            invokeDeleteKeepAliveFile(helper);
+
+            assertFalse(Files.exists(keepAliveFile, LinkOption.NOFOLLOW_LINKS));
+            assertTrue(Files.exists(keepAliveFile.getParent(), LinkOption.NOFOLLOW_LINKS));
+            assertTrue(Files.exists(siblingFile, LinkOption.NOFOLLOW_LINKS));
+        });
+    }
+
+    @Test
+    void keepAliveDirectoryAttributesOnlyUsePosixPermissionsWhenSupported() throws Exception {
+        FileAttribute<?>[] attributes = invokeKeepAliveDirectoryAttributes(tempDir);
+        boolean posixSupported = Files.getFileStore(tempDir).supportsFileAttributeView("posix");
+
+        assertEquals(posixSupported ? 1 : 0, attributes.length);
+    }
+
+    @Test
+    void keepAliveDirectoryAttributesReturnsEmptyArrayForNullDirectory() throws Exception {
+        assertEquals(0, invokeKeepAliveDirectoryAttributes(null).length);
+    }
+
+    private static TestResourcesHelper helper(String builderId) {
+        MavenExecutionRequest request = mock(MavenExecutionRequest.class);
+        when(request.getBuilderId()).thenReturn(builderId);
+
+        MavenSession mavenSession = mock(MavenSession.class);
+        when(mavenSession.getRequest()).thenReturn(request);
+
+        return new TestResourcesHelper(mavenSession, true, false, new File("."));
+    }
+
+    private static Path invokeGetKeepAliveFile(TestResourcesHelper helper) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod("getKeepAliveFile");
+        method.setAccessible(true);
+        return (Path) method.invoke(helper);
+    }
+
+    private static void invokeCreateKeepAliveFile(TestResourcesHelper helper) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod("createKeepAliveFile");
+        method.setAccessible(true);
+        method.invoke(helper);
+    }
+
+    private static boolean invokeIsKeepAlive(TestResourcesHelper helper) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod("isKeepAlive");
+        method.setAccessible(true);
+        return (boolean) method.invoke(helper);
+    }
+
+    private static void invokeDeleteKeepAliveFile(TestResourcesHelper helper) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod("deleteKeepAliveFile");
+        method.setAccessible(true);
+        method.invoke(helper);
+    }
+
+    private static void invokeCreateKeepAliveDirectory(TestResourcesHelper helper) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod("createKeepAliveDirectory");
+        method.setAccessible(true);
+        method.invoke(helper);
+    }
+
+    private static boolean createSymlinkIfSupported(Path link, Path target) {
+        try {
+            Files.createSymbolicLink(link, target);
+            return true;
+        } catch (UnsupportedOperationException | IOException e) {
+            return false;
+        }
+    }
+
+    private static void withTmpDir(Path scopedTmpDir, ThrowingRunnable action) throws Exception {
+        String previousTmpDir = System.getProperty(JAVA_IO_TMPDIR_PROPERTY);
+        System.setProperty(JAVA_IO_TMPDIR_PROPERTY, scopedTmpDir.toString());
+        try {
+            action.run();
+        } finally {
+            restoreSystemProperty(JAVA_IO_TMPDIR_PROPERTY, previousTmpDir);
+        }
+    }
+
+    private static void restoreSystemProperty(String propertyName, String previousValue) {
+        if (previousValue == null) {
+            System.clearProperty(propertyName);
+        } else {
+            System.setProperty(propertyName, previousValue);
+        }
+    }
+
+    private static FileAttribute<?>[] invokeKeepAliveDirectoryAttributes(Path directory) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod("keepAliveDirectoryAttributes", Path.class);
+        method.setAccessible(true);
+        return (FileAttribute<?>[]) method.invoke(null, directory);
+    }
+
+    @FunctionalInterface
+    private interface ThrowingRunnable {
+        void run() throws Exception;
     }
 }
