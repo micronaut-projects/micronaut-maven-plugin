@@ -122,14 +122,19 @@ class AbstractDockerMojoTest {
     private static final class TestDockerMojo extends AbstractDockerMojo {
 
         private TestDockerMojo(MavenProject mavenProject, MavenSession mavenSession) {
+            this(mavenProject, mavenSession, mock(JibConfigurationService.class));
+        }
+
+        private TestDockerMojo(MavenProject mavenProject, MavenSession mavenSession, JibConfigurationService jibConfigurationService) {
             super(
                 mavenProject,
-                mock(JibConfigurationService.class),
+                jibConfigurationService,
                 mock(ApplicationConfigurationService.class),
                 mock(DockerService.class),
                 mavenSession,
                 mock(MojoExecution.class)
             );
+            oracleLinuxVersion = "ol9";
         }
 
         @Override
