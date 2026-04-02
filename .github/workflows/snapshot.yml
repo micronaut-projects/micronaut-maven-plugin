@@ -18,6 +18,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Keep the default workflow token read-only; individual jobs opt into writes only when needed.
+permissions:
+  contents: read
+
 jobs:
   workflow-hardening:
     runs-on: ubuntu-latest
@@ -31,6 +35,10 @@ jobs:
     needs:
       - workflow-hardening
     runs-on: ubuntu-latest
+    # CI only needs repository reads plus check publication for the JUnit report action.
+    permissions:
+      contents: read
+      checks: write
     strategy:
       matrix:
         java: ['25']
@@ -154,6 +162,9 @@ jobs:
     if: github.event_name == 'push'
     needs: snapshot
     runs-on: ubuntu-latest
+    # Pages publication uses GH_TOKEN; the workflow token only needs repository read access.
+    permissions:
+      contents: read
     concurrency:
       group: snapshot-pages-${{ github.repository }}-${{ github.ref }}
       cancel-in-progress: true

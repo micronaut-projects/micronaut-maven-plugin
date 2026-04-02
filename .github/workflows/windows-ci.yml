@@ -16,6 +16,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Windows CI only checks out source and reads release metadata for GraalVM setup.
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: windows-latest
