@@ -24,8 +24,10 @@ jobs:
     steps:
       - name: "📥 Checkout repository"
         uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
-      - name: "🛡 Verify workflow pinning"
+      - name: "🛡 Verify repository hardening"
         run: bash .github/scripts/check-workflow-pinning.sh
+      - name: "🔒 Verify Maven wrapper checksum pin"
+        run: bash .github/scripts/check-maven-wrapper-checksum.sh
 
   snapshot:
     needs:
@@ -89,6 +91,11 @@ jobs:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "🧰 Verify Maven wrapper bootstrap"
+        run: |
+          rm -rf ~/.m2/wrapper/dists
+          ./mvnw -q --version
 
       - name: "⏬ Eagerly pull Docker images"
         run: |
