@@ -151,6 +151,35 @@ class DockerfileMojoTest {
     }
 
     @Test
+    void processDockerfileTreatsCmdArrayClassNameAsJsonContext(@TempDir Path tempDir) throws IOException, MojoExecutionException {
+        var project = mockProject(tempDir);
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.of("ghcr.io/example/builder:1.0"));
+        when(jibConfigurationService.getPorts()).thenReturn(Optional.of("8080"));
+
+        var mojo = new DockerfileMojo(
+            project,
+            mock(DockerService.class),
+            jibConfigurationService,
+            mock(ApplicationConfigurationService.class),
+            mock(ExecutorService.class),
+            mockSession(project),
+            mock(MojoExecution.class)
+        );
+        mojo.micronautRuntime = "netty";
+        mojo.mainClass = "example.App$USER `quoted` \"Slash\\\\\"";
+
+        var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), "CMD [\"${CLASS_NAME}\"]");
+
+        invokeProcessDockerfile(mojo, dockerfile);
+
+        assertEquals(
+            "CMD [\"" + AbstractDockerMojo.escapeJsonString("exec.mainClass", mojo.mainClass) + "\"]",
+            Files.readAllLines(dockerfile).get(0)
+        );
+    }
+
+    @Test
     void processDockerfileRejectsInvalidBaseImageReference(@TempDir Path tempDir) throws IOException {
         var project = mockProject(tempDir);
         var jibConfigurationService = mock(JibConfigurationService.class);
@@ -302,6 +331,41 @@ class DockerfileMojoTest {
                 "ARG PORTS_FILE=/tmp/ports",
                 "ARG CLASS_NAME_SUFFIX=Application",
                 "FROM ghcr.io/example/builder:1.0"
+            ),
+            Files.readAllLines(dockerfile)
+        );
+    }
+
+    @Test
+    void processDockerfileDoesNotValidateSimilarlyNamedPlaceholders(@TempDir Path tempDir) throws IOException, MojoExecutionException {
+        var project = mockProject(tempDir);
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.of("invalid image"));
+        when(jibConfigurationService.getPorts()).thenReturn(Optional.of("8080"));
+
+        var mojo = new DockerfileMojo(
+            project,
+            mock(DockerService.class),
+            jibConfigurationService,
+            mock(ApplicationConfigurationService.class),
+            mock(ExecutorService.class),
+            mockSession(project),
+            mock(MojoExecution.class)
+        );
+        mojo.micronautRuntime = "netty";
+        mojo.mainClass = "example.App\nRUN echo injected";
+
+        var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), String.join(System.lineSeparator(),
+            "FROM ${BASE_IMAGE_TAG}",
+            "CMD [\"${CLASS_NAME_SUFFIX}\"]"
+        ));
+
+        invokeProcessDockerfile(mojo, dockerfile);
+
+        assertEquals(
+            java.util.List.of(
+                "FROM ${BASE_IMAGE_TAG}",
+                "CMD [\"${CLASS_NAME_SUFFIX}\"]"
             ),
             Files.readAllLines(dockerfile)
         );

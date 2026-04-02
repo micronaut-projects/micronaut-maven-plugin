@@ -214,25 +214,29 @@ public class DockerfileMojo extends AbstractDockerMojo {
         if (line.startsWith("ARG")) {
             return shouldInlineArgLine(line) ? null : line;
         }
-        if (line.contains("BASE_IMAGE_RUN")) {
+        if (containsPlaceholder(line, "BASE_IMAGE_RUN")) {
             return line.replace("${BASE_IMAGE_RUN}", validateImageReference("micronaut.native-image.base-image-run", baseImageRun));
         }
-        if (line.contains("BASE_IMAGE")) {
+        if (containsPlaceholder(line, "BASE_IMAGE")) {
             return line.replace("${BASE_IMAGE}", validateImageReference("jib.from.image", getFrom()));
         }
-        if (line.contains("BASE_JAVA_IMAGE")) {
+        if (containsPlaceholder(line, "BASE_JAVA_IMAGE")) {
             return line.replace("${BASE_JAVA_IMAGE}", validateImageReference("base Java image", getBaseImage()));
         }
-        if (line.contains("GRAALVM_DOWNLOAD_URL")) {
+        if (containsPlaceholder(line, "GRAALVM_DOWNLOAD_URL")) {
             return line.replace("${GRAALVM_DOWNLOAD_URL}", shellLiteral("GraalVM download URL", validateDownloadUrl("GraalVM download URL", graalVmDownloadUrl())));
         }
-        if (line.contains("CLASS_NAME")) {
+        if (containsPlaceholder(line, "CLASS_NAME")) {
             return replaceClassName(line);
         }
-        if (line.contains("PORTS")) {
+        if (containsPlaceholder(line, "PORTS")) {
             return line.replace("${PORTS}", validateExposedPorts("jib.container.ports", getPorts()));
         }
         return line;
+    }
+
+    private static boolean containsPlaceholder(String line, String placeholderName) {
+        return line.contains("${" + placeholderName + "}");
     }
 
     private static boolean shouldInlineArgLine(String line) {
@@ -272,12 +276,17 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     private String replaceClassName(String line) throws MojoExecutionException {
-        String className = line.contains("ENTRYPOINT [")
+        String className = isJsonArrayClassNameContext(line)
             ? escapeJsonString("exec.mainClass", mainClass)
             : line.contains("\"${CLASS_NAME}\"")
                 ? escapeShellDoubleQuoted("exec.mainClass", mainClass)
             : shellLiteral("exec.mainClass", mainClass);
         return line.replace("${CLASS_NAME}", className);
+    }
+
+    private static boolean isJsonArrayClassNameContext(String line) {
+        return containsPlaceholder(line, "CLASS_NAME")
+            && (line.contains("ENTRYPOINT [") || line.contains("CMD ["));
     }
 
     private static String escapeShellDoubleQuoted(String source, String value) throws MojoExecutionException {
