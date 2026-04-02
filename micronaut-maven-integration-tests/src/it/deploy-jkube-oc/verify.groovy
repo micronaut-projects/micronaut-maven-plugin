@@ -1,0 +1,6 @@
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains('--- oc:1.19.0:build')
+assert log.text.contains('oc: `oc:build` goal is skipped.')
+assert log.text.contains('--- oc:1.19.0:push')
+assert log.text.contains('oc: `oc:push` goal is skipped.')

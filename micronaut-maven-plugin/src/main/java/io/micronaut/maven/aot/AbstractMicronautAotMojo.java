@@ -115,7 +115,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMicronautMojo {
         var packaging = Packaging.of(mavenProject.getPackaging());
         var aotRuntime = AotRuntime.valueOf(runtime.toUpperCase());
         switch (packaging) {
-            case JAR, DOCKER_CRAC, DOCKER -> {
+            case JAR, DOCKER_CRAC, DOCKER, JKUBE_K8S, JKUBE_OC -> {
                 if (aotRuntime != AotRuntime.JIT) {
                     warnRuntimeMismatchAndSetCorrectValue(AotRuntime.JIT);
                 }
