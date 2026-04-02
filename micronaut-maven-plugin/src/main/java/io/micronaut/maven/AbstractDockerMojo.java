@@ -537,6 +537,14 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
         return quoteShellLiteral(source, validateDockerfileValue(source, value));
     }
 
+    protected static String escapeShellDoubleQuoted(String source, String value) throws MojoExecutionException {
+        return validateDockerfileValue(source, value)
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("$", "\\$")
+            .replace("`", "\\`");
+    }
+
     /**
      * @return Networking mode for the RUN instructions during build (if any).
      */

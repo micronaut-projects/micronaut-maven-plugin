@@ -26,6 +26,7 @@ import java.util.Properties;
 
 import static io.micronaut.maven.AbstractDockerMojo.X86_64_ARCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -283,6 +284,16 @@ class DockerNativeMojoTest {
         var command = mojo.getLambdaBootstrapCommand();
 
         assertEquals("./func -XX:MaximumHeapSizePercent=80 -Dio.netty.allocator.numDirectArenas=0 -Dio.netty.noPreferDirect=true -Djava.library.path=$(pwd) -Dio.netty.noUnsafe=true '-Dcustom.message=hello world'", command);
+    }
+
+    @Test
+    void escapeClassNameBuildArgEscapesShellExpansionCharacters() throws MojoExecutionException {
+        assertEquals("example.Outer\\$Inner", DockerNativeMojo.escapeClassNameBuildArg("example.Outer$Inner"));
+    }
+
+    @Test
+    void escapeClassNameBuildArgRejectsControlCharacters() {
+        assertThrows(MojoExecutionException.class, () -> DockerNativeMojo.escapeClassNameBuildArg("example.App\nRUN echo injected"));
     }
 
 }

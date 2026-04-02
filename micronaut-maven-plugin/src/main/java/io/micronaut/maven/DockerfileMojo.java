@@ -58,7 +58,6 @@ import static io.micronaut.maven.DockerNativeMojo.ARGS_FILE_PROPERTY_NAME;
 @Mojo(name = "dockerfile", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 @Execute(phase = LifecyclePhase.PROCESS_CLASSES)
 public class DockerfileMojo extends AbstractDockerMojo {
-
     public static final String DOCKERFILE = "Dockerfile";
     public static final String DOCKERFILE_AWS_CUSTOM_RUNTIME = "DockerfileNativeLambda";
     public static final String DOCKERFILE_AWS = "DockerfileLambda";
@@ -71,6 +70,8 @@ public class DockerfileMojo extends AbstractDockerMojo {
     public static final String DOCKERFILE_NATIVE_STATIC = "DockerfileNativeStatic";
     public static final String DOCKERFILE_NATIVE_ORACLE_CLOUD = "DockerfileNativeOracleCloud";
     public static final String NATIVE_BUILD_TOOLS_MAVEN_PLUGIN = "org.graalvm.buildtools:native-maven-plugin";
+    private static final String CLASS_NAME_PLACEHOLDER = "CLASS_NAME";
+    private static final String EXEC_MAIN_CLASS_SOURCE = "exec.mainClass";
 
     private final ExecutorService executorService;
 
@@ -226,7 +227,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
         if (containsPlaceholder(line, "GRAALVM_DOWNLOAD_URL")) {
             return line.replace("${GRAALVM_DOWNLOAD_URL}", shellLiteral("GraalVM download URL", validateDownloadUrl("GraalVM download URL", graalVmDownloadUrl())));
         }
-        if (containsPlaceholder(line, "CLASS_NAME")) {
+        if (containsPlaceholder(line, CLASS_NAME_PLACEHOLDER)) {
             return replaceClassName(line);
         }
         if (containsPlaceholder(line, "PORTS")) {
@@ -271,30 +272,22 @@ public class DockerfileMojo extends AbstractDockerMojo {
             || "BASE_JAVA_IMAGE".equals(argName)
             || "BASE_IMAGE".equals(argName)
             || "GRAALVM_DOWNLOAD_URL".equals(argName)
-            || "CLASS_NAME".equals(argName)
+            || CLASS_NAME_PLACEHOLDER.equals(argName)
             || "PORTS".equals(argName);
     }
 
     private String replaceClassName(String line) throws MojoExecutionException {
         String className = isJsonArrayClassNameContext(line)
-            ? escapeJsonString("exec.mainClass", mainClass)
+            ? escapeJsonString(EXEC_MAIN_CLASS_SOURCE, mainClass)
             : line.contains("\"${CLASS_NAME}\"")
-                ? escapeShellDoubleQuoted("exec.mainClass", mainClass)
-            : shellLiteral("exec.mainClass", mainClass);
+                ? escapeShellDoubleQuoted(EXEC_MAIN_CLASS_SOURCE, mainClass)
+            : shellLiteral(EXEC_MAIN_CLASS_SOURCE, mainClass);
         return line.replace("${CLASS_NAME}", className);
     }
 
     private static boolean isJsonArrayClassNameContext(String line) {
-        return containsPlaceholder(line, "CLASS_NAME")
+        return containsPlaceholder(line, CLASS_NAME_PLACEHOLDER)
             && (line.contains("ENTRYPOINT [") || line.contains("CMD ["));
-    }
-
-    private static String escapeShellDoubleQuoted(String source, String value) throws MojoExecutionException {
-        return validateDockerfileValue(source, value)
-            .replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-            .replace("$", "\\$")
-            .replace("`", "\\`");
     }
 
     private String findArgsFile() throws IOException {
