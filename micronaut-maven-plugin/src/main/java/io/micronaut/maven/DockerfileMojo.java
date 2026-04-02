@@ -236,12 +236,39 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     private static boolean shouldInlineArgLine(String line) {
-        return line.contains("BASE_IMAGE_RUN")
-            || line.contains("BASE_JAVA_IMAGE")
-            || line.contains("BASE_IMAGE")
-            || line.contains("GRAALVM_DOWNLOAD_URL")
-            || line.contains("CLASS_NAME")
-            || line.contains("PORTS");
+        String trimmed = line.trim();
+        if (!trimmed.startsWith("ARG")) {
+            return false;
+        }
+        String remainder = trimmed.substring(3).trim();
+        if (remainder.isEmpty()) {
+            return false;
+        }
+
+        int endEquals = remainder.indexOf('=');
+        int endWhitespace = -1;
+        for (int i = 0; i < remainder.length(); i++) {
+            if (Character.isWhitespace(remainder.charAt(i))) {
+                endWhitespace = i;
+                break;
+            }
+        }
+
+        int end = remainder.length();
+        if (endEquals >= 0) {
+            end = Math.min(end, endEquals);
+        }
+        if (endWhitespace >= 0) {
+            end = Math.min(end, endWhitespace);
+        }
+
+        String argName = remainder.substring(0, end);
+        return "BASE_IMAGE_RUN".equals(argName)
+            || "BASE_JAVA_IMAGE".equals(argName)
+            || "BASE_IMAGE".equals(argName)
+            || "GRAALVM_DOWNLOAD_URL".equals(argName)
+            || "CLASS_NAME".equals(argName)
+            || "PORTS".equals(argName);
     }
 
     private String replaceClassName(String line) throws MojoExecutionException {

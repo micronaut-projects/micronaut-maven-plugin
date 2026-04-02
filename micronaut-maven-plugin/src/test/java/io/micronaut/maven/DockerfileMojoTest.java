@@ -268,6 +268,45 @@ class DockerfileMojoTest {
         );
     }
 
+    @Test
+    void processDockerfilePreservesSimilarlyNamedArgLines(@TempDir Path tempDir) throws IOException, MojoExecutionException {
+        var project = mockProject(tempDir);
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.of("ghcr.io/example/builder:1.0"));
+        when(jibConfigurationService.getPorts()).thenReturn(Optional.of("8080"));
+
+        var mojo = new DockerfileMojo(
+            project,
+            mock(DockerService.class),
+            jibConfigurationService,
+            mock(ApplicationConfigurationService.class),
+            mock(ExecutorService.class),
+            mockSession(project),
+            mock(MojoExecution.class)
+        );
+        mojo.micronautRuntime = "netty";
+
+        var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), String.join(System.lineSeparator(),
+            "ARG BASE_IMAGE_TAG=latest",
+            "ARG PORTS_FILE=/tmp/ports",
+            "ARG CLASS_NAME_SUFFIX=Application",
+            "ARG BASE_IMAGE",
+            "FROM ${BASE_IMAGE}"
+        ));
+
+        invokeProcessDockerfile(mojo, dockerfile);
+
+        assertEquals(
+            java.util.List.of(
+                "ARG BASE_IMAGE_TAG=latest",
+                "ARG PORTS_FILE=/tmp/ports",
+                "ARG CLASS_NAME_SUFFIX=Application",
+                "FROM ghcr.io/example/builder:1.0"
+            ),
+            Files.readAllLines(dockerfile)
+        );
+    }
+
     private static MavenProject mockProject(Path tempDir) {
         var project = mock(MavenProject.class);
         var build = mock(Build.class);
