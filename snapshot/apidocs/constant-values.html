@@ -72,27 +72,30 @@ loadScripts(document, 'script');</script>
 <div class="col-first even-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.ARM_ARCH">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#ARM_ARCH">ARM_ARCH</a></code></div>
 <div class="col-last even-row-color"><code>"aarch64"</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.DEFAULT_BASE_IMAGE_GRAALVM_RUN">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#DEFAULT_BASE_IMAGE_GRAALVM_RUN">DEFAULT_BASE_IMAGE_GRAALVM_RUN</a></code></div>
-<div class="col-last odd-row-color"><code>"cgr.dev/chainguard/wolfi-base@sha256:a5a619c1793039dcf92f02178f37c94bb3d6001403716da59d6092dfe8d9b502"</code></div>
-<div class="col-first even-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.GDS_DOWNLOAD_URL">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#GDS_DOWNLOAD_URL">GDS_DOWNLOAD_URL</a></code></div>
-<div class="col-last even-row-color"><code>"https://gds.oracle.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz"</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER">LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER</a></code></div>
-<div class="col-last odd-row-color"><code>"${LAMBDA_BOOTSTRAP_DOCKER_COMMAND}"</code></div>
-<div class="col-first even-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.LATEST_TAG">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#LATEST_TAG">LATEST_TAG</a></code></div>
-<div class="col-last even-row-color"><code>"latest"</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG">MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG</a></code></div>
-<div class="col-last odd-row-color"><code>"-H:+StaticExecutableWithDynamicLibC"</code></div>
-<div class="col-first even-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.ORACLE_CLOUD_FUNCTION_DEFAULT_CMD">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#ORACLE_CLOUD_FUNCTION_DEFAULT_CMD">ORACLE_CLOUD_FUNCTION_DEFAULT_CMD</a></code></div>
-<div class="col-last even-row-color"><code>"CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]"</code></div>
-<div class="col-first odd-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.X86_64_ARCH">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#X86_64_ARCH">X86_64_ARCH</a></code></div>
-<div class="col-last odd-row-color"><code>"x64"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.DEFAULT_BASE_IMAGE_GRAALVM_BUILD">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#DEFAULT_BASE_IMAGE_GRAALVM_BUILD">DEFAULT_BASE_IMAGE_GRAALVM_BUILD</a></code></div>
+<div class="col-last odd-row-color"><code>"container-registry.oracle.com/graalvm/native-image"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.DEFAULT_BASE_IMAGE_GRAALVM_RUN">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#DEFAULT_BASE_IMAGE_GRAALVM_RUN">DEFAULT_BASE_IMAGE_GRAALVM_RUN</a></code></div>
+<div class="col-last even-row-color"><code>"cgr.dev/chainguard/wolfi-base@sha256:a5a619c1793039dcf92f02178f37c94bb3d6001403716da59d6092dfe8d9b502"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.GDS_DOWNLOAD_URL">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#GDS_DOWNLOAD_URL">GDS_DOWNLOAD_URL</a></code></div>
+<div class="col-last odd-row-color"><code>"https://gds.oracle.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER">LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER</a></code></div>
+<div class="col-last even-row-color"><code>"${LAMBDA_BOOTSTRAP_DOCKER_COMMAND}"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.LATEST_TAG">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#LATEST_TAG">LATEST_TAG</a></code></div>
+<div class="col-last odd-row-color"><code>"latest"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG">MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG</a></code></div>
+<div class="col-last even-row-color"><code>"-H:+StaticExecutableWithDynamicLibC"</code></div>
+<div class="col-first odd-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.ORACLE_CLOUD_FUNCTION_DEFAULT_CMD">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#ORACLE_CLOUD_FUNCTION_DEFAULT_CMD">ORACLE_CLOUD_FUNCTION_DEFAULT_CMD</a></code></div>
+<div class="col-last odd-row-color"><code>"CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]"</code></div>
+<div class="col-first even-row-color"><code id="io.micronaut.maven.AbstractDockerMojo.X86_64_ARCH">public&nbsp;static&nbsp;final&nbsp;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="io/micronaut/maven/AbstractDockerMojo.html#X86_64_ARCH">X86_64_ARCH</a></code></div>
+<div class="col-last even-row-color"><code>"x64"</code></div>
 </div>
 </li>
 <li>
