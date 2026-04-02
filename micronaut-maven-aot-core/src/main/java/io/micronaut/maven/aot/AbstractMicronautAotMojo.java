@@ -15,12 +15,14 @@
  */
 package io.micronaut.maven.aot;
 
-import io.micronaut.maven.AbstractMicronautMojo;
-import io.micronaut.maven.Packaging;
-import io.micronaut.maven.services.CompilerService;
+import io.micronaut.maven.aot.internal.AotCompilerService;
+import io.micronaut.maven.aot.internal.AotPackaging;
+import io.micronaut.maven.aot.internal.JansiLog;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.model.Exclusion;
+import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.resolution.DependencyResolutionException;
@@ -32,10 +34,9 @@ import java.util.List;
 /**
  * Abstract Mojo for Micronaut AOT.
  */
-public abstract class AbstractMicronautAotMojo extends AbstractMicronautMojo {
+public abstract class AbstractMicronautAotMojo extends AbstractMojo {
 
-    protected final CompilerService compilerService;
-
+    protected final AotCompilerService compilerService;
     protected final MavenProject mavenProject;
 
     /**
@@ -64,20 +65,24 @@ public abstract class AbstractMicronautAotMojo extends AbstractMicronautMojo {
 
     /**
      * Packages that would be excluded from the AOT processing.
+     *
      * @since 4.11.0
      */
     @Parameter(property = "exclusions")
     protected List<Exclusion> aotExclusions;
 
-    public AbstractMicronautAotMojo(CompilerService compilerService, MavenProject mavenProject) {
+    protected AbstractMicronautAotMojo(AotCompilerService compilerService, MavenProject mavenProject) {
         this.compilerService = compilerService;
         this.mavenProject = mavenProject;
     }
 
-    abstract void onSuccess(File outputDir) throws MojoExecutionException;
+    @Override
+    public void setLog(Log log) {
+        super.setLog(new JansiLog(log));
+    }
 
     protected final File getBaseOutputDirectory() {
-        var targetDirectory = new File(mavenProject.getBuild().getDirectory(), "aot");
+        File targetDirectory = new File(mavenProject.getBuild().getDirectory(), "aot");
         return new File(targetDirectory, runtime);
     }
 
@@ -87,10 +92,12 @@ public abstract class AbstractMicronautAotMojo extends AbstractMicronautMojo {
 
     @Override
     public final void execute() throws MojoExecutionException {
-        if (!enabled) {
+        if (!enabled || !shouldExecute()) {
             return;
         }
-        validateRuntime();
+        if (alignRuntimeWithPackaging()) {
+            validateRuntime();
+        }
         getLog().info("Running Micronaut AOT " + micronautAotVersion + " " + getName());
         try {
             File baseOutputDirectory = getBaseOutputDirectory();
@@ -103,19 +110,43 @@ public abstract class AbstractMicronautAotMojo extends AbstractMicronautMojo {
         }
     }
 
-    private void clean(File baseOutputDirectory) throws IOException {
-        if (baseOutputDirectory.exists()) {
-            getLog().debug("Deleting " + baseOutputDirectory.getAbsolutePath());
-            FileUtils.deleteDirectory(baseOutputDirectory);
+    /**
+     * Allows concrete plugins to suppress execution for specific project layouts.
+     *
+     * @return {@code true} when AOT execution should proceed
+     */
+    protected boolean shouldExecute() {
+        return true;
+    }
+
+    /**
+     * Controls whether the configured runtime should be normalized against the current project packaging.
+     *
+     * @return {@code true} to enforce the integrated packaging/runtime mapping
+     */
+    protected boolean alignRuntimeWithPackaging() {
+        return true;
+    }
+
+    abstract void onSuccess(File outputDir) throws MojoExecutionException;
+
+    protected abstract void doExecute() throws DependencyResolutionException, MojoExecutionException;
+
+    abstract String getName();
+
+    private void clean(File directory) throws IOException {
+        if (directory.exists()) {
+            getLog().debug("Deleting " + directory.getAbsolutePath());
+            FileUtils.deleteDirectory(directory);
         }
-        baseOutputDirectory.mkdirs();
+        directory.mkdirs();
     }
 
     private void validateRuntime() {
-        var packaging = Packaging.of(mavenProject.getPackaging());
-        var aotRuntime = AotRuntime.valueOf(runtime.toUpperCase());
+        AotPackaging packaging = AotPackaging.of(mavenProject.getPackaging());
+        AotRuntime aotRuntime = AotRuntime.valueOf(runtime.toUpperCase());
         switch (packaging) {
-            case JAR, DOCKER_CRAC, DOCKER -> {
+            case JAR, DOCKER, DOCKER_CRAC -> {
                 if (aotRuntime != AotRuntime.JIT) {
                     warnRuntimeMismatchAndSetCorrectValue(AotRuntime.JIT);
                 }
@@ -129,13 +160,9 @@ public abstract class AbstractMicronautAotMojo extends AbstractMicronautMojo {
         }
     }
 
-    private void warnRuntimeMismatchAndSetCorrectValue(final AotRuntime correctRuntime) {
+    private void warnRuntimeMismatchAndSetCorrectValue(AotRuntime correctRuntime) {
         String correctRuntimeString = correctRuntime.name().toLowerCase();
         getLog().warn("Packaging is set to [" + mavenProject.getPackaging() + "], but Micronaut AOT runtime is set to [" + runtime + "]. Setting AOT runtime to: [" + correctRuntimeString + "]");
-        this.runtime = correctRuntimeString;
+        runtime = correctRuntimeString;
     }
-
-    protected abstract void doExecute() throws DependencyResolutionException, MojoExecutionException;
-
-    abstract String getName();
 }

@@ -37,17 +37,6 @@ abstract class Constants {
         "io.micronaut.core.async.subscriber.Completable"
     );
 
-    static final List<String> SERVICE_TYPES = List.of(
-        "io.micronaut.context.env.PropertySourceLoader",
-        "io.micronaut.inject.BeanConfiguration",
-        "io.micronaut.inject.BeanDefinitionReference",
-        "io.micronaut.http.HttpRequestFactory",
-        "io.micronaut.http.HttpResponseFactory",
-        "io.micronaut.core.beans.BeanIntrospectionReference",
-        "io.micronaut.core.convert.TypeConverterRegistrar",
-        "io.micronaut.context.env.PropertyExpressionResolver"
-    );
-
     static final String MICRONAUT_AOT_GROUP_ID = "io.micronaut.aot";
     static final String MICRONAUT_AOT_ARTIFACT_ID_PREFIX = "micronaut-aot-";
     static final String MICRONAUT_AOT_MAIN_CLASS = "io.micronaut.aot.cli.Main";

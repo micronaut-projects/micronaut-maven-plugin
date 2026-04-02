@@ -14,6 +14,8 @@
     <inceptionYear>2020</inceptionYear>
 
     <modules>
+        <module>micronaut-maven-aot-core</module>
+        <module>micronaut-maven-aot-plugin</module>
         <module>micronaut-maven-core</module>
         <module>micronaut-maven-enforcer-rules</module>
         <module>micronaut-maven-jib-integration</module>

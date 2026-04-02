@@ -19,6 +19,7 @@ import io.micronaut.maven.aot.internal.AotCompilerService;
 import io.micronaut.maven.aot.internal.AotDependencyResolutionService;
 import io.micronaut.maven.aot.internal.AotExecutorService;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
@@ -27,24 +28,23 @@ import org.apache.maven.toolchain.ToolchainManager;
 import javax.inject.Inject;
 
 /**
- * <p>Invokes the <a href="https://micronaut-projects.github.io/micronaut-aot/latest/guide/">Micronaut AOT</a>
- * optimizer, generating sources/classes and the effective AOT configuration properties file. Refer to the Micronaut
- * AOT documentation for more information.</p>
- *
- * <p><strong>WARNING</strong>: this goal is not intended to be executed directly. Instead, enable AOT with the
- * <code>micronaut.aot.enabled</code> property, eg:</p>
- *
- * <pre>mvn -Dmicronaut.aot.enabled=true package</pre>
- * <pre>mvn -Dmicronaut.aot.enabled=true mn:run</pre>
+ * Standalone Micronaut AOT sample configuration goal.
  */
-@Mojo(name = AotAnalysisMojo.NAME, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
-public class AotAnalysisMojo extends AbstractAotAnalysisMojo {
+@Mojo(name = AotSampleMojo.NAME, defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+public class AotSampleMojo extends AbstractAotSampleMojo {
 
     @Inject
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    public AotAnalysisMojo(AotCompilerService compilerService, AotExecutorService executorService, MavenProject mavenProject,
-                           AotDependencyResolutionService dependencyResolutionService,
-                           MavenSession mavenSession, ToolchainManager toolchainManager) {
+    public AotSampleMojo(AotCompilerService compilerService,
+                         AotExecutorService executorService,
+                         MavenProject mavenProject,
+                         AotDependencyResolutionService dependencyResolutionService,
+                         MavenSession mavenSession,
+                         ToolchainManager toolchainManager) {
         super(compilerService, executorService, mavenProject, dependencyResolutionService, mavenSession, toolchainManager);
+    }
+
+    @Override
+    protected boolean alignRuntimeWithPackaging() {
+        return false;
     }
 }

@@ -19,6 +19,11 @@
         <!-- Internal dependencies -->
         <dependency>
             <groupId>io.micronaut.maven</groupId>
+            <artifactId>micronaut-maven-aot-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.maven</groupId>
             <artifactId>micronaut-maven-core</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -140,11 +145,6 @@
         </dependency>
 
         <!-- Micronaut -->
-        <dependency>
-            <groupId>io.micronaut.aot</groupId>
-            <artifactId>micronaut-aot-std-optimizers</artifactId>
-            <version>${micronaut.aot.version}</version>
-        </dependency>
         <dependency>
             <groupId>io.micronaut.testresources</groupId>
             <artifactId>micronaut-test-resources-build-tools</artifactId>

@@ -48,6 +48,11 @@
     <dependencies>
         <dependency>
             <groupId>io.micronaut.maven</groupId>
+            <artifactId>micronaut-maven-aot-plugin</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.micronaut.maven</groupId>
             <artifactId>micronaut-maven-core</artifactId>
             <version>${project.version}</version>
         </dependency>

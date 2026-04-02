@@ -13,13 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.maven.aot;
+package io.micronaut.maven.aot.internal;
 
 /**
- * AOT runtime values.
- *
- * @author Álvaro Sánchez-Mariscal
+ * Packaging types supported by Micronaut's integrated AOT execution.
  */
-public enum AotRuntime {
-    JIT, NATIVE
+public enum AotPackaging {
+    JAR("jar"),
+    NATIVE_IMAGE("native-image"),
+    DOCKER("docker"),
+    DOCKER_NATIVE("docker-native"),
+    DOCKER_CRAC("docker-crac");
+
+    private final String id;
+
+    AotPackaging(String id) {
+        this.id = id;
+    }
+
+    public static AotPackaging of(String value) {
+        return AotPackaging.valueOf(value.replace("-", "_").toUpperCase());
+    }
+
+    public String id() {
+        return id;
+    }
 }
