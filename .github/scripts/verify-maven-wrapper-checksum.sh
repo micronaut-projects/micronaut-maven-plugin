@@ -3,6 +3,10 @@ set -euo pipefail
 
 properties_file="${1:-.mvn/wrapper/maven-wrapper.properties}"
 
+normalize_properties_value() {
+  printf '%s' "$1" | sed 's/^[[:space:]]*//;s/\\:/:/g;s/\\\\/\\/g'
+}
+
 if [[ ! -f "$properties_file" ]]; then
   echo "Missing wrapper properties file: $properties_file" >&2
   exit 1
@@ -18,10 +22,10 @@ while IFS= read -r line || [[ -n "$line" ]]; do
 
   case "$line" in
     distributionUrl=*)
-      distribution_url="${line#distributionUrl=}"
+      distribution_url="$(normalize_properties_value "${line#distributionUrl=}")"
       ;;
     distributionSha256Sum=*)
-      distribution_sha256_sum="${line#distributionSha256Sum=}"
+      distribution_sha256_sum="$(normalize_properties_value "${line#distributionSha256Sum=}")"
       ;;
   esac
 done <"$properties_file"
@@ -36,15 +40,22 @@ if [[ -z "$distribution_sha256_sum" ]]; then
   exit 1
 fi
 
+distribution_sha256_sum="${distribution_sha256_sum,,}"
+
 if [[ ! "$distribution_sha256_sum" =~ ^[0-9a-f]{64}$ ]]; then
-  echo "distributionSha256Sum must be a lowercase SHA-256 hex digest" >&2
+  echo "distributionSha256Sum must be a SHA-256 hex digest" >&2
   exit 1
 fi
 
 tmp_file="$(mktemp)"
 trap 'rm -f "$tmp_file"' EXIT
 
-curl -fsSL "$distribution_url" -o "$tmp_file"
+curl -fsSL \
+  --connect-timeout 10 \
+  --max-time 300 \
+  --retry 3 \
+  --retry-delay 5 \
+  "$distribution_url" -o "$tmp_file"
 
 actual_sha256_sum=""
 if command -v sha256sum >/dev/null 2>&1; then
