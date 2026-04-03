@@ -46,10 +46,12 @@ class AbstractMicronautAotMojoTest {
 
         @Override
         void onSuccess(File outputDir) {
+            // This test only verifies runtime coercion before the success hook runs.
         }
 
         @Override
         protected void doExecute() throws DependencyResolutionException, MojoExecutionException {
+            // No-op: the test exercises execute() up to runtime normalization only.
         }
 
         @Override
