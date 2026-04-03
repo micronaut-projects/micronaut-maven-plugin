@@ -25,6 +25,8 @@ import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -44,6 +46,7 @@ import static org.twdata.maven.mojoexecutor.MojoExecutor.plugin;
 public final class AotExecutorService {
 
     private static final String TEST_RESOURCES_ENABLED_PROPERTY = "micronaut.test.resources.enabled";
+    private static final Logger LOG = LoggerFactory.getLogger(AotExecutorService.class);
 
     private final BuildPluginManager pluginManager;
     private final MavenProject mavenProject;
@@ -98,8 +101,8 @@ public final class AotExecutorService {
         request.setQuiet(quiet);
         request.setAlsoMake(true);
         if (!quiet) {
-            request.setErrorHandler(System.err::println);
-            request.setOutputHandler(System.out::println);
+            request.setErrorHandler(LOG::error);
+            request.setOutputHandler(LOG::info);
         }
         request.setProperties(properties);
         return invoker.execute(request);

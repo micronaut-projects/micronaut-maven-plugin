@@ -30,7 +30,7 @@ import javax.inject.Inject;
 /**
  * Generates a sample <code>aot.properties</code> showcasing all the possible values along with a description.
  */
-@Mojo(name = AotSampleMojo.NAME, defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+@Mojo(name = AbstractAotSampleMojo.NAME, defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class AotSampleMojo extends AbstractAotSampleMojo {
 
     @Inject

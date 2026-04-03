@@ -78,7 +78,7 @@ public final class AotDependencyResolutionService {
             List<org.apache.maven.model.Dependency> dependencies = dependencyManagement == null || dependencyManagement.getDependencies() == null
                 ? List.of()
                 : dependencyManagement.getDependencies();
-            HashMap<String, Dependency> dependencyMap = new HashMap<>(dependencies.size());
+            HashMap<String, Dependency> dependencyMap = HashMap.newHashMap(dependencies.size());
             for (org.apache.maven.model.Dependency dependency : dependencies) {
                 String ga = dependency.getGroupId() + ":" + dependency.getArtifactId();
                 Artifact artifact = new DefaultArtifact(

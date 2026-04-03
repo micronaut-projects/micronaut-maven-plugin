@@ -37,7 +37,7 @@ import javax.inject.Inject;
  * <pre>mvn -Dmicronaut.aot.enabled=true package</pre>
  * <pre>mvn -Dmicronaut.aot.enabled=true mn:run</pre>
  */
-@Mojo(name = AotAnalysisMojo.NAME, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+@Mojo(name = AbstractAotAnalysisMojo.NAME, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class AotAnalysisMojo extends AbstractAotAnalysisMojo {
 
     @Inject

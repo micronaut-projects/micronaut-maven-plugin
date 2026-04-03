@@ -31,7 +31,7 @@ import javax.inject.Inject;
 /**
  * Standalone Micronaut AOT analysis goal.
  */
-@Mojo(name = AotAnalysisMojo.NAME, defaultPhase = LifecyclePhase.PREPARE_PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+@Mojo(name = AbstractAotAnalysisMojo.NAME, defaultPhase = LifecyclePhase.PREPARE_PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class AotAnalysisMojo extends AbstractAotAnalysisMojo {
 
     @Inject
