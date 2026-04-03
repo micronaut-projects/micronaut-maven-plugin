@@ -34,7 +34,7 @@ Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module pl
 | Shared compile/dependency logic | `micronaut-maven-plugin/src/main/java/io/micronaut/maven/services` | Used by heavy mojos like `RunMojo` |
 | Enforcer policy checks | `micronaut-maven-enforcer-rules/src/main/java/io/micronaut/maven/enforcer` | Currently centered on `CheckSnakeYaml`; keep cross-module policy here |
 | Cross-module integration behavior | `micronaut-maven-integration-tests/src/it` | Scenario-per-directory invoker tests |
-| CI/release delivery changes | `.github/workflows` | `snapshot.yml`, `windows-ci.yml`, and `release.yml` must stay aligned |
+| CI/release delivery changes | `.github/workflows` | `snapshot.yml` includes the Linux docker-native preflight plus the full snapshot run; keep `windows-ci.yml` and `release.yml` aligned when CI expectations move |
 | Formatting and style rules | `config/checkstyle`, `config/spotless.license.java` | Enforced in compile phase |
 
 ## CODE MAP
@@ -52,7 +52,7 @@ Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module pl
 - Root POM owns shared plugin and quality configuration; module POMs stay lean.
 - Feature packages under `io.micronaut.maven` are explicit (`openapi`, `aot`, `testresources`, `services`, `jsonschema`).
 - Integration tests are isolated scenarios under `src/it/<scenario>` with per-scenario `invoker.properties` and optional `verify.groovy`.
-- CI matrix is intentional: snapshot on Java 25, windows on Java 25, release workflow handles tagging + publish.
+- CI matrix is intentional: `snapshot.yml` carries a PR/merge-group Linux docker-native preflight plus the full Java 25 snapshot run, `windows-ci.yml` covers Java 25 on Windows, and `release.yml` handles tagging + publish.
 
 ## ANTI-PATTERNS (THIS PROJECT)
 - Do not add new plugin behavior only in examples; behavior must live in real modules and be covered by `src/it` scenarios.
