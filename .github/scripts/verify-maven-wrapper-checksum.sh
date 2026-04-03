@@ -47,7 +47,8 @@ if [[ ! "$distribution_sha256_sum" =~ ^[0-9a-f]{64}$ ]]; then
   exit 1
 fi
 
-tmp_file="$(mktemp)"
+# Use an explicit template so local verification also works with BSD/macOS mktemp.
+tmp_file="$(mktemp "${TMPDIR:-/tmp}/maven-wrapper-checksum.XXXXXX")"
 trap 'rm -f "$tmp_file"' EXIT
 
 curl -fsSL \
