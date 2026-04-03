@@ -194,6 +194,20 @@
                             <toLowerCase>true</toLowerCase>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>docker-safe-branch-tag-length</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>regex-property</goal>
+                        </goals>
+                        <configuration>
+                            <name>git.branch.dockerTag</name>
+                            <value>${git.branch.dockerTag}</value>
+                            <regex>^(.{1,105}).*$</regex>
+                            <replacement>$1</replacement>
+                            <failIfNoMatch>false</failIfNoMatch>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
 
