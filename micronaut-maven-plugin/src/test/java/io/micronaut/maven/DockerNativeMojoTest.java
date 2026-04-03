@@ -120,6 +120,28 @@ class DockerNativeMojoTest {
     }
 
     @Test
+    void testGraalVmDownloadSha256RejectsUnsupportedResolvedArch() {
+        var project = mock(MavenProject.class);
+        var session = mock(MavenSession.class);
+        var execution = mock(MojoExecution.class);
+        when(session.getCurrentProject()).thenReturn(project);
+        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getSystemProperties()).thenReturn(new Properties());
+        when(project.getProperties()).thenReturn(new Properties());
+
+        var mojo = new DockerNativeMojo(project, null, null, null, session, execution) {
+            @Override
+            protected String graalVmArch() {
+                return "sparc64";
+            }
+        };
+
+        var ex = assertThrows(IllegalStateException.class, mojo::graalVmDownloadSha256);
+
+        assertEquals("Unsupported GraalVM architecture: sparc64", ex.getMessage());
+    }
+
+    @Test
     void testGetPortsFromJib() {
         var project = mock(MavenProject.class);
         var session = mock(MavenSession.class);

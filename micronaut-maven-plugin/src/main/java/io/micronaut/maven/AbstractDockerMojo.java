@@ -256,7 +256,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
         Integer graalVersion = resolveGraalVersion();
         GraalVmRelease release = GRAALVM_RELEASES.get(graalVersion);
         if (release == null) {
-            throw new IllegalStateException("Unsupported GraalVM version: " + graalVersion + ". Supported versions are: " + GRAALVM_RELEASES.keySet());
+            throw new IllegalStateException("Unsupported GraalVM version: " + graalVersion + ". Supported versions are: " + GRAALVM_VERSIONS);
         }
         return release;
     }

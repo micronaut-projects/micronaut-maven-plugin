@@ -1,6 +1,7 @@
+# Pinned amazonlinux:2023-minimal digest for reproducible Lambda native-image builds.
 FROM public.ecr.aws/amazonlinux/amazonlinux@sha256:45c6144a8aedb7e7981ffd953d3af02998d5248f963305b869c820e1d30353de AS graalvm
 ENV LANG=en_US.UTF-8
-RUN dnf update -y && dnf install -y gcc glibc-devel zlib-devel libstdc++-static tar && dnf clean all && rm -rf /var/cache/dnf
+RUN dnf update -y && dnf install -y coreutils-single gcc glibc-devel zlib-devel libstdc++-static tar && dnf clean all && rm -rf /var/cache/dnf
 ARG GRAALVM_DOWNLOAD_URL
 ARG GRAALVM_DOWNLOAD_SHA256
 RUN curl -4 -fsSL ${GRAALVM_DOWNLOAD_URL} -o "/tmp/graalvm.tar.gz" \
@@ -19,6 +20,7 @@ COPY *.args /home/app/graalvm-native-image.args
 ARG CLASS_NAME
 RUN native-image @/home/app/graalvm-native-image.args -H:Class="${CLASS_NAME}" -H:Name=application -cp "/home/app/libs/release/*:/home/app/libs/snapshot/*:/home/app/classes/"
 
+# Keep the runtime stage on the same pinned amazonlinux:2023-minimal digest as the builder.
 FROM public.ecr.aws/amazonlinux/amazonlinux@sha256:45c6144a8aedb7e7981ffd953d3af02998d5248f963305b869c820e1d30353de
 WORKDIR /function
 RUN dnf update -y && dnf install -y zip && dnf clean all
