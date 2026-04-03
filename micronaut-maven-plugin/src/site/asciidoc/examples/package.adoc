@@ -7,6 +7,8 @@ This plugin supports different `<packaging>` types:
 * `docker`: builds a Docker image with the application artifacts (compiled classes, resources, dependencies, etc).
 * `docker-native`: builds a Docker image with a GraalVM native image inside.
 * `docker-crac`: builds a Docker image containing a CRaC checkpointed application.
+* `k8s`: delegates packaging to Eclipse JKube's Kubernetes Maven Plugin (`k8s:build`).
+* `openshift`: delegates packaging to Eclipse JKube's OpenShift Maven Plugin (`oc:build`).
 
 To package an application, `mvn package` is the one-stop shop to produce the desired artifact. By default, applications
 generated from https://micronaut.io/launch/[Micronaut Launch] have the packaging defined like
@@ -211,6 +213,58 @@ For example, you can define the `jib-maven-plugin` in your POM as follows to pas
     </container>
   </configuration>
 </plugin>
+----
+
+=== Delegating packaging to Eclipse JKube
+
+----
+$ mvn package -Dpackaging=k8s
+----
+
+The `k8s` and `openshift` packaging types let Micronaut's lifecycle bindings delegate to Eclipse JKube instead of
+the built-in Docker/Jib packaging.
+
+* `k8s` maps `package` to `org.eclipse.jkube:kubernetes-maven-plugin:build`.
+* `openshift` maps `package` to `org.eclipse.jkube:openshift-maven-plugin:build`.
+
+These packaging types are additive. They only activate when you explicitly set the packaging, and you must still
+declare and configure the corresponding JKube plugin in your build. Micronaut does not manage JKube plugin versions or
+configuration for you.
+
+For example, to use the Kubernetes integration:
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.eclipse.jkube</groupId>
+  <artifactId>kubernetes-maven-plugin</artifactId>
+  <version>1.19.0</version>
+</plugin>
+----
+
+Then package with:
+
+[source,shell]
+----
+mvn package -Dpackaging=k8s
+----
+
+For OpenShift, declare the OpenShift plugin instead:
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.eclipse.jkube</groupId>
+  <artifactId>openshift-maven-plugin</artifactId>
+  <version>1.19.0</version>
+</plugin>
+----
+
+and package with:
+
+[source,shell]
+----
+mvn package -Dpackaging=openshift
 ----
 
 === Bringing your own `Dockerfile`

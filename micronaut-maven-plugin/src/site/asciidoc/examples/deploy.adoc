@@ -5,6 +5,7 @@ required to deploy an application that, depending on the `<packaging>`:
 
 * `jar` (default): will deploy the artifact to a remote repository using `org.apache.maven.plugins:maven-deploy-plugin:deploy`.
 * `docker` or `docker-native`: will push the Docker image to the configured Docker registry.
+* `k8s` or `openshift`: will delegate image publication to Eclipse JKube's `push` goal for the selected platform.
 
 You can use Jib to configure which registry should the image be pushed to. Refer to the
 https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration[Jib Maven Plugin documentation]
@@ -26,6 +27,16 @@ For example, to push an image to Docker Hub:
 ----
 
 Then, you can execute `mvn deploy -Dpackaging=docker` or `mvn deploy -Dpackaging=docker-native`.
+
+For JKube-backed deployments, declare the matching JKube plugin in your POM and run either:
+
+----
+$ mvn deploy -Dpackaging=k8s
+$ mvn deploy -Dpackaging=openshift
+----
+
+`k8s` maps `deploy` to `org.eclipse.jkube:kubernetes-maven-plugin:push`, while `openshift` maps `deploy` to
+`org.eclipse.jkube:openshift-maven-plugin:push`.
 
 For `docker` packaging, setting `-Djib.buildGoal=buildTar` or `-Djib.buildGoal=build` only affects the earlier
 `package` phase and prevents Jib from creating a local Docker-daemon image. The `deploy` phase still uses
