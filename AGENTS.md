@@ -68,6 +68,7 @@ Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module pl
 
 ## COMMANDS
 ```bash
+sdk env                    # applies the repo's Java 25 toolchain from .sdkmanrc when using SDKMAN!
 ./mvnw clean verify
 ./mvnw verify "-Dinvoker.test=dockerfile*"
 ./mvnw -pl micronaut-maven-integration-tests -am verify
@@ -78,5 +79,6 @@ Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module pl
 
 ## NOTES
 - If touching CI expectations, update `.github/workflows/snapshot.yml`, `.github/workflows/windows-ci.yml`, and/or `.github/workflows/release.yml` consistently.
+- Local shells may still default to Java 21 even though the repo and CI validate on Java 25; apply `.sdkmanrc` with `sdk env` or point `JAVA_HOME` at a Java 25 install before running root `./mvnw ... validate/verify` commands.
 - Paperclip worktrees may surface an untracked `.agents/` directory as local runtime scaffolding; ignore it unless the task is explicitly about agent assets or skills.
 - Keep child AGENTS.md files scoped: local rules only, no repeated root-level guidance.

@@ -28,11 +28,29 @@ A release is performed with the following steps:
 
 ## Contributing tips and tricks
 
+### Bootstrapping the toolchain
+
+This repository's root validation and verify commands expect Java 25. The repo includes a
+`.sdkmanrc`, but shared shells may still start on an older JDK until you apply it.
+
+If you use SDKMAN!, run this from the repository root before `./mvnw ...` commands:
+
+```shell
+sdk env
+java -version
+```
+
+If you do not use SDKMAN!, set `JAVA_HOME` to a Java 25 installation before running the same commands.
+
 ### Running integration tests
 
-You can run integration tests by executing `mvn verify`
+Run the wrapper so you inherit the repo's Maven configuration:
 
-If you want to run individual tests, you can execute `mvn verify "-Dinvoker.test=dockerfile*"`. In this case,
+```shell
+./mvnw verify
+```
+
+If you want to run individual tests, you can execute `./mvnw verify "-Dinvoker.test=dockerfile*"`. In this case,
 `dockerfile*` will match all test projects under `src/it` folder with a name that starts with "dockerfile".
 
 ### Debugging
@@ -40,7 +58,7 @@ If you want to run individual tests, you can execute `mvn verify "-Dinvoker.test
 To debug the plugin, you first need to publish a snapshot to your Maven local:
 
 ```shell
-$ mvn install
+./mvnw install
 ```
 
 You can skip execution of integration tests by adding `-Dinvoker.skip=true` to the command line.
@@ -67,5 +85,5 @@ Then in your IDE, attach a remote debugger to port 8000.
 ### Preparing for a new minor/major version
 
 ```shell
-mvn release:update-versions -DautoVersionSubmodules=true -DdevelopmentVersion=X.Y.Z-SNAPSHOT
+./mvnw release:update-versions -DautoVersionSubmodules=true -DdevelopmentVersion=X.Y.Z-SNAPSHOT
 ```
