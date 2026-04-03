@@ -1,6 +1,7 @@
+# Pinned amazonlinux:2023-minimal digest for reproducible Lambda native-image builds.
 FROM public.ecr.aws/amazonlinux/amazonlinux@sha256:45c6144a8aedb7e7981ffd953d3af02998d5248f963305b869c820e1d30353de AS graalvm
 ENV LANG=en_US.UTF-8
-RUN dnf update -y && dnf install -y gcc glibc-devel zlib-devel libstdc++-static tar && dnf clean all && rm -rf /var/cache/dnf
+RUN dnf update -y && dnf install -y coreutils-single gcc glibc-devel zlib-devel libstdc++-static tar && dnf clean all && rm -rf /var/cache/dnf
 RUN curl -4 -fsSL 'https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-25.0.2/graalvm-community-jdk-25.0.2_linux-aarch64_bin.tar.gz' -o "/tmp/graalvm.tar.gz" \
     && echo "b4580d9f223d0a4b3a1757e58b18ff4c1db950e67e105fc5cb741457d2384a71  /tmp/graalvm.tar.gz" | sha256sum -c - \
     && mkdir -p /usr/lib/graalvm \
@@ -16,6 +17,7 @@ COPY native/generated /home/app/
 COPY *.args /home/app/graalvm-native-image.args
 RUN native-image @/home/app/graalvm-native-image.args -H:Class="io.micronaut.function.aws.runtime.MicronautLambdaRuntime" -H:Name=application -cp "/home/app/libs/release/*:/home/app/libs/snapshot/*:/home/app/classes/"
 
+# Keep the runtime stage on the same pinned amazonlinux:2023-minimal digest as the builder.
 FROM public.ecr.aws/amazonlinux/amazonlinux@sha256:45c6144a8aedb7e7981ffd953d3af02998d5248f963305b869c820e1d30353de
 WORKDIR /function
 RUN dnf update -y && dnf install -y zip && dnf clean all
