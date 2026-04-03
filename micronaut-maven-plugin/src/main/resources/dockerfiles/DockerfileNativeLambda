@@ -11,11 +11,11 @@ WORKDIR /home/app
 COPY classes /home/app/classes
 COPY dependency/release/ /home/app/libs/release/
 COPY dependency/snapshot/ /home/app/libs/snapshot/
-COPY graalvm-reachability-metadat[a] /home/app/graalvm-reachability-metadata
-COPY nativ[e]/generated /home/app/
+COPY graalvm-reachability-metadata /home/app/graalvm-reachability-metadata
+COPY native/generated /home/app/
 COPY *.args /home/app/graalvm-native-image.args
 ARG CLASS_NAME
-RUN native-image @/home/app/graalvm-native-image.args -H:Class=${CLASS_NAME} -H:Name=application -cp "/home/app/libs/release/*:/home/app/libs/snapshot/*:/home/app/classes/"
+RUN native-image @/home/app/graalvm-native-image.args -H:Class="${CLASS_NAME}" -H:Name=application -cp "/home/app/libs/release/*:/home/app/libs/snapshot/*:/home/app/classes/"
 
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal
 WORKDIR /function

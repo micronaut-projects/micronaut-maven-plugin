@@ -1,31 +1,45 @@
 package io.micronaut.maven;
 
+import com.github.dockerjava.api.command.BuildImageCmd;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
+import org.apache.maven.model.Build;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junitpioneer.jupiter.ClearSystemProperty;
 import org.junitpioneer.jupiter.RestoreSystemProperties;
 import org.junitpioneer.jupiter.SetSystemProperty;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
 import static io.micronaut.maven.AbstractDockerMojo.X86_64_ARCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.RETURNS_SELF;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RestoreSystemProperties
@@ -268,7 +282,7 @@ class DockerNativeMojoTest {
     }
 
     @Test
-    void testLambdaBootstrapCommandAppendsCustomArguments() {
+    void testLambdaBootstrapCommandAppendsCustomArguments() throws MojoExecutionException {
         var project = mock(MavenProject.class);
         var session = mock(MavenSession.class);
         var execution = mock(MojoExecution.class);
@@ -282,6 +296,175 @@ class DockerNativeMojoTest {
         var command = mojo.getLambdaBootstrapCommand();
 
         assertEquals("./func -XX:MaximumHeapSizePercent=80 -Dio.netty.allocator.numDirectArenas=0 -Dio.netty.noPreferDirect=true -Djava.library.path=$(pwd) -Dio.netty.noUnsafe=true '-Dcustom.message=hello world'", command);
+    }
+
+    @Test
+    void escapeClassNameBuildArgEscapesShellExpansionCharacters() throws MojoExecutionException {
+        assertEquals("example.Outer\\$Inner", DockerNativeMojo.escapeClassNameBuildArg("example.Outer$Inner"));
+    }
+
+    @Test
+    void escapeClassNameBuildArgRejectsControlCharacters() {
+        assertThrows(MojoExecutionException.class, () -> DockerNativeMojo.escapeClassNameBuildArg("example.App\nRUN echo injected"));
+    }
+
+    @Test
+    void testBuildDockerfileLeavesDefaultNativeDockerfileUntouched(@TempDir Path tempDir) throws Exception {
+        Path dockerfile = tempDir.resolve("DockerfileNative");
+        Files.writeString(dockerfile, "FROM builder\nENTRYPOINT [\"/app/application\"]\n");
+
+        Fixtures fixtures = invokeBuildDockerfile(tempDir, dockerfile, DockerfileMojo.DOCKERFILE_NATIVE, true);
+
+        String dockerfileContents = Files.readString(dockerfile);
+        assertFalse(dockerfileContents.contains(AbstractDockerMojo.ORACLE_CLOUD_FUNCTION_DEFAULT_CMD));
+        verify(fixtures.dockerService).buildImage(fixtures.buildImageCmd);
+    }
+
+    @Test
+    void testBuildDockerfileAppendsOracleFunctionCmdForBundledOracleDockerfile(@TempDir Path tempDir) throws Exception {
+        Path dockerfile = tempDir.resolve("DockerfileNativeOracleCloud");
+        Files.writeString(dockerfile, "FROM builder\nENTRYPOINT [\"./func\"]\n");
+
+        Fixtures fixtures = invokeBuildDockerfile(tempDir, dockerfile, DockerfileMojo.DOCKERFILE_NATIVE_ORACLE_CLOUD, false);
+
+        String dockerfileContents = Files.readString(dockerfile);
+        assertTrue(dockerfileContents.contains(AbstractDockerMojo.ORACLE_CLOUD_FUNCTION_DEFAULT_CMD));
+        verify(fixtures.dockerService).buildImage(fixtures.buildImageCmd);
+    }
+
+    @Test
+    void testBuildDockerfileCopiesProvidedDockerfileSymlinkContents(@TempDir Path tempDir) throws Exception {
+        Assumptions.assumeTrue(supportsSymbolicLinks(tempDir), "Symbolic links are not supported in this test environment");
+
+        Path linkedDockerfileTarget = tempDir.resolve("Dockerfile-custom");
+        Files.writeString(linkedDockerfileTarget, "FROM builder\nENTRYPOINT [\"/custom/application\"]\n");
+        Path providedDockerfile = tempDir.resolve(DockerfileMojo.DOCKERFILE);
+        Files.createSymbolicLink(providedDockerfile, linkedDockerfileTarget.getFileName());
+
+        Fixtures fixtures = new Fixtures(tempDir, tempDir.resolve("DockerfileNative"));
+        invokeBuildDockerfile(fixtures.mojo, DockerfileMojo.DOCKERFILE_NATIVE, true);
+
+        Path copiedDockerfile = tempDir.resolve("target").resolve(DockerfileMojo.DOCKERFILE);
+        assertTrue(Files.isRegularFile(copiedDockerfile));
+        assertFalse(Files.isSymbolicLink(copiedDockerfile));
+        assertEquals(Files.readString(linkedDockerfileTarget), Files.readString(copiedDockerfile));
+        verify(fixtures.dockerService).buildImage(fixtures.buildImageCmd);
+    }
+
+    @Test
+    void testBuildDockerfileCreatesMissingTargetDirectoryForProvidedDockerfile(@TempDir Path tempDir) throws Exception {
+        Path providedDockerfile = tempDir.resolve(DockerfileMojo.DOCKERFILE);
+        Files.writeString(providedDockerfile, "FROM builder\nENTRYPOINT [\"/app/application\"]\n");
+
+        Fixtures fixtures = new Fixtures(tempDir, tempDir.resolve("DockerfileNative"));
+        Path detachedArgsFile = tempDir.resolve("native-image.args");
+        Files.writeString(detachedArgsFile, "--no-fallback\n");
+        fixtures.properties.setProperty(DockerNativeMojo.ARGS_FILE_PROPERTY_NAME, detachedArgsFile.toString());
+        Files.deleteIfExists(fixtures.targetDir.resolve("native-image.args"));
+        Files.deleteIfExists(fixtures.targetDir);
+
+        invokeBuildDockerfile(fixtures.mojo, DockerfileMojo.DOCKERFILE_NATIVE, true);
+
+        Path copiedDockerfile = fixtures.targetDir.resolve(DockerfileMojo.DOCKERFILE);
+        assertTrue(Files.isDirectory(fixtures.targetDir));
+        assertTrue(Files.isRegularFile(copiedDockerfile));
+        assertEquals(Files.readString(providedDockerfile), Files.readString(copiedDockerfile));
+        verify(fixtures.dockerService).buildImage(fixtures.buildImageCmd);
+    }
+
+    private boolean supportsSymbolicLinks(Path tempDir) throws IOException {
+        Path probeTarget = tempDir.resolve("symlink-probe-target");
+        Path probeLink = tempDir.resolve("symlink-probe-link");
+        Files.writeString(probeTarget, "probe");
+        try {
+            Files.createSymbolicLink(probeLink, probeTarget.getFileName());
+            return Files.isSymbolicLink(probeLink);
+        } catch (IOException | UnsupportedOperationException | SecurityException e) {
+            return false;
+        } finally {
+            Files.deleteIfExists(probeLink);
+            Files.deleteIfExists(probeTarget);
+        }
+    }
+
+    private Fixtures invokeBuildDockerfile(Path tempDir, Path dockerfile, String dockerfileName, boolean passClassName) throws Exception {
+        Fixtures fixtures = new Fixtures(tempDir, dockerfile);
+        invokeBuildDockerfile(fixtures.mojo, dockerfileName, passClassName);
+        return fixtures;
+    }
+
+    private void invokeBuildDockerfile(DockerNativeMojo mojo, String dockerfileName, boolean passClassName) throws Exception {
+        Method buildDockerfile = DockerNativeMojo.class.getDeclaredMethod("buildDockerfile", String.class, boolean.class);
+        buildDockerfile.setAccessible(true);
+        try {
+            buildDockerfile.invoke(mojo, dockerfileName, passClassName);
+        } catch (InvocationTargetException e) {
+            throw unwrapInvocationTargetException(e);
+        }
+    }
+
+    private Exception unwrapInvocationTargetException(InvocationTargetException e) throws Exception {
+        Throwable cause = e.getCause();
+        if (cause instanceof Exception exception) {
+            return exception;
+        }
+        throw e;
+    }
+
+    private static final class Fixtures {
+        private final DockerService dockerService;
+        private final BuildImageCmd buildImageCmd;
+        private final DockerNativeMojo mojo;
+        private final Properties properties;
+        private final Path targetDir;
+
+        private Fixtures(Path tempDir, Path dockerfile) throws IOException {
+            MavenProject project = mock(MavenProject.class);
+            MavenSession session = mock(MavenSession.class);
+            MojoExecution execution = mock(MojoExecution.class);
+            JibConfigurationService jibConfigurationService = mock(JibConfigurationService.class);
+            ApplicationConfigurationService applicationConfigurationService = mock(ApplicationConfigurationService.class);
+            dockerService = mock(DockerService.class);
+            buildImageCmd = mock(BuildImageCmd.class, RETURNS_SELF);
+
+            Build build = new Build();
+            targetDir = tempDir.resolve("target");
+            build.setDirectory(targetDir.toString());
+
+            Path argsFile = targetDir.resolve("native-image.args");
+            Files.createDirectories(argsFile.getParent());
+            Files.writeString(argsFile, "--no-fallback\n");
+
+            properties = new Properties();
+            properties.setProperty(DockerNativeMojo.ARGS_FILE_PROPERTY_NAME, argsFile.toString());
+
+            when(session.getCurrentProject()).thenReturn(project);
+            when(session.getUserProperties()).thenReturn(new Properties());
+            when(session.getSystemProperties()).thenReturn(new Properties());
+            when(project.getProperties()).thenReturn(properties);
+            when(project.getArtifactId()).thenReturn("demo");
+            when(project.getBuild()).thenReturn(build);
+            when(project.getBasedir()).thenReturn(tempDir.toFile());
+            when(jibConfigurationService.getFromImage()).thenReturn(Optional.empty());
+            when(jibConfigurationService.getToImage()).thenReturn(Optional.empty());
+            when(jibConfigurationService.getTags()).thenReturn(java.util.Set.of());
+            when(jibConfigurationService.getPorts()).thenReturn(Optional.of("8080"));
+            when(applicationConfigurationService.getServerPort()).thenReturn("8080");
+            when(dockerService.loadDockerfileAsResource(dockerfileNameFor(dockerfile))).thenReturn(dockerfile.toFile());
+            when(dockerService.buildImageCmd()).thenReturn(buildImageCmd);
+            when(dockerService.buildImage(buildImageCmd)).thenReturn("image-id");
+
+            mojo = new DockerNativeMojo(project, jibConfigurationService, applicationConfigurationService, dockerService, session, execution);
+            mojo.baseImageRun = AbstractDockerMojo.DEFAULT_BASE_IMAGE_GRAALVM_RUN;
+            mojo.mainClass = "example.Application";
+            mojo.staticNativeImage = false;
+            mojo.oracleLinuxVersion = "ol9";
+            mojo.nativeImageBuildArgs = List.of("--no-fallback");
+        }
+
+        private static String dockerfileNameFor(Path dockerfile) {
+            return dockerfile.getFileName().toString();
+        }
     }
 
 }

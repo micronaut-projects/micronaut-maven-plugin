@@ -58,7 +58,6 @@ import static io.micronaut.maven.DockerNativeMojo.ARGS_FILE_PROPERTY_NAME;
 @Mojo(name = "dockerfile", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 @Execute(phase = LifecyclePhase.PROCESS_CLASSES)
 public class DockerfileMojo extends AbstractDockerMojo {
-
     public static final String DOCKERFILE = "Dockerfile";
     public static final String DOCKERFILE_AWS_CUSTOM_RUNTIME = "DockerfileNativeLambda";
     public static final String DOCKERFILE_AWS = "DockerfileLambda";
@@ -71,6 +70,8 @@ public class DockerfileMojo extends AbstractDockerMojo {
     public static final String DOCKERFILE_NATIVE_STATIC = "DockerfileNativeStatic";
     public static final String DOCKERFILE_NATIVE_ORACLE_CLOUD = "DockerfileNativeOracleCloud";
     public static final String NATIVE_BUILD_TOOLS_MAVEN_PLUGIN = "org.graalvm.buildtools:native-maven-plugin";
+    private static final String CLASS_NAME_PLACEHOLDER = "CLASS_NAME";
+    private static final String EXEC_MAIN_CLASS_SOURCE = "exec.mainClass";
 
     private final ExecutorService executorService;
 
@@ -102,7 +103,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
         }
     }
 
-    private Optional<File> buildDockerfile(MicronautRuntime runtime) throws IOException {
+    private Optional<File> buildDockerfile(MicronautRuntime runtime) throws IOException, MojoExecutionException {
         File dockerfile;
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION -> {
@@ -155,7 +156,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
         }
     }
 
-    private Optional<File> buildDockerfileNative(MicronautRuntime runtime) throws IOException, MavenInvocationException {
+    private Optional<File> buildDockerfileNative(MicronautRuntime runtime) throws IOException, MavenInvocationException, MojoExecutionException {
         getLog().info("Generating GraalVM args file");
         executorService.invokeGoal(NATIVE_BUILD_TOOLS_MAVEN_PLUGIN, "write-args-file");
         File dockerfile;
@@ -185,58 +186,136 @@ public class DockerfileMojo extends AbstractDockerMojo {
         return Optional.ofNullable(dockerfile);
     }
 
-    private void processDockerfile(File dockerfile) throws IOException {
+    private void processDockerfile(File dockerfile) throws IOException, MojoExecutionException {
+        if (dockerfile == null) {
+            return;
+        }
 
-        if (dockerfile != null) {
-            var allLines = Files.readAllLines(dockerfile.toPath());
-            var result = new ArrayList<String>();
-            for (String line : allLines) {
-                if (!line.startsWith("ARG")) {
-                    if (line.contains("BASE_IMAGE_RUN")) {
-                        result.add(line.replace("${BASE_IMAGE_RUN}", baseImageRun));
-                    } else if (line.contains("BASE_IMAGE")) {
-                        result.add(line.replace("${BASE_IMAGE}", getFrom()));
-                    } else if (line.contains("BASE_JAVA_IMAGE")) {
-                        result.add(line.replace("${BASE_JAVA_IMAGE}", getBaseImage()));
-                    } else if (line.contains("GRAALVM_DOWNLOAD_URL")) {
-                        result.add(line.replace("${GRAALVM_DOWNLOAD_URL}", graalVmDownloadUrl()));
-                    } else if (line.contains("CLASS_NAME")) {
-                        result.add(line.replace("${CLASS_NAME}", mainClass));
-                    } else if (line.contains("PORTS")) {
-                        result.add(line.replace("${PORTS}", getPorts()));
-                    } else {
-                        result.add(line);
-                    }
-                }
-            }
+        var allLines = Files.readAllLines(dockerfile.toPath());
+        Files.write(dockerfile.toPath(), processDockerfileLines(allLines));
 
-            String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);
-            if (argsFile == null) {
-                Path targetPath = Paths.get(mavenProject.getBuild().getDirectory());
-                try (Stream<Path> listStream = Files.list(targetPath)) {
-                    Path argsFilePath = listStream
-                        .map(path -> path.getFileName().toString())
-                        .filter(f -> f.startsWith("native-image") && f.endsWith("args"))
-                        .map(targetPath::resolve)
-                        .findFirst()
-                        .orElse(null);
-                    if (argsFilePath != null) {
-                        argsFile = argsFilePath.toAbsolutePath().toString();
-                    }
-                }
-            }
-            if (argsFile != null) {
-                List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);
-                //Remove extra main class argument
-                allNativeImageBuildArgs.remove(mainClass);
-                getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);
-                List<String> conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));
-                if (conversionResult.size() == 1) {
-                    Files.delete(Paths.get(argsFile));
-                }
-            }
+        String argsFile = findArgsFile();
+        if (argsFile != null) {
+            processNativeImageArgs(argsFile);
+        }
+    }
 
-            Files.write(dockerfile.toPath(), result);
+    private List<String> processDockerfileLines(List<String> allLines) throws MojoExecutionException {
+        var result = new ArrayList<String>();
+        for (String line : allLines) {
+            String processedLine = processDockerfileLine(line);
+            if (processedLine != null) {
+                result.add(processedLine);
+            }
+        }
+        return result;
+    }
+
+    private String processDockerfileLine(String line) throws MojoExecutionException {
+        if (line.startsWith("ARG")) {
+            return shouldInlineArgLine(line) ? null : line;
+        }
+        if (containsPlaceholder(line, "BASE_IMAGE_RUN")) {
+            return line.replace("${BASE_IMAGE_RUN}", validateImageReference("micronaut.native-image.base-image-run", baseImageRun));
+        }
+        if (containsPlaceholder(line, "BASE_IMAGE")) {
+            return line.replace("${BASE_IMAGE}", validateImageReference("jib.from.image", getFrom()));
+        }
+        if (containsPlaceholder(line, "BASE_JAVA_IMAGE")) {
+            return line.replace("${BASE_JAVA_IMAGE}", validateImageReference("base Java image", getBaseImage()));
+        }
+        if (containsPlaceholder(line, "GRAALVM_DOWNLOAD_URL")) {
+            return line.replace("${GRAALVM_DOWNLOAD_URL}", shellLiteral("GraalVM download URL", validateDownloadUrl("GraalVM download URL", graalVmDownloadUrl())));
+        }
+        if (containsPlaceholder(line, CLASS_NAME_PLACEHOLDER)) {
+            return replaceClassName(line);
+        }
+        if (containsPlaceholder(line, "PORTS")) {
+            return line.replace("${PORTS}", validateExposedPorts("jib.container.ports", getPorts()));
+        }
+        return line;
+    }
+
+    private static boolean containsPlaceholder(String line, String placeholderName) {
+        return line.contains("${" + placeholderName + "}");
+    }
+
+    private static boolean shouldInlineArgLine(String line) {
+        String trimmed = line.trim();
+        if (!trimmed.startsWith("ARG")) {
+            return false;
+        }
+        String remainder = trimmed.substring(3).trim();
+        if (remainder.isEmpty()) {
+            return false;
+        }
+
+        int endEquals = remainder.indexOf('=');
+        int endWhitespace = -1;
+        for (int i = 0; i < remainder.length(); i++) {
+            if (Character.isWhitespace(remainder.charAt(i))) {
+                endWhitespace = i;
+                break;
+            }
+        }
+
+        int end = remainder.length();
+        if (endEquals >= 0) {
+            end = Math.min(end, endEquals);
+        }
+        if (endWhitespace >= 0) {
+            end = Math.min(end, endWhitespace);
+        }
+
+        String argName = remainder.substring(0, end);
+        return "BASE_IMAGE_RUN".equals(argName)
+            || "BASE_JAVA_IMAGE".equals(argName)
+            || "BASE_IMAGE".equals(argName)
+            || "GRAALVM_DOWNLOAD_URL".equals(argName)
+            || CLASS_NAME_PLACEHOLDER.equals(argName)
+            || "PORTS".equals(argName);
+    }
+
+    private String replaceClassName(String line) throws MojoExecutionException {
+        String className = isJsonArrayClassNameContext(line)
+            ? escapeJsonString(EXEC_MAIN_CLASS_SOURCE, mainClass)
+            : line.contains("\"${CLASS_NAME}\"")
+                ? escapeShellDoubleQuoted(EXEC_MAIN_CLASS_SOURCE, mainClass)
+            : shellLiteral(EXEC_MAIN_CLASS_SOURCE, mainClass);
+        return line.replace("${CLASS_NAME}", className);
+    }
+
+    private static boolean isJsonArrayClassNameContext(String line) {
+        return containsPlaceholder(line, CLASS_NAME_PLACEHOLDER)
+            && (line.contains("ENTRYPOINT [") || line.contains("CMD ["));
+    }
+
+    private String findArgsFile() throws IOException {
+        String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);
+        if (argsFile != null) {
+            return argsFile;
+        }
+        Path targetPath = Paths.get(mavenProject.getBuild().getDirectory());
+        try (Stream<Path> listStream = Files.list(targetPath)) {
+            return listStream
+                .filter(path -> {
+                    String fileName = path.getFileName().toString();
+                    return fileName.startsWith("native-image") && fileName.endsWith("args");
+                })
+                .findFirst()
+                .map(path -> path.toAbsolutePath().toString())
+                .orElse(null);
+        }
+    }
+
+    private void processNativeImageArgs(String argsFile) throws IOException, MojoExecutionException {
+        List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);
+        //Remove extra main class argument
+        allNativeImageBuildArgs.remove(mainClass);
+        getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);
+        List<String> conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));
+        if (conversionResult.size() == 1) {
+            Files.delete(Paths.get(argsFile));
         }
     }
 }

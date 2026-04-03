@@ -23,7 +23,9 @@ public enum AotPackaging {
     NATIVE_IMAGE("native-image"),
     DOCKER("docker"),
     DOCKER_NATIVE("docker-native"),
-    DOCKER_CRAC("docker-crac");
+    DOCKER_CRAC("docker-crac"),
+    K8S("k8s"),
+    OPENSHIFT("openshift");
 
     private final String id;
 

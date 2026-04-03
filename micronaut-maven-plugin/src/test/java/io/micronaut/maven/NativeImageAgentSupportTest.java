@@ -1,0 +1,214 @@
+package io.micronaut.maven;
+
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Properties;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+class NativeImageAgentSupportTest {
+
+    @TempDir
+    Path tempDir;
+
+    @Test
+    void doesNotAddAgentArgumentsWhenAgentIsDisabled() throws MojoExecutionException {
+        var arguments = NativeImageAgentSupport.computeJvmArguments(session(new Properties(), new Properties()), project(null), targetDirectory(), List.of());
+
+        assertEquals(List.of(), arguments);
+    }
+
+    @Test
+    void addsDefaultAgentArgumentsWhenEnabledFromCommandLine() throws MojoExecutionException {
+        var userProperties = new Properties();
+        userProperties.setProperty(NativeImageAgentSupport.AGENT_PROPERTY, "true");
+
+        var arguments = NativeImageAgentSupport.computeJvmArguments(session(userProperties, new Properties()), project(null), targetDirectory(), List.of());
+
+        assertEquals(2, arguments.size());
+        assertEquals("-Dorg.graalvm.nativeimage.imagecode=agent", arguments.get(1));
+        assertTrue(arguments.get(0).startsWith("-agentlib:native-image-agent=config-output-dir=" + targetDirectory().getAbsolutePath() + File.separator + "native" + File.separator + "agent-output" + File.separator + "main"));
+    }
+
+    @Test
+    void rejectsManualNativeImageAgentWhenNativeBuildToolsAgentIsEnabled() {
+        var userProperties = new Properties();
+        userProperties.setProperty(NativeImageAgentSupport.AGENT_PROPERTY, "true");
+
+        var exception = assertThrows(MojoExecutionException.class, () ->
+            NativeImageAgentSupport.computeJvmArguments(session(userProperties, new Properties()), project(null), targetDirectory(), List.of("-agentlib:native-image-agent=config-output-dir=custom"))
+        );
+
+        assertTrue(exception.getMessage().contains("mn.jvmArgs"));
+    }
+
+    @Test
+    void rejectsManualImagecodeJvmArgumentWhenNativeBuildToolsAgentIsEnabled() {
+        var userProperties = new Properties();
+        userProperties.setProperty(NativeImageAgentSupport.AGENT_PROPERTY, "true");
+
+        var exception = assertThrows(MojoExecutionException.class, () ->
+            NativeImageAgentSupport.computeJvmArguments(
+                session(userProperties, new Properties()),
+                project(null),
+                targetDirectory(),
+                List.of("-Dorg.graalvm.nativeimage.imagecode=buildtime")
+            )
+        );
+
+        assertTrue(exception.getMessage().contains(NativeImageAgentSupport.IMAGECODE_PROPERTY));
+    }
+
+    @Test
+    void rejectsManualImagecodeUserPropertyWhenNativeBuildToolsAgentIsEnabled() {
+        var userProperties = new Properties();
+        userProperties.setProperty(NativeImageAgentSupport.AGENT_PROPERTY, "true");
+        userProperties.setProperty(NativeImageAgentSupport.IMAGECODE_PROPERTY, "buildtime");
+
+        var exception = assertThrows(MojoExecutionException.class, () ->
+            NativeImageAgentSupport.computeJvmArguments(session(userProperties, new Properties()), project(null), targetDirectory(), List.of())
+        );
+
+        assertTrue(exception.getMessage().contains(NativeImageAgentSupport.IMAGECODE_PROPERTY));
+    }
+
+    @Test
+    void addsAgentArgumentsWhenEnabledInPomConfiguration() throws MojoExecutionException {
+        var arguments = NativeImageAgentSupport.computeJvmArguments(session(new Properties(), new Properties()), project(agentConfiguration("true", "standard")), targetDirectory(), List.of());
+
+        assertEquals(2, arguments.size());
+        assertTrue(arguments.get(0).startsWith("-agentlib:native-image-agent=config-output-dir=" + targetDirectory().getAbsolutePath() + File.separator + "native" + File.separator + "agent-output" + File.separator + "main"));
+    }
+
+    @Test
+    void commandLineFalseOverridesPomConfiguration() throws MojoExecutionException {
+        var userProperties = new Properties();
+        userProperties.setProperty(NativeImageAgentSupport.AGENT_PROPERTY, "false");
+
+        var arguments = NativeImageAgentSupport.computeJvmArguments(session(userProperties, new Properties()), project(agentConfiguration("true", "standard")), targetDirectory(), List.of());
+
+        assertEquals(List.of(), arguments);
+    }
+
+    @Test
+    void readsAgentOverrideFromSystemProperties() throws MojoExecutionException {
+        var systemProperties = new Properties();
+        systemProperties.setProperty(NativeImageAgentSupport.AGENT_PROPERTY, "true");
+
+        var arguments = NativeImageAgentSupport.computeJvmArguments(session(new Properties(), systemProperties), project(null), targetDirectory(), List.of());
+
+        assertEquals(2, arguments.size());
+    }
+
+    @Test
+    void commandLineTrueOverridesDisabledPomConfiguration() throws MojoExecutionException {
+        var userProperties = new Properties();
+        userProperties.setProperty(NativeImageAgentSupport.AGENT_PROPERTY, "true");
+
+        var arguments = NativeImageAgentSupport.computeJvmArguments(session(userProperties, new Properties()), project(agentConfiguration("false", "standard")), targetDirectory(), List.of());
+
+        assertEquals(2, arguments.size());
+    }
+
+    @Test
+    void resolvesConfiguredFilterFilesToAbsolutePaths() throws MojoExecutionException {
+        File absoluteAccessFilter = tempDir.resolve("filters/access-filter.json").toFile();
+        var arguments = NativeImageAgentSupport.computeJvmArguments(session(new Properties(), new Properties()), project(agentConfigurationWithFilterFiles(absoluteAccessFilter)), targetDirectory(), List.of());
+
+        assertTrue(arguments.get(0).contains(tempDir.resolve("filters/caller-filter.json").toAbsolutePath().toString()));
+        assertTrue(arguments.get(0).contains(absoluteAccessFilter.getAbsolutePath()));
+    }
+
+    @Test
+    void rejectsUnsupportedDirectModeConfiguration() {
+        var exception = assertThrows(MojoExecutionException.class, () ->
+            NativeImageAgentSupport.computeJvmArguments(session(new Properties(), new Properties()), project(agentConfiguration("true", "direct")), targetDirectory(), List.of())
+        );
+
+        assertTrue(exception.getMessage().contains("standard mode"));
+    }
+
+    @Test
+    void rejectsInvalidPomBooleanConfiguration() {
+        var exception = assertThrows(MojoExecutionException.class, () ->
+            NativeImageAgentSupport.computeJvmArguments(session(new Properties(), new Properties()), project(agentConfiguration("maybe", "standard")), targetDirectory(), List.of())
+        );
+
+        assertTrue(exception.getMessage().contains("<enabled>"));
+    }
+
+    private MavenSession session(Properties userProperties, Properties systemProperties) {
+        var session = mock(MavenSession.class);
+        when(session.getUserProperties()).thenReturn(userProperties);
+        when(session.getSystemProperties()).thenReturn(systemProperties);
+        return session;
+    }
+
+    private MavenProject project(Xpp3Dom configuration) {
+        var project = mock(MavenProject.class);
+        when(project.getBasedir()).thenReturn(tempDir.toFile());
+        if (configuration != null) {
+            var plugin = new Plugin();
+            plugin.setGroupId("org.graalvm.buildtools");
+            plugin.setArtifactId("native-maven-plugin");
+            plugin.setConfiguration(configuration);
+            when(project.getPlugin(NativeImageAgentSupport.NATIVE_MAVEN_PLUGIN)).thenReturn(plugin);
+        }
+        return project;
+    }
+
+    private File targetDirectory() {
+        return tempDir.resolve("target").toFile();
+    }
+
+    private Xpp3Dom agentConfiguration(String enabledValue, String mode) {
+        var configuration = new Xpp3Dom("configuration");
+        var agent = new Xpp3Dom("agent");
+        configuration.addChild(agent);
+
+        var enabled = new Xpp3Dom("enabled");
+        enabled.setValue(enabledValue);
+        agent.addChild(enabled);
+
+        var defaultMode = new Xpp3Dom("defaultMode");
+        defaultMode.setValue(mode);
+        agent.addChild(defaultMode);
+
+        var modes = new Xpp3Dom("modes");
+        agent.addChild(modes);
+        var direct = new Xpp3Dom("direct");
+        direct.setValue("config-output-dir={output_dir}");
+        modes.addChild(direct);
+        return configuration;
+    }
+
+    private Xpp3Dom agentConfigurationWithFilterFiles(File absoluteAccessFilter) {
+        var configuration = agentConfiguration("true", "standard");
+        var options = new Xpp3Dom("options");
+        childWithValue(options, "callerFilterFiles", "filterFile", "filters/caller-filter.json");
+        childWithValue(options, "accessFilterFiles", "filterFile", absoluteAccessFilter.getAbsolutePath());
+        configuration.getChild("agent").addChild(options);
+        return configuration;
+    }
+
+    private void childWithValue(Xpp3Dom parent, String childName, String nestedChildName, String value) {
+        var child = new Xpp3Dom(childName);
+        var nestedChild = new Xpp3Dom(nestedChildName);
+        nestedChild.setValue(value);
+        child.addChild(nestedChild);
+        parent.addChild(child);
+    }
+}

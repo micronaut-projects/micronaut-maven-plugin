@@ -27,6 +27,102 @@ jobs:
       - name: "🛡 Verify workflow pinning"
         run: bash .github/scripts/check-workflow-pinning.sh
 
+  linux-docker-native-preflight:
+    if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+    needs:
+      - workflow-hardening
+    runs-on: ubuntu-latest
+    env:
+      DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
+      DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
+      DEVELOCITY_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
+      GRAALVM_QUICK_BUILD: true
+    steps:
+      - name: "📥 Checkout repository"
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+        with:
+          fetch-depth: 0
+
+      - name: "🔎 Determine preflight scope"
+        id: preflight_scope
+        shell: bash
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "merge_group" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "reason=merge_group" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.head.sha }}"
+
+          should_run=false
+          reason=non_sensitive_paths
+          while IFS= read -r file; do
+            case "$file" in
+              .github/workflows/*|.github/scripts/*|.mvn/*|mvnw|mvnw.cmd|pom.xml|micronaut-maven-core/*|micronaut-maven-jib-integration/*|micronaut-maven-plugin/*|micronaut-maven-integration-tests/pom.xml|micronaut-maven-integration-tests/src/it/issue582/*|micronaut-maven-integration-tests/src/it/dockerfile-docker-native-*/*)
+                should_run=true
+                reason="$file"
+                break
+                ;;
+            esac
+          done < <(git diff --name-only "$base_sha" "$head_sha")
+
+          echo "should_run=$should_run" >> "$GITHUB_OUTPUT"
+          echo "reason=$reason" >> "$GITHUB_OUTPUT"
+
+      - name: "ℹ️ Skip preflight for unrelated changes"
+        if: steps.preflight_scope.outputs.should_run != 'true'
+        run: |
+          echo "Skipping Linux docker-native preflight."
+          echo "Reason: ${{ steps.preflight_scope.outputs.reason }}"
+
+      - name: "🗑 Remove system JDKs"
+        if: steps.preflight_scope.outputs.should_run == 'true'
+        run: |
+          sudo rm -rf /usr/lib/jvm/*
+          unset JAVA_HOME
+          filtered_path=$(echo "$PATH" | tr ':' '\n' | grep -v '/usr/lib/jvm' | paste -sd:)
+          export PATH="$filtered_path"
+
+      - name: "🗑 Free disk space"
+        if: steps.preflight_scope.outputs.should_run == 'true'
+        run: |
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo apt-get clean
+          df -h
+
+      - name: "☕️ Install Java and Maven"
+        if: steps.preflight_scope.outputs.should_run == 'true'
+        uses: actions/setup-java@1d018f9b8b9b505bb578a83b230fabcce01af93b
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          cache: 'maven'
+
+      - name: "🔧 Setup GraalVM CE"
+        if: steps.preflight_scope.outputs.should_run == 'true'
+        uses: graalvm/setup-graalvm@2149f395d36ce12ad4ee5d7f334b26bf081fa555
+        with:
+          distribution: 'graalvm'
+          java-version: '25'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "🐳 Run Linux docker-native preflight"
+        if: steps.preflight_scope.outputs.should_run == 'true'
+        run: |
+          ./mvnw -q install -Dinvoker.skip=true
+          ./mvnw -pl micronaut-maven-integration-tests -am verify "-Dinvoker.test=issue582,dockerfile-docker-native-netty-custom-base"
+
+      - name: "📊 Publish Preflight Test Report"
+        if: always() && steps.preflight_scope.outputs.should_run == 'true'
+        uses: mikepenz/action-junit-report@74626db7353a25a20a72816467ebf035f674c5f8
+        with:
+          check_name: Linux Docker Native Preflight / Test Report
+          report_paths: '**/target/invoker-reports/TEST-*.xml'
+          check_retries: 'true'
+
   snapshot:
     needs:
       - workflow-hardening
@@ -84,7 +180,7 @@ jobs:
           server-password: SONATYPE_PASSWORD
 
       - name: "🔧 Setup GraalVM CE"
-        uses: graalvm/setup-graalvm@54b4f5a65c1a84b2fdfdc2078fe43df32819e4b1
+        uses: graalvm/setup-graalvm@2149f395d36ce12ad4ee5d7f334b26bf081fa555
         with:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
@@ -92,7 +188,7 @@ jobs:
 
       - name: "⏬ Eagerly pull Docker images"
         run: |
-          docker pull postgres:latest
+          docker pull postgres:18.3@sha256:a9abf4275f9e99bff8e6aed712b3b7dfec9cac1341bba01c1ffdfce9ff9fc34a
 
       - name: "🧪 Run tests"
         run: |
