@@ -26,8 +26,8 @@ public enum Packaging {
     DOCKER("docker"),
     DOCKER_NATIVE("docker-native"),
     DOCKER_CRAC("docker-crac"),
-    JKUBE_K8S("jkube-k8s"),
-    JKUBE_OC("jkube-oc");
+    K8S("k8s"),
+    OPENSHIFT("openshift");
 
     private final String id;
 

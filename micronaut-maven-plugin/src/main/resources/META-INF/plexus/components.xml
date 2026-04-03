@@ -281,7 +281,7 @@
         <!-- JKube Kubernetes packaging -->
         <component>
             <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
-            <role-hint>jkube-k8s</role-hint>
+            <role-hint>k8s</role-hint>
             <implementation>
                 org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping
             </implementation>
@@ -333,7 +333,7 @@
         <!-- JKube OpenShift packaging -->
         <component>
             <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
-            <role-hint>jkube-oc</role-hint>
+            <role-hint>openshift</role-hint>
             <implementation>
                 org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping
             </implementation>

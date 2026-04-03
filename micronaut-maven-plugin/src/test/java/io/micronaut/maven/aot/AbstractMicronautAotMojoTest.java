@@ -19,8 +19,8 @@ import static org.mockito.Mockito.when;
 class AbstractMicronautAotMojoTest {
 
     @ParameterizedTest
-    @ValueSource(strings = {"jkube-k8s", "jkube-oc"})
-    void treatsJkubePackagingsAsJitRuntime(String packaging, @TempDir Path tempDir) throws Exception {
+    @ValueSource(strings = {"k8s", "openshift"})
+    void treatsKubernetesAndOpenShiftPackagingsAsJitRuntime(String packaging, @TempDir Path tempDir) throws Exception {
         var project = mock(MavenProject.class);
         var build = mock(Build.class);
         when(project.getPackaging()).thenReturn(packaging);

@@ -13,8 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class LifecycleMappingTest {
 
     @Test
-    void jkubeK8sPackagingDelegatesPackageAndDeployLifecyclePhases() throws Exception {
-        Element component = findLifecycleComponent("jkube-k8s");
+    void k8sPackagingDelegatesPackageAndDeployLifecyclePhases() throws Exception {
+        Element component = findLifecycleComponent("k8s");
 
         assertEquals(
             "org.eclipse.jkube:kubernetes-maven-plugin:build",
@@ -27,8 +27,8 @@ class LifecycleMappingTest {
     }
 
     @Test
-    void jkubeOcPackagingDelegatesPackageAndDeployLifecyclePhases() throws Exception {
-        Element component = findLifecycleComponent("jkube-oc");
+    void openshiftPackagingDelegatesPackageAndDeployLifecyclePhases() throws Exception {
+        Element component = findLifecycleComponent("openshift");
 
         assertEquals(
             "org.eclipse.jkube:openshift-maven-plugin:build",

@@ -9,10 +9,10 @@ class PackagingTest {
 
     @ParameterizedTest
     @CsvSource({
-        "jkube-k8s,JKUBE_K8S",
-        "jkube-oc,JKUBE_OC"
+        "k8s,K8S",
+        "openshift,OPENSHIFT"
     })
-    void supportsJkubePackagingAliases(String value, Packaging expected) {
+    void supportsKubernetesAndOpenShiftPackagings(String value, Packaging expected) {
         assertEquals(expected, Packaging.of(value));
         assertEquals(value, expected.id());
     }
