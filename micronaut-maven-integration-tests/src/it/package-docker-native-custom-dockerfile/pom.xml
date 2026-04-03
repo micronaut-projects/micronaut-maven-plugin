@@ -67,7 +67,10 @@
         <artifactId>micronaut-maven-plugin</artifactId>
         <version>${micronaut-maven-plugin.version}</version>
         <configuration>
-          <nativeImageBuildArgs>-Ob</nativeImageBuildArgs>
+          <nativeImageBuildArgs>
+            <nativeImageBuildArg>-Ob</nativeImageBuildArg>
+            <nativeImageBuildArg>--initialize-at-run-time=io.netty.handler.pcap.PcapWriteHandler</nativeImageBuildArg>
+          </nativeImageBuildArgs>
         </configuration>
       </plugin>
       <plugin>
