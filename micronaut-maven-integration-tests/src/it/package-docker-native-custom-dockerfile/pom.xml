@@ -66,12 +66,6 @@
         <groupId>io.micronaut.maven</groupId>
         <artifactId>micronaut-maven-plugin</artifactId>
         <version>${micronaut-maven-plugin.version}</version>
-        <configuration>
-          <nativeImageBuildArgs>
-            <nativeImageBuildArg>-Ob</nativeImageBuildArg>
-            <nativeImageBuildArg>--initialize-at-run-time=io.netty.handler.pcap.PcapWriteHandler</nativeImageBuildArg>
-          </nativeImageBuildArgs>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -103,6 +97,21 @@
             <arg>-Amicronaut.processing.group=io.micronaut.build.examples</arg>
             <arg>-Amicronaut.processing.module=${project.artifactId}</arg>
           </compilerArgs>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.graalvm.buildtools</groupId>
+        <artifactId>native-maven-plugin</artifactId>
+        <configuration>
+          <metadataRepository>
+            <dependencies>
+              <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-common</artifactId>
+                <excluded>true</excluded>
+              </dependency>
+            </dependencies>
+          </metadataRepository>
         </configuration>
       </plugin>
       <plugin>
