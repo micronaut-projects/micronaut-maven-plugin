@@ -36,6 +36,9 @@ jobs:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Windows wrapper preflight
+        shell: cmd
+        run: .github\scripts\windows-preflight.cmd
       - name: Build with Maven
         shell: cmd
         run: |

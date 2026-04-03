@@ -75,10 +75,13 @@ sdk env                    # applies the repo's Java 25 toolchain from .sdkmanrc
 ./mvnw spotless:check checkstyle:check
 ./mvnw -pl micronaut-maven-plugin -am test
 ./mvnw release:prepare -DdryRun=true
+bash .github/scripts/check-workflow-pinning.sh
+.\.github\scripts\windows-preflight.cmd
 ```
 
 ## NOTES
 - If touching CI expectations, update `.github/workflows/snapshot.yml`, `.github/workflows/windows-ci.yml`, and/or `.github/workflows/release.yml` consistently.
 - Local shells may still default to Java 21 even though the repo and CI validate on Java 25; apply `.sdkmanrc` with `sdk env` or point `JAVA_HOME` at a Java 25 install before running root `./mvnw ... validate/verify` commands.
 - Paperclip worktrees may surface an untracked `.agents/` directory as local runtime scaffolding; ignore it unless the task is explicitly about agent assets or skills.
+- If a change touches `.github/workflows`, `.github/scripts`, `.mvn/wrapper`, `mvnw`, or `mvnw.cmd`, run the workflow-pinning check and the Windows preflight before handoff. Use the `Windows Preflight` workflow if you do not have local Windows access.
 - Keep child AGENTS.md files scoped: local rules only, no repeated root-level guidance.
