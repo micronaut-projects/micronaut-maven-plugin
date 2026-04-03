@@ -15,6 +15,8 @@
  */
 package io.micronaut.maven;
 
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.common.io.FileWriteMode;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.maven.core.MicronautRuntime;
@@ -26,6 +28,7 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -33,6 +36,8 @@ import org.apache.maven.project.MavenProject;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -46,7 +51,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.micronaut.maven.services.ApplicationConfigurationService.DEFAULT_PORT;
 
@@ -362,18 +366,18 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     /**
      * @return the Docker CMD command.
      */
-    protected String getCmd() {
-        return "CMD [" +
-            appArguments.stream()
-                .map(s -> "\"" + s + "\"")
-                .collect(Collectors.joining(", ")) +
-            "]";
+    protected String getCmd() throws MojoExecutionException {
+        var escapedArguments = new ArrayList<String>(appArguments.size());
+        for (String argument : appArguments) {
+            escapedArguments.add(jsonStringLiteral("mn.app.args", argument));
+        }
+        return "CMD [" + String.join(", ", escapedArguments) + "]";
     }
 
     /**
      * @return the generated AWS Lambda bootstrap command.
      */
-    protected String getLambdaBootstrapCommand() {
+    protected String getLambdaBootstrapCommand() throws MojoExecutionException {
         var command = new StringBuilder("./func");
         for (String bootstrapArgument : DEFAULT_LAMBDA_BOOTSTRAP_ARGUMENTS) {
             command.append(' ').append(bootstrapArgument);
@@ -391,10 +395,11 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      *
      * @param dockerfile the docker file
      */
-    protected void lambdaBootstrapCommand(File dockerfile) throws IOException {
+    protected void lambdaBootstrapCommand(File dockerfile) throws IOException, MojoExecutionException {
         if (dockerfile == null) {
             return;
         }
+        String lambdaBootstrapDockerCommand = getLambdaBootstrapDockerCommand();
         if (lambdaBootstrapArguments != null && !lambdaBootstrapArguments.isEmpty()) {
             getLog().info("Using AWS Lambda bootstrap arguments: " + lambdaBootstrapArguments);
         }
@@ -402,7 +407,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
         var result = new ArrayList<String>(allLines.size());
         for (String line : allLines) {
             if (line.contains(LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER)) {
-                result.add(line.replace(LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER, getLambdaBootstrapDockerCommand()));
+                result.add(line.replace(LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER, lambdaBootstrapDockerCommand));
             } else {
                 result.add(line);
             }
@@ -410,19 +415,20 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
         Files.write(dockerfile.toPath(), result);
     }
 
-    private String getLambdaBootstrapDockerCommand() {
-        return "printf '%s\\n' "
-            + Stream.of("#!/bin/sh", "set -euo pipefail", getLambdaBootstrapCommand())
-            .map(AbstractDockerMojo::quoteShellLiteral)
-            .collect(Collectors.joining(" "))
-            + " > bootstrap";
+    private String getLambdaBootstrapDockerCommand() throws MojoExecutionException {
+        var quotedLines = new ArrayList<String>();
+        for (String line : List.of("#!/bin/sh", "set -euo pipefail", getLambdaBootstrapCommand())) {
+            quotedLines.add(quoteShellLiteral("AWS Lambda bootstrap command", line));
+        }
+        return "printf '%s\\n' " + String.join(" ", quotedLines) + " > bootstrap";
     }
 
-    private static String escapeBootstrapArgument(String argument) {
-        if (isShellSafe(argument)) {
-            return argument;
+    private static String escapeBootstrapArgument(String argument) throws MojoExecutionException {
+        String sanitized = validateDockerfileValue("micronaut.lambda.bootstrap.args", argument);
+        if (isShellSafe(sanitized)) {
+            return sanitized;
         }
-        return quoteShellLiteral(argument);
+        return quoteShellLiteral("micronaut.lambda.bootstrap.args", sanitized);
     }
 
     private static boolean isShellSafe(String argument) {
@@ -439,8 +445,104 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
         return true;
     }
 
-    private static String quoteShellLiteral(String value) {
+    static String quoteShellLiteral(String source, String value) throws MojoExecutionException {
+        validateDockerfileValue(source, value);
         return "'" + value.replace("'", "'\"'\"'") + "'";
+    }
+
+    protected static String validateDockerfileValue(String source, String value) throws MojoExecutionException {
+        if (value == null) {
+            throw new MojoExecutionException(source + " must not be null when generating a Dockerfile");
+        }
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (Character.isISOControl(c)) {
+                throw new MojoExecutionException(source + " contains an unsupported control character at index " + i
+                    + " and cannot be written into a generated Dockerfile");
+            }
+        }
+        return value;
+    }
+
+    protected static String validateImageReference(String source, String value) throws MojoExecutionException {
+        String sanitized = validateDockerfileValue(source, value);
+        try {
+            ImageReference.parse(sanitized);
+        } catch (InvalidImageReferenceException e) {
+            throw new MojoExecutionException(source + " is not a valid Docker image reference: " + sanitized, e);
+        }
+        return sanitized;
+    }
+
+    protected static String validateExposedPorts(String source, String value) throws MojoExecutionException {
+        String sanitized = validateDockerfileValue(source, value);
+        for (String token : sanitized.split("\\s+")) {
+            if (token.isEmpty()) {
+                continue;
+            }
+            if (!token.matches("\\d+(/(?:tcp|udp))?")) {
+                throw new MojoExecutionException(source + " contains an invalid exposed port token: " + token);
+            }
+        }
+        return sanitized;
+    }
+
+    protected static String validateDownloadUrl(String source, String value) throws MojoExecutionException {
+        String sanitized = validateDockerfileValue(source, value);
+        try {
+            URI uri = new URI(sanitized);
+            String scheme = uri.getScheme();
+            if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) {
+                throw new MojoExecutionException(source + " must use an http or https URL: " + sanitized);
+            }
+            if (!uri.isAbsolute()) {
+                throw new MojoExecutionException(source + " must be an absolute URL: " + sanitized);
+            }
+        } catch (URISyntaxException e) {
+            throw new MojoExecutionException(source + " is not a valid URL: " + sanitized, e);
+        }
+        return sanitized;
+    }
+
+    protected static String jsonStringLiteral(String source, String value) throws MojoExecutionException {
+        return "\"" + escapeJsonString(source, value) + "\"";
+    }
+
+    protected static String escapeJsonString(String source, String value) throws MojoExecutionException {
+        String sanitized = validateDockerfileValue(source, value);
+        var result = new StringBuilder(sanitized.length() + 8);
+        for (int i = 0; i < sanitized.length(); i++) {
+            char c = sanitized.charAt(i);
+            switch (c) {
+                case '"' -> result.append("\\\"");
+                case '\\' -> result.append("\\\\");
+                case '\b' -> result.append("\\b");
+                case '\f' -> result.append("\\f");
+                case '\n' -> result.append("\\n");
+                case '\r' -> result.append("\\r");
+                case '\t' -> result.append("\\t");
+                default -> {
+                    if (c < 0x20) {
+                        result.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        result.append(c);
+                    }
+                }
+            }
+        }
+        return result.toString();
+    }
+
+    protected static String shellLiteral(String source, String value) throws MojoExecutionException {
+        return quoteShellLiteral(source, validateDockerfileValue(source, value));
+    }
+
+    protected static String escapeShellDoubleQuoted(String source, String value) throws MojoExecutionException {
+        return validateDockerfileValue(source, value)
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("$", "\\$")
+            .replace("`", "\\`");
     }
 
     /**
@@ -498,10 +600,11 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      *
      * @param dockerfile the docker file
      */
-    protected void oracleCloudFunctionCmd(File dockerfile) throws IOException {
+    protected void oracleCloudFunctionCmd(File dockerfile) throws IOException, MojoExecutionException {
         if (appArguments != null && !appArguments.isEmpty()) {
             getLog().info("Using application arguments: " + appArguments);
-            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + getCmd());
+            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND)
+                .write(System.lineSeparator() + getCmd());
         } else {
             com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + ORACLE_CLOUD_FUNCTION_DEFAULT_CMD);
         }

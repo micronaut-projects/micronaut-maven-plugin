@@ -7,11 +7,13 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
 import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junitpioneer.jupiter.RestoreSystemProperties;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,6 +23,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -109,6 +112,38 @@ class AbstractDockerMojoTest {
         assertEquals("snapshot", Files.readString(flatSnapshotJar));
     }
 
+    @Test
+    void getCmdEscapesJsonArguments() throws MojoExecutionException {
+        var project = mockProject(Path.of(".").toAbsolutePath(), Set.of());
+        var mojo = new TestDockerMojo(project, mockSession(project));
+        mojo.appArguments = java.util.List.of("handler\", \"extra", "path\\segment");
+
+        assertEquals("CMD [\"handler\\\", \\\"extra\", \"path\\\\segment\"]", mojo.getCmd());
+    }
+
+    @Test
+    void getCmdRejectsControlCharacters() {
+        var project = mockProject(Path.of(".").toAbsolutePath(), Set.of());
+        var mojo = new TestDockerMojo(project, mockSession(project));
+        mojo.appArguments = java.util.List.of("handler\nRUN echo injected");
+
+        var exception = assertThrows(MojoExecutionException.class, mojo::getCmd);
+
+        assertTrue(exception.getMessage().contains("mn.app.args contains an unsupported control character"));
+    }
+
+    @Test
+    void lambdaBootstrapCommandRejectsControlCharacters(@TempDir Path tempDir) throws IOException {
+        var project = mockProject(tempDir, Set.of());
+        var mojo = new TestDockerMojo(project, mockSession(project));
+        mojo.lambdaBootstrapArguments = java.util.List.of("-Dsafe=true", "-Dmessage=hello\nRUN echo injected");
+        var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), "RUN ${LAMBDA_BOOTSTRAP_DOCKER_COMMAND}");
+
+        var exception = assertThrows(MojoExecutionException.class, () -> mojo.applyLambdaBootstrapCommand(dockerfile.toFile()));
+
+        assertTrue(exception.getMessage().contains("micronaut.lambda.bootstrap.args contains an unsupported control character"));
+    }
+
     private static Artifact mockDependency(String scope, boolean snapshot, Path file) {
         var dependency = mock(Artifact.class);
         when(dependency.getScope()).thenReturn(scope);
@@ -137,6 +172,9 @@ class AbstractDockerMojoTest {
 
     private static final class TestDockerMojo extends AbstractDockerMojo {
 
+        private TestDockerMojo(MavenProject mavenProject, MavenSession mavenSession) {
+            this(mavenProject, mavenSession, mock(JibConfigurationService.class));
+        }
         private TestDockerMojo(MavenProject mavenProject, MavenSession mavenSession, JibConfigurationService jibConfigurationService) {
             super(
                 mavenProject,
@@ -160,6 +198,10 @@ class AbstractDockerMojoTest {
         @Override
         public void execute() {
             throw new UnsupportedOperationException("not used in test");
+        }
+
+        private void applyLambdaBootstrapCommand(File dockerfile) throws IOException, MojoExecutionException {
+            lambdaBootstrapCommand(dockerfile);
         }
     }
 }
