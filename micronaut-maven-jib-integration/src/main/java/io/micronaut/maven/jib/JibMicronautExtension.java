@@ -141,7 +141,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
         entrypoint.add("-Djava.awt.headless=true");
         entrypoint.add("-Djava.library.path=/function/runtime/lib");
         entrypoint.add("-cp");
-        entrypoint.add("/function/app/classes:/function/app/libs/*:/function/app/resources:/function/runtime/*");
+        entrypoint.add("/function/app/classes:/function/app/libs/release/*:/function/app/libs/snapshot/*:/function/app/resources:/function/runtime/*");
         entrypoint.add("com.fnproject.fn.runtime.EntryPoint");
         return entrypoint;
     }
@@ -210,8 +210,10 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     static FileEntry remapEntry(FileEntry originalEntry, String layerName) {
         var pathComponents = UnixPathParser.parse(originalEntry.getExtractionPath().toString());
         AbsoluteUnixPath newPath;
-        if (layerName.contains("dependencies")) {
-            newPath = AbsoluteUnixPath.get("/function/app/libs/" + pathComponents.get(pathComponents.size() - 1));
+        if ("dependencies".equals(layerName)) {
+            newPath = AbsoluteUnixPath.get("/function/app/libs/release/" + pathComponents.get(pathComponents.size() - 1));
+        } else if ("snapshot-dependencies".equals(layerName)) {
+            newPath = AbsoluteUnixPath.get("/function/app/libs/snapshot/" + pathComponents.get(pathComponents.size() - 1));
         } else {
             //classes or resources
             newPath = AbsoluteUnixPath.get("/function" + originalEntry.getExtractionPath());

@@ -1,5 +1,8 @@
 FROM ubuntu:18.04
 
+ARG CRAC_ARCH
+ARG CRAC_JDK_VERSION
+ARG CRAC_OS
 WORKDIR /home/app
 
 # Add required libraries
@@ -34,7 +37,8 @@ RUN release_id=$(curl -s "https://api.azul.com/metadata/v1/zulu/packages/?java_v
 
 # Copy layers
 COPY classes /home/app/classes
-COPY dependency/* /home/app/libs/
+COPY dependency/release/ /home/app/libs/release/
+COPY dependency/snapshot/ /home/app/libs/snapshot/
 
 # Add build scripts
 COPY scripts/checkpoint.sh /home/app/checkpoint.sh

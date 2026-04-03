@@ -18,14 +18,14 @@
     <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
     <maven.native.plugin.version>@native-maven-plugin.version@</maven.native.plugin.version>
     <packaging>jar</packaging>
-    <micronaut.runtime>netty</micronaut.runtime>
+    <micronaut.runtime>http_server_jdk</micronaut.runtime>
     <maven.compiler.release>${java.specification.version}</maven.compiler.release>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>io.micronaut</groupId>
-      <artifactId>micronaut-http-server-netty</artifactId>
+      <groupId>io.micronaut.servlet</groupId>
+      <artifactId>micronaut-http-server-jdk</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -97,21 +97,6 @@
             <arg>-Amicronaut.processing.group=io.micronaut.build.examples</arg>
             <arg>-Amicronaut.processing.module=${project.artifactId}</arg>
           </compilerArgs>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.graalvm.buildtools</groupId>
-        <artifactId>native-maven-plugin</artifactId>
-        <configuration>
-          <metadataRepository>
-            <dependencies>
-              <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-common</artifactId>
-                <excluded>true</excluded>
-              </dependency>
-            </dependencies>
-          </metadataRepository>
         </configuration>
       </plugin>
       <plugin>

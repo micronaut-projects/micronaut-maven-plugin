@@ -1,8 +1,12 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-02-17 13:31:24 CET
-**Commit:** 520ced668
-**Branch:** 5.0.x
+This file is durable project guidance, not a point-in-time repository snapshot.
+Primary owners: Micronaut Maven Plugin maintainers (backup: release engineer on duty).
+Keep the sections below current, and review/update this file when:
+- cutting a release or changing supported Java, Micronaut, or Maven baselines
+- adding, renaming, or removing modules or major directories
+- changing CI workflows in `.github/workflows/` or the unit/invoker test strategy
+- moving core plugin behavior or shared logic between modules or major packages
 
 ## OVERVIEW
 Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module plus shared core, Jib integration, enforcer rules, and a large invoker-based integration-test harness.
@@ -28,7 +32,9 @@ Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module pl
 | AOT integration changes | `micronaut-maven-plugin/src/main/java/io/micronaut/maven/aot` | Analysis + sample config generation |
 | Test resources lifecycle | `micronaut-maven-plugin/src/main/java/io/micronaut/maven/testresources` | Start/stop lifecycle + helper |
 | Shared compile/dependency logic | `micronaut-maven-plugin/src/main/java/io/micronaut/maven/services` | Used by heavy mojos like `RunMojo` |
+| Enforcer policy checks | `micronaut-maven-enforcer-rules/src/main/java/io/micronaut/maven/enforcer` | Currently centered on `CheckSnakeYaml`; keep cross-module policy here |
 | Cross-module integration behavior | `micronaut-maven-integration-tests/src/it` | Scenario-per-directory invoker tests |
+| CI/release delivery changes | `.github/workflows` | `snapshot.yml` includes the Linux docker-native preflight plus the full snapshot run; keep `windows-ci.yml` and `release.yml` aligned when CI expectations move |
 | Formatting and style rules | `config/checkstyle`, `config/spotless.license.java` | Enforced in compile phase |
 
 ## CODE MAP
@@ -46,7 +52,7 @@ Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module pl
 - Root POM owns shared plugin and quality configuration; module POMs stay lean.
 - Feature packages under `io.micronaut.maven` are explicit (`openapi`, `aot`, `testresources`, `services`, `jsonschema`).
 - Integration tests are isolated scenarios under `src/it/<scenario>` with per-scenario `invoker.properties` and optional `verify.groovy`.
-- CI matrix is intentional: snapshot on Java 25, windows on Java 25, release workflow handles tagging + publish.
+- CI matrix is intentional: `snapshot.yml` carries a PR/merge-group Linux docker-native preflight plus the full Java 25 snapshot run, `windows-ci.yml` covers Java 25 on Windows, and `release.yml` handles tagging + publish.
 
 ## ANTI-PATTERNS (THIS PROJECT)
 - Do not add new plugin behavior only in examples; behavior must live in real modules and be covered by `src/it` scenarios.
@@ -62,14 +68,20 @@ Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module pl
 
 ## COMMANDS
 ```bash
+sdk env                    # applies the repo's Java 25 toolchain from .sdkmanrc when using SDKMAN!
 ./mvnw clean verify
 ./mvnw verify "-Dinvoker.test=dockerfile*"
 ./mvnw -pl micronaut-maven-integration-tests -am verify
 ./mvnw spotless:check checkstyle:check
 ./mvnw -pl micronaut-maven-plugin -am test
 ./mvnw release:prepare -DdryRun=true
+bash .github/scripts/check-workflow-pinning.sh
+.\.github\scripts\windows-preflight.cmd
 ```
 
 ## NOTES
 - If touching CI expectations, update `.github/workflows/snapshot.yml`, `.github/workflows/windows-ci.yml`, and/or `.github/workflows/release.yml` consistently.
+- Local shells may still default to Java 21 even though the repo and CI validate on Java 25; apply `.sdkmanrc` with `sdk env` or point `JAVA_HOME` at a Java 25 install before running root `./mvnw ... validate/verify` commands.
+- Paperclip worktrees may surface an untracked `.agents/` directory as local runtime scaffolding; ignore it unless the task is explicitly about agent assets or skills.
+- If a change touches `.github/workflows`, `.github/scripts`, `.mvn/wrapper`, `mvnw`, or `mvnw.cmd`, run the workflow-pinning check and the Windows preflight before handoff. Use the `Windows Preflight` workflow if you do not have local Windows access.
 - Keep child AGENTS.md files scoped: local rules only, no repeated root-level guidance.

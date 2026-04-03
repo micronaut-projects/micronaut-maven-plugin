@@ -34,12 +34,18 @@ import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 
 import java.io.File;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.FileAlreadyExistsException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -157,7 +163,7 @@ public class TestResourcesHelper {
     }
 
     private boolean isKeepAlive() {
-        boolean hasKeepAliveFile = Files.exists(getKeepAliveFile());
+        boolean hasKeepAliveFile = Files.isRegularFile(getKeepAliveFile(), LinkOption.NOFOLLOW_LINKS);
         return hasKeepAliveFile || isStartExplicitlyInvoked();
     }
 
@@ -529,8 +535,13 @@ public class TestResourcesHelper {
 
     private void createKeepAliveFile() throws IOException {
         Path keepalive = getKeepAliveFile();
-        if (!Files.exists(keepalive)) {
-            Files.write(keepalive, "true".getBytes());
+        createKeepAliveDirectory();
+        if (Files.exists(keepalive, LinkOption.NOFOLLOW_LINKS)) {
+            if (!Files.isRegularFile(keepalive, LinkOption.NOFOLLOW_LINKS)) {
+                throw new IOException("Keepalive path exists but is not a regular file: " + keepalive);
+            }
+        } else {
+            Files.writeString(keepalive, "true", StandardOpenOption.CREATE_NEW);
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 try {
                     deleteKeepAliveFile();
@@ -538,6 +549,30 @@ public class TestResourcesHelper {
                     // ignore, we're in a shutdown hook
                 }
             }));
+        }
+    }
+
+    private void createKeepAliveDirectory() throws IOException {
+        synchronized (SESSION_STATE_MONITOR) {
+            Path keepAliveDirectory = sessionState().keepAliveDirectory;
+            if (Files.exists(keepAliveDirectory, LinkOption.NOFOLLOW_LINKS)) {
+                if (!Files.isDirectory(keepAliveDirectory, LinkOption.NOFOLLOW_LINKS)) {
+                    throw new IOException("Keepalive directory exists but is not a directory: " + keepAliveDirectory);
+                }
+                return;
+            }
+            try {
+                FileAttribute<?>[] attributes = keepAliveDirectoryAttributes(keepAliveDirectory.getParent());
+                if (attributes.length == 0) {
+                    Files.createDirectory(keepAliveDirectory);
+                } else {
+                    Files.createDirectory(keepAliveDirectory, attributes);
+                }
+            } catch (FileAlreadyExistsException e) {
+                if (!Files.isDirectory(keepAliveDirectory, LinkOption.NOFOLLOW_LINKS)) {
+                    throw new IOException("Keepalive directory exists but is not a directory: " + keepAliveDirectory, e);
+                }
+            }
         }
     }
 
@@ -569,13 +604,14 @@ public class TestResourcesHelper {
     }
 
     private void deleteKeepAliveFile() throws MojoExecutionException {
-        if (Files.exists(getKeepAliveFile())) {
+        if (Files.exists(getKeepAliveFile(), LinkOption.NOFOLLOW_LINKS)) {
             try {
                 Files.delete(getKeepAliveFile());
             } catch (IOException e) {
                 throw new MojoExecutionException("Failed to delete keepalive file", e);
             }
         }
+        tryDeleteKeepAliveDirectory();
     }
 
     private Path getServerSettingsDirectory() {
@@ -586,8 +622,32 @@ public class TestResourcesHelper {
     }
 
     private Path getKeepAliveFile() {
-        var tmpDir = Path.of(System.getProperty("java.io.tmpdir"));
-        return tmpDir.resolve("keepalive-" + mavenSession.getRequest().getBuilderId());
+        return sessionState().keepAliveDirectory.resolve("keepalive-" + mavenSession.getRequest().getBuilderId());
+    }
+
+    private void tryDeleteKeepAliveDirectory() throws MojoExecutionException {
+        Path keepAliveDirectory = sessionState().keepAliveDirectory;
+        try {
+            Files.deleteIfExists(keepAliveDirectory);
+        } catch (DirectoryNotEmptyException ignored) {
+            // Another keepalive file in the same session still owns the directory.
+        } catch (IOException e) {
+            throw new MojoExecutionException("Failed to delete keepalive directory", e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static FileAttribute<?>[] keepAliveDirectoryAttributes(Path directory) {
+        try {
+            if (directory == null || !Files.getFileStore(directory).supportsFileAttributeView("posix")) {
+                return new FileAttribute[0];
+            }
+            return new FileAttribute<?>[]{
+                PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------"))
+            };
+        } catch (IOException | UnsupportedOperationException | SecurityException e) {
+            return new FileAttribute[0];
+        }
     }
 
     private void cleanupSharedProjectSettings() throws IOException {
@@ -610,6 +670,8 @@ public class TestResourcesHelper {
 
     private static final class SessionState {
         private final String scopePrefix = SCOPE_PREFIX + "-" + UUID.randomUUID();
+        private final Path keepAliveDirectory = Path.of(System.getProperty("java.io.tmpdir"))
+            .resolve("mn-test-resources-" + UUID.randomUUID());
         private final Map<Path, SharedServerState> sharedServers = new LinkedHashMap<>();
     }
 

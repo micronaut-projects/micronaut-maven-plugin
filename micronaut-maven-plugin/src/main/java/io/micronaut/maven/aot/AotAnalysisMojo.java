@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -118,12 +119,28 @@ public class AotAnalysisMojo extends AbstractMicronautAotCliMojo {
     protected void onSuccess(File outputDir) throws MojoExecutionException {
         Path generated = outputDir.toPath().resolve("generated");
         Path generatedClasses = generated.resolve("classes");
+        Path targetOutputDirectory = outputDirectory.toPath().toAbsolutePath().normalize();
         try {
             FileUtils.copyDirectory(generatedClasses.toFile(), outputDirectory);
             try (Stream<String> linesStream = Files.lines(generated.resolve("logs").resolve("resource-filter.txt"))) {
                 linesStream.forEach(toRemove -> {
+                    String sanitized = toRemove.strip();
+                    if (sanitized.isEmpty() || ".".equals(sanitized)) {
+                        return;
+                    }
+                    final Path candidate;
                     try {
-                        Files.delete(outputDirectory.toPath().resolve(toRemove));
+                        candidate = targetOutputDirectory.resolve(Path.of(sanitized)).normalize();
+                    } catch (InvalidPathException e) {
+                        getLog().warn("Skipping invalid deletion entry: " + toRemove, e);
+                        return;
+                    }
+                    if (!candidate.startsWith(targetOutputDirectory)) {
+                        getLog().warn("Skipping deletion outside output directory: " + toRemove);
+                        return;
+                    }
+                    try {
+                        Files.delete(candidate);
                         getLog().debug("Removed " + toRemove);
                     } catch (IOException e) {
                         if (!(e instanceof NoSuchFileException)) {

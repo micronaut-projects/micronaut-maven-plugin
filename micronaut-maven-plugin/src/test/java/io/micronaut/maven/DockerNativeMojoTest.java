@@ -7,6 +7,7 @@ import io.micronaut.maven.services.DockerService;
 import org.apache.maven.model.Build;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,7 @@ import java.util.Properties;
 import static io.micronaut.maven.AbstractDockerMojo.X86_64_ARCH;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.RETURNS_SELF;
@@ -280,7 +282,7 @@ class DockerNativeMojoTest {
     }
 
     @Test
-    void testLambdaBootstrapCommandAppendsCustomArguments() {
+    void testLambdaBootstrapCommandAppendsCustomArguments() throws MojoExecutionException {
         var project = mock(MavenProject.class);
         var session = mock(MavenSession.class);
         var execution = mock(MojoExecution.class);
@@ -294,6 +296,16 @@ class DockerNativeMojoTest {
         var command = mojo.getLambdaBootstrapCommand();
 
         assertEquals("./func -XX:MaximumHeapSizePercent=80 -Dio.netty.allocator.numDirectArenas=0 -Dio.netty.noPreferDirect=true -Djava.library.path=$(pwd) -Dio.netty.noUnsafe=true '-Dcustom.message=hello world'", command);
+    }
+
+    @Test
+    void escapeClassNameBuildArgEscapesShellExpansionCharacters() throws MojoExecutionException {
+        assertEquals("example.Outer\\$Inner", DockerNativeMojo.escapeClassNameBuildArg("example.Outer$Inner"));
+    }
+
+    @Test
+    void escapeClassNameBuildArgRejectsControlCharacters() {
+        assertThrows(MojoExecutionException.class, () -> DockerNativeMojo.escapeClassNameBuildArg("example.App\nRUN echo injected"));
     }
 
     @Test

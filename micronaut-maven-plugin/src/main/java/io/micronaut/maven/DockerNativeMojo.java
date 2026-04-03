@@ -145,7 +145,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         }
     }
 
-    private void buildDockerNativeLambda() throws IOException {
+    private void buildDockerNativeLambda() throws IOException, MojoExecutionException {
         var buildImageCmdArguments = new HashMap<String, String>();
 
         // Add proxy settings if configured
@@ -160,13 +160,13 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, () -> dockerService.buildImageCmd()
             .withDockerfile(dockerfile)
             .withBuildArg("GRAALVM_DOWNLOAD_URL", graalVmDownloadUrl()));
-        buildImageCmd.withBuildArg("CLASS_NAME", mainClass);
+        buildImageCmd.withBuildArg("CLASS_NAME", escapeClassNameBuildArg(mainClass));
         String imageId = dockerService.buildImage(buildImageCmd);
         File functionZip = dockerService.copyFromContainer(imageId, "/function/function.zip");
         getLog().info("AWS Lambda Custom Runtime ZIP: " + functionZip.getPath());
     }
 
-    private void buildDockerNative() throws IOException, InvalidImageReferenceException {
+    private void buildDockerNative() throws IOException, InvalidImageReferenceException, MojoExecutionException {
         String dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE;
         if (Boolean.TRUE.equals(staticNativeImage)) {
             getLog().info("Generating a static native image");
@@ -179,11 +179,11 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         buildDockerfile(dockerfileName, true);
     }
 
-    private void buildOracleCloud() throws IOException, InvalidImageReferenceException {
+    private void buildOracleCloud() throws IOException, InvalidImageReferenceException, MojoExecutionException {
         buildDockerfile(DockerfileMojo.DOCKERFILE_NATIVE_ORACLE_CLOUD, false);
     }
 
-    private void buildDockerfile(String dockerfileName, boolean passClassName) throws IOException, InvalidImageReferenceException {
+    private void buildDockerfile(String dockerfileName, boolean passClassName) throws IOException, InvalidImageReferenceException, MojoExecutionException {
         Set<String> tags = getTags();
         for (String tag : tags) {
             ImageReference.parse(tag);
@@ -213,7 +213,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         dockerService.buildImage(buildImageCmd);
     }
 
-    private void buildProvidedDockerfile(File providedDockerfile, Set<String> tags, boolean passClassName, String from, String ports) throws IOException {
+    private void buildProvidedDockerfile(File providedDockerfile, Set<String> tags, boolean passClassName, String from, String ports) throws IOException, MojoExecutionException {
         getLog().info("Using Dockerfile: " + providedDockerfile.getAbsolutePath());
 
         File targetDir = new File(mavenProject.getBuild().getDirectory());
@@ -231,7 +231,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         dockerService.buildImage(buildImageCmd);
     }
 
-    private Map<String, String> buildImageCmdArguments(boolean passClassName) {
+    private Map<String, String> buildImageCmdArguments(boolean passClassName) throws MojoExecutionException {
         var buildImageCmdArguments = new HashMap<String, String>();
 
         // Add proxy settings if configured
@@ -242,7 +242,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         }
 
         if (passClassName) {
-            buildImageCmdArguments.put("CLASS_NAME", mainClass);
+            buildImageCmdArguments.put("CLASS_NAME", escapeClassNameBuildArg(mainClass));
         }
         return buildImageCmdArguments;
     }
@@ -268,6 +268,10 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         } else {
             throw new IOException("Unable to convert native image build args to args file");
         }
+    }
+
+    static String escapeClassNameBuildArg(String value) throws MojoExecutionException {
+        return escapeShellDoubleQuoted("exec.mainClass", value);
     }
 
 }

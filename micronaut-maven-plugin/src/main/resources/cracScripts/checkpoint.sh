@@ -17,7 +17,7 @@ GLIBC_TUNABLES=glibc.pthread.rseq=0
   -XX:+UnlockDiagnosticVMOptions \
   -XX:+CRTraceStartupTime \
   -Djdk.crac.trace-startup-time=true \
-  -cp /home/app/classes:/home/app/libs/* @MAINCLASS@ &
+  -cp /home/app/classes:/home/app/libs/release/*:/home/app/libs/snapshot/* @MAINCLASS@ &
 PROCESS=$!
 echo "Started application as process $PROCESS"
 
