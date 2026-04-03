@@ -1,0 +1,55 @@
+name: Windows Preflight
+
+on:
+  pull_request:
+    branches:
+      - master
+      - '[1-9]+.[0-9]+.x'
+    paths:
+      - '.github/workflows/**'
+      - '.github/scripts/**'
+      - '.mvn/wrapper/**'
+      - 'mvnw'
+      - 'mvnw.cmd'
+  merge_group:
+    types: [checks_requested]
+    paths:
+      - '.github/workflows/**'
+      - '.github/scripts/**'
+      - '.mvn/wrapper/**'
+      - 'mvnw'
+      - 'mvnw.cmd'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workflow-hardening:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "📥 Checkout repository"
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+      - name: "🛡 Verify workflow pinning"
+        run: bash .github/scripts/check-workflow-pinning.sh
+
+  windows-wrapper:
+    needs:
+      - workflow-hardening
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        java: ['25']
+    steps:
+      - name: "📥 Checkout repository"
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+      - name: "☕️ Install Java"
+        uses: actions/setup-java@1d018f9b8b9b505bb578a83b230fabcce01af93b
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java }}
+          cache: 'maven'
+      - name: "🔎 Run Windows wrapper preflight"
+        shell: cmd
+        run: .github\scripts\windows-preflight.cmd

@@ -35,6 +35,24 @@ You can run integration tests by executing `mvn verify`
 If you want to run individual tests, you can execute `mvn verify "-Dinvoker.test=dockerfile*"`. In this case,
 `dockerfile*` will match all test projects under `src/it` folder with a name that starts with "dockerfile".
 
+### Windows-sensitive preflight
+
+If your change touches GitHub Actions workflows, `.github/scripts`, `.mvn/wrapper`, `mvnw`, or `mvnw.cmd`, run the lightweight Windows preflight before review handoff.
+
+On Windows, execute:
+
+```shell
+.\.github\scripts\windows-preflight.cmd
+```
+
+On any platform, also verify workflow pinning:
+
+```shell
+bash .github/scripts/check-workflow-pinning.sh
+```
+
+If you do not have a Windows shell locally, open a draft PR or run the `Windows Preflight` workflow manually to get the same wrapper/bootstrap check on `windows-latest` without waiting for the full Windows CI job.
+
 ### Debugging
 
 To debug the plugin, you first need to publish a snapshot to your Maven local:
