@@ -175,13 +175,36 @@
             </plugin>
 
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <id>docker-safe-branch-tag</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>regex-property</goal>
+                        </goals>
+                        <configuration>
+                            <name>git.branch.dockerTag</name>
+                            <value>branch-${git.branch.name}</value>
+                            <regex>[^a-z0-9._-]</regex>
+                            <replacement>-</replacement>
+                            <failIfNoMatch>false</failIfNoMatch>
+                            <toLowerCase>true</toLowerCase>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <groupId>com.google.cloud.tools</groupId>
                 <artifactId>jib-maven-plugin</artifactId>
                 <configuration>
                     <to>
                         <tags>
-                            <tag>${git.branch.name}-${maven.build.timestamp}</tag>
-                            <tag>${git.branch.name}-latest</tag>
+                            <tag>${git.branch.dockerTag}-${maven.build.timestamp}</tag>
+                            <tag>${git.branch.dockerTag}-latest</tag>
                         </tags>
                     </to>
                     <container>
