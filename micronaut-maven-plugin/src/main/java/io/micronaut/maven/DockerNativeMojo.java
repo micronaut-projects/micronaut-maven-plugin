@@ -217,6 +217,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         getLog().info("Using Dockerfile: " + providedDockerfile.getAbsolutePath());
 
         File targetDir = new File(mavenProject.getBuild().getDirectory());
+        Files.createDirectories(targetDir.toPath());
         File targetDockerfile = new File(targetDir, providedDockerfile.getName());
         Files.copy(providedDockerfile.toPath(), targetDockerfile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 

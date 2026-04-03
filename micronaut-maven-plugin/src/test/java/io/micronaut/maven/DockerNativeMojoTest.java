@@ -339,6 +339,27 @@ class DockerNativeMojoTest {
         verify(fixtures.dockerService).buildImage(fixtures.buildImageCmd);
     }
 
+    @Test
+    void testBuildDockerfileCreatesMissingTargetDirectoryForProvidedDockerfile(@TempDir Path tempDir) throws Exception {
+        Path providedDockerfile = tempDir.resolve(DockerfileMojo.DOCKERFILE);
+        Files.writeString(providedDockerfile, "FROM builder\nENTRYPOINT [\"/app/application\"]\n");
+
+        Fixtures fixtures = new Fixtures(tempDir, tempDir.resolve("DockerfileNative"));
+        Path detachedArgsFile = tempDir.resolve("native-image.args");
+        Files.writeString(detachedArgsFile, "--no-fallback\n");
+        fixtures.properties.setProperty(DockerNativeMojo.ARGS_FILE_PROPERTY_NAME, detachedArgsFile.toString());
+        Files.deleteIfExists(fixtures.targetDir.resolve("native-image.args"));
+        Files.deleteIfExists(fixtures.targetDir);
+
+        invokeBuildDockerfile(fixtures.mojo, DockerfileMojo.DOCKERFILE_NATIVE, true);
+
+        Path copiedDockerfile = fixtures.targetDir.resolve(DockerfileMojo.DOCKERFILE);
+        assertTrue(Files.isDirectory(fixtures.targetDir));
+        assertTrue(Files.isRegularFile(copiedDockerfile));
+        assertEquals(Files.readString(providedDockerfile), Files.readString(copiedDockerfile));
+        verify(fixtures.dockerService).buildImage(fixtures.buildImageCmd);
+    }
+
     private boolean supportsSymbolicLinks(Path tempDir) throws IOException {
         Path probeTarget = tempDir.resolve("symlink-probe-target");
         Path probeLink = tempDir.resolve("symlink-probe-link");
@@ -382,6 +403,8 @@ class DockerNativeMojoTest {
         private final DockerService dockerService;
         private final BuildImageCmd buildImageCmd;
         private final DockerNativeMojo mojo;
+        private final Properties properties;
+        private final Path targetDir;
 
         private Fixtures(Path tempDir, Path dockerfile) throws IOException {
             MavenProject project = mock(MavenProject.class);
@@ -393,13 +416,14 @@ class DockerNativeMojoTest {
             buildImageCmd = mock(BuildImageCmd.class, RETURNS_SELF);
 
             Build build = new Build();
-            build.setDirectory(tempDir.resolve("target").toString());
+            targetDir = tempDir.resolve("target");
+            build.setDirectory(targetDir.toString());
 
-            Path argsFile = tempDir.resolve("target").resolve("native-image.args");
+            Path argsFile = targetDir.resolve("native-image.args");
             Files.createDirectories(argsFile.getParent());
             Files.writeString(argsFile, "--no-fallback\n");
 
-            Properties properties = new Properties();
+            properties = new Properties();
             properties.setProperty(DockerNativeMojo.ARGS_FILE_PROPERTY_NAME, argsFile.toString());
 
             when(session.getCurrentProject()).thenReturn(project);
