@@ -12,5 +12,6 @@ assert effectiveConfig.exists()
 File jarFilePath = new File(basedir, 'target/standalone-aot-0.1.jar')
 assert jarFilePath.exists()
 
-JarFile jarFile = new JarFile(jarFilePath)
-assert jarFile.stream().anyMatch { entry -> entry.name == 'io/micronaut/build/examples/generated/AOTApplicationContextConfigurer.class' }
+new JarFile(jarFilePath).withCloseable { jarFile ->
+    assert jarFile.stream().anyMatch { entry -> entry.name == 'io/micronaut/build/examples/generated/AOTApplicationContextConfigurer.class' }
+}

@@ -16,6 +16,7 @@
 package io.micronaut.maven.aot.internal;
 
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
@@ -73,7 +74,10 @@ public final class AotDependencyResolutionService {
         collectRequest.setRepositories(mavenProject.getRemoteProjectRepositories());
 
         if (applyManagedDependencies) {
-            List<org.apache.maven.model.Dependency> dependencies = mavenProject.getDependencyManagement().getDependencies();
+            DependencyManagement dependencyManagement = mavenProject.getDependencyManagement();
+            List<org.apache.maven.model.Dependency> dependencies = dependencyManagement == null || dependencyManagement.getDependencies() == null
+                ? List.of()
+                : dependencyManagement.getDependencies();
             HashMap<String, Dependency> dependencyMap = new HashMap<>(dependencies.size());
             for (org.apache.maven.model.Dependency dependency : dependencies) {
                 String ga = dependency.getGroupId() + ":" + dependency.getArtifactId();

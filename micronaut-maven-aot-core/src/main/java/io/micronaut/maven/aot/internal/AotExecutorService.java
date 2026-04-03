@@ -89,14 +89,18 @@ public final class AotExecutorService {
 
         Properties properties = new Properties();
         properties.put(TEST_RESOURCES_ENABLED_PROPERTY, "false");
+        int loggingLevel = mavenSession.getRequest().getLoggingLevel();
+        boolean quiet = loggingLevel >= org.apache.maven.execution.MavenExecutionRequest.LOGGING_LEVEL_ERROR;
 
         request.setLocalRepositoryDirectory(new File(mavenSession.getLocalRepository().getBasedir()));
         request.addArgs(Arrays.asList(goals));
         request.setBatchMode(true);
-        request.setQuiet(true);
+        request.setQuiet(quiet);
         request.setAlsoMake(true);
-        request.setErrorHandler(System.err::println);
-        request.setOutputHandler(System.out::println);
+        if (!quiet) {
+            request.setErrorHandler(System.err::println);
+            request.setOutputHandler(System.out::println);
+        }
         request.setProperties(properties);
         return invoker.execute(request);
     }

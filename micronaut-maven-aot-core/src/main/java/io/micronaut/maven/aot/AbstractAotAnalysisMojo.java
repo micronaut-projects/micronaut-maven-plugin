@@ -132,7 +132,7 @@ public abstract class AbstractAotAnalysisMojo extends AbstractMicronautAotCliMoj
         Properties props = new Properties();
         if (userProvidedFile.exists()) {
             try (InputStream in = Files.newInputStream(userProvidedFile.toPath())) {
-                getLog().info("Using AOT configuration file: " + configFile.getAbsolutePath());
+                getLog().info("Using AOT configuration file: " + userProvidedFile.getAbsolutePath());
                 props.load(in);
             } catch (IOException e) {
                 throw new MojoExecutionException("Unable to parse configuration file", e);
@@ -145,7 +145,7 @@ public abstract class AbstractAotAnalysisMojo extends AbstractMicronautAotCliMoj
         try (OutputStream out = Files.newOutputStream(effectiveConfig.toPath())) {
             props.store(out, "Effective AOT configuration");
         } catch (IOException e) {
-            throw new MojoExecutionException("Unable to parse configuration file", e);
+            throw new MojoExecutionException("Unable to write effective AOT configuration file", e);
         }
         return effectiveConfig;
     }
