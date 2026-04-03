@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -192,10 +193,45 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         String ports = getPorts();
         getLog().info("Exposing port(s): " + ports);
 
+        File providedDockerfile = new File(mavenProject.getBasedir(), DockerfileMojo.DOCKERFILE);
+        if (providedDockerfile.isFile()) {
+            buildProvidedDockerfile(providedDockerfile, tags, passClassName, from, ports);
+            return;
+        }
+
         File dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);
+        if (DockerfileMojo.DOCKERFILE_NATIVE_ORACLE_CLOUD.equals(dockerfileName)) {
+            oracleCloudFunctionCmd(dockerfile);
+        }
 
-        oracleCloudFunctionCmd(dockerfile);
+        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments(passClassName), () -> dockerService.buildImageCmd()
+            .withDockerfile(dockerfile)
+            .withTags(tags)
+            .withBuildArg("BASE_IMAGE", from)
+            .withBuildArg("PORTS", ports));
 
+        dockerService.buildImage(buildImageCmd);
+    }
+
+    private void buildProvidedDockerfile(File providedDockerfile, Set<String> tags, boolean passClassName, String from, String ports) throws IOException, MojoExecutionException {
+        getLog().info("Using Dockerfile: " + providedDockerfile.getAbsolutePath());
+
+        File targetDir = new File(mavenProject.getBuild().getDirectory());
+        Files.createDirectories(targetDir.toPath());
+        File targetDockerfile = new File(targetDir, providedDockerfile.getName());
+        Files.copy(providedDockerfile.toPath(), targetDockerfile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments(passClassName), () -> dockerService.buildImageCmd()
+            .withDockerfile(targetDockerfile)
+            .withTags(tags)
+            .withBaseDirectory(targetDir)
+            .withBuildArg("BASE_IMAGE", from)
+            .withBuildArg("PORTS", ports));
+
+        dockerService.buildImage(buildImageCmd);
+    }
+
+    private Map<String, String> buildImageCmdArguments(boolean passClassName) throws MojoExecutionException {
         var buildImageCmdArguments = new HashMap<String, String>();
 
         // Add proxy settings if configured
@@ -208,14 +244,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         if (passClassName) {
             buildImageCmdArguments.put("CLASS_NAME", escapeClassNameBuildArg(mainClass));
         }
-
-        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, () -> dockerService.buildImageCmd()
-            .withDockerfile(dockerfile)
-            .withTags(getTags())
-            .withBuildArg("BASE_IMAGE", from)
-            .withBuildArg("PORTS", ports));
-
-        dockerService.buildImage(buildImageCmd);
+        return buildImageCmdArguments;
     }
 
     private BuildImageCmd addNativeImageBuildArgs(Map<String, String> buildImageCmdArguments, Supplier<BuildImageCmd> buildImageCmdSupplier) throws IOException {

@@ -330,6 +330,55 @@ $ mvn package -Dpackaging=docker-native \
 Prefer passing credential-bearing proxy values from the command line or CI secrets rather than committing them to
 the project POM.
 
+==== Bringing your own native `Dockerfile`
+
+----
+$ mvn package -Dpackaging=docker-native
+----
+
+If there is a `Dockerfile` in the project's root directory and the selected `docker-native` path produces a Docker
+container image, the file will be copied into `target/` and used to build that image with `target/` as the Docker
+build context.
+
+AWS Lambda and other `docker-native` modes that only produce ZIP artifacts such as `function.zip` do not consult the
+project-root `Dockerfile` and continue to use the plugin's bundled native Dockerfiles for the native-image build step.
+
+For image-building `docker-native` modes, the plugin still prepares the native-image inputs under `target/` and passes
+the same build arguments as the bundled native Dockerfiles where applicable. Depending on the runtime and image mode,
+it may provide:
+
+* `BASE_IMAGE`
+* `BASE_IMAGE_RUN` when `micronaut.native-image.static` is not `true`
+* `CLASS_NAME` when the runtime still needs an application entrypoint
+* `PORTS`
+
+For example, Oracle Cloud Function images disable `CLASS_NAME`, and static native images do not pass `BASE_IMAGE_RUN`.
+If your custom `Dockerfile` needs those values, declare the matching `ARG` instructions only for the arguments used by
+your build and copy the generated native build inputs from the `target/` context. For example:
+
+[source,dockerfile]
+----
+ARG BASE_IMAGE
+ARG BASE_IMAGE_RUN
+FROM ${BASE_IMAGE} AS builder
+WORKDIR /home/app
+
+COPY classes /home/app/classes
+COPY dependency/* /home/app/libs/
+COPY graalvm-reachability-metadata /home/app/graalvm-reachability-metadata
+COPY native/generated /home/app/
+COPY *.args /home/app/graalvm-native-image.args
+ARG CLASS_NAME
+RUN native-image @/home/app/graalvm-native-image.args -H:Class=${CLASS_NAME} -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
+
+FROM ${BASE_IMAGE_RUN}
+COPY --from=builder /home/app/application /app/application
+
+ARG PORTS=8080
+EXPOSE ${PORTS}
+ENTRYPOINT ["/app/application"]
+----
+
 The image built can be customised using
 https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configuration[Jib]. In particular, you can set:
 

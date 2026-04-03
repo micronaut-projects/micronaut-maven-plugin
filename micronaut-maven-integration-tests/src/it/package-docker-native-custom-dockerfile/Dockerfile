@@ -1,0 +1,20 @@
+## custom native Dockerfile marker
+ARG BASE_IMAGE
+ARG BASE_IMAGE_RUN
+FROM ${BASE_IMAGE} AS builder
+WORKDIR /home/app
+
+COPY classes /home/app/classes
+COPY dependency/* /home/app/libs/
+COPY graalvm-reachability-metadat[a] /home/app/graalvm-reachability-metadata
+COPY nativ[e]/generated /home/app/
+COPY *.args /home/app/graalvm-native-image.args
+ARG CLASS_NAME
+RUN native-image @/home/app/graalvm-native-image.args -H:Class=${CLASS_NAME} -H:Name=application -cp "/home/app/libs/*:/home/app/classes/"
+
+FROM ${BASE_IMAGE_RUN}
+COPY --from=builder /home/app/application /app/application
+
+ARG PORTS=8080
+EXPOSE ${PORTS}
+ENTRYPOINT ["/app/application"]
