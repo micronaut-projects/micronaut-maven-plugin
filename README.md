@@ -55,21 +55,27 @@ If you want to run individual tests, you can execute `./mvnw verify "-Dinvoker.t
 
 ### Windows-sensitive preflight
 
-If your change touches GitHub Actions workflows, `.github/scripts`, `.mvn/wrapper`, `mvnw`, or `mvnw.cmd`, run the lightweight Windows preflight before review handoff.
+If your change touches GitHub Actions workflows, `.github/scripts`, `.mvn/wrapper`, `mvnw`, or `mvnw.cmd`, start with the repo-owned CI-sensitive preflight wrapper before review handoff:
 
-On Windows, execute:
+```shell
+bash .github/scripts/ci-sensitive-preflight.sh
+```
+
+The wrapper always runs workflow pinning locally. In a Windows shell that exposes `cmd.exe`, it also dispatches the lightweight wrapper/bootstrap validation automatically.
+
+If you want to run the Windows-specific step directly, execute:
 
 ```shell
 .\.github\scripts\windows-preflight.cmd
 ```
 
-On any platform, also verify workflow pinning:
+If you want to run the workflow pinning step directly, execute:
 
 ```shell
 bash .github/scripts/check-workflow-pinning.sh
 ```
 
-If you do not have a Windows shell locally, open a draft PR or run the `Windows Preflight` workflow manually to get the same wrapper/bootstrap check on `windows-latest` without waiting for the full Windows CI job.
+If you do not have a Windows shell locally, the wrapper will remind you to open a draft PR or run the `Windows Preflight` workflow manually to get the same wrapper/bootstrap check on `windows-latest` without waiting for the full Windows CI job.
 
 ### Debugging
 
