@@ -75,6 +75,7 @@ sdk env                    # applies the repo's Java 25 toolchain from .sdkmanrc
 ./mvnw spotless:check checkstyle:check
 ./mvnw -pl micronaut-maven-plugin -am test
 ./mvnw release:prepare -DdryRun=true
+bash .github/scripts/ci-sensitive-preflight.sh
 bash .github/scripts/check-workflow-pinning.sh
 .\.github\scripts\windows-preflight.cmd
 ```
@@ -83,5 +84,5 @@ bash .github/scripts/check-workflow-pinning.sh
 - If touching CI expectations, update `.github/workflows/snapshot.yml`, `.github/workflows/windows-ci.yml`, and/or `.github/workflows/release.yml` consistently.
 - Local shells may still default to Java 21 even though the repo and CI validate on Java 25; apply `.sdkmanrc` with `sdk env` or point `JAVA_HOME` at a Java 25 install before running root `./mvnw ... validate/verify` commands.
 - Paperclip worktrees may surface an untracked `.agents/` directory as local runtime scaffolding; ignore it unless the task is explicitly about agent assets or skills.
-- If a change touches `.github/workflows`, `.github/scripts`, `.mvn/wrapper`, `mvnw`, or `mvnw.cmd`, run the workflow-pinning check and the Windows preflight before handoff. Use the `Windows Preflight` workflow if you do not have local Windows access.
+- If a change touches `.github/workflows`, `.github/scripts`, `.mvn/wrapper`, `mvnw`, or `mvnw.cmd`, start with `bash .github/scripts/ci-sensitive-preflight.sh` before handoff. It always runs workflow pinning and, when `cmd.exe` is available, dispatches the Windows wrapper preflight; otherwise use the `Windows Preflight` workflow for the Windows-only leg.
 - Keep child AGENTS.md files scoped: local rules only, no repeated root-level guidance.
