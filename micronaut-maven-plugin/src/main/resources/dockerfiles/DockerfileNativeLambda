@@ -26,7 +26,7 @@ WORKDIR /function
 RUN dnf update -y && dnf install -y zip && dnf clean all
 COPY --from=graalvm /home/app/application /function/func
 RUN ${LAMBDA_BOOTSTRAP_DOCKER_COMMAND}
-RUN chmod 777 bootstrap
-RUN chmod 777 func
+RUN chmod 555 bootstrap
+RUN chmod 555 func
 RUN zip -j function.zip bootstrap func
 ENTRYPOINT ["/function/func"]
