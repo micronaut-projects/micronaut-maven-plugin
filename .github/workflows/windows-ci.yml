@@ -24,6 +24,9 @@ jobs:
         java: ['25']
     steps:
       - uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+      - name: Verify Maven wrapper checksum
+        shell: bash
+        run: bash .github/scripts/verify-maven-wrapper-checksum.sh
       - name: Cache Maven packages
         uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7
         with:
