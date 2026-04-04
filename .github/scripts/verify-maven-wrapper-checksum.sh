@@ -6,7 +6,7 @@ wrapper_dir="$(cd "$(dirname "$properties_file")" && pwd)"
 wrapper_jar="$wrapper_dir/maven-wrapper.jar"
 
 normalize_properties_value() {
-  printf '%s' "$1" | sed 's/^[[:space:]]*//;s/\\:/:/g;s/\\\\/\\/g'
+  printf '%s' "$1" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//;s/\\:/:/g;s/\\\\/\\/g'
 }
 
 sha256_file() {
@@ -97,7 +97,8 @@ curl -fsSL \
   --max-time 300 \
   --retry 3 \
   --retry-delay 5 \
-  "$distribution_url" -o "$tmp_file"
+  -o "$tmp_file" \
+  -- "$distribution_url"
 
 actual_sha256_sum="$(sha256_file "$tmp_file")"
 
