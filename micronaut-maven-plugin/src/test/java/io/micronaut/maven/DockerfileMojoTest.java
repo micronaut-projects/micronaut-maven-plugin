@@ -249,11 +249,11 @@ class DockerfileMojoTest {
         );
         mojo.micronautRuntime = "netty";
 
-        var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), "RUN curl -4 -fsSL ${GRAALVM_DOWNLOAD_URL} -o \"/tmp/graalvm.tar.gz\"");
+        var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), "RUN curl -4 -fsSL \"${GRAALVM_DOWNLOAD_URL}\" -o \"/tmp/graalvm.tar.gz\"");
 
         invokeProcessDockerfile(mojo, dockerfile);
 
-        assertTrue(Files.readString(dockerfile).contains("-fsSL " + AbstractDockerMojo.shellLiteral("GraalVM download URL", mojo.graalVmDownloadUrl()) + " -o \"/tmp/graalvm.tar.gz\""));
+        assertTrue(Files.readString(dockerfile).contains("-fsSL \"" + mojo.graalVmDownloadUrl() + "\" -o \"/tmp/graalvm.tar.gz\""));
     }
 
     @Test

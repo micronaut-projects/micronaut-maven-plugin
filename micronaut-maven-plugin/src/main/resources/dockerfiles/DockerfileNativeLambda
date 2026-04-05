@@ -4,7 +4,7 @@ ENV LANG=en_US.UTF-8
 RUN dnf update -y && dnf install -y coreutils-single gcc glibc-devel zlib-devel libstdc++-static tar && dnf clean all && rm -rf /var/cache/dnf
 ARG GRAALVM_DOWNLOAD_URL
 ARG GRAALVM_DOWNLOAD_SHA256
-RUN curl -4 -fsSL ${GRAALVM_DOWNLOAD_URL} -o "/tmp/graalvm.tar.gz" \
+RUN curl -4 -fsSL "${GRAALVM_DOWNLOAD_URL}" -o "/tmp/graalvm.tar.gz" \
     && echo "${GRAALVM_DOWNLOAD_SHA256}  /tmp/graalvm.tar.gz" | sha256sum -c - \
     && mkdir -p /usr/lib/graalvm \
     && tar -zxf /tmp/graalvm.tar.gz -C /usr/lib/graalvm --strip-components 1 \

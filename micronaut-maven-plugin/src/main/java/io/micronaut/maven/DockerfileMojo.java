@@ -228,7 +228,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
             return line.replace("${GRAALVM_DOWNLOAD_SHA256}", validateDockerfileValue("GraalVM download SHA-256", graalVmDownloadSha256()));
         }
         if (containsPlaceholder(line, "GRAALVM_DOWNLOAD_URL")) {
-            return line.replace("${GRAALVM_DOWNLOAD_URL}", shellLiteral("GraalVM download URL", validateDownloadUrl("GraalVM download URL", graalVmDownloadUrl())));
+            return line.replace("${GRAALVM_DOWNLOAD_URL}", validateDownloadUrl("GraalVM download URL", graalVmDownloadUrl()));
         }
         if (containsPlaceholder(line, CLASS_NAME_PLACEHOLDER)) {
             return replaceClassName(line);
