@@ -2,6 +2,10 @@ name: Release
 on:
   release:
     types: [published]
+
+# Release mutations are performed with the dedicated GH_TOKEN secret, not the default workflow token.
+permissions: {}
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -99,7 +103,7 @@ jobs:
         run: |
           release_url=`cat $GITHUB_EVENT_PATH | jq '.release.url' | sed -e 's/^"\(.*\)"$/\1/g'`
           echo $release_url
-          curl -s --request PATCH -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/json" $release_url --data "{\"draft\": false}"
+          curl -s --request PATCH -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" -H "Content-Type: application/json" $release_url --data "{\"draft\": false}"
 
       - name: "↩️ Rollback release"
         if: failure()

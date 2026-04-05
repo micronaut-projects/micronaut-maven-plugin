@@ -18,6 +18,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Keep the default workflow token read-only; individual jobs opt into writes when needed.
+permissions:
+  contents: read
+
 jobs:
   workflow-hardening:
     runs-on: ubuntu-latest
@@ -34,6 +38,9 @@ jobs:
     needs:
       - workflow-hardening
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
     env:
       DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
       DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
@@ -129,6 +136,9 @@ jobs:
     needs:
       - workflow-hardening
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
     strategy:
       matrix:
         java: ['25']

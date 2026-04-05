@@ -16,6 +16,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Windows CI only needs repository read access for checkout and setup actions.
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: windows-latest
