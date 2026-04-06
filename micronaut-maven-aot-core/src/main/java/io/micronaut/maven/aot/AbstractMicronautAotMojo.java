@@ -15,9 +15,9 @@
  */
 package io.micronaut.maven.aot;
 
+import io.micronaut.maven.JansiLog;
 import io.micronaut.maven.aot.internal.AotCompilerService;
 import io.micronaut.maven.aot.internal.AotPackaging;
-import io.micronaut.maven.aot.internal.JansiLog;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.model.Exclusion;
 import org.apache.maven.plugin.AbstractMojo;

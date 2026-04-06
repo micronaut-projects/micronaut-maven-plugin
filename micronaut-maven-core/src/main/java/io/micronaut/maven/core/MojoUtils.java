@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.maven.aot.internal;
+package io.micronaut.maven.core;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
@@ -24,15 +24,14 @@ import org.codehaus.plexus.util.Os;
 import java.io.File;
 
 /**
- * Utility methods used by the shared AOT support module.
+ * Shared utility methods for Micronaut Maven plugin modules.
  */
-public final class AotMojoUtils {
+public final class MojoUtils {
 
-    public static final String MAIN_PLUGIN_GROUP_ID = "io.micronaut.maven";
-    public static final String MAIN_PLUGIN_ARTIFACT_ID = "micronaut-maven-plugin";
+    public static final String THIS_PLUGIN = "io.micronaut.maven:micronaut-maven-plugin";
     private static final String JAVA = "java";
 
-    private AotMojoUtils() {
+    private MojoUtils() {
     }
 
     public static String findJavaExecutable(ToolchainManager toolchainManager, MavenSession mavenSession) {
@@ -43,8 +42,10 @@ public final class AotMojoUtils {
         } else {
             executable = null;
         }
+
+        // Fallback to default Java executable if toolchain is not configured or doesn't provide a valid tool.
         if (executable == null) {
-            File javaBinariesDir = new File(new File(System.getProperty("java.home")), "bin");
+            var javaBinariesDir = new File(new File(System.getProperty("java.home")), "bin");
             if (Os.isFamily(Os.FAMILY_UNIX)) {
                 executable = new File(javaBinariesDir, JAVA).getAbsolutePath();
             } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
@@ -56,8 +57,11 @@ public final class AotMojoUtils {
         return executable;
     }
 
-    public static boolean hasMicronautPlugin(MavenProject project) {
+    public static boolean hasMicronautMavenPlugin(MavenProject project) {
+        String[] parts = THIS_PLUGIN.split(":");
+        String groupId = parts[0];
+        String artifactId = parts[1];
         return project.getBuildPlugins().stream()
-            .anyMatch(plugin -> MAIN_PLUGIN_GROUP_ID.equals(plugin.getGroupId()) && MAIN_PLUGIN_ARTIFACT_ID.equals(plugin.getArtifactId()));
+            .anyMatch(p -> p.getGroupId().equals(groupId) && p.getArtifactId().equals(artifactId));
     }
 }

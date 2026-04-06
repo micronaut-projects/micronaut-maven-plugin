@@ -25,7 +25,7 @@ import static org.fusesource.jansi.Ansi.ansi;
  * @author Álvaro Sánchez-Mariscal
  * @since 4.0.0
  */
-public class JansiLog implements Log {
+public final class JansiLog implements Log {
 
     private final Log delegate;
 
@@ -113,8 +113,7 @@ public class JansiLog implements Log {
         delegate.error(error);
     }
 
-    private String fmt(CharSequence s) {
-        return ansi().fgYellow().a(s).reset().toString();
+    private String fmt(CharSequence content) {
+        return ansi().fgYellow().a(content).reset().toString();
     }
-
 }

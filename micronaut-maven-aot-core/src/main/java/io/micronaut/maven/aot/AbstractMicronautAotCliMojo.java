@@ -18,7 +18,7 @@ package io.micronaut.maven.aot;
 import io.micronaut.maven.aot.internal.AotCompilerService;
 import io.micronaut.maven.aot.internal.AotDependencyResolutionService;
 import io.micronaut.maven.aot.internal.AotExecutorService;
-import io.micronaut.maven.aot.internal.AotMojoUtils;
+import io.micronaut.maven.core.MojoUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -220,7 +220,7 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
             getExtraArgs()
         );
         File argumentFile = writeJavaArgumentFile(getBaseOutputDirectory(), commandArguments);
-        String javaExecutable = AotMojoUtils.findJavaExecutable(toolchainManager, mavenSession);
+        String javaExecutable = MojoUtils.findJavaExecutable(toolchainManager, mavenSession);
         Xpp3Dom config = configuration(
             element("executable", javaExecutable),
             element("arguments", element("argument", "@" + argumentFile.getAbsolutePath()))

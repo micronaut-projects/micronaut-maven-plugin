@@ -18,11 +18,8 @@ package io.micronaut.maven;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.toolchain.Toolchain;
 import org.apache.maven.toolchain.ToolchainManager;
-import org.codehaus.plexus.util.Os;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,32 +37,12 @@ import static io.micronaut.maven.AbstractDockerMojo.MOSTLY_STATIC_NATIVE_IMAGE_G
 public final class MojoUtils {
 
     public static final String THIS_PLUGIN = "io.micronaut.maven:micronaut-maven-plugin";
-    private static final String JAVA = "java";
 
     private MojoUtils() {
     }
 
     public static String findJavaExecutable(ToolchainManager toolchainManager, MavenSession mavenSession) {
-        String executable;
-        Toolchain toolchain = toolchainManager.getToolchainFromBuildContext("jdk", mavenSession);
-        if (toolchain != null) {
-            executable = toolchain.findTool(JAVA);
-        } else {
-            executable = null;
-        }
-        
-        // Fallback to default Java executable if toolchain is not configured or doesn't provide a valid tool
-        if (executable == null) {
-            var javaBinariesDir = new File(new File(System.getProperty("java.home")), "bin");
-            if (Os.isFamily(Os.FAMILY_UNIX)) {
-                executable = new File(javaBinariesDir, JAVA).getAbsolutePath();
-            } else if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-                executable = new File(javaBinariesDir, "java.exe").getAbsolutePath();
-            } else {
-                executable = JAVA;
-            }
-        }
-        return executable;
+        return io.micronaut.maven.core.MojoUtils.findJavaExecutable(toolchainManager, mavenSession);
     }
 
     public static List<String> computeNativeImageArgs(List<String> nativeImageBuildArgs, String baseImageRun, String argsFile) {
@@ -182,10 +159,6 @@ public final class MojoUtils {
      * @return true if the project has the Micronaut Maven plugin defined
      */
     public static boolean hasMicronautMavenPlugin(MavenProject project) {
-        String[] parts = THIS_PLUGIN.split(":");
-        String groupId = parts[0];
-        String artifactId = parts[1];
-        return project.getBuildPlugins().stream()
-            .anyMatch(p -> p.getGroupId().equals(groupId) && p.getArtifactId().equals(artifactId));
+        return io.micronaut.maven.core.MojoUtils.hasMicronautMavenPlugin(project);
     }
 }

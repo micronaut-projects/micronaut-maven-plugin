@@ -18,7 +18,7 @@ package io.micronaut.maven.aot;
 import io.micronaut.maven.aot.internal.AotCompilerService;
 import io.micronaut.maven.aot.internal.AotDependencyResolutionService;
 import io.micronaut.maven.aot.internal.AotExecutorService;
-import io.micronaut.maven.aot.internal.AotMojoUtils;
+import io.micronaut.maven.core.MojoUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -47,7 +47,7 @@ public class AotAnalysisMojo extends AbstractAotAnalysisMojo {
 
     @Override
     protected boolean shouldExecute() {
-        if (AotMojoUtils.hasMicronautPlugin(mavenProject)) {
+        if (MojoUtils.hasMicronautMavenPlugin(mavenProject)) {
             getLog().info("Skipping standalone AOT analysis because micronaut-maven-plugin already owns AOT execution for this build");
             return false;
         }
