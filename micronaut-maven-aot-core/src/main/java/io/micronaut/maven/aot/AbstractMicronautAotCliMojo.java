@@ -15,10 +15,10 @@
  */
 package io.micronaut.maven.aot;
 
-import io.micronaut.maven.aot.internal.AotCompilerService;
-import io.micronaut.maven.aot.internal.AotDependencyResolutionService;
-import io.micronaut.maven.aot.internal.AotExecutorService;
 import io.micronaut.maven.core.MojoUtils;
+import io.micronaut.maven.services.CompilerService;
+import io.micronaut.maven.services.DependencyResolutionService;
+import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -50,7 +50,7 @@ import static io.micronaut.maven.aot.Constants.MICRONAUT_AOT_ARTIFACT_ID_PREFIX;
 import static io.micronaut.maven.aot.Constants.MICRONAUT_AOT_GROUP_ID;
 import static io.micronaut.maven.aot.Constants.MICRONAUT_AOT_MAIN_CLASS;
 import static io.micronaut.maven.aot.Constants.MICRONAUT_AOT_PACKAGE_NAME;
-import static io.micronaut.maven.aot.internal.AotDependencyResolutionService.toClasspath;
+import static io.micronaut.maven.services.DependencyResolutionService.toClasspath;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.configuration;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.element;
 
@@ -76,8 +76,8 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     @Parameter(property = MICRONAUT_AOT_PACKAGE_NAME)
     protected String packageName;
 
-    private final AotExecutorService executorService;
-    private final AotDependencyResolutionService dependencyResolutionService;
+    private final ExecutorService executorService;
+    private final DependencyResolutionService dependencyResolutionService;
     private final MavenSession mavenSession;
     private final ToolchainManager toolchainManager;
 
@@ -93,10 +93,10 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     private List<String> aotJvmArgs;
 
     @Inject
-    protected AbstractMicronautAotCliMojo(AotCompilerService compilerService,
-                                          AotExecutorService executorService,
+    protected AbstractMicronautAotCliMojo(CompilerService compilerService,
+                                          ExecutorService executorService,
                                           MavenProject mavenProject,
-                                          AotDependencyResolutionService dependencyResolutionService,
+                                          DependencyResolutionService dependencyResolutionService,
                                           MavenSession mavenSession,
                                           ToolchainManager toolchainManager) {
         super(compilerService, mavenProject);

@@ -1,6 +1,6 @@
 package io.micronaut.maven.aot;
 
-import io.micronaut.maven.aot.internal.AotCompilerService;
+import io.micronaut.maven.services.CompilerService;
 import org.apache.maven.model.Build;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
@@ -41,7 +41,7 @@ class AbstractMicronautAotMojoTest {
     private static final class TestMicronautAotMojo extends AbstractMicronautAotMojo {
 
         private TestMicronautAotMojo(MavenProject mavenProject) {
-            super(mock(AotCompilerService.class), mavenProject);
+            super(mock(CompilerService.class), mavenProject);
         }
 
         @Override

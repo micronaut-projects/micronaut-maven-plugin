@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.maven.aot.internal;
+package io.micronaut.maven.services;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.logging.Log;
@@ -26,8 +26,10 @@ import org.apache.maven.project.ProjectDependenciesResolver;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyFilter;
+import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.util.filter.DependencyFilterUtils;
 
 import javax.inject.Inject;
@@ -40,31 +42,44 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * Project compilation helpers used by the extracted AOT mojos.
+ * Provides methods to compile a Maven project.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 5.0.0
  */
 @Singleton
-public final class AotCompilerService {
+public class CompilerService {
 
     public static final String MAVEN_JAR_PLUGIN = "org.apache.maven.plugins:maven-jar-plugin";
+
     private static final String COMPILE_GOAL = "compile";
 
     private final Log log;
     private final MavenSession mavenSession;
-    private final AotExecutorService executorService;
+    private final ExecutorService executorService;
     private final ProjectDependenciesResolver resolver;
 
+    @SuppressWarnings("MnInjectionPoints")
     @Inject
-    public AotCompilerService(MavenSession mavenSession,
-                              AotExecutorService executorService,
-                              ProjectDependenciesResolver resolver) {
+    public CompilerService(MavenSession mavenSession,
+                           ExecutorService executorService,
+                           ProjectDependenciesResolver resolver) {
         this.mavenSession = mavenSession;
-        this.executorService = executorService;
         this.resolver = resolver;
         this.log = new SystemStreamLog();
+        this.executorService = executorService;
     }
 
+    /**
+     * Compiles the project.
+     *
+     * @return the last compilation time millis.
+     */
     public Optional<Long> compileProject() {
         Long lastCompilation = null;
+        if (log.isDebugEnabled()) {
+            log.debug("Compiling the project");
+        }
         try {
             MavenProject projectToCompile = mavenSession.getTopLevelProject();
             if (mavenSession.getAllProjects().contains(mavenSession.getCurrentProject().getParent())) {
@@ -80,13 +95,35 @@ public final class AotCompilerService {
         return Optional.ofNullable(lastCompilation);
     }
 
-    public List<Dependency> resolveDependencies(MavenProject project, String... scopes) {
+    /**
+     * Resolves project dependencies for given scopes.
+     *
+     * @param runnableProject The project
+     * @param scopes The scopes
+     * @return The dependencies
+     */
+    public List<Dependency> resolveDependencies(MavenProject runnableProject, String... scopes) {
+        return resolveDependencies(runnableProject, false, scopes);
+    }
+
+    /**
+     * Resolves project dependencies for the given scopes.
+     *
+     * @param runnableProject the project to resolve dependencies for.
+     * @param excludeProjects Whether to exclude projects (of this build) from the dependencies.
+     * @param scopes the scopes to resolve dependencies for.
+     * @return the list of dependencies.
+     */
+    public List<Dependency> resolveDependencies(MavenProject runnableProject, boolean excludeProjects, String... scopes) {
         try {
             DependencyFilter filter = DependencyFilterUtils.classpathFilter(scopes);
+            if (excludeProjects) {
+                filter = DependencyFilterUtils.andFilter(filter, new ReactorProjectsFilter(mavenSession.getAllProjects()));
+            }
             RepositorySystemSession session = mavenSession.getRepositorySession();
-            DependencyResolutionRequest request = new DefaultDependencyResolutionRequest(project, session);
-            request.setResolutionFilter(filter);
-            DependencyResolutionResult result = resolver.resolve(request);
+            DependencyResolutionRequest dependencyResolutionRequest = new DefaultDependencyResolutionRequest(runnableProject, session);
+            dependencyResolutionRequest.setResolutionFilter(filter);
+            DependencyResolutionResult result = resolver.resolve(dependencyResolutionRequest);
             return result.getDependencies();
         } catch (org.apache.maven.project.DependencyResolutionException e) {
             if (log.isWarnEnabled()) {
@@ -96,6 +133,12 @@ public final class AotCompilerService {
         }
     }
 
+    /**
+     * Builds a classpath string for the given dependencies.
+     *
+     * @param dependencies the dependencies to build the classpath for.
+     * @return the classpath string.
+     */
     public String buildClasspath(List<Dependency> dependencies) {
         Comparator<Dependency> byGroupId = Comparator.comparing(d -> d.getArtifact().getGroupId());
         Comparator<Dependency> byArtifactId = Comparator.comparing(d -> d.getArtifact().getArtifactId());
@@ -105,7 +148,31 @@ public final class AotCompilerService {
             .collect(Collectors.joining(File.pathSeparator));
     }
 
+    /**
+     * Packages the project by invoking the Jar plugin.
+     *
+     * @return the invocation result.
+     */
     public InvocationResult packageProject() throws MavenInvocationException {
         return executorService.invokeGoal(MAVEN_JAR_PLUGIN, "jar");
+    }
+
+    private record ReactorProjectsFilter(List<MavenProject> reactorProjects) implements DependencyFilter {
+
+        @Override
+        public boolean accept(DependencyNode node, List<DependencyNode> parents) {
+            Artifact nodeArtifact = node.getArtifact();
+            if (nodeArtifact == null) {
+                return true;
+            }
+            for (MavenProject project : reactorProjects) {
+                if (project.getGroupId().equals(nodeArtifact.getGroupId())
+                    && project.getArtifactId().equals(nodeArtifact.getArtifactId())
+                    && project.getVersion().equals(nodeArtifact.getVersion())) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 }

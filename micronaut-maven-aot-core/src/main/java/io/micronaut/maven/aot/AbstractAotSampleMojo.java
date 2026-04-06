@@ -15,9 +15,9 @@
  */
 package io.micronaut.maven.aot;
 
-import io.micronaut.maven.aot.internal.AotCompilerService;
-import io.micronaut.maven.aot.internal.AotDependencyResolutionService;
-import io.micronaut.maven.aot.internal.AotExecutorService;
+import io.micronaut.maven.services.CompilerService;
+import io.micronaut.maven.services.DependencyResolutionService;
+import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.toolchain.ToolchainManager;
@@ -35,10 +35,10 @@ public abstract class AbstractAotSampleMojo extends AbstractMicronautAotCliMojo 
     public static final String NAME = "aot-sample-config";
 
     @Inject
-    protected AbstractAotSampleMojo(AotCompilerService compilerService,
-                                    AotExecutorService executorService,
+    protected AbstractAotSampleMojo(CompilerService compilerService,
+                                    ExecutorService executorService,
                                     MavenProject mavenProject,
-                                    AotDependencyResolutionService dependencyResolutionService,
+                                    DependencyResolutionService dependencyResolutionService,
                                     MavenSession mavenSession,
                                     ToolchainManager toolchainManager) {
         super(compilerService, executorService, mavenProject, dependencyResolutionService, mavenSession, toolchainManager);

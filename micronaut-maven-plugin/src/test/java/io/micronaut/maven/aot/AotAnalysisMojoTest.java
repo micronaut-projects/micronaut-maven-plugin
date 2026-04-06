@@ -1,8 +1,8 @@
 package io.micronaut.maven.aot;
 
-import io.micronaut.maven.aot.internal.AotCompilerService;
-import io.micronaut.maven.aot.internal.AotDependencyResolutionService;
-import io.micronaut.maven.aot.internal.AotExecutorService;
+import io.micronaut.maven.services.CompilerService;
+import io.micronaut.maven.services.DependencyResolutionService;
+import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.toolchain.ToolchainManager;
@@ -54,10 +54,10 @@ class AotAnalysisMojoTest {
 
     private static AotAnalysisMojo newMojo(Path outputDirectory) throws Exception {
         var mojo = new AotAnalysisMojo(
-            mock(AotCompilerService.class),
-            mock(AotExecutorService.class),
+            mock(CompilerService.class),
+            mock(ExecutorService.class),
             mock(MavenProject.class),
-            mock(AotDependencyResolutionService.class),
+            mock(DependencyResolutionService.class),
             mock(MavenSession.class),
             mock(ToolchainManager.class)
         );

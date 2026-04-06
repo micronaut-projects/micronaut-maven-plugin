@@ -18,6 +18,7 @@ package io.micronaut.maven.services;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.testresources.buildtools.MavenDependency;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
@@ -43,6 +44,9 @@ import java.util.stream.Stream;
 
 /**
  * Utility methods for performing dependency resolution.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 5.0.0
  */
 @Singleton
 public class DependencyResolutionService {
@@ -53,21 +57,20 @@ public class DependencyResolutionService {
     private static final String JAR_EXTENSION = "jar";
 
     private final MavenSession mavenSession;
-
     private final MavenProject mavenProject;
-
     private final RepositorySystem repositorySystem;
 
     @Inject
-    public DependencyResolutionService(MavenSession mavenSession, MavenProject mavenProject, RepositorySystem repositorySystem) {
+    public DependencyResolutionService(MavenSession mavenSession,
+                                       MavenProject mavenProject,
+                                       RepositorySystem repositorySystem) {
         this.mavenSession = mavenSession;
         this.mavenProject = mavenProject;
         this.repositorySystem = repositorySystem;
     }
 
     private static Stream<File> streamClasspath(List<ArtifactResult> resolutionResult) {
-        return resolutionResult
-            .stream()
+        return resolutionResult.stream()
             .map(ArtifactResult::getArtifact)
             .map(Artifact::getFile);
     }
@@ -79,25 +82,30 @@ public class DependencyResolutionService {
     }
 
     public static List<File> toClasspathFiles(List<ArtifactResult> resolutionResult) {
-        return streamClasspath(resolutionResult)
-            .toList();
+        return streamClasspath(resolutionResult).toList();
     }
 
-    public static Dependency mavenDependencyToAetherDependency(org.apache.maven.model.Dependency d) {
-        Artifact artifact = mavenDependencyToAetherArtifact(d);
-        return new Dependency(artifact, d.getScope(), Boolean.valueOf(d.getOptional()));
+    public static Dependency mavenDependencyToAetherDependency(org.apache.maven.model.Dependency dependency) {
+        Artifact artifact = mavenDependencyToAetherArtifact(dependency);
+        return new Dependency(artifact, dependency.getScope(), Boolean.valueOf(dependency.getOptional()));
     }
 
-    public static Artifact mavenDependencyToAetherArtifact(org.apache.maven.model.Dependency d) {
-        return new DefaultArtifact(d.getGroupId(), d.getArtifactId(), d.getClassifier(), d.getType(), d.getVersion());
+    public static Artifact mavenDependencyToAetherArtifact(org.apache.maven.model.Dependency dependency) {
+        return new DefaultArtifact(
+            dependency.getGroupId(),
+            dependency.getArtifactId(),
+            dependency.getClassifier(),
+            dependency.getType(),
+            dependency.getVersion()
+        );
     }
 
-    public static MavenDependency mavenDependencyToTestResourcesDependency(org.apache.maven.model.Dependency d) {
-        return new MavenDependency(d.getGroupId(), d.getArtifactId(), d.getVersion());
+    public static MavenDependency mavenDependencyToTestResourcesDependency(org.apache.maven.model.Dependency dependency) {
+        return new MavenDependency(dependency.getGroupId(), dependency.getArtifactId(), dependency.getVersion());
     }
 
-    public static Artifact testResourcesDependencyToAetherArtifact(MavenDependency d) {
-        return new DefaultArtifact(d.getGroup(), d.getArtifact(), JAR_EXTENSION, d.getVersion());
+    public static Artifact testResourcesDependencyToAetherArtifact(MavenDependency dependency) {
+        return new DefaultArtifact(dependency.getGroup(), dependency.getArtifact(), JAR_EXTENSION, dependency.getVersion());
     }
 
     /**
@@ -110,34 +118,39 @@ public class DependencyResolutionService {
     public List<ArtifactResult> artifactResultsFor(Stream<Artifact> artifacts, boolean applyManagedDependencies) throws DependencyResolutionException {
         RepositorySystemSession repositorySession = mavenSession.getRepositorySession();
         DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.RUNTIME);
-        var collectRequest = new CollectRequest();
+        CollectRequest collectRequest = new CollectRequest();
         collectRequest.setRepositories(mavenProject.getRemoteProjectRepositories());
 
         if (applyManagedDependencies) {
-            List<org.apache.maven.model.Dependency> dependencies = mavenProject.getDependencyManagement().getDependencies();
-            var dependencyMap = new HashMap<String, Dependency>(dependencies.size());
+            DependencyManagement dependencyManagement = mavenProject.getDependencyManagement();
+            List<org.apache.maven.model.Dependency> dependencies = dependencyManagement == null || dependencyManagement.getDependencies() == null
+                ? List.of()
+                : dependencyManagement.getDependencies();
+            HashMap<String, Dependency> dependencyMap = new HashMap<>(dependencies.size());
             for (org.apache.maven.model.Dependency dependency : dependencies) {
                 String ga = dependency.getGroupId() + ":" + dependency.getArtifactId();
-                dependencyMap.putIfAbsent(ga, DependencyResolutionService.mavenDependencyToAetherDependency(dependency));
+                dependencyMap.putIfAbsent(ga, mavenDependencyToAetherDependency(dependency));
             }
             collectRequest.setManagedDependencies(new ArrayList<>(dependencyMap.values()));
 
-            artifacts.forEach(a -> {
-                if (StringUtils.isEmpty(a.getVersion())) {
-                    dependencyMap.computeIfPresent(a.getGroupId() + ":" + a.getArtifactId(), (coord, d) -> {
-                        collectRequest.addDependency(new Dependency(new DefaultArtifact(a.getGroupId(), a.getArtifactId(), a.getExtension(), d.getArtifact().getVersion()), JavaScopes.RUNTIME));
-                        return d;
+            artifacts.forEach(artifact -> {
+                if (StringUtils.isEmpty(artifact.getVersion())) {
+                    dependencyMap.computeIfPresent(artifact.getGroupId() + ":" + artifact.getArtifactId(), (coordinates, dependency) -> {
+                        collectRequest.addDependency(new Dependency(
+                            new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getExtension(), dependency.getArtifact().getVersion()),
+                            JavaScopes.RUNTIME
+                        ));
+                        return dependency;
                     });
                 } else {
-                    collectRequest.addDependency(new Dependency(a, JavaScopes.RUNTIME));
+                    collectRequest.addDependency(new Dependency(artifact, JavaScopes.RUNTIME));
                 }
             });
         } else {
-            artifacts.map(a -> new Dependency(a, JavaScopes.RUNTIME)).forEach(collectRequest::addDependency);
+            artifacts.map(artifact -> new Dependency(artifact, JavaScopes.RUNTIME)).forEach(collectRequest::addDependency);
         }
 
-        var dependencyRequest = new DependencyRequest(collectRequest, classpathFilter);
-
+        DependencyRequest dependencyRequest = new DependencyRequest(collectRequest, classpathFilter);
         DependencyResult dependencyResult = repositorySystem.resolveDependencies(repositorySession, dependencyRequest);
         return dependencyResult.getArtifactResults();
     }

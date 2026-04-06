@@ -1,8 +1,8 @@
 package io.micronaut.maven.aot;
 
-import io.micronaut.maven.aot.internal.AotCompilerService;
-import io.micronaut.maven.aot.internal.AotDependencyResolutionService;
-import io.micronaut.maven.aot.internal.AotExecutorService;
+import io.micronaut.maven.services.CompilerService;
+import io.micronaut.maven.services.DependencyResolutionService;
+import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
 import org.apache.maven.project.MavenProject;
@@ -90,10 +90,10 @@ class AbstractAotAnalysisMojoTest {
         project.setPackaging("jar");
 
         TestAotAnalysisMojo mojo = new TestAotAnalysisMojo(
-            mock(AotCompilerService.class),
-            mock(AotExecutorService.class),
+            mock(CompilerService.class),
+            mock(ExecutorService.class),
             project,
-            mock(AotDependencyResolutionService.class),
+            mock(DependencyResolutionService.class),
             mock(MavenSession.class),
             mock(ToolchainManager.class)
         );
@@ -113,10 +113,10 @@ class AbstractAotAnalysisMojoTest {
 
     private static final class TestAotAnalysisMojo extends AbstractAotAnalysisMojo {
 
-        private TestAotAnalysisMojo(AotCompilerService compilerService,
-                                    AotExecutorService executorService,
+        private TestAotAnalysisMojo(CompilerService compilerService,
+                                    ExecutorService executorService,
                                     MavenProject mavenProject,
-                                    AotDependencyResolutionService dependencyResolutionService,
+                                    DependencyResolutionService dependencyResolutionService,
                                     MavenSession mavenSession,
                                     ToolchainManager toolchainManager) {
             super(compilerService, executorService, mavenProject, dependencyResolutionService, mavenSession, toolchainManager);

@@ -1,4 +1,4 @@
-package io.micronaut.maven.aot.internal;
+package io.micronaut.maven.services;
 
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.execution.MavenExecutionRequest;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class AotExecutorServiceTest {
+class ExecutorServiceTest {
 
     @Test
     void invokeGoalsKeepsInvokerHandlersUnsetWhenSessionIsQuiet(@TempDir Path tempDir) throws Exception {
@@ -36,7 +36,7 @@ class AotExecutorServiceTest {
         MavenSession session = newSession(tempDir, true, null);
         when(invoker.execute(any(InvocationRequest.class))).thenReturn(mock(InvocationResult.class));
 
-        AotExecutorService service = new AotExecutorService(project, session, mock(BuildPluginManager.class), invoker);
+        ExecutorService service = new ExecutorService(project, session, mock(BuildPluginManager.class), invoker);
         service.invokeGoals("package");
 
         ArgumentCaptor<InvocationRequest> requestCaptor = ArgumentCaptor.forClass(InvocationRequest.class);
@@ -59,7 +59,7 @@ class AotExecutorServiceTest {
         MavenSession session = newSession(tempDir, false, settingsFile.toFile());
         when(invoker.execute(any(InvocationRequest.class))).thenReturn(mock(InvocationResult.class));
 
-        AotExecutorService service = new AotExecutorService(project, session, mock(BuildPluginManager.class), invoker);
+        ExecutorService service = new ExecutorService(project, session, mock(BuildPluginManager.class), invoker);
         service.invokeGoals("package");
 
         ArgumentCaptor<InvocationRequest> requestCaptor = ArgumentCaptor.forClass(InvocationRequest.class);
@@ -88,7 +88,7 @@ class AotExecutorServiceTest {
         project.setBuild(build);
         project.setFile(buildDirectory.resolve("flattened-pom.xml").toFile());
 
-        assertEquals(originalPom, AotExecutorService.resolveOriginalPom(project));
+        assertEquals(originalPom, ExecutorService.resolveOriginalPom(project));
     }
 
     @Test
@@ -102,7 +102,7 @@ class AotExecutorServiceTest {
         File alternatePom = projectDirectory.resolve("custom.xml").toFile();
         project.setFile(alternatePom);
 
-        assertSame(alternatePom, AotExecutorService.resolveOriginalPom(project));
+        assertSame(alternatePom, ExecutorService.resolveOriginalPom(project));
     }
 
     private static MavenSession newSession(Path tempDir, boolean quiet, File settingsFile) {

@@ -1,4 +1,4 @@
-package io.micronaut.maven.aot.internal;
+package io.micronaut.maven.services;
 
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.DependencyManagement;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class AotDependencyResolutionServiceTest {
+class DependencyResolutionServiceTest {
 
     @Test
     void artifactResultsForTreatsMissingDependencyManagementAsEmpty() throws Exception {
@@ -34,7 +34,7 @@ class AotDependencyResolutionServiceTest {
         when(project.getRemoteProjectRepositories()).thenReturn(List.of(new RemoteRepository.Builder("central", "default", "https://repo.maven.apache.org/maven2").build()));
         when(repositorySystem.resolveDependencies(any(), any())).thenReturn(new DependencyResult(new DependencyRequest()));
 
-        AotDependencyResolutionService service = new AotDependencyResolutionService(session, project, repositorySystem);
+        DependencyResolutionService service = new DependencyResolutionService(session, project, repositorySystem);
         service.artifactResultsFor(Stream.of(new DefaultArtifact("io.micronaut", "micronaut-runtime", "jar", "")), true);
 
         ArgumentCaptor<DependencyRequest> requestCaptor = ArgumentCaptor.forClass(DependencyRequest.class);
@@ -61,7 +61,7 @@ class AotDependencyResolutionServiceTest {
         when(project.getDependencyManagement()).thenReturn(dependencyManagement);
         when(repositorySystem.resolveDependencies(any(), any())).thenReturn(new DependencyResult(new DependencyRequest()));
 
-        AotDependencyResolutionService service = new AotDependencyResolutionService(session, project, repositorySystem);
+        DependencyResolutionService service = new DependencyResolutionService(session, project, repositorySystem);
         service.artifactResultsFor(Stream.of(new DefaultArtifact("io.micronaut", "micronaut-runtime", "jar", "")), true);
 
         ArgumentCaptor<DependencyRequest> requestCaptor = ArgumentCaptor.forClass(DependencyRequest.class);

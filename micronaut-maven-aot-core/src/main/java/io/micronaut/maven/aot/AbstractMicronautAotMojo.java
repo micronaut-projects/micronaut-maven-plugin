@@ -16,8 +16,8 @@
 package io.micronaut.maven.aot;
 
 import io.micronaut.maven.JansiLog;
-import io.micronaut.maven.aot.internal.AotCompilerService;
 import io.micronaut.maven.aot.internal.AotPackaging;
+import io.micronaut.maven.services.CompilerService;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.model.Exclusion;
 import org.apache.maven.plugin.AbstractMojo;
@@ -36,7 +36,7 @@ import java.util.List;
  */
 public abstract class AbstractMicronautAotMojo extends AbstractMojo {
 
-    protected final AotCompilerService compilerService;
+    protected final CompilerService compilerService;
     protected final MavenProject mavenProject;
 
     /**
@@ -71,7 +71,7 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
     @Parameter(property = "exclusions")
     protected List<Exclusion> aotExclusions;
 
-    protected AbstractMicronautAotMojo(AotCompilerService compilerService, MavenProject mavenProject) {
+    protected AbstractMicronautAotMojo(CompilerService compilerService, MavenProject mavenProject) {
         this.compilerService = compilerService;
         this.mavenProject = mavenProject;
     }

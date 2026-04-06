@@ -15,10 +15,10 @@
  */
 package io.micronaut.maven.aot;
 
-import io.micronaut.maven.aot.internal.AotCompilerService;
-import io.micronaut.maven.aot.internal.AotDependencyResolutionService;
-import io.micronaut.maven.aot.internal.AotExecutorService;
 import io.micronaut.maven.core.MojoUtils;
+import io.micronaut.maven.services.CompilerService;
+import io.micronaut.maven.services.DependencyResolutionService;
+import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -36,10 +36,10 @@ public class AotAnalysisMojo extends AbstractAotAnalysisMojo {
 
     @Inject
     @SuppressWarnings("CdiInjectionPointsInspection")
-    public AotAnalysisMojo(AotCompilerService compilerService,
-                           AotExecutorService executorService,
+    public AotAnalysisMojo(CompilerService compilerService,
+                           ExecutorService executorService,
                            MavenProject mavenProject,
-                           AotDependencyResolutionService dependencyResolutionService,
+                           DependencyResolutionService dependencyResolutionService,
                            MavenSession mavenSession,
                            ToolchainManager toolchainManager) {
         super(compilerService, executorService, mavenProject, dependencyResolutionService, mavenSession, toolchainManager);
