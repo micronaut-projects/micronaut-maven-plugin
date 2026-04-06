@@ -151,5 +151,5 @@ For example, to exclude `com.example:example` use the following configuration:
   </build>
 ----
 
-NOTE: It is recommended to add AOT exclusions if you are building native imagen and have
+NOTE: It is recommended to add AOT exclusions if you are building native image and have
 exclusions in the `native-maven-plugin`.
