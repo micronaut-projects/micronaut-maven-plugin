@@ -143,6 +143,11 @@
                 <version>${plexus.utils.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-xml</artifactId>
+                <version>3.0.2</version>
+            </dependency>
+            <dependency>
                 <groupId>org.twdata.maven</groupId>
                 <artifactId>mojo-executor</artifactId>
                 <version>${mojo.executor.version}</version>
