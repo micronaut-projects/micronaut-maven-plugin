@@ -1,6 +1,6 @@
 package io.micronaut.maven.testresources;
 
-import io.micronaut.maven.MojoUtils;
+import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.testresources.buildtools.ServerUtils;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.toolchain.Toolchain;

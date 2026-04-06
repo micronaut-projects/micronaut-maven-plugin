@@ -29,6 +29,9 @@ import javax.inject.Inject;
 
 /**
  * Standalone Micronaut AOT sample configuration goal.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 3.2.0
  */
 @Mojo(name = AbstractAotSampleMojo.NAME, defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class AotSampleMojo extends AbstractAotSampleMojo {

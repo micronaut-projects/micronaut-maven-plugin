@@ -19,6 +19,9 @@ import java.util.Optional;
 
 /**
  * Packaging types supported by Micronaut's integrated AOT execution.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 5.0.0
  */
 public enum AotPackaging {
     JAR("jar"),

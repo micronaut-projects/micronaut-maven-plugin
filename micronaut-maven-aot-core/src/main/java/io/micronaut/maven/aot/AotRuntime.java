@@ -17,6 +17,9 @@ package io.micronaut.maven.aot;
 
 /**
  * AOT runtime values.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 3.2.0
  */
 public enum AotRuntime {
     JIT, NATIVE

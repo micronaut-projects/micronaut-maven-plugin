@@ -33,6 +33,9 @@ import java.util.List;
 
 /**
  * Abstract Mojo for Micronaut AOT.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 3.2.0
  */
 public abstract class AbstractMicronautAotMojo extends AbstractMojo {
 

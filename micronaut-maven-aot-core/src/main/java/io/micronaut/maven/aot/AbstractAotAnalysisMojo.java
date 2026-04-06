@@ -42,6 +42,9 @@ import java.util.stream.Stream;
 
 /**
  * Shared implementation for the AOT analysis goal.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 3.2.0
  */
 public abstract class AbstractAotAnalysisMojo extends AbstractMicronautAotCliMojo {
 

@@ -56,6 +56,9 @@ import static org.twdata.maven.mojoexecutor.MojoExecutor.element;
 
 /**
  * Base class for Micronaut AOT mojos.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 3.2.0
  */
 public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMojo {
 

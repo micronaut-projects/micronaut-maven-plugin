@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-import static io.micronaut.maven.MojoUtils.THIS_PLUGIN;
+import static io.micronaut.maven.core.MojoUtils.THIS_PLUGIN;
 import static io.micronaut.maven.testresources.AbstractTestResourcesMojo.CONFIG_PROPERTY_PREFIX;
 import static io.micronaut.maven.testresources.StopTestResourcesServerMojo.MICRONAUT_TEST_RESOURCES_KEEPALIVE;
 

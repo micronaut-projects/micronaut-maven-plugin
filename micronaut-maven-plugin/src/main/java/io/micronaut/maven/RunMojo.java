@@ -62,9 +62,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import static io.micronaut.maven.MojoUtils.findJavaExecutable;
-import static io.micronaut.maven.MojoUtils.hasMicronautMavenPlugin;
-import static io.micronaut.maven.MojoUtils.THIS_PLUGIN;
+import static io.micronaut.maven.core.MojoUtils.findJavaExecutable;
+import static io.micronaut.maven.core.MojoUtils.hasMicronautMavenPlugin;
+import static io.micronaut.maven.core.MojoUtils.THIS_PLUGIN;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isReadable;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;

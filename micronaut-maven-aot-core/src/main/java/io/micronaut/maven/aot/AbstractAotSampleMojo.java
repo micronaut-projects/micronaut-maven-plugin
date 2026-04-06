@@ -28,6 +28,9 @@ import java.util.List;
 
 /**
  * Shared implementation for the AOT sample configuration goal.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 3.2.0
  */
 public abstract class AbstractAotSampleMojo extends AbstractMicronautAotCliMojo {
 
