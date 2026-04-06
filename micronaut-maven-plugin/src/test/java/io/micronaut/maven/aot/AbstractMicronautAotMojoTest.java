@@ -13,6 +13,7 @@ import java.io.File;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +37,25 @@ class AbstractMicronautAotMojoTest {
         mojo.execute();
 
         assertEquals("jit", mojo.runtime);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"pom", "maven-plugin", "custom-packaging"})
+    void ignoresUnsupportedPackagingsDuringRuntimeAlignment(String packaging, @TempDir Path tempDir) {
+        var project = mock(MavenProject.class);
+        var build = mock(Build.class);
+        when(project.getPackaging()).thenReturn(packaging);
+        when(project.getBuild()).thenReturn(build);
+        when(build.getDirectory()).thenReturn(tempDir.resolve("target").toString());
+
+        var mojo = new TestMicronautAotMojo(project);
+        mojo.enabled = true;
+        mojo.runtime = "native";
+        mojo.micronautAotVersion = "test";
+        mojo.outputDirectory = tempDir.resolve("classes").toFile();
+
+        assertDoesNotThrow(mojo::execute);
+        assertEquals("native", mojo.runtime);
     }
 
     private static final class TestMicronautAotMojo extends AbstractMicronautAotMojo {

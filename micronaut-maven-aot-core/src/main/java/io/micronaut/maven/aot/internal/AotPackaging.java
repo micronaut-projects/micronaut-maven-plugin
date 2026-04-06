@@ -15,6 +15,8 @@
  */
 package io.micronaut.maven.aot.internal;
 
+import java.util.Optional;
+
 /**
  * Packaging types supported by Micronaut's integrated AOT execution.
  */
@@ -35,6 +37,14 @@ public enum AotPackaging {
 
     public static AotPackaging of(String value) {
         return AotPackaging.valueOf(value.replace("-", "_").toUpperCase());
+    }
+
+    public static Optional<AotPackaging> find(String value) {
+        try {
+            return Optional.of(of(value));
+        } catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
     }
 
     public String id() {

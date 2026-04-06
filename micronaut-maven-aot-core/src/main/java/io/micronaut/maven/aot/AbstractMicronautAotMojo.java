@@ -143,7 +143,12 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
     }
 
     private void validateRuntime() {
-        AotPackaging packaging = AotPackaging.of(mavenProject.getPackaging());
+        String packagingId = mavenProject.getPackaging();
+        AotPackaging packaging = AotPackaging.find(packagingId).orElse(null);
+        if (packaging == null) {
+            getLog().debug("Skipping AOT runtime alignment for unsupported packaging: " + packagingId);
+            return;
+        }
         AotRuntime aotRuntime = AotRuntime.valueOf(runtime.toUpperCase());
         switch (packaging) {
             case JAR, DOCKER, DOCKER_CRAC, K8S, OPENSHIFT -> {
@@ -156,7 +161,9 @@ public abstract class AbstractMicronautAotMojo extends AbstractMojo {
                     warnRuntimeMismatchAndSetCorrectValue(AotRuntime.NATIVE);
                 }
             }
-            default -> throw new IllegalArgumentException("Unsupported packaging: " + packaging);
+            default -> {
+                // No additional runtime normalization is required.
+            }
         }
     }
 
