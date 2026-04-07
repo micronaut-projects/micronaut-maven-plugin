@@ -15,6 +15,7 @@
  */
 package io.micronaut.maven.aot.internal;
 
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -39,7 +40,7 @@ public enum AotPackaging {
     }
 
     public static AotPackaging of(String value) {
-        return AotPackaging.valueOf(value.replace("-", "_").toUpperCase());
+        return AotPackaging.valueOf(value.replace("-", "_").toUpperCase(Locale.ROOT));
     }
 
     public static Optional<AotPackaging> find(String value) {

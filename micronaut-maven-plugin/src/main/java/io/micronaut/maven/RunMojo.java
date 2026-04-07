@@ -18,6 +18,7 @@ package io.micronaut.maven;
 import io.methvin.watcher.DirectoryChangeEvent;
 import io.methvin.watcher.DirectoryWatcher;
 import io.micronaut.maven.aot.AotAnalysisMojo;
+import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.maven.services.ExecutorService;
