@@ -14,6 +14,8 @@
     <inceptionYear>2020</inceptionYear>
 
     <modules>
+        <module>micronaut-maven-aot-core</module>
+        <module>micronaut-maven-aot-plugin</module>
         <module>micronaut-maven-core</module>
         <module>micronaut-maven-enforcer-rules</module>
         <module>micronaut-maven-jib-integration</module>
@@ -73,6 +75,12 @@
 
         <maven.resources-plugin.version>3.4.0</maven.resources-plugin.version>
         <maven.archiver-plugin.version>3.6.0</maven.archiver-plugin.version>
+        <maven.invoker.version>3.3.0</maven.invoker.version>
+        <plexus.utils.version>4.0.3</plexus.utils.version>
+        <mojo.executor.version>2.4.1</mojo.executor.version>
+        <commons.io.version>2.21.0</commons.io.version>
+        <jansi.version>2.4.2</jansi.version>
+        <maven.plugin.testing.harness.version>3.5.1</maven.plugin.testing.harness.version>
 
         <site.path>${project.artifactId}</site.path>
         <site.name>${project.name}</site.name>
@@ -110,9 +118,39 @@
                 <version>${maven.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.maven</groupId>
+                <artifactId>maven-plugin-api</artifactId>
+                <version>${maven.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.maven.shared</groupId>
+                <artifactId>maven-invoker</artifactId>
+                <version>${maven.invoker.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>io.methvin</groupId>
                 <artifactId>directory-watcher</artifactId>
                 <version>${directory-watcher.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${maven.resources-plugin.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-utils</artifactId>
+                <version>${plexus.utils.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-xml</artifactId>
+                <version>3.0.2</version>
+            </dependency>
+            <dependency>
+                <groupId>org.twdata.maven</groupId>
+                <artifactId>mojo-executor</artifactId>
+                <version>${mojo.executor.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
@@ -128,6 +166,16 @@
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
                 <version>${snakeyaml.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${commons.io.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.fusesource.jansi</groupId>
+                <artifactId>jansi</artifactId>
+                <version>${jansi.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
@@ -159,6 +207,21 @@
                 <groupId>org.apache.maven.plugin-tools</groupId>
                 <artifactId>maven-plugin-annotations</artifactId>
                 <version>${maven-plugin-tools.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.maven.plugin-testing</groupId>
+                <artifactId>maven-plugin-testing-harness</artifactId>
+                <version>${maven.plugin.testing.harness.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.sisu</groupId>
+                <artifactId>org.eclipse.sisu.inject</artifactId>
+                <version>${sisu.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.graalvm.buildtools</groupId>
+                <artifactId>utils</artifactId>
+                <version>${native-maven-plugin.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>

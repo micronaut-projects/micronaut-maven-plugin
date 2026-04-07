@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.maven.core.MicronautRuntime;
+import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;

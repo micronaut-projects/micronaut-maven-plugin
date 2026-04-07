@@ -14,6 +14,43 @@ To enable Micronaut AOT, simply set the property `micronaut.aot.enabled`, either
 $ mvn package -Dmicronaut.aot.enabled=true
 ----
 
+That integrated path continues to work through `micronaut-maven-plugin` on `5.0.x`, including the existing packaging and
+`mn:run` flows.
+
+==== Standalone AOT plugin
+
+If a module only needs Micronaut AOT support, it can use the standalone `micronaut-maven-aot-plugin` without applying
+the main Micronaut Maven plugin:
+
+[source,xml]
+----
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.micronaut.maven</groupId>
+        <artifactId>micronaut-maven-aot-plugin</artifactId>
+        <version>{site-version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>aot-analysis</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+----
+
+The standalone plugin keeps the same goals, but it uses the `mn-aot` prefix for direct invocation:
+
+----
+$ mvn mn-aot:aot-sample-config -Dmicronaut.aot.enabled=true
+----
+
+When both plugins are declared in the same build, `micronaut-maven-plugin` remains the owner of integrated AOT
+execution and the standalone `aot-analysis` goal will skip itself to avoid double-running AOT.
+
 When Micronaut AOT is enabled, the packaged (or exploded) format of the application will contain some optimizations
 computed at build time. It may contain, for example, additional classes, or even have different resources.
 
@@ -114,6 +151,5 @@ For example, to exclude `com.example:example` use the following configuration:
   </build>
 ----
 
-NOTE: It is recommended to add AOT exclusions if you are building native imagen and have
+NOTE: It is recommended to add AOT exclusions if you are building native image and have
 exclusions in the `native-maven-plugin`.
-

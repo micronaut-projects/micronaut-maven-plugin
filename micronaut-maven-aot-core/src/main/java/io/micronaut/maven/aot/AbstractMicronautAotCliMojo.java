@@ -15,12 +15,10 @@
  */
 package io.micronaut.maven.aot;
 
-import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.maven.MojoUtils;
+import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.maven.services.ExecutorService;
-
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -34,6 +32,7 @@ import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.artifact.JavaScopes;
+
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
@@ -57,6 +56,9 @@ import static org.twdata.maven.mojoexecutor.MojoExecutor.element;
 
 /**
  * Base class for Micronaut AOT mojos.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 3.2.0
  */
 public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMojo {
 
@@ -78,11 +80,8 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     protected String packageName;
 
     private final ExecutorService executorService;
-
     private final DependencyResolutionService dependencyResolutionService;
-    
     private final MavenSession mavenSession;
-    
     private final ToolchainManager toolchainManager;
 
     @Parameter
@@ -97,9 +96,12 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     private List<String> aotJvmArgs;
 
     @Inject
-    public AbstractMicronautAotCliMojo(CompilerService compilerService, ExecutorService executorService,
-                                       MavenProject mavenProject, DependencyResolutionService dependencyResolutionService,
-                                       MavenSession mavenSession, ToolchainManager toolchainManager) {
+    protected AbstractMicronautAotCliMojo(CompilerService compilerService,
+                                          ExecutorService executorService,
+                                          MavenProject mavenProject,
+                                          DependencyResolutionService dependencyResolutionService,
+                                          MavenSession mavenSession,
+                                          ToolchainManager toolchainManager) {
         super(compilerService, mavenProject);
         this.executorService = executorService;
         this.dependencyResolutionService = dependencyResolutionService;
@@ -126,68 +128,6 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
         } catch (MavenInvocationException e) {
             getLog().error("Error when packaging project", e);
         }
-    }
-
-    private void executeAot() throws DependencyResolutionException, MojoExecutionException {
-        getLog().info("Executing Micronaut AOT analysis");
-        AotJavaExecution execution = createJavaExecution();
-        boolean executionSucceeded = false;
-
-        try {
-            executorService.executeGoal(
-                EXEC_MAVEN_PLUGIN_GROUP,
-                EXEC_MAVEN_PLUGIN_ARTIFACT,
-                mavenProject.getProperties().getProperty(EXEC_MAVEN_PLUGIN_VERSION_PROPERTY, DEFAULT_EXEC_MAVEN_PLUGIN_VERSION),
-                "exec",
-                execution.config
-            );
-            executionSucceeded = true;
-        } catch (MojoExecutionException e) {
-            getLog().error("Error when executing Micronaut AOT: " + e.getMessage());
-            getLog().error("Command line was: java @" + execution.argumentFile.getAbsolutePath());
-            getLog().error("Micronaut AOT argument file retained at: " + execution.argumentFile.getAbsolutePath());
-            throw e;
-        } finally {
-            if (executionSucceeded) {
-                deleteArgumentFile(execution.argumentFile);
-            }
-        }
-
-    }
-
-    private AotJavaExecution createJavaExecution() throws DependencyResolutionException, MojoExecutionException {
-        List<String> aotClasspath = resolveAotClasspath();
-        List<String> aotPluginsClasspath = resolveAotPluginsClasspath();
-        List<String> applicationClasspath = resolveApplicationClasspath();
-
-        var classpath = new ArrayList<String>(aotPluginsClasspath.size() + applicationClasspath.size());
-        classpath.addAll(aotClasspath);
-        classpath.addAll(aotPluginsClasspath);
-        classpath.addAll(applicationClasspath);
-
-        if (!CollectionUtils.isEmpty(aotExclusions)) {
-            getLog().info("Using exclusions for the AOT classpath: " +
-                    aotExclusions.stream().map(v -> v.getGroupId() + ":" + v.getArtifactId()).collect(Collectors.joining(", ")));
-            getLog().info("Resulting AOT classpath: " + String.join(", ", classpath));
-        }
-
-        List<String> commandArguments = buildJavaCommandArguments(
-            Optional.ofNullable(aotJvmArgs).orElse(List.of()),
-            String.join(File.pathSeparator, aotClasspath),
-            String.join(File.pathSeparator, classpath),
-            packageName,
-            runtime,
-            getExtraArgs()
-        );
-        File argumentFile = writeJavaArgumentFile(getBaseOutputDirectory(), commandArguments);
-
-        String javaExecutable = MojoUtils.findJavaExecutable(toolchainManager, mavenSession);
-
-        Xpp3Dom config = configuration(
-            element("executable", javaExecutable),
-            element("arguments", element("argument", "@" + argumentFile.getAbsolutePath()))
-        );
-        return new AotJavaExecution(config, argumentFile);
     }
 
     static List<String> buildJavaCommandArguments(List<String> jvmArgs,
@@ -233,6 +173,64 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
         return escaped;
     }
 
+    private void executeAot() throws DependencyResolutionException, MojoExecutionException {
+        getLog().info("Executing Micronaut AOT analysis");
+        AotJavaExecution execution = createJavaExecution();
+        boolean executionSucceeded = false;
+        try {
+            executorService.executeGoal(
+                EXEC_MAVEN_PLUGIN_GROUP,
+                EXEC_MAVEN_PLUGIN_ARTIFACT,
+                mavenProject.getProperties().getProperty(EXEC_MAVEN_PLUGIN_VERSION_PROPERTY, DEFAULT_EXEC_MAVEN_PLUGIN_VERSION),
+                "exec",
+                execution.config
+            );
+            executionSucceeded = true;
+        } catch (MojoExecutionException e) {
+            getLog().error("Error when executing Micronaut AOT: " + e.getMessage());
+            getLog().error("Command line was: java @" + execution.argumentFile.getAbsolutePath());
+            getLog().error("Micronaut AOT argument file retained at: " + execution.argumentFile.getAbsolutePath());
+            throw e;
+        } finally {
+            if (executionSucceeded) {
+                deleteArgumentFile(execution.argumentFile);
+            }
+        }
+    }
+
+    private AotJavaExecution createJavaExecution() throws DependencyResolutionException, MojoExecutionException {
+        List<String> aotClasspath = resolveAotClasspath();
+        List<String> aotPluginsClasspath = resolveAotPluginsClasspath();
+        List<String> applicationClasspath = resolveApplicationClasspath();
+
+        ArrayList<String> classpath = new ArrayList<>(aotPluginsClasspath.size() + applicationClasspath.size());
+        classpath.addAll(aotClasspath);
+        classpath.addAll(aotPluginsClasspath);
+        classpath.addAll(applicationClasspath);
+
+        if (aotExclusions != null && !aotExclusions.isEmpty()) {
+            getLog().info("Using exclusions for the AOT classpath: " +
+                aotExclusions.stream().map(exclusion -> exclusion.getGroupId() + ":" + exclusion.getArtifactId()).collect(Collectors.joining(", ")));
+            getLog().info("Resulting AOT classpath: " + String.join(", ", classpath));
+        }
+
+        List<String> commandArguments = buildJavaCommandArguments(
+            Optional.ofNullable(aotJvmArgs).orElse(List.of()),
+            String.join(File.pathSeparator, aotClasspath),
+            String.join(File.pathSeparator, classpath),
+            packageName,
+            runtime,
+            getExtraArgs()
+        );
+        File argumentFile = writeJavaArgumentFile(getBaseOutputDirectory(), commandArguments);
+        String javaExecutable = MojoUtils.findJavaExecutable(toolchainManager, mavenSession);
+        Xpp3Dom config = configuration(
+            element("executable", javaExecutable),
+            element("arguments", element("argument", "@" + argumentFile.getAbsolutePath()))
+        );
+        return new AotJavaExecution(config, argumentFile);
+    }
+
     private void deleteArgumentFile(File argumentFile) {
         try {
             Files.deleteIfExists(argumentFile.toPath());
@@ -242,12 +240,13 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
     }
 
     private List<String> resolveApplicationClasspath() {
-        String projectJar = new File(mavenProject.getBuild().getDirectory(), mavenProject.getBuild().getFinalName() + ".jar")
-            .getAbsolutePath();
-        var result = new ArrayList<String>();
+        String projectJar = new File(mavenProject.getBuild().getDirectory(), mavenProject.getBuild().getFinalName() + ".jar").getAbsolutePath();
+        ArrayList<String> result = new ArrayList<>();
         result.add(projectJar);
-        String classpath = compilerService.buildClasspath(compilerService.resolveDependencies(mavenProject, JavaScopes.RUNTIME)
-                .stream().filter(dep -> this.isDependencyIncluded(dep.getArtifact())).toList()
+        String classpath = compilerService.buildClasspath(
+            compilerService.resolveDependencies(mavenProject, JavaScopes.RUNTIME).stream()
+                .filter(dependency -> isDependencyIncluded(dependency.getArtifact()))
+                .toList()
         );
         result.addAll(Arrays.asList(classpath.split(File.pathSeparator)));
         return result;
@@ -255,22 +254,25 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
 
     private List<String> resolveAotClasspath() throws DependencyResolutionException {
         Stream<Artifact> aotArtifacts = Arrays.stream(AOT_MODULES)
-            .map(m -> new DefaultArtifact(MICRONAUT_AOT_GROUP_ID + ":" + MICRONAUT_AOT_ARTIFACT_ID_PREFIX + m + ":" + micronautAotVersion));
-        return toClasspath(dependencyResolutionService.artifactResultsFor(aotArtifacts, false)
-                .stream().filter(r -> this.isDependencyIncluded(r.getArtifact())).toList()
+            .map(module -> new DefaultArtifact(MICRONAUT_AOT_GROUP_ID + ":" + MICRONAUT_AOT_ARTIFACT_ID_PREFIX + module + ":" + micronautAotVersion));
+        return toClasspath(
+            dependencyResolutionService.artifactResultsFor(aotArtifacts, false).stream()
+                .filter(result -> isDependencyIncluded(result.getArtifact()))
+                .toList()
         );
     }
 
     private List<String> resolveAotPluginsClasspath() throws DependencyResolutionException {
-        if (aotDependencies != null && !aotDependencies.isEmpty()) {
-            Stream<Artifact> aotPlugins = aotDependencies.stream()
-                .map(d -> new DefaultArtifact(d.getGroupId(), d.getArtifactId(), d.getType(), d.getVersion()));
-            return toClasspath(dependencyResolutionService.artifactResultsFor(aotPlugins, false)
-                    .stream().filter(r -> this.isDependencyIncluded(r.getArtifact())).toList()
-            );
-        } else {
+        if (aotDependencies == null || aotDependencies.isEmpty()) {
             return Collections.emptyList();
         }
+        Stream<Artifact> aotPlugins = aotDependencies.stream()
+            .map(dependency -> new DefaultArtifact(dependency.getGroupId(), dependency.getArtifactId(), dependency.getType(), dependency.getVersion()));
+        return toClasspath(
+            dependencyResolutionService.artifactResultsFor(aotPlugins, false).stream()
+                .filter(result -> isDependencyIncluded(result.getArtifact()))
+                .toList()
+        );
     }
 
     private boolean isDependencyIncluded(Artifact dependency) {
@@ -278,17 +280,9 @@ public abstract class AbstractMicronautAotCliMojo extends AbstractMicronautAotMo
             return true;
         }
         return aotExclusions.stream()
-                .noneMatch(e -> e.getGroupId().equals(dependency.getGroupId()) && e.getArtifactId().equals(dependency.getArtifactId()));
+            .noneMatch(exclusion -> exclusion.getGroupId().equals(dependency.getGroupId()) && exclusion.getArtifactId().equals(dependency.getArtifactId()));
     }
 
-    private static final class AotJavaExecution {
-        private final Xpp3Dom config;
-        private final File argumentFile;
-
-        private AotJavaExecution(Xpp3Dom config, File argumentFile) {
-            this.config = config;
-            this.argumentFile = argumentFile;
-        }
+    private record AotJavaExecution(Xpp3Dom config, File argumentFile) {
     }
-
 }

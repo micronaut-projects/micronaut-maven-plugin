@@ -15,7 +15,7 @@
  */
 package io.micronaut.maven.testresources;
 
-import io.micronaut.maven.MojoUtils;
+import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.services.DependencyResolutionService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;

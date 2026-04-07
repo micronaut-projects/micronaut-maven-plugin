@@ -1,8 +1,16 @@
 
-return isGraalJVM()
+return isGraalJVM() && hasNativeLinkerPrerequisites()
 
 static boolean isGraalJVM() {
     return isGraal("jvmci.Compiler", "java.vendor.version")
+}
+
+static boolean hasNativeLinkerPrerequisites() {
+    if (!System.getProperty("os.name").toLowerCase(Locale.ENGLISH).contains("linux")) {
+        return true
+    }
+    String libzArchive = queryFileFromGcc("libz.a")
+    return libzArchive != null && new File(libzArchive).isFile()
 }
 
 private static boolean isGraal(String... props) {
@@ -13,4 +21,23 @@ private static boolean isGraal(String... props) {
         }
     }
     return false
+}
+
+private static String queryFileFromGcc(String filename) {
+    try {
+        Process process = new ProcessBuilder("gcc", "-print-file-name=${filename}")
+            .redirectErrorStream(true)
+            .start()
+        process.waitFor()
+        if (process.exitValue() != 0) {
+            return null
+        }
+        String path = process.inputStream.text.trim()
+        return path == filename ? null : path
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt()
+        return null
+    } catch (IOException e) {
+        return null
+    }
 }

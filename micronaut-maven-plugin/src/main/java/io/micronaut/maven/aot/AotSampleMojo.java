@@ -18,7 +18,6 @@ package io.micronaut.maven.aot;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.maven.services.ExecutorService;
-
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -27,44 +26,17 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.toolchain.ToolchainManager;
 
 import javax.inject.Inject;
-import java.io.File;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Generates a sample <code>aot.properties</code> showcasing all the possible values along with a description.
  */
-@Mojo(name = AotSampleMojo.NAME, defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
-public class AotSampleMojo extends AbstractMicronautAotCliMojo {
-
-    public static final String SAMPLE_AOT_PROPERTIES_FILE_NAME = "aot.properties";
-    public static final String NAME = "aot-sample-config";
+@Mojo(name = AbstractAotSampleMojo.NAME, defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+public class AotSampleMojo extends AbstractAotSampleMojo {
 
     @Inject
     public AotSampleMojo(CompilerService compilerService, ExecutorService executorService, MavenProject mavenProject,
                          DependencyResolutionService dependencyResolutionService,
                          MavenSession mavenSession, ToolchainManager toolchainManager) {
         super(compilerService, executorService, mavenProject, dependencyResolutionService, mavenSession, toolchainManager);
-    }
-
-    @Override
-    protected List<String> getExtraArgs() {
-        return Arrays.asList(
-            "--config",
-            outputFile(SAMPLE_AOT_PROPERTIES_FILE_NAME).getAbsolutePath()
-        );
-    }
-
-    @Override
-    protected void onSuccess(File outputDir) {
-        var sampleFile = new File(outputDir, SAMPLE_AOT_PROPERTIES_FILE_NAME);
-        if (sampleFile.exists()) {
-            getLog().info("Sample configuration file written to " + sampleFile);
-        }
-    }
-
-    @Override
-    String getName() {
-        return NAME;
     }
 }

@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static io.micronaut.maven.MojoUtils.findJavaExecutable;
+import static io.micronaut.maven.core.MojoUtils.findJavaExecutable;
 
 /**
  * Default implementation for {@link ServerFactory}.

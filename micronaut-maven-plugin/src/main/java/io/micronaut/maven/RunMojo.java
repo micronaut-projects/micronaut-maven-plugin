@@ -17,7 +17,8 @@ package io.micronaut.maven;
 
 import io.methvin.watcher.DirectoryChangeEvent;
 import io.methvin.watcher.DirectoryWatcher;
-import io.micronaut.maven.aot.AotAnalysisMojo;
+import io.micronaut.maven.aot.AbstractAotAnalysisMojo;
+import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.maven.services.ExecutorService;
@@ -62,9 +63,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import static io.micronaut.maven.MojoUtils.findJavaExecutable;
-import static io.micronaut.maven.MojoUtils.hasMicronautMavenPlugin;
-import static io.micronaut.maven.MojoUtils.THIS_PLUGIN;
+import static io.micronaut.maven.core.MojoUtils.findJavaExecutable;
+import static io.micronaut.maven.core.MojoUtils.hasMicronautMavenPlugin;
+import static io.micronaut.maven.core.MojoUtils.THIS_PLUGIN;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isReadable;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
@@ -609,7 +610,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
     private void runAotIfNeeded() {
         if (aotEnabled) {
             try {
-                executorService.executeGoal(runnableProject, THIS_PLUGIN, AotAnalysisMojo.NAME);
+                executorService.executeGoal(runnableProject, THIS_PLUGIN, AbstractAotAnalysisMojo.NAME);
             } catch (MojoExecutionException e) {
                 getLog().error(e.getMessage());
             }

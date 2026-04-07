@@ -15,7 +15,7 @@
  */
 package io.micronaut.maven.services;
 
-import io.micronaut.core.util.StringUtils;
+import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
@@ -38,7 +38,6 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static io.micronaut.maven.testresources.TestResourcesConfiguration.TEST_RESOURCES_ENABLED_PROPERTY;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.configuration;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.executeMojo;
 import static org.twdata.maven.mojoexecutor.MojoExecutor.executionEnvironment;
@@ -49,11 +48,12 @@ import static org.twdata.maven.mojoexecutor.MojoExecutor.plugin;
  * Provides methods to execute goals on the current project.
  *
  * @author Álvaro Sánchez-Mariscal
- * @since 1.1
+ * @since 5.0.0
  */
 @Singleton
 public class ExecutorService {
 
+    private static final String TEST_RESOURCES_ENABLED_PROPERTY = "micronaut.test.resources.enabled";
     private static final Logger LOG = LoggerFactory.getLogger(ExecutorService.class);
 
     private final BuildPluginManager pluginManager;
@@ -63,7 +63,9 @@ public class ExecutorService {
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    public ExecutorService(MavenProject mavenProject, MavenSession mavenSession, BuildPluginManager pluginManager,
+    public ExecutorService(MavenProject mavenProject,
+                           MavenSession mavenSession,
+                           BuildPluginManager pluginManager,
                            Invoker invoker) {
         this.pluginManager = pluginManager;
         this.mavenProject = mavenProject;
@@ -88,17 +90,16 @@ public class ExecutorService {
 
     public final void executeGoal(MavenProject project, String pluginKey, String goal, Xpp3Dom overriddenConfiguration) throws MojoExecutionException {
         MavenProject targetProject = project == null ? mavenProject : project;
-        final Plugin plugin = targetProject.getPlugin(pluginKey);
+        Plugin plugin = targetProject.getPlugin(pluginKey);
         if (plugin != null) {
             String goalName = goal;
-            var executionId = new AtomicReference<>(goalName);
+            AtomicReference<String> executionId = new AtomicReference<>(goalName);
             if (goalName != null && goalName.indexOf('#') > -1) {
                 int pos = goalName.indexOf('#');
                 executionId.set(goal.substring(pos + 1));
                 goalName = goalName.substring(0, pos);
             }
-            Optional<PluginExecution> execution = plugin
-                .getExecutions()
+            Optional<PluginExecution> execution = plugin.getExecutions()
                 .stream()
                 .filter(e -> e.getId().equals(executionId.get()))
                 .findFirst();
@@ -129,7 +130,7 @@ public class ExecutorService {
      * @throws MojoExecutionException if the goal execution fails
      */
     public void executeGoal(String pluginGroup, String pluginArtifact, String pluginVersion, String goal, Xpp3Dom configuration) throws MojoExecutionException {
-        final Plugin plugin = plugin(pluginGroup, pluginArtifact, pluginVersion);
+        Plugin plugin = plugin(pluginGroup, pluginArtifact, pluginVersion);
         executeMojo(plugin, goal(goal), configuration, executionEnvironment(mavenProject, mavenSession, pluginManager));
     }
 
@@ -146,7 +147,7 @@ public class ExecutorService {
     }
 
     /**
-     * Executes a goal using the Maven shared invoker.
+     * Executes goals using the Maven shared invoker.
      *
      * @param goals The goals to execute
      * @return The result of the invocation
@@ -157,31 +158,35 @@ public class ExecutorService {
     }
 
     /**
-     * Executes a goal using the Maven shared invoker.
+     * Executes goals using the Maven shared invoker.
      *
      * @param project The Maven project
      * @param goals The goals to execute
      * @return The result of the invocation
      * @throws MavenInvocationException If the goal execution fails
      */
-
     public InvocationResult invokeGoals(MavenProject project, String... goals) throws MavenInvocationException {
-        var request = new DefaultInvocationRequest();
+        DefaultInvocationRequest request = new DefaultInvocationRequest();
         request.setPomFile(resolveOriginalPom(project));
         File settingsFile = mavenSession.getRequest().getUserSettingsFile();
-        if (settingsFile.exists()) {
+        if (settingsFile != null && settingsFile.exists()) {
             request.setUserSettingsFile(settingsFile);
         }
-        var properties = new Properties();
-        properties.put(TEST_RESOURCES_ENABLED_PROPERTY, StringUtils.FALSE);
+        Properties properties = new Properties();
+        properties.put(TEST_RESOURCES_ENABLED_PROPERTY, "false");
+
+        int loggingLevel = mavenSession.getRequest().getLoggingLevel();
+        boolean quiet = loggingLevel >= MavenExecutionRequest.LOGGING_LEVEL_ERROR;
 
         request.setLocalRepositoryDirectory(new File(mavenSession.getLocalRepository().getBasedir()));
         request.addArgs(Arrays.asList(goals));
         request.setBatchMode(true);
-        request.setQuiet(true);
+        request.setQuiet(quiet);
         request.setAlsoMake(true);
-        request.setErrorHandler(LOG::error);
-        request.setOutputHandler(LOG::info);
+        if (!quiet) {
+            request.setErrorHandler(LOG::error);
+            request.setOutputHandler(LOG::info);
+        }
         request.setProperties(properties);
         return invoker.execute(request);
     }
@@ -198,23 +203,13 @@ public class ExecutorService {
      */
     static File resolveOriginalPom(MavenProject project) {
         File projectFile = project.getFile();
-        if (projectFile == null) {
-            return null;
-        }
-        if ("pom.xml".equals(projectFile.getName())) {
+        if (projectFile == null || "pom.xml".equals(projectFile.getName())) {
             return projectFile;
         }
-        // Only attempt to resolve an "original" pom.xml when the current project file
-        // looks like a processed POM produced during the build (for example, by the
-        // flatten-maven-plugin or maven-shade-plugin). This avoids overriding legitimate
-        // non-standard POM file names that may have been provided explicitly (e.g. via -f).
         String buildDirectory = project.getBuild() != null ? project.getBuild().getDirectory() : null;
         if (buildDirectory != null) {
             File buildDir = new File(buildDirectory);
             if (isInDirectory(projectFile, buildDir) || isKnownProcessedPom(projectFile)) {
-                // The build directory (typically {basedir}/target) is resolved from the original
-                // project directory during model building, so its parent should be the original
-                // project directory.
                 File projectDirectory = buildDir.getParentFile();
                 if (projectDirectory != null) {
                     File originalPom = new File(projectDirectory, "pom.xml");
@@ -227,9 +222,6 @@ public class ExecutorService {
         return projectFile;
     }
 
-    /**
-     * Returns true if {@code file} is located in {@code directory} or one of its subdirectories.
-     */
     private static boolean isInDirectory(File file, File directory) {
         if (file == null || directory == null) {
             return false;
@@ -244,9 +236,6 @@ public class ExecutorService {
         return false;
     }
 
-    /**
-     * Returns true if the given project file name matches a known processed/rewritten POM name.
-     */
     private static boolean isKnownProcessedPom(File projectFile) {
         if (projectFile == null) {
             return false;

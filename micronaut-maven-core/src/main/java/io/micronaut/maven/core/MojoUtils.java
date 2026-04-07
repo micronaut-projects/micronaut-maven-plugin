@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.maven;
+package io.micronaut.maven.core;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.maven.execution.MavenSession;
@@ -32,15 +32,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.micronaut.maven.AbstractDockerMojo.MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG;
-
 /**
- * Utility methods for different mojos.
+ * Shared utility methods for Micronaut Maven plugin modules.
  */
 public final class MojoUtils {
 
     public static final String THIS_PLUGIN = "io.micronaut.maven:micronaut-maven-plugin";
     private static final String JAVA = "java";
+    private static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
 
     private MojoUtils() {
     }
@@ -53,8 +52,8 @@ public final class MojoUtils {
         } else {
             executable = null;
         }
-        
-        // Fallback to default Java executable if toolchain is not configured or doesn't provide a valid tool
+
+        // Fallback to default Java executable if toolchain is not configured or doesn't provide a valid tool.
         if (executable == null) {
             var javaBinariesDir = new File(new File(System.getProperty("java.home")), "bin");
             if (Os.isFamily(Os.FAMILY_UNIX)) {
@@ -66,6 +65,14 @@ public final class MojoUtils {
             }
         }
         return executable;
+    }
+
+    public static boolean hasMicronautMavenPlugin(MavenProject project) {
+        String[] parts = THIS_PLUGIN.split(":");
+        String groupId = parts[0];
+        String artifactId = parts[1];
+        return project.getBuildPlugins().stream()
+            .anyMatch(p -> p.getGroupId().equals(groupId) && p.getArtifactId().equals(artifactId));
     }
 
     public static List<String> computeNativeImageArgs(List<String> nativeImageBuildArgs, String baseImageRun, String argsFile) {
@@ -80,6 +87,35 @@ public final class MojoUtils {
         List<String> argsFileContent = parseNativeImageArgsFile(argsFile).toList();
         allNativeImageBuildArgs.addAll(argsFileContent);
         return allNativeImageBuildArgs;
+    }
+
+    public static String parseConfigurationFilesDirectoriesArg(String arg) {
+        String[] split = arg.split("=");
+        String[] directories = split[1].split(",");
+        String separator = "/";
+        if (arg.contains("generateResourceConfig") || arg.contains("generateTestResourceConfig")) {
+            return Stream.of(directories)
+                .map(FilenameUtils::separatorsToUnix)
+                .map(directory -> {
+                    String[] splitDirectory = directory.split(separator);
+                    return "/home/app/" + splitDirectory[splitDirectory.length - 1];
+                })
+                .collect(Collectors.joining(","))
+                .transform(s -> "-H:ConfigurationFileDirectories=" + s);
+        } else {
+            return Stream.of(directories)
+                .map(FilenameUtils::separatorsToUnix)
+                .map(directory -> {
+                    String[] splitDirectory = directory.split(separator);
+                    String last4Directories = splitDirectory[splitDirectory.length - 4] + separator +
+                        splitDirectory[splitDirectory.length - 3] + separator +
+                        splitDirectory[splitDirectory.length - 2] + separator +
+                        splitDirectory[splitDirectory.length - 1];
+                    return "/home/app/graalvm-reachability-metadata/" + last4Directories;
+                })
+                .collect(Collectors.joining(","))
+                .transform(s -> "-H:ConfigurationFileDirectories=" + s);
+        }
     }
 
     private static Stream<String> parseNativeImageArgsFile(String argsFile) {
@@ -144,48 +180,5 @@ public final class MojoUtils {
             ? "snapshot"
             : "release";
         return "\\Q/home/app/libs/" + layerDirectory + "/" + fileName + "\\E";
-    }
-
-    static String parseConfigurationFilesDirectoriesArg(String arg) {
-        String[] split = arg.split("=");
-        String[] directories = split[1].split(",");
-        String separator = "/";
-        if (arg.contains("generateResourceConfig") || arg.contains("generateTestResourceConfig")) {
-            return Stream.of(directories)
-                .map(FilenameUtils::separatorsToUnix)
-                .map(directory -> {
-                    String[] splitDirectory = directory.split(separator);
-                    return "/home/app/" + splitDirectory[splitDirectory.length - 1];
-                })
-                .collect(Collectors.joining(","))
-                .transform(s -> "-H:ConfigurationFileDirectories=" + s);
-        } else {
-            return Stream.of(directories)
-                .map(FilenameUtils::separatorsToUnix)
-                .map(directory -> {
-                    String[] splitDirectory = directory.split(separator);
-                    String last4Directories = splitDirectory[splitDirectory.length - 4] + separator +
-                        splitDirectory[splitDirectory.length - 3] + separator +
-                        splitDirectory[splitDirectory.length - 2] + separator +
-                        splitDirectory[splitDirectory.length - 1];
-                    return "/home/app/graalvm-reachability-metadata/" + last4Directories;
-                })
-                .collect(Collectors.joining(","))
-                .transform(s -> "-H:ConfigurationFileDirectories=" + s);
-        }
-    }
-
-    /**
-     * Checks if the project has the Micronaut Maven plugin defined.
-     *
-     * @param project the Maven project
-     * @return true if the project has the Micronaut Maven plugin defined
-     */
-    public static boolean hasMicronautMavenPlugin(MavenProject project) {
-        String[] parts = THIS_PLUGIN.split(":");
-        String groupId = parts[0];
-        String artifactId = parts[1];
-        return project.getBuildPlugins().stream()
-            .anyMatch(p -> p.getGroupId().equals(groupId) && p.getArtifactId().equals(artifactId));
     }
 }

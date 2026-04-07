@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
  * Provides methods to compile a Maven project.
  *
  * @author Álvaro Sánchez-Mariscal
- * @since 1.1
+ * @since 5.0.0
  */
 @Singleton
 public class CompilerService {
@@ -61,7 +61,8 @@ public class CompilerService {
 
     @SuppressWarnings("MnInjectionPoints")
     @Inject
-    public CompilerService(MavenSession mavenSession, ExecutorService executorService,
+    public CompilerService(MavenSession mavenSession,
+                           ExecutorService executorService,
                            ProjectDependenciesResolver resolver) {
         this.mavenSession = mavenSession;
         this.resolver = resolver;
@@ -117,7 +118,7 @@ public class CompilerService {
         try {
             DependencyFilter filter = DependencyFilterUtils.classpathFilter(scopes);
             if (excludeProjects) {
-                DependencyFilterUtils.andFilter(filter, new ReactorProjectsFilter(mavenSession.getAllProjects()));
+                filter = DependencyFilterUtils.andFilter(filter, new ReactorProjectsFilter(mavenSession.getAllProjects()));
             }
             RepositorySystemSession session = mavenSession.getRepositorySession();
             DependencyResolutionRequest dependencyResolutionRequest = new DefaultDependencyResolutionRequest(runnableProject, session);
@@ -159,19 +160,19 @@ public class CompilerService {
     private record ReactorProjectsFilter(List<MavenProject> reactorProjects) implements DependencyFilter {
 
         @Override
-            public boolean accept(final DependencyNode node, final List<DependencyNode> parents) {
-                final Artifact nodeArtifact = node.getArtifact();
-                if (nodeArtifact == null) {
-                    return true;
-                }
-                for (MavenProject project : reactorProjects) {
-                    if (project.getGroupId().equals(nodeArtifact.getGroupId()) &&
-                        project.getArtifactId().equals(nodeArtifact.getArtifactId()) &&
-                        project.getVersion().equals(nodeArtifact.getVersion())) {
-                        return false;
-                    }
-                }
+        public boolean accept(DependencyNode node, List<DependencyNode> parents) {
+            Artifact nodeArtifact = node.getArtifact();
+            if (nodeArtifact == null) {
                 return true;
             }
+            for (MavenProject project : reactorProjects) {
+                if (project.getGroupId().equals(nodeArtifact.getGroupId())
+                    && project.getArtifactId().equals(nodeArtifact.getArtifactId())
+                    && project.getVersion().equals(nodeArtifact.getVersion())) {
+                    return false;
+                }
+            }
+            return true;
         }
+    }
 }
