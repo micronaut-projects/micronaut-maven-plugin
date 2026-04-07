@@ -17,7 +17,7 @@ package io.micronaut.maven;
 
 import io.methvin.watcher.DirectoryChangeEvent;
 import io.methvin.watcher.DirectoryWatcher;
-import io.micronaut.maven.aot.AotAnalysisMojo;
+import io.micronaut.maven.aot.AbstractAotAnalysisMojo;
 import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
@@ -610,7 +610,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
     private void runAotIfNeeded() {
         if (aotEnabled) {
             try {
-                executorService.executeGoal(runnableProject, THIS_PLUGIN, AotAnalysisMojo.NAME);
+                executorService.executeGoal(runnableProject, THIS_PLUGIN, AbstractAotAnalysisMojo.NAME);
             } catch (MojoExecutionException e) {
                 getLog().error(e.getMessage());
             }
