@@ -54,6 +54,7 @@ loadScripts(document, 'script');</script>
 <ul class="horizontal contents-list">
 <li><a href="io/micronaut/maven/package-tree.html">io.micronaut.maven</a>, </li>
 <li><a href="io/micronaut/maven/aot/package-tree.html">io.micronaut.maven.aot</a>, </li>
+<li><a href="io/micronaut/maven/aot/internal/package-tree.html">io.micronaut.maven.aot.internal</a>, </li>
 <li><a href="io/micronaut/maven/core/package-tree.html">io.micronaut.maven.core</a>, </li>
 <li><a href="io/micronaut/maven/enforcer/package-tree.html">io.micronaut.maven.enforcer</a>, </li>
 <li><a href="io/micronaut/maven/jib/package-tree.html">io.micronaut.maven.jib</a>, </li>
@@ -79,6 +80,24 @@ loadScripts(document, 'script');</script>
 </li>
 <li class="circle">org.apache.maven.plugin.AbstractMojo (implements org.apache.maven.plugin.ContextEnabled, org.apache.maven.plugin.Mojo)
 <ul>
+<li class="circle">io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AbstractMicronautAotMojo.html" class="type-name-link" title="class in io.micronaut.maven.aot">AbstractMicronautAotMojo</a>
+<ul>
+<li class="circle">io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html" class="type-name-link" title="class in io.micronaut.maven.aot">AbstractMicronautAotCliMojo</a>
+<ul>
+<li class="circle">io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AbstractAotAnalysisMojo.html" class="type-name-link" title="class in io.micronaut.maven.aot">AbstractAotAnalysisMojo</a>
+<ul>
+<li class="circle">io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AotAnalysisMojo.html" class="type-name-link" title="class in io.micronaut.maven.aot">AotAnalysisMojo</a></li>
+</ul>
+</li>
+<li class="circle">io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AbstractAotSampleMojo.html" class="type-name-link" title="class in io.micronaut.maven.aot">AbstractAotSampleMojo</a>
+<ul>
+<li class="circle">io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AotSampleMojo.html" class="type-name-link" title="class in io.micronaut.maven.aot">AotSampleMojo</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="circle">io.micronaut.maven.<a href="io/micronaut/maven/AbstractMicronautMojo.html" class="type-name-link" title="class in io.micronaut.maven">AbstractMicronautMojo</a>
 <ul>
 <li class="circle">io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" class="type-name-link" title="class in io.micronaut.maven">AbstractDockerMojo</a>
@@ -88,16 +107,6 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.maven.<a href="io/micronaut/maven/DockerMojo.html" class="type-name-link" title="class in io.micronaut.maven">DockerMojo</a></li>
 <li class="circle">io.micronaut.maven.<a href="io/micronaut/maven/DockerNativeMojo.html" class="type-name-link" title="class in io.micronaut.maven">DockerNativeMojo</a></li>
 <li class="circle">io.micronaut.maven.<a href="io/micronaut/maven/DockerPushMojo.html" class="type-name-link" title="class in io.micronaut.maven">DockerPushMojo</a></li>
-</ul>
-</li>
-<li class="circle">io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AbstractMicronautAotMojo.html" class="type-name-link" title="class in io.micronaut.maven.aot">AbstractMicronautAotMojo</a>
-<ul>
-<li class="circle">io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html" class="type-name-link" title="class in io.micronaut.maven.aot">AbstractMicronautAotCliMojo</a>
-<ul>
-<li class="circle">io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AotAnalysisMojo.html" class="type-name-link" title="class in io.micronaut.maven.aot">AotAnalysisMojo</a></li>
-<li class="circle">io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AotSampleMojo.html" class="type-name-link" title="class in io.micronaut.maven.aot">AotSampleMojo</a></li>
-</ul>
-</li>
 </ul>
 </li>
 <li class="circle">io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html" class="type-name-link" title="class in io.micronaut.maven.openapi">AbstractOpenApiMojo</a>
@@ -114,6 +123,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.maven.jsonschema.<a href="io/micronaut/maven/jsonschema/ValidateTestConfigurationMojo.html" class="type-name-link" title="class in io.micronaut.maven.jsonschema">ValidateTestConfigurationMojo</a></li>
 </ul>
 </li>
+<li class="circle">io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/HelpMojo.html" class="type-name-link" title="class in io.micronaut.maven.aot">HelpMojo</a></li>
 <li class="circle">io.micronaut.maven.<a href="io/micronaut/maven/HelpMojo.html" class="type-name-link" title="class in io.micronaut.maven">HelpMojo</a></li>
 <li class="circle">org.apache.maven.plugins.resources.ResourcesMojo
 <ul>
@@ -133,7 +143,7 @@ loadScripts(document, 'script');</script>
 <li class="circle">io.micronaut.maven.<a href="io/micronaut/maven/JansiLog.html" class="type-name-link" title="class in io.micronaut.maven">JansiLog</a> (implements org.apache.maven.plugin.logging.Log)</li>
 <li class="circle">io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfigurationService.html" class="type-name-link" title="class in io.micronaut.maven.jib">JibConfigurationService</a></li>
 <li class="circle">io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibMicronautExtension.html" class="type-name-link" title="class in io.micronaut.maven.jib">JibMicronautExtension</a> (implements com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension&lt;T&gt;)</li>
-<li class="circle">io.micronaut.maven.<a href="io/micronaut/maven/MojoUtils.html" class="type-name-link" title="class in io.micronaut.maven">MojoUtils</a></li>
+<li class="circle">io.micronaut.maven.core.<a href="io/micronaut/maven/core/MojoUtils.html" class="type-name-link" title="class in io.micronaut.maven.core">MojoUtils</a></li>
 <li class="circle">io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/ParameterMapping.html" class="type-name-link" title="class in io.micronaut.maven.openapi">ParameterMapping</a></li>
 <li class="circle">io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/ResponseBodyMapping.html" class="type-name-link" title="class in io.micronaut.maven.openapi">ResponseBodyMapping</a></li>
 <li class="circle">io.micronaut.maven.testresources.<a href="io/micronaut/maven/testresources/TestResourcesConfiguration.html" class="type-name-link" title="class in io.micronaut.maven.testresources">TestResourcesConfiguration</a>
@@ -159,6 +169,7 @@ loadScripts(document, 'script');</script>
 <ul>
 <li class="circle">java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Enum.html" class="type-name-link external-link" title="class or interface in java.lang">Enum</a>&lt;E&gt; (implements java.lang.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Comparable.html" title="class or interface in java.lang" class="external-link">Comparable</a>&lt;T&gt;, java.lang.constant.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/constant/Constable.html" title="class or interface in java.lang.constant" class="external-link">Constable</a>, java.io.<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/Serializable.html" title="class or interface in java.io" class="external-link">Serializable</a>)
 <ul>
+<li class="circle">io.micronaut.maven.aot.internal.<a href="io/micronaut/maven/aot/internal/AotPackaging.html" class="type-name-link" title="enum class in io.micronaut.maven.aot.internal">AotPackaging</a></li>
 <li class="circle">io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AotRuntime.html" class="type-name-link" title="enum class in io.micronaut.maven.aot">AotRuntime</a></li>
 <li class="circle">io.micronaut.maven.core.<a href="io/micronaut/maven/core/DockerBuildStrategy.html" class="type-name-link" title="enum class in io.micronaut.maven.core">DockerBuildStrategy</a></li>
 <li class="circle">io.micronaut.maven.core.<a href="io/micronaut/maven/core/MicronautRuntime.html" class="type-name-link" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></li>

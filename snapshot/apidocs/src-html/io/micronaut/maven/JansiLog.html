@@ -38,7 +38,7 @@
 <span class="source-line-no">025</span><span id="line-25"> * @author Álvaro Sánchez-Mariscal</span>
 <span class="source-line-no">026</span><span id="line-26"> * @since 4.0.0</span>
 <span class="source-line-no">027</span><span id="line-27"> */</span>
-<span class="source-line-no">028</span><span id="line-28">public class JansiLog implements Log {</span>
+<span class="source-line-no">028</span><span id="line-28">public final class JansiLog implements Log {</span>
 <span class="source-line-no">029</span><span id="line-29"></span>
 <span class="source-line-no">030</span><span id="line-30">    private final Log delegate;</span>
 <span class="source-line-no">031</span><span id="line-31"></span>
@@ -126,11 +126,10 @@
 <span class="source-line-no">113</span><span id="line-113">        delegate.error(error);</span>
 <span class="source-line-no">114</span><span id="line-114">    }</span>
 <span class="source-line-no">115</span><span id="line-115"></span>
-<span class="source-line-no">116</span><span id="line-116">    private String fmt(CharSequence s) {</span>
-<span class="source-line-no">117</span><span id="line-117">        return ansi().fgYellow().a(s).reset().toString();</span>
+<span class="source-line-no">116</span><span id="line-116">    private String fmt(CharSequence content) {</span>
+<span class="source-line-no">117</span><span id="line-117">        return ansi().fgYellow().a(content).reset().toString();</span>
 <span class="source-line-no">118</span><span id="line-118">    }</span>
-<span class="source-line-no">119</span><span id="line-119"></span>
-<span class="source-line-no">120</span><span id="line-120">}</span>
+<span class="source-line-no">119</span><span id="line-119">}</span>
 
 
 

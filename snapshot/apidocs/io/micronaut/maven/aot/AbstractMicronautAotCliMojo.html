@@ -87,10 +87,8 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="inheritance" title="Inheritance Tree"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">java.lang.Object</a>
 <div class="inheritance">org.apache.maven.plugin.AbstractMojo
-<div class="inheritance"><a href="../AbstractMicronautMojo.html" title="class in io.micronaut.maven">io.micronaut.maven.AbstractMicronautMojo</a>
 <div class="inheritance"><a href="AbstractMicronautAotMojo.html" title="class in io.micronaut.maven.aot">io.micronaut.maven.aot.AbstractMicronautAotMojo</a>
 <div class="inheritance">io.micronaut.maven.aot.AbstractMicronautAotCliMojo</div>
-</div>
 </div>
 </div>
 </div>
@@ -101,13 +99,19 @@ loadScripts(document, 'script');</script>
 </dl>
 <dl class="notes">
 <dt>Direct Known Subclasses:</dt>
-<dd><code><a href="AotAnalysisMojo.html" title="class in io.micronaut.maven.aot">AotAnalysisMojo</a>, <a href="AotSampleMojo.html" title="class in io.micronaut.maven.aot">AotSampleMojo</a></code></dd>
+<dd><code><a href="AbstractAotAnalysisMojo.html" title="class in io.micronaut.maven.aot">AbstractAotAnalysisMojo</a>, <a href="AbstractAotSampleMojo.html" title="class in io.micronaut.maven.aot">AbstractAotSampleMojo</a></code></dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
-<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-61">AbstractMicronautAotCliMojo</a></span>
+<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-63">AbstractMicronautAotCliMojo</a></span>
 <span class="extends-implements">extends <a href="AbstractMicronautAotMojo.html" title="class in io.micronaut.maven.aot">AbstractMicronautAotMojo</a></span></div>
 <div class="block">Base class for Micronaut AOT mojos.</div>
+<dl class="notes">
+<dt>Since:</dt>
+<dd>3.2.0</dd>
+<dt>Author:</dt>
+<dd>Álvaro Sánchez-Mariscal</dd>
+</dl>
 </div>
 </section>
 <section class="summary">
@@ -152,9 +156,11 @@ loadScripts(document, 'script');</script>
 <section class="constructor-summary" id="constructor-summary">
 <h2>Constructor Summary</h2>
 <div class="caption"><span>Constructors</span></div>
-<div class="summary-table two-column-summary">
-<div class="table-header col-first">Constructor</div>
+<div class="summary-table three-column-summary">
+<div class="table-header col-first">Modifier</div>
+<div class="table-header col-second">Constructor</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color"><code>protected </code></div>
 <div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(io.micronaut.maven.services.CompilerService,io.micronaut.maven.services.ExecutorService,org.apache.maven.project.MavenProject,io.micronaut.maven.services.DependencyResolutionService,org.apache.maven.execution.MavenSession,org.apache.maven.toolchain.ToolchainManager)" class="member-name-link">AbstractMicronautAotCliMojo</a><wbr>(<a href="../services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a>&nbsp;compilerService,
  <a href="../services/ExecutorService.html" title="class in io.micronaut.maven.services">ExecutorService</a>&nbsp;executorService,
  org.apache.maven.project.MavenProject&nbsp;mavenProject,
@@ -187,10 +193,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.maven.aot.AbstractMicronautAotMojo">Methods inherited from class&nbsp;<a href="AbstractMicronautAotMojo.html#method-summary" title="class in io.micronaut.maven.aot">AbstractMicronautAotMojo</a></h3>
-<code><a href="AbstractMicronautAotMojo.html#execute()" title="execute()">execute</a>, <a href="AbstractMicronautAotMojo.html#getBaseOutputDirectory()" title="getBaseOutputDirectory()">getBaseOutputDirectory</a>, <a href="AbstractMicronautAotMojo.html#outputFile(java.lang.String)" title="outputFile(String)">outputFile</a></code></div>
-<div class="inherited-list">
-<h3 id="methods-inherited-from-class-io.micronaut.maven.AbstractMicronautMojo">Methods inherited from class&nbsp;<a href="../AbstractMicronautMojo.html#method-summary" title="class in io.micronaut.maven">AbstractMicronautMojo</a></h3>
-<code><a href="../AbstractMicronautMojo.html#setLog(org.apache.maven.plugin.logging.Log)" title="setLog(Log)">setLog</a></code></div>
+<code><a href="AbstractMicronautAotMojo.html#alignRuntimeWithPackaging()" title="alignRuntimeWithPackaging()">alignRuntimeWithPackaging</a>, <a href="AbstractMicronautAotMojo.html#execute()" title="execute()">execute</a>, <a href="AbstractMicronautAotMojo.html#getBaseOutputDirectory()" title="getBaseOutputDirectory()">getBaseOutputDirectory</a>, <a href="AbstractMicronautAotMojo.html#outputFile(java.lang.String)" title="outputFile(String)">outputFile</a>, <a href="AbstractMicronautAotMojo.html#setLog(org.apache.maven.plugin.logging.Log)" title="setLog(Log)">setLog</a>, <a href="AbstractMicronautAotMojo.html#shouldExecute()" title="shouldExecute()">shouldExecute</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-org.apache.maven.plugin.AbstractMojo">Methods inherited from class&nbsp;org.apache.maven.plugin.AbstractMojo</h3>
 <code>getLog, getPluginContext, setPluginContext</code></div>
@@ -212,7 +215,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="EXEC_MAVEN_PLUGIN_GROUP">
 <h3>EXEC_MAVEN_PLUGIN_GROUP</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-63">EXEC_MAVEN_PLUGIN_GROUP</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-65">EXEC_MAVEN_PLUGIN_GROUP</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -228,7 +231,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="EXEC_MAVEN_PLUGIN_ARTIFACT">
 <h3>EXEC_MAVEN_PLUGIN_ARTIFACT</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-64">EXEC_MAVEN_PLUGIN_ARTIFACT</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-66">EXEC_MAVEN_PLUGIN_ARTIFACT</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -244,7 +247,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="EXEC_MAVEN_PLUGIN_VERSION_PROPERTY">
 <h3>EXEC_MAVEN_PLUGIN_VERSION_PROPERTY</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-65">EXEC_MAVEN_PLUGIN_VERSION_PROPERTY</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-67">EXEC_MAVEN_PLUGIN_VERSION_PROPERTY</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -260,7 +263,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="DEFAULT_EXEC_MAVEN_PLUGIN_VERSION">
 <h3>DEFAULT_EXEC_MAVEN_PLUGIN_VERSION</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-66">DEFAULT_EXEC_MAVEN_PLUGIN_VERSION</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-68">DEFAULT_EXEC_MAVEN_PLUGIN_VERSION</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -277,7 +280,7 @@ loadScripts(document, 'script');</script>
 <h3>packageName</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.aot.packageName")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-77">packageName</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-79">packageName</a></span></div>
 <div class="block">Package name to use for generated sources.</div>
 </div>
 </section>
@@ -295,7 +298,7 @@ loadScripts(document, 'script');</script>
 <h3>AbstractMicronautAotCliMojo</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Inject
-</span><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-99">AbstractMicronautAotCliMojo</a></span><wbr><span class="parameters">(<a href="../services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a>&nbsp;compilerService,
+</span><span class="modifiers">protected</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-98">AbstractMicronautAotCliMojo</a></span><wbr><span class="parameters">(<a href="../services/CompilerService.html" title="class in io.micronaut.maven.services">CompilerService</a>&nbsp;compilerService,
  <a href="../services/ExecutorService.html" title="class in io.micronaut.maven.services">ExecutorService</a>&nbsp;executorService,
  org.apache.maven.project.MavenProject&nbsp;mavenProject,
  <a href="../services/DependencyResolutionService.html" title="class in io.micronaut.maven.services">DependencyResolutionService</a>&nbsp;dependencyResolutionService,
@@ -316,7 +319,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="getExtraArgs()">
 <h3>getExtraArgs</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-110">getExtraArgs</a></span>()
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-112">getExtraArgs</a></span>()
                                       throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
 <dt>Throws:</dt>
@@ -329,7 +332,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="doExecute()">
 <h3>doExecute</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-112">doExecute</a></span>()
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#line-114">doExecute</a></span>()
                   throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException,
 org.eclipse.aether.resolution.DependencyResolutionException</span></div>
 <dl class="notes">

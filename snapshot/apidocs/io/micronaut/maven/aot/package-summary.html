@@ -76,6 +76,8 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color"><a href="../package-summary.html">io.micronaut.maven</a></div>
 <div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><a href="internal/package-summary.html">io.micronaut.maven.aot.internal</a></div>
+<div class="col-last odd-row-color">&nbsp;</div>
 </div>
 </div>
 </li>
@@ -86,6 +88,14 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Class</div>
 <div class="table-header col-last">Description</div>
+<div class="col-first even-row-color class-summary class-summary-tab2"><a href="AbstractAotAnalysisMojo.html" title="class in io.micronaut.maven.aot">AbstractAotAnalysisMojo</a></div>
+<div class="col-last even-row-color class-summary class-summary-tab2">
+<div class="block">Shared implementation for the AOT analysis goal.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="AbstractAotSampleMojo.html" title="class in io.micronaut.maven.aot">AbstractAotSampleMojo</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="block">Shared implementation for the AOT sample configuration goal.</div>
+</div>
 <div class="col-first even-row-color class-summary class-summary-tab2"><a href="AbstractMicronautAotCliMojo.html" title="class in io.micronaut.maven.aot">AbstractMicronautAotCliMojo</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
 <div class="block">Base class for Micronaut AOT mojos.</div>
@@ -96,8 +106,7 @@ loadScripts(document, 'script');</script>
 </div>
 <div class="col-first even-row-color class-summary class-summary-tab2"><a href="AotAnalysisMojo.html" title="class in io.micronaut.maven.aot">AotAnalysisMojo</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">Invokes the <a href="https://micronaut-projects.github.io/micronaut-aot/latest/guide/">Micronaut AOT</a>
-optimizer, generating sources/classes and the effective AOT configuration properties file.</div>
+<div class="block">Standalone Micronaut AOT analysis goal.</div>
 </div>
 <div class="col-first odd-row-color class-summary class-summary-tab3"><a href="AotRuntime.html" title="enum class in io.micronaut.maven.aot">AotRuntime</a></div>
 <div class="col-last odd-row-color class-summary class-summary-tab3">
@@ -105,7 +114,12 @@ optimizer, generating sources/classes and the effective AOT configuration proper
 </div>
 <div class="col-first even-row-color class-summary class-summary-tab2"><a href="AotSampleMojo.html" title="class in io.micronaut.maven.aot">AotSampleMojo</a></div>
 <div class="col-last even-row-color class-summary class-summary-tab2">
-<div class="block">Generates a sample <code>aot.properties</code> showcasing all the possible values along with a description.</div>
+<div class="block">Standalone Micronaut AOT sample configuration goal.</div>
+</div>
+<div class="col-first odd-row-color class-summary class-summary-tab2"><a href="HelpMojo.html" title="class in io.micronaut.maven.aot">HelpMojo</a></div>
+<div class="col-last odd-row-color class-summary class-summary-tab2">
+<div class="block">Display help information on micronaut-maven-aot-plugin.<br>
+Call <code>mvn mn-aot:help -Ddetail=true -Dgoal=&lt;goal-name&gt;</code> to display parameter details.</div>
 </div>
 </div>
 </div>
