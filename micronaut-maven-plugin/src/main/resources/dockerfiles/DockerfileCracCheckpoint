@@ -27,7 +27,7 @@ RUN archive=/tmp/crac-jdk.tar.gz \
            mv "$(find "$extract_dir" -mindepth 1 -maxdepth 1)" /azul-crac-jdk; \
        else \
            mkdir -p /azul-crac-jdk \
-           && find "$extract_dir" -mindepth 1 -maxdepth 1 -exec mv {} /azul-crac-jdk/ \; \
+           && find "$extract_dir" -mindepth 1 -maxdepth 1 -exec mv {} /azul-crac-jdk/ \; ; \
        fi \
     && rm -f "$archive" \
     && rm -rf "$extract_dir"
