@@ -249,11 +249,45 @@ class DockerfileMojoTest {
         );
         mojo.micronautRuntime = "netty";
 
-        var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), "RUN curl -4 -L ${GRAALVM_DOWNLOAD_URL} -o /tmp/graalvm.tar.gz");
+        var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), "RUN curl -4 -fsSL \"${GRAALVM_DOWNLOAD_URL}\" -o \"/tmp/graalvm.tar.gz\"");
 
         invokeProcessDockerfile(mojo, dockerfile);
 
-        assertTrue(Files.readString(dockerfile).contains("-L " + AbstractDockerMojo.shellLiteral("GraalVM download URL", mojo.graalVmDownloadUrl()) + " -o"));
+        assertTrue(Files.readString(dockerfile).contains("-fsSL \"" + mojo.graalVmDownloadUrl() + "\" -o \"/tmp/graalvm.tar.gz\""));
+    }
+
+    @Test
+    void processDockerfileInlinesLambdaDownloadChecksum(@TempDir Path tempDir) throws IOException, MojoExecutionException {
+        var project = mockProject(tempDir);
+        project.getProperties().setProperty("maven.compiler.release", "25");
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.of("ghcr.io/example/builder:1.0"));
+        when(jibConfigurationService.getPorts()).thenReturn(Optional.of("8080"));
+
+        var mojo = new DockerfileMojo(
+            project,
+            mock(DockerService.class),
+            jibConfigurationService,
+            mock(ApplicationConfigurationService.class),
+            mock(ExecutorService.class),
+            mockSession(project),
+            mock(MojoExecution.class)
+        );
+        mojo.micronautRuntime = "lambda";
+
+        var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), String.join(System.lineSeparator(),
+            "ARG GRAALVM_DOWNLOAD_SHA256",
+            "RUN echo \"${GRAALVM_DOWNLOAD_SHA256}  /tmp/graalvm.tar.gz\" | sha256sum -c -"
+        ));
+
+        invokeProcessDockerfile(mojo, dockerfile);
+
+        assertEquals(
+            java.util.List.of(
+                "RUN echo \"" + mojo.graalVmDownloadSha256() + "  /tmp/graalvm.tar.gz\" | sha256sum -c -"
+            ),
+            Files.readAllLines(dockerfile)
+        );
     }
 
     @Test

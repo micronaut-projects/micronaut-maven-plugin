@@ -1,7 +1,9 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal AS graalvm
+# Pin the amazonlinux:2023-minimal builder digest so the Lambda native-image build starts from an explicit base image.
+FROM public.ecr.aws/amazonlinux/amazonlinux@sha256:45c6144a8aedb7e7981ffd953d3af02998d5248f963305b869c820e1d30353de AS graalvm
 ENV LANG=en_US.UTF-8
-RUN dnf update -y && dnf install -y gcc glibc-devel zlib-devel libstdc++-static tar && dnf clean all && rm -rf /var/cache/dnf
-RUN curl -4 -L 'https://gds.oracle.com/download/graal/25/latest-gftc/graalvm-jdk-25_linux-x64_bin.tar.gz' -o /tmp/graalvm.tar.gz \
+RUN dnf update -y && dnf install -y coreutils-single gcc glibc-devel zlib-devel libstdc++-static tar && dnf clean all && rm -rf /var/cache/dnf
+RUN curl -4 -fsSL "https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-25.0.2/graalvm-community-jdk-25.0.2_linux-x64_bin.tar.gz" -o "/tmp/graalvm.tar.gz" \
+    && echo "e0be791c8fda4d03b6b0a0cb824fef3149736170057b3a515252b44419606af0  /tmp/graalvm.tar.gz" | sha256sum -c - \
     && mkdir -p /usr/lib/graalvm \
     && tar -zxf /tmp/graalvm.tar.gz -C /usr/lib/graalvm --strip-components 1 \
     && rm -rf /tmp/*
@@ -15,12 +17,13 @@ COPY native/generated /home/app/
 COPY *.args /home/app/graalvm-native-image.args
 RUN native-image @/home/app/graalvm-native-image.args -H:Class="io.micronaut.function.aws.runtime.MicronautLambdaRuntime" -H:Name=application -cp "/home/app/libs/release/*:/home/app/libs/snapshot/*:/home/app/classes/"
 
-FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal
+# Keep the runtime stage on the same pinned amazonlinux:2023-minimal digest as the builder base image.
+FROM public.ecr.aws/amazonlinux/amazonlinux@sha256:45c6144a8aedb7e7981ffd953d3af02998d5248f963305b869c820e1d30353de
 WORKDIR /function
 RUN dnf update -y && dnf install -y zip && dnf clean all
 COPY --from=graalvm /home/app/application /function/func
 RUN printf '%s\n' '#!/bin/sh' 'set -euo pipefail' './func -XX:MaximumHeapSizePercent=80 -Dio.netty.allocator.numDirectArenas=0 -Dio.netty.noPreferDirect=true -Djava.library.path=$(pwd) -Dio.netty.noUnsafe=true -Dio.netty.noPreferDirect=false' > bootstrap
-RUN chmod 777 bootstrap
-RUN chmod 777 func
+RUN chmod 555 bootstrap
+RUN chmod 555 func
 RUN zip -j function.zip bootstrap func
 ENTRYPOINT ["/function/func"]

@@ -70,13 +70,22 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     public static final String ARM_ARCH = "aarch64";
     public static final String X86_64_ARCH = "x64";
     public static final String ORACLE_CLOUD_FUNCTION_DEFAULT_CMD = "CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]";
-    public static final String GDS_DOWNLOAD_URL = "https://gds.oracle.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz";
+    public static final String GRAALVM_DOWNLOAD_URL = "https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-%s/graalvm-community-jdk-%s_linux-%s_bin.tar.gz";
     public static final String LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER = "${LAMBDA_BOOTSTRAP_DOCKER_COMMAND}";
     static final String JIB_FROM_IMAGE_PROPERTY = "jib.from.image";
     private static final String DEPENDENCY_DIRECTORY = "dependency";
     private static final String RELEASE_DEPENDENCY_DIRECTORY = "release";
     private static final String SNAPSHOT_DEPENDENCY_DIRECTORY = "snapshot";
-    private static final NavigableSet<Integer> GRAALVM_VERSIONS = new TreeSet<>(Set.of(25));
+    private static final Map<Integer, GraalVmRelease> GRAALVM_RELEASES = Map.of(
+        25, new GraalVmRelease(
+            "25.0.2",
+            Map.of(
+                X86_64_ARCH, "e0be791c8fda4d03b6b0a0cb824fef3149736170057b3a515252b44419606af0",
+                ARM_ARCH, "b4580d9f223d0a4b3a1757e58b18ff4c1db950e67e105fc5cb741457d2384a71"
+            )
+        )
+    );
+    private static final NavigableSet<Integer> GRAALVM_VERSIONS = new TreeSet<>(GRAALVM_RELEASES.keySet());
     private static final List<String> DEFAULT_LAMBDA_BOOTSTRAP_ARGUMENTS = List.of(
         "-XX:MaximumHeapSizePercent=80",
         "-Dio.netty.allocator.numDirectArenas=0",
@@ -221,9 +230,19 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @return the GraalVM download URL depending on the Java version.
      */
     protected String graalVmDownloadUrl() {
-        Integer version = resolveGraalVersion();
+        var release = resolveGraalVmRelease();
+        return GRAALVM_DOWNLOAD_URL.formatted(release.version(), release.version(), graalVmArch());
+    }
 
-        return GDS_DOWNLOAD_URL.formatted(version, version, graalVmArch());
+    /**
+     * @return the expected SHA-256 checksum for the pinned GraalVM download.
+     */
+    protected String graalVmDownloadSha256() {
+        var checksum = resolveGraalVmRelease().checksumsByArch().get(graalVmArch());
+        if (checksum == null) {
+            throw new IllegalStateException("Unsupported GraalVM architecture: " + graalVmArch());
+        }
+        return checksum;
     }
 
     private Integer resolveGraalVersion() {
@@ -231,6 +250,15 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
         Integer version = GRAALVM_VERSIONS.floor(target);
 
         return version != null ? version : GRAALVM_VERSIONS.first();
+    }
+
+    private GraalVmRelease resolveGraalVmRelease() {
+        Integer graalVersion = resolveGraalVersion();
+        GraalVmRelease release = GRAALVM_RELEASES.get(graalVersion);
+        if (release == null) {
+            throw new IllegalStateException("Unsupported GraalVM version: " + graalVersion + ". Supported versions are: " + GRAALVM_VERSIONS);
+        }
+        return release;
     }
 
     /**
@@ -608,6 +636,9 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
         } else {
             com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + ORACLE_CLOUD_FUNCTION_DEFAULT_CMD);
         }
+    }
+
+    private record GraalVmRelease(String version, Map<String, String> checksumsByArch) {
     }
 
 }

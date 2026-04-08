@@ -225,8 +225,11 @@ public class DockerfileMojo extends AbstractDockerMojo {
         if (containsPlaceholder(line, "BASE_JAVA_IMAGE")) {
             return line.replace("${BASE_JAVA_IMAGE}", validateImageReference("base Java image", getBaseImage()));
         }
+        if (containsPlaceholder(line, "GRAALVM_DOWNLOAD_SHA256")) {
+            return line.replace("${GRAALVM_DOWNLOAD_SHA256}", validateDockerfileValue("GraalVM download SHA-256", graalVmDownloadSha256()));
+        }
         if (containsPlaceholder(line, "GRAALVM_DOWNLOAD_URL")) {
-            return line.replace("${GRAALVM_DOWNLOAD_URL}", shellLiteral("GraalVM download URL", validateDownloadUrl("GraalVM download URL", graalVmDownloadUrl())));
+            return line.replace("${GRAALVM_DOWNLOAD_URL}", validateDownloadUrl("GraalVM download URL", graalVmDownloadUrl()));
         }
         if (containsPlaceholder(line, CLASS_NAME_PLACEHOLDER)) {
             return replaceClassName(line);
@@ -272,6 +275,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
         return "BASE_IMAGE_RUN".equals(argName)
             || "BASE_JAVA_IMAGE".equals(argName)
             || "BASE_IMAGE".equals(argName)
+            || "GRAALVM_DOWNLOAD_SHA256".equals(argName)
             || "GRAALVM_DOWNLOAD_URL".equals(argName)
             || CLASS_NAME_PLACEHOLDER.equals(argName)
             || "PORTS".equals(argName);

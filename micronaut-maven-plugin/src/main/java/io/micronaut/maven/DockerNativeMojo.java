@@ -160,7 +160,8 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         //   - For function apps: com.example.BookLambdaRuntime
         BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, () -> dockerService.buildImageCmd()
             .withDockerfile(dockerfile)
-            .withBuildArg("GRAALVM_DOWNLOAD_URL", graalVmDownloadUrl()));
+            .withBuildArg("GRAALVM_DOWNLOAD_URL", graalVmDownloadUrl())
+            .withBuildArg("GRAALVM_DOWNLOAD_SHA256", graalVmDownloadSha256()));
         buildImageCmd.withBuildArg("CLASS_NAME", escapeClassNameBuildArg(mainClass));
         String imageId = dockerService.buildImage(buildImageCmd);
         File functionZip = dockerService.copyFromContainer(imageId, "/function/function.zip");
