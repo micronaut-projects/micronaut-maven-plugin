@@ -563,4 +563,18 @@ These can be overridden by passing properties to the build:
 </properties>
 ----
 
-NOTE: Currently only Java 25, and `amd64` and `aarch64` architectures are supported.
+NOTE: The pinned defaults currently support Java 17, 21, 23, and 25 on `amd64` and `aarch64` for `linux-glibc`.
+
+On `5.0.x`, the built-in CRaC defaults are pinned to repository-managed Azul tarballs for `linux-glibc`.
+The supported pinned Java versions are 17, 21, 23, and 25 on `amd64` and `aarch64`.
+
+If you need a different CRaC distribution, provide both the download URL and the expected checksum explicitly:
+
+[source,xml]
+.Example overriding the pinned CRaC JDK artifact
+----
+<properties>
+    <crac.jdk.download.url>https://example.invalid/custom-crac-jdk.tar.gz</crac.jdk.download.url>
+    <crac.jdk.download.sha256>0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef</crac.jdk.download.sha256>
+</properties>
+----

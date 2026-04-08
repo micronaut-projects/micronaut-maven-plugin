@@ -48,7 +48,11 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * <p>Implementation of the <code>docker-crac</code> packaging.</p>
@@ -85,12 +89,57 @@ public class DockerCracMojo extends AbstractDockerMojo {
     public static final String CRAC_ARCHITECTURE = "crac.arch";
 
     public static final String CRAC_OS = "crac.os";
+    public static final String CRAC_JDK_DOWNLOAD_URL_PROPERTY = "crac.jdk.download.url";
+    public static final String CRAC_JDK_DOWNLOAD_SHA256_PROPERTY = "crac.jdk.download.sha256";
     public static final String DEFAULT_CRAC_OS = "linux-glibc";
 
     public static final String DEFAULT_BASE_IMAGE = "ubuntu:22.04";
 
     public static final String ARM_ARCH = "aarch64";
     public static final String X86_64_ARCH = "amd64";
+    private static final Set<Integer> SUPPORTED_CRAC_JDK_VERSIONS = new TreeSet<>(Set.of(17, 21, 23, 25));
+    private static final Map<Integer, CracJdkRelease> CRAC_JDK_RELEASES = Map.of(
+        17, new CracJdkRelease(
+            Map.of(
+                X86_64_ARCH, "https://cdn.azul.com/zulu/bin/zulu17.64.17-ca-crac-jdk17.0.18-linux_x64.tar.gz",
+                ARM_ARCH, "https://cdn.azul.com/zulu/bin/zulu17.64.17-ca-crac-jdk17.0.18-linux_aarch64.tar.gz"
+            ),
+            Map.of(
+                X86_64_ARCH, "51f4cebe3832bb30a7cff905b1e7b94951ef221c93efe3379702fd726c4c5bc7",
+                ARM_ARCH, "7a9c373e3c2f1b714ad361a7ee73d3919b2ab568eb62d6ffa13864ec7c370ead"
+            )
+        ),
+        21, new CracJdkRelease(
+            Map.of(
+                X86_64_ARCH, "https://cdn.azul.com/zulu/bin/zulu21.48.17-ca-crac-jdk21.0.10-linux_x64.tar.gz",
+                ARM_ARCH, "https://cdn.azul.com/zulu/bin/zulu21.48.17-ca-crac-jdk21.0.10-linux_aarch64.tar.gz"
+            ),
+            Map.of(
+                X86_64_ARCH, "b8e4ab4f2919deda3737d381d921d1b6f7bf694348b22c14115a10daae7a91f6",
+                ARM_ARCH, "17c88f5112d9782255826fb860217a7d56686451e1629a98695ffd63718d3366"
+            )
+        ),
+        23, new CracJdkRelease(
+            Map.of(
+                X86_64_ARCH, "https://cdn.azul.com/zulu/bin/zulu23.32.11-ca-crac-jdk23.0.2-linux_x64.tar.gz",
+                ARM_ARCH, "https://cdn.azul.com/zulu/bin/zulu23.32.11-ca-crac-jdk23.0.2-linux_aarch64.tar.gz"
+            ),
+            Map.of(
+                X86_64_ARCH, "d94ad46ed2b8e9f10db01e2c5b09aef749e81c80e4179394fa37ccac4e2d709c",
+                ARM_ARCH, "ff22ab00c1f06fc0a9dc616f175e71ed3366e664a8827f87e3e69ac5590ffe07"
+            )
+        ),
+        25, new CracJdkRelease(
+            Map.of(
+                X86_64_ARCH, "https://cdn.azul.com/zulu/bin/zulu25.32.23-ca-crac-jdk25.0.2-linux_x64.tar.gz",
+                ARM_ARCH, "https://cdn.azul.com/zulu/bin/zulu25.32.23-ca-crac-jdk25.0.2-linux_aarch64.tar.gz"
+            ),
+            Map.of(
+                X86_64_ARCH, "2ebb784450f158e628f5717034aac3126591a6ef03498290297f2f46d8f886b1",
+                ARM_ARCH, "83f4621c04cf8f8d2ce8ce82e7505b85897d9e5b4cadb5472a1c679bc27a41bd"
+            )
+        )
+    );
 
     private static final EnumSet<PosixFilePermission> POSIX_FILE_PERMISSIONS = EnumSet.of(
         PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
@@ -135,6 +184,19 @@ public class DockerCracMojo extends AbstractDockerMojo {
     @Parameter(property = DockerCracMojo.CRAC_OS, defaultValue = DEFAULT_CRAC_OS)
     private String cracOs;
 
+    /**
+     * Explicit CRaC JDK download URL override. Must be paired with {@value #CRAC_JDK_DOWNLOAD_SHA256_PROPERTY}.
+     */
+    @Parameter(property = CRAC_JDK_DOWNLOAD_URL_PROPERTY)
+    private String cracJdkDownloadUrl;
+
+    /**
+     * Explicit SHA-256 checksum override for the CRaC JDK download. Must be paired with
+     * {@value #CRAC_JDK_DOWNLOAD_URL_PROPERTY}.
+     */
+    @Parameter(property = CRAC_JDK_DOWNLOAD_SHA256_PROPERTY)
+    private String cracJdkDownloadSha256;
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     public DockerCracMojo(
@@ -175,7 +237,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
         }
     }
 
-    private void buildDockerCrac() throws IOException, InvalidImageReferenceException, MavenFilteringException {
+    private void buildDockerCrac() throws IOException, InvalidImageReferenceException, MavenFilteringException, MojoExecutionException {
         String checkpointImage = buildCheckpointDockerfile();
         getLog().info("CRaC Checkpoint image: " + checkpointImage);
         File checkpointDir = new File(mavenProject.getBuild().getDirectory(), "cr");
@@ -200,7 +262,7 @@ public class DockerCracMojo extends AbstractDockerMojo {
         return X86_64_ARCH;
     }
 
-    private String buildCheckpointDockerfile() throws IOException, MavenFilteringException {
+    private String buildCheckpointDockerfile() throws IOException, MavenFilteringException, MojoExecutionException {
         String name = mavenProject.getArtifactId() + "-crac-checkpoint";
         var checkpointTags = Collections.singleton(name);
         copyScripts(CHECKPOINT_SCRIPT_NAME, WARMUP_SCRIPT_NAME, RUN_SCRIPT_NAME);
@@ -210,11 +272,13 @@ public class DockerCracMojo extends AbstractDockerMojo {
         String filteredCracArchitecture = limitArchitecture(cracArchitecture);
         String finalArchitecture = filteredCracArchitecture == null ? systemArchitecture : filteredCracArchitecture;
         String baseImage = getFromImage().orElse(DEFAULT_BASE_IMAGE);
+        CracJdkDownload cracJdkDownload = resolveCracJdkDownload(finalArchitecture);
 
         getLog().info("Using BASE_IMAGE: " + baseImage);
         getLog().info("Using CRAC_ARCH: " + finalArchitecture);
         getLog().info("Using CRAC_JDK_VERSION: " + cracJavaVersion);
         getLog().info("Using CRAC_OS: " + cracOs);
+        getLog().info("Using CRAC_JDK_DOWNLOAD_URL: " + cracJdkDownload.downloadUrl());
 
         BuildImageCmd buildImageCmd = dockerService.buildImageCmd()
             .withDockerfile(dockerfile)
@@ -222,10 +286,91 @@ public class DockerCracMojo extends AbstractDockerMojo {
             .withBuildArg("CRAC_ARCH", finalArchitecture)
             .withBuildArg("CRAC_OS", cracOs)
             .withBuildArg("CRAC_JDK_VERSION", cracJavaVersion)
+            .withBuildArg("CRAC_JDK_URL", cracJdkDownload.downloadUrl())
+            .withBuildArg("CRAC_JDK_SHA256", cracJdkDownload.sha256())
             .withTags(checkpointTags);
         getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);
         dockerService.buildImage(buildImageCmd);
         return name;
+    }
+
+    private String cracJdkDownloadUrl(String architecture) throws MojoExecutionException {
+        return resolveCracJdkDownload(architecture).downloadUrl();
+    }
+
+    private String cracJdkDownloadSha256(String architecture) throws MojoExecutionException {
+        return resolveCracJdkDownload(architecture).sha256();
+    }
+
+    private CracJdkDownload resolveCracJdkDownload(String architecture) throws MojoExecutionException {
+        boolean hasCustomUrl = hasText(cracJdkDownloadUrl);
+        boolean hasCustomSha256 = hasText(cracJdkDownloadSha256);
+        if (hasCustomUrl || hasCustomSha256) {
+            if (!hasCustomUrl || !hasCustomSha256) {
+                throw new MojoExecutionException(
+                    CRAC_JDK_DOWNLOAD_URL_PROPERTY + " and " + CRAC_JDK_DOWNLOAD_SHA256_PROPERTY + " must be configured together"
+                );
+            }
+            return new CracJdkDownload(
+                validateDownloadUrl(CRAC_JDK_DOWNLOAD_URL_PROPERTY, cracJdkDownloadUrl),
+                validateSha256(CRAC_JDK_DOWNLOAD_SHA256_PROPERTY, cracJdkDownloadSha256)
+            );
+        }
+        if (!DEFAULT_CRAC_OS.equals(cracOs)) {
+            throw new MojoExecutionException(
+                "Unsupported CRaC OS '" + cracOs + "'. The pinned defaults only support " + DEFAULT_CRAC_OS
+                    + ". Override with " + CRAC_JDK_DOWNLOAD_URL_PROPERTY + " and " + CRAC_JDK_DOWNLOAD_SHA256_PROPERTY + "."
+            );
+        }
+
+        int javaVersion = resolveCracJdkVersion();
+        CracJdkRelease release = CRAC_JDK_RELEASES.get(javaVersion);
+        if (release == null) {
+            throw new MojoExecutionException(
+                "Unsupported CRaC JDK version '" + cracJavaVersion + "'. Supported pinned defaults are " + SUPPORTED_CRAC_JDK_VERSIONS
+                    + ". Override with " + CRAC_JDK_DOWNLOAD_URL_PROPERTY + " and " + CRAC_JDK_DOWNLOAD_SHA256_PROPERTY + "."
+            );
+        }
+
+        String downloadUrl = release.downloadUrlsByArch().get(architecture);
+        String sha256 = release.checksumsByArch().get(architecture);
+        if (downloadUrl == null || sha256 == null) {
+            throw new MojoExecutionException(
+                "Unsupported CRaC architecture '" + architecture + "'. Supported pinned defaults are "
+                    + release.downloadUrlsByArch().keySet() + ". Override with " + CRAC_JDK_DOWNLOAD_URL_PROPERTY + " and "
+                    + CRAC_JDK_DOWNLOAD_SHA256_PROPERTY + "."
+            );
+        }
+        return new CracJdkDownload(downloadUrl, sha256);
+    }
+
+    private int resolveCracJdkVersion() throws MojoExecutionException {
+        StringBuilder majorVersion = new StringBuilder();
+        for (int i = 0; i < cracJavaVersion.length(); i++) {
+            char character = cracJavaVersion.charAt(i);
+            if (!Character.isDigit(character)) {
+                break;
+            }
+            majorVersion.append(character);
+        }
+        if (majorVersion.isEmpty()) {
+            throw new MojoExecutionException(
+                "Unsupported CRaC JDK version '" + cracJavaVersion + "'. Expected a numeric Java major version or release."
+            );
+        }
+        return Integer.parseInt(majorVersion.toString());
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    private static String validateSha256(String source, String value) throws MojoExecutionException {
+        String sanitized = validateDockerfileValue(source, value).trim();
+        if (!sanitized.matches("[0-9a-fA-F]{64}")) {
+            throw new MojoExecutionException(source + " must be a 64-character hexadecimal SHA-256 checksum");
+        }
+        return sanitized.toLowerCase(Locale.ROOT);
     }
 
     private void buildFinalDockerfile(String checkpointContainerId) throws IOException, InvalidImageReferenceException, MavenFilteringException {
@@ -293,5 +438,11 @@ public class DockerCracMojo extends AbstractDockerMojo {
                 Files.setPosixFilePermissions(outputPath, POSIX_FILE_PERMISSIONS);
             }
         }
+    }
+
+    private record CracJdkRelease(Map<String, String> downloadUrlsByArch, Map<String, String> checksumsByArch) {
+    }
+
+    private record CracJdkDownload(String downloadUrl, String sha256) {
     }
 }
