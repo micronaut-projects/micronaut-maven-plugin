@@ -2,6 +2,8 @@ File checkpointDockerfile = new File("$basedir/target", "Dockerfile.crac.checkpo
 File expectedCheckpointDockerfile = new File(basedir, "Dockerfile.crac.checkpoint")
 
 assert checkpointDockerfile.text == expectedCheckpointDockerfile.text
+assert !checkpointDockerfile.text.contains("api.azul.com/metadata")
+assert !checkpointDockerfile.text.contains("latest=true")
 
 File dockerfile = new File("$basedir/target", "Dockerfile")
 File expectedDockerfile = new File(basedir, "Dockerfile")
