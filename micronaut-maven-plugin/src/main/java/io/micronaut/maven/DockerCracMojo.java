@@ -256,10 +256,10 @@ public class DockerCracMojo extends AbstractDockerMojo {
         if (architecture == null) {
             return null;
         }
-        if (ARM_ARCH.equals(architecture)) {
-            return architecture;
-        }
-        return X86_64_ARCH;
+        return switch (architecture) {
+            case ARM_ARCH, "arm64" -> ARM_ARCH;
+            default -> X86_64_ARCH;
+        };
     }
 
     private String buildCheckpointDockerfile() throws IOException, MavenFilteringException, MojoExecutionException {
@@ -358,7 +358,14 @@ public class DockerCracMojo extends AbstractDockerMojo {
                 "Unsupported CRaC JDK version '" + cracJavaVersion + "'. Expected a numeric Java major version or release."
             );
         }
-        return Integer.parseInt(majorVersion.toString());
+        try {
+            return Integer.parseInt(majorVersion.toString());
+        } catch (NumberFormatException e) {
+            throw new MojoExecutionException(
+                "Unsupported CRaC JDK version '" + cracJavaVersion + "'. Expected a numeric Java major version or release.",
+                e
+            );
+        }
     }
 
     private static boolean hasText(String value) {
@@ -435,7 +442,11 @@ public class DockerCracMojo extends AbstractDockerMojo {
                 try (Writer writer = Files.newBufferedWriter(outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
                     IOUtils.copy(mavenReaderFilter.filter(req), writer);
                 }
-                Files.setPosixFilePermissions(outputPath, POSIX_FILE_PERMISSIONS);
+                try {
+                    Files.setPosixFilePermissions(outputPath, POSIX_FILE_PERMISSIONS);
+                } catch (UnsupportedOperationException ignored) {
+                    // Non-POSIX file systems such as Windows cannot apply POSIX permissions locally.
+                }
             }
         }
     }

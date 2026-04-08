@@ -114,6 +114,38 @@ class DockerCracMojoTest {
         );
     }
 
+    @Test
+    void buildCheckpointDockerfileUsesAarch64PinnedArtifactsForArm64Hosts(@TempDir Path tempDir) throws Exception {
+        var fixtures = new Fixtures(tempDir);
+        System.setProperty("os.arch", "arm64");
+        setField(fixtures.mojo, "cracArchitecture", null);
+
+        invokeBuildCheckpointDockerfile(fixtures.mojo);
+
+        verify(fixtures.buildImageCmd).withBuildArg(
+            "CRAC_JDK_URL",
+            "https://cdn.azul.com/zulu/bin/zulu25.32.23-ca-crac-jdk25.0.2-linux_aarch64.tar.gz"
+        );
+        verify(fixtures.buildImageCmd).withBuildArg(
+            "CRAC_JDK_SHA256",
+            "83f4621c04cf8f8d2ce8ce82e7505b85897d9e5b4cadb5472a1c679bc27a41bd"
+        );
+    }
+
+    @Test
+    void rejectsCracJdkOverrideWithEmbeddedCredentials(@TempDir Path tempDir) {
+        var fixtures = new Fixtures(tempDir);
+        setField(fixtures.mojo, "cracJdkDownloadUrl", "https://user:secret@example.com/custom-crac.tar.gz");
+        setField(fixtures.mojo, "cracJdkDownloadSha256", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+
+        var exception = assertThrows(
+            MojoExecutionException.class,
+            () -> invokeStringMethod(fixtures.mojo, "cracJdkDownloadUrl", DockerCracMojo.X86_64_ARCH)
+        );
+
+        assertEquals("crac.jdk.download.url must not include embedded credentials", exception.getMessage());
+    }
+
     private static void invokeBuildCheckpointDockerfile(DockerCracMojo mojo) throws Exception {
         Method buildCheckpointDockerfile = DockerCracMojo.class.getDeclaredMethod("buildCheckpointDockerfile");
         buildCheckpointDockerfile.setAccessible(true);
@@ -193,6 +225,14 @@ class DockerCracMojoTest {
                 Path dockerfile = tempDir.resolve("DockerfileCracCheckpoint");
                 Files.writeString(dockerfile, "FROM ${BASE_IMAGE}\n");
                 when(dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_CRAC_CHECKPOINT)).thenReturn(dockerfile.toFile());
+                for (String scriptName : new String[] {
+                    DockerCracMojo.CHECKPOINT_SCRIPT_NAME,
+                    DockerCracMojo.WARMUP_SCRIPT_NAME,
+                    DockerCracMojo.RUN_SCRIPT_NAME
+                }) {
+                    Path script = tempDir.resolve(scriptName);
+                    Files.writeString(script, "#!/bin/sh\n");
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

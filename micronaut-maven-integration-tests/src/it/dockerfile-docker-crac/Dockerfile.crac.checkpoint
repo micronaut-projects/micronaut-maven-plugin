@@ -15,13 +15,21 @@ RUN apt-get update && apt-get install -y \
 
 # Install pinned CRaC OpenJDK
 RUN echo Installing pinned CRaC OpenJDK $CRAC_JDK_VERSION for $CRAC_ARCH from $CRAC_JDK_URL
-RUN name=$(basename "$CRAC_JDK_URL") \
-    && echo "Downloading $name from $CRAC_JDK_URL" \
-    && curl -fsSL "$CRAC_JDK_URL" -o "$name" \
-    && echo "$CRAC_JDK_SHA256  $name" | sha256sum -c - \
-    && tar xzf "$name" \
-    && mv ${name%%.tar.gz} /azul-crac-jdk \
-    && rm "$name"
+RUN archive=/tmp/crac-jdk.tar.gz \
+    && extract_dir=$(mktemp -d) \
+    && echo "Downloading CRaC JDK from $CRAC_JDK_URL" \
+    && curl -fsSL "$CRAC_JDK_URL" -o "$archive" \
+    && echo "$CRAC_JDK_SHA256  $archive" | sha256sum -c - \
+    && tar xzf "$archive" -C "$extract_dir" \
+    && top_level_count=$(find "$extract_dir" -mindepth 1 -maxdepth 1 | wc -l) \
+       && if [ "$top_level_count" -eq 1 ] && [ -d "$(find "$extract_dir" -mindepth 1 -maxdepth 1)" ]; then \
+           mv "$(find "$extract_dir" -mindepth 1 -maxdepth 1)" /azul-crac-jdk; \
+       else \
+           mkdir -p /azul-crac-jdk \
+           && find "$extract_dir" -mindepth 1 -maxdepth 1 -exec mv {} /azul-crac-jdk/ \; \
+       fi \
+    && rm -f "$archive" \
+    && rm -rf "$extract_dir"
 
 # Copy layers
 COPY classes /home/app/classes

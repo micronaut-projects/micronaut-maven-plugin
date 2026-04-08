@@ -498,6 +498,9 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
             if (!uri.isAbsolute()) {
                 throw new MojoExecutionException(source + " must be an absolute URL: " + sanitized);
             }
+            if (uri.getUserInfo() != null) {
+                throw new MojoExecutionException(source + " must not include embedded credentials");
+            }
         } catch (URISyntaxException e) {
             throw new MojoExecutionException(source + " is not a valid URL: " + sanitized, e);
         }
