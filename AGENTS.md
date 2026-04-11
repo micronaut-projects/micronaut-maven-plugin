@@ -14,6 +14,8 @@ Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module pl
 ## STRUCTURE
 ```text
 ./
+|- micronaut-maven-aot-core/          # shared AOT analysis/sample support
+|- micronaut-maven-aot-plugin/        # standalone `mn-aot` plugin entrypoints
 |- micronaut-maven-plugin/            # main Maven goals and feature packages
 |- micronaut-maven-core/              # shared runtime/build abstractions
 |- micronaut-maven-jib-integration/   # Jib extension and configuration glue
@@ -29,7 +31,7 @@ Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module pl
 |------|----------|-------|
 | Add/modify plugin goal behavior | `micronaut-maven-plugin/src/main/java/io/micronaut/maven` | Includes top-level mojos and feature packages |
 | OpenAPI generation changes | `micronaut-maven-plugin/src/main/java/io/micronaut/maven/openapi` | Client/server/generic generators |
-| AOT integration changes | `micronaut-maven-plugin/src/main/java/io/micronaut/maven/aot` | Analysis + sample config generation |
+| AOT integration changes | `micronaut-maven-plugin/src/main/java/io/micronaut/maven/aot`, `micronaut-maven-aot-core/src/main/java/io/micronaut/maven/aot`, `micronaut-maven-aot-plugin/src/main/java/io/micronaut/maven/aot` | Main plugin keeps embedded AOT mojos, `micronaut-maven-aot-core` holds shared AOT logic, and `micronaut-maven-aot-plugin` exposes the standalone `mn-aot` goal entrypoints |
 | Test resources lifecycle | `micronaut-maven-plugin/src/main/java/io/micronaut/maven/testresources` | Start/stop lifecycle + helper |
 | Shared compile/dependency logic | `micronaut-maven-plugin/src/main/java/io/micronaut/maven/services` | Used by heavy mojos like `RunMojo` |
 | Enforcer policy checks | `micronaut-maven-enforcer-rules/src/main/java/io/micronaut/maven/enforcer` | Currently centered on `CheckSnakeYaml`; keep cross-module policy here |
@@ -42,7 +44,7 @@ Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module pl
 |--------|------|----------|------|------|
 | `RunMojo` | class | `micronaut-maven-plugin/.../RunMojo.java` | high | Main run/watch/recompile orchestrator |
 | `AbstractOpenApiMojo` | class | `micronaut-maven-plugin/.../openapi/AbstractOpenApiMojo.java` | medium | Base for OpenAPI generators |
-| `AotAnalysisMojo` | class | `micronaut-maven-plugin/.../aot/AotAnalysisMojo.java` | medium | AOT analysis goal |
+| `AbstractAotAnalysisMojo` | class | `micronaut-maven-aot-core/.../aot/AbstractAotAnalysisMojo.java` | medium | Shared AOT analysis base for the embedded and standalone AOT plugins |
 | `TestResourcesHelper` | class | `micronaut-maven-plugin/.../testresources/TestResourcesHelper.java` | high | Test resources server/process management |
 | `JibMicronautExtension` | class | `micronaut-maven-jib-integration/.../JibMicronautExtension.java` | medium | Jib build-plan integration |
 | `MicronautRuntime` | enum | `micronaut-maven-core/.../MicronautRuntime.java` | medium | Runtime/build-strategy selector |
@@ -50,7 +52,7 @@ Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module pl
 ## CONVENTIONS
 - Build gates run at compile/verify: Spotless + Checkstyle in compile, invoker integration tests in verify.
 - Root POM owns shared plugin and quality configuration; module POMs stay lean.
-- Feature packages under `io.micronaut.maven` are explicit (`openapi`, `aot`, `testresources`, `services`, `jsonschema`).
+- Feature packages under `io.micronaut.maven` are explicit (`openapi`, `aot`, `testresources`, `services`, `jsonschema`), and shared AOT support now lives in dedicated `micronaut-maven-aot-*` modules.
 - Integration tests are isolated scenarios under `src/it/<scenario>` with per-scenario `invoker.properties` and optional `verify.groovy`.
 - CI matrix is intentional: `snapshot.yml` carries a PR/merge-group Linux docker-native preflight plus the full Java 25 snapshot run, `windows-ci.yml` covers Java 25 on Windows, and `release.yml` handles tagging + publish.
 
