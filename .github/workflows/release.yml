@@ -72,8 +72,7 @@ jobs:
       - name: "❓ Figure out next version"
         id: next_version
         run: |
-          chmod +x .github/scripts/increment_version.sh
-          NV="$(.github/scripts/increment_version.sh -p "${{ steps.release_version.outputs.release_version }}")"
+          NV="$(bash .github/scripts/increment_version.sh -p "${{ steps.release_version.outputs.release_version }}")"
           echo "next_version=${NV}-SNAPSHOT" >> $GITHUB_OUTPUT
 
       - name: "⚙️ Prepare release"
