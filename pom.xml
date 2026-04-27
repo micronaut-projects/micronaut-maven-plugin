@@ -65,7 +65,7 @@
         <maven.compiler.source>${jdk.version}</maven.compiler.source>
         <maven.compiler.target>${jdk.version}</maven.compiler.target>
 
-        <maven.version>3.9.14</maven.version>
+        <maven.version>3.9.15</maven.version>
         <micronaut.version>5.0.0-M24</micronaut.version>
         <native-maven-plugin.version>0.11.5</native-maven-plugin.version>
         <micronaut.aot.version>3.0.0-M2</micronaut.aot.version>
