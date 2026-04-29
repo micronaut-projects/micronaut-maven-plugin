@@ -90,7 +90,7 @@ public class ExecutorService {
 
     public final void executeGoal(MavenProject project, String pluginKey, String goal, Xpp3Dom overriddenConfiguration) throws MojoExecutionException {
         MavenProject targetProject = project == null ? mavenProject : project;
-        Plugin plugin = targetProject.getPlugin(pluginKey);
+        Plugin plugin = resolveBuildPlugin(targetProject, pluginKey);
         if (plugin != null) {
             String goalName = goal;
             AtomicReference<String> executionId = new AtomicReference<>(goalName);
@@ -117,6 +117,40 @@ public class ExecutorService {
         } else {
             throw new MojoExecutionException("Plugin not found: " + pluginKey);
         }
+    }
+
+    static Plugin resolveBuildPlugin(MavenProject targetProject, String pluginKey) {
+        Plugin plugin = targetProject.getPlugin(pluginKey);
+        if (plugin != null) {
+            return plugin;
+        }
+        if (targetProject.getBuild() == null || targetProject.getBuild().getPluginManagement() == null) {
+            return null;
+        }
+        return targetProject.getBuild().getPluginManagement().getPlugins()
+            .stream()
+            .filter(managedPlugin -> matchesPluginKey(managedPlugin, pluginKey))
+            .findFirst()
+            .orElse(null);
+    }
+
+    private static boolean matchesPluginKey(Plugin plugin, String pluginKey) {
+        if (plugin == null) {
+            return false;
+        }
+        if (pluginKey.equals(plugin.getKey())) {
+            return true;
+        }
+        String groupId = plugin.getGroupId();
+        String artifactId = plugin.getArtifactId();
+        String version = plugin.getVersion();
+        if (groupId == null || artifactId == null) {
+            return false;
+        }
+        if (pluginKey.equals(groupId + ":" + artifactId)) {
+            return true;
+        }
+        return version != null && pluginKey.equals(groupId + ":" + artifactId + ":" + version);
     }
 
     /**
