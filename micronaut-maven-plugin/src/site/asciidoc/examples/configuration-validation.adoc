@@ -102,6 +102,8 @@ The mojos share a `configurationValidation` block and expose options equivalent 
 ----
 
 If `<enabled>` is not set (or is set to `false`), validation does not run; set it to `true` to enable validation.
+The plugin always suppresses Micronaut annotation-processing metadata such as `micronaut.processing.*` because those
+compiler options are not application configuration keys.
 
 === Classpath configuration
 

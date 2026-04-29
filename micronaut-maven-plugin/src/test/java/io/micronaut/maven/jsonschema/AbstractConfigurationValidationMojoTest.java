@@ -125,6 +125,19 @@ class AbstractConfigurationValidationMojoTest {
         assertEquals(Boolean.FALSE, configuration.getEnabled());
     }
 
+    @Test
+    void effectiveSuppressionsIncludeMicronautProcessingMetadataByDefault() {
+        assertEquals(List.of("micronaut.processing"), AbstractConfigurationValidationMojo.effectiveSuppressions(null));
+    }
+
+    @Test
+    void effectiveSuppressionsAppendConfiguredValues() {
+        assertEquals(
+            List.of("micronaut.processing", "custom.property"),
+            AbstractConfigurationValidationMojo.effectiveSuppressions(List.of("custom.property", " "))
+        );
+    }
+
     private static String invokeSuppressionHint(AbstractConfigurationValidationMojo mojo,
                                                 Set<DependencyInjectionError> errors) throws Exception {
         Method method = AbstractConfigurationValidationMojo.class

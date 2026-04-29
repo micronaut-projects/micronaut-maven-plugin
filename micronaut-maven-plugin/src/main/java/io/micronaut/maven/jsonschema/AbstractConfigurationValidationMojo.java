@@ -49,6 +49,9 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         "logback.xml",
         "logback-test.xml"
     );
+    private static final List<String> DEFAULT_SUPPRESSIONS = List.of(
+        "micronaut.processing"
+    );
 
     protected final MavenProject project;
     protected final CompilerService compilerService;
@@ -107,7 +110,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         throws MojoExecutionException, MojoFailureException, IOException {
 
         List<String> environments = computeEnvironments(set, defaultEnvironments());
-        List<String> suppressions = copyList(cfg.getSuppressions());
+        List<String> suppressions = effectiveSuppressions(cfg.getSuppressions());
         List<String> suppressInjectErrors = copyList(cfg.getSuppressInjectErrors());
         boolean failOnNotPresent = cfg.getFailOnNotPresent() == null || cfg.getFailOnNotPresent();
         boolean deduceEnvironments = cfg.getDeduceEnvironments() != null && cfg.getDeduceEnvironments();
@@ -168,6 +171,12 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
 
     private static <T> List<T> copyList(List<T> values) {
         return values == null ? List.of() : List.copyOf(values);
+    }
+
+    static List<String> effectiveSuppressions(List<String> configuredSuppressions) {
+        Set<String> suppressions = new LinkedHashSet<>(DEFAULT_SUPPRESSIONS);
+        addNonBlankElements(suppressions, configuredSuppressions);
+        return List.copyOf(suppressions);
     }
 
     private String computeClasspathFingerprint(boolean cacheEnabled,
@@ -389,7 +398,7 @@ abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo
         return defaultClasspath(project);
     }
 
-    private void addNonBlankElements(Set<String> elements, List<String> candidates) {
+    private static void addNonBlankElements(Set<String> elements, List<String> candidates) {
         if (candidates == null) {
             return;
         }

@@ -62,6 +62,16 @@
                     </configurationValidation>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-Amicronaut.processing.group=io.micronaut.build.examples</arg>
+                        <arg>-Amicronaut.processing.module=${project.artifactId}</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>
