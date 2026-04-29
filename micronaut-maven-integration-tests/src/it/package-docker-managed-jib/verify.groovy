@@ -1,0 +1,5 @@
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains("Using base image: eclipse-temurin:${System.getProperty("java.specification.version")}-jre")
+assert new File(basedir, 'target/jib-image.tar').exists()
+assert !log.text.contains("Plugin not found: com.google.cloud.tools:jib-maven-plugin")

@@ -3,6 +3,9 @@ package io.micronaut.maven.services;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Build;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.model.PluginManagement;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.invoker.InvocationRequest;
@@ -96,13 +99,95 @@ class ExecutorServiceTest {
         Path projectDirectory = tempDir.resolve("project");
         Path buildDirectory = projectDirectory.resolve("target");
         MavenProject project = new MavenProject();
-        org.apache.maven.model.Build build = new org.apache.maven.model.Build();
+        Build build = new Build();
         build.setDirectory(buildDirectory.toString());
         project.setBuild(build);
         File alternatePom = projectDirectory.resolve("custom.xml").toFile();
         project.setFile(alternatePom);
 
         assertSame(alternatePom, ExecutorService.resolveOriginalPom(project));
+    }
+
+    @Test
+    void resolveBuildPluginFallsBackToManagedPlugin() {
+        MavenProject project = new MavenProject();
+        Build build = new Build();
+        PluginManagement pluginManagement = new PluginManagement();
+        Plugin plugin = plugin("com.google.cloud.tools", "jib-maven-plugin", "3.5.1");
+        pluginManagement.addPlugin(plugin);
+        build.setPluginManagement(pluginManagement);
+        project.setBuild(build);
+
+        Plugin result = ExecutorService.resolveBuildPlugin(project, "com.google.cloud.tools:jib-maven-plugin");
+
+        assertSame(plugin, result);
+    }
+
+    @Test
+    void resolveBuildPluginPrefersDirectBuildPluginOverManagedPlugin() {
+        MavenProject project = new MavenProject();
+        Build build = new Build();
+        Plugin directPlugin = plugin("com.google.cloud.tools", "jib-maven-plugin", "3.5.1");
+        build.addPlugin(directPlugin);
+        PluginManagement pluginManagement = new PluginManagement();
+        Plugin managedPlugin = plugin("com.google.cloud.tools", "jib-maven-plugin", "3.5.0");
+        pluginManagement.addPlugin(managedPlugin);
+        build.setPluginManagement(pluginManagement);
+        project.setBuild(build);
+
+        Plugin result = ExecutorService.resolveBuildPlugin(project, "com.google.cloud.tools:jib-maven-plugin");
+
+        assertSame(directPlugin, result);
+    }
+
+    @Test
+    void resolveBuildPluginReturnsNullWithoutPluginManagement() {
+        MavenProject project = new MavenProject();
+
+        assertNull(ExecutorService.resolveBuildPlugin(project, "com.google.cloud.tools:jib-maven-plugin"));
+
+        project.setBuild(new Build());
+
+        assertNull(ExecutorService.resolveBuildPlugin(project, "com.google.cloud.tools:jib-maven-plugin"));
+    }
+
+    @Test
+    void resolveBuildPluginIgnoresNullIncompleteAndNonMatchingManagedPlugins() {
+        MavenProject project = new MavenProject();
+        Build build = new Build();
+        PluginManagement pluginManagement = new PluginManagement();
+        pluginManagement.getPlugins().add(null);
+        pluginManagement.addPlugin(plugin("com.google.cloud.tools", null, "3.5.1"));
+        pluginManagement.addPlugin(plugin("com.google.cloud.tools", "other-maven-plugin", null));
+        build.setPluginManagement(pluginManagement);
+        project.setBuild(build);
+
+        Plugin result = ExecutorService.resolveBuildPlugin(project, "com.google.cloud.tools:jib-maven-plugin");
+
+        assertNull(result);
+    }
+
+    @Test
+    void resolveBuildPluginMatchesManagedPluginWithVersionedKey() {
+        MavenProject project = new MavenProject();
+        Build build = new Build();
+        PluginManagement pluginManagement = new PluginManagement();
+        Plugin plugin = plugin("com.google.cloud.tools", "jib-maven-plugin", "3.5.1");
+        pluginManagement.addPlugin(plugin);
+        build.setPluginManagement(pluginManagement);
+        project.setBuild(build);
+
+        Plugin result = ExecutorService.resolveBuildPlugin(project, "com.google.cloud.tools:jib-maven-plugin:3.5.1");
+
+        assertSame(plugin, result);
+    }
+
+    private static Plugin plugin(String groupId, String artifactId, String version) {
+        Plugin plugin = new Plugin();
+        plugin.setGroupId(groupId);
+        plugin.setArtifactId(artifactId);
+        plugin.setVersion(version);
+        return plugin;
     }
 
     private static MavenSession newSession(Path tempDir, boolean quiet, File settingsFile) {
