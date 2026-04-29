@@ -141,16 +141,12 @@ public class ExecutorService {
         if (pluginKey.equals(plugin.getKey())) {
             return true;
         }
-        String groupId = plugin.getGroupId();
         String artifactId = plugin.getArtifactId();
-        String version = plugin.getVersion();
-        if (groupId == null || artifactId == null) {
+        if (artifactId == null) {
             return false;
         }
-        if (pluginKey.equals(groupId + ":" + artifactId)) {
-            return true;
-        }
-        return version != null && pluginKey.equals(groupId + ":" + artifactId + ":" + version);
+        String version = plugin.getVersion();
+        return version != null && pluginKey.equals(plugin.getKey() + ":" + version);
     }
 
     /**
