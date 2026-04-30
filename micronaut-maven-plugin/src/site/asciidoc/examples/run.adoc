@@ -3,7 +3,7 @@
 It watches for changes in the project tree, and if they match certain conditions, it will recompile and restart the
 application.
 
-The plugin can handle changes in all the languages supported by Micronaut: Java, Kotlin and Groovy.
+The plugin can handle changes in Java, Groovy and resource source directories by default.
 
 Note that this plugin can work with any Micronaut version (and potentially with any Java application), since it only
 deals with file changes and JVM restarts.
@@ -43,7 +43,6 @@ By default, this plugin watches for changes in the following locations:
 * `src/main/resources/**/*`.
 * `src/main/java/**/*` (if it exists).
 * `src/main/groovy/**/*` (if it exists).
-* `src/main/kotlin/**/*` (if it exists).
 
 You can further include or exclude some other locations:
 

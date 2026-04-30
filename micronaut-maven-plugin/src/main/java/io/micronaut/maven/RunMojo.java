@@ -76,7 +76,7 @@ import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
  * <p>It watches for changes in the project tree. If there are changes in the {@code pom.xml} file, dependencies will be reloaded. If
  * the changes are anywhere underneath {@code src/main}, it will recompile the project and restart the application.</p>
  *
- * <p>The plugin can handle changes in all the languages supported by Micronaut: Java, Kotlin and Groovy.</p>
+ * <p>The plugin can handle changes in Java, Groovy and resource source directories by default.</p>
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 1.0.0
@@ -90,7 +90,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
     public static final String EXEC_MAIN_CLASS = "${exec.mainClass}";
     public static final String RESOURCES_DIR = "src/main/resources";
 
-    private static final List<String> RELEVANT_SRC_DIRS = List.of("resources", "java", "kotlin", "groovy");
+    private static final List<String> RELEVANT_SRC_DIRS = List.of("resources", "java", "groovy");
     private static final int LAST_COMPILATION_THRESHOLD = 500;
     private static final List<String> DEFAULT_EXCLUDES;
 

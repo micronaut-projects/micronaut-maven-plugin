@@ -92,16 +92,16 @@ class FileWatchingTest {
         mojo.assertNotRecompiled();
 
         // when:
-        List.of("groovy", "kotlin").forEach(lang -> {
-            mojo.withChange(createFile(tempDir.resolve("src/main/" + lang + "/Dummy." + lang), "public class Dummy { public static void main(String[] args) {} }"));
-            // then:
-            mojo.assertRecompiled();
-        });
+        mojo.withChange(createFile(tempDir.resolve("src/main/groovy/Dummy.groovy"), "class Dummy { static void main(String[] args) {} }"));
+        // then:
+        mojo.assertRecompiled();
 
         // when:
-        mojo.withChange(createFile(tempDir.resolve("src/main/scala/Dummy.java"), "I'm not a supported language"));
-        // then:
-        mojo.assertNotRecompiled();
+        List.of("kotlin", "scala").forEach(lang -> {
+            mojo.withChange(createFile(tempDir.resolve("src/main/" + lang + "/Dummy." + lang), "I'm not a supported language"));
+            // then:
+            mojo.assertNotRecompiled();
+        });
 
         // when:
         mojo.withChange(createFile(tempDir.resolve("unrelated.file"), "I'm not a source file"));
@@ -164,16 +164,16 @@ class FileWatchingTest {
         mojo.assertNotRecompiled();
 
         // when:
-        List.of("groovy", "kotlin").forEach(lang -> {
-            mojo.withChange(createFile(module0.resolve("src/main/" + lang + "/Dummy." + lang), "public class Dummy { public static void main(String[] args) {} }"));
-            // then:
-            mojo.assertRecompiled();
-        });
+        mojo.withChange(createFile(module0.resolve("src/main/groovy/Dummy.groovy"), "class Dummy { static void main(String[] args) {} }"));
+        // then:
+        mojo.assertRecompiled();
 
         // when:
-        mojo.withChange(createFile(module0.resolve("src/main/scala/Dummy.java"), "I'm not a supported language"));
-        // then:
-        mojo.assertNotRecompiled();
+        List.of("kotlin", "scala").forEach(lang -> {
+            mojo.withChange(createFile(module0.resolve("src/main/" + lang + "/Dummy." + lang), "I'm not a supported language"));
+            // then:
+            mojo.assertNotRecompiled();
+        });
 
         // when:
         mojo.withChange(createFile(module1.resolve("src/main/java/Dummy.java"), "Detects change in another module"));
