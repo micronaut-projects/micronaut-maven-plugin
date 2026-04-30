@@ -80,6 +80,7 @@ loadScripts(document, 'script');</script>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
+<li><a href="#validateLanguage()" tabindex="0">validateLanguage()</a></li>
 <li><a href="#isEnabled()" tabindex="0">isEnabled()</a></li>
 <li><a href="#configureBuilder(io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder)" tabindex="0">configureBuilder(MicronautCodeGeneratorBuilder)</a></li>
 </ol>
@@ -109,7 +110,7 @@ loadScripts(document, 'script');</script>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="annotations">@Mojo(name="generate-openapi-client",
       defaultPhase=GENERATE_SOURCES)
-</span><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-29">OpenApiClientMojo</a></span>
+</span><span class="modifiers">public class </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-30">OpenApiClientMojo</a></span>
 <span class="extends-implements">extends <a href="AbstractOpenApiMojo.html" title="class in io.micronaut.maven.openapi">AbstractOpenApiMojo</a></span></div>
 <div class="block">Generates an OpenAPI client.
 The sources are generated in the target directory.</div>
@@ -182,7 +183,7 @@ The sources are generated in the target directory.</div>
 </div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-io.micronaut.maven.openapi.AbstractOpenApiMojo">Fields inherited from class&nbsp;<a href="AbstractOpenApiMojo.html#field-summary" title="class in io.micronaut.maven.openapi">AbstractOpenApiMojo</a></h3>
-<code><a href="AbstractOpenApiMojo.html#additionalEnumTypeAnnotations">additionalEnumTypeAnnotations</a>, <a href="AbstractOpenApiMojo.html#additionalModelTypeAnnotations">additionalModelTypeAnnotations</a>, <a href="AbstractOpenApiMojo.html#additionalOneOfTypeAnnotations">additionalOneOfTypeAnnotations</a>, <a href="AbstractOpenApiMojo.html#additionalProperties">additionalProperties</a>, <a href="AbstractOpenApiMojo.html#allowUnicodeIdentifiers">allowUnicodeIdentifiers</a>, <a href="AbstractOpenApiMojo.html#alwaysUseGenerateHttpResponse">alwaysUseGenerateHttpResponse</a>, <a href="AbstractOpenApiMojo.html#apiNamePrefix">apiNamePrefix</a>, <a href="AbstractOpenApiMojo.html#apiNameSuffix">apiNameSuffix</a>, <a href="AbstractOpenApiMojo.html#apiPackageName">apiPackageName</a>, <a href="AbstractOpenApiMojo.html#coroutines">coroutines</a>, <a href="AbstractOpenApiMojo.html#dateTimeFormat">dateTimeFormat</a>, <a href="AbstractOpenApiMojo.html#definitionFile">definitionFile</a>, <a href="AbstractOpenApiMojo.html#ensureUniqueParams">ensureUniqueParams</a>, <a href="AbstractOpenApiMojo.html#enumNameMapping">enumNameMapping</a>, <a href="AbstractOpenApiMojo.html#generateControllerAsAbstract">generateControllerAsAbstract</a>, <a href="AbstractOpenApiMojo.html#generateHttpResponseWhereRequired">generateHttpResponseWhereRequired</a>, <a href="AbstractOpenApiMojo.html#generateSwaggerAnnotations">generateSwaggerAnnotations</a>, <a href="AbstractOpenApiMojo.html#implicitHeaders">implicitHeaders</a>, <a href="AbstractOpenApiMojo.html#implicitHeadersRegex">implicitHeadersRegex</a>, <a href="AbstractOpenApiMojo.html#importMapping">importMapping</a>, <a href="AbstractOpenApiMojo.html#inlineSchemaNameMapping">inlineSchemaNameMapping</a>, <a href="AbstractOpenApiMojo.html#inlineSchemaOption">inlineSchemaOption</a>, <a href="AbstractOpenApiMojo.html#invokerPackageName">invokerPackageName</a>, <a href="AbstractOpenApiMojo.html#jsonIncludeAlwaysForRequiredFields">jsonIncludeAlwaysForRequiredFields</a>, <a href="AbstractOpenApiMojo.html#ksp">ksp</a>, <a href="AbstractOpenApiMojo.html#lang">lang</a>, <a href="AbstractOpenApiMojo.html#modelNameMapping">modelNameMapping</a>, <a href="AbstractOpenApiMojo.html#modelNamePrefix">modelNamePrefix</a>, <a href="AbstractOpenApiMojo.html#modelNameSuffix">modelNameSuffix</a>, <a href="AbstractOpenApiMojo.html#modelPackageName">modelPackageName</a>, <a href="AbstractOpenApiMojo.html#nameMapping">nameMapping</a>, <a href="AbstractOpenApiMojo.html#openapiNormalizer">openapiNormalizer</a>, <a href="AbstractOpenApiMojo.html#outputDirectory">outputDirectory</a>, <a href="AbstractOpenApiMojo.html#outputKinds">outputKinds</a>, <a href="AbstractOpenApiMojo.html#parameterMappings">parameterMappings</a>, <a href="AbstractOpenApiMojo.html#prependFormOrBodyParameters">prependFormOrBodyParameters</a>, <a href="AbstractOpenApiMojo.html#project">project</a>, <a href="AbstractOpenApiMojo.html#removeOperationIdPrefixCount">removeOperationIdPrefixCount</a>, <a href="AbstractOpenApiMojo.html#removeOperationIdPrefixDelimiter">removeOperationIdPrefixDelimiter</a>, <a href="AbstractOpenApiMojo.html#requiredPropertiesInConstructor">requiredPropertiesInConstructor</a>, <a href="AbstractOpenApiMojo.html#responseBodyMappings">responseBodyMappings</a>, <a href="AbstractOpenApiMojo.html#schemaMapping">schemaMapping</a>, <a href="AbstractOpenApiMojo.html#serializationFramework">serializationFramework</a>, <a href="AbstractOpenApiMojo.html#skipOperationExample">skipOperationExample</a>, <a href="AbstractOpenApiMojo.html#skipSortingOperations">skipSortingOperations</a>, <a href="AbstractOpenApiMojo.html#sortModelPropertiesByRequiredFlag">sortModelPropertiesByRequiredFlag</a>, <a href="AbstractOpenApiMojo.html#sortParamsByRequiredFlag">sortParamsByRequiredFlag</a>, <a href="AbstractOpenApiMojo.html#typeMapping">typeMapping</a>, <a href="AbstractOpenApiMojo.html#useBeanValidation">useBeanValidation</a>, <a href="AbstractOpenApiMojo.html#useEnumCaseInsensitive">useEnumCaseInsensitive</a>, <a href="AbstractOpenApiMojo.html#useJakartaEe">useJakartaEe</a>, <a href="AbstractOpenApiMojo.html#useOneOfInterfaces">useOneOfInterfaces</a>, <a href="AbstractOpenApiMojo.html#useOptional">useOptional</a>, <a href="AbstractOpenApiMojo.html#useReactive">useReactive</a>, <a href="AbstractOpenApiMojo.html#useSealed">useSealed</a></code></div>
+<code><a href="AbstractOpenApiMojo.html#additionalEnumTypeAnnotations">additionalEnumTypeAnnotations</a>, <a href="AbstractOpenApiMojo.html#additionalModelTypeAnnotations">additionalModelTypeAnnotations</a>, <a href="AbstractOpenApiMojo.html#additionalOneOfTypeAnnotations">additionalOneOfTypeAnnotations</a>, <a href="AbstractOpenApiMojo.html#additionalProperties">additionalProperties</a>, <a href="AbstractOpenApiMojo.html#allowUnicodeIdentifiers">allowUnicodeIdentifiers</a>, <a href="AbstractOpenApiMojo.html#alwaysUseGenerateHttpResponse">alwaysUseGenerateHttpResponse</a>, <a href="AbstractOpenApiMojo.html#apiNamePrefix">apiNamePrefix</a>, <a href="AbstractOpenApiMojo.html#apiNameSuffix">apiNameSuffix</a>, <a href="AbstractOpenApiMojo.html#apiPackageName">apiPackageName</a>, <a href="AbstractOpenApiMojo.html#dateTimeFormat">dateTimeFormat</a>, <a href="AbstractOpenApiMojo.html#definitionFile">definitionFile</a>, <a href="AbstractOpenApiMojo.html#ensureUniqueParams">ensureUniqueParams</a>, <a href="AbstractOpenApiMojo.html#enumNameMapping">enumNameMapping</a>, <a href="AbstractOpenApiMojo.html#generateControllerAsAbstract">generateControllerAsAbstract</a>, <a href="AbstractOpenApiMojo.html#generateHttpResponseWhereRequired">generateHttpResponseWhereRequired</a>, <a href="AbstractOpenApiMojo.html#generateSwaggerAnnotations">generateSwaggerAnnotations</a>, <a href="AbstractOpenApiMojo.html#implicitHeaders">implicitHeaders</a>, <a href="AbstractOpenApiMojo.html#implicitHeadersRegex">implicitHeadersRegex</a>, <a href="AbstractOpenApiMojo.html#importMapping">importMapping</a>, <a href="AbstractOpenApiMojo.html#inlineSchemaNameMapping">inlineSchemaNameMapping</a>, <a href="AbstractOpenApiMojo.html#inlineSchemaOption">inlineSchemaOption</a>, <a href="AbstractOpenApiMojo.html#invokerPackageName">invokerPackageName</a>, <a href="AbstractOpenApiMojo.html#jsonIncludeAlwaysForRequiredFields">jsonIncludeAlwaysForRequiredFields</a>, <a href="AbstractOpenApiMojo.html#lang">lang</a>, <a href="AbstractOpenApiMojo.html#modelNameMapping">modelNameMapping</a>, <a href="AbstractOpenApiMojo.html#modelNamePrefix">modelNamePrefix</a>, <a href="AbstractOpenApiMojo.html#modelNameSuffix">modelNameSuffix</a>, <a href="AbstractOpenApiMojo.html#modelPackageName">modelPackageName</a>, <a href="AbstractOpenApiMojo.html#nameMapping">nameMapping</a>, <a href="AbstractOpenApiMojo.html#openapiNormalizer">openapiNormalizer</a>, <a href="AbstractOpenApiMojo.html#outputDirectory">outputDirectory</a>, <a href="AbstractOpenApiMojo.html#outputKinds">outputKinds</a>, <a href="AbstractOpenApiMojo.html#parameterMappings">parameterMappings</a>, <a href="AbstractOpenApiMojo.html#prependFormOrBodyParameters">prependFormOrBodyParameters</a>, <a href="AbstractOpenApiMojo.html#project">project</a>, <a href="AbstractOpenApiMojo.html#removeOperationIdPrefixCount">removeOperationIdPrefixCount</a>, <a href="AbstractOpenApiMojo.html#removeOperationIdPrefixDelimiter">removeOperationIdPrefixDelimiter</a>, <a href="AbstractOpenApiMojo.html#requiredPropertiesInConstructor">requiredPropertiesInConstructor</a>, <a href="AbstractOpenApiMojo.html#responseBodyMappings">responseBodyMappings</a>, <a href="AbstractOpenApiMojo.html#schemaMapping">schemaMapping</a>, <a href="AbstractOpenApiMojo.html#serializationFramework">serializationFramework</a>, <a href="AbstractOpenApiMojo.html#skipOperationExample">skipOperationExample</a>, <a href="AbstractOpenApiMojo.html#skipSortingOperations">skipSortingOperations</a>, <a href="AbstractOpenApiMojo.html#sortModelPropertiesByRequiredFlag">sortModelPropertiesByRequiredFlag</a>, <a href="AbstractOpenApiMojo.html#sortParamsByRequiredFlag">sortParamsByRequiredFlag</a>, <a href="AbstractOpenApiMojo.html#typeMapping">typeMapping</a>, <a href="AbstractOpenApiMojo.html#useBeanValidation">useBeanValidation</a>, <a href="AbstractOpenApiMojo.html#useEnumCaseInsensitive">useEnumCaseInsensitive</a>, <a href="AbstractOpenApiMojo.html#useJakartaEe">useJakartaEe</a>, <a href="AbstractOpenApiMojo.html#useOneOfInterfaces">useOneOfInterfaces</a>, <a href="AbstractOpenApiMojo.html#useOptional">useOptional</a>, <a href="AbstractOpenApiMojo.html#useReactive">useReactive</a>, <a href="AbstractOpenApiMojo.html#useSealed">useSealed</a></code></div>
 <div class="inherited-list">
 <h3 id="fields-inherited-from-class-org.apache.maven.plugin.Mojo">Fields inherited from interface&nbsp;org.apache.maven.plugin.Mojo</h3>
 <code>ROLE</code></div>
@@ -222,12 +223,17 @@ The sources are generated in the target directory.</div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Determines if this mojo must be executed.</div>
 </div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#validateLanguage()" class="member-name-link">validateLanguage</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Validates generator-specific language support before common generator options are resolved.</div>
+</div>
 </div>
 </div>
 </div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.maven.openapi.AbstractOpenApiMojo">Methods inherited from class&nbsp;<a href="AbstractOpenApiMojo.html#method-summary" title="class in io.micronaut.maven.openapi">AbstractOpenApiMojo</a></h3>
-<code><a href="AbstractOpenApiMojo.html#execute()" title="execute()">execute</a></code></div>
+<code><a href="AbstractOpenApiMojo.html#execute()" title="execute()">execute</a>, <a href="AbstractOpenApiMojo.html#rejectUnsupportedKotlinLanguage(java.lang.String)" title="rejectUnsupportedKotlinLanguage(String)">rejectUnsupportedKotlinLanguage</a></code></div>
 <div class="inherited-list">
 <h3 id="methods-inherited-from-class-io.micronaut.maven.AbstractMicronautMojo">Methods inherited from class&nbsp;<a href="../AbstractMicronautMojo.html#method-summary" title="class in io.micronaut.maven">AbstractMicronautMojo</a></h3>
 <code><a href="../AbstractMicronautMojo.html#setLog(org.apache.maven.plugin.logging.Log)" title="setLog(Log)">setLog</a></code></div>
@@ -252,7 +258,7 @@ The sources are generated in the target directory.</div>
 <section class="detail" id="MOJO_NAME">
 <h3>MOJO_NAME</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-32">MOJO_NAME</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-33">MOJO_NAME</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -269,7 +275,7 @@ The sources are generated in the target directory.</div>
 <h3>clientId</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.id")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-39">clientId</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-40">clientId</a></span></div>
 <div class="block">Client id.</div>
 </div>
 </section>
@@ -279,7 +285,7 @@ The sources are generated in the target directory.</div>
 <h3>clientPath</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.path")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-45">clientPath</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-46">clientPath</a></span></div>
 <div class="block">If set to true, Api annotation @Client will be with `path` attribute.</div>
 </div>
 </section>
@@ -290,7 +296,7 @@ The sources are generated in the target directory.</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.use.auth",
            defaultValue="false")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-51">useAuth</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-52">useAuth</a></span></div>
 <div class="block">Whether to configure authentication for client.</div>
 </div>
 </section>
@@ -300,7 +306,7 @@ The sources are generated in the target directory.</div>
 <h3>additionalTypeAnnotations</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.additional.type.annotations")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-57">additionalTypeAnnotations</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-58">additionalTypeAnnotations</a></span></div>
 <div class="block">Additional annotations to be used on the generated client API classes.</div>
 </div>
 </section>
@@ -310,7 +316,7 @@ The sources are generated in the target directory.</div>
 <h3>basePathSeparator</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.base.path.separator")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-63">basePathSeparator</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-64">basePathSeparator</a></span></div>
 <div class="block">The base path separator.</div>
 </div>
 </section>
@@ -320,7 +326,7 @@ The sources are generated in the target directory.</div>
 <h3>authorizationFilterPattern</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.authorization.filter.pattern")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-69">authorizationFilterPattern</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-70">authorizationFilterPattern</a></span></div>
 <div class="block">The pattern for authorization filter.</div>
 </div>
 </section>
@@ -330,7 +336,7 @@ The sources are generated in the target directory.</div>
 <h3>enabled</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.generate.client")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-75">enabled</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-76">enabled</a></span></div>
 <div class="block">The property that defines if this mojo is used.</div>
 </div>
 </section>
@@ -340,7 +346,7 @@ The sources are generated in the target directory.</div>
 <h3>lombok</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.lombok")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-83">lombok</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-84">lombok</a></span></div>
 <div class="block">Determines if the client should use lombok.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -354,7 +360,7 @@ The sources are generated in the target directory.</div>
 <h3>fluxForArrays</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.flux.for.arrays")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-91">fluxForArrays</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-92">fluxForArrays</a></span></div>
 <div class="block">Determines if the client should use flux for arrays.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -369,7 +375,7 @@ The sources are generated in the target directory.</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.client.generated.annotation",
            defaultValue="true")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-99">generatedAnnotation</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-100">generatedAnnotation</a></span></div>
 <div class="block">If set to true, the `javax.annotation.Generated` annotation will be added to all generated classes.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -390,7 +396,7 @@ The sources are generated in the target directory.</div>
 <section class="detail" id="&lt;init&gt;()">
 <h3>OpenApiClientMojo</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-30">OpenApiClientMojo</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-31">OpenApiClientMojo</a></span>()</div>
 </div>
 </section>
 </li>
@@ -403,10 +409,27 @@ The sources are generated in the target directory.</div>
 <h2>Method Details</h2>
 <ul class="member-list">
 <li>
+<section class="detail" id="validateLanguage()">
+<h3>validateLanguage</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-103">validateLanguage</a></span>()
+                         throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="AbstractOpenApiMojo.html#validateLanguage()">AbstractOpenApiMojo</a></code></span></div>
+<div class="block">Validates generator-specific language support before common generator options are resolved.</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="AbstractOpenApiMojo.html#validateLanguage()">validateLanguage</a></code>&nbsp;in class&nbsp;<code><a href="AbstractOpenApiMojo.html" title="class in io.micronaut.maven.openapi">AbstractOpenApiMojo</a></code></dd>
+<dt>Throws:</dt>
+<dd><code>org.apache.maven.plugin.MojoExecutionException</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="isEnabled()">
 <h3>isEnabled</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-102">isEnabled</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-108">isEnabled</a></span>()</div>
 <div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="AbstractOpenApiMojo.html#isEnabled()">AbstractOpenApiMojo</a></code></span></div>
 <div class="block">Determines if this mojo must be executed.</div>
 <dl class="notes">
@@ -422,7 +445,7 @@ The sources are generated in the target directory.</div>
 <section class="detail" id="configureBuilder(io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder)">
 <h3>configureBuilder</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-107">configureBuilder</a></span><wbr><span class="parameters">(io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder&nbsp;builder)</span></div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/OpenApiClientMojo.html#line-113">configureBuilder</a></span><wbr><span class="parameters">(io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder&nbsp;builder)</span></div>
 <div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="AbstractOpenApiMojo.html#configureBuilder(io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder)">AbstractOpenApiMojo</a></code></span></div>
 <div class="block">Configures the OpenAPI generator. When this method is called,
 common properties shared by all generators have already been

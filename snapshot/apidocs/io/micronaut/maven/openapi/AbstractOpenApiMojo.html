@@ -71,7 +71,6 @@ loadScripts(document, 'script');</script>
 <li><a href="#serializationFramework" tabindex="0">serializationFramework</a></li>
 <li><a href="#alwaysUseGenerateHttpResponse" tabindex="0">alwaysUseGenerateHttpResponse</a></li>
 <li><a href="#generateHttpResponseWhereRequired" tabindex="0">generateHttpResponseWhereRequired</a></li>
-<li><a href="#ksp" tabindex="0">ksp</a></li>
 <li><a href="#dateTimeFormat" tabindex="0">dateTimeFormat</a></li>
 <li><a href="#outputKinds" tabindex="0">outputKinds</a></li>
 <li><a href="#outputDirectory" tabindex="0">outputDirectory</a></li>
@@ -109,7 +108,6 @@ loadScripts(document, 'script');</script>
 <li><a href="#ensureUniqueParams" tabindex="0">ensureUniqueParams</a></li>
 <li><a href="#allowUnicodeIdentifiers" tabindex="0">allowUnicodeIdentifiers</a></li>
 <li><a href="#prependFormOrBodyParameters" tabindex="0">prependFormOrBodyParameters</a></li>
-<li><a href="#coroutines" tabindex="0">coroutines</a></li>
 <li><a href="#useSealed" tabindex="0">useSealed</a></li>
 <li><a href="#jsonIncludeAlwaysForRequiredFields" tabindex="0">jsonIncludeAlwaysForRequiredFields</a></li>
 <li><a href="#requiredPropertiesInConstructor" tabindex="0">requiredPropertiesInConstructor</a></li>
@@ -126,6 +124,8 @@ loadScripts(document, 'script');</script>
 <ol class="toc-list">
 <li><a href="#isEnabled()" tabindex="0">isEnabled()</a></li>
 <li><a href="#configureBuilder(io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder)" tabindex="0">configureBuilder(MicronautCodeGeneratorBuilder)</a></li>
+<li><a href="#validateLanguage()" tabindex="0">validateLanguage()</a></li>
+<li><a href="#rejectUnsupportedKotlinLanguage(java.lang.String)" tabindex="0">rejectUnsupportedKotlinLanguage(String)</a></li>
 <li><a href="#execute()" tabindex="0">execute()</a></li>
 </ol>
 </li>
@@ -218,85 +218,75 @@ methods.</div>
 <div class="col-last even-row-color">
 <div class="block">The package name for the APIs (controller interfaces).</div>
 </div>
-<div class="col-first odd-row-color"><code>protected boolean</code></div>
-<div class="col-second odd-row-color"><code><a href="#coroutines" class="member-name-link">coroutines</a></code></div>
+<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#dateTimeFormat" class="member-name-link">dateTimeFormat</a></code></div>
 <div class="col-last odd-row-color">
-<div class="block">If set to true, generated code will be with suspend methods.</div>
-</div>
-<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#dateTimeFormat" class="member-name-link">dateTimeFormat</a></code></div>
-<div class="col-last even-row-color">
 <div class="block">Configure the date-time format.</div>
 </div>
-<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#definitionFile" class="member-name-link">definitionFile</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></code></div>
+<div class="col-second even-row-color"><code><a href="#definitionFile" class="member-name-link">definitionFile</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">The OpenAPI specification file path relative to the project's root path.</div>
 </div>
-<div class="col-first even-row-color"><code>protected boolean</code></div>
-<div class="col-second even-row-color"><code><a href="#ensureUniqueParams" class="member-name-link">ensureUniqueParams</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code>protected boolean</code></div>
+<div class="col-second odd-row-color"><code><a href="#ensureUniqueParams" class="member-name-link">ensureUniqueParams</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">Whether to ensure parameter names are unique in an operation (rename parameters that are not).</div>
 </div>
-<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color"><code><a href="#enumNameMapping" class="member-name-link">enumNameMapping</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#enumNameMapping" class="member-name-link">enumNameMapping</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Add the enum name mappings.</div>
 </div>
-<div class="col-first even-row-color"><code>protected boolean</code></div>
-<div class="col-second even-row-color"><code><a href="#generateControllerAsAbstract" class="member-name-link">generateControllerAsAbstract</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code>protected boolean</code></div>
+<div class="col-second odd-row-color"><code><a href="#generateControllerAsAbstract" class="member-name-link">generateControllerAsAbstract</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">If true, the generated controller interface will be without `@Controller` annotation.</div>
 </div>
-<div class="col-first odd-row-color"><code>protected boolean</code></div>
-<div class="col-second odd-row-color"><code><a href="#generateHttpResponseWhereRequired" class="member-name-link">generateHttpResponseWhereRequired</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>protected boolean</code></div>
+<div class="col-second even-row-color"><code><a href="#generateHttpResponseWhereRequired" class="member-name-link">generateHttpResponseWhereRequired</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Wrap the operations response in HttpResponse object where non-200 HTTP status codes or additional headers are defined.</div>
 </div>
-<div class="col-first even-row-color"><code>protected boolean</code></div>
-<div class="col-second even-row-color"><code><a href="#generateSwaggerAnnotations" class="member-name-link">generateSwaggerAnnotations</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code>protected boolean</code></div>
+<div class="col-second odd-row-color"><code><a href="#generateSwaggerAnnotations" class="member-name-link">generateSwaggerAnnotations</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">If set to true, controller and client method will be generated with openAPI annotations.</div>
 </div>
-<div class="col-first odd-row-color"><code>protected boolean</code></div>
-<div class="col-second odd-row-color"><code><a href="#implicitHeaders" class="member-name-link">implicitHeaders</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>protected boolean</code></div>
+<div class="col-second even-row-color"><code><a href="#implicitHeaders" class="member-name-link">implicitHeaders</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Set the implicit headers flag.</div>
 </div>
-<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#implicitHeadersRegex" class="member-name-link">implicitHeadersRegex</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#implicitHeadersRegex" class="member-name-link">implicitHeadersRegex</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">Set the implicit headers regex.</div>
 </div>
-<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color"><code><a href="#importMapping" class="member-name-link">importMapping</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#importMapping" class="member-name-link">importMapping</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Add the import mappings.</div>
 </div>
-<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color"><code><a href="#inlineSchemaNameMapping" class="member-name-link">inlineSchemaNameMapping</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color"><code><a href="#inlineSchemaNameMapping" class="member-name-link">inlineSchemaNameMapping</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">Add the inline schema name mappings.</div>
 </div>
-<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color"><code><a href="#inlineSchemaOption" class="member-name-link">inlineSchemaOption</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#inlineSchemaOption" class="member-name-link">inlineSchemaOption</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Add the inline schema options.</div>
 </div>
-<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#invokerPackageName" class="member-name-link">invokerPackageName</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#invokerPackageName" class="member-name-link">invokerPackageName</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">The name of the package that can be used for various classes required for invocation.</div>
 </div>
-<div class="col-first odd-row-color"><code>protected boolean</code></div>
-<div class="col-second odd-row-color"><code><a href="#jsonIncludeAlwaysForRequiredFields" class="member-name-link">jsonIncludeAlwaysForRequiredFields</a></code></div>
-<div class="col-last odd-row-color">
-<div class="block">If set to true, @JsonInclude annotation will be with value ALWAYS for required properties in POJO's.</div>
-</div>
 <div class="col-first even-row-color"><code>protected boolean</code></div>
-<div class="col-second even-row-color"><code><a href="#ksp" class="member-name-link">ksp</a></code></div>
+<div class="col-second even-row-color"><code><a href="#jsonIncludeAlwaysForRequiredFields" class="member-name-link">jsonIncludeAlwaysForRequiredFields</a></code></div>
 <div class="col-last even-row-color">
-<div class="block">If set to true, generated code will be fully compatible with KSP, but not 100% with KAPT.</div>
+<div class="block">If set to true, @JsonInclude annotation will be with value ALWAYS for required properties in POJO's.</div>
 </div>
 <div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#lang" class="member-name-link">lang</a></code></div>
@@ -489,6 +479,14 @@ methods.</div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Determines if this mojo must be executed.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#rejectUnsupportedKotlinLanguage(java.lang.String)" class="member-name-link">rejectUnsupportedKotlinLanguage</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;generatorType)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#validateLanguage()" class="member-name-link">validateLanguage</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Validates generator-specific language support before common generator options are resolved.</div>
+</div>
 </div>
 </div>
 </div>
@@ -519,7 +517,7 @@ methods.</div>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.definition",
            defaultValue="io.micronaut.openapi.invoker",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-46">definitionFile</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-49">definitionFile</a></span></div>
 <div class="block">The OpenAPI specification file path relative to the project's root path.</div>
 </div>
 </section>
@@ -531,7 +529,7 @@ methods.</div>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.invoker.package.name",
            defaultValue="io.micronaut.openapi.invoker",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-52">invokerPackageName</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-55">invokerPackageName</a></span></div>
 <div class="block">The name of the package that can be used for various classes required for invocation.</div>
 </div>
 </section>
@@ -543,7 +541,7 @@ methods.</div>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.api.package.name",
            defaultValue="io.micronaut.openapi.api",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-58">apiPackageName</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-61">apiPackageName</a></span></div>
 <div class="block">The package name for the APIs (controller interfaces).</div>
 </div>
 </section>
@@ -555,7 +553,7 @@ methods.</div>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.model.package.name",
            defaultValue="io.micronaut.openapi.model",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-64">modelPackageName</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-67">modelPackageName</a></span></div>
 <div class="block">The package name for the model classes.</div>
 </div>
 </section>
@@ -567,7 +565,7 @@ methods.</div>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.use.bean.validation",
            defaultValue="true",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-70">useBeanValidation</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-73">useBeanValidation</a></span></div>
 <div class="block">Whether to generate validation annotations for models and APIs.</div>
 </div>
 </section>
@@ -579,7 +577,7 @@ methods.</div>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.use.one.of.interfaces",
            defaultValue="true",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-76">useOneOfInterfaces</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-79">useOneOfInterfaces</a></span></div>
 <div class="block">Flag to indicate whether to use the utils.OneOfImplementorAdditionalData related logic.</div>
 </div>
 </section>
@@ -591,7 +589,7 @@ methods.</div>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.use.optional",
            defaultValue="false",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-82">useOptional</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-85">useOptional</a></span></div>
 <div class="block">Whether to use <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link"><code>Optional</code></a> for non-required model properties and API parameters.</div>
 </div>
 </section>
@@ -603,7 +601,7 @@ methods.</div>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.use.reactive",
            defaultValue="true",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-88">useReactive</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-91">useReactive</a></span></div>
 <div class="block">Whether to use reactor types for operation responses.</div>
 </div>
 </section>
@@ -615,7 +613,7 @@ methods.</div>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.serialization.framework",
            defaultValue="MICRONAUT_SERDE_JACKSON",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-94">serializationFramework</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-97">serializationFramework</a></span></div>
 <div class="block">Configure the serialization library.</div>
 </div>
 </section>
@@ -627,7 +625,7 @@ methods.</div>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.always.use.generate.http.response",
            defaultValue="false",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-100">alwaysUseGenerateHttpResponse</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-103">alwaysUseGenerateHttpResponse</a></span></div>
 <div class="block">If true, the generated operation return types will be wrapped in HttpResponse.</div>
 </div>
 </section>
@@ -639,20 +637,8 @@ methods.</div>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.generate.http.response.where.required",
            defaultValue="true",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-106">generateHttpResponseWhereRequired</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-109">generateHttpResponseWhereRequired</a></span></div>
 <div class="block">Wrap the operations response in HttpResponse object where non-200 HTTP status codes or additional headers are defined.</div>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="ksp">
-<h3>ksp</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.ksp",
-           defaultValue="false",
-           required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-112">ksp</a></span></div>
-<div class="block">If set to true, generated code will be fully compatible with KSP, but not 100% with KAPT.</div>
 </div>
 </section>
 </li>
@@ -663,7 +649,7 @@ methods.</div>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.date.time.format",
            defaultValue="ZONED_DATETIME",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-118">dateTimeFormat</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-115">dateTimeFormat</a></span></div>
 <div class="block">Configure the date-time format.</div>
 </div>
 </section>
@@ -675,7 +661,7 @@ methods.</div>
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.outputs",
            required=true,
            defaultValue="apis,models,supporting_files")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-125">outputKinds</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-122">outputKinds</a></span></div>
 <div class="block">Comma-separated values of output kinds to generate. The values are defined by the
 <code>MicronautCodeGeneratorEntryPoint.OutputKind</code> enum.</div>
 </div>
@@ -687,7 +673,7 @@ methods.</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(defaultValue="${project.build.directory}/generated-sources/openapi",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-131">outputDirectory</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-128">outputDirectory</a></span></div>
 <div class="block">The output directory to which all the sources will be generated.</div>
 </div>
 </section>
@@ -697,7 +683,7 @@ methods.</div>
 <h3>parameterMappings</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.parameterMappings")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="ParameterMapping.html" title="class in io.micronaut.maven.openapi">ParameterMapping</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-138">parameterMappings</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="ParameterMapping.html" title="class in io.micronaut.maven.openapi">ParameterMapping</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-135">parameterMappings</a></span></div>
 <div class="block">Define parameter mappings that allow using custom types for parameter binding.
 See <a href="ParameterMapping.html" title="class in io.micronaut.maven.openapi"><code>ParameterMapping</code></a> for details.</div>
 </div>
@@ -708,7 +694,7 @@ See <a href="ParameterMapping.html" title="class in io.micronaut.maven.openapi">
 <h3>responseBodyMappings</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.responseBodyMappings")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openapi">ResponseBodyMapping</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-145">responseBodyMappings</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openapi">ResponseBodyMapping</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-142">responseBodyMappings</a></span></div>
 <div class="block">Define parameter mappings that allow using custom types for parameter binding.
 See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openapi"><code>ResponseBodyMapping</code></a> for details.</div>
 </div>
@@ -719,7 +705,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>schemaMapping</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.schemaMapping")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-151">schemaMapping</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-148">schemaMapping</a></span></div>
 <div class="block">Add the schema mappings.</div>
 </div>
 </section>
@@ -729,7 +715,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>importMapping</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.importMapping")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-157">importMapping</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-154">importMapping</a></span></div>
 <div class="block">Add the import mappings.</div>
 </div>
 </section>
@@ -739,7 +725,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>nameMapping</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.nameMapping")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-163">nameMapping</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-160">nameMapping</a></span></div>
 <div class="block">Add the name mappings.</div>
 </div>
 </section>
@@ -749,7 +735,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>typeMapping</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.typeMapping")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-169">typeMapping</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-166">typeMapping</a></span></div>
 <div class="block">Add the type mappings.</div>
 </div>
 </section>
@@ -759,7 +745,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>enumNameMapping</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.enumNameMapping")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-175">enumNameMapping</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-172">enumNameMapping</a></span></div>
 <div class="block">Add the enum name mappings.</div>
 </div>
 </section>
@@ -769,7 +755,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>modelNameMapping</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.modelNameMapping")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-181">modelNameMapping</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-178">modelNameMapping</a></span></div>
 <div class="block">Add the model name mappings.</div>
 </div>
 </section>
@@ -779,7 +765,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>inlineSchemaNameMapping</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.inlineSchemaNameMapping")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-187">inlineSchemaNameMapping</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-184">inlineSchemaNameMapping</a></span></div>
 <div class="block">Add the inline schema name mappings.</div>
 </div>
 </section>
@@ -789,7 +775,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>inlineSchemaOption</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.inlineSchemaOption")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-193">inlineSchemaOption</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-190">inlineSchemaOption</a></span></div>
 <div class="block">Add the inline schema options.</div>
 </div>
 </section>
@@ -799,7 +785,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>openapiNormalizer</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.openapiNormalizer")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-199">openapiNormalizer</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-196">openapiNormalizer</a></span></div>
 <div class="block">Add the OpenAPI normalizer options.</div>
 </div>
 </section>
@@ -809,7 +795,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>apiNamePrefix</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.apiNamePrefix")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-205">apiNamePrefix</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-202">apiNamePrefix</a></span></div>
 <div class="block">Set the api name prefix.</div>
 </div>
 </section>
@@ -819,7 +805,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>apiNameSuffix</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.apiNameSuffix")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-211">apiNameSuffix</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-208">apiNameSuffix</a></span></div>
 <div class="block">Set the api name suffix.</div>
 </div>
 </section>
@@ -829,7 +815,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>modelNamePrefix</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.modelNamePrefix")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-217">modelNamePrefix</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-214">modelNamePrefix</a></span></div>
 <div class="block">Set the model name prefix.</div>
 </div>
 </section>
@@ -839,7 +825,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>modelNameSuffix</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.modelNameSuffix")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-223">modelNameSuffix</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-220">modelNameSuffix</a></span></div>
 <div class="block">Set the model name suffix.</div>
 </div>
 </section>
@@ -850,7 +836,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.lang",
            defaultValue="java")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-231">lang</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-228">lang</a></span></div>
 <div class="block">Allows specifying the language of the generated code.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -865,7 +851,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.useEnumCaseInsensitive",
            defaultValue="false")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-237">useEnumCaseInsensitive</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-234">useEnumCaseInsensitive</a></span></div>
 <div class="block">If set to true, the generated enums check enum value with ignoring case.</div>
 </div>
 </section>
@@ -875,7 +861,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>additionalEnumTypeAnnotations</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.additionalEnumTypeAnnotations")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-243">additionalEnumTypeAnnotations</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-240">additionalEnumTypeAnnotations</a></span></div>
 <div class="block">Additional annotations for enum type (class level annotations).</div>
 </div>
 </section>
@@ -885,7 +871,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>additionalModelTypeAnnotations</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.additionalModelTypeAnnotations")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-249">additionalModelTypeAnnotations</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-246">additionalModelTypeAnnotations</a></span></div>
 <div class="block">Additional annotations for model type (class level annotations).</div>
 </div>
 </section>
@@ -895,7 +881,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>additionalOneOfTypeAnnotations</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.additionalOneOfTypeAnnotations")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-255">additionalOneOfTypeAnnotations</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-252">additionalOneOfTypeAnnotations</a></span></div>
 <div class="block">Additional annotations for oneOf interfaces (class level annotations).</div>
 </div>
 </section>
@@ -905,7 +891,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>additionalProperties</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.additionalProperties")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-261">additionalProperties</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-258">additionalProperties</a></span></div>
 <div class="block">Additional generator properties.</div>
 </div>
 </section>
@@ -916,7 +902,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.generateSwaggerAnnotations",
            defaultValue="false")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-267">generateSwaggerAnnotations</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-264">generateSwaggerAnnotations</a></span></div>
 <div class="block">If set to true, controller and client method will be generated with openAPI annotations.</div>
 </div>
 </section>
@@ -927,7 +913,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.implicitHeaders",
            defaultValue="false")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-273">implicitHeaders</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-270">implicitHeaders</a></span></div>
 <div class="block">Set the implicit headers flag.</div>
 </div>
 </section>
@@ -937,7 +923,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <h3>implicitHeadersRegex</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.implicitHeadersRegex")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-279">implicitHeadersRegex</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-276">implicitHeadersRegex</a></span></div>
 <div class="block">Set the implicit headers regex.</div>
 </div>
 </section>
@@ -948,7 +934,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.useJakartaEe",
            defaultValue="true")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-285">useJakartaEe</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-282">useJakartaEe</a></span></div>
 <div class="block">Flag to indicate whether to use the "jakarta" or "javax" package.</div>
 </div>
 </section>
@@ -959,7 +945,7 @@ See <a href="ResponseBodyMapping.html" title="class in io.micronaut.maven.openap
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.sortParamsByRequiredFlag",
            defaultValue="true")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-292">sortParamsByRequiredFlag</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-289">sortParamsByRequiredFlag</a></span></div>
 <div class="block">Sort method arguments to place required parameters before optional parameters.
 Default: true</div>
 </div>
@@ -970,7 +956,7 @@ Default: true</div>
 <h3>skipOperationExample</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.skipOperationExample")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-299">skipOperationExample</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-296">skipOperationExample</a></span></div>
 <div class="block">Skip examples defined in operations to avoid out of memory errors.
 Default: false</div>
 </div>
@@ -981,7 +967,7 @@ Default: false</div>
 <h3>skipSortingOperations</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.skipSortingOperations")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-306">skipSortingOperations</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-303">skipSortingOperations</a></span></div>
 <div class="block">Skip sorting operations.
 Default: false</div>
 </div>
@@ -993,7 +979,7 @@ Default: false</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.removeOperationIdPrefixDelimiter",
            defaultValue="_")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-312">removeOperationIdPrefixDelimiter</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-309">removeOperationIdPrefixDelimiter</a></span></div>
 <div class="block">Character to use as a delimiter for the prefix. Default: '_'</div>
 </div>
 </section>
@@ -1004,7 +990,7 @@ Default: false</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.removeOperationIdPrefixCount",
            defaultValue="1")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-318">removeOperationIdPrefixCount</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-315">removeOperationIdPrefixCount</a></span></div>
 <div class="block">Count of delimiter for the prefix. Use -1 for last. Default: 1</div>
 </div>
 </section>
@@ -1015,7 +1001,7 @@ Default: false</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.sortModelPropertiesByRequiredFlag",
            defaultValue="true")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-324">sortModelPropertiesByRequiredFlag</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-321">sortModelPropertiesByRequiredFlag</a></span></div>
 <div class="block">Sort model properties to place required parameters before optional parameters.</div>
 </div>
 </section>
@@ -1026,7 +1012,7 @@ Default: false</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.ensureUniqueParams",
            defaultValue="true")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-330">ensureUniqueParams</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-327">ensureUniqueParams</a></span></div>
 <div class="block">Whether to ensure parameter names are unique in an operation (rename parameters that are not).</div>
 </div>
 </section>
@@ -1036,7 +1022,7 @@ Default: false</div>
 <h3>allowUnicodeIdentifiers</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.allowUnicodeIdentifiers")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-336">allowUnicodeIdentifiers</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-333">allowUnicodeIdentifiers</a></span></div>
 <div class="block">boolean, toggles whether Unicode identifiers are allowed in names or not, default is false.</div>
 </div>
 </section>
@@ -1046,22 +1032,8 @@ Default: false</div>
 <h3>prependFormOrBodyParameters</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.prependFormOrBodyParameters")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-342">prependFormOrBodyParameters</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-339">prependFormOrBodyParameters</a></span></div>
 <div class="block">Add form or body parameters to the beginning of the parameter list.</div>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="coroutines">
-<h3>coroutines</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.coroutines")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-350">coroutines</a></span></div>
-<div class="block">If set to true, generated code will be with suspend methods. Ony for kotlin generator.</div>
-<dl class="notes">
-<dt>Since:</dt>
-<dd>4.8.0</dd>
-</dl>
 </div>
 </section>
 </li>
@@ -1070,7 +1042,7 @@ Default: false</div>
 <h3>useSealed</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.useSealed")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-358">useSealed</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-347">useSealed</a></span></div>
 <div class="block">Whether to generate sealed model interfaces and classes. Only for java generator.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -1084,7 +1056,7 @@ Default: false</div>
 <h3>jsonIncludeAlwaysForRequiredFields</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.jsonIncludeAlwaysForRequiredFields")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-366">jsonIncludeAlwaysForRequiredFields</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-355">jsonIncludeAlwaysForRequiredFields</a></span></div>
 <div class="block">If set to true, @JsonInclude annotation will be with value ALWAYS for required properties in POJO's.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -1099,7 +1071,7 @@ Default: false</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.requiredPropertiesInConstructor",
            defaultValue="true")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-374">requiredPropertiesInConstructor</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-363">requiredPropertiesInConstructor</a></span></div>
 <div class="block">Generate or not required properties constructor. Only for java generator.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -1113,7 +1085,7 @@ Default: false</div>
 <h3>generateControllerAsAbstract</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.openapi.generateControllerAsAbstract")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-382">generateControllerAsAbstract</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-371">generateControllerAsAbstract</a></span></div>
 <div class="block">If true, the generated controller interface will be without `@Controller` annotation.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -1128,7 +1100,7 @@ Default: false</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(defaultValue="${project}",
            readonly=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">org.apache.maven.project.MavenProject</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-385">project</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type">org.apache.maven.project.MavenProject</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-374">project</a></span></div>
 </div>
 </section>
 </li>
@@ -1160,7 +1132,7 @@ Default: false</div>
 <section class="detail" id="isEnabled()">
 <h3>isEnabled</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-393">isEnabled</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-382">isEnabled</a></span>()</div>
 <div class="block">Determines if this mojo must be executed.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -1173,7 +1145,7 @@ Default: false</div>
 <section class="detail" id="configureBuilder(io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder)">
 <h3>configureBuilder</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-403">configureBuilder</a></span><wbr><span class="parameters">(io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder&nbsp;builder)</span>
+<div class="member-signature"><span class="modifiers">protected abstract</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-392">configureBuilder</a></span><wbr><span class="parameters">(io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder&nbsp;builder)</span>
                                   throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <div class="block">Configures the OpenAPI generator. When this method is called,
 common properties shared by all generators have already been
@@ -1189,10 +1161,37 @@ the generator specific parameters.</div>
 </section>
 </li>
 <li>
+<section class="detail" id="validateLanguage()">
+<h3>validateLanguage</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-397">validateLanguage</a></span>()
+                         throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
+<div class="block">Validates generator-specific language support before common generator options are resolved.</div>
+<dl class="notes">
+<dt>Throws:</dt>
+<dd><code>org.apache.maven.plugin.MojoExecutionException</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="rejectUnsupportedKotlinLanguage(java.lang.String)">
+<h3>rejectUnsupportedKotlinLanguage</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-401">rejectUnsupportedKotlinLanguage</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;generatorType)</span>
+                                              throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
+<dl class="notes">
+<dt>Throws:</dt>
+<dd><code>org.apache.maven.plugin.MojoExecutionException</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="execute()">
 <h3>execute</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-405">execute</a></span>()
+<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/openapi/AbstractOpenApiMojo.html#line-410">execute</a></span>()
                    throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException,
 org.apache.maven.plugin.MojoFailureException</span></div>
 <dl class="notes">

@@ -89,7 +89,7 @@
 <span class="source-line-no">076</span><span id="line-76"> * &lt;p&gt;It watches for changes in the project tree. If there are changes in the {@code pom.xml} file, dependencies will be reloaded. If</span>
 <span class="source-line-no">077</span><span id="line-77"> * the changes are anywhere underneath {@code src/main}, it will recompile the project and restart the application.&lt;/p&gt;</span>
 <span class="source-line-no">078</span><span id="line-78"> *</span>
-<span class="source-line-no">079</span><span id="line-79"> * &lt;p&gt;The plugin can handle changes in all the languages supported by Micronaut: Java, Kotlin and Groovy.&lt;/p&gt;</span>
+<span class="source-line-no">079</span><span id="line-79"> * &lt;p&gt;The plugin can handle changes in Java, Groovy and resource source directories by default.&lt;/p&gt;</span>
 <span class="source-line-no">080</span><span id="line-80"> *</span>
 <span class="source-line-no">081</span><span id="line-81"> * @author Álvaro Sánchez-Mariscal</span>
 <span class="source-line-no">082</span><span id="line-82"> * @since 1.0.0</span>
@@ -103,7 +103,7 @@
 <span class="source-line-no">090</span><span id="line-90">    public static final String EXEC_MAIN_CLASS = "${exec.mainClass}";</span>
 <span class="source-line-no">091</span><span id="line-91">    public static final String RESOURCES_DIR = "src/main/resources";</span>
 <span class="source-line-no">092</span><span id="line-92"></span>
-<span class="source-line-no">093</span><span id="line-93">    private static final List&lt;String&gt; RELEVANT_SRC_DIRS = List.of("resources", "java", "kotlin", "groovy");</span>
+<span class="source-line-no">093</span><span id="line-93">    private static final List&lt;String&gt; RELEVANT_SRC_DIRS = List.of("resources", "java", "groovy");</span>
 <span class="source-line-no">094</span><span id="line-94">    private static final int LAST_COMPILATION_THRESHOLD = 500;</span>
 <span class="source-line-no">095</span><span id="line-95">    private static final List&lt;String&gt; DEFAULT_EXCLUDES;</span>
 <span class="source-line-no">096</span><span id="line-96"></span>
