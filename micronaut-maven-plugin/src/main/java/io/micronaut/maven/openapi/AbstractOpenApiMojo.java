@@ -39,6 +39,9 @@ import java.util.Map;
 public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
     static final String MICRONAUT_OPENAPI_PREFIX = "micronaut.openapi";
     static final String IO_MICRONAUT_OPENAPI_PREFIX = "io.micronaut.openapi";
+    static final String KOTLIN_MAVEN_UNSUPPORTED_MESSAGE =
+        "Kotlin applications built with Maven are no longer supported in Micronaut Platform 5. "
+            + "Use Java or Groovy with Maven, or use Gradle for Kotlin applications.";
 
     /**
      * The OpenAPI specification file path relative to the project's root path.
@@ -105,12 +108,6 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
      */
     @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".generate.http.response.where.required", defaultValue = "true", required = true)
     protected boolean generateHttpResponseWhereRequired;
-
-    /**
-     * If set to true, generated code will be fully compatible with KSP, but not 100% with KAPT.
-     */
-    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".ksp", defaultValue = "false", required = true)
-    protected boolean ksp;
 
     /**
      * Configure the date-time format.
@@ -343,14 +340,6 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
     protected boolean prependFormOrBodyParameters;
 
     /**
-     * If set to true, generated code will be with suspend methods. Ony for kotlin generator.
-     *
-     * @since 4.8.0
-     */
-    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + ".coroutines")
-    protected boolean coroutines;
-
-    /**
      * Whether to generate sealed model interfaces and classes. Only for java generator.
      *
      * @since 4.8.0
@@ -402,6 +391,22 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
      */
     protected abstract void configureBuilder(MicronautCodeGeneratorBuilder builder) throws MojoExecutionException;
 
+    /**
+     * Validates generator-specific language support before common generator options are resolved.
+     */
+    protected void validateLanguage() throws MojoExecutionException {
+        // Default implementation accepts the common generator language configuration.
+    }
+
+    protected final void rejectUnsupportedKotlinLanguage(String generatorType) throws MojoExecutionException {
+        if ("kotlin".equalsIgnoreCase(lang)) {
+            throw new MojoExecutionException(
+                "Kotlin OpenAPI " + generatorType + " generation is not supported by the Micronaut Maven Plugin. "
+                    + KOTLIN_MAVEN_UNSUPPORTED_MESSAGE
+            );
+        }
+    }
+
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException {
         if (!isEnabled()) {
@@ -409,6 +414,7 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
             return;
         }
 
+        validateLanguage();
         project.addCompileSourceRoot(outputDirectory.getAbsolutePath());
         var builder = MicronautCodeGeneratorEntryPoint.builder()
             .withDefinitionFile(definitionFile.toURI())

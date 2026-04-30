@@ -1,13 +1,12 @@
 # EXAMPLES KNOWLEDGE BASE
 
 ## OVERVIEW
-Consumer-facing sample projects used for manual verification and debugging flows. These are references for Java, Kotlin, Groovy, and multi-module usage.
+Consumer-facing sample projects used for manual verification and debugging flows. These are references for Java, Groovy, and multi-module usage.
 
 ## STRUCTURE
 ```text
 examples/
 |- java/           # single-module Java sample
-|- kotlin/         # single-module Kotlin sample
 |- groovy/         # single-module Groovy sample
 `- multi-project/  # parent POM with app + lib modules
 ```
@@ -16,7 +15,6 @@ examples/
 | Task | Location | Notes |
 |------|----------|-------|
 | Java baseline sample | `java` | Usually the most up-to-date debug target |
-| Kotlin sample setup | `kotlin/pom.xml` | Kotlin plugin + kapt wiring |
 | Groovy sample setup | `groovy/pom.xml` | Groovy runtime and gmavenplus wiring |
 | Multi-module usage pattern | `multi-project` | Parent + child module wiring for app/lib |
 
@@ -32,7 +30,6 @@ examples/
 ## COMMANDS
 ```bash
 ./mvnw -f examples/java/pom.xml test
-./mvnw -f examples/kotlin/pom.xml test
 ./mvnw -f examples/groovy/pom.xml test
 ./mvnw -f examples/multi-project/pom.xml test
 ```

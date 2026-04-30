@@ -16,6 +16,7 @@
 package io.micronaut.maven.openapi;
 
 import io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -82,27 +83,18 @@ public class OpenApiServerMojo extends AbstractOpenApiMojo {
     protected boolean enabled;
 
     @Override
+    protected void validateLanguage() throws MojoExecutionException {
+        rejectUnsupportedKotlinLanguage("server");
+    }
+
+    @Override
     protected boolean isEnabled() {
         return enabled;
     }
 
     @Override
     protected void configureBuilder(MicronautCodeGeneratorBuilder builder) {
-        if ("kotlin".equalsIgnoreCase(lang)) {
-            builder.forKotlinServer(spec -> spec
-                .withControllerPackage(controllerPackageName)
-                .withAuthentication(useAuth)
-                .withAot(aotCompatible)
-                // we don't want these to be configurable in the plugin for now
-                .withGenerateImplementationFiles(false)
-                .withGenerateControllerFromExamples(false)
-                .withGenerateOperationsToReturnNotImplemented(false)
-                .withGeneratedAnnotation(generatedAnnotation)
-                .withFluxForArrays(fluxForArrays)
-                .withKsp(ksp)
-                .withCoroutines(coroutines)
-            );
-        } else if ("java".equalsIgnoreCase(lang)) {
+        if ("java".equalsIgnoreCase(lang)) {
             builder.forJavaServer(spec -> spec
                 .withControllerPackage(controllerPackageName)
                 .withAuthentication(useAuth)

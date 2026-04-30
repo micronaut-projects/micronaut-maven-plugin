@@ -16,6 +16,7 @@
 package io.micronaut.maven.openapi;
 
 import io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -100,35 +101,18 @@ public class OpenApiClientMojo extends AbstractOpenApiMojo {
     protected boolean generatedAnnotation;
 
     @Override
+    protected void validateLanguage() throws MojoExecutionException {
+        rejectUnsupportedKotlinLanguage("client");
+    }
+
+    @Override
     protected boolean isEnabled() {
         return enabled;
     }
 
     @Override
     protected void configureBuilder(MicronautCodeGeneratorBuilder builder) {
-        if ("kotlin".equalsIgnoreCase(lang)) {
-            builder.forKotlinClient(spec -> {
-                spec.withAuthorization(useAuth)
-                    .withGeneratedAnnotation(generatedAnnotation)
-                    .withFluxForArrays(fluxForArrays)
-                    .withKsp(ksp)
-                    .withClientPath(clientPath)
-                    .withCoroutines(coroutines);
-
-                if (clientId != null && !clientId.isEmpty()) {
-                    spec.withClientId(clientId);
-                }
-                if (additionalTypeAnnotations != null) {
-                    spec.withAdditionalClientTypeAnnotations(additionalTypeAnnotations);
-                }
-                if (basePathSeparator != null) {
-                    spec.withBasePathSeparator(basePathSeparator);
-                }
-                if (authorizationFilterPattern != null) {
-                    spec.withAuthorizationFilterPattern(authorizationFilterPattern);
-                }
-            });
-        } else if ("java".equalsIgnoreCase(lang)) {
+        if ("java".equalsIgnoreCase(lang)) {
             builder.forJavaClient(spec -> {
                 spec.withAuthorization(useAuth)
                     .withLombok(lombok)
