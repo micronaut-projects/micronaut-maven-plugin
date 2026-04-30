@@ -77,6 +77,54 @@ The plugin does not currently provide a dedicated non-shaded launcher for plain 
 depends on separate classpath entries, prefer `docker` packaging or your own classpath-based launch script over the
 default shaded JAR.
 
+If you intentionally keep a shaded fat JAR for a GraalVM Truffle or GraalPy application, follow the
+https://www.graalvm.org/latest/reference-manual/embed-languages/#uber-jar-file-creation[GraalVM uber-JAR guidance] and
+make the application POM preserve the multi-release manifest metadata required by Truffle. Configure the Shade plugin
+with both the services transformer and a manifest transformer that keeps `${exec.mainClass}` as the main class and adds
+`Multi-Release: true`:
+
+[source,xml]
+----
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-shade-plugin</artifactId>
+  <executions>
+    <execution>
+      <phase>package</phase>
+      <goals>
+        <goal>shade</goal>
+      </goals>
+      <configuration>
+        <transformers>
+          <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+          <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+            <mainClass>${exec.mainClass}</mainClass>
+            <manifestEntries>
+              <Multi-Release>true</Multi-Release>
+            </manifestEntries>
+          </transformer>
+        </transformers>
+        <filters>
+          <filter>
+            <artifact>*:*</artifact>
+            <excludes>
+              <exclude>META-INF/*.SF</exclude>
+              <exclude>META-INF/*.DSA</exclude>
+              <exclude>META-INF/*.RSA</exclude>
+            </excludes>
+          </filter>
+        </filters>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+----
+
+Micronaut Maven Plugin does not add this manifest entry for every application because most applications do not need
+Truffle's multi-release metadata. To verify the packaging, inspect `META-INF/MANIFEST.MF` in the generated JAR and
+confirm it contains `Multi-Release: true`, then start the application with the same JDK used in production. Do not
+disable Truffle's multi-release validation check as a packaging fix.
+
 === Generating GraalVM native images
 
 ----
