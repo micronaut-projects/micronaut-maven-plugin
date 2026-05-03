@@ -1,6 +1,7 @@
 package io.micronaut.maven;
 
 import io.micronaut.maven.jib.JibConfigurationService;
+import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
 import io.micronaut.maven.services.ExecutorService;
@@ -369,6 +370,69 @@ class DockerfileMojoTest {
             ),
             Files.readAllLines(dockerfile)
         );
+    }
+
+    @Test
+    void processDockerfileAddsSharedArenaSupportForDefaultGraalVm25Builder(@TempDir Path tempDir) throws IOException, MojoExecutionException {
+        var project = mockProject(tempDir);
+        project.getProperties().setProperty("maven.compiler.release", "25");
+        Path argsFile = tempDir.resolve("target").resolve("native-image.args");
+        Files.writeString(argsFile, "--no-fallback\n");
+        project.getProperties().setProperty(DockerNativeMojo.ARGS_FILE_PROPERTY_NAME, argsFile.toString());
+        var mojo = newDockerfileMojo(project, Optional.empty());
+        mojo.baseImageRun = AbstractDockerMojo.DEFAULT_BASE_IMAGE_GRAALVM_RUN;
+
+        var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), "FROM builder");
+
+        invokeProcessDockerfile(mojo, dockerfile);
+
+        assertTrue(Files.readString(findConvertedArgsFile(tempDir.resolve("target"))).contains(MojoUtils.SHARED_ARENA_SUPPORT));
+    }
+
+    @Test
+    void processDockerfileSkipsSharedArenaSupportForCustomGraalVm21Builder(@TempDir Path tempDir) throws IOException, MojoExecutionException {
+        var project = mockProject(tempDir);
+        Path argsFile = tempDir.resolve("target").resolve("native-image.args");
+        Files.writeString(argsFile, "--no-fallback\n");
+        project.getProperties().setProperty(DockerNativeMojo.ARGS_FILE_PROPERTY_NAME, argsFile.toString());
+        var mojo = newDockerfileMojo(project, Optional.empty());
+        mojo.baseImageRun = AbstractDockerMojo.DEFAULT_BASE_IMAGE_GRAALVM_RUN;
+        mojo.baseImage = "container-registry.oracle.com/graalvm/native-image:21-ol8";
+
+        var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), "FROM builder");
+
+        invokeProcessDockerfile(mojo, dockerfile);
+
+        assertFalse(Files.readString(findConvertedArgsFile(tempDir.resolve("target"))).contains(MojoUtils.SHARED_ARENA_SUPPORT));
+    }
+
+    private static DockerfileMojo newDockerfileMojo(MavenProject project, Optional<String> fromImage) {
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(fromImage);
+        when(jibConfigurationService.getPorts()).thenReturn(Optional.of("8080"));
+        var mojo = new DockerfileMojo(
+            project,
+            mock(DockerService.class),
+            jibConfigurationService,
+            mock(ApplicationConfigurationService.class),
+            mock(ExecutorService.class),
+            mockSession(project),
+            mock(MojoExecution.class)
+        );
+        mojo.micronautRuntime = "netty";
+        mojo.mainClass = "example.Application";
+        mojo.staticNativeImage = false;
+        mojo.oracleLinuxVersion = "ol9";
+        return mojo;
+    }
+
+    private static Path findConvertedArgsFile(Path targetDir) throws IOException {
+        try (var paths = Files.list(targetDir)) {
+            return paths
+                .filter(path -> path.getFileName().toString().endsWith(".args"))
+                .findFirst()
+                .orElseThrow();
+        }
     }
 
     private static MavenProject mockProject(Path tempDir) {

@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.common.io.FileWriteMode;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.maven.core.MicronautRuntime;
+import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.jib.JibMicronautExtension;
 import io.micronaut.maven.services.ApplicationConfigurationService;
@@ -45,12 +46,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static io.micronaut.maven.services.ApplicationConfigurationService.DEFAULT_PORT;
 
@@ -76,6 +80,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     private static final String DEPENDENCY_DIRECTORY = "dependency";
     private static final String RELEASE_DEPENDENCY_DIRECTORY = "release";
     private static final String SNAPSHOT_DEPENDENCY_DIRECTORY = "snapshot";
+    private static final Pattern LEADING_MAJOR_VERSION = Pattern.compile("([1-9][0-9]*)(?:[.-].*)?");
     private static final NavigableSet<Integer> GRAALVM_VERSIONS = new TreeSet<>(Set.of(25));
     private static final List<String> DEFAULT_LAMBDA_BOOTSTRAP_ARGUMENTS = List.of(
         "-XX:MaximumHeapSizePercent=80",
@@ -248,6 +253,56 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
             .or(() -> Optional.ofNullable(baseImage).filter(StringUtils::hasText))
             .or(() -> getFromImage().filter(StringUtils::hasText))
             .orElse(DEFAULT_BASE_IMAGE_GRAALVM_BUILD + ":" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion));
+    }
+
+    /**
+     * @return whether the selected native-image builder is known to support {@code -H:+SharedArenaSupport}.
+     */
+    protected boolean supportsSharedArena() {
+        return sharedArenaBuilderMajorVersion()
+            .map(MojoUtils::supportsSharedArena)
+            .orElse(false);
+    }
+
+    private Optional<Integer> sharedArenaBuilderMajorVersion() {
+        return getJibFromImageSystemProperty()
+            .or(() -> Optional.ofNullable(baseImage).filter(StringUtils::hasText))
+            .or(() -> getFromImage().filter(StringUtils::hasText))
+            .map(AbstractDockerMojo::graalVmNativeImageBuilderMajorVersion)
+            .orElseGet(() -> Optional.of(resolveGraalVersion()));
+    }
+
+    static Optional<Integer> graalVmNativeImageBuilderMajorVersion(String image) {
+        if (!StringUtils.hasText(image)) {
+            return Optional.empty();
+        }
+
+        int digestStart = image.indexOf('@');
+        String imageWithoutDigest = digestStart >= 0 ? image.substring(0, digestStart) : image;
+        int lastSlash = imageWithoutDigest.lastIndexOf('/');
+        int tagSeparator = imageWithoutDigest.lastIndexOf(':');
+        if (tagSeparator <= lastSlash) {
+            return Optional.empty();
+        }
+
+        String repository = imageWithoutDigest.substring(0, tagSeparator).toLowerCase(Locale.ROOT);
+        if (!isGraalVmNativeImageRepository(repository)) {
+            return Optional.empty();
+        }
+
+        String tag = imageWithoutDigest.substring(tagSeparator + 1);
+        Matcher matcher = LEADING_MAJOR_VERSION.matcher(tag);
+        if (!matcher.matches()) {
+            return Optional.empty();
+        }
+        return Optional.of(Integer.parseInt(matcher.group(1)));
+    }
+
+    private static boolean isGraalVmNativeImageRepository(String repository) {
+        int lastSlash = repository.lastIndexOf('/');
+        String imageName = lastSlash >= 0 ? repository.substring(lastSlash + 1) : repository;
+        return (repository.startsWith("graalvm/") || repository.contains("/graalvm/"))
+            && imageName.startsWith("native-image");
     }
 
     /**

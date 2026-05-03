@@ -17,6 +17,8 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -171,5 +173,43 @@ class MojoUtilsTest {
         List<String> result = MojoUtils.computeNativeImageArgs(List.of(), "oraclelinux:9", argsFile.toString());
 
         assertIterableEquals(List.of("\\Q/home/app/libs/snapshot/demo-1.0-20260330.123456-1.jar\\E"), result);
+    }
+
+    @Test
+    void testComputeNativeImageArgsAddsSharedArenaSupportWhenSupported(@TempDir Path tempDir) throws IOException {
+        Path argsFile = tempDir.resolve("graalvm-native-image.args");
+        Files.write(argsFile, List.of("--no-fallback"));
+
+        List<String> result = MojoUtils.computeNativeImageArgs(List.of("-Ob"), "oraclelinux:9", argsFile.toString(), true);
+
+        assertIterableEquals(List.of("-Ob", "--no-fallback", MojoUtils.SHARED_ARENA_SUPPORT), result);
+    }
+
+    @Test
+    void testComputeNativeImageArgsSkipsSharedArenaSupportWhenUnsupported(@TempDir Path tempDir) throws IOException {
+        Path argsFile = tempDir.resolve("graalvm-native-image.args");
+        Files.write(argsFile, List.of("--no-fallback"));
+
+        List<String> result = MojoUtils.computeNativeImageArgs(List.of("-Ob"), "oraclelinux:9", argsFile.toString(), false);
+
+        assertFalse(result.contains(MojoUtils.SHARED_ARENA_SUPPORT));
+    }
+
+    @Test
+    void testComputeNativeImageArgsDoesNotDuplicateSharedArenaSupport(@TempDir Path tempDir) throws IOException {
+        Path argsFile = tempDir.resolve("graalvm-native-image.args");
+        Files.write(argsFile, List.of(MojoUtils.SHARED_ARENA_SUPPORT));
+
+        List<String> result = MojoUtils.computeNativeImageArgs(List.of(MojoUtils.SHARED_ARENA_SUPPORT), "oraclelinux:9", argsFile.toString(), true);
+
+        assertEquals(1, result.stream().filter(MojoUtils.SHARED_ARENA_SUPPORT::equals).count());
+    }
+
+    @Test
+    void testSupportsSharedArenaUsesGraalVm25Threshold() {
+        assertFalse(MojoUtils.supportsSharedArena(21));
+        assertFalse(MojoUtils.supportsSharedArena(24));
+        assertTrue(MojoUtils.supportsSharedArena(25));
+        assertTrue(MojoUtils.supportsSharedArena(26));
     }
 }

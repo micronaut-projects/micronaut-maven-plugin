@@ -1,6 +1,7 @@
 package io.micronaut.maven;
 
 import com.github.dockerjava.api.command.BuildImageCmd;
+import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
@@ -372,6 +373,32 @@ class DockerNativeMojoTest {
         verify(fixtures.dockerService).buildImage(fixtures.buildImageCmd);
     }
 
+    @Test
+    void buildDockerfileAddsSharedArenaSupportForDefaultGraalVm25Builder(@TempDir Path tempDir) throws Exception {
+        Path dockerfile = tempDir.resolve("DockerfileNative");
+        Files.writeString(dockerfile, "FROM builder\n");
+        Fixtures fixtures = new Fixtures(tempDir, dockerfile);
+        fixtures.properties.setProperty("maven.compiler.release", "25");
+
+        invokeBuildDockerfile(fixtures.mojo, DockerfileMojo.DOCKERFILE_NATIVE, true);
+
+        assertTrue(Files.readString(findConvertedArgsFile(fixtures.targetDir)).contains(MojoUtils.SHARED_ARENA_SUPPORT));
+        verify(fixtures.dockerService).buildImage(fixtures.buildImageCmd);
+    }
+
+    @Test
+    void buildDockerfileSkipsSharedArenaSupportForCustomGraalVm21Builder(@TempDir Path tempDir) throws Exception {
+        Path dockerfile = tempDir.resolve("DockerfileNative");
+        Files.writeString(dockerfile, "FROM builder\n");
+        Fixtures fixtures = new Fixtures(tempDir, dockerfile);
+        fixtures.mojo.baseImage = "container-registry.oracle.com/graalvm/native-image:21-ol8";
+
+        invokeBuildDockerfile(fixtures.mojo, DockerfileMojo.DOCKERFILE_NATIVE, true);
+
+        assertFalse(Files.readString(findConvertedArgsFile(fixtures.targetDir)).contains(MojoUtils.SHARED_ARENA_SUPPORT));
+        verify(fixtures.dockerService).buildImage(fixtures.buildImageCmd);
+    }
+
     private boolean supportsSymbolicLinks(Path tempDir) throws IOException {
         Path probeTarget = tempDir.resolve("symlink-probe-target");
         Path probeLink = tempDir.resolve("symlink-probe-link");
@@ -409,6 +436,15 @@ class DockerNativeMojoTest {
             return exception;
         }
         throw e;
+    }
+
+    private Path findConvertedArgsFile(Path targetDir) throws IOException {
+        try (var paths = Files.list(targetDir)) {
+            return paths
+                .filter(path -> path.getFileName().toString().endsWith(".args"))
+                .findFirst()
+                .orElseThrow();
+        }
     }
 
     private static final class Fixtures {

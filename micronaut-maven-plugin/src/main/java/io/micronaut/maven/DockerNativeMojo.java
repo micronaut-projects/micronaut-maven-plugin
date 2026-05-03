@@ -250,7 +250,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
 
     private BuildImageCmd addNativeImageBuildArgs(Map<String, String> buildImageCmdArguments, Supplier<BuildImageCmd> buildImageCmdSupplier) throws IOException {
         String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);
-        List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);
+        List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile, supportsSharedArena());
         //Remove extra main class argument
         allNativeImageBuildArgs.remove(mainClass);
         getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);

@@ -110,6 +110,10 @@ For example, to add `--verbose` to the native image args, you should define:
 </plugin>
 ----
 
+For GraalVM/Java 25 or newer native images that need Netty's shared arena support, add
+`-H:+SharedArenaSupport` through the same upstream native plugin `<buildArgs>` configuration. Micronaut Maven Plugin
+does not rewrite the delegated `native-image` packaging configuration.
+
 ==== Windows users
 
 Sometimes, depending on how many classes are in the classpath you may see an error `The command line is too long` when
@@ -300,6 +304,12 @@ $ mvn package -Dpackaging=docker-native
 
 If the `<packaging>` is set to `docker-native`, this plugin will use a Docker client to build and tag custom Docker
 images. In this case, the `micronaut.runtime` property will also determine how the image is prepared.
+
+For Micronaut-managed `docker-native` builds and generated Dockerfiles, the plugin adds `-H:+SharedArenaSupport` to
+the native-image arguments by default when the selected builder is known to be a GraalVM/Java 25 or newer native-image
+builder. Current Netty native images require this flag on those builders. The plugin skips the default for older
+builders and for custom builder images whose GraalVM major version cannot be confidently detected; when you know a
+custom builder supports the option, add it explicitly with `nativeImageBuildArgs` or `micronaut.native-image.args`.
 
 * Default runtime.
 ** Default image (pinned immutable base): `mvn package -Dpackaging=docker-native`.
