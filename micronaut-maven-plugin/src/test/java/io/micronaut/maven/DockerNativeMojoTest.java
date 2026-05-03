@@ -374,6 +374,36 @@ class DockerNativeMojoTest {
     }
 
     @Test
+    void buildDockerfileSkipsSharedArenaSupportForProvidedDockerfile(@TempDir Path tempDir) throws Exception {
+        Path providedDockerfile = tempDir.resolve(DockerfileMojo.DOCKERFILE);
+        Files.writeString(providedDockerfile, "FROM builder\nENTRYPOINT [\"/app/application\"]\n");
+
+        Fixtures fixtures = new Fixtures(tempDir, tempDir.resolve("DockerfileNative"));
+        fixtures.properties.setProperty("maven.compiler.release", "25");
+
+        invokeBuildDockerfile(fixtures.mojo, DockerfileMojo.DOCKERFILE_NATIVE, true);
+
+        assertFalse(Files.readString(findConvertedArgsFile(fixtures.targetDir)).contains(MojoUtils.SHARED_ARENA_SUPPORT));
+        verify(fixtures.dockerService).buildImage(fixtures.buildImageCmd);
+    }
+
+    @Test
+    void buildDockerfilePreservesExplicitSharedArenaSupportForProvidedDockerfile(@TempDir Path tempDir) throws Exception {
+        Path providedDockerfile = tempDir.resolve(DockerfileMojo.DOCKERFILE);
+        Files.writeString(providedDockerfile, "FROM builder\nENTRYPOINT [\"/app/application\"]\n");
+
+        Fixtures fixtures = new Fixtures(tempDir, tempDir.resolve("DockerfileNative"));
+        fixtures.mojo.nativeImageBuildArgs = List.of(MojoUtils.SHARED_ARENA_SUPPORT);
+
+        invokeBuildDockerfile(fixtures.mojo, DockerfileMojo.DOCKERFILE_NATIVE, true);
+
+        String args = Files.readString(findConvertedArgsFile(fixtures.targetDir));
+        assertTrue(args.contains(MojoUtils.SHARED_ARENA_SUPPORT));
+        assertEquals(1, args.lines().filter(MojoUtils.SHARED_ARENA_SUPPORT::equals).count());
+        verify(fixtures.dockerService).buildImage(fixtures.buildImageCmd);
+    }
+
+    @Test
     void buildDockerfileAddsSharedArenaSupportForDefaultGraalVm25Builder(@TempDir Path tempDir) throws Exception {
         Path dockerfile = tempDir.resolve("DockerfileNative");
         Files.writeString(dockerfile, "FROM builder\n");

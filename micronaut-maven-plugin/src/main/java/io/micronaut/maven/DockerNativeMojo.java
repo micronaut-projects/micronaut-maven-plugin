@@ -158,7 +158,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         // Starter sets the right class in pom.xml:
         //   - For applications: io.micronaut.function.aws.runtime.MicronautLambdaRuntime
         //   - For function apps: com.example.BookLambdaRuntime
-        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, () -> dockerService.buildImageCmd()
+        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, supportsSharedArena(), () -> dockerService.buildImageCmd()
             .withDockerfile(dockerfile)
             .withBuildArg("GRAALVM_DOWNLOAD_URL", graalVmDownloadUrl()));
         buildImageCmd.withBuildArg("CLASS_NAME", escapeClassNameBuildArg(mainClass));
@@ -205,7 +205,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
             oracleCloudFunctionCmd(dockerfile);
         }
 
-        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments(passClassName), () -> dockerService.buildImageCmd()
+        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments(passClassName), supportsSharedArena(), () -> dockerService.buildImageCmd()
             .withDockerfile(dockerfile)
             .withTags(tags)
             .withBuildArg("BASE_IMAGE", from)
@@ -222,7 +222,7 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         File targetDockerfile = new File(targetDir, providedDockerfile.getName());
         Files.copy(providedDockerfile.toPath(), targetDockerfile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments(passClassName), () -> dockerService.buildImageCmd()
+        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments(passClassName), false, () -> dockerService.buildImageCmd()
             .withDockerfile(targetDockerfile)
             .withTags(tags)
             .withBaseDirectory(targetDir)
@@ -248,9 +248,9 @@ public class DockerNativeMojo extends AbstractDockerMojo {
         return buildImageCmdArguments;
     }
 
-    private BuildImageCmd addNativeImageBuildArgs(Map<String, String> buildImageCmdArguments, Supplier<BuildImageCmd> buildImageCmdSupplier) throws IOException {
+    private BuildImageCmd addNativeImageBuildArgs(Map<String, String> buildImageCmdArguments, boolean sharedArenaSupport, Supplier<BuildImageCmd> buildImageCmdSupplier) throws IOException {
         String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);
-        List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile, supportsSharedArena());
+        List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile, sharedArenaSupport);
         //Remove extra main class argument
         allNativeImageBuildArgs.remove(mainClass);
         getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);

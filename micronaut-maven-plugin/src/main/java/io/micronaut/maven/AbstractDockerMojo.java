@@ -295,7 +295,11 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
         if (!matcher.matches()) {
             return Optional.empty();
         }
-        return Optional.of(Integer.parseInt(matcher.group(1)));
+        try {
+            return Optional.of(Integer.parseInt(matcher.group(1)));
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
     }
 
     private static boolean isGraalVmNativeImageRepository(String repository) {

@@ -130,6 +130,7 @@ class AbstractDockerMojoTest {
         assertEquals(Optional.empty(), AbstractDockerMojo.graalVmNativeImageBuilderMajorVersion("container-registry.oracle.com/graalvm/native-image@sha256:1234"));
         assertEquals(Optional.empty(), AbstractDockerMojo.graalVmNativeImageBuilderMajorVersion("container-registry.oracle.com/graalvm/native-image:latest"));
         assertEquals(Optional.empty(), AbstractDockerMojo.graalVmNativeImageBuilderMajorVersion("ghcr.io/example/native-image:25-ol9"));
+        assertEquals(Optional.empty(), AbstractDockerMojo.graalVmNativeImageBuilderMajorVersion("container-registry.oracle.com/graalvm/native-image:999999999999999999999999999999999-ol9"));
     }
 
     @Test
