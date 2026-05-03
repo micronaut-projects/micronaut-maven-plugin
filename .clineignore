@@ -1,0 +1,26 @@
+# .clineignore - Cline AI ignore file for Micronaut projects
+# This file tells Cline which files/directories to ignore for code intelligence and automation
+
+# === Build outputs ===
+target/
+*/target/
+
+# === Dependency/Cache directories ===
+.mvn/.develocity/
+
+# === IDE/Editor/OS Metadata ===
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+
+# === Tool-specific/Config artifacts ===
+*.log
+
+# === Maven Wrappers/Binaries ===
+mvnw
+mvnw.cmd

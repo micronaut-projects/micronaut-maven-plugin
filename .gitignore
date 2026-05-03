@@ -1,11 +1,15 @@
 .gradle
 /build/
 target/
+.DS_Store
+out/
 .settings/
 .classpath
 .project
 .factorypath
 .micronaut/
+**/.micronaut/test-resources/
+*.log
 
 # Ignore Gradle GUI config
 gradle-app.setting
@@ -22,3 +26,6 @@ gradle-app.setting
 
 .idea
 *.iml
+*.ipr
+*.iws
+.sisyphus/
