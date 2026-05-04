@@ -171,7 +171,7 @@
 <span class="source-line-no">158</span><span id="line-158">        // Starter sets the right class in pom.xml:</span>
 <span class="source-line-no">159</span><span id="line-159">        //   - For applications: io.micronaut.function.aws.runtime.MicronautLambdaRuntime</span>
 <span class="source-line-no">160</span><span id="line-160">        //   - For function apps: com.example.BookLambdaRuntime</span>
-<span class="source-line-no">161</span><span id="line-161">        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, () -&gt; dockerService.buildImageCmd()</span>
+<span class="source-line-no">161</span><span id="line-161">        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments, supportsSharedArena(), () -&gt; dockerService.buildImageCmd()</span>
 <span class="source-line-no">162</span><span id="line-162">            .withDockerfile(dockerfile)</span>
 <span class="source-line-no">163</span><span id="line-163">            .withBuildArg("GRAALVM_DOWNLOAD_URL", graalVmDownloadUrl()));</span>
 <span class="source-line-no">164</span><span id="line-164">        buildImageCmd.withBuildArg("CLASS_NAME", escapeClassNameBuildArg(mainClass));</span>
@@ -218,7 +218,7 @@
 <span class="source-line-no">205</span><span id="line-205">            oracleCloudFunctionCmd(dockerfile);</span>
 <span class="source-line-no">206</span><span id="line-206">        }</span>
 <span class="source-line-no">207</span><span id="line-207"></span>
-<span class="source-line-no">208</span><span id="line-208">        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments(passClassName), () -&gt; dockerService.buildImageCmd()</span>
+<span class="source-line-no">208</span><span id="line-208">        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments(passClassName), supportsSharedArena(), () -&gt; dockerService.buildImageCmd()</span>
 <span class="source-line-no">209</span><span id="line-209">            .withDockerfile(dockerfile)</span>
 <span class="source-line-no">210</span><span id="line-210">            .withTags(tags)</span>
 <span class="source-line-no">211</span><span id="line-211">            .withBuildArg("BASE_IMAGE", from)</span>
@@ -235,7 +235,7 @@
 <span class="source-line-no">222</span><span id="line-222">        File targetDockerfile = new File(targetDir, providedDockerfile.getName());</span>
 <span class="source-line-no">223</span><span id="line-223">        Files.copy(providedDockerfile.toPath(), targetDockerfile.toPath(), StandardCopyOption.REPLACE_EXISTING);</span>
 <span class="source-line-no">224</span><span id="line-224"></span>
-<span class="source-line-no">225</span><span id="line-225">        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments(passClassName), () -&gt; dockerService.buildImageCmd()</span>
+<span class="source-line-no">225</span><span id="line-225">        BuildImageCmd buildImageCmd = addNativeImageBuildArgs(buildImageCmdArguments(passClassName), false, () -&gt; dockerService.buildImageCmd()</span>
 <span class="source-line-no">226</span><span id="line-226">            .withDockerfile(targetDockerfile)</span>
 <span class="source-line-no">227</span><span id="line-227">            .withTags(tags)</span>
 <span class="source-line-no">228</span><span id="line-228">            .withBaseDirectory(targetDir)</span>
@@ -261,9 +261,9 @@
 <span class="source-line-no">248</span><span id="line-248">        return buildImageCmdArguments;</span>
 <span class="source-line-no">249</span><span id="line-249">    }</span>
 <span class="source-line-no">250</span><span id="line-250"></span>
-<span class="source-line-no">251</span><span id="line-251">    private BuildImageCmd addNativeImageBuildArgs(Map&lt;String, String&gt; buildImageCmdArguments, Supplier&lt;BuildImageCmd&gt; buildImageCmdSupplier) throws IOException {</span>
+<span class="source-line-no">251</span><span id="line-251">    private BuildImageCmd addNativeImageBuildArgs(Map&lt;String, String&gt; buildImageCmdArguments, boolean sharedArenaSupport, Supplier&lt;BuildImageCmd&gt; buildImageCmdSupplier) throws IOException {</span>
 <span class="source-line-no">252</span><span id="line-252">        String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);</span>
-<span class="source-line-no">253</span><span id="line-253">        List&lt;String&gt; allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);</span>
+<span class="source-line-no">253</span><span id="line-253">        List&lt;String&gt; allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile, sharedArenaSupport);</span>
 <span class="source-line-no">254</span><span id="line-254">        //Remove extra main class argument</span>
 <span class="source-line-no">255</span><span id="line-255">        allNativeImageBuildArgs.remove(mainClass);</span>
 <span class="source-line-no">256</span><span id="line-256">        getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);</span>

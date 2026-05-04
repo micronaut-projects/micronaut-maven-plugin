@@ -323,7 +323,7 @@
 <span class="source-line-no">310</span><span id="line-310">    }</span>
 <span class="source-line-no">311</span><span id="line-311"></span>
 <span class="source-line-no">312</span><span id="line-312">    private void processNativeImageArgs(String argsFile) throws IOException, MojoExecutionException {</span>
-<span class="source-line-no">313</span><span id="line-313">        List&lt;String&gt; allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);</span>
+<span class="source-line-no">313</span><span id="line-313">        List&lt;String&gt; allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile, supportsSharedArena());</span>
 <span class="source-line-no">314</span><span id="line-314">        //Remove extra main class argument</span>
 <span class="source-line-no">315</span><span id="line-315">        allNativeImageBuildArgs.remove(mainClass);</span>
 <span class="source-line-no">316</span><span id="line-316">        getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);</span>
