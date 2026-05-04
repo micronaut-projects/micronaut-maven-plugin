@@ -22,3 +22,6 @@ gradle-app.setting
 
 .idea
 *.iml
+
+# OpenCode files
+.sisyphus/
