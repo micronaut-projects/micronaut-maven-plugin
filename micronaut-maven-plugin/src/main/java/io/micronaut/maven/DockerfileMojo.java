@@ -310,7 +310,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     private void processNativeImageArgs(String argsFile) throws IOException, MojoExecutionException {
-        List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile);
+        List<String> allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile, supportsSharedArena());
         //Remove extra main class argument
         allNativeImageBuildArgs.remove(mainClass);
         getLog().info("GraalVM native image build args: " + allNativeImageBuildArgs);

@@ -38,6 +38,7 @@ import java.util.stream.Stream;
 public final class MojoUtils {
 
     public static final String THIS_PLUGIN = "io.micronaut.maven:micronaut-maven-plugin";
+    public static final String SHARED_ARENA_SUPPORT = "-H:+SharedArenaSupport";
     private static final String JAVA = "java";
     private static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
 
@@ -76,6 +77,10 @@ public final class MojoUtils {
     }
 
     public static List<String> computeNativeImageArgs(List<String> nativeImageBuildArgs, String baseImageRun, String argsFile) {
+        return computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile, false);
+    }
+
+    public static List<String> computeNativeImageArgs(List<String> nativeImageBuildArgs, String baseImageRun, String argsFile, boolean sharedArenaSupport) {
         var allNativeImageBuildArgs = new ArrayList<String>();
         if (nativeImageBuildArgs != null && !nativeImageBuildArgs.isEmpty()) {
             allNativeImageBuildArgs.addAll(nativeImageBuildArgs);
@@ -86,7 +91,33 @@ public final class MojoUtils {
 
         List<String> argsFileContent = parseNativeImageArgsFile(argsFile).toList();
         allNativeImageBuildArgs.addAll(argsFileContent);
+        if (sharedArenaSupport) {
+            if (allNativeImageBuildArgs.contains(SHARED_ARENA_SUPPORT)) {
+                removeDuplicateSharedArenaSupport(allNativeImageBuildArgs);
+            } else {
+                allNativeImageBuildArgs.add(SHARED_ARENA_SUPPORT);
+            }
+        }
         return allNativeImageBuildArgs;
+    }
+
+    public static boolean supportsSharedArena(int graalVmMajorVersion) {
+        return graalVmMajorVersion >= 25;
+    }
+
+    private static void removeDuplicateSharedArenaSupport(List<String> nativeImageBuildArgs) {
+        boolean found = false;
+        for (int i = 0; i < nativeImageBuildArgs.size(); i++) {
+            if (!SHARED_ARENA_SUPPORT.equals(nativeImageBuildArgs.get(i))) {
+                continue;
+            }
+            if (found) {
+                nativeImageBuildArgs.remove(i);
+                i--;
+            } else {
+                found = true;
+            }
+        }
     }
 
     public static String parseConfigurationFilesDirectoriesArg(String arg) {

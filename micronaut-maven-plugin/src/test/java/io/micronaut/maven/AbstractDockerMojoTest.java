@@ -80,6 +80,60 @@ class AbstractDockerMojoTest {
     }
 
     @Test
+    void supportsSharedArenaForDefaultGraalVm25Builder(@TempDir Path tempDir) {
+        var project = mockProject(tempDir, Set.of());
+        project.getProperties().setProperty("maven.compiler.release", "25");
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.empty());
+
+        var mojo = new TestDockerMojo(project, mockSession(project), jibConfigurationService);
+
+        assertTrue(mojo.supportsSharedArenaBuilder());
+    }
+
+    @Test
+    void skipsSharedArenaForOlderCustomGraalVmBuilder(@TempDir Path tempDir) {
+        var project = mockProject(tempDir, Set.of());
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.empty());
+
+        var mojo = new TestDockerMojo(project, mockSession(project), jibConfigurationService);
+        mojo.baseImage = "container-registry.oracle.com/graalvm/native-image:21-ol8";
+
+        assertFalse(mojo.supportsSharedArenaBuilder());
+    }
+
+    @Test
+    void supportsSharedArenaForGraalVm25CustomBuilderTags(@TempDir Path tempDir) {
+        var project = mockProject(tempDir, Set.of());
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.of("ghcr.io/graalvm/native-image-community:25-muslib-ol9"));
+
+        var mojo = new TestDockerMojo(project, mockSession(project), jibConfigurationService);
+
+        assertTrue(mojo.supportsSharedArenaBuilder());
+        assertEquals(Optional.of(25), AbstractDockerMojo.graalVmNativeImageBuilderMajorVersion("container-registry.oracle.com/graalvm/native-image:25-ol9"));
+        assertEquals(Optional.of(25), AbstractDockerMojo.graalVmNativeImageBuilderMajorVersion("ghcr.io/graalvm/native-image-community:25.0.1-ol9"));
+    }
+
+    @Test
+    void skipsSharedArenaForUnknownCustomBuilderTags(@TempDir Path tempDir) {
+        System.setProperty(AbstractDockerMojo.JIB_FROM_IMAGE_PROPERTY, "ghcr.io/example/native-image:25-ol9");
+
+        var project = mockProject(tempDir, Set.of());
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.empty());
+
+        var mojo = new TestDockerMojo(project, mockSession(project), jibConfigurationService);
+
+        assertFalse(mojo.supportsSharedArenaBuilder());
+        assertEquals(Optional.empty(), AbstractDockerMojo.graalVmNativeImageBuilderMajorVersion("container-registry.oracle.com/graalvm/native-image@sha256:1234"));
+        assertEquals(Optional.empty(), AbstractDockerMojo.graalVmNativeImageBuilderMajorVersion("container-registry.oracle.com/graalvm/native-image:latest"));
+        assertEquals(Optional.empty(), AbstractDockerMojo.graalVmNativeImageBuilderMajorVersion("ghcr.io/example/native-image:25-ol9"));
+        assertEquals(Optional.empty(), AbstractDockerMojo.graalVmNativeImageBuilderMajorVersion("container-registry.oracle.com/graalvm/native-image:999999999999999999999999999999999-ol9"));
+    }
+
+    @Test
     void copyDependenciesKeepsFlatLayoutAndAddsReleaseAndSnapshotLayers(@TempDir Path tempDir) throws IOException {
         var releaseJar = Files.writeString(tempDir.resolve("release.jar"), "release");
         var snapshotJar = Files.writeString(tempDir.resolve("snapshot.jar"), "snapshot");
@@ -193,6 +247,10 @@ class AbstractDockerMojoTest {
 
         private String defaultBuilderImage() {
             return DEFAULT_BASE_IMAGE_GRAALVM_BUILD + ":" + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion);
+        }
+
+        private boolean supportsSharedArenaBuilder() {
+            return supportsSharedArena();
         }
 
         @Override
