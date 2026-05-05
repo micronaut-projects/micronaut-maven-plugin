@@ -77,7 +77,7 @@ close as practical while preserving Maven-specific build, CI, wrapper, release, 
 Files that are generally safe to keep aligned include:
 
 * Issue templates under `.github/ISSUE_TEMPLATE`.
-* `.editorconfig`, `.clineignore`, `SECURITY.md`, `MAINTAINING.md`, `LICENSE`, and `config/HEADER`.
+* `.editorconfig`, `.clineignore`, `SECURITY.md`, `MAINTAINING.md`, and `LICENSE`.
 * Generic license and formatting metadata where it does not conflict with Maven-specific checks.
 
 Files that require Maven-specific review rather than direct copying include:
