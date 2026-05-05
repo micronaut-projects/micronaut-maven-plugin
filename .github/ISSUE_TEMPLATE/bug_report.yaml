@@ -4,9 +4,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reporting an issue, please review the task list below before submitting the issue. Your issue report will be closed if the issue is incomplete and the below tasks not completed.
+        Thanks for reporting an issue. Please review the task list below before submitting. If required diagnostic details are missing, maintainers may ask for more information before triage.
 
-        NOTE: If you are unsure about something and the issue is more of a question a better place to ask questions is on Github Discussions :arrow_up:, [Stack Overflow](https://stackoverflow.com/tags/micronaut) or [Gitter](https://gitter.im/micronautfw/).
+        NOTE: If you are unsure about something and the issue is more of a question, a better place to ask is GitHub Discussions :arrow_up:, [Stack Overflow](https://stackoverflow.com/tags/micronaut) or [Gitter](https://gitter.im/micronautfw/).
   - type: textarea
     attributes:
       label: Expected Behavior
@@ -16,7 +16,7 @@ body:
       required: false
   - type: textarea
     attributes:
-      label: Actual Behaviour
+      label: Actual Behavior
       description: A concise description of what you're experiencing.
       placeholder: Tell us what happens instead
     validations:
