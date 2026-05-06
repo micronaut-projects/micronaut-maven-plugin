@@ -1,0 +1,14 @@
+name: Feature request
+description: Create a new feature request
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please describe the feature you want Micronaut to implement.
+        Before filing, check whether an existing issue already covers it.
+  - type: textarea
+    attributes:
+      label: Feature description
+      placeholder: Tell us what feature you would like Micronaut to have and what problem it would solve
+    validations:
+      required: true
