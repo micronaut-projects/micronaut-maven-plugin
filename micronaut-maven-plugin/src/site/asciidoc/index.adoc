@@ -1,3 +1,5 @@
+= Micronaut Maven Plugin
+
 {site-description}.
 
 This plugin has the following features:
@@ -10,10 +12,10 @@ This plugin has the following features:
 6. link:examples/test-resources.html[Integration with Micronaut Test Resources].
 7. link:examples/openapi.html[Integration with Micronaut OpenAPI].
 8. link:examples/bean-import.html[Importing beans from project dependencies].
-9. link:examples/jsonschema.html[Generating Sources from JSON Schema]
-10. link:examples/configuration-validation.html[Validating Micronaut configuration and dependency injection]
+9. link:examples/jsonschema.html[Generating Sources from JSON Schema].
+10. link:examples/configuration-validation.html[Validating Micronaut configuration and dependency injection].
 
-=== Usage
+== Usage
 
 It is recommended to use this plugin in combination with the https://central.sonatype.com/artifact/io.micronaut.platform/micronaut-parent[Micronaut Parent POM].
 
@@ -48,7 +50,7 @@ Then, declare the plugin to your `build/plugins` section:
 WARNING: Since version 4.0.0 of this plugin (which is the version compatible with Micronaut 4.x), the group id is
 `io.micronaut.maven`. Earlier versions compatible with Micronaut 3.x used `io.micronaut.build`.
 
-The `<packaging>` part is important since the plugin support several packaging types. The default is `jar`.
+The `<packaging>` part is important since the plugin supports several packaging types. The default is `jar`.
 
 For snapshot versions, you need the Maven Central Portal Snapshot repository:
 

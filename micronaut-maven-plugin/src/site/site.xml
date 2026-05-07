@@ -30,6 +30,7 @@
             <item name="Generating OpenAPI clients or servers" href="examples/openapi.html"/>
             <item name="Importing beans from project dependencies" href="examples/bean-import.html"/>
             <item name="Generating Sources from JSON Schema" href="examples/jsonschema.html"/>
+            <item name="Validating Micronaut configuration" href="examples/configuration-validation.html"/>
         </menu>
 
         <menu ref="reports"/>
