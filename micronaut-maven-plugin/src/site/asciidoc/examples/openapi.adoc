@@ -1,11 +1,11 @@
 === Integration with Micronaut OpenAPI
 
-This plugins integrates with https://micronaut-projects.github.io/micronaut-openapi/latest/guide/index.html[Micronaut OpenAPI] in order to provide support for generating https://www.openapis.org/[OpenAPI] clients or servers.
+This plugin integrates with https://micronaut-projects.github.io/micronaut-openapi/latest/guide/index.html[Micronaut OpenAPI] to provide support for generating https://www.openapis.org/[OpenAPI] clients or servers.
 
 The plugin adds a couple goals which can be used to generate code:
 
 - the link:../generate-openapi-client-mojo.html[mn:generate-openapi-client] goal can be used to generate a client from an OpenAPI definition
-- the link:../generate-openapi-server-mojo.html[mn:generate-openapi-server] goal can be used to generate server skeleton from an OpenAPI definition
+- the link:../generate-openapi-server-mojo.html[mn:generate-openapi-server] goal can be used to generate a server skeleton from an OpenAPI definition
 
 In both cases, the code is generated in your `target` directory and integrated into the build lifecycle.
 In particular, in case you are generating a server, the generated code will be interfaces that you will have to implement in your main sources.
