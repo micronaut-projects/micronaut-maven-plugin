@@ -79,6 +79,9 @@
         <plexus.utils.version>4.0.3</plexus.utils.version>
         <mojo.executor.version>2.4.1</mojo.executor.version>
         <commons.io.version>2.21.0</commons.io.version>
+        <commons.compress.version>1.28.0</commons.compress.version>
+        <commons.lang3.version>3.20.0</commons.lang3.version>
+        <bouncycastle.version>1.84</bouncycastle.version>
         <jansi.version>2.4.2</jansi.version>
         <maven.plugin.testing.harness.version>3.5.1</maven.plugin.testing.harness.version>
 
@@ -173,6 +176,16 @@
                 <version>${commons.io.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>${commons.compress.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${commons.lang3.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.fusesource.jansi</groupId>
                 <artifactId>jansi</artifactId>
                 <version>${jansi.version}</version>
@@ -202,6 +215,21 @@
                 <groupId>com.github.docker-java</groupId>
                 <artifactId>docker-java-transport-zerodep</artifactId>
                 <version>${docker-java.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcutil-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.maven.plugin-tools</groupId>

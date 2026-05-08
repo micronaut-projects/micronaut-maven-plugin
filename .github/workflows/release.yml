@@ -25,9 +25,24 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_TOKEN }}
+          persist-credentials: false
 
       - name: "🛡 Verify Maven wrapper checksum"
         run: bash .github/scripts/verify-maven-wrapper-checksum.sh
+
+      - name: "☕️ Install Java and Maven"
+        uses: actions/setup-java@1d018f9b8b9b505bb578a83b230fabcce01af93b
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          cache: 'maven'
+
+      - name: "🔎 Vulnerability Audit"
+        env:
+          DEVELOCITY_ACCESS_KEY: ""
+          DEVELOCITY_CACHE_USERNAME: ""
+          DEVELOCITY_CACHE_PASSWORD: ""
+        run: .github/scripts/vulnerability-audit.sh
 
       - name: "🔐 Import GPG key"
         env:
@@ -38,12 +53,11 @@ jobs:
           echo "$GPG_FILE" | base64 -d | gpg --batch --import
           gpg --list-secret-keys --keyid-format LONG
 
-      - name: "☕️ Install Java and Maven and set up Apache Maven Central"
+      - name: "☕️ Set up Apache Maven Central"
         uses: actions/setup-java@1d018f9b8b9b505bb578a83b230fabcce01af93b
         with:
           distribution: 'temurin'
           java-version: '25'
-          cache: 'maven'
           server-id: central
           server-username: SONATYPE_USERNAME
           server-password: SONATYPE_PASSWORD
@@ -52,6 +66,11 @@ jobs:
         id: release_version
         run: echo "release_version=${GITHUB_REF:11}" >> $GITHUB_OUTPUT
 
+      - name: "🔑 Setup SSH key"
+        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
       - name: "🪾 Setup git"
         env:
           MICRONAUT_BUILD_EMAIL: ${{ secrets.MICRONAUT_BUILD_EMAIL }}
@@ -59,15 +78,11 @@ jobs:
           git config --global --add safe.directory /github/workspace
           git config --global user.email "$MICRONAUT_BUILD_EMAIL"
           git config --global user.name "micronaut-build"
+          git remote set-url origin "git@github.com:${GITHUB_REPOSITORY}.git"
           echo "Checking out ${{ github.event.release.target_commitish }}"
           git checkout ${{ github.event.release.target_commitish }}
           git tag -d v${{ steps.release_version.outputs.release_version }}
           git push origin :refs/tags/v${{ steps.release_version.outputs.release_version }}
-
-      - name: "🔑 Setup SSH key"
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: "❓ Figure out next version"
         id: next_version
