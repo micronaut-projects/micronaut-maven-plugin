@@ -17,6 +17,7 @@ import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -40,6 +41,44 @@ class DockerMojoTest {
         mojo.execute();
 
         verify(executorService).executeGoal(project, "com.google.cloud.tools:jib-maven-plugin", "buildTar");
+    }
+
+    @Test
+    void rejectsJibRegistryBuildWithoutTargetImage(@TempDir Path tempDir) throws MojoExecutionException {
+        var project = mockProject(tempDir);
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        var executorService = mock(ExecutorService.class);
+        var session = mockSession(project);
+
+        var mojo = new DockerMojo(project, jibConfigurationService, null, null, session,
+            mock(MojoExecution.class), executorService);
+        mojo.micronautRuntime = "NONE";
+        mojo.jibBuildGoal = "build";
+
+        var ex = assertThrows(MojoExecutionException.class, mojo::execute);
+
+        assertTrue(ex.getMessage().contains("jib.buildGoal=build requires a configured target image"));
+        assertTrue(ex.getMessage().contains("jib.to.image"));
+        verify(executorService, never()).executeGoal(project, "com.google.cloud.tools:jib-maven-plugin", "build");
+    }
+
+    @Test
+    void executesJibRegistryBuildWithTargetImage(@TempDir Path tempDir) throws MojoExecutionException {
+        var project = mockProject(tempDir);
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getToImage()).thenReturn(Optional.of("registry.example.com/team/app:1.0"));
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.empty());
+        var executorService = mock(ExecutorService.class);
+        var session = mockSession(project);
+
+        var mojo = new DockerMojo(project, jibConfigurationService, null, null, session,
+            mock(MojoExecution.class), executorService);
+        mojo.micronautRuntime = "NONE";
+        mojo.jibBuildGoal = "build";
+
+        mojo.execute();
+
+        verify(executorService).executeGoal(project, "com.google.cloud.tools:jib-maven-plugin", "build");
     }
 
     @Test

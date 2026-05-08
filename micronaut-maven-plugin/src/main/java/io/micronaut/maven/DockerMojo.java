@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.StandardCopyOption;
-import java.util.List;
 
 import static io.micronaut.maven.DockerfileMojo.DOCKERFILE_ORACLE_CLOUD;
 
@@ -54,7 +53,6 @@ import static io.micronaut.maven.DockerfileMojo.DOCKERFILE_ORACLE_CLOUD;
 public class DockerMojo extends AbstractDockerMojo {
 
     public static final String DOCKER_PACKAGING = "docker";
-    private static final List<String> SUPPORTED_JIB_BUILD_GOALS = List.of("dockerBuild", "build", "buildTar");
 
     private final ExecutorService executorService;
 
@@ -76,17 +74,13 @@ public class DockerMojo extends AbstractDockerMojo {
             buildDockerfile(dockerfile, providedDockerfile.exists());
         } else {
             validateJibBuildGoal();
+            if (JIB_BUILD_GOAL_BUILD.equals(jibBuildGoal)) {
+                requireConfiguredToImageForJibRegistryBuild();
+            }
             if (jibConfigurationService.getFromImage().isEmpty()) {
                 mavenProject.getProperties().setProperty(PropertyNames.FROM_IMAGE, getBaseImage());
             }
             executorService.executeGoal(mavenProject, "com.google.cloud.tools:jib-maven-plugin", jibBuildGoal);
-        }
-    }
-
-    private void validateJibBuildGoal() throws MojoExecutionException {
-        if (!SUPPORTED_JIB_BUILD_GOALS.contains(jibBuildGoal)) {
-            throw new MojoExecutionException("Unsupported jib.buildGoal '" + jibBuildGoal
-                + "'. Supported values are: " + String.join(", ", SUPPORTED_JIB_BUILD_GOALS));
         }
     }
 
@@ -99,11 +93,6 @@ public class DockerMojo extends AbstractDockerMojo {
         } catch (IOException e) {
             throw new MojoExecutionException("Error loading Dockerfile", e);
         }
-    }
-
-    private boolean shouldBuildWithDockerfile(File providedDockerfile) {
-        var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
-        return providedDockerfile.exists() || runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION;
     }
 
     private void buildDockerfile(File dockerfile, boolean providedDockerfileExists) throws MojoExecutionException {

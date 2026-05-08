@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.io.File;
 import java.util.Optional;
 
 /**
@@ -60,12 +61,17 @@ public class DockerPushMojo extends AbstractDockerMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         Packaging packaging = Packaging.of(mavenProject.getPackaging());
         if (packaging == Packaging.DOCKER || packaging == Packaging.DOCKER_NATIVE || packaging == Packaging.DOCKER_CRAC) {
+            if (packaging == Packaging.DOCKER && !shouldBuildWithDockerfile(new File(mavenProject.getBasedir(), DockerfileMojo.DOCKERFILE))) {
+                if (validateJibDeployBuildGoal()) {
+                    return;
+                }
+            }
             var images = getTags();
 
             // getTags() will automatically generate an image name if none is specified
             // To maintain error compatibility, check that an image name has been
             // manually specified.
-            if (jibConfigurationService.getToImage().isPresent()) {
+            if (getConfiguredToImage().isPresent()) {
                 for (String taggedImage : images) {
                     getLog().info("Pushing image: " + taggedImage);
                     try (PushImageCmd pushImageCmd = dockerService.pushImageCmd(taggedImage)) {
@@ -91,6 +97,20 @@ public class DockerPushMojo extends AbstractDockerMojo {
         } else {
             throw new MojoFailureException("The <packaging> must be set to either [" + Packaging.DOCKER.id() + "] or [" + Packaging.DOCKER_NATIVE.id() + "]");
         }
+    }
+
+    private boolean validateJibDeployBuildGoal() throws MojoExecutionException, MojoFailureException {
+        validateJibBuildGoal();
+        if (JIB_BUILD_GOAL_BUILD.equals(jibBuildGoal)) {
+            String toImage = requireConfiguredToImageForJibRegistryBuild();
+            getLog().info("Skipping Docker daemon push for " + toImage + " because jib.buildGoal=build publishes the image to the registry during the package phase.");
+            return true;
+        }
+        if (JIB_BUILD_GOAL_BUILD_TAR.equals(jibBuildGoal)) {
+            throw new MojoFailureException("jib.buildGoal=buildTar is not supported for deploy because it creates target/jib-image.tar instead of publishing to a registry. "
+                + "Use jib.buildGoal=build with jib.to.image for daemonless registry deploy, or omit jib.buildGoal/use dockerBuild for the Docker daemon push path.");
+        }
+        return false;
     }
 
 }
