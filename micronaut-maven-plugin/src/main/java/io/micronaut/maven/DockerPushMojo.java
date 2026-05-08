@@ -95,7 +95,8 @@ public class DockerPushMojo extends AbstractDockerMojo {
                 throw new MojoFailureException("The plugin " + MavenProjectProperties.PLUGIN_KEY + " is misconfigured. Missing <to> tag");
             }
         } else {
-            throw new MojoFailureException("The <packaging> must be set to either [" + Packaging.DOCKER.id() + "] or [" + Packaging.DOCKER_NATIVE.id() + "]");
+            throw new MojoFailureException("The <packaging> must be set to either [" + Packaging.DOCKER.id() + "], ["
+                + Packaging.DOCKER_NATIVE.id() + "] or [" + Packaging.DOCKER_CRAC.id() + "]");
         }
     }
 
