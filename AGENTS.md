@@ -56,6 +56,11 @@ Micronaut Maven Plugin monorepo. Core work happens in the Maven plugin module pl
 - Integration tests are isolated scenarios under `src/it/<scenario>` with per-scenario `invoker.properties` and optional `verify.groovy`.
 - CI matrix is intentional: `snapshot.yml` carries a PR/merge-group Linux docker-native preflight plus the full Java 25 snapshot run, `windows-ci.yml` covers Java 25 on Windows, and `release.yml` handles tagging + publish.
 
+## CONTRIBUTING GUIDELINES
+- Before opening or updating a pull request, check whether this repository has a `CONTRIBUTING.md` or other maintainer contribution guide and follow every repo-specific PR requirement it names.
+- Treat contributor-checklist items as handoff requirements. If a requirement is not applicable, state that explicitly in the PR description or handoff note.
+- For UI-visible changes, confirm whether screenshots or other visual evidence are required and include them in the PR description; if screenshots cannot be provided, explain why and describe the verification that was performed.
+
 ## ANTI-PATTERNS (THIS PROJECT)
 - Do not add new plugin behavior only in examples; behavior must live in real modules and be covered by `src/it` scenarios.
 - Do not bypass style gates (`spotless`, `checkstyle`) in normal contributor flows.
