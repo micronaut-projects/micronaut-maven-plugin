@@ -204,6 +204,7 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
         Containerizer containerizer;
         if (DEFAULT_JIB_BUILD_GOAL.equals(jibBuildGoal)) {
             Path output = jibConfigurationService.getOutputPathsTar()
+                .filter(StringUtils::hasText)
                 .map(Path::of)
                 .orElseGet(() -> Path.of(mavenProject.getBuild().getDirectory(), DEFAULT_TAR_NAME));
             containerizer = Containerizer.to(TarImage.at(output).named(imageReference));

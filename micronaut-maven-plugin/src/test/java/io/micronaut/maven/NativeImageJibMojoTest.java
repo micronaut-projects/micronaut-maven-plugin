@@ -72,6 +72,21 @@ class NativeImageJibMojoTest {
     }
 
     @Test
+    void blankTarOutputPathFallsBackToDefault(@TempDir Path tempDir) throws Exception {
+        Files.createDirectories(tempDir.resolve("target"));
+        Files.writeString(tempDir.resolve("target/demo"), "native");
+        var mojo = newMojo(tempDir);
+        mojo.allowPlatformMismatch = true;
+        when(mojo.jibConfigurationService.getFromImage()).thenReturn(Optional.of("scratch"));
+        when(mojo.jibConfigurationService.getToImage()).thenReturn(Optional.of("example.com/micronaut/demo:0.1"));
+        when(mojo.jibConfigurationService.getOutputPathsTar()).thenReturn(Optional.of(" "));
+
+        mojo.execute();
+
+        assertTrue(Files.exists(tempDir.resolve("target/jib-image.tar")));
+    }
+
+    @Test
     void appliesConfiguredContainerSettings(@TempDir Path tempDir) throws Exception {
         Path executable = Files.writeString(tempDir.resolve("demo"), "native");
         var mojo = newMojo(tempDir);

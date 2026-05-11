@@ -241,14 +241,18 @@ public class JibConfigurationService {
     public Optional<String> getOutputPathsTar() {
         final String value = configuration.flatMap(c -> c.outputPaths().flatMap(OutputPathsConfiguration::tar))
                 .orElse(null);
-        return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.OUTPUT_PATHS_TAR, value));
+        return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.OUTPUT_PATHS_TAR, value))
+                .filter(tar -> !tar.isBlank());
     }
 
     private static Set<String> parseCommaSeparatedList(String list) {
         String[] parts = list.split(",");
         var items = LinkedHashSet.<String>newLinkedHashSet(parts.length);
         for (String part : parts) {
-            items.add(part.trim());
+            String item = part.trim();
+            if (!item.isBlank()) {
+                items.add(item);
+            }
         }
         return items;
     }

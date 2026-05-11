@@ -197,6 +197,18 @@ class JibConfigurationServiceTest {
     }
 
     @Test
+    @SetSystemProperty(key = PropertyNames.TO_TAGS, value = "tag2, ,latest,")
+    void testGetTagsFromSystemPropertiesIgnoresBlankEntries() {
+        var service = setupJibConfigurationService();
+
+        var tags = service.getTags();
+
+        assertEquals(2, tags.size());
+        assertTrue(tags.contains("tag2"));
+        assertTrue(tags.contains("latest"));
+    }
+
+    @Test
     void testGetTagsEmpty() {
         var service = setupJibConfigurationService();
 
@@ -335,6 +347,16 @@ class JibConfigurationServiceTest {
     }
 
     @Test
+    @SetSystemProperty(key = PropertyNames.CONTAINER_ARGS, value = "some, ,args,")
+    void testGetArgsFromSystemPropertiesIgnoresBlankEntries() {
+        var service = setupJibConfigurationService();
+
+        var args = service.getArgs();
+
+        assertEquals(java.util.List.of("some", "args"), args);
+    }
+
+    @Test
     void testGetArgsEmpty() {
         var service = setupJibConfigurationService();
 
@@ -362,6 +384,14 @@ class JibConfigurationServiceTest {
         var service = setupJibConfigurationService();
 
         assertEquals(java.util.List.of("/custom", "--flag"), service.getEntrypoint());
+    }
+
+    @Test
+    @SetSystemProperty(key = PropertyNames.CONTAINER_ENTRYPOINT, value = " ")
+    void testGetEntrypointFromBlankSystemProperty() {
+        var service = setupJibConfigurationService();
+
+        assertTrue(service.getEntrypoint().isEmpty());
     }
 
     @Test
@@ -443,6 +473,14 @@ class JibConfigurationServiceTest {
         var service = setupJibConfigurationService();
 
         assertEquals("target/custom.tar", service.getOutputPathsTar().orElseThrow());
+    }
+
+    @Test
+    @SetSystemProperty(key = PropertyNames.OUTPUT_PATHS_TAR, value = " ")
+    void testGetOutputPathsTarIgnoresBlankSystemProperty() {
+        var service = setupJibConfigurationService();
+
+        assertTrue(service.getOutputPathsTar().isEmpty());
     }
 
     @Test
