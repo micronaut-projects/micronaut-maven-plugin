@@ -1,7 +1,13 @@
 {
-  "extends": ["config:recommended"],
-  "addLabels": ["type: dependency-upgrade"],
-  "schedule": ["after 10pm"],
+  "extends": [
+    "config:recommended"
+  ],
+  "addLabels": [
+    "type: dependency-upgrade"
+  ],
+  "schedule": [
+    "after 10pm"
+  ],
   "prHourlyLimit": 1,
   "prConcurrentLimit": 20,
   "timezone": "Europe/Prague",
@@ -13,9 +19,12 @@
       ],
       "matchCurrentVersion": "!/^0/",
       "automerge": true,
-      "matchManagers": ["github-actions"],
+      "matchManagers": [
+        "github-actions"
+      ],
       "groupName": "GitHub Actions dependencies"
-    },{
+    },
+    {
       "matchDatasources": [
         "maven"
       ],
@@ -24,26 +33,37 @@
         "gradle"
       ],
       "allowedVersions": "!/.+-SNAPSHOT$/"
-    },{
+    },
+    {
       "matchUpdateTypes": [
         "patch"
       ],
       "matchCurrentVersion": "!/^0/",
       "automerge": true
-    },{
+    },
+    {
       "matchPackageNames": [
         "/.*micronaut.*/"
       ],
       "groupName": "Micronaut dependencies"
-    },{
+    },
+    {
       "matchFileNames": [
         "src/it/package-docker-native-different-parent-version/pom.xml"
       ],
-      "matchPackageNames": ["io.micronaut:micronaut-parent"],
+      "matchPackageNames": [
+        "io.micronaut:micronaut-parent"
+      ],
       "enabled": false
-    },{
-      "matchFileNames": ["src/main/resources/dockerfiles/Dockerfile*"],
-      "matchPackageNames": ["eclipse-temurin", "amazonlinux"],
+    },
+    {
+      "matchFileNames": [
+        "src/main/resources/dockerfiles/Dockerfile*"
+      ],
+      "matchPackageNames": [
+        "eclipse-temurin",
+        "amazonlinux"
+      ],
       "enabled": false
     }
   ]
