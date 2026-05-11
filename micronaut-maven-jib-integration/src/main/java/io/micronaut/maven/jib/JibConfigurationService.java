@@ -35,7 +35,7 @@ import org.slf4j.Logger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -86,6 +86,17 @@ public class JibConfigurationService {
         final String value = configuration.flatMap(c -> c.from().flatMap(FromConfiguration::image))
                 .orElse(null);
         return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.FROM_IMAGE, value));
+    }
+
+    /**
+     * @return the <code>from.platforms</code> configuration.
+     */
+    public Set<PlatformConfiguration> getFromPlatforms() {
+        final Set<PlatformConfiguration> platforms = configuration.flatMap(c -> c.from().map(FromConfiguration::platforms))
+                .orElse(Collections.emptySet());
+        return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.FROM_PLATFORMS))
+                .map(JibConfigurationService::parsePlatforms)
+                .orElse(platforms == null ? Collections.emptySet() : platforms);
     }
 
     /**
@@ -189,7 +200,7 @@ public class JibConfigurationService {
         return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.CONTAINER_ARGS))
                 .map(JibConfigurationService::parseCommaSeparatedList)
                 .map(List::copyOf)
-                .orElse(args);
+                .orElse(args == null ? Collections.emptyList() : args);
     }
 
     /**
@@ -200,16 +211,62 @@ public class JibConfigurationService {
                 .orElse(Collections.emptySet());
         return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.CONTAINER_PORTS))
                 .map(s -> s.replace(",", " "))
-                .or(() -> ports.isEmpty() ? Optional.empty() : Optional.of(String.join(" ", ports)));
+                .or(() -> ports == null || ports.isEmpty() ? Optional.empty() : Optional.of(String.join(" ", ports)));
+    }
+
+    /**
+     * @return the <code>container.entrypoint</code> configuration.
+     */
+    public List<String> getEntrypoint() {
+        final List<String> entrypoint = configuration.flatMap(c -> c.container().map(ContainerConfiguration::entrypoint))
+                .orElse(Collections.emptyList());
+        return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.CONTAINER_ENTRYPOINT))
+                .map(JibConfigurationService::parseCommaSeparatedList)
+                .map(List::copyOf)
+                .orElse(entrypoint == null ? Collections.emptyList() : entrypoint);
+    }
+
+    /**
+     * @return the <code>container.user</code> configuration.
+     */
+    public Optional<String> getUser() {
+        final String value = configuration.flatMap(c -> c.container().flatMap(ContainerConfiguration::user))
+                .orElse(null);
+        return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.CONTAINER_USER, value));
+    }
+
+    /**
+     * @return the <code>outputPaths.tar</code> configuration.
+     */
+    public Optional<String> getOutputPathsTar() {
+        final String value = configuration.flatMap(c -> c.outputPaths().flatMap(OutputPathsConfiguration::tar))
+                .orElse(null);
+        return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.OUTPUT_PATHS_TAR, value));
     }
 
     private static Set<String> parseCommaSeparatedList(String list) {
         String[] parts = list.split(",");
-        var items = new HashSet<String>(parts.length);
+        var items = LinkedHashSet.<String>newLinkedHashSet(parts.length);
         for (String part : parts) {
             items.add(part.trim());
         }
         return items;
+    }
+
+    private static Set<PlatformConfiguration> parsePlatforms(String list) {
+        var platforms = new LinkedHashSet<PlatformConfiguration>();
+        for (String platform : parseCommaSeparatedList(list)) {
+            if (platform.isEmpty()) {
+                continue;
+            }
+            String[] parts = platform.split("/", 2);
+            if (parts.length != 2 || parts[0].isBlank() || parts[1].isBlank()) {
+                throw new IllegalArgumentException("jib.from.platforms contains an invalid platform token: "
+                    + platform + ". Expected <os>/<architecture>.");
+            }
+            platforms.add(new PlatformConfiguration(Optional.of(parts[1]), Optional.of(parts[0])));
+        }
+        return platforms;
     }
 
     private void logEvent(LogEvent logEvent, Logger logger) {

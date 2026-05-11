@@ -25,9 +25,11 @@ import java.util.Set;
  * @param from The from configuration.
  * @param to The to configuration.
  * @param container The container configuration.
+ * @param outputPaths The output paths configuration.
  * @since 4.7.0
  */
-public record JibConfiguration(Optional<FromConfiguration> from, Optional<ToConfiguration> to, Optional<ContainerConfiguration> container) {
+public record JibConfiguration(Optional<FromConfiguration> from, Optional<ToConfiguration> to, Optional<ContainerConfiguration> container,
+                               Optional<OutputPathsConfiguration> outputPaths) {
 
     /**
      * Represents the authentication configuration.
@@ -42,8 +44,17 @@ public record JibConfiguration(Optional<FromConfiguration> from, Optional<ToConf
      *
      * @param image The image.
      * @param auth The authentication configuration.
+     * @param platforms The platforms configuration.
      */
-    public record FromConfiguration(Optional<String> image, Optional<AuthConfiguration> auth) { }
+    public record FromConfiguration(Optional<String> image, Optional<AuthConfiguration> auth, Set<PlatformConfiguration> platforms) { }
+
+    /**
+     * Represents a platform configuration.
+     *
+     * @param architecture The architecture.
+     * @param os The operating system.
+     */
+    public record PlatformConfiguration(Optional<String> architecture, Optional<String> os) { }
 
     /**
      * Represents the to configuration.
@@ -61,6 +72,16 @@ public record JibConfiguration(Optional<FromConfiguration> from, Optional<ToConf
      * @param ports The ports.
      * @param args The arguments.
      * @param labels The labels.
+     * @param entrypoint The entrypoint.
+     * @param user The user.
      */
-    public record ContainerConfiguration(Optional<String> workingDirectory, Set<String> ports, List<String> args, Set<String> labels) { }
+    public record ContainerConfiguration(Optional<String> workingDirectory, Set<String> ports, List<String> args, Set<String> labels,
+                                         List<String> entrypoint, Optional<String> user) { }
+
+    /**
+     * Represents the output paths configuration.
+     *
+     * @param tar The tar image output path.
+     */
+    public record OutputPathsConfiguration(Optional<String> tar) { }
 }

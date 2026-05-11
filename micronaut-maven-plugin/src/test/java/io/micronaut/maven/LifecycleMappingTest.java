@@ -8,7 +8,9 @@ import java.io.InputStream;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LifecycleMappingTest {
 
@@ -40,6 +42,18 @@ class LifecycleMappingTest {
         );
     }
 
+    @Test
+    void nativeImageJibPackagingCompilesNativeExecutableBeforeJibContainer() throws Exception {
+        Element component = findLifecycleComponent("native-image-jib");
+
+        String packagePhase = phase(component, "package");
+
+        assertTrue(packagePhase.contains("org.graalvm.buildtools:native-maven-plugin:compile-no-fork"));
+        assertTrue(packagePhase.contains(":native-image-jib"));
+        assertTrue(packagePhase.indexOf("compile-no-fork") < packagePhase.indexOf("native-image-jib"));
+        assertFalse(hasPhase(component, "deploy"));
+    }
+
     private static Element findLifecycleComponent(String roleHint) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
@@ -65,5 +79,10 @@ class LifecycleMappingTest {
             .map(Element::getTextContent)
             .map(String::trim)
             .orElseThrow(() -> new IllegalArgumentException("Phase not found: " + phaseName));
+    }
+
+    private static boolean hasPhase(Element component, String phaseName) {
+        Element phases = (Element) component.getElementsByTagName("phases").item(0);
+        return phases.getElementsByTagName(phaseName).getLength() > 0;
     }
 }

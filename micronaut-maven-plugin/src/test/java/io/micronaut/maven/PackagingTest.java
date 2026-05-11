@@ -9,10 +9,11 @@ class PackagingTest {
 
     @ParameterizedTest
     @CsvSource({
+        "native-image-jib,NATIVE_IMAGE_JIB",
         "k8s,K8S",
         "openshift,OPENSHIFT"
     })
-    void supportsKubernetesAndOpenShiftPackagings(String value, Packaging expected) {
+    void supportsKnownPackagings(String value, Packaging expected) {
         assertEquals(expected, Packaging.of(value));
         assertEquals(value, expected.id());
     }

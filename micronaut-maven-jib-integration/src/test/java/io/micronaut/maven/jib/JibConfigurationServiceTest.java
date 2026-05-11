@@ -92,6 +92,75 @@ class JibConfigurationServiceTest {
     }
 
     @Test
+    void testGetFromPlatformsFromXml() throws XmlPullParserException, IOException {
+        var config = """
+                <configuration>
+                  <from>
+                    <platforms>
+                      <platform>
+                        <architecture>arm64</architecture>
+                        <os>linux</os>
+                      </platform>
+                    </platforms>
+                  </from>
+                </configuration>""";
+        var service = setupJibConfigurationService(config);
+
+        var platforms = service.getFromPlatforms();
+
+        assertEquals(1, platforms.size());
+        var platform = platforms.iterator().next();
+        assertEquals("arm64", platform.architecture().orElseThrow());
+        assertEquals("linux", platform.os().orElseThrow());
+    }
+
+    @Test
+    @SetSystemProperty(key = PropertyNames.FROM_PLATFORMS, value = "linux/amd64")
+    void testGetFromPlatformsFromSystemProperties() {
+        var service = setupJibConfigurationService();
+
+        var platforms = service.getFromPlatforms();
+
+        assertEquals(1, platforms.size());
+        var platform = platforms.iterator().next();
+        assertEquals("amd64", platform.architecture().orElseThrow());
+        assertEquals("linux", platform.os().orElseThrow());
+    }
+
+    @Test
+    @SetSystemProperty(key = PropertyNames.FROM_PLATFORMS, value = ",linux/amd64")
+    void testGetFromPlatformsIgnoresBlankSystemPropertyEntries() {
+        var service = setupJibConfigurationService();
+
+        var platforms = service.getFromPlatforms();
+
+        assertEquals(1, platforms.size());
+        var platform = platforms.iterator().next();
+        assertEquals("amd64", platform.architecture().orElseThrow());
+        assertEquals("linux", platform.os().orElseThrow());
+    }
+
+    @Test
+    @SetSystemProperty(key = PropertyNames.FROM_PLATFORMS, value = "linux")
+    void testGetFromPlatformsRejectsInvalidSystemPropertyEntries() {
+        var service = setupJibConfigurationService();
+
+        var exception = assertThrows(IllegalArgumentException.class, service::getFromPlatforms);
+
+        assertEquals("jib.from.platforms contains an invalid platform token: linux. Expected <os>/<architecture>.", exception.getMessage());
+    }
+
+    @Test
+    @SetSystemProperty(key = PropertyNames.FROM_PLATFORMS, value = "linux/")
+    void testGetFromPlatformsRejectsBlankArchitecture() {
+        var service = setupJibConfigurationService();
+
+        var exception = assertThrows(IllegalArgumentException.class, service::getFromPlatforms);
+
+        assertEquals("jib.from.platforms contains an invalid platform token: linux/. Expected <os>/<architecture>.", exception.getMessage());
+    }
+
+    @Test
     void testGetTagsFromXml() throws XmlPullParserException, IOException {
         var config = """
                 <configuration>
@@ -273,6 +342,50 @@ class JibConfigurationServiceTest {
     }
 
     @Test
+    void testGetEntrypointFromXml() throws XmlPullParserException, IOException {
+        var config = """
+                <configuration>
+                  <container>
+                    <entrypoint>
+                      <arg>/custom</arg>
+                    </entrypoint>
+                  </container>
+                </configuration>""";
+        var service = setupJibConfigurationService(config);
+
+        assertEquals(java.util.List.of("/custom"), service.getEntrypoint());
+    }
+
+    @Test
+    @SetSystemProperty(key = PropertyNames.CONTAINER_ENTRYPOINT, value = "/custom,--flag")
+    void testGetEntrypointFromSystemProperties() {
+        var service = setupJibConfigurationService();
+
+        assertEquals(java.util.List.of("/custom", "--flag"), service.getEntrypoint());
+    }
+
+    @Test
+    void testGetUserFromXml() throws XmlPullParserException, IOException {
+        var config = """
+                <configuration>
+                  <container>
+                    <user>1001</user>
+                  </container>
+                </configuration>""";
+        var service = setupJibConfigurationService(config);
+
+        assertEquals("1001", service.getUser().orElseThrow());
+    }
+
+    @Test
+    @SetSystemProperty(key = PropertyNames.CONTAINER_USER, value = "1001")
+    void testGetUserFromSystemProperties() {
+        var service = setupJibConfigurationService();
+
+        assertEquals("1001", service.getUser().orElseThrow());
+    }
+
+    @Test
     void testGetPortsFromXml() throws XmlPullParserException, IOException {
         var config = """
                 <configuration>
@@ -309,6 +422,27 @@ class JibConfigurationServiceTest {
         var service = setupJibConfigurationService();
 
         assertTrue(service.getPorts().isEmpty());
+    }
+
+    @Test
+    void testGetOutputPathsTarFromXml() throws XmlPullParserException, IOException {
+        var config = """
+                <configuration>
+                  <outputPaths>
+                    <tar>target/custom.tar</tar>
+                  </outputPaths>
+                </configuration>""";
+        var service = setupJibConfigurationService(config);
+
+        assertEquals("target/custom.tar", service.getOutputPathsTar().orElseThrow());
+    }
+
+    @Test
+    @SetSystemProperty(key = PropertyNames.OUTPUT_PATHS_TAR, value = "target/custom.tar")
+    void testGetOutputPathsTarFromSystemProperties() {
+        var service = setupJibConfigurationService();
+
+        assertEquals("target/custom.tar", service.getOutputPathsTar().orElseThrow());
     }
 
     @Test

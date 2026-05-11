@@ -5,6 +5,7 @@ required to deploy an application that, depending on the `<packaging>`:
 
 * `jar` (default): will deploy the artifact to a remote repository using `org.apache.maven.plugins:maven-deploy-plugin:deploy`.
 * `docker` or `docker-native`: will push the Docker image to the configured Docker registry.
+* `native-image-jib`: writes a daemonless tarball during `package` by default, or publishes during `package` when `-Djib.buildGoal=build` is set.
 * `k8s` or `openshift`: will delegate image publication to Eclipse JKube's `push` goal for the selected platform.
 
 You can use Jib to configure which registry should the image be pushed to. Refer to the
@@ -28,6 +29,15 @@ For example, to push an image to Docker Hub:
 
 Then, you can execute `mvn deploy -Dpackaging=docker` or `mvn deploy -Dpackaging=docker-native`.
 
+For daemonless native executable images, use `package` with `native-image-jib` and Jib's registry build goal:
+
+----
+$ mvn package -Dpackaging=native-image-jib -Djib.buildGoal=build -Djib.to.image=my-company/my-app:latest
+----
+
+This path builds the local native executable, copies only that executable into an OCI image, and pushes with Jib registry
+credentials. It does not bind `mvn deploy -Dpackaging=native-image-jib` to a separate push goal.
+
 For JKube-backed deployments, declare the matching JKube plugin in your POM and run either:
 
 ----
@@ -42,6 +52,9 @@ For `docker` packaging, setting `-Djib.buildGoal=buildTar` or `-Djib.buildGoal=b
 `package` phase and prevents Jib from creating a local Docker-daemon image. The `deploy` phase still uses
 `mn:docker-push` to publish an image from the local Docker daemon, so `mvn deploy -Dpackaging=docker` currently
 requires `-Djib.buildGoal=dockerBuild` or the default behavior with no `jib.buildGoal` override.
+
+For `native-image-jib` packaging, omitting `jib.buildGoal` produces `target/jib-image.tar` by default, and
+`-Djib.buildGoal=build` publishes directly to `jib.to.image` during `package`.
 
 You can also omit the plugin declaration in your POM, and execute directly:
 
