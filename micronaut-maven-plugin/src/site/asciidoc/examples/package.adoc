@@ -4,7 +4,6 @@ This plugin supports different `<packaging>` types:
 
 * `jar` (default): produces a runnable fat JAR.
 * `native-image`: generates a GraalVM native image.
-* `native-image-jib`: generates a GraalVM native image and packages it into an OCI image with Jib, without a Docker daemon.
 * `docker`: builds a Docker image with the application artifacts (compiled classes, resources, dependencies, etc).
 * `docker-native`: builds a Docker image with a GraalVM native image inside.
 * `docker-crac`: builds a Docker image containing a CRaC checkpointed application.
@@ -215,28 +214,28 @@ mvn package -Dpackaging=native-image # <2>
 === Building daemonless native executable container images
 
 ----
-$ mvn package -Dpackaging=native-image-jib
+$ mvn package -Dpackaging=native-image -Dmicronaut.native-image.jib.enabled=true
 ----
 
-If the `<packaging>` is set to `native-image-jib`, this plugin first delegates to
+If the `<packaging>` is set to `native-image` and `micronaut.native-image.jib.enabled` is set to `true`, this plugin first delegates to
 `org.graalvm.buildtools:native-maven-plugin:compile-no-fork` to create the local native executable, then packages only
 that executable into an OCI image with Jib Core. This workflow does not require a Docker daemon.
 
-By default, `native-image-jib` writes the Jib tarball to `target/jib-image.tar`:
+By default, the native image Jib workflow writes the Jib tarball to `target/jib-image.tar`:
 
 [source,shell]
 ----
-mvn package -Dpackaging=native-image-jib
+mvn package -Dpackaging=native-image -Dmicronaut.native-image.jib.enabled=true
 ----
 
 To publish directly to a registry without Docker, use Jib's registry build goal and destination configuration:
 
 [source,shell]
 ----
-mvn package -Dpackaging=native-image-jib -Djib.buildGoal=build -Djib.to.image=my-company/my-app:latest
+mvn package -Dpackaging=native-image -Dmicronaut.native-image.jib.enabled=true -Djib.buildGoal=build -Djib.to.image=my-company/my-app:latest
 ----
 
-The supported `jib.buildGoal` values for `native-image-jib` are `buildTar` and `build`. Use `docker-native` packaging
+The supported `jib.buildGoal` values for the native image Jib workflow are `buildTar` and `build`. Use `docker-native` packaging
 when you need Docker-backed native image builds.
 
 The image name, additional tags, and registry credentials use the same Jib configuration keys as JVM `docker`
@@ -256,7 +255,7 @@ copies only the native executable into the runtime layer. Set `micronaut.native-
 executable is not at `target/<native imageName or artifactId>`. Jib container args, ports, user, entrypoint, and platform
 configuration are honored where they apply to a single native executable image.
 
-`native-image-jib` packages a locally built executable into a Linux container image. By default, it fails on non-Linux
+The native image Jib workflow packages a locally built executable into a Linux container image. By default, it fails on non-Linux
 hosts and when the host architecture does not match the configured Jib platform, because a macOS or Windows native
 executable will not run in a Linux container image. Use `docker-native` when you need Docker to build the Linux native
 executable from another host OS. If you have intentionally cross-compiled a compatible Linux executable, set

@@ -43,8 +43,8 @@ class LifecycleMappingTest {
     }
 
     @Test
-    void nativeImageJibPackagingCompilesNativeExecutableBeforeJibContainer() throws Exception {
-        Element component = findLifecycleComponent("native-image-jib");
+    void nativeImagePackagingRunsNativeImageJibAfterNativeCompile() throws Exception {
+        Element component = findLifecycleComponent("native-image");
 
         String packagePhase = phase(component, "package");
 

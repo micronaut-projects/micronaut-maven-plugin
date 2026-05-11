@@ -111,6 +111,16 @@ class NativeImageJibMojoTest {
     }
 
     @Test
+    void skipsWhenNativeImageJibIsNotEnabled(@TempDir Path tempDir) throws Exception {
+        var mojo = newMojo(tempDir);
+        mojo.enabled = false;
+
+        mojo.execute();
+
+        assertEquals("dockerBuild", mojo.jibBuildGoal);
+    }
+
+    @Test
     void rejectsDockerBackedJibGoal(@TempDir Path tempDir) {
         Properties userProperties = new Properties();
         userProperties.setProperty("jib.buildGoal", "dockerBuild");
@@ -119,7 +129,7 @@ class NativeImageJibMojoTest {
 
         var exception = assertThrows(MojoExecutionException.class, mojo::execute);
 
-        assertEquals("Unsupported jib.buildGoal 'dockerBuild' for native-image-jib packaging. Supported values are: buildTar, build. Use docker-native packaging for Docker-backed native image builds.", exception.getMessage());
+        assertEquals("Unsupported jib.buildGoal 'dockerBuild' for native image Jib packaging. Supported values are: buildTar, build. Use docker-native packaging for Docker-backed native image builds.", exception.getMessage());
     }
 
     @Test
@@ -130,7 +140,7 @@ class NativeImageJibMojoTest {
 
         var exception = assertThrows(MojoExecutionException.class, mojo::execute);
 
-        assertEquals("Unsupported jib.buildGoal 'dockerBuild' for native-image-jib packaging. Supported values are: buildTar, build. Use docker-native packaging for Docker-backed native image builds.", exception.getMessage());
+        assertEquals("Unsupported jib.buildGoal 'dockerBuild' for native image Jib packaging. Supported values are: buildTar, build. Use docker-native packaging for Docker-backed native image builds.", exception.getMessage());
     }
 
     @Test
@@ -190,7 +200,7 @@ class NativeImageJibMojoTest {
 
         var exception = assertThrows(MojoExecutionException.class, mojo::execute);
 
-        assertEquals("native-image-jib supports exactly one target platform because it packages one local native executable.", exception.getMessage());
+        assertEquals("native image Jib supports exactly one target platform because it packages one local native executable.", exception.getMessage());
     }
 
     @Test
@@ -202,7 +212,7 @@ class NativeImageJibMojoTest {
 
         var exception = assertThrows(MojoExecutionException.class, mojo::execute);
 
-        assertEquals("jib.from.platforms must define an architecture for native-image-jib packaging.", exception.getMessage());
+        assertEquals("jib.from.platforms must define an architecture for native image Jib packaging.", exception.getMessage());
     }
 
     @Test
@@ -214,7 +224,7 @@ class NativeImageJibMojoTest {
 
         var exception = assertThrows(MojoExecutionException.class, mojo::execute);
 
-        assertEquals("native-image-jib packages Linux container images only. Configured platform is windows/amd64.", exception.getMessage());
+        assertEquals("native image Jib packages Linux container images only. Configured platform is windows/amd64.", exception.getMessage());
     }
 
     @Test
@@ -228,7 +238,7 @@ class NativeImageJibMojoTest {
 
         var exception = assertThrows(MojoExecutionException.class, mojo::execute);
 
-        assertEquals("native-image-jib host architecture amd64 does not match configured target architecture arm64. Set -D"
+        assertEquals("native image Jib host architecture amd64 does not match configured target architecture arm64. Set -D"
             + NativeImageJibMojo.ALLOW_PLATFORM_MISMATCH_PROPERTY + "=true only for a known compatible cross-compiled executable.", exception.getMessage());
     }
 
@@ -244,7 +254,7 @@ class NativeImageJibMojoTest {
 
         var exception = assertThrows(MojoExecutionException.class, mojo::execute);
 
-        assertEquals("jib.to.tags contains an invalid image tag for native-image-jib: bad tag", exception.getMessage());
+        assertEquals("jib.to.tags contains an invalid image tag for native image Jib: bad tag", exception.getMessage());
     }
 
     @Test
@@ -256,7 +266,7 @@ class NativeImageJibMojoTest {
         var exception = assertThrows(MojoExecutionException.class,
             () -> mojo.createContainerBuilder(executable, new Platform("amd64", "linux")));
 
-        assertTrue(exception.getMessage().contains("native-image-jib base image is not a valid Docker image reference: bad image"));
+        assertTrue(exception.getMessage().contains("native image Jib base image is not a valid Docker image reference: bad image"));
     }
 
     @Test
@@ -277,7 +287,7 @@ class NativeImageJibMojoTest {
 
         var exception = assertThrows(MojoExecutionException.class, mojo::execute);
 
-        assertEquals("native-image-jib packaging does not support micronaut.runtime=lambda. Use docker-native packaging for Lambda and Oracle Function native images.", exception.getMessage());
+        assertEquals("native image Jib packaging does not support micronaut.runtime=lambda. Use docker-native packaging for Lambda and Oracle Function native images.", exception.getMessage());
     }
 
     private static NativeImageJibMojo newMojo(Path tempDir) {
@@ -311,6 +321,7 @@ class NativeImageJibMojoTest {
         mojo.micronautRuntime = "NONE";
         mojo.jibBuildGoal = "dockerBuild";
         mojo.baseImageRun = AbstractDockerMojo.DEFAULT_BASE_IMAGE_GRAALVM_RUN;
+        mojo.enabled = true;
         return mojo;
     }
 

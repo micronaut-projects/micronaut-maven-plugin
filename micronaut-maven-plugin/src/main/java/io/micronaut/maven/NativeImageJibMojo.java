@@ -68,10 +68,11 @@ import java.util.concurrent.ExecutionException;
 /**
  * Builds a container image from a locally compiled native executable with Jib Core.
  */
-@Mojo(name = NativeImageJibMojo.NATIVE_IMAGE_JIB_PACKAGING, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+@Mojo(name = NativeImageJibMojo.NATIVE_IMAGE_JIB_GOAL, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class NativeImageJibMojo extends AbstractDockerMojo {
 
-    public static final String NATIVE_IMAGE_JIB_PACKAGING = "native-image-jib";
+    public static final String NATIVE_IMAGE_JIB_GOAL = "native-image-jib";
+    static final String ENABLED_PROPERTY = "micronaut.native-image.jib.enabled";
     static final String EXECUTABLE_PROPERTY = "micronaut.native-image.jib.executable";
     static final String BASE_IMAGE_PROPERTY = "micronaut.native-image.jib.base-image";
     static final String ALLOW_PLATFORM_MISMATCH_PROPERTY = "micronaut.native-image.jib.allow-platform-mismatch";
@@ -89,6 +90,12 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
     private static final String LINUX = "linux";
     private static final String AMD64 = "amd64";
     private static final String ARM64 = "arm64";
+
+    /**
+     * Packages the generated native executable into an OCI image with Jib after native-image packaging.
+     */
+    @Parameter(property = ENABLED_PROPERTY, defaultValue = "false")
+    protected boolean enabled;
 
     /**
      * Native executable to copy into the image. Defaults to {@code target/<native imageName or artifactId>}.
@@ -128,6 +135,10 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
+        if (!enabled) {
+            getLog().debug("Skipping native image Jib packaging because " + ENABLED_PROPERTY + " is not enabled.");
+            return;
+        }
         applyDefaultJibBuildGoal();
         validateJibBuildGoal();
         validateRuntime();
@@ -136,7 +147,8 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
         Path nativeExecutable = resolveExecutable();
         if (!Files.isRegularFile(nativeExecutable)) {
             throw new MojoExecutionException("Native executable not found: " + nativeExecutable
-                + ". Build with native-image packaging first, or set -D" + EXECUTABLE_PROPERTY + "=<path>.");
+                + ". Build with native-image packaging and -D" + ENABLED_PROPERTY + "=true, or set -D"
+                + EXECUTABLE_PROPERTY + "=<path>.");
         }
         ImageReference imageReference = parseImageReference(primaryImage());
         JibContainerBuilder builder = createContainerBuilder(nativeExecutable, platform);
@@ -215,7 +227,7 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
     private void validateJibBuildGoal() throws MojoExecutionException {
         if (!SUPPORTED_JIB_BUILD_GOALS.contains(jibBuildGoal)) {
             throw new MojoExecutionException("Unsupported jib.buildGoal '" + jibBuildGoal
-                + "' for native-image-jib packaging. Supported values are: " + String.join(", ", SUPPORTED_JIB_BUILD_GOALS)
+                + "' for native image Jib packaging. Supported values are: " + String.join(", ", SUPPORTED_JIB_BUILD_GOALS)
                 + ". Use docker-native packaging for Docker-backed native image builds.");
         }
     }
@@ -254,7 +266,7 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
         MicronautRuntime runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase(Locale.ENGLISH));
         DockerBuildStrategy buildStrategy = runtime.getBuildStrategy();
         if (buildStrategy == DockerBuildStrategy.LAMBDA || buildStrategy == DockerBuildStrategy.ORACLE_FUNCTION) {
-            throw new MojoExecutionException("native-image-jib packaging does not support micronaut.runtime="
+            throw new MojoExecutionException("native image Jib packaging does not support micronaut.runtime="
                 + micronautRuntime + ". Use docker-native packaging for Lambda and Oracle Function native images.");
         }
     }
@@ -287,14 +299,14 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
             .or(() -> Optional.ofNullable(nativeImageJibBaseImage).filter(StringUtils::hasText))
             .or(() -> Optional.ofNullable(baseImageRun).filter(StringUtils::hasText))
             .orElse(DEFAULT_BASE_IMAGE_GRAALVM_RUN);
-        return validateImageReference("native-image-jib base image", evaluateMavenExpression(image));
+        return validateImageReference("native image Jib base image", evaluateMavenExpression(image));
     }
 
     private ImageReference parseImageReference(String image) throws MojoExecutionException {
         try {
             return ImageReference.parse(image);
         } catch (InvalidImageReferenceException e) {
-            throw new MojoExecutionException("native-image-jib target image is not a valid image reference: " + image, e);
+            throw new MojoExecutionException("native image Jib target image is not a valid image reference: " + image, e);
         }
     }
 
@@ -304,7 +316,7 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
             credential.ifPresent(value -> addCredential(registryImage, value));
             return registryImage;
         } catch (InvalidImageReferenceException e) {
-            throw new MojoExecutionException("Invalid image reference for native-image-jib: " + image, e);
+            throw new MojoExecutionException("Invalid image reference for native image Jib: " + image, e);
         }
     }
 
@@ -329,7 +341,7 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
                 continue;
             }
             if (!ImageReference.isValidTag(evaluated)) {
-                throw new MojoExecutionException("jib.to.tags contains an invalid image tag for native-image-jib: " + evaluated);
+                throw new MojoExecutionException("jib.to.tags contains an invalid image tag for native image Jib: " + evaluated);
             }
             tags.add(evaluated);
         }
@@ -372,7 +384,7 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
         try {
             return com.google.cloud.tools.jib.api.Ports.parse(List.of(ports.trim().split("\\s+")));
         } catch (IllegalArgumentException e) {
-            throw new MojoExecutionException("native-image-jib supports individual exposed ports such as 8080 or 8080/tcp: " + ports, e);
+            throw new MojoExecutionException("native image Jib supports individual exposed ports such as 8080 or 8080/tcp: " + ports, e);
         }
     }
 
@@ -382,13 +394,13 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
             return detectedPlatform();
         }
         if (configuredPlatforms.size() > 1) {
-            throw new MojoExecutionException("native-image-jib supports exactly one target platform because it packages one local native executable.");
+            throw new MojoExecutionException("native image Jib supports exactly one target platform because it packages one local native executable.");
         }
         JibConfiguration.PlatformConfiguration configuredPlatform = configuredPlatforms.iterator().next();
         String os = configuredPlatform.os().orElse(LINUX);
         String architecture = configuredPlatform.architecture()
             .map(NativeImageJibMojo::normalizeArchitecture)
-            .orElseThrow(() -> new MojoExecutionException("jib.from.platforms must define an architecture for native-image-jib packaging."));
+            .orElseThrow(() -> new MojoExecutionException("jib.from.platforms must define an architecture for native image Jib packaging."));
         return new Platform(architecture, os);
     }
 
@@ -398,7 +410,7 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
 
     private void validatePlatform(Platform platform) throws MojoExecutionException {
         if (!LINUX.equals(platform.getOs())) {
-            throw new MojoExecutionException("native-image-jib packages Linux container images only. Configured platform is "
+            throw new MojoExecutionException("native image Jib packages Linux container images only. Configured platform is "
                 + platform.getOs() + "/" + platform.getArchitecture() + ".");
         }
         if (allowPlatformMismatch) {
@@ -406,12 +418,12 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
         }
         String hostOs = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
         if (!hostOs.contains(LINUX)) {
-            throw new MojoExecutionException("native-image-jib requires a Linux host by default because the local native executable is copied into a Linux container image. "
+            throw new MojoExecutionException("native image Jib packaging requires a Linux host by default because the local native executable is copied into a Linux container image. "
                 + "Use docker-native packaging for Docker-backed cross-platform builds, or set -D" + ALLOW_PLATFORM_MISMATCH_PROPERTY + "=true for a known Linux cross-compiled executable.");
         }
         String hostArchitecture = normalizeArchitecture(System.getProperty("os.arch"));
         if (!hostArchitecture.equals(platform.getArchitecture())) {
-            throw new MojoExecutionException("native-image-jib host architecture " + hostArchitecture
+            throw new MojoExecutionException("native image Jib host architecture " + hostArchitecture
                 + " does not match configured target architecture " + platform.getArchitecture()
                 + ". Set -D" + ALLOW_PLATFORM_MISMATCH_PROPERTY + "=true only for a known compatible cross-compiled executable.");
         }

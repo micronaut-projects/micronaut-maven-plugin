@@ -9,7 +9,7 @@ class PackagingTest {
 
     @ParameterizedTest
     @CsvSource({
-        "native-image-jib,NATIVE_IMAGE_JIB",
+        "native-image,NATIVE_IMAGE",
         "k8s,K8S",
         "openshift,OPENSHIFT"
     })

@@ -23,7 +23,6 @@ package io.micronaut.maven;
 public enum Packaging {
     JAR("jar"),
     NATIVE_IMAGE("native-image"),
-    NATIVE_IMAGE_JIB("native-image-jib"),
     DOCKER("docker"),
     DOCKER_NATIVE("docker-native"),
     DOCKER_CRAC("docker-crac"),
