@@ -69,6 +69,10 @@ loadScripts(document, 'script');</script>
 <li><a href="#ORACLE_CLOUD_FUNCTION_DEFAULT_CMD" tabindex="0">ORACLE_CLOUD_FUNCTION_DEFAULT_CMD</a></li>
 <li><a href="#GDS_DOWNLOAD_URL" tabindex="0">GDS_DOWNLOAD_URL</a></li>
 <li><a href="#LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER" tabindex="0">LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER</a></li>
+<li><a href="#JIB_BUILD_GOAL_DOCKER_BUILD" tabindex="0">JIB_BUILD_GOAL_DOCKER_BUILD</a></li>
+<li><a href="#JIB_BUILD_GOAL_BUILD" tabindex="0">JIB_BUILD_GOAL_BUILD</a></li>
+<li><a href="#JIB_BUILD_GOAL_BUILD_TAR" tabindex="0">JIB_BUILD_GOAL_BUILD_TAR</a></li>
+<li><a href="#SUPPORTED_JIB_BUILD_GOALS" tabindex="0">SUPPORTED_JIB_BUILD_GOALS</a></li>
 <li><a href="#mavenProject" tabindex="0">mavenProject</a></li>
 <li><a href="#mavenSession" tabindex="0">mavenSession</a></li>
 <li><a href="#jibConfigurationService" tabindex="0">jibConfigurationService</a></li>
@@ -96,6 +100,10 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#javaVersion()" tabindex="0">javaVersion()</a></li>
+<li><a href="#validateJibBuildGoal()" tabindex="0">validateJibBuildGoal()</a></li>
+<li><a href="#getConfiguredToImage()" tabindex="0">getConfiguredToImage()</a></li>
+<li><a href="#requireConfiguredToImageForJibRegistryBuild()" tabindex="0">requireConfiguredToImageForJibRegistryBuild()</a></li>
+<li><a href="#shouldBuildWithDockerfile(java.io.File)" tabindex="0">shouldBuildWithDockerfile(File)</a></li>
 <li><a href="#graalVmJvmVersion()" tabindex="0">graalVmJvmVersion()</a></li>
 <li><a href="#graalVmDownloadUrl()" tabindex="0">graalVmDownloadUrl()</a></li>
 <li><a href="#graalVmArch()" tabindex="0">graalVmArch()</a></li>
@@ -150,7 +158,7 @@ loadScripts(document, 'script');</script>
 </dl>
 <hr>
 <div class="horizontal-scroll">
-<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-68">AbstractDockerMojo</a></span>
+<div class="type-signature"><span class="modifiers">public abstract class </span><span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-69">AbstractDockerMojo</a></span>
 <span class="extends-implements">extends <a href="AbstractMicronautMojo.html" title="class in io.micronaut.maven">AbstractMicronautMojo</a></span></div>
 <div class="block">Abstract base class for mojos related to Docker files and builds.</div>
 <dl class="notes">
@@ -208,69 +216,81 @@ loadScripts(document, 'script');</script>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#GDS_DOWNLOAD_URL" class="member-name-link">GDS_DOWNLOAD_URL</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#jibBuildGoal" class="member-name-link">jibBuildGoal</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first even-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#JIB_BUILD_GOAL_BUILD" class="member-name-link">JIB_BUILD_GOAL_BUILD</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#JIB_BUILD_GOAL_BUILD_TAR" class="member-name-link">JIB_BUILD_GOAL_BUILD_TAR</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#JIB_BUILD_GOAL_DOCKER_BUILD" class="member-name-link">JIB_BUILD_GOAL_DOCKER_BUILD</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#jibBuildGoal" class="member-name-link">jibBuildGoal</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">
 Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 </div>
-<div class="col-first odd-row-color"><code>protected final <a href="jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#jibConfigurationService" class="member-name-link">jibConfigurationService</a></code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER" class="member-name-link">LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER</a></code></div>
+<div class="col-first even-row-color"><code>protected final <a href="jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></code></div>
+<div class="col-second even-row-color"><code><a href="#jibConfigurationService" class="member-name-link">jibConfigurationService</a></code></div>
 <div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color"><code><a href="#lambdaBootstrapArguments" class="member-name-link">lambdaBootstrapArguments</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER" class="member-name-link">LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#lambdaBootstrapArguments" class="member-name-link">lambdaBootstrapArguments</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Additional arguments that will be appended to the generated AWS Lambda native bootstrap command.</div>
 </div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#LATEST_TAG" class="member-name-link">LATEST_TAG</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#mainClass" class="member-name-link">mainClass</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#LATEST_TAG" class="member-name-link">LATEST_TAG</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#mainClass" class="member-name-link">mainClass</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">The main class of the application, as defined in the
 <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.</div>
 </div>
-<div class="col-first even-row-color"><code>protected final org.apache.maven.project.MavenProject</code></div>
-<div class="col-second even-row-color"><code><a href="#mavenProject" class="member-name-link">mavenProject</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected final org.apache.maven.execution.MavenSession</code></div>
-<div class="col-second odd-row-color"><code><a href="#mavenSession" class="member-name-link">mavenSession</a></code></div>
+<div class="col-first odd-row-color"><code>protected final org.apache.maven.project.MavenProject</code></div>
+<div class="col-second odd-row-color"><code><a href="#mavenProject" class="member-name-link">mavenProject</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#micronautRuntime" class="member-name-link">micronautRuntime</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first even-row-color"><code>protected final org.apache.maven.execution.MavenSession</code></div>
+<div class="col-second even-row-color"><code><a href="#mavenSession" class="member-name-link">mavenSession</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#micronautRuntime" class="member-name-link">micronautRuntime</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">The target runtime of the application.</div>
 </div>
-<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG" class="member-name-link">MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG</a></code></div>
-<div class="col-last odd-row-color">&nbsp;</div>
-<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color"><code><a href="#nativeImageBuildArgs" class="member-name-link">nativeImageBuildArgs</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG" class="member-name-link">MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color"><code><a href="#nativeImageBuildArgs" class="member-name-link">nativeImageBuildArgs</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">Additional arguments that will be passed to the <code>native-image</code> executable.</div>
 </div>
-<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#networkMode" class="member-name-link">networkMode</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#networkMode" class="member-name-link">networkMode</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">Networking mode for the RUN instructions during build.</div>
 </div>
-<div class="col-first even-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color"><code><a href="#ORACLE_CLOUD_FUNCTION_DEFAULT_CMD" class="member-name-link">ORACLE_CLOUD_FUNCTION_DEFAULT_CMD</a></code></div>
-<div class="col-last even-row-color">&nbsp;</div>
-<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color"><code><a href="#oracleLinuxVersion" class="member-name-link">oracleLinuxVersion</a></code></div>
-<div class="col-last odd-row-color">
+<div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#ORACLE_CLOUD_FUNCTION_DEFAULT_CMD" class="member-name-link">ORACLE_CLOUD_FUNCTION_DEFAULT_CMD</a></code></div>
+<div class="col-last odd-row-color">&nbsp;</div>
+<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color"><code><a href="#oracleLinuxVersion" class="member-name-link">oracleLinuxVersion</a></code></div>
+<div class="col-last even-row-color">
 <div class="block">The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.</div>
 </div>
-<div class="col-first even-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a></code></div>
-<div class="col-second even-row-color"><code><a href="#staticNativeImage" class="member-name-link">staticNativeImage</a></code></div>
-<div class="col-last even-row-color">
+<div class="col-first odd-row-color"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a></code></div>
+<div class="col-second odd-row-color"><code><a href="#staticNativeImage" class="member-name-link">staticNativeImage</a></code></div>
+<div class="col-last odd-row-color">
 <div class="block">Whether to produce a static native image when using <code>docker-native</code> packaging.</div>
 </div>
+<div class="col-first even-row-color"><code>protected static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color"><code><a href="#SUPPORTED_JIB_BUILD_GOALS" class="member-name-link">SUPPORTED_JIB_BUILD_GOALS</a></code></div>
+<div class="col-last even-row-color">&nbsp;</div>
 <div class="col-first odd-row-color"><code>static final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second odd-row-color"><code><a href="#X86_64_ARCH" class="member-name-link">X86_64_ARCH</a></code></div>
 <div class="col-last odd-row-color">&nbsp;</div>
@@ -330,89 +350,101 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCmd()" class="member-name-link">getCmd</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getFrom()" class="member-name-link">getFrom</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getConfiguredToImage()" class="member-name-link">getConfiguredToImage</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getFrom()" class="member-name-link">getFrom</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getFromImage()" class="member-name-link">getFromImage</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getFromImage()" class="member-name-link">getFromImage</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJibFromImageSystemProperty()" class="member-name-link">getJibFromImageSystemProperty</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getLambdaBootstrapCommand()" class="member-name-link">getLambdaBootstrapCommand</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getNetworkMode()" class="member-name-link">getNetworkMode</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPorts()" class="member-name-link">getPorts</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getProxyBuildArgs()" class="member-name-link">getProxyBuildArgs</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTags()" class="member-name-link">getTags</a>()</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getJibFromImageSystemProperty()" class="member-name-link">getJibFromImageSystemProperty</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#graalVmArch()" class="member-name-link">graalVmArch</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getLambdaBootstrapCommand()" class="member-name-link">getLambdaBootstrapCommand</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#graalVmDownloadUrl()" class="member-name-link">graalVmDownloadUrl</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getNetworkMode()" class="member-name-link">getNetworkMode</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#graalVmJvmVersion()" class="member-name-link">graalVmJvmVersion</a>()</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPorts()" class="member-name-link">getPorts</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getProxyBuildArgs()" class="member-name-link">getProxyBuildArgs</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getTags()" class="member-name-link">getTags</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#graalVmTag(java.lang.String,java.lang.Boolean,java.lang.String)" class="member-name-link">graalVmTag</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;graalVmJvmVersion,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#graalVmArch()" class="member-name-link">graalVmArch</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#graalVmDownloadUrl()" class="member-name-link">graalVmDownloadUrl</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#graalVmJvmVersion()" class="member-name-link">graalVmJvmVersion</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#graalVmTag(java.lang.String,java.lang.Boolean,java.lang.String)" class="member-name-link">graalVmTag</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;graalVmJvmVersion,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&nbsp;staticNativeImage,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;oracleLinuxVersion)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isArm()" class="member-name-link">isArm</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isArm()" class="member-name-link">isArm</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Check os.arch against known ARM architecture identifiers.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected org.apache.maven.artifact.versioning.ArtifactVersion</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#javaVersion()" class="member-name-link">javaVersion</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#jsonStringLiteral(java.lang.String,java.lang.String)" class="member-name-link">jsonStringLiteral</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected org.apache.maven.artifact.versioning.ArtifactVersion</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#javaVersion()" class="member-name-link">javaVersion</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#jsonStringLiteral(java.lang.String,java.lang.String)" class="member-name-link">jsonStringLiteral</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#lambdaBootstrapCommand(java.io.File)" class="member-name-link">lambdaBootstrapCommand</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;dockerfile)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#lambdaBootstrapCommand(java.io.File)" class="member-name-link">lambdaBootstrapCommand</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;dockerfile)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Applies the generated AWS Lambda bootstrap script to a dockerfile template.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#oracleCloudFunctionCmd(java.io.File)" class="member-name-link">oracleCloudFunctionCmd</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;dockerfile)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#oracleCloudFunctionCmd(java.io.File)" class="member-name-link">oracleCloudFunctionCmd</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;dockerfile)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Adds cmd to docker oracle cloud function file.</div>
 </div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#requireConfiguredToImageForJibRegistryBuild()" class="member-name-link">requireConfiguredToImageForJibRegistryBuild</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#shellLiteral(java.lang.String,java.lang.String)" class="member-name-link">shellLiteral</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#supportsSharedArena()" class="member-name-link">supportsSharedArena</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#shouldBuildWithDockerfile(java.io.File)" class="member-name-link">shouldBuildWithDockerfile</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;providedDockerfile)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#validateDockerfileValue(java.lang.String,java.lang.String)" class="member-name-link">validateDockerfileValue</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#supportsSharedArena()" class="member-name-link">supportsSharedArena</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#validateDownloadUrl(java.lang.String,java.lang.String)" class="member-name-link">validateDownloadUrl</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#validateDockerfileValue(java.lang.String,java.lang.String)" class="member-name-link">validateDockerfileValue</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#validateExposedPorts(java.lang.String,java.lang.String)" class="member-name-link">validateExposedPorts</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#validateDownloadUrl(java.lang.String,java.lang.String)" class="member-name-link">validateDownloadUrl</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#validateImageReference(java.lang.String,java.lang.String)" class="member-name-link">validateImageReference</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#validateExposedPorts(java.lang.String,java.lang.String)" class="member-name-link">validateExposedPorts</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#validateImageReference(java.lang.String,java.lang.String)" class="member-name-link">validateImageReference</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#validateJibBuildGoal()" class="member-name-link">validateJibBuildGoal</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -443,7 +475,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <section class="detail" id="LATEST_TAG">
 <h3>LATEST_TAG</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-70">LATEST_TAG</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-71">LATEST_TAG</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -459,7 +491,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <section class="detail" id="DEFAULT_BASE_IMAGE_GRAALVM_RUN">
 <h3>DEFAULT_BASE_IMAGE_GRAALVM_RUN</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-71">DEFAULT_BASE_IMAGE_GRAALVM_RUN</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-72">DEFAULT_BASE_IMAGE_GRAALVM_RUN</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -475,7 +507,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <section class="detail" id="DEFAULT_BASE_IMAGE_GRAALVM_BUILD">
 <h3>DEFAULT_BASE_IMAGE_GRAALVM_BUILD</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-72">DEFAULT_BASE_IMAGE_GRAALVM_BUILD</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-73">DEFAULT_BASE_IMAGE_GRAALVM_BUILD</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -491,7 +523,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <section class="detail" id="MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG">
 <h3>MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-73">MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-74">MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -507,7 +539,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <section class="detail" id="ARM_ARCH">
 <h3>ARM_ARCH</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-74">ARM_ARCH</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-75">ARM_ARCH</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -523,7 +555,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <section class="detail" id="X86_64_ARCH">
 <h3>X86_64_ARCH</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-75">X86_64_ARCH</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-76">X86_64_ARCH</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -539,7 +571,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <section class="detail" id="ORACLE_CLOUD_FUNCTION_DEFAULT_CMD">
 <h3>ORACLE_CLOUD_FUNCTION_DEFAULT_CMD</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-76">ORACLE_CLOUD_FUNCTION_DEFAULT_CMD</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-77">ORACLE_CLOUD_FUNCTION_DEFAULT_CMD</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -555,7 +587,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <section class="detail" id="GDS_DOWNLOAD_URL">
 <h3>GDS_DOWNLOAD_URL</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-77">GDS_DOWNLOAD_URL</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-78">GDS_DOWNLOAD_URL</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -571,7 +603,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <section class="detail" id="LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER">
 <h3>LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-78">LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER</a></span></div>
+<div class="member-signature"><span class="modifiers">public static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-79">LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER</a></span></div>
 <dl class="notes">
 <dt>See Also:</dt>
 <dd>
@@ -584,10 +616,66 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 </section>
 </li>
 <li>
+<section class="detail" id="JIB_BUILD_GOAL_DOCKER_BUILD">
+<h3>JIB_BUILD_GOAL_DOCKER_BUILD</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-80">JIB_BUILD_GOAL_DOCKER_BUILD</a></span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../constant-values.html#io.micronaut.maven.AbstractDockerMojo.JIB_BUILD_GOAL_DOCKER_BUILD">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="JIB_BUILD_GOAL_BUILD">
+<h3>JIB_BUILD_GOAL_BUILD</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-81">JIB_BUILD_GOAL_BUILD</a></span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../constant-values.html#io.micronaut.maven.AbstractDockerMojo.JIB_BUILD_GOAL_BUILD">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="JIB_BUILD_GOAL_BUILD_TAR">
+<h3>JIB_BUILD_GOAL_BUILD_TAR</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-82">JIB_BUILD_GOAL_BUILD_TAR</a></span></div>
+<dl class="notes">
+<dt>See Also:</dt>
+<dd>
+<ul class="tag-list">
+<li><a href="../../../constant-values.html#io.micronaut.maven.AbstractDockerMojo.JIB_BUILD_GOAL_BUILD_TAR">Constant Field Values</a></li>
+</ul>
+</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="SUPPORTED_JIB_BUILD_GOALS">
+<h3>SUPPORTED_JIB_BUILD_GOALS</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected static final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-83">SUPPORTED_JIB_BUILD_GOALS</a></span></div>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="mavenProject">
 <h3>mavenProject</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">org.apache.maven.project.MavenProject</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-92">mavenProject</a></span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">org.apache.maven.project.MavenProject</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-101">mavenProject</a></span></div>
 </div>
 </section>
 </li>
@@ -595,7 +683,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <section class="detail" id="mavenSession">
 <h3>mavenSession</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">org.apache.maven.execution.MavenSession</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-93">mavenSession</a></span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">org.apache.maven.execution.MavenSession</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-102">mavenSession</a></span></div>
 </div>
 </section>
 </li>
@@ -603,7 +691,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <section class="detail" id="jibConfigurationService">
 <h3>jibConfigurationService</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-94">jibConfigurationService</a></span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-103">jibConfigurationService</a></span></div>
 </div>
 </section>
 </li>
@@ -611,7 +699,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <section class="detail" id="applicationConfigurationService">
 <h3>applicationConfigurationService</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="services/ApplicationConfigurationService.html" title="class in io.micronaut.maven.services">ApplicationConfigurationService</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-95">applicationConfigurationService</a></span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="services/ApplicationConfigurationService.html" title="class in io.micronaut.maven.services">ApplicationConfigurationService</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-104">applicationConfigurationService</a></span></div>
 </div>
 </section>
 </li>
@@ -619,7 +707,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <section class="detail" id="dockerService">
 <h3>dockerService</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="services/DockerService.html" title="class in io.micronaut.maven.services">DockerService</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-96">dockerService</a></span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="services/DockerService.html" title="class in io.micronaut.maven.services">DockerService</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-105">dockerService</a></span></div>
 </div>
 </section>
 </li>
@@ -627,7 +715,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <section class="detail" id="expressionEvaluator">
 <h3>expressionEvaluator</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">org.apache.maven.plugin.PluginParameterExpressionEvaluator</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-97">expressionEvaluator</a></span></div>
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">org.apache.maven.plugin.PluginParameterExpressionEvaluator</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-106">expressionEvaluator</a></span></div>
 </div>
 </section>
 </li>
@@ -636,7 +724,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <h3>nativeImageBuildArgs</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.native-image.args")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-108">nativeImageBuildArgs</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-117">nativeImageBuildArgs</a></span></div>
 <div class="block">Additional arguments that will be passed to the <code>native-image</code> executable. Note that this will only
 be used when using a packaging of type <code>docker-native</code>. For <code>native-image</code> packaging
 you should use the
@@ -651,7 +739,7 @@ Native Image Maven Plugin
 <h3>appArguments</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="mn.appArgs")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-114">appArguments</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-123">appArguments</a></span></div>
 <div class="block">List of additional arguments that will be passed to the application.</div>
 </div>
 </section>
@@ -661,7 +749,7 @@ Native Image Maven Plugin
 <h3>lambdaBootstrapArguments</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.lambda.bootstrap.args")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-122">lambdaBootstrapArguments</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-131">lambdaBootstrapArguments</a></span></div>
 <div class="block">Additional arguments that will be appended to the generated AWS Lambda native bootstrap command.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -676,7 +764,7 @@ Native Image Maven Plugin
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(defaultValue="${exec.mainClass}",
            required=true)
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-129">mainClass</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-138">mainClass</a></span></div>
 <div class="block">The main class of the application, as defined in the
 <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.</div>
 </div>
@@ -688,7 +776,7 @@ Native Image Maven Plugin
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(defaultValue="false",
            property="micronaut.native-image.static")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-135">staticNativeImage</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-144">staticNativeImage</a></span></div>
 <div class="block">Whether to produce a static native image when using <code>docker-native</code> packaging.</div>
 </div>
 </section>
@@ -699,7 +787,7 @@ Native Image Maven Plugin
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.runtime",
            defaultValue="NONE")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-141">micronautRuntime</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-150">micronautRuntime</a></span></div>
 <div class="block">The target runtime of the application.</div>
 </div>
 </section>
@@ -710,7 +798,7 @@ Native Image Maven Plugin
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.native-image.base-image-run",
            defaultValue="cgr.dev/chainguard/wolfi-base@sha256:52e71f61c6afd1f8d2625cff4465d8ecee156668ca665f7e9c582d1cc914eb6a")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-149">baseImageRun</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-158">baseImageRun</a></span></div>
 <div class="block">The Docker image used to run the native image.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -724,7 +812,7 @@ Native Image Maven Plugin
 <h3>baseImage</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.native-image.base-image")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-157">baseImage</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-166">baseImage</a></span></div>
 <div class="block">The builder-stage base image used to build the native image for docker-native packaging variants.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -739,7 +827,7 @@ Native Image Maven Plugin
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="micronaut.native-image.ol.version",
            defaultValue="ol9")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-163">oracleLinuxVersion</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-172">oracleLinuxVersion</a></span></div>
 <div class="block">The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.</div>
 </div>
 </section>
@@ -749,7 +837,7 @@ Native Image Maven Plugin
 <h3>networkMode</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="docker.networkMode")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-171">networkMode</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-180">networkMode</a></span></div>
 <div class="block">Networking mode for the RUN instructions during build.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -764,7 +852,7 @@ Native Image Maven Plugin
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="annotations">@Parameter(property="jib.buildGoal",
            defaultValue="dockerBuild")
-</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-184">jibBuildGoal</a></span></div>
+</span><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-193">jibBuildGoal</a></span></div>
 <div class="block"><p>
 Jib goal used to build Docker images for <code>docker</code> packaging.
 </p>
@@ -790,7 +878,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="&lt;init&gt;(org.apache.maven.project.MavenProject,io.micronaut.maven.jib.JibConfigurationService,io.micronaut.maven.services.ApplicationConfigurationService,io.micronaut.maven.services.DockerService,org.apache.maven.execution.MavenSession,org.apache.maven.plugin.MojoExecution)">
 <h3>AbstractDockerMojo</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-187">AbstractDockerMojo</a></span><wbr><span class="parameters">(org.apache.maven.project.MavenProject&nbsp;mavenProject,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-196">AbstractDockerMojo</a></span><wbr><span class="parameters">(org.apache.maven.project.MavenProject&nbsp;mavenProject,
  <a href="jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a>&nbsp;jibConfigurationService,
  <a href="services/ApplicationConfigurationService.html" title="class in io.micronaut.maven.services">ApplicationConfigurationService</a>&nbsp;applicationConfigurationService,
  <a href="services/DockerService.html" title="class in io.micronaut.maven.services">DockerService</a>&nbsp;dockerService,
@@ -811,7 +899,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="javaVersion()">
 <h3>javaVersion</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">org.apache.maven.artifact.versioning.ArtifactVersion</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-201">javaVersion</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">org.apache.maven.artifact.versioning.ArtifactVersion</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-210">javaVersion</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the Java version from either the <code>maven.compiler.target</code> property or the <code>java.version</code> property.</dd>
@@ -820,10 +908,52 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 </section>
 </li>
 <li>
+<section class="detail" id="validateJibBuildGoal()">
+<h3>validateJibBuildGoal</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-227">validateJibBuildGoal</a></span>()
+                                   throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
+<dl class="notes">
+<dt>Throws:</dt>
+<dd><code>org.apache.maven.plugin.MojoExecutionException</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getConfiguredToImage()">
+<h3>getConfiguredToImage</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-234">getConfiguredToImage</a></span>()</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="requireConfiguredToImageForJibRegistryBuild()">
+<h3>requireConfiguredToImageForJibRegistryBuild</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-238">requireConfiguredToImageForJibRegistryBuild</a></span>()
+                                                            throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
+<dl class="notes">
+<dt>Throws:</dt>
+<dd><code>org.apache.maven.plugin.MojoExecutionException</code></dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="shouldBuildWithDockerfile(java.io.File)">
+<h3>shouldBuildWithDockerfile</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-246">shouldBuildWithDockerfile</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;providedDockerfile)</span></div>
+</div>
+</section>
+</li>
+<li>
 <section class="detail" id="graalVmJvmVersion()">
 <h3>graalVmJvmVersion</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-221">graalVmJvmVersion</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-254">graalVmJvmVersion</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the JVM version to use for GraalVM.</dd>
@@ -835,7 +965,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="graalVmDownloadUrl()">
 <h3>graalVmDownloadUrl</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-228">graalVmDownloadUrl</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-261">graalVmDownloadUrl</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the GraalVM download URL depending on the Java version.</dd>
@@ -847,7 +977,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="graalVmArch()">
 <h3>graalVmArch</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-244">graalVmArch</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-277">graalVmArch</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the OS architecture to use for GraalVM depending on the <code>os.arch</code> system property.</dd>
@@ -859,7 +989,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="getFrom()">
 <h3>getFrom</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-251">getFrom</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-284">getFrom</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the base FROM image for the native image.</dd>
@@ -871,7 +1001,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="supportsSharedArena()">
 <h3>supportsSharedArena</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-261">supportsSharedArena</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-294">supportsSharedArena</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>whether the selected native-image builder is known to support <code>-H:+SharedArenaSupport</code>.</dd>
@@ -883,7 +1013,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="graalVmTag(java.lang.String,java.lang.Boolean,java.lang.String)">
 <h3>graalVmTag</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-318">graalVmTag</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;graalVmJvmVersion,
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-351">graalVmTag</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;graalVmJvmVersion,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Boolean.html" title="class or interface in java.lang" class="external-link">Boolean</a>&nbsp;staticNativeImage,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;oracleLinuxVersion)</span></div>
 <dl class="notes">
@@ -901,7 +1031,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="isArm()">
 <h3>isArm</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-330">isArm</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-363">isArm</a></span>()</div>
 <div class="block">Check os.arch against known ARM architecture identifiers.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -914,7 +1044,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="getFromImage()">
 <h3>getFromImage</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-340">getFromImage</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-373">getFromImage</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the base image from the jib configuration (if any).</dd>
@@ -926,7 +1056,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="getJibFromImageSystemProperty()">
 <h3>getJibFromImageSystemProperty</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-347">getJibFromImageSystemProperty</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-380">getJibFromImageSystemProperty</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the base image from the Jib system property override, if any.</dd>
@@ -938,7 +1068,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="getTags()">
 <h3>getTags</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-355">getTags</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Set.html" title="class or interface in java.util" class="external-link">Set</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-388">getTags</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the Docker image tags by looking at the Jib plugin configuration.</dd>
@@ -950,7 +1080,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="getPorts()">
 <h3>getPorts</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-393">getPorts</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-426">getPorts</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the application ports to expose by looking at the Jib configuration or the application configuration.</dd>
@@ -962,7 +1092,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="copyDependencies()">
 <h3>copyDependencies</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-403">copyDependencies</a></span>()
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-436">copyDependencies</a></span>()
                          throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a></span></div>
 <div class="block">Copy project dependencies to a <code>target/dependency</code> directory.</div>
 <dl class="notes">
@@ -976,7 +1106,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="getCmd()">
 <h3>getCmd</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-428">getCmd</a></span>()
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-461">getCmd</a></span>()
                  throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -991,7 +1121,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="getLambdaBootstrapCommand()">
 <h3>getLambdaBootstrapCommand</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-439">getLambdaBootstrapCommand</a></span>()
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-472">getLambdaBootstrapCommand</a></span>()
                                     throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -1006,7 +1136,7 @@ Defaults to <code>dockerBuild</code>. Set it to <code>buildTar</code> or <code>b
 <section class="detail" id="lambdaBootstrapCommand(java.io.File)">
 <h3>lambdaBootstrapCommand</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-457">lambdaBootstrapCommand</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;dockerfile)</span>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-490">lambdaBootstrapCommand</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;dockerfile)</span>
                                throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a>,
 org.apache.maven.plugin.MojoExecutionException</span></div>
 <div class="block">Applies the generated AWS Lambda bootstrap script to a dockerfile template.</div>
@@ -1024,7 +1154,7 @@ org.apache.maven.plugin.MojoExecutionException</span></div>
 <section class="detail" id="validateDockerfileValue(java.lang.String,java.lang.String)">
 <h3>validateDockerfileValue</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-512">validateDockerfileValue</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-545">validateDockerfileValue</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</span>
                                          throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
@@ -1038,7 +1168,7 @@ org.apache.maven.plugin.MojoExecutionException</span></div>
 <section class="detail" id="validateImageReference(java.lang.String,java.lang.String)">
 <h3>validateImageReference</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-526">validateImageReference</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-559">validateImageReference</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</span>
                                         throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
@@ -1052,7 +1182,7 @@ org.apache.maven.plugin.MojoExecutionException</span></div>
 <section class="detail" id="validateExposedPorts(java.lang.String,java.lang.String)">
 <h3>validateExposedPorts</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-536">validateExposedPorts</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-569">validateExposedPorts</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</span>
                                       throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
@@ -1066,7 +1196,7 @@ org.apache.maven.plugin.MojoExecutionException</span></div>
 <section class="detail" id="validateDownloadUrl(java.lang.String,java.lang.String)">
 <h3>validateDownloadUrl</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-549">validateDownloadUrl</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-582">validateDownloadUrl</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</span>
                                      throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
@@ -1080,7 +1210,7 @@ org.apache.maven.plugin.MojoExecutionException</span></div>
 <section class="detail" id="jsonStringLiteral(java.lang.String,java.lang.String)">
 <h3>jsonStringLiteral</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-566">jsonStringLiteral</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-599">jsonStringLiteral</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</span>
                                    throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
@@ -1094,7 +1224,7 @@ org.apache.maven.plugin.MojoExecutionException</span></div>
 <section class="detail" id="escapeJsonString(java.lang.String,java.lang.String)">
 <h3>escapeJsonString</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-570">escapeJsonString</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-603">escapeJsonString</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</span>
                                   throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
@@ -1108,7 +1238,7 @@ org.apache.maven.plugin.MojoExecutionException</span></div>
 <section class="detail" id="shellLiteral(java.lang.String,java.lang.String)">
 <h3>shellLiteral</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-595">shellLiteral</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-628">shellLiteral</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</span>
                               throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
@@ -1122,7 +1252,7 @@ org.apache.maven.plugin.MojoExecutionException</span></div>
 <section class="detail" id="escapeShellDoubleQuoted(java.lang.String,java.lang.String)">
 <h3>escapeShellDoubleQuoted</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-599">escapeShellDoubleQuoted</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
+<div class="member-signature"><span class="modifiers">protected static</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-632">escapeShellDoubleQuoted</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;source,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;value)</span>
                                          throws <span class="exceptions">org.apache.maven.plugin.MojoExecutionException</span></div>
 <dl class="notes">
@@ -1136,7 +1266,7 @@ org.apache.maven.plugin.MojoExecutionException</span></div>
 <section class="detail" id="getNetworkMode()">
 <h3>getNetworkMode</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-610">getNetworkMode</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-643">getNetworkMode</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Networking mode for the RUN instructions during build (if any).</dd>
@@ -1148,7 +1278,7 @@ org.apache.maven.plugin.MojoExecutionException</span></div>
 <section class="detail" id="getProxyBuildArgs()">
 <h3>getProxyBuildArgs</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-617">getProxyBuildArgs</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Map.html" title="class or interface in java.util" class="external-link">Map</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>,<wbr><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-650">getProxyBuildArgs</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Map of proxy-related build arguments for Docker builds.</dd>
@@ -1160,7 +1290,7 @@ org.apache.maven.plugin.MojoExecutionException</span></div>
 <section class="detail" id="getBaseImage()">
 <h3>getBaseImage</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-653">getBaseImage</a></span>()</div>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-686">getBaseImage</a></span>()</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the base image to use for the Dockerfile.</dd>
@@ -1172,7 +1302,7 @@ org.apache.maven.plugin.MojoExecutionException</span></div>
 <section class="detail" id="oracleCloudFunctionCmd(java.io.File)">
 <h3>oracleCloudFunctionCmd</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-662">oracleCloudFunctionCmd</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;dockerfile)</span>
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name"><a href="../../../src-html/io/micronaut/maven/AbstractDockerMojo.html#line-695">oracleCloudFunctionCmd</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/File.html" title="class or interface in java.io" class="external-link">File</a>&nbsp;dockerfile)</span>
                                throws <span class="exceptions"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/io/IOException.html" title="class or interface in java.io" class="external-link">IOException</a>,
 org.apache.maven.plugin.MojoExecutionException</span></div>
 <div class="block">Adds cmd to docker oracle cloud function file.</div>
