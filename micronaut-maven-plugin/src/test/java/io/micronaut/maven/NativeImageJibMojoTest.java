@@ -305,6 +305,17 @@ class NativeImageJibMojoTest {
         assertEquals("native image Jib packaging does not support micronaut.runtime=lambda. Use docker-native packaging for Lambda and Oracle Function native images.", exception.getMessage());
     }
 
+    @Test
+    void rejectsInvalidRuntimeWithMojoExecutionException(@TempDir Path tempDir) {
+        var mojo = newMojo(tempDir);
+        mojo.micronautRuntime = "invalid";
+
+        var exception = assertThrows(MojoExecutionException.class, mojo::execute);
+
+        assertEquals("Unsupported micronaut.runtime 'invalid' for native image Jib packaging.", exception.getMessage());
+        assertTrue(exception.getCause() instanceof IllegalArgumentException);
+    }
+
     private static NativeImageJibMojo newMojo(Path tempDir) {
         return newMojo(tempDir, new Properties(), new Properties());
     }

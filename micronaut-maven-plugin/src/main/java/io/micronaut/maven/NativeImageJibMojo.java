@@ -264,7 +264,13 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
     }
 
     private void validateRuntime() throws MojoExecutionException {
-        MicronautRuntime runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase(Locale.ENGLISH));
+        MicronautRuntime runtime;
+        try {
+            runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase(Locale.ENGLISH));
+        } catch (IllegalArgumentException e) {
+            throw new MojoExecutionException("Unsupported micronaut.runtime '" + micronautRuntime
+                + "' for native image Jib packaging.", e);
+        }
         DockerBuildStrategy buildStrategy = runtime.getBuildStrategy();
         if (buildStrategy == DockerBuildStrategy.LAMBDA || buildStrategy == DockerBuildStrategy.ORACLE_FUNCTION) {
             throw new MojoExecutionException("native image Jib packaging does not support micronaut.runtime="

@@ -247,7 +247,7 @@ public class JibConfigurationService {
 
     private static Set<String> parseCommaSeparatedList(String list) {
         String[] parts = list.split(",");
-        var items = LinkedHashSet.<String>newLinkedHashSet(parts.length);
+        var items = new LinkedHashSet<String>(parts.length);
         for (String part : parts) {
             String item = part.trim();
             if (!item.isBlank()) {
