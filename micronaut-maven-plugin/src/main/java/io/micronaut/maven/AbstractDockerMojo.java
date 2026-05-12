@@ -19,6 +19,7 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.common.io.FileWriteMode;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.jib.JibConfigurationService;
@@ -76,6 +77,14 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     public static final String ORACLE_CLOUD_FUNCTION_DEFAULT_CMD = "CMD [\"io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\"]";
     public static final String GDS_DOWNLOAD_URL = "https://gds.oracle.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz";
     public static final String LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER = "${LAMBDA_BOOTSTRAP_DOCKER_COMMAND}";
+    protected static final String JIB_BUILD_GOAL_DOCKER_BUILD = "dockerBuild";
+    protected static final String JIB_BUILD_GOAL_BUILD = "build";
+    protected static final String JIB_BUILD_GOAL_BUILD_TAR = "buildTar";
+    protected static final List<String> SUPPORTED_JIB_BUILD_GOALS = List.of(
+        JIB_BUILD_GOAL_DOCKER_BUILD,
+        JIB_BUILD_GOAL_BUILD,
+        JIB_BUILD_GOAL_BUILD_TAR
+    );
     static final String JIB_FROM_IMAGE_PROPERTY = "jib.from.image";
     private static final String DEPENDENCY_DIRECTORY = "dependency";
     private static final String RELEASE_DEPENDENCY_DIRECTORY = "release";
@@ -213,6 +222,30 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
         var properties = project.getProperties();
         var projectProperty = Optional.of(propertName).map(properties::getProperty);
         return systemProperty.or(() -> projectProperty);
+    }
+
+    protected final void validateJibBuildGoal() throws MojoExecutionException {
+        if (!SUPPORTED_JIB_BUILD_GOALS.contains(jibBuildGoal)) {
+            throw new MojoExecutionException("Unsupported jib.buildGoal '" + jibBuildGoal
+                + "'. Supported values are: " + String.join(", ", SUPPORTED_JIB_BUILD_GOALS));
+        }
+    }
+
+    protected final Optional<String> getConfiguredToImage() {
+        return jibConfigurationService.getToImage().filter(StringUtils::hasText);
+    }
+
+    protected final String requireConfiguredToImageForJibRegistryBuild() throws MojoExecutionException {
+        return getConfiguredToImage()
+            .orElseThrow(() -> new MojoExecutionException("jib.buildGoal=build requires a configured target image. "
+                + "Set jib.to.image to the registry image to publish, and configure registry credentials with "
+                + "Jib-supported options such as jib.to.auth.*, jib.to.credHelper, Maven settings, or environment-backed "
+                + "configuration."));
+    }
+
+    protected final boolean shouldBuildWithDockerfile(File providedDockerfile) {
+        var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
+        return providedDockerfile.exists() || runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION;
     }
 
     /**

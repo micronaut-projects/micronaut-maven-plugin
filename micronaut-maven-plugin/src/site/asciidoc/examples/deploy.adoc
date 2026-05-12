@@ -29,14 +29,53 @@ For example, to push an image to Docker Hub:
 
 Then, you can execute `mvn deploy -Dpackaging=docker` or `mvn deploy -Dpackaging=docker-native`.
 
-For daemonless native executable images, use `package` with `native-image`, enable the native image Jib workflow, and set Jib's registry build goal:
+For JVM `docker` packaging, the `jib.buildGoal` value determines how the image is published:
 
+[cols="1,2", options="header"]
+|===
+| `jib.buildGoal`
+| Deploy behavior
+
+| Omitted or `dockerBuild`
+| Jib builds the image into the local Docker daemon during `package`, and `mn:docker-push` pushes that local image during
+`deploy`.
+
+| `build`
+| Jib publishes the image directly to the registry during `package`. Because Maven runs `package` before `deploy`,
+`mn:docker-push` logs that the Jib registry publish path was used and skips the Docker-daemon push.
+
+| `buildTar`
+| Unsupported for `deploy`. It creates `target/jib-image.tar` and does not publish to a registry.
+|===
+
+Use `build` for daemonless deploy from CI environments that do not have a local Docker daemon:
+
+[source,shell]
 ----
-$ mvn package -Dpackaging=native-image -Dmicronaut.native-image.jib.enabled=true -Djib.buildGoal=build -Djib.to.image=my-company/my-app:latest
+mvn deploy -Dpackaging=docker \
+  -Djib.buildGoal=build \
+  -Djib.to.image=registry.example.com/team/my-app:1.0.0
+----
+
+The command must include `jib.to.image` or equivalent Jib `<to><image>...</image></to>` configuration. Configure
+registry credentials with Jib-supported mechanisms such as Maven settings, `jib.to.credHelper`, environment-backed
+`jib.to.auth.username` and `jib.to.auth.password` properties, or standard registry credential helpers. Do not commit
+plain-text registry secrets to the POM.
+
+For daemonless native executable images, use `native-image`, enable the native image Jib workflow, and set Jib's registry
+build goal:
+
+[source,shell]
+----
+mvn package -Dpackaging=native-image \
+  -Dmicronaut.native-image.jib.enabled=true \
+  -Djib.buildGoal=build \
+  -Djib.to.image=my-company/my-app:latest
 ----
 
 This path builds the local native executable, copies only that executable into an OCI image, and pushes with Jib registry
-credentials. It does not bind `mvn deploy -Dpackaging=native-image` to a separate push goal.
+credentials. `mvn deploy -Dpackaging=native-image` also runs the `package` phase, so the same Jib registry publish path
+is used when `jib.buildGoal=build` is configured.
 
 For JKube-backed deployments, declare the matching JKube plugin in your POM and run either:
 
@@ -47,11 +86,6 @@ $ mvn deploy -Dpackaging=openshift
 
 `k8s` maps `deploy` to `org.eclipse.jkube:kubernetes-maven-plugin:push`, while `openshift` maps `deploy` to
 `org.eclipse.jkube:openshift-maven-plugin:push`.
-
-For `docker` packaging, setting `-Djib.buildGoal=buildTar` or `-Djib.buildGoal=build` only affects the earlier
-`package` phase and prevents Jib from creating a local Docker-daemon image. The `deploy` phase still uses
-`mn:docker-push` to publish an image from the local Docker daemon, so `mvn deploy -Dpackaging=docker` currently
-requires `-Djib.buildGoal=dockerBuild` or the default behavior with no `jib.buildGoal` override.
 
 For native image Jib image creation, omitting `jib.buildGoal` produces `target/jib-image.tar` by default, and
 `-Djib.buildGoal=build` publishes directly to `jib.to.image` during `package`.

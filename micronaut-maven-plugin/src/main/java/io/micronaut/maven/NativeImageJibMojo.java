@@ -140,7 +140,7 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
             return;
         }
         applyDefaultJibBuildGoal();
-        validateJibBuildGoal();
+        validateNativeImageJibBuildGoal();
         validateRuntime();
         Platform platform = resolvePlatform();
         validatePlatform(platform);
@@ -225,7 +225,7 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
             .setToolVersion(pluginVersion);
     }
 
-    private void validateJibBuildGoal() throws MojoExecutionException {
+    private void validateNativeImageJibBuildGoal() throws MojoExecutionException {
         if (!SUPPORTED_JIB_BUILD_GOALS.contains(jibBuildGoal)) {
             throw new MojoExecutionException("Unsupported jib.buildGoal '" + jibBuildGoal
                 + "' for native image Jib packaging. Supported values are: " + String.join(", ", SUPPORTED_JIB_BUILD_GOALS)
