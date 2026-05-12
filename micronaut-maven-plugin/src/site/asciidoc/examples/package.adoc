@@ -225,13 +225,15 @@ The Docker image is built to a local Docker daemon (the equivalent of executing 
 
 If you want daemonless packaging, set `-Djib.buildGoal=buildTar` to produce the standard Jib tarball at
 `target/jib-image.tar`, or `-Djib.buildGoal=build` to publish directly to the configured registry during the `package`
-phase.
+phase. The `build` goal is also the daemonless path for `mvn deploy -Dpackaging=docker`: Maven runs `package` before
+`deploy`, so Jib publishes the image during `package` and the later deploy step skips the Docker-daemon push.
 
 Depending on the `micronaut.runtime` property, the image built might be different. Options are:
 
 * Default runtime: `mvn package -Dpackaging=docker`.
 * JDK HTTP server runtime (Starter compatibility alias; same Docker image as the default runtime): `mvn package -Dpackaging=docker -Dmicronaut.runtime=http_server_jdk`.
 * Daemonless tarball: `mvn package -Dpackaging=docker -Djib.buildGoal=buildTar`.
+* Daemonless registry publish: `mvn package -Dpackaging=docker -Djib.buildGoal=build -Djib.to.image=registry.example.com/team/app:latest`.
 * Oracle Cloud Function: `mvn package -Dpackaging=docker -Dmicronaut.runtime=oracle_function`.
 * AWS Lambda (Java runtimes): `mvn package -Dpackaging=docker -Dmicronaut.runtime=lambda`.
 
@@ -480,10 +482,10 @@ command line:
 * `jib.to.auth.password`.
 * `jib.to.credHelper`.
 
-When using `jib.buildGoal=buildTar` or `jib.buildGoal=build`, only the `package` phase becomes daemonless. `deploy` for
-`docker` packaging still goes through `mn:docker-push`, which expects an image to exist in the local Docker daemon. As a
-result, `mvn deploy -Dpackaging=docker -Djib.buildGoal=buildTar` and `... -Djib.buildGoal=build` are not supported; for
-deployments, either omit `jib.buildGoal` or set it to `dockerBuild`.
+When using `jib.buildGoal=build`, set `jib.to.image` to the registry image to publish. Credentials can come from
+Jib-supported configuration such as `jib.to.auth.*`, `jib.to.credHelper`, Maven settings, environment-backed POM
+properties, or standard registry credential helpers. `jib.buildGoal=buildTar` only creates `target/jib-image.tar`; it
+does not publish to a registry and is not a deploy mode.
 
 Note that changing the builder image to a totally different one than the default might break image building, since the rest
 of the build steps expect a certain builder-stage base image. By default, that builder-stage base image comes from
