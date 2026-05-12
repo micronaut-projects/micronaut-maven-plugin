@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -106,7 +107,7 @@ public class JibConfigurationService {
         final Set<String> tags = configuration.flatMap(c -> c.to().map(ToConfiguration::tags))
                 .orElse(Collections.emptySet());
         return Optional.ofNullable(System.getProperties().getProperty(PropertyNames.TO_TAGS))
-                .map(JibConfigurationService::parseCommaSeparatedList)
+                .map(JibConfigurationService::parseCommaSeparatedSet)
                 .orElse(tags);
     }
 
@@ -245,9 +246,9 @@ public class JibConfigurationService {
                 .filter(tar -> !tar.isBlank());
     }
 
-    private static Set<String> parseCommaSeparatedList(String list) {
+    private static List<String> parseCommaSeparatedList(String list) {
         String[] parts = list.split(",");
-        var items = new LinkedHashSet<String>(parts.length);
+        var items = new ArrayList<String>(parts.length);
         for (String part : parts) {
             String item = part.trim();
             if (!item.isBlank()) {
@@ -257,9 +258,13 @@ public class JibConfigurationService {
         return items;
     }
 
+    private static Set<String> parseCommaSeparatedSet(String list) {
+        return new LinkedHashSet<>(parseCommaSeparatedList(list));
+    }
+
     private static Set<PlatformConfiguration> parsePlatforms(String list) {
         var platforms = new LinkedHashSet<PlatformConfiguration>();
-        for (String platform : parseCommaSeparatedList(list)) {
+        for (String platform : parseCommaSeparatedSet(list)) {
             if (platform.isEmpty()) {
                 continue;
             }

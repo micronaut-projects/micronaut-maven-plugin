@@ -347,6 +347,14 @@ class JibConfigurationServiceTest {
     }
 
     @Test
+    @SetSystemProperty(key = PropertyNames.CONTAINER_ARGS, value = "some,some,args")
+    void testGetArgsFromSystemPropertiesKeepsDuplicates() {
+        var service = setupJibConfigurationService();
+
+        assertEquals(java.util.List.of("some", "some", "args"), service.getArgs());
+    }
+
+    @Test
     @SetSystemProperty(key = PropertyNames.CONTAINER_ARGS, value = "some, ,args,")
     void testGetArgsFromSystemPropertiesIgnoresBlankEntries() {
         var service = setupJibConfigurationService();
@@ -384,6 +392,14 @@ class JibConfigurationServiceTest {
         var service = setupJibConfigurationService();
 
         assertEquals(java.util.List.of("/custom", "--flag"), service.getEntrypoint());
+    }
+
+    @Test
+    @SetSystemProperty(key = PropertyNames.CONTAINER_ENTRYPOINT, value = "/custom,--flag,--flag")
+    void testGetEntrypointFromSystemPropertiesKeepsDuplicates() {
+        var service = setupJibConfigurationService();
+
+        assertEquals(java.util.List.of("/custom", "--flag", "--flag"), service.getEntrypoint());
     }
 
     @Test
