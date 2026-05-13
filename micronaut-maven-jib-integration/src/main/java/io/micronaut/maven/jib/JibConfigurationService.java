@@ -26,6 +26,10 @@ import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
+import io.micronaut.maven.jib.JibConfiguration.AuthConfiguration;
+import io.micronaut.maven.jib.JibConfiguration.ContainerConfiguration;
+import io.micronaut.maven.jib.JibConfiguration.FromConfiguration;
+import io.micronaut.maven.jib.JibConfiguration.ToConfiguration;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import org.apache.maven.model.Plugin;
@@ -39,8 +43,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
-import static io.micronaut.maven.jib.JibConfiguration.*;
 
 /**
  * Exposes the Jib plugin configuration so that it can be read by other mojos.
