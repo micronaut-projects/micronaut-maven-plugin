@@ -92,7 +92,7 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
     private static final String ARM64 = "arm64";
 
     /**
-     * Packages the generated native executable into an OCI image with Jib after native-image packaging.
+     * Packages the generated native executable into a container image with Jib after native-image packaging.
      */
     @Parameter(property = ENABLED_PROPERTY, defaultValue = "false")
     protected boolean enabled;
@@ -177,7 +177,7 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
             .setEntrypoint(entrypoint(containerExecutable))
             .setProgramArguments(programArguments())
             .setExposedPorts(exposedPorts())
-            .setFormat(ImageFormat.OCI)
+            .setFormat(ImageFormat.Docker)
             .setPlatforms(Set.of(platform))
             .setWorkingDirectory(AbsoluteUnixPath.get(DEFAULT_APP_ROOT))
             .setUser(jibConfigurationService.getUser().orElse(DEFAULT_USER));

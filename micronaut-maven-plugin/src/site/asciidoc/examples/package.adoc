@@ -219,7 +219,7 @@ $ mvn package -Dpackaging=native-image -Dmicronaut.native-image.jib.enabled=true
 
 If the `<packaging>` is set to `native-image` and `micronaut.native-image.jib.enabled` is set to `true`, this plugin first delegates to
 `org.graalvm.buildtools:native-maven-plugin:compile-no-fork` to create the local native executable, then packages only
-that executable into an OCI image with Jib Core. This workflow does not require a Docker daemon.
+that executable into a container image with Jib Core. This workflow does not require a Docker daemon.
 
 By default, the native image Jib workflow writes the Jib tarball to `target/jib-image.tar`:
 

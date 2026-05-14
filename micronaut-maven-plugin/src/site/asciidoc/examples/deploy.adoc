@@ -73,7 +73,7 @@ mvn package -Dpackaging=native-image \
   -Djib.to.image=my-company/my-app:latest
 ----
 
-This path builds the local native executable, copies only that executable into an OCI image, and pushes with Jib registry
+This path builds the local native executable, copies only that executable into a container image, and pushes with Jib registry
 credentials. `mvn deploy -Dpackaging=native-image` also runs the `package` phase, so the same Jib registry publish path
 is used when `jib.buildGoal=build` is configured.
 

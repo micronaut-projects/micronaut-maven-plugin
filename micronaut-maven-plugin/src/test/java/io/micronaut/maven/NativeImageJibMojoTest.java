@@ -1,5 +1,6 @@
 package io.micronaut.maven;
 
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
 import com.google.cloud.tools.jib.api.buildplan.Platform;
 import io.micronaut.maven.jib.JibConfiguration;
 import io.micronaut.maven.jib.JibConfigurationService;
@@ -40,6 +41,7 @@ class NativeImageJibMojoTest {
         var plan = mojo.createContainerBuilder(executable, new Platform("amd64", "linux")).toContainerBuildPlan();
 
         assertEquals(List.of("/app/demo"), plan.getEntrypoint());
+        assertEquals(ImageFormat.Docker, plan.getFormat());
         assertEquals("/app", plan.getWorkingDirectory().toString());
         assertEquals("65532", plan.getUser());
         assertEquals(1, plan.getPlatforms().size());
