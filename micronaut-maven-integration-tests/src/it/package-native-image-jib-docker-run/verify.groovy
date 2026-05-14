@@ -5,18 +5,29 @@ assert log.text.contains('Built native image container alvarosanchez/package-nat
 assert new File(basedir, 'target/jib-image.tar').exists()
 
 String imageName = 'alvarosanchez/package-native-image-jib-docker-run:0.1'
+Process load = ['docker', 'load', '--input', 'target/jib-image.tar'].execute(null, basedir)
+load.waitFor()
+String loadOutput = load.inputStream.text
+assert load.exitValue() == 0 : load.errorStream.text
+String loadedReference = loadOutput.readLines()
+    .find { it.startsWith('Loaded image: ') }
+    ?.replace('Loaded image: ', '')
+
 Process images = ['docker', 'images', '--format', '{{.Repository}}:{{.Tag}} {{.ID}}'].execute(null, basedir)
 images.waitFor()
 String imagesOutput = images.inputStream.text
 assert images.exitValue() == 0 : images.errorStream.text
+String imageReference = loadedReference ?: [imageName, "docker.io/${imageName}"].find { reference ->
+    imagesOutput.readLines().any { it.startsWith(reference + ' ') }
+}
+assert imageReference : "Image ${imageName} was not loaded. Docker load output:\n${loadOutput}\nDocker images:\n${imagesOutput}"
 String imageId = imagesOutput.readLines()
-    .find { it.startsWith(imageName + ' ') || it.startsWith("docker.io/${imageName} ") }
+    .find { it.startsWith(imageReference + ' ') }
     ?.split(/\s+/)
     ?.last()
-assert imageId : "Image ${imageName} was not loaded. Docker images:\n${imagesOutput}"
 
 String containerName = 'package-native-image-jib-docker-run-' + System.currentTimeMillis()
-Process process = new ProcessBuilder('docker', 'run', '--rm', '--name', containerName, imageId)
+Process process = new ProcessBuilder('docker', 'run', '--rm', '--name', containerName, imageId ?: imageReference)
     .directory(basedir)
     .redirectErrorStream(true)
     .start()
