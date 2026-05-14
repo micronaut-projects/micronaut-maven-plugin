@@ -14,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LifecycleMappingTest {
 
+    private static final String MICRONAUT_MAVEN_PLUGIN_COORDINATES = "io.micronaut.maven:micronaut-maven-plugin:";
+
     @Test
     void k8sPackagingDelegatesPackageAndDeployLifecyclePhases() throws Exception {
         Element component = findLifecycleComponent("k8s");
@@ -49,7 +51,7 @@ class LifecycleMappingTest {
         String packagePhase = phase(component, "package");
 
         assertTrue(packagePhase.contains("org.graalvm.buildtools:native-maven-plugin:compile-no-fork"));
-        assertTrue(packagePhase.contains(":native-image-jib"));
+        assertTrue(packagePhase.matches("(?s).*" + MICRONAUT_MAVEN_PLUGIN_COORDINATES + "[^,\\s]+:native-image-jib.*"));
         assertTrue(packagePhase.indexOf("compile-no-fork") < packagePhase.indexOf("native-image-jib"));
         assertFalse(hasPhase(component, "deploy"));
     }
@@ -83,6 +85,6 @@ class LifecycleMappingTest {
 
     private static boolean hasPhase(Element component, String phaseName) {
         Element phases = (Element) component.getElementsByTagName("phases").item(0);
-        return phases.getElementsByTagName(phaseName).getLength() > 0;
+        return phases != null && phases.getElementsByTagName(phaseName).getLength() > 0;
     }
 }

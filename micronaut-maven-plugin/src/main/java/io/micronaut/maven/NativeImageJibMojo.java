@@ -206,6 +206,7 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
             Path output = jibConfigurationService.getOutputPathsTar()
                 .filter(StringUtils::hasText)
                 .map(Path::of)
+                .map(this::resolveTarOutputPath)
                 .orElseGet(() -> Path.of(mavenProject.getBuild().getDirectory(), DEFAULT_TAR_NAME));
             containerizer = Containerizer.to(TarImage.at(output).named(imageReference));
         } else {
@@ -223,6 +224,13 @@ public class NativeImageJibMojo extends AbstractDockerMojo {
             .addEventHandler(LogEvent.class, this::logJibEvent)
             .setToolName("micronaut-maven-plugin")
             .setToolVersion(pluginVersion);
+    }
+
+    private Path resolveTarOutputPath(Path output) {
+        if (output.isAbsolute()) {
+            return output;
+        }
+        return mavenProject.getBasedir().toPath().resolve(output);
     }
 
     private void validateNativeImageJibBuildGoal() throws MojoExecutionException {

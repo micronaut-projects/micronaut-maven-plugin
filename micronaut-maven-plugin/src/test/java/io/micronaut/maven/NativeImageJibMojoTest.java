@@ -72,6 +72,21 @@ class NativeImageJibMojoTest {
     }
 
     @Test
+    void relativeTarOutputPathIsResolvedFromProjectBaseDirectory(@TempDir Path tempDir) throws Exception {
+        Files.createDirectories(tempDir.resolve("target"));
+        Files.writeString(tempDir.resolve("target/demo"), "native");
+        var mojo = newMojo(tempDir);
+        mojo.allowPlatformMismatch = true;
+        when(mojo.jibConfigurationService.getFromImage()).thenReturn(Optional.of("scratch"));
+        when(mojo.jibConfigurationService.getToImage()).thenReturn(Optional.of("example.com/micronaut/demo:0.1"));
+        when(mojo.jibConfigurationService.getOutputPathsTar()).thenReturn(Optional.of("target/custom-native-image.tar"));
+
+        mojo.execute();
+
+        assertTrue(Files.exists(tempDir.resolve("target/custom-native-image.tar")));
+    }
+
+    @Test
     void blankTarOutputPathFallsBackToDefault(@TempDir Path tempDir) throws Exception {
         Files.createDirectories(tempDir.resolve("target"));
         Files.writeString(tempDir.resolve("target/demo"), "native");
@@ -359,6 +374,7 @@ class NativeImageJibMojoTest {
         when(project.getProperties()).thenReturn(new Properties());
         when(project.getBuild()).thenReturn(build);
         when(project.getPlugin("org.graalvm.buildtools:native-maven-plugin")).thenReturn(null);
+        when(project.getBasedir()).thenReturn(tempDir.toFile());
         when(build.getDirectory()).thenReturn(tempDir.resolve("target").toString());
         return project;
     }

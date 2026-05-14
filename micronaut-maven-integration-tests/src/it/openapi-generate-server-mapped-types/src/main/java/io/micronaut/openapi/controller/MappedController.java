@@ -1,6 +1,6 @@
 package io.micronaut.openapi.controller;
 
-import io.micronaut.http.annotation.*;
+import io.micronaut.http.annotation.Controller;
 import reactor.core.publisher.Mono;
 import io.micronaut.openapi.dated.DatedResponse;
 import io.micronaut.openapi.filter.MyFilter;
@@ -13,7 +13,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

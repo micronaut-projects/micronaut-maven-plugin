@@ -108,7 +108,7 @@
                             </prepare-package>
                             <package>
                                 org.graalvm.buildtools:native-maven-plugin:compile-no-fork,
-                                ${project.groupId}:${project.artifactId}:${project.version}:native-image-jib
+                                io.micronaut.maven:micronaut-maven-plugin:${project.version}:native-image-jib
                             </package>
                         </phases>
                     </lifecycle>
