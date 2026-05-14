@@ -7,12 +7,13 @@ assert new File(basedir, 'target/jib-image.tar').exists()
 String imageName = 'alvarosanchez/package-native-image-jib-docker-run:0.1'
 Process images = ['docker', 'images', '--format', '{{.Repository}}:{{.Tag}} {{.ID}}'].execute(null, basedir)
 images.waitFor()
-assert images.exitValue() == 0
-String imageId = images.inputStream.text.readLines()
-    .find { it.startsWith(imageName + ' ') }
+String imagesOutput = images.inputStream.text
+assert images.exitValue() == 0 : images.errorStream.text
+String imageId = imagesOutput.readLines()
+    .find { it.startsWith(imageName + ' ') || it.startsWith("docker.io/${imageName} ") }
     ?.split(/\s+/)
     ?.last()
-assert imageId
+assert imageId : "Image ${imageName} was not loaded. Docker images:\n${imagesOutput}"
 
 String containerName = 'package-native-image-jib-docker-run-' + System.currentTimeMillis()
 Process process = new ProcessBuilder('docker', 'run', '--rm', '--name', containerName, imageId)
