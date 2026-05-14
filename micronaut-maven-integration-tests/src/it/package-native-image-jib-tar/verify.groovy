@@ -5,9 +5,9 @@ Process process = ['tar', '-tf', tarball.absolutePath].execute(null, basedir)
 process.waitFor()
 assert process.exitValue() == 0
 String contents = process.inputStream.text
-assert contents.contains('oci-layout')
-assert contents.contains('index.json')
-assert contents.contains('blobs/sha256/')
+assert contents.contains('manifest.json')
+assert contents.contains('config.json')
+assert contents.readLines().any { it.endsWith('.tar.gz') }
 
 File log = new File(basedir, 'build.log')
 assert log.exists()
