@@ -123,12 +123,19 @@
         <artifactId>docker-maven-plugin</artifactId>
         <version>0.48.1</version>
         <configuration>
+          <showLogs>true</showLogs>
           <images>
             <image>
               <name>alvarosanchez/${project.artifactId}:${project.version}</name>
               <build>
                 <dockerArchive>${project.build.directory}/jib-image.tar</dockerArchive>
               </build>
+              <run>
+                <wait>
+                  <log>Startup completed in</log>
+                  <time>20000</time>
+                </wait>
+              </run>
             </image>
           </images>
         </configuration>
