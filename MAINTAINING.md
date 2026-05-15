@@ -99,5 +99,8 @@ tag such as `v5.0.0`, then monitor the `Release` workflow.
 The release workflow prepares the Maven release, publishes the generated site to GitHub Pages, and performs the Maven
 release. Do not replace it with the Gradle-oriented template release flow.
 
+The release workflow runs the vulnerability audit before publishing. Vulnerability findings are advisory for milestone
+and release-candidate tags such as `v5.0.0-M1` and `v5.0.0-RC1`, but they remain blocking for GA releases.
+
 If there is an issue with the release, do not publish artifacts to Maven Central again for the same version. Maven Central
 artifacts are immutable once released.
