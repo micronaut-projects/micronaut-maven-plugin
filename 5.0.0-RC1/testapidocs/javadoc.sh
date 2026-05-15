@@ -1,0 +1,1 @@
+/opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/25.0.3-9.0.LTS/x64/bin/javadoc -J-Xmx512m -J-Xms128m -J-Duser.language= -J-Duser.country= @options @packages
