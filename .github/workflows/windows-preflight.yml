@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "📥 Checkout repository"
-        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: "🛡 Verify workflow pinning"
         run: bash .github/scripts/check-workflow-pinning.sh
 
@@ -43,9 +43,9 @@ jobs:
         java: ['25']
     steps:
       - name: "📥 Checkout repository"
-        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: "☕️ Install Java"
-        uses: actions/setup-java@1d018f9b8b9b505bb578a83b230fabcce01af93b
+        uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
         with:
           distribution: 'temurin'
           java-version: ${{ matrix.java }}
