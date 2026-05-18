@@ -133,6 +133,10 @@ loadScripts(document, 'script');</script>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/aot/AotSampleMojo.html#alignRuntimeWithPackaging()" class="member-name-link">alignRuntimeWithPackaging()</a> - Method in class io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AotSampleMojo.html" title="class in io.micronaut.maven.aot">AotSampleMojo</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/maven/NativeImageJibMojo.html#allowPlatformMismatch" class="member-name-link">allowPlatformMismatch</a> - Variable in class io.micronaut.maven.<a href="io/micronaut/maven/NativeImageJibMojo.html" title="class in io.micronaut.maven">NativeImageJibMojo</a></dt>
+<dd>
+<div class="block">Allows packaging when the host OS/architecture differs from the selected Linux container platform.</div>
+</dd>
 <dt><a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html#allowUnicodeIdentifiers" class="member-name-link">allowUnicodeIdentifiers</a> - Variable in class io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html" title="class in io.micronaut.maven.openapi">AbstractOpenApiMojo</a></dt>
 <dd>
 <div class="block">boolean, toggles whether Unicode identifiers are allowed in names or not, default is false.</div>
@@ -195,6 +199,10 @@ loadScripts(document, 'script');</script>
 </dd>
 <dt><a href="io/micronaut/maven/services/ApplicationConfigurationService.html#%3Cinit%3E(org.apache.maven.project.MavenProject)" class="member-name-link">ApplicationConfigurationService(MavenProject)</a> - Constructor for class io.micronaut.maven.services.<a href="io/micronaut/maven/services/ApplicationConfigurationService.html" title="class in io.micronaut.maven.services">ApplicationConfigurationService</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.PlatformConfiguration.html#architecture()" class="member-name-link">architecture()</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.PlatformConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.PlatformConfiguration</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/maven/jib/JibConfiguration.PlatformConfiguration.html#param-architecture"><code>architecture</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/maven/jib/JibConfiguration.ContainerConfiguration.html#args()" class="member-name-link">args()</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.ContainerConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ContainerConfiguration</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/maven/jib/JibConfiguration.ContainerConfiguration.html#param-args"><code>args</code></a> record component.</div>
@@ -344,7 +352,7 @@ classpath, based on the project dependencies.</div>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/maven/jib/JibConfiguration.html#param-container"><code>container</code></a> record component.</div>
 </dd>
-<dt><a href="io/micronaut/maven/jib/JibConfiguration.ContainerConfiguration.html#%3Cinit%3E(java.util.Optional,java.util.Set,java.util.List,java.util.Set)" class="member-name-link">ContainerConfiguration(Optional, Set, List, Set)</a> - Constructor for record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.ContainerConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ContainerConfiguration</a></dt>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.ContainerConfiguration.html#%3Cinit%3E(java.util.Optional,java.util.Set,java.util.List,java.util.Set,java.util.List,java.util.Optional)" class="member-name-link">ContainerConfiguration(Optional, Set, List, Set, List, Optional)</a> - Constructor for record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.ContainerConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ContainerConfiguration</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>ContainerConfiguration</code> record class.</div>
 </dd>
@@ -553,6 +561,10 @@ properties.</div>
 <dd>
 <div class="block">Whether to enable or disable Micronaut AOT.</div>
 </dd>
+<dt><a href="io/micronaut/maven/NativeImageJibMojo.html#enabled" class="member-name-link">enabled</a> - Variable in class io.micronaut.maven.<a href="io/micronaut/maven/NativeImageJibMojo.html" title="class in io.micronaut.maven">NativeImageJibMojo</a></dt>
+<dd>
+<div class="block">Packages the generated native executable into a container image with Jib after native-image packaging.</div>
+</dd>
 <dt><a href="io/micronaut/maven/openapi/OpenApiClientMojo.html#enabled" class="member-name-link">enabled</a> - Variable in class io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/OpenApiClientMojo.html" title="class in io.micronaut.maven.openapi">OpenApiClientMojo</a></dt>
 <dd>
 <div class="block">The property that defines if this mojo is used.</div>
@@ -564,6 +576,10 @@ properties.</div>
 <dt><a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html#ensureUniqueParams" class="member-name-link">ensureUniqueParams</a> - Variable in class io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html" title="class in io.micronaut.maven.openapi">AbstractOpenApiMojo</a></dt>
 <dd>
 <div class="block">Whether to ensure parameter names are unique in an operation (rename parameters that are not).</div>
+</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.ContainerConfiguration.html#entrypoint()" class="member-name-link">entrypoint()</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.ContainerConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ContainerConfiguration</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/maven/jib/JibConfiguration.ContainerConfiguration.html#param-entrypoint"><code>entrypoint</code></a> record component.</div>
 </dd>
 <dt><a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html#enumNameMapping" class="member-name-link">enumNameMapping</a> - Variable in class io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html" title="class in io.micronaut.maven.openapi">AbstractOpenApiMojo</a></dt>
 <dd>
@@ -582,6 +598,14 @@ properties.</div>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
 <dt><a href="io/micronaut/maven/jib/JibConfiguration.FromConfiguration.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.FromConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.FromConfiguration</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.OutputPathsConfiguration.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.OutputPathsConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.OutputPathsConfiguration</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.PlatformConfiguration.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.PlatformConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.PlatformConfiguration</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
 </dd>
@@ -607,6 +631,10 @@ properties.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html#EXEC_MAVEN_PLUGIN_VERSION_PROPERTY" class="member-name-link">EXEC_MAVEN_PLUGIN_VERSION_PROPERTY</a> - Static variable in class io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AbstractMicronautAotCliMojo.html" title="class in io.micronaut.maven.aot">AbstractMicronautAotCliMojo</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/maven/NativeImageJibMojo.html#executable" class="member-name-link">executable</a> - Variable in class io.micronaut.maven.<a href="io/micronaut/maven/NativeImageJibMojo.html" title="class in io.micronaut.maven">NativeImageJibMojo</a></dt>
+<dd>
+<div class="block">Native executable to copy into the image.</div>
+</dd>
 <dt><a href="io/micronaut/maven/aot/AbstractMicronautAotMojo.html#execute()" class="member-name-link">execute()</a> - Method in class io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AbstractMicronautAotMojo.html" title="class in io.micronaut.maven.aot">AbstractMicronautAotMojo</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/aot/HelpMojo.html#execute()" class="member-name-link">execute()</a> - Method in class io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/HelpMojo.html" title="class in io.micronaut.maven.aot">HelpMojo</a></dt>
@@ -636,6 +664,8 @@ properties.</div>
 <dt><a href="io/micronaut/maven/jsonschema/ValidateTestConfigurationMojo.html#execute()" class="member-name-link">execute()</a> - Method in class io.micronaut.maven.jsonschema.<a href="io/micronaut/maven/jsonschema/ValidateTestConfigurationMojo.html" title="class in io.micronaut.maven.jsonschema">ValidateTestConfigurationMojo</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/jsonschema/JsonSchemaGeneratorMojo.html#execute()" class="member-name-link">execute()</a> - Method in class io.micronaut.maven.jsonschema.<a href="io/micronaut/maven/jsonschema/JsonSchemaGeneratorMojo.html" title="class in io.micronaut.maven.jsonschema">JsonSchemaGeneratorMojo</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/maven/NativeImageJibMojo.html#execute()" class="member-name-link">execute()</a> - Method in class io.micronaut.maven.<a href="io/micronaut/maven/NativeImageJibMojo.html" title="class in io.micronaut.maven">NativeImageJibMojo</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html#execute()" class="member-name-link">execute()</a> - Method in class io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html" title="class in io.micronaut.maven.openapi">AbstractOpenApiMojo</a></dt>
 <dd>&nbsp;</dd>
@@ -697,7 +727,7 @@ by using this parameter.</div>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/maven/jib/JibConfiguration.html#param-from"><code>from</code></a> record component.</div>
 </dd>
-<dt><a href="io/micronaut/maven/jib/JibConfiguration.FromConfiguration.html#%3Cinit%3E(java.util.Optional,java.util.Optional)" class="member-name-link">FromConfiguration(Optional, Optional)</a> - Constructor for record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.FromConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.FromConfiguration</a></dt>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.FromConfiguration.html#%3Cinit%3E(java.util.Optional,java.util.Optional,java.util.Set)" class="member-name-link">FromConfiguration(Optional, Optional, Set)</a> - Constructor for record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.FromConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.FromConfiguration</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>FromConfiguration</code> record class.</div>
 </dd>
@@ -766,6 +796,8 @@ by using this parameter.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/jsonschema/ConfigurationValidationConfiguration.ValidationSet.html#getEnabled()" class="member-name-link">getEnabled()</a> - Method in class io.micronaut.maven.jsonschema.<a href="io/micronaut/maven/jsonschema/ConfigurationValidationConfiguration.ValidationSet.html" title="class in io.micronaut.maven.jsonschema">ConfigurationValidationConfiguration.ValidationSet</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfigurationService.html#getEntrypoint()" class="member-name-link">getEntrypoint()</a> - Method in class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/jsonschema/ConfigurationValidationConfiguration.ValidationSet.html#getEnvironments()" class="member-name-link">getEnvironments()</a> - Method in class io.micronaut.maven.jsonschema.<a href="io/micronaut/maven/jsonschema/ConfigurationValidationConfiguration.ValidationSet.html" title="class in io.micronaut.maven.jsonschema">ConfigurationValidationConfiguration.ValidationSet</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/aot/AbstractAotAnalysisMojo.html#getExtraArgs()" class="member-name-link">getExtraArgs()</a> - Method in class io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AbstractAotAnalysisMojo.html" title="class in io.micronaut.maven.aot">AbstractAotAnalysisMojo</a></dt>
@@ -791,6 +823,8 @@ by using this parameter.</div>
 <dt><a href="io/micronaut/maven/AbstractDockerMojo.html#getFromImage()" class="member-name-link">getFromImage()</a> - Method in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/jib/JibConfigurationService.html#getFromImage()" class="member-name-link">getFromImage()</a> - Method in class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfigurationService.html#getFromPlatforms()" class="member-name-link">getFromPlatforms()</a> - Method in class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/openapi/ResponseBodyMapping.html#getHeaderName()" class="member-name-link">getHeaderName()</a> - Method in class io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/ResponseBodyMapping.html" title="class in io.micronaut.maven.openapi">ResponseBodyMapping</a></dt>
 <dd>&nbsp;</dd>
@@ -823,6 +857,8 @@ by using this parameter.</div>
 <div class="block">Base output directory for reports.</div>
 </dd>
 <dt><a href="io/micronaut/maven/jsonschema/ConfigurationValidationConfiguration.ValidationSet.html#getOutputDirectory()" class="member-name-link">getOutputDirectory()</a> - Method in class io.micronaut.maven.jsonschema.<a href="io/micronaut/maven/jsonschema/ConfigurationValidationConfiguration.ValidationSet.html" title="class in io.micronaut.maven.jsonschema">ConfigurationValidationConfiguration.ValidationSet</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfigurationService.html#getOutputPathsTar()" class="member-name-link">getOutputPathsTar()</a> - Method in class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/jsonschema/ConfigurationValidationConfiguration.html#getPackageValidation()" class="member-name-link">getPackageValidation()</a> - Method in class io.micronaut.maven.jsonschema.<a href="io/micronaut/maven/jsonschema/ConfigurationValidationConfiguration.html" title="class in io.micronaut.maven.jsonschema">ConfigurationValidationConfiguration</a></dt>
 <dd>&nbsp;</dd>
@@ -862,6 +898,8 @@ by using this parameter.</div>
 <dt><a href="io/micronaut/maven/jib/JibConfigurationService.html#getToCredentials()" class="member-name-link">getToCredentials()</a> - Method in class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/jib/JibConfigurationService.html#getToImage()" class="member-name-link">getToImage()</a> - Method in class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfigurationService.html#getUser()" class="member-name-link">getUser()</a> - Method in class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfigurationService.html" title="class in io.micronaut.maven.jib">JibConfigurationService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/jsonschema/ConfigurationValidationConfiguration.html#getValidateDependencyInjection()" class="member-name-link">getValidateDependencyInjection()</a> - Method in class io.micronaut.maven.jsonschema.<a href="io/micronaut/maven/jsonschema/ConfigurationValidationConfiguration.html" title="class in io.micronaut.maven.jsonschema">ConfigurationValidationConfiguration</a></dt>
 <dd>
@@ -911,6 +949,14 @@ by using this parameter.</div>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
 <dt><a href="io/micronaut/maven/jib/JibConfiguration.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.OutputPathsConfiguration.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.OutputPathsConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.OutputPathsConfiguration</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.PlatformConfiguration.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.PlatformConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.PlatformConfiguration</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
 </dd>
@@ -1092,7 +1138,7 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <dd>
 <div class="block">Represents the Jib plugin configuration.</div>
 </dd>
-<dt><a href="io/micronaut/maven/jib/JibConfiguration.html#%3Cinit%3E(java.util.Optional,java.util.Optional,java.util.Optional)" class="member-name-link">JibConfiguration(Optional, Optional, Optional)</a> - Constructor for record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration</a></dt>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.html#%3Cinit%3E(java.util.Optional,java.util.Optional,java.util.Optional,java.util.Optional)" class="member-name-link">JibConfiguration(Optional, Optional, Optional, Optional)</a> - Constructor for record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>JibConfiguration</code> record class.</div>
 </dd>
@@ -1107,6 +1153,14 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <dt><a href="io/micronaut/maven/jib/JibConfiguration.FromConfiguration.html" class="type-name-link" title="class in io.micronaut.maven.jib">JibConfiguration.FromConfiguration</a> - Record Class in <a href="io/micronaut/maven/jib/package-summary.html">io.micronaut.maven.jib</a></dt>
 <dd>
 <div class="block">Represents the from configuration.</div>
+</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.OutputPathsConfiguration.html" class="type-name-link" title="class in io.micronaut.maven.jib">JibConfiguration.OutputPathsConfiguration</a> - Record Class in <a href="io/micronaut/maven/jib/package-summary.html">io.micronaut.maven.jib</a></dt>
+<dd>
+<div class="block">Represents the output paths configuration.</div>
+</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.PlatformConfiguration.html" class="type-name-link" title="class in io.micronaut.maven.jib">JibConfiguration.PlatformConfiguration</a> - Record Class in <a href="io/micronaut/maven/jib/package-summary.html">io.micronaut.maven.jib</a></dt>
+<dd>
+<div class="block">Represents a platform configuration.</div>
 </dd>
 <dt><a href="io/micronaut/maven/jib/JibConfiguration.ToConfiguration.html" class="type-name-link" title="class in io.micronaut.maven.jib">JibConfiguration.ToConfiguration</a> - Record Class in <a href="io/micronaut/maven/jib/package-summary.html">io.micronaut.maven.jib</a></dt>
 <dd>
@@ -1303,10 +1357,22 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/Packaging.html#NATIVE_IMAGE" class="member-name-link">NATIVE_IMAGE</a> - Enum constant in enum class io.micronaut.maven.<a href="io/micronaut/maven/Packaging.html" title="enum class in io.micronaut.maven">Packaging</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/maven/NativeImageJibMojo.html#NATIVE_IMAGE_JIB_GOAL" class="member-name-link">NATIVE_IMAGE_JIB_GOAL</a> - Static variable in class io.micronaut.maven.<a href="io/micronaut/maven/NativeImageJibMojo.html" title="class in io.micronaut.maven">NativeImageJibMojo</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/AbstractDockerMojo.html#nativeImageBuildArgs" class="member-name-link">nativeImageBuildArgs</a> - Variable in class io.micronaut.maven.<a href="io/micronaut/maven/AbstractDockerMojo.html" title="class in io.micronaut.maven">AbstractDockerMojo</a></dt>
 <dd>
 <div class="block">Additional arguments that will be passed to the <code>native-image</code> executable.</div>
 </dd>
+<dt><a href="io/micronaut/maven/NativeImageJibMojo.html#nativeImageJibBaseImage" class="member-name-link">nativeImageJibBaseImage</a> - Variable in class io.micronaut.maven.<a href="io/micronaut/maven/NativeImageJibMojo.html" title="class in io.micronaut.maven">NativeImageJibMojo</a></dt>
+<dd>
+<div class="block">Runtime base image for the native executable image.</div>
+</dd>
+<dt><a href="io/micronaut/maven/NativeImageJibMojo.html" class="type-name-link" title="class in io.micronaut.maven">NativeImageJibMojo</a> - Class in <a href="io/micronaut/maven/package-summary.html">io.micronaut.maven</a></dt>
+<dd>
+<div class="block">Builds a container image from a locally compiled native executable with Jib Core.</div>
+</dd>
+<dt><a href="io/micronaut/maven/NativeImageJibMojo.html#%3Cinit%3E(org.apache.maven.project.MavenProject,io.micronaut.maven.jib.JibConfigurationService,io.micronaut.maven.services.ApplicationConfigurationService,io.micronaut.maven.services.DockerService,org.apache.maven.execution.MavenSession,org.apache.maven.plugin.MojoExecution)" class="member-name-link">NativeImageJibMojo(MavenProject, JibConfigurationService, ApplicationConfigurationService, DockerService, MavenSession, MojoExecution)</a> - Constructor for class io.micronaut.maven.<a href="io/micronaut/maven/NativeImageJibMojo.html" title="class in io.micronaut.maven">NativeImageJibMojo</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/core/MicronautRuntime.html#NETTY" class="member-name-link">NETTY</a> - Enum constant in enum class io.micronaut.maven.core.<a href="io/micronaut/maven/core/MicronautRuntime.html" title="enum class in io.micronaut.maven.core">MicronautRuntime</a></dt>
 <dd>
 <div class="block">Default packaging.</div>
@@ -1374,6 +1440,10 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <dd>
 <div class="block">The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.</div>
 </dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.PlatformConfiguration.html#os()" class="member-name-link">os()</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.PlatformConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.PlatformConfiguration</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/maven/jib/JibConfiguration.PlatformConfiguration.html#param-os"><code>os</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/maven/aot/AbstractMicronautAotMojo.html#outputDirectory" class="member-name-link">outputDirectory</a> - Variable in class io.micronaut.maven.aot.<a href="io/micronaut/maven/aot/AbstractMicronautAotMojo.html" title="class in io.micronaut.maven.aot">AbstractMicronautAotMojo</a></dt>
 <dd>
 <div class="block">Directory where compiled application classes are.</div>
@@ -1387,6 +1457,14 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <dt><a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html#outputKinds" class="member-name-link">outputKinds</a> - Variable in class io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html" title="class in io.micronaut.maven.openapi">AbstractOpenApiMojo</a></dt>
 <dd>
 <div class="block">Comma-separated values of output kinds to generate.</div>
+</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.html#outputPaths()" class="member-name-link">outputPaths()</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/maven/jib/JibConfiguration.html#param-outputPaths"><code>outputPaths</code></a> record component.</div>
+</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.OutputPathsConfiguration.html#%3Cinit%3E(java.util.Optional)" class="member-name-link">OutputPathsConfiguration(Optional)</a> - Constructor for record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.OutputPathsConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.OutputPathsConfiguration</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>OutputPathsConfiguration</code> record class.</div>
 </dd>
 </dl>
 <h2 class="title" id="I:P">P</h2>
@@ -1422,6 +1500,14 @@ Jib goal used to build Docker images for <code>docker</code> packaging.</div>
 <dt><a href="io/micronaut/maven/jib/JibConfiguration.AuthConfiguration.html#password()" class="member-name-link">password()</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.AuthConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.AuthConfiguration</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/maven/jib/JibConfiguration.AuthConfiguration.html#param-password"><code>password</code></a> record component.</div>
+</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.PlatformConfiguration.html#%3Cinit%3E(java.util.Optional,java.util.Optional)" class="member-name-link">PlatformConfiguration(Optional, Optional)</a> - Constructor for record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.PlatformConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.PlatformConfiguration</a></dt>
+<dd>
+<div class="block">Creates an instance of a <code>PlatformConfiguration</code> record class.</div>
+</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.FromConfiguration.html#platforms()" class="member-name-link">platforms()</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.FromConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.FromConfiguration</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/maven/jib/JibConfiguration.FromConfiguration.html#param-platforms"><code>platforms</code></a> record component.</div>
 </dd>
 <dt><a href="io/micronaut/maven/testresources/AbstractTestResourcesMojo.html#pluginContext" class="member-name-link">pluginContext</a> - Variable in class io.micronaut.maven.testresources.<a href="io/micronaut/maven/testresources/AbstractTestResourcesMojo.html" title="class in io.micronaut.maven.testresources">AbstractTestResourcesMojo</a></dt>
 <dd>
@@ -1713,6 +1799,10 @@ get any request.</div>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/maven/jib/JibConfiguration.ToConfiguration.html#param-tags"><code>tags</code></a> record component.</div>
 </dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.OutputPathsConfiguration.html#tar()" class="member-name-link">tar()</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.OutputPathsConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.OutputPathsConfiguration</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/maven/jib/JibConfiguration.OutputPathsConfiguration.html#param-tar"><code>tar</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/maven/services/DependencyResolutionService.html#TEST_RESOURCES_ARTIFACT_ID_PREFIX" class="member-name-link">TEST_RESOURCES_ARTIFACT_ID_PREFIX</a> - Static variable in class io.micronaut.maven.services.<a href="io/micronaut/maven/services/DependencyResolutionService.html" title="class in io.micronaut.maven.services">DependencyResolutionService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/maven/testresources/TestResourcesConfiguration.html#TEST_RESOURCES_ENABLED_PROPERTY" class="member-name-link">TEST_RESOURCES_ENABLED_PROPERTY</a> - Static variable in class io.micronaut.maven.testresources.<a href="io/micronaut/maven/testresources/TestResourcesConfiguration.html" title="class in io.micronaut.maven.testresources">TestResourcesConfiguration</a></dt>
@@ -1791,6 +1881,14 @@ be stopped when the build is complete.</div>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
 </dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.OutputPathsConfiguration.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.OutputPathsConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.OutputPathsConfiguration</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.PlatformConfiguration.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.PlatformConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.PlatformConfiguration</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
 <dt><a href="io/micronaut/maven/jib/JibConfiguration.ToConfiguration.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.ToConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ToConfiguration</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
@@ -1837,6 +1935,10 @@ be stopped when the build is complete.</div>
 <dt><a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html#useOptional" class="member-name-link">useOptional</a> - Variable in class io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html" title="class in io.micronaut.maven.openapi">AbstractOpenApiMojo</a></dt>
 <dd>
 <div class="block">Whether to use <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link"><code>Optional</code></a> for non-required model properties and API parameters.</div>
+</dd>
+<dt><a href="io/micronaut/maven/jib/JibConfiguration.ContainerConfiguration.html#user()" class="member-name-link">user()</a> - Method in record class io.micronaut.maven.jib.<a href="io/micronaut/maven/jib/JibConfiguration.ContainerConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ContainerConfiguration</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/maven/jib/JibConfiguration.ContainerConfiguration.html#param-user"><code>user</code></a> record component.</div>
 </dd>
 <dt><a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html#useReactive" class="member-name-link">useReactive</a> - Variable in class io.micronaut.maven.openapi.<a href="io/micronaut/maven/openapi/AbstractOpenApiMojo.html" title="class in io.micronaut.maven.openapi">AbstractOpenApiMojo</a></dt>
 <dd>

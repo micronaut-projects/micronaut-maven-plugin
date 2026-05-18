@@ -60,7 +60,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#method-summary" tabindex="0">Method Summary</a></li>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
-<li><a href="#%3Cinit%3E(java.util.Optional,java.util.Optional,java.util.Optional)" tabindex="0">JibConfiguration(Optional, Optional, Optional)</a></li>
+<li><a href="#%3Cinit%3E(java.util.Optional,java.util.Optional,java.util.Optional,java.util.Optional)" tabindex="0">JibConfiguration(Optional, Optional, Optional, Optional)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
@@ -71,6 +71,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#from()" tabindex="0">from()</a></li>
 <li><a href="#to()" tabindex="0">to()</a></li>
 <li><a href="#container()" tabindex="0">container()</a></li>
+<li><a href="#outputPaths()" tabindex="0">outputPaths()</a></li>
 </ol>
 </li>
 </ol>
@@ -91,10 +92,11 @@ loadScripts(document, 'script');</script>
 <dd><code><span id="param-from">from</span></code> - The from configuration.</dd>
 <dd><code><span id="param-to">to</span></code> - The to configuration.</dd>
 <dd><code><span id="param-container">container</span></code> - The container configuration.</dd>
+<dd><code><span id="param-outputPaths">outputPaths</span></code> - The output paths configuration.</dd>
 </dl>
 <hr>
 <div class="horizontal-scroll">
-<div class="type-signature"><span class="modifiers">public record </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-30">JibConfiguration</a></span>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.FromConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.FromConfiguration</a>&gt;&nbsp;from, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.ToConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ToConfiguration</a>&gt;&nbsp;to, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.ContainerConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ContainerConfiguration</a>&gt;&nbsp;container)
+<div class="type-signature"><span class="modifiers">public record </span><span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-31">JibConfiguration</a></span>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.FromConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.FromConfiguration</a>&gt;&nbsp;from, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.ToConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ToConfiguration</a>&gt;&nbsp;to, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.ContainerConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ContainerConfiguration</a>&gt;&nbsp;container, <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.OutputPathsConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.OutputPathsConfiguration</a>&gt;&nbsp;outputPaths)
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Record.html" title="class or interface in java.lang" class="external-link">Record</a></span></div>
 <div class="block">Represents the Jib plugin configuration.</div>
 <dl class="notes">
@@ -130,6 +132,16 @@ loadScripts(document, 'script');</script>
 <div class="block">Represents the from configuration.</div>
 </div>
 <div class="col-first odd-row-color"><code>static final record&nbsp;</code></div>
+<div class="col-second odd-row-color"><code><a href="JibConfiguration.OutputPathsConfiguration.html" class="type-name-link" title="class in io.micronaut.maven.jib">JibConfiguration.OutputPathsConfiguration</a></code></div>
+<div class="col-last odd-row-color">
+<div class="block">Represents the output paths configuration.</div>
+</div>
+<div class="col-first even-row-color"><code>static final record&nbsp;</code></div>
+<div class="col-second even-row-color"><code><a href="JibConfiguration.PlatformConfiguration.html" class="type-name-link" title="class in io.micronaut.maven.jib">JibConfiguration.PlatformConfiguration</a></code></div>
+<div class="col-last even-row-color">
+<div class="block">Represents a platform configuration.</div>
+</div>
+<div class="col-first odd-row-color"><code>static final record&nbsp;</code></div>
 <div class="col-second odd-row-color"><code><a href="JibConfiguration.ToConfiguration.html" class="type-name-link" title="class in io.micronaut.maven.jib">JibConfiguration.ToConfiguration</a></code></div>
 <div class="col-last odd-row-color">
 <div class="block">Represents the to configuration.</div>
@@ -145,9 +157,10 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.util.Optional,java.util.Optional,java.util.Optional)" class="member-name-link">JibConfiguration</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.FromConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.FromConfiguration</a>&gt;&nbsp;from,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.util.Optional,java.util.Optional,java.util.Optional,java.util.Optional)" class="member-name-link">JibConfiguration</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.FromConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.FromConfiguration</a>&gt;&nbsp;from,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.ToConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ToConfiguration</a>&gt;&nbsp;to,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.ContainerConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ContainerConfiguration</a>&gt;&nbsp;container)</code></div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.ContainerConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ContainerConfiguration</a>&gt;&nbsp;container,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.OutputPathsConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.OutputPathsConfiguration</a>&gt;&nbsp;outputPaths)</code></div>
 <div class="col-last even-row-color">
 <div class="block">Creates an instance of a <code>JibConfiguration</code> record class.</div>
 </div>
@@ -185,14 +198,19 @@ loadScripts(document, 'script');</script>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a hash code value for this object.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="JibConfiguration.ToConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ToConfiguration</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#to()" class="member-name-link">to</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="JibConfiguration.OutputPathsConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.OutputPathsConfiguration</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#outputPaths()" class="member-name-link">outputPaths</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Returns the value of the <a href="#param-outputPaths"><code>outputPaths</code></a> record component.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="JibConfiguration.ToConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ToConfiguration</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#to()" class="member-name-link">to</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the value of the <a href="#param-to"><code>to</code></a> record component.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns a string representation of this record class.</div>
 </div>
 </div>
@@ -213,18 +231,20 @@ loadScripts(document, 'script');</script>
 <h2>Constructor Details</h2>
 <ul class="member-list">
 <li>
-<section class="detail" id="&lt;init&gt;(java.util.Optional,java.util.Optional,java.util.Optional)">
+<section class="detail" id="&lt;init&gt;(java.util.Optional,java.util.Optional,java.util.Optional,java.util.Optional)">
 <h3>JibConfiguration</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-30">JibConfiguration</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.FromConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.FromConfiguration</a>&gt;&nbsp;from,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-31">JibConfiguration</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.FromConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.FromConfiguration</a>&gt;&nbsp;from,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.ToConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ToConfiguration</a>&gt;&nbsp;to,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.ContainerConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ContainerConfiguration</a>&gt;&nbsp;container)</span></div>
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.ContainerConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ContainerConfiguration</a>&gt;&nbsp;container,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.OutputPathsConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.OutputPathsConfiguration</a>&gt;&nbsp;outputPaths)</span></div>
 <div class="block">Creates an instance of a <code>JibConfiguration</code> record class.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>from</code> - the value for the <a href="#param-from"><code>from</code></a> record component</dd>
 <dd><code>to</code> - the value for the <a href="#param-to"><code>to</code></a> record component</dd>
 <dd><code>container</code> - the value for the <a href="#param-container"><code>container</code></a> record component</dd>
+<dd><code>outputPaths</code> - the value for the <a href="#param-outputPaths"><code>outputPaths</code></a> record component</dd>
 </dl>
 </div>
 </section>
@@ -241,7 +261,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="toString()">
 <h3>toString</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-30">toString</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-31">toString</a></span>()</div>
 <div class="block">Returns a string representation of this record class. The representation contains the name of the class, followed by the name and value of each of the record components.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
@@ -256,7 +276,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="hashCode()">
 <h3>hashCode</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-30">hashCode</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">int</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-31">hashCode</a></span>()</div>
 <div class="block">Returns a hash code value for this object. The value is derived from the hash code of each of the record components.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
@@ -271,7 +291,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="equals(java.lang.Object)">
 <h3>equals</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-30">equals</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</span></div>
+<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-31">equals</a></span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;o)</span></div>
 <div class="block">Indicates whether some other object is "equal to" this one. The objects are equal if the other object is of the same class and if all the record components are equal. All components in this record class are compared with <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Objects.html#equals(java.lang.Object,java.lang.Object)" title="class or interface in java.util" class="external-link"><code>Objects::equals(Object,Object)</code></a>.</div>
 <dl class="notes">
 <dt>Specified by:</dt>
@@ -288,7 +308,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="from()">
 <h3>from</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.FromConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.FromConfiguration</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-30">from</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.FromConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.FromConfiguration</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-31">from</a></span>()</div>
 <div class="block">Returns the value of the <a href="#param-from"><code>from</code></a> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -301,7 +321,7 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="to()">
 <h3>to</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.ToConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ToConfiguration</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-30">to</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.ToConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ToConfiguration</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-31">to</a></span>()</div>
 <div class="block">Returns the value of the <a href="#param-to"><code>to</code></a> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
@@ -314,11 +334,24 @@ loadScripts(document, 'script');</script>
 <section class="detail" id="container()">
 <h3>container</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.ContainerConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ContainerConfiguration</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-30">container</a></span>()</div>
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.ContainerConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.ContainerConfiguration</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-31">container</a></span>()</div>
 <div class="block">Returns the value of the <a href="#param-container"><code>container</code></a> record component.</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>the value of the <a href="#param-container"><code>container</code></a> record component</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="outputPaths()">
+<h3>outputPaths</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="JibConfiguration.OutputPathsConfiguration.html" title="class in io.micronaut.maven.jib">JibConfiguration.OutputPathsConfiguration</a>&gt;</span>&nbsp;<span class="element-name"><a href="../../../../src-html/io/micronaut/maven/jib/JibConfiguration.html#line-31">outputPaths</a></span>()</div>
+<div class="block">Returns the value of the <a href="#param-outputPaths"><code>outputPaths</code></a> record component.</div>
+<dl class="notes">
+<dt>Returns:</dt>
+<dd>the value of the <a href="#param-outputPaths"><code>outputPaths</code></a> record component</dd>
 </dl>
 </div>
 </section>
