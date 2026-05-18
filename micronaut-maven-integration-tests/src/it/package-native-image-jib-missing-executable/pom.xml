@@ -1,0 +1,46 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>io.micronaut.build.examples</groupId>
+    <artifactId>package-native-image-jib-missing-executable</artifactId>
+    <version>0.1</version>
+    <packaging>${packaging}</packaging>
+
+    <parent>
+        <groupId>io.micronaut.platform</groupId>
+        <artifactId>micronaut-parent</artifactId>
+        <version>@it.micronaut.version@</version>
+    </parent>
+
+    <properties>
+        <micronaut.version>@it.micronaut.version@</micronaut.version>
+        <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
+        <jib-maven-plugin.version>@jib-maven-plugin.version@</jib-maven-plugin.version>
+        <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
+        <packaging>jar</packaging>
+        <micronaut.runtime>netty</micronaut.runtime>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>io.micronaut.maven</groupId>
+                <artifactId>micronaut-maven-plugin</artifactId>
+                <version>${micronaut-maven-plugin.version}</version>
+            </plugin>
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>${jib-maven-plugin.version}</version>
+                <configuration>
+                    <from>
+                        <image>scratch</image>
+                    </from>
+                    <to>
+                        <image>example.com/micronaut/${project.artifactId}:${project.version}</image>
+                    </to>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

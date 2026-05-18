@@ -5,6 +5,7 @@ required to deploy an application that, depending on the `<packaging>`:
 
 * `jar` (default): will deploy the artifact to a remote repository using `org.apache.maven.plugins:maven-deploy-plugin:deploy`.
 * `docker` or `docker-native`: will push the Docker image to the configured Docker registry.
+* `native-image` with `micronaut.native-image.jib.enabled=true`: writes a daemonless tarball during `package` by default, or publishes during `package` when `-Djib.buildGoal=build` is set.
 * `k8s` or `openshift`: will delegate image publication to Eclipse JKube's `push` goal for the selected platform.
 
 You can use Jib to configure which registry should the image be pushed to. Refer to the
@@ -61,6 +62,21 @@ registry credentials with Jib-supported mechanisms such as Maven settings, `jib.
 `jib.to.auth.username` and `jib.to.auth.password` properties, or standard registry credential helpers. Do not commit
 plain-text registry secrets to the POM.
 
+For daemonless native executable images, use `native-image`, enable the native image Jib workflow, and set Jib's registry
+build goal:
+
+[source,shell]
+----
+mvn package -Dpackaging=native-image \
+  -Dmicronaut.native-image.jib.enabled=true \
+  -Djib.buildGoal=build \
+  -Djib.to.image=my-company/my-app:latest
+----
+
+This path builds the local native executable, copies only that executable into a container image, and pushes with Jib registry
+credentials. `mvn deploy -Dpackaging=native-image` also runs the `package` phase, so the same Jib registry publish path
+is used when `jib.buildGoal=build` is configured.
+
 For JKube-backed deployments, declare the matching JKube plugin in your POM and run either:
 
 ----
@@ -70,6 +86,9 @@ $ mvn deploy -Dpackaging=openshift
 
 `k8s` maps `deploy` to `org.eclipse.jkube:kubernetes-maven-plugin:push`, while `openshift` maps `deploy` to
 `org.eclipse.jkube:openshift-maven-plugin:push`.
+
+For native image Jib image creation, omitting `jib.buildGoal` produces `target/jib-image.tar` by default, and
+`-Djib.buildGoal=build` publishes directly to `jib.to.image` during `package`.
 
 You can also omit the plugin declaration in your POM, and execute directly:
 

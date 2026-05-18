@@ -8,9 +8,13 @@ import java.io.InputStream;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class LifecycleMappingTest {
+
+    private static final String MICRONAUT_MAVEN_PLUGIN_COORDINATES = "io.micronaut.maven:micronaut-maven-plugin:";
 
     @Test
     void k8sPackagingDelegatesPackageAndDeployLifecyclePhases() throws Exception {
@@ -40,6 +44,18 @@ class LifecycleMappingTest {
         );
     }
 
+    @Test
+    void nativeImagePackagingRunsNativeImageJibAfterNativeCompile() throws Exception {
+        Element component = findLifecycleComponent("native-image");
+
+        String packagePhase = phase(component, "package");
+
+        assertTrue(packagePhase.contains("org.graalvm.buildtools:native-maven-plugin:compile-no-fork"));
+        assertTrue(packagePhase.matches("(?s).*" + MICRONAUT_MAVEN_PLUGIN_COORDINATES + "[^,\\s]+:native-image-jib.*"));
+        assertTrue(packagePhase.indexOf("compile-no-fork") < packagePhase.indexOf("native-image-jib"));
+        assertFalse(hasPhase(component, "deploy"));
+    }
+
     private static Element findLifecycleComponent(String roleHint) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
@@ -65,5 +81,10 @@ class LifecycleMappingTest {
             .map(Element::getTextContent)
             .map(String::trim)
             .orElseThrow(() -> new IllegalArgumentException("Phase not found: " + phaseName));
+    }
+
+    private static boolean hasPhase(Element component, String phaseName) {
+        Element phases = (Element) component.getElementsByTagName("phases").item(0);
+        return phases != null && phases.getElementsByTagName(phaseName).getLength() > 0;
     }
 }

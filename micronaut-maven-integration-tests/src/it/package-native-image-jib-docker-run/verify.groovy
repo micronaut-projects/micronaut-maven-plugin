@@ -1,0 +1,6 @@
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains("native:${nativeMavenPluginVersion}:compile-no-fork")
+assert log.text.contains('Built native image container alvarosanchez/package-native-image-jib-docker-run:0.1')
+assert new File(basedir, 'target/jib-image.tar').exists()
+assert log.text.contains('Startup completed')

@@ -107,7 +107,8 @@
                                 org.apache.maven.plugins:maven-jar-plugin:jar
                             </prepare-package>
                             <package>
-                                org.graalvm.buildtools:native-maven-plugin:compile-no-fork
+                                org.graalvm.buildtools:native-maven-plugin:compile-no-fork,
+                                io.micronaut.maven:micronaut-maven-plugin:${project.version}:native-image-jib
                             </package>
                         </phases>
                     </lifecycle>

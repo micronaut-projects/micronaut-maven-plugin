@@ -211,6 +211,57 @@ mvn package -Dpackaging=native-image # <2>
 <1> Create the shaded runnable jar for the application.
 <2> Use the shaded runnable jar to build the native image.
 
+=== Building daemonless native executable container images
+
+----
+$ mvn package -Dpackaging=native-image -Dmicronaut.native-image.jib.enabled=true
+----
+
+If the `<packaging>` is set to `native-image` and `micronaut.native-image.jib.enabled` is set to `true`, this plugin first delegates to
+`org.graalvm.buildtools:native-maven-plugin:compile-no-fork` to create the local native executable, then packages only
+that executable into a container image with Jib Core. This workflow does not require a Docker daemon.
+
+By default, the native image Jib workflow writes the Jib tarball to `target/jib-image.tar`:
+
+[source,shell]
+----
+mvn package -Dpackaging=native-image -Dmicronaut.native-image.jib.enabled=true
+----
+
+To publish directly to a registry without Docker, use Jib's registry build goal and destination configuration:
+
+[source,shell]
+----
+mvn package -Dpackaging=native-image -Dmicronaut.native-image.jib.enabled=true -Djib.buildGoal=build -Djib.to.image=my-company/my-app:latest
+----
+
+The supported `jib.buildGoal` values for the native image Jib workflow are `buildTar` and `build`. Use `docker-native` packaging
+when you need Docker-backed native image builds.
+
+The image name, additional tags, and registry credentials use the same Jib configuration keys as JVM `docker`
+packaging, including `jib.to.image`, `jib.to.tags`, `jib.to.auth.username`, `jib.to.auth.password`, Jib credential
+helpers, Google Application Default Credentials, and Docker config credential lookup. The tarball path can be changed
+with Jib's `jib.outputPaths.tar` setting.
+
+The runtime base image is resolved in this order:
+
+* `jib.from.image`
+* `micronaut.native-image.jib.base-image`
+* `micronaut.native-image.base-image-run`
+* The Micronaut Maven Plugin native runtime default
+
+The container entrypoint defaults to `/app/<executable-name>`, the working directory defaults to `/app`, and the image
+copies only the native executable into the runtime layer. Set `micronaut.native-image.jib.executable` when the native
+executable is not at `target/<native imageName or artifactId>`. Jib container args, ports, user, entrypoint, and platform
+configuration are honored where they apply to a single native executable image.
+
+The native image Jib workflow packages a locally built executable into a Linux container image. By default, it fails on non-Linux
+hosts and when the host architecture does not match the configured Jib platform, because a macOS or Windows native
+executable will not run in a Linux container image. Use `docker-native` when you need Docker to build the Linux native
+executable from another host OS. If you have intentionally cross-compiled a compatible Linux executable, set
+`micronaut.native-image.jib.allow-platform-mismatch=true`.
+
+Lambda and Oracle Function native images keep their existing runtime-specific `docker-native` packaging paths.
 
 === Building JVM-based Docker images
 
