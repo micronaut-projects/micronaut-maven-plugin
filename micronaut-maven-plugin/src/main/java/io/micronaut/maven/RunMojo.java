@@ -610,11 +610,19 @@ public class RunMojo extends AbstractTestResourcesMojo {
     private void runAotIfNeeded() {
         if (aotEnabled) {
             try {
-                executorService.executeGoal(runnableProject, THIS_PLUGIN, AbstractAotAnalysisMojo.NAME);
+                executorService.executeGoal(runnableProject, THIS_PLUGIN, AbstractAotAnalysisMojo.NAME, aotAnalysisConfiguration());
             } catch (MojoExecutionException e) {
                 getLog().error(e.getMessage());
             }
         }
+    }
+
+    private Xpp3Dom aotAnalysisConfiguration() {
+        Xpp3Dom configuration = new Xpp3Dom("configuration");
+        Xpp3Dom enabled = new Xpp3Dom("enabled");
+        enabled.setValue(Boolean.TRUE.toString());
+        configuration.addChild(enabled);
+        return configuration;
     }
 
     private Xpp3Dom configurationValidationConfiguration() {
