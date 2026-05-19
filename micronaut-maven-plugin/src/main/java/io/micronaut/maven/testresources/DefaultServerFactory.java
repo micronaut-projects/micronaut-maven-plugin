@@ -26,6 +26,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -40,6 +42,8 @@ import static io.micronaut.maven.core.MojoUtils.findJavaExecutable;
  */
 public class DefaultServerFactory implements ServerFactory {
 
+    private static final Set<Process> PROCESSES = ConcurrentHashMap.newKeySet();
+
     private final Log log;
     private final ToolchainManager toolchainManager;
     private final MavenSession mavenSession;
@@ -47,6 +51,7 @@ public class DefaultServerFactory implements ServerFactory {
     private final String testResourcesVersion;
     private final boolean debugServer;
     private final boolean foreground;
+    private final boolean stopOnShutdown;
     private final Map<String, String> testResourcesSystemProperties;
 
     private Process process;
@@ -57,7 +62,9 @@ public class DefaultServerFactory implements ServerFactory {
                                 AtomicBoolean serverStarted,
                                 String testResourcesVersion,
                                 boolean debugServer,
-                                boolean foreground, final Map<String, String> testResourcesSystemProperties) {
+                                boolean foreground,
+                                boolean stopOnShutdown,
+                                final Map<String, String> testResourcesSystemProperties) {
         this.log = log;
         this.toolchainManager = toolchainManager;
         this.mavenSession = mavenSession;
@@ -65,6 +72,7 @@ public class DefaultServerFactory implements ServerFactory {
         this.testResourcesVersion = testResourcesVersion;
         this.debugServer = debugServer;
         this.foreground = foreground;
+        this.stopOnShutdown = stopOnShutdown;
         this.testResourcesSystemProperties = testResourcesSystemProperties;
     }
 
@@ -80,6 +88,11 @@ public class DefaultServerFactory implements ServerFactory {
         var builder = new ProcessBuilder(cli);
         try {
             process = builder.inheritIO().start();
+            PROCESSES.add(process);
+            process.onExit().thenRun(() -> PROCESSES.remove(process));
+            if (stopOnShutdown) {
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> stopServer(process)));
+            }
             if (foreground) {
                 log.info("Test Resources Service started in foreground. Press Ctrl+C to stop.");
                 process.waitFor();
@@ -146,6 +159,25 @@ public class DefaultServerFactory implements ServerFactory {
     public void waitFor(Duration duration) throws InterruptedException {
         if (process != null) {
             process.waitFor(duration.toMillis(), TimeUnit.MILLISECONDS);
+        }
+    }
+
+    static void stopAllServers() {
+        PROCESSES.forEach(DefaultServerFactory::stopServer);
+    }
+
+    private static void stopServer(Process process) {
+        PROCESSES.remove(process);
+        if (process.isAlive()) {
+            process.destroy();
+            try {
+                if (!process.waitFor(10, TimeUnit.SECONDS)) {
+                    process.destroyForcibly();
+                }
+            } catch (InterruptedException e) {
+                process.destroyForcibly();
+                Thread.currentThread().interrupt();
+            }
         }
     }
 }

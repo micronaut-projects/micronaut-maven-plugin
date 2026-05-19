@@ -192,7 +192,7 @@ public class TestResourcesHelper {
         Path buildDir = buildDirectory.toPath();
         Path serverSettingsDirectory = getServerSettingsDirectory();
         var serverStarted = new AtomicBoolean(false);
-        var serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion, debugServer, foreground, testResourcesSystemProperties);
+        var serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion, debugServer, foreground, !isKeepAlive(), testResourcesSystemProperties);
         if (shared) {
             try (var ignored = sharedServerLock(serverSettingsDirectory)) {
                 doStart(accessToken, buildDir, serverSettingsDirectory, serverFactory, serverStarted);
@@ -207,6 +207,16 @@ public class TestResourcesHelper {
                          Path serverSettingsDirectory,
                          ServerFactory serverFactory,
                          AtomicBoolean serverStarted) throws IOException {
+        Optional<ServerSettings> sessionSharedServerSettings = findSessionSharedServer(serverSettingsDirectory);
+        if (sessionSharedServerSettings.isPresent()) {
+            ServerSettings serverSettings = sessionSharedServerSettings.get();
+            writePortFile(buildDir.resolve(PORT_FILE_NAME), serverSettings.getPort());
+            registerSharedServerUse(serverSettingsDirectory, serverSettings.getPort(), false);
+            logSharedMode(serverSettingsDirectory);
+            writeSharedScopeConfiguration();
+            setSystemProperties(serverSettings);
+            return;
+        }
         Optional<ServerSettings> optionalServerSettings = startOrConnectToExistingServer(accessToken, buildDir, serverSettingsDirectory, serverFactory);
         if (optionalServerSettings.isEmpty()) {
             return;
@@ -226,6 +236,24 @@ public class TestResourcesHelper {
         } else if (!sessionOwnedSharedServer) {
             // A server was already listening before this build started, so leave it running.
             createKeepAliveFile();
+        }
+    }
+
+    private Optional<ServerSettings> findSessionSharedServer(Path serverSettingsDirectory) {
+        if (!shared || mavenProject == null) {
+            return Optional.empty();
+        }
+        synchronized (SESSION_STATE_MONITOR) {
+            SessionState sessionState = SESSION_STATES.get(mavenSession);
+            if (sessionState == null) {
+                return Optional.empty();
+            }
+            SharedServerState sharedServerState = sessionState.sharedServers.get(normalize(serverSettingsDirectory));
+            if (sharedServerState == null) {
+                return Optional.empty();
+            }
+            return ServerUtils.readServerSettings(serverSettingsDirectory)
+                .filter(settings -> settings.getPort() == sharedServerState.port);
         }
     }
 

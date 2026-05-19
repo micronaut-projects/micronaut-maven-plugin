@@ -16,7 +16,9 @@ assert !packageHtml.exists()
 
 def packageJsonData = new JsonSlurper().parseText(packageJson.text)
 assert packageJsonData instanceof Map
-assert packageJsonData.isEmpty()
+assert packageJsonData.configurationErrors.size() == 1
+assert packageJsonData.configurationErrors[0].property == 'micronaut.server.port'
+assert packageJsonData.configurationErrors[0].type == 'WARNING'
 
 File testHtml = new File(basedir, 'target/validation-reports/test/configuration-errors.html')
 File testJson = new File(basedir, 'target/validation-reports/test/configuration-errors.json')
