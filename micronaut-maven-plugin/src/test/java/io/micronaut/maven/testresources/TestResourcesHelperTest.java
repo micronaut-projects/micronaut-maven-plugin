@@ -20,6 +20,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -298,6 +299,56 @@ class TestResourcesHelperTest {
         }
     }
 
+    @Test
+    void findSessionSharedServerRequiresSharedMode() throws Exception {
+        TestResourcesHelper helper = new TestResourcesHelper(mock(MavenSession.class), true, false, tempDir.toFile());
+
+        assertTrue(invokeFindSessionSharedServer(helper, tempDir.resolve("shared-settings")).isEmpty());
+    }
+
+    @Test
+    void findSessionSharedServerRequiresRegisteredSessionState() throws Exception {
+        TestResourcesHelper helper = sharedHelper(tempDir.resolve("build"), new MavenProject(), mock(MavenSession.class));
+
+        assertTrue(invokeFindSessionSharedServer(helper, tempDir.resolve("shared-settings")).isEmpty());
+    }
+
+    @Test
+    void findSessionSharedServerRejectsMismatchedSettingsPort() throws Exception {
+        Path serverSettingsDirectory = tempDir.resolve("shared-settings");
+        int registeredPort = 12345;
+        ServerUtils.writeServerSettings(serverSettingsDirectory, new ServerSettings(54321, "test-token", 30));
+
+        MavenProject project = new MavenProject();
+        project.setFile(tempDir.resolve("app1").resolve("pom.xml").toFile());
+        TestResourcesHelper helper = sharedHelper(tempDir.resolve("build"), project, mock(MavenSession.class));
+
+        assertTrue(invokeRegisterSharedServerUse(helper, serverSettingsDirectory, registeredPort, true));
+        assertTrue(invokeFindSessionSharedServer(helper, serverSettingsDirectory).isEmpty());
+    }
+
+    private static TestResourcesHelper sharedHelper(Path buildDirectory, MavenProject project, MavenSession mavenSession) {
+        return new TestResourcesHelper(
+            true,
+            true,
+            buildDirectory.toFile(),
+            null,
+            null,
+            null,
+            project,
+            mavenSession,
+            null,
+            null,
+            "4.0.0",
+            false,
+            null,
+            null,
+            false,
+            false,
+            Map.of()
+        );
+    }
+
     private static TestResourcesHelper helper(String builderId) {
         MavenExecutionRequest request = mock(MavenExecutionRequest.class);
         when(request.getBuilderId()).thenReturn(builderId);
@@ -375,6 +426,13 @@ class TestResourcesHelperTest {
         Method method = TestResourcesHelper.class.getDeclaredMethod("registerSharedServerUse", Path.class, int.class, boolean.class);
         method.setAccessible(true);
         return (boolean) method.invoke(helper, serverSettingsDirectory, port, serverStarted);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Optional<ServerSettings> invokeFindSessionSharedServer(TestResourcesHelper helper, Path serverSettingsDirectory) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod("findSessionSharedServer", Path.class);
+        method.setAccessible(true);
+        return (Optional<ServerSettings>) method.invoke(helper, serverSettingsDirectory);
     }
 
     private static void invokeDoStart(TestResourcesHelper helper, Path buildDirectory, Path serverSettingsDirectory, ServerFactory serverFactory) throws Exception {
