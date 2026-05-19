@@ -2,6 +2,9 @@ package io.micronaut.maven.testresources;
 
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
+import io.micronaut.testresources.buildtools.ServerFactory;
+import io.micronaut.testresources.buildtools.ServerSettings;
+import io.micronaut.testresources.buildtools.ServerUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.ResourceLock;
@@ -16,9 +19,11 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -214,6 +219,85 @@ class TestResourcesHelperTest {
         assertEquals(0, invokeKeepAliveDirectoryAttributes(null).length);
     }
 
+    @Test
+    void doStartReusesSessionSharedServerSettings() throws Exception {
+        Path serverSettingsDirectory = tempDir.resolve("shared-settings");
+        Path buildDirectory = tempDir.resolve("build");
+        Path testOutputDirectory = tempDir.resolve("test-output");
+        int port = 12345;
+        ServerSettings serverSettings = new ServerSettings(port, "test-token", 30);
+        ServerUtils.writeServerSettings(serverSettingsDirectory, serverSettings);
+
+        MavenProject project = new MavenProject();
+        project.setArtifactId("app1");
+        project.setFile(tempDir.resolve("app1").resolve("pom.xml").toFile());
+        Build build = new Build();
+        build.setTestOutputDirectory(testOutputDirectory.toString());
+        project.setBuild(build);
+
+        MavenExecutionRequest request = mock(MavenExecutionRequest.class);
+        when(request.getMultiModuleProjectDirectory()).thenReturn(tempDir.toFile());
+        MavenSession mavenSession = mock(MavenSession.class);
+        when(mavenSession.getRequest()).thenReturn(request);
+
+        TestResourcesHelper helper = new TestResourcesHelper(
+            true,
+            true,
+            buildDirectory.toFile(),
+            null,
+            null,
+            null,
+            project,
+            mavenSession,
+            null,
+            null,
+            "4.0.0",
+            false,
+            null,
+            null,
+            false,
+            false,
+            Map.of()
+        );
+
+        assertTrue(invokeRegisterSharedServerUse(helper, serverSettingsDirectory, port, true));
+
+        ServerFactory serverFactory = new ServerFactory() {
+            @Override
+            public void startServer(ServerUtils.ProcessParameters processParameters) {
+                throw new AssertionError("Existing session shared server should be reused");
+            }
+
+            @Override
+            public void waitFor(java.time.Duration timeout) {
+                throw new AssertionError("Existing session shared server should be reused");
+            }
+        };
+
+        String previousServerUri = System.getProperty("micronaut.test.resources.server.uri");
+        String previousAccessToken = System.getProperty("micronaut.test.resources.server.access.token");
+        String previousReadTimeout = System.getProperty("micronaut.test.resources.server.client.read.timeout");
+        try {
+            invokeDoStart(helper, buildDirectory, serverSettingsDirectory, serverFactory);
+
+            assertEquals(Integer.toString(port), Files.readString(buildDirectory.resolve("test-resources-port.txt")));
+            assertEquals("http://localhost:" + port, System.getProperty("micronaut.test.resources.server.uri"));
+            assertEquals("test-token", System.getProperty("micronaut.test.resources.server.access.token"));
+            assertEquals("30", System.getProperty("micronaut.test.resources.server.client.read.timeout"));
+
+            Properties properties = new Properties();
+            try (var input = Files.newInputStream(testOutputDirectory.resolve("application-test.properties"))) {
+                properties.load(input);
+            }
+            assertTrue(properties.getProperty("micronaut.test.resources.scope").startsWith("mvn-"));
+            assertTrue(properties.getProperty("micronaut.test.resources.scope").endsWith(".app1"));
+        } finally {
+            restoreSystemProperty("micronaut.test.resources.server.uri", previousServerUri);
+            restoreSystemProperty("micronaut.test.resources.server.access.token", previousAccessToken);
+            restoreSystemProperty("micronaut.test.resources.server.client.read.timeout", previousReadTimeout);
+        }
+    }
+
     private static TestResourcesHelper helper(String builderId) {
         MavenExecutionRequest request = mock(MavenExecutionRequest.class);
         when(request.getBuilderId()).thenReturn(builderId);
@@ -285,6 +369,25 @@ class TestResourcesHelperTest {
         Method method = TestResourcesHelper.class.getDeclaredMethod("keepAliveDirectoryAttributes", Path.class);
         method.setAccessible(true);
         return (FileAttribute<?>[]) method.invoke(null, directory);
+    }
+
+    private static boolean invokeRegisterSharedServerUse(TestResourcesHelper helper, Path serverSettingsDirectory, int port, boolean serverStarted) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod("registerSharedServerUse", Path.class, int.class, boolean.class);
+        method.setAccessible(true);
+        return (boolean) method.invoke(helper, serverSettingsDirectory, port, serverStarted);
+    }
+
+    private static void invokeDoStart(TestResourcesHelper helper, Path buildDirectory, Path serverSettingsDirectory, ServerFactory serverFactory) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod(
+            "doStart",
+            String.class,
+            Path.class,
+            Path.class,
+            ServerFactory.class,
+            AtomicBoolean.class
+        );
+        method.setAccessible(true);
+        method.invoke(helper, "new-token", buildDirectory, serverSettingsDirectory, serverFactory, new AtomicBoolean(false));
     }
 
     @FunctionalInterface
