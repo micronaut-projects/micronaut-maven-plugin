@@ -36,7 +36,7 @@ class DefaultServerFactoryTest {
     @Test
     void itPassesSystemProperties() {
         try (MockedStatic<MojoUtils> mojoUtils = mockStatic(MojoUtils.class)) {
-            var serverFactory = new DefaultServerFactory(null, null, null, null, null, false, false, Map.of("foo", "bar"));
+            var serverFactory = new DefaultServerFactory(null, null, null, null, null, false, false, true, Map.of("foo", "bar"));
             mojoUtils.when(() -> MojoUtils.findJavaExecutable(any(), any())).thenReturn("java");
             var cliArguments = serverFactory.computeCliArguments(createProcessParameters());
             assertTrue(cliArguments.contains("-Dfoo=bar"));
@@ -53,7 +53,7 @@ class DefaultServerFactoryTest {
         when(toolchainManager.getToolchainFromBuildContext("jdk", mavenSession)).thenReturn(toolchain);
         when(toolchain.findTool("java")).thenReturn(null); // Simulates misconfigured toolchain
 
-        var serverFactory = new DefaultServerFactory(null, toolchainManager, mavenSession, null, null, false, false, Map.of());
+        var serverFactory = new DefaultServerFactory(null, toolchainManager, mavenSession, null, null, false, false, true, Map.of());
 
         // This should not throw IllegalStateException anymore
         assertDoesNotThrow(() -> {
@@ -73,7 +73,7 @@ class DefaultServerFactoryTest {
 
         try (MockedStatic<MojoUtils> mojoUtils = mockStatic(MojoUtils.class)) {
             mojoUtils.when(() -> MojoUtils.findJavaExecutable(any(), any())).thenReturn(System.getProperty("java.home") + "/bin/java");
-            var serverFactory = new DefaultServerFactory(log, null, null, serverStarted, "4.0.0", false, false, Map.of());
+            var serverFactory = new DefaultServerFactory(log, null, null, serverStarted, "4.0.0", false, false, true, Map.of());
 
             serverFactory.startServer(createProcessParameters(SleepingServer.class.getName()));
 
@@ -97,6 +97,26 @@ class DefaultServerFactoryTest {
         assertTrue(process.destroyCalled);
         assertTrue(process.destroyForciblyCalled);
         assertTrue(trackedProcesses().isEmpty());
+    }
+
+    @Test
+    void itCanStartKeepAliveProcessWithoutShutdownHook() throws Exception {
+        AtomicBoolean serverStarted = new AtomicBoolean(false);
+        Log log = mock(Log.class);
+
+        try (MockedStatic<MojoUtils> mojoUtils = mockStatic(MojoUtils.class)) {
+            mojoUtils.when(() -> MojoUtils.findJavaExecutable(any(), any())).thenReturn(System.getProperty("java.home") + "/bin/java");
+            var serverFactory = new DefaultServerFactory(log, null, null, serverStarted, "4.0.0", false, false, false, Map.of());
+
+            serverFactory.startServer(createProcessParameters(SleepingServer.class.getName()));
+
+            assertTrue(serverStarted.get());
+            assertFalse(trackedProcesses().isEmpty());
+
+            DefaultServerFactory.stopAllServers();
+
+            assertTrue(trackedProcesses().isEmpty());
+        }
     }
 
     @Test

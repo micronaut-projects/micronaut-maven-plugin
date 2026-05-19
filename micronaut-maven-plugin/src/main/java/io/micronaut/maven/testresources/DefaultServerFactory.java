@@ -51,6 +51,7 @@ public class DefaultServerFactory implements ServerFactory {
     private final String testResourcesVersion;
     private final boolean debugServer;
     private final boolean foreground;
+    private final boolean stopOnShutdown;
     private final Map<String, String> testResourcesSystemProperties;
 
     private Process process;
@@ -61,7 +62,9 @@ public class DefaultServerFactory implements ServerFactory {
                                 AtomicBoolean serverStarted,
                                 String testResourcesVersion,
                                 boolean debugServer,
-                                boolean foreground, final Map<String, String> testResourcesSystemProperties) {
+                                boolean foreground,
+                                boolean stopOnShutdown,
+                                final Map<String, String> testResourcesSystemProperties) {
         this.log = log;
         this.toolchainManager = toolchainManager;
         this.mavenSession = mavenSession;
@@ -69,6 +72,7 @@ public class DefaultServerFactory implements ServerFactory {
         this.testResourcesVersion = testResourcesVersion;
         this.debugServer = debugServer;
         this.foreground = foreground;
+        this.stopOnShutdown = stopOnShutdown;
         this.testResourcesSystemProperties = testResourcesSystemProperties;
     }
 
@@ -86,7 +90,9 @@ public class DefaultServerFactory implements ServerFactory {
             process = builder.inheritIO().start();
             PROCESSES.add(process);
             process.onExit().thenRun(() -> PROCESSES.remove(process));
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> stopServer(process)));
+            if (stopOnShutdown) {
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> stopServer(process)));
+            }
             if (foreground) {
                 log.info("Test Resources Service started in foreground. Press Ctrl+C to stop.");
                 process.waitFor();

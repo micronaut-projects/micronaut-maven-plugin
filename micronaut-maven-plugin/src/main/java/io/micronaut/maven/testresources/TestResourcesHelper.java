@@ -192,7 +192,7 @@ public class TestResourcesHelper {
         Path buildDir = buildDirectory.toPath();
         Path serverSettingsDirectory = getServerSettingsDirectory();
         var serverStarted = new AtomicBoolean(false);
-        var serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion, debugServer, foreground, testResourcesSystemProperties);
+        var serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion, debugServer, foreground, !isKeepAlive(), testResourcesSystemProperties);
         if (shared) {
             try (var ignored = sharedServerLock(serverSettingsDirectory)) {
                 doStart(accessToken, buildDir, serverSettingsDirectory, serverFactory, serverStarted);
