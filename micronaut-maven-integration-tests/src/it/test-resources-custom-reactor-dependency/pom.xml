@@ -19,6 +19,7 @@
         <micronaut.runtime>netty</micronaut.runtime>
         <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
         <micronaut.test.resources.version>@micronaut.test.resources.version@</micronaut.test.resources.version>
+        <micronaut.testresources.version>${micronaut.test.resources.version}</micronaut.testresources.version>
         <micronaut.test.resources.enabled>true</micronaut.test.resources.enabled>
     </properties>
 
