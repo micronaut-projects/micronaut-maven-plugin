@@ -26,6 +26,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -39,6 +41,8 @@ import static io.micronaut.maven.core.MojoUtils.findJavaExecutable;
  * @since 4.0.0
  */
 public class DefaultServerFactory implements ServerFactory {
+
+    private static final Set<Process> PROCESSES = ConcurrentHashMap.newKeySet();
 
     private final Log log;
     private final ToolchainManager toolchainManager;
@@ -80,6 +84,9 @@ public class DefaultServerFactory implements ServerFactory {
         var builder = new ProcessBuilder(cli);
         try {
             process = builder.inheritIO().start();
+            PROCESSES.add(process);
+            process.onExit().thenRun(() -> PROCESSES.remove(process));
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> stopServer(process)));
             if (foreground) {
                 log.info("Test Resources Service started in foreground. Press Ctrl+C to stop.");
                 process.waitFor();
@@ -146,6 +153,25 @@ public class DefaultServerFactory implements ServerFactory {
     public void waitFor(Duration duration) throws InterruptedException {
         if (process != null) {
             process.waitFor(duration.toMillis(), TimeUnit.MILLISECONDS);
+        }
+    }
+
+    static void stopAllServers() {
+        PROCESSES.forEach(DefaultServerFactory::stopServer);
+    }
+
+    private static void stopServer(Process process) {
+        PROCESSES.remove(process);
+        if (process.isAlive()) {
+            process.destroy();
+            try {
+                if (!process.waitFor(10, TimeUnit.SECONDS)) {
+                    process.destroyForcibly();
+                }
+            } catch (InterruptedException e) {
+                process.destroyForcibly();
+                Thread.currentThread().interrupt();
+            }
         }
     }
 }
