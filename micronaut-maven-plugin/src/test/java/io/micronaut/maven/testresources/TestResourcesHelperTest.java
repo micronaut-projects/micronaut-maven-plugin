@@ -225,7 +225,7 @@ class TestResourcesHelperTest {
         Path buildDirectory = tempDir.resolve("build");
         Path testOutputDirectory = tempDir.resolve("test-output");
         int port = 12345;
-        ServerSettings serverSettings = new ServerSettings(port, "test-token", 30);
+        ServerSettings serverSettings = new ServerSettings(port, "test-token", 30, null);
         ServerUtils.writeServerSettings(serverSettingsDirectory, serverSettings);
 
         MavenProject project = new MavenProject();
