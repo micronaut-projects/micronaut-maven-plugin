@@ -91,8 +91,11 @@ jobs:
           git remote set-url origin "git@github.com:${GITHUB_REPOSITORY}.git"
           echo "Checking out ${{ github.event.release.target_commitish }}"
           git checkout ${{ github.event.release.target_commitish }}
-          git tag -d v${{ steps.release_version.outputs.release_version }}
-          git push origin :refs/tags/v${{ steps.release_version.outputs.release_version }}
+          # The release event is created from an existing tag. Keep the remote tag in
+          # place so GitHub does not detach the published release and emit another
+          # release event. Delete only the local copy so Maven can recreate it on the
+          # release commit, then force-update the remote tag after release:prepare.
+          git tag -d v${{ steps.release_version.outputs.release_version }} || true
 
       - name: "❓ Figure out next version"
         id: next_version
@@ -102,8 +105,23 @@ jobs:
 
       - name: "⚙️ Prepare release"
         run: |
-          ./mvnw --batch-mode release:prepare -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }} -Darguments="-Dinvoker.skip=true"
+          ./mvnw --batch-mode release:prepare -DpushChanges=false -DreleaseVersion=${{ steps.release_version.outputs.release_version }} -Dtag=v${{ steps.release_version.outputs.release_version }} -DdevelopmentVersion=${{ steps.next_version.outputs.next_version }} -Darguments="-Dinvoker.skip=true"
+          git push origin HEAD:${{ github.event.release.target_commitish }}
+          git push origin v${{ steps.release_version.outputs.release_version }} --force
           cp -R target/site/apidocs/* micronaut-maven-plugin/target/site/apidocs
+
+      - name: "🚪 Close release after updating the tag"
+        run: |
+          release_url="$(jq -er '.release.url' "$GITHUB_EVENT_PATH")"
+          echo "$release_url"
+          curl --fail-with-body --silent --show-error \
+            --request PATCH \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Content-Type: application/json" \
+            "$release_url" \
+            --data '{"draft": false}'
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: "📄 Publish docs to Github Pages"
         uses: micronaut-projects/github-pages-deploy-action@76d63aafbab7108d74e83be4e5b3b0501382e829
@@ -121,18 +139,6 @@ jobs:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSWORD }}
-
-      - name: "🚪 Close release"
-        if: success()
-        run: |
-          release_url="$(jq -er '.release.url' "$GITHUB_EVENT_PATH")"
-          echo "$release_url"
-          curl --fail-with-body --silent --show-error \
-            --request PATCH \
-            -H "Authorization: Bearer ${{ secrets.GH_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            "$release_url" \
-            --data '{"draft": false}'
 
       - name: "↩️ Rollback release"
         if: failure()
