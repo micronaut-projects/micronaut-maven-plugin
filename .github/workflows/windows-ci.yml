@@ -44,6 +44,7 @@ jobs:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: true
       - name: Windows wrapper preflight
         shell: cmd
         run: .github\scripts\windows-preflight.cmd
@@ -53,6 +54,7 @@ jobs:
           .\mvnw install -Dinvoker.skip=true && .\mvnw verify
         env:
           TESTCONTAINERS_RYUK_DISABLED: true
+          NATIVE_IMAGE_OPTIONS: "-H:+ReportExceptionStackTraces"
           DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
           DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
           DEVELOCITY_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
