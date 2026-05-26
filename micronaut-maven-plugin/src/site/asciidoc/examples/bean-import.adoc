@@ -1,4 +1,4 @@
-=== Importing beans from dependencies
+= Importing beans from dependencies
 
 When project dependencies contain beans but don't contain the Micronaut bean definitions the `@Import` annotation can
 be used to import those beans and allow them to be injected in the Micronaut application context. Since this annotation

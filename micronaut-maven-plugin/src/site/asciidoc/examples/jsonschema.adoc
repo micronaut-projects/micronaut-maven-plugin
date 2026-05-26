@@ -1,4 +1,4 @@
-=== Integration with Micronaut JSON Schema Generator
+= Integration with Micronaut JSON Schema Generator
 
 This plugin integrates with https://micronaut-projects.github.io/micronaut-json-schema/latest/guide/[Micronaut JSON Schema] to provide support for generating beans from https://json-schema.org[JSON Schema].
 

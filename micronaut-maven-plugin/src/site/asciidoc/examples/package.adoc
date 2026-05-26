@@ -1,4 +1,4 @@
-=== Packaging an application
+= Packaging an application
 
 This plugin supports different `<packaging>` types:
 
@@ -16,7 +16,7 @@ generated from https://micronaut.io/launch/[Micronaut Launch] have the packaging
 
 :toc:
 
-=== Packaging the application in a fat JAR
+== Packaging the application in a fat JAR
 
 ----
 $ mvn package
@@ -27,7 +27,7 @@ configuration is defined in the `io.micronaut:micronaut-parent` POM, and the def
 to customize how to produce the JAR file, refer to the
 https://maven.apache.org/plugins/maven-shade-plugin/[Maven Shade Plugin documentation].
 
-==== Classpath-sensitive libraries and shaded JARs
+=== Classpath-sensitive libraries and shaded JARs
 
 Shaded JARs are convenient for single-file deployments, but they are not a good fit for every runtime. Libraries that
 expect to discover resources, languages, or services from separate classpath entries can fail once everything is merged
@@ -125,7 +125,7 @@ Truffle's multi-release metadata. To verify the packaging, inspect `META-INF/MAN
 confirm it contains `Multi-Release: true`, then start the application with the same JDK used in production. Do not
 disable Truffle's multi-release validation check as a packaging fix.
 
-=== Generating GraalVM native images
+== Generating GraalVM native images
 
 ----
 $ mvn package -Dpackaging=native-image
@@ -162,7 +162,7 @@ For GraalVM/Java 25 or newer native images that need Netty's shared arena suppor
 `-H:+SharedArenaSupport` through the same upstream native plugin `<buildArgs>` configuration. Micronaut Maven Plugin
 does not rewrite the delegated `native-image` packaging configuration.
 
-==== Windows users
+=== Windows users
 
 Sometimes, depending on how many classes are in the classpath you may see an error `The command line is too long` when
 building a native-image. This is a https://graalvm.github.io/native-build-tools/latest/maven-plugin.html#long_classpath_and_shading_support[known issue]
@@ -211,7 +211,7 @@ mvn package -Dpackaging=native-image # <2>
 <1> Create the shaded runnable jar for the application.
 <2> Use the shaded runnable jar to build the native image.
 
-=== Building daemonless native executable container images
+== Building daemonless native executable container images
 
 ----
 $ mvn package -Dpackaging=native-image -Dmicronaut.native-image.jib.enabled=true
@@ -263,7 +263,7 @@ executable from another host OS. If you have intentionally cross-compiled a comp
 
 Lambda and Oracle Function native images keep their existing runtime-specific `docker-native` packaging paths.
 
-=== Building JVM-based Docker images
+== Building JVM-based Docker images
 
 ----
 $ mvn package -Dpackaging=docker
@@ -320,7 +320,7 @@ For example, you can define the `jib-maven-plugin` in your POM as follows to pas
 </plugin>
 ----
 
-=== Delegating packaging to Eclipse JKube
+== Delegating packaging to Eclipse JKube
 
 ----
 $ mvn package -Dpackaging=k8s
@@ -372,7 +372,7 @@ and package with:
 mvn package -Dpackaging=openshift
 ----
 
-=== Bringing your own `Dockerfile`
+== Bringing your own `Dockerfile`
 
 ----
 $ mvn package -Dpackaging=docker
@@ -397,7 +397,7 @@ COPY dependency/* /home/app/libs/
 ENTRYPOINT ["java", "-cp", "/home/app/libs/*:/home/app/classes/", "com.example.app.Application"]
 ----
 
-=== Building GraalVM-based Docker images
+== Building GraalVM-based Docker images
 
 ----
 $ mvn package -Dpackaging=docker-native
@@ -441,7 +441,7 @@ $ mvn package -Dpackaging=docker-native \
 Prefer passing credential-bearing proxy values from the command line or CI secrets rather than committing them to
 the project POM.
 
-==== Bringing your own native `Dockerfile`
+=== Bringing your own native `Dockerfile`
 
 ----
 $ mvn package -Dpackaging=docker-native
@@ -599,7 +599,7 @@ Or from the command line:
 $ mvn package -Dpackaging=docker-native -Dmicronaut.native-image.args="--verbose"
 ----
 
-=== Building CRaC-based Docker images
+== Building CRaC-based Docker images
 
 **Warning**: The Micronaut CRaC module is in experimental stages. Use at your own risk!
 
@@ -630,7 +630,7 @@ https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#configu
 * The base image, using `<from><image>`.
 * The image name/tags that will be used for building, using either `<to><image>` and/or `<to><tags>`.
 
-==== Checking an application is ready
+=== Checking an application is ready
 
 As part of the checkpointing process, the application will be tested until it is ready to receive requests.
 This is by default done by executing the command `curl --output /dev/null --silent --head http://localhost:8080`, however you can override this by setting the `crac.readiness` property in your build.
@@ -643,7 +643,7 @@ This is by default done by executing the command `curl --output /dev/null --sile
 </properties>
 ----
 
-==== Customizing warmup
+=== Customizing warmup
 
 The default warmup script simply makes a request to port 8080 of the application.
 However, you can specify your own by placing a Bash script named `warmup.sh` in the root project folder.
@@ -659,7 +659,7 @@ for run in {1..10}; do
 done
 ----
 
-==== Customizing the JDK
+=== Customizing the JDK
 
 By default, the CRaC JDK used to build the image will be for the current system architecture and Java 25.
 These can be overridden by passing properties to the build:
