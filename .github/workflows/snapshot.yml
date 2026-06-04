@@ -133,6 +133,7 @@ jobs:
           check_retries: 'true'
 
   snapshot:
+    name: "snapshot"
     needs:
       - workflow-hardening
     runs-on: ubuntu-latest
