@@ -24,6 +24,8 @@ jobs:
   build:
     name: "build"
     runs-on: windows-latest
+    env:
+      NATIVE_IMAGE_OPTIONS: "-H:+ReportExceptionStackTraces"
     strategy:
       matrix:
         java: ['25']
@@ -44,6 +46,7 @@ jobs:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: true
       - name: Windows wrapper preflight
         shell: cmd
         run: .github\scripts\windows-preflight.cmd

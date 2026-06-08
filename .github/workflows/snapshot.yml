@@ -46,6 +46,7 @@ jobs:
       DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
       DEVELOCITY_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
       GRAALVM_QUICK_BUILD: true
+      NATIVE_IMAGE_OPTIONS: "-H:+ReportExceptionStackTraces"
     steps:
       - name: "📥 Checkout repository"
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -117,6 +118,7 @@ jobs:
           distribution: 'graalvm'
           java-version: '25'
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: true
 
       - name: "🐳 Run Linux docker-native preflight"
         if: steps.preflight_scope.outputs.should_run == 'true'
@@ -153,6 +155,7 @@ jobs:
       OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_CLI_KEY_CONTENT }}
       OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
       GRAALVM_QUICK_BUILD: true
+      NATIVE_IMAGE_OPTIONS: "-H:+ReportExceptionStackTraces"
     steps:
       - name: "🗑 Remove system JDKs"
         run: |
@@ -198,6 +201,7 @@ jobs:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: true
 
       - name: "⏬ Eagerly pull Docker images"
         run: |
@@ -299,6 +303,7 @@ jobs:
       DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
       DEVELOCITY_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
       GRAALVM_QUICK_BUILD: true
+      NATIVE_IMAGE_OPTIONS: "-H:+ReportExceptionStackTraces"
     steps:
       - name: "🗑 Remove system JDKs"
         run: |
@@ -332,6 +337,7 @@ jobs:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: true
 
       - name: "⏬ Eagerly pull Docker images"
         run: |
