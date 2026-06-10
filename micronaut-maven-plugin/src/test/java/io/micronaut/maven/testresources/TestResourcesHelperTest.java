@@ -11,12 +11,15 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.apache.maven.model.Build;
 import org.apache.maven.project.MavenProject;
+import com.sun.net.httpserver.HttpServer;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -310,8 +313,9 @@ class TestResourcesHelperTest {
         Path serverSettingsDirectory = tempDir.resolve("standalone-settings");
         Path buildDirectory = tempDir.resolve("build");
 
-        try (ServerSocket server = new ServerSocket(0)) {
-            int port = server.getLocalPort();
+        HttpServer server = startReusableTestResourcesServer("standalone-token");
+        try {
+            int port = server.getAddress().getPort();
             ServerUtils.writeServerSettings(serverSettingsDirectory, new ServerSettings(port, "standalone-token", 45, 60));
             TestResourcesHelper helper = helperWithDependencyResolution(buildDirectory, null);
             AtomicBoolean serverStarted = new AtomicBoolean(false);
@@ -344,6 +348,21 @@ class TestResourcesHelperTest {
                 restoreSystemProperty("micronaut.test.resources.server.access.token", previousAccessToken);
                 restoreSystemProperty("micronaut.test.resources.server.client.read.timeout", previousReadTimeout);
             }
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void findReachableRecordedStandaloneServerRejectsRawListener() throws Exception {
+        Path serverSettingsDirectory = tempDir.resolve("standalone-settings");
+
+        try (ServerSocket server = new ServerSocket(0)) {
+            int port = server.getLocalPort();
+            ServerUtils.writeServerSettings(serverSettingsDirectory, new ServerSettings(port, "standalone-token", 45, 60));
+            TestResourcesHelper helper = helperWithDependencyResolution(tempDir.resolve("build"), null);
+
+            assertTrue(invokeFindReachableRecordedServer(helper, serverSettingsDirectory).isEmpty());
         }
     }
 
@@ -471,6 +490,21 @@ class TestResourcesHelperTest {
         }
     }
 
+    private static HttpServer startReusableTestResourcesServer(String accessToken) throws IOException {
+        HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+        server.createContext("/requirements/entries", exchange -> {
+            byte[] body = "[]".getBytes(StandardCharsets.UTF_8);
+            int status = accessToken.equals(exchange.getRequestHeaders().getFirst("Access-Token")) ? 200 : 401;
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(status, body.length);
+            try (var output = exchange.getResponseBody()) {
+                output.write(body);
+            }
+        });
+        server.start();
+        return server;
+    }
+
     private static Path invokeGetKeepAliveFile(TestResourcesHelper helper) throws Exception {
         Method method = TestResourcesHelper.class.getDeclaredMethod("getKeepAliveFile");
         method.setAccessible(true);
@@ -543,6 +577,13 @@ class TestResourcesHelperTest {
     @SuppressWarnings("unchecked")
     private static Optional<ServerSettings> invokeFindSessionSharedServer(TestResourcesHelper helper, Path serverSettingsDirectory) throws Exception {
         Method method = TestResourcesHelper.class.getDeclaredMethod("findSessionSharedServer", Path.class);
+        method.setAccessible(true);
+        return (Optional<ServerSettings>) method.invoke(helper, serverSettingsDirectory);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Optional<ServerSettings> invokeFindReachableRecordedServer(TestResourcesHelper helper, Path serverSettingsDirectory) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod("findReachableRecordedServer", Path.class);
         method.setAccessible(true);
         return (Optional<ServerSettings>) method.invoke(helper, serverSettingsDirectory);
     }
