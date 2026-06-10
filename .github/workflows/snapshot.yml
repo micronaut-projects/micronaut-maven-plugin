@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "📥 Checkout repository"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: "🛡 Verify workflow pinning"
         run: bash .github/scripts/check-workflow-pinning.sh
       - name: "🛡 Verify Maven wrapper checksum"
@@ -49,7 +49,7 @@ jobs:
       NATIVE_IMAGE_OPTIONS: "-H:+ReportExceptionStackTraces"
     steps:
       - name: "📥 Checkout repository"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
 
@@ -172,7 +172,7 @@ jobs:
           df -h
 
       - name: "📥 Checkout repository"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
 
@@ -279,7 +279,7 @@ jobs:
       shards: ${{ steps.shards.outputs.shards }}
     steps:
       - name: "📥 Checkout repository"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: "🧩 Generate invoker test shards"
         id: shards
         run: python3 .github/scripts/shard-invoker-tests.py --github-output "$GITHUB_OUTPUT"
@@ -320,7 +320,7 @@ jobs:
           df -h
 
       - name: "📥 Checkout repository"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
 
@@ -367,7 +367,7 @@ jobs:
       cancel-in-progress: true
     steps:
       - name: "📥 Checkout repository"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 1
 
