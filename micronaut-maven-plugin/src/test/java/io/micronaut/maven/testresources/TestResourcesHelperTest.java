@@ -318,6 +318,7 @@ class TestResourcesHelperTest {
             int port = server.getAddress().getPort();
             ServerUtils.writeServerSettings(serverSettingsDirectory, new ServerSettings(port, "standalone-token", 45, 60));
             TestResourcesHelper helper = helperWithDependencyResolution(buildDirectory, null);
+            assertTrue(invokeFindReachableRecordedServer(helper, serverSettingsDirectory).isPresent());
             AtomicBoolean serverStarted = new AtomicBoolean(false);
             ServerFactory serverFactory = new ServerFactory() {
                 @Override

@@ -264,9 +264,6 @@ public class TestResourcesHelper {
     }
 
     private boolean isReusableTestResourcesServer(ServerSettings serverSettings) {
-        if (!isServerStarted(serverSettings.getPort())) {
-            return false;
-        }
         HttpURLConnection connection = null;
         try {
             var url = URI.create("http://localhost:" + serverSettings.getPort() + TEST_RESOURCES_REQUIREMENTS_ENTRIES_PATH).toURL();
