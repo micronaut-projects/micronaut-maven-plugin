@@ -367,6 +367,62 @@ class TestResourcesHelperTest {
     }
 
     @Test
+    void findReachableRecordedStandaloneServerRejectsWrongToken() throws Exception {
+        Path serverSettingsDirectory = tempDir.resolve("standalone-settings");
+        HttpServer server = startReusableTestResourcesServer("expected-token");
+        try {
+            ServerUtils.writeServerSettings(serverSettingsDirectory, new ServerSettings(server.getAddress().getPort(), "recorded-token", 45, 60));
+            TestResourcesHelper helper = helperWithDependencyResolution(tempDir.resolve("build"), null);
+
+            assertTrue(invokeFindReachableRecordedServer(helper, serverSettingsDirectory).isEmpty());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void findReachableRecordedStandaloneServerRejectsUnexpectedResponseShape() throws Exception {
+        Path serverSettingsDirectory = tempDir.resolve("standalone-settings");
+        HttpServer server = startTestResourcesProbeServer("standalone-token", 200, "application/json", "{}");
+        try {
+            ServerUtils.writeServerSettings(serverSettingsDirectory, new ServerSettings(server.getAddress().getPort(), "standalone-token", 45, 60));
+            TestResourcesHelper helper = helperWithDependencyResolution(tempDir.resolve("build"), null);
+
+            assertTrue(invokeFindReachableRecordedServer(helper, serverSettingsDirectory).isEmpty());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void findReachableRecordedStandaloneServerRejectsUnexpectedContentType() throws Exception {
+        Path serverSettingsDirectory = tempDir.resolve("standalone-settings");
+        HttpServer server = startTestResourcesProbeServer("standalone-token", 200, "text/plain", "[]");
+        try {
+            ServerUtils.writeServerSettings(serverSettingsDirectory, new ServerSettings(server.getAddress().getPort(), "standalone-token", 45, 60));
+            TestResourcesHelper helper = helperWithDependencyResolution(tempDir.resolve("build"), null);
+
+            assertTrue(invokeFindReachableRecordedServer(helper, serverSettingsDirectory).isEmpty());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void findReachableRecordedStandaloneServerHonorsExplicitPort() throws Exception {
+        Path serverSettingsDirectory = tempDir.resolve("standalone-settings");
+        HttpServer server = startReusableTestResourcesServer("standalone-token");
+        try {
+            ServerUtils.writeServerSettings(serverSettingsDirectory, new ServerSettings(server.getAddress().getPort(), "standalone-token", 45, 60));
+            TestResourcesHelper helper = helperWithDependencyResolution(tempDir.resolve("build"), availableTcpPort());
+
+            assertTrue(invokeFindReachableRecordedServer(helper, serverSettingsDirectory).isEmpty());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
     void doStartFallsBackWhenRecordedStandaloneServerIsStale() throws Exception {
         Path serverSettingsDirectory = tempDir.resolve("standalone-settings");
         Path buildDirectory = tempDir.resolve("build");
@@ -491,11 +547,15 @@ class TestResourcesHelperTest {
     }
 
     private static HttpServer startReusableTestResourcesServer(String accessToken) throws IOException {
+        return startTestResourcesProbeServer(accessToken, 200, "application/json; charset=utf-8", "[]");
+    }
+
+    private static HttpServer startTestResourcesProbeServer(String accessToken, int successStatus, String contentType, String responseBody) throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
         server.createContext("/requirements/entries", exchange -> {
-            byte[] body = "[]".getBytes(StandardCharsets.UTF_8);
-            int status = accessToken.equals(exchange.getRequestHeaders().getFirst("Access-Token")) ? 200 : 401;
-            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
+            int status = accessToken.equals(exchange.getRequestHeaders().getFirst("Access-Token")) ? successStatus : 401;
+            exchange.getResponseHeaders().set("Content-Type", contentType);
             exchange.sendResponseHeaders(status, body.length);
             try (var output = exchange.getResponseBody()) {
                 output.write(body);

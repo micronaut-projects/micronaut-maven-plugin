@@ -40,7 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -269,7 +269,7 @@ public class TestResourcesHelper {
         }
         HttpURLConnection connection = null;
         try {
-            URL url = new URL("http://localhost:" + serverSettings.getPort() + TEST_RESOURCES_REQUIREMENTS_ENTRIES_PATH);
+            var url = URI.create("http://localhost:" + serverSettings.getPort() + TEST_RESOURCES_REQUIREMENTS_ENTRIES_PATH).toURL();
             connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(SERVER_PROBE_TIMEOUT_MS);
             connection.setReadTimeout(SERVER_PROBE_TIMEOUT_MS);
@@ -285,7 +285,7 @@ public class TestResourcesHelper {
             try (InputStream input = connection.getInputStream()) {
                 return isJsonStringArray(new String(input.readAllBytes(), StandardCharsets.UTF_8));
             }
-        } catch (IOException e) {
+        } catch (IOException _) {
             return false;
         } finally {
             if (connection != null) {
