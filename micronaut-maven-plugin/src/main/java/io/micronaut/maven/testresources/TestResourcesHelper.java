@@ -217,25 +217,19 @@ public class TestResourcesHelper {
             setSystemProperties(serverSettings);
             return;
         }
+        Optional<ServerSettings> existingServerSettings = findReachableRecordedServer(serverSettingsDirectory);
+        if (existingServerSettings.isPresent()) {
+            useServerSettings(buildDir, serverSettingsDirectory, existingServerSettings.get(), false);
+            return;
+        }
         Optional<ServerSettings> optionalServerSettings = startOrConnectToExistingServer(accessToken, buildDir, serverSettingsDirectory, serverFactory);
         if (optionalServerSettings.isEmpty()) {
             return;
         }
         ServerSettings serverSettings = optionalServerSettings.get();
-        writePortFile(buildDir.resolve(PORT_FILE_NAME), serverSettings.getPort());
-        boolean sessionOwnedSharedServer = shared && registerSharedServerUse(serverSettingsDirectory, serverSettings.getPort(), serverStarted.get());
-        if (shared) {
-            logSharedMode(serverSettingsDirectory);
-            writeSharedScopeConfiguration();
-        }
-        setSystemProperties(serverSettings);
-        if (serverStarted.get()) {
-            if (isKeepAlive()) {
-                log.info("Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:" + StopTestResourcesServerMojo.NAME + "'");
-            }
-        } else if (!sessionOwnedSharedServer) {
-            // A server was already listening before this build started, so leave it running.
-            createKeepAliveFile();
+        useServerSettings(buildDir, serverSettingsDirectory, serverSettings, serverStarted.get());
+        if (serverStarted.get() && isKeepAlive()) {
+            log.info("Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:" + StopTestResourcesServerMojo.NAME + "'");
         }
     }
 
@@ -254,6 +248,26 @@ public class TestResourcesHelper {
             }
             return ServerUtils.readServerSettings(serverSettingsDirectory)
                 .filter(settings -> settings.getPort() == sharedServerState.port);
+        }
+    }
+
+    private Optional<ServerSettings> findReachableRecordedServer(Path serverSettingsDirectory) {
+        return ServerUtils.readServerSettings(serverSettingsDirectory)
+            .filter(serverSettings -> explicitPort == null || serverSettings.getPort() == explicitPort)
+            .filter(serverSettings -> isServerStarted(serverSettings.getPort()));
+    }
+
+    private void useServerSettings(Path buildDir, Path serverSettingsDirectory, ServerSettings serverSettings, boolean serverStarted) throws IOException {
+        writePortFile(buildDir.resolve(PORT_FILE_NAME), serverSettings.getPort());
+        boolean sessionOwnedSharedServer = shared && registerSharedServerUse(serverSettingsDirectory, serverSettings.getPort(), serverStarted);
+        if (shared) {
+            logSharedMode(serverSettingsDirectory);
+            writeSharedScopeConfiguration();
+        }
+        setSystemProperties(serverSettings);
+        if (!serverStarted && !sessionOwnedSharedServer) {
+            // A server was already listening before this build started, so leave it running.
+            createKeepAliveFile();
         }
     }
 
