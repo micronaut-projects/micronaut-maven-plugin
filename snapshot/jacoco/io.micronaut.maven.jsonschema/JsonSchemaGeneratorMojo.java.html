@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JsonSchemaGeneratorMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.jsonschema</a> &gt; <span class="el_source">JsonSchemaGeneratorMojo.java</span></div><h1>JsonSchemaGeneratorMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2021 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.jsonschema;
+
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.maven.AbstractMicronautMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.util.List;
+
+import io.micronaut.jsonschema.generator.SourceGenerator;
+import io.micronaut.jsonschema.generator.utils.SourceGeneratorConfigBuilder;
+import io.micronaut.jsonschema.generator.loaders.UrlLoader;
+
+import javax.inject.Inject;
+
+/**
+ * Json Schema generator mojo provides the parameters for all generators and the invoker logic.
+ * &lt;p&gt;
+ * Expects single or multiple schema files as input via a URL, file, or directory;
+ * and generates all required source code representing the validation form in the targeted language.
+ * &lt;/p&gt;
+ */
+@Mojo(name = JsonSchemaGeneratorMojo.MOJO_NAME, defaultPhase = LifecyclePhase.GENERATE_SOURCES)
+public class JsonSchemaGeneratorMojo extends AbstractMicronautMojo {
+    public static final String MOJO_NAME = &quot;generate-jsonschema&quot;;
+
+    static final String MICRONAUT_SCHEMA_PREFIX = &quot;micronaut.jsonschema.generator&quot;;
+    static final String IO_MICRONAUT_SCHEMA_PREFIX = &quot;io.micronaut.jsonschema&quot;;
+
+    /**
+     * The URL to an input resource, pointing to a JSON schema.
+     */
+    @Parameter(property = MICRONAUT_SCHEMA_PREFIX + &quot;.input-url&quot;)
+    private String inputURL;
+
+    /**
+     * The input file containing the schema.
+     * This file will be used as a source for generating or processing schemas.
+     */
+    @Parameter(property = MICRONAUT_SCHEMA_PREFIX + &quot;.input-file&quot;)
+    private File inputFile;
+
+    /**
+     * The directory containing multiple input files or schema files.
+     * The Mojo will process all schema files in this directory.
+     */
+    @Parameter(property = MICRONAUT_SCHEMA_PREFIX + &quot;.input-directory&quot;)
+    private File inputDirectory;
+
+    /**
+     * The programming language to be used for schema generation. Default is &quot;JAVA&quot;.
+     * Other values may be supported depending on the version of micronaut-sourcegen module.
+     */
+    @Parameter(property = MICRONAUT_SCHEMA_PREFIX + &quot;.language&quot;, defaultValue = &quot;JAVA&quot;)
+    private String language;
+
+    /**
+     * The output directory where generated sources or files will be placed.
+     * By default, this points to `${project.build.directory}/generated-sources/jsonschema`.
+     */
+    @Parameter(defaultValue = &quot;${project.build.directory}/generated-sources/jsonschema&quot;)
+    private File outputDirectory;
+
+    /**
+     * The package name for the generated classes or schemas.
+     * Default value is specified as &quot;io.micronaut.jsonschema&quot;.
+     */
+    @Parameter(property = MICRONAUT_SCHEMA_PREFIX + &quot;.output-package-name&quot;, defaultValue = IO_MICRONAUT_SCHEMA_PREFIX)
+    private String outputPackageName;
+
+    /**
+     * The name of the output file where the generated schema or data will be saved only if there is a single output source.
+     */
+    @Parameter(property = MICRONAUT_SCHEMA_PREFIX + &quot;.output-file-name&quot;)
+    private String outputFileName;
+
+    /**
+     * A list of accepted URL patterns. Used to filter or validate input resources
+     * based on their URL. URLs matching at least one pattern will be accepted.
+     * Default value is &quot;^https://.* /.*.json&quot;.
+     */
+    @Parameter(property = MICRONAUT_SCHEMA_PREFIX + &quot;.accepted-url-patterns&quot;)
+    private List&lt;String&gt; acceptedUrlPatterns;
+
+    /**
+     * The property that defines if this mojo is used.
+     */
+    @Parameter(property = MICRONAUT_SCHEMA_PREFIX + &quot;.enabled&quot;, defaultValue = StringUtils.FALSE)
+    private boolean enabled;
+
+    private final MavenProject project;
+
+    @SuppressWarnings(&quot;CdiInjectionPointsInspection&quot;)
+    @Inject
+<span class="nc" id="L116">    public JsonSchemaGeneratorMojo(final MavenProject project) {</span>
+<span class="nc" id="L117">        this.project = project;</span>
+<span class="nc" id="L118">    }</span>
+
+    @Override
+    public void execute() throws MojoExecutionException, MojoFailureException {
+<span class="nc bnc" id="L122" title="All 2 branches missed.">        if (!enabled) {</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">            if (getLog().isDebugEnabled()) {</span>
+<span class="nc" id="L124">                getLog().debug(MOJO_NAME + &quot; is disabled&quot;);</span>
+            }
+<span class="nc" id="L126">            return;</span>
+        }
+
+<span class="nc" id="L129">        var langGenerator = new SourceGenerator(language.toUpperCase());</span>
+
+<span class="nc bnc" id="L131" title="All 4 branches missed.">        if (acceptedUrlPatterns != null &amp;&amp; !acceptedUrlPatterns.isEmpty()) {</span>
+<span class="nc" id="L132">            UrlLoader.addAllowedUrlPatterns(acceptedUrlPatterns);</span>
+        }
+
+<span class="nc" id="L135">        Path outputDirPath = getSourceDirectory(language);</span>
+<span class="nc" id="L136">        project.addCompileSourceRoot(outputDirPath.toString());</span>
+
+<span class="nc" id="L138">        var builder = new SourceGeneratorConfigBuilder()</span>
+<span class="nc" id="L139">                .withOutputFolder(outputDirPath)</span>
+<span class="nc" id="L140">                .withOutputPackageName(outputPackageName)</span>
+<span class="nc" id="L141">                .withOutputFileName(outputFileName);</span>
+
+<span class="nc" id="L143">        var message = &quot;Generating sources for JSON schema from %s in the directory: %s&quot;;</span>
+<span class="nc" id="L144">        var relativePath = relativize(outputDirPath);</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">        if (inputURL != null) {</span>
+<span class="nc" id="L146">            builder.withJsonUrl(inputURL);</span>
+<span class="nc" id="L147">            message = message.formatted(&quot;URL [&quot; + inputURL + &quot;]&quot;, relativePath);</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">        } else if (inputFile != null) {</span>
+<span class="nc" id="L149">            builder.withJsonFile(inputFile);</span>
+<span class="nc" id="L150">            message = message.formatted(&quot;file [&quot; + relativize(inputFile.toPath()) + &quot;]&quot;, relativePath);</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        } else if (inputDirectory != null) {</span>
+<span class="nc" id="L152">            builder.withInputFolder(inputDirectory.toPath());</span>
+<span class="nc" id="L153">            message = message.formatted(&quot;directory [&quot; + relativize(inputDirectory.toPath()) + &quot;]&quot;, relativePath);</span>
+        } else {
+<span class="nc" id="L155">            var msg = new StringBuilder(&quot;In the generate-jsonschema goal, one of the following parameters needs to be specified:&quot;)</span>
+<span class="nc" id="L156">                    .append(System.lineSeparator())</span>
+<span class="nc" id="L157">                    .append(&quot;%s.input-file&quot;.formatted(MICRONAUT_SCHEMA_PREFIX))</span>
+<span class="nc" id="L158">                    .append(System.lineSeparator())</span>
+<span class="nc" id="L159">                    .append(&quot;%s.input-url&quot;.formatted(MICRONAUT_SCHEMA_PREFIX))</span>
+<span class="nc" id="L160">                    .append(System.lineSeparator())</span>
+<span class="nc" id="L161">                    .append(&quot;%s.input-directory&quot;.formatted(MICRONAUT_SCHEMA_PREFIX))</span>
+<span class="nc" id="L162">                    .append(System.lineSeparator());</span>
+<span class="nc" id="L163">            throw new MojoFailureException(msg.toString());</span>
+        }
+
+        try {
+<span class="nc" id="L167">            getLog().info(message);</span>
+<span class="nc" id="L168">            langGenerator.generate(builder.build());</span>
+<span class="nc" id="L169">        } catch (Exception e) {</span>
+<span class="nc" id="L170">            throw new MojoExecutionException(&quot;Error when generating JSON schema&quot;, e);</span>
+<span class="nc" id="L171">        }</span>
+<span class="nc" id="L172">    }</span>
+
+    private String relativize(Path path) {
+<span class="nc" id="L175">        return project.getBasedir().toPath().relativize(path).toString();</span>
+    }
+
+    private Path getSourceDirectory(String language) {
+<span class="nc" id="L179">        return outputDirectory.toPath().resolve(&quot;src/main/&quot; + language.toLowerCase());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

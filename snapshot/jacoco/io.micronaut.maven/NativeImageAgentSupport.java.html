@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NativeImageAgentSupport.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven</a> &gt; <span class="el_source">NativeImageAgentSupport.java</span></div><h1>NativeImageAgentSupport.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven;
+
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.graalvm.buildtools.agent.AgentConfiguration;
+import org.graalvm.buildtools.agent.StandardAgentMode;
+import org.graalvm.buildtools.utils.SharedConstants;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
+
+final class NativeImageAgentSupport {
+
+    static final String AGENT_PROPERTY = &quot;agent&quot;;
+    static final String IMAGECODE_PROPERTY = &quot;org.graalvm.nativeimage.imagecode&quot;;
+    static final String NATIVE_IMAGE_AGENTLIB = &quot;-agentlib:native-image-agent&quot;;
+    static final String NATIVE_IMAGE_IMAGECODE = &quot;-Dorg.graalvm.nativeimage.imagecode=agent&quot;;
+    static final String NATIVE_MAVEN_PLUGIN = DockerfileMojo.NATIVE_BUILD_TOOLS_MAVEN_PLUGIN;
+
+    private NativeImageAgentSupport() {
+    }
+
+    static List&lt;String&gt; computeJvmArguments(MavenSession session,
+                                            MavenProject project,
+                                            File targetDirectory,
+                                            List&lt;String&gt; existingJvmArguments) throws MojoExecutionException {
+<span class="fc" id="L48">        AgentConfiguration configuration = resolveAgentConfiguration(session, project);</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">        if (!configuration.isEnabled()) {</span>
+<span class="fc" id="L50">            return List.of();</span>
+        }
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        if (containsNativeImageAgent(existingJvmArguments)) {</span>
+<span class="fc" id="L53">            throw new MojoExecutionException(&quot;Native image agent support is enabled through native-build-tools, so mn.jvmArgs must not define -agentlib:native-image-agent manually&quot;);</span>
+        }
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        if (containsNativeImageImagecode(session, existingJvmArguments)) {</span>
+<span class="fc" id="L56">            throw new MojoExecutionException(&quot;Native image agent support is enabled through native-build-tools, so mn.jvmArgs and Maven properties must not define org.graalvm.nativeimage.imagecode manually&quot;);</span>
+        }
+<span class="fc" id="L58">        String outputDirectory = new File(targetDirectory, SharedConstants.AGENT_OUTPUT_FOLDER + File.separator + &quot;main&quot;).getAbsolutePath();</span>
+<span class="fc" id="L59">        String agentArgument = NATIVE_IMAGE_AGENTLIB + &quot;=&quot; + configuration.getAgentCommandLine().stream()</span>
+<span class="fc" id="L60">            .map(option -&gt; option.replace(SharedConstants.AGENT_OUTPUT_DIRECTORY_MARKER, outputDirectory))</span>
+<span class="fc" id="L61">            .reduce((left, right) -&gt; left + &quot;,&quot; + right)</span>
+<span class="fc" id="L62">            .orElse(&quot;&quot;);</span>
+<span class="fc" id="L63">        return List.of(agentArgument, NATIVE_IMAGE_IMAGECODE);</span>
+    }
+
+    private static AgentConfiguration resolveAgentConfiguration(MavenSession session, MavenProject project) throws MojoExecutionException {
+<span class="fc" id="L67">        Plugin plugin = project.getPlugin(NATIVE_MAVEN_PLUGIN);</span>
+<span class="pc bpc" id="L68" title="1 of 4 branches missed.">        Xpp3Dom configurationRoot = plugin != null &amp;&amp; plugin.getConfiguration() instanceof Xpp3Dom dom ? dom : null;</span>
+<span class="fc" id="L69">        Xpp3Dom agentNode = child(configurationRoot, AGENT_PROPERTY);</span>
+<span class="fc" id="L70">        Optional&lt;Boolean&gt; commandLineOverride = readAgentOverride(session);</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (commandLineOverride.isPresent()) {</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">            if (!commandLineOverride.get()) {</span>
+<span class="fc" id="L73">                return new AgentConfiguration();</span>
+            }
+<span class="fc bfc" id="L75" title="All 2 branches covered.">            return agentNode == null ? new AgentConfiguration(new StandardAgentMode()) : parseAgentConfiguration(project, agentNode);</span>
+        }
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        if (!isEnabledInPom(agentNode)) {</span>
+<span class="fc" id="L78">            return new AgentConfiguration();</span>
+        }
+<span class="fc" id="L80">        return parseAgentConfiguration(project, agentNode);</span>
+    }
+
+    private static AgentConfiguration parseAgentConfiguration(MavenProject project, Xpp3Dom agentNode) throws MojoExecutionException {
+<span class="fc" id="L84">        String mode = value(agentNode, &quot;defaultMode&quot;).orElse(&quot;standard&quot;);</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        if (!&quot;standard&quot;.equalsIgnoreCase(mode)) {</span>
+<span class="fc" id="L86">            throw new MojoExecutionException(&quot;mn:run supports native-image agent configuration only in standard mode. Configured mode [&quot; + mode + &quot;] must use the upstream native-maven-plugin exec workflow instead&quot;);</span>
+        }
+<span class="fc" id="L88">        Xpp3Dom options = child(agentNode, &quot;options&quot;);</span>
+<span class="fc" id="L89">        return new AgentConfiguration(</span>
+<span class="fc" id="L90">            filterFiles(project, options, &quot;callerFilterFiles&quot;),</span>
+<span class="fc" id="L91">            filterFiles(project, options, &quot;accessFilterFiles&quot;),</span>
+<span class="fc" id="L92">            parseBoolean(options, &quot;builtinCallerFilter&quot;).orElse(null),</span>
+<span class="fc" id="L93">            parseBoolean(options, &quot;builtinHeuristicFilter&quot;).orElse(null),</span>
+<span class="fc" id="L94">            parseBoolean(options, &quot;enableExperimentalPredefinedClasses&quot;).orElse(null),</span>
+<span class="fc" id="L95">            parseBoolean(options, &quot;enableExperimentalUnsafeAllocationTracing&quot;).orElse(null),</span>
+<span class="fc" id="L96">            parseBoolean(options, &quot;trackReflectionMetadata&quot;).orElse(null),</span>
+            new StandardAgentMode()
+        );
+    }
+
+    private static ArrayList&lt;String&gt; filterFiles(MavenProject project, Xpp3Dom options, String name) {
+<span class="fc" id="L102">        ArrayList&lt;String&gt; files = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L103">        Xpp3Dom parent = child(options, name);</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">        if (parent == null) {</span>
+<span class="fc" id="L105">            return files;</span>
+        }
+<span class="fc bfc" id="L107" title="All 2 branches covered.">        for (Xpp3Dom filterFile : parent.getChildren(&quot;filterFile&quot;)) {</span>
+<span class="fc" id="L108">            String value = filterFile.getValue();</span>
+<span class="pc bpc" id="L109" title="2 of 4 branches missed.">            if (value != null &amp;&amp; !value.isBlank()) {</span>
+<span class="fc" id="L110">                File file = new File(value);</span>
+<span class="fc bfc" id="L111" title="All 2 branches covered.">                files.add(file.isAbsolute() ? file.getPath() : new File(project.getBasedir(), value).getAbsolutePath());</span>
+            }
+        }
+<span class="fc" id="L114">        return files;</span>
+    }
+
+    private static boolean isEnabledInPom(Xpp3Dom agentNode) throws MojoExecutionException {
+<span class="fc bfc" id="L118" title="All 2 branches covered.">        if (agentNode == null) {</span>
+<span class="fc" id="L119">            return false;</span>
+        }
+<span class="fc" id="L121">        return parseBoolean(agentNode, &quot;enabled&quot;).orElse(false);</span>
+    }
+
+    private static Optional&lt;Boolean&gt; readAgentOverride(MavenSession session) throws MojoExecutionException {
+<span class="fc" id="L125">        Optional&lt;String&gt; value = readProperty(session.getUserProperties(), AGENT_PROPERTY)</span>
+<span class="fc" id="L126">            .or(() -&gt; readProperty(session.getSystemProperties(), AGENT_PROPERTY));</span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        if (value.isEmpty()) {</span>
+<span class="fc" id="L128">            return Optional.empty();</span>
+        }
+<span class="fc" id="L130">        return Optional.of(parseBoolean(AGENT_PROPERTY, value.get()));</span>
+    }
+
+    private static Optional&lt;String&gt; readProperty(Properties properties, String key) {
+<span class="pc bpc" id="L134" title="1 of 2 branches missed.">        if (properties == null) {</span>
+<span class="nc" id="L135">            return Optional.empty();</span>
+        }
+<span class="fc" id="L137">        return Optional.ofNullable(properties.getProperty(key));</span>
+    }
+
+    private static Optional&lt;Boolean&gt; parseBoolean(Xpp3Dom parent, String childName) throws MojoExecutionException {
+<span class="fc" id="L141">        Xpp3Dom child = child(parent, childName);</span>
+<span class="pc bpc" id="L142" title="1 of 4 branches missed.">        if (child == null || child.getValue() == null) {</span>
+<span class="fc" id="L143">            return Optional.empty();</span>
+        }
+<span class="fc" id="L145">        return Optional.of(parseBoolean(&quot;&lt;&quot; + childName + &quot;&gt;&quot;, child.getValue()));</span>
+    }
+
+    private static Boolean parseBoolean(String name, String value) throws MojoExecutionException {
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        if (&quot;true&quot;.equalsIgnoreCase(value)) {</span>
+<span class="fc" id="L150">            return true;</span>
+        }
+<span class="fc bfc" id="L152" title="All 2 branches covered.">        if (&quot;false&quot;.equalsIgnoreCase(value)) {</span>
+<span class="fc" id="L153">            return false;</span>
+        }
+<span class="fc" id="L155">        throw new MojoExecutionException(&quot;Invalid boolean value [&quot; + value + &quot;] for &quot; + name + &quot;. Use true or false&quot;);</span>
+    }
+
+    private static Optional&lt;String&gt; value(Xpp3Dom parent, String childName) {
+<span class="fc" id="L159">        Xpp3Dom child = child(parent, childName);</span>
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">        return child == null ? Optional.empty() : Optional.ofNullable(child.getValue());</span>
+    }
+
+    private static Xpp3Dom child(Xpp3Dom parent, String childName) {
+<span class="fc bfc" id="L164" title="All 2 branches covered.">        return parent == null ? null : parent.getChild(childName);</span>
+    }
+
+    private static boolean containsNativeImageAgent(List&lt;String&gt; jvmArguments) {
+<span class="fc" id="L168">        return jvmArguments.stream().anyMatch(argument -&gt; argument.startsWith(NATIVE_IMAGE_AGENTLIB));</span>
+    }
+
+    private static boolean containsNativeImageImagecode(MavenSession session, List&lt;String&gt; jvmArguments) {
+<span class="fc bfc" id="L172" title="All 2 branches covered.">        return jvmArguments.stream().anyMatch(NativeImageAgentSupport::isNativeImageImagecodeArgument)</span>
+<span class="fc bfc" id="L173" title="All 2 branches covered.">            || hasProperty(session.getUserProperties(), IMAGECODE_PROPERTY)</span>
+<span class="pc bpc" id="L174" title="1 of 2 branches missed.">            || hasProperty(session.getSystemProperties(), IMAGECODE_PROPERTY);</span>
+    }
+
+    private static boolean isNativeImageImagecodeArgument(String argument) {
+<span class="fc" id="L178">        return argument.startsWith(&quot;-D&quot; + IMAGECODE_PROPERTY + &quot;=&quot;);</span>
+    }
+
+    private static boolean hasProperty(Properties properties, String key) {
+<span class="pc bpc" id="L182" title="1 of 4 branches missed.">        return properties != null &amp;&amp; properties.containsKey(key);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

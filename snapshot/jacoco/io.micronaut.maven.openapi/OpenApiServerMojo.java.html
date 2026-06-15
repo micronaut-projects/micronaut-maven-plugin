@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OpenApiServerMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.openapi</a> &gt; <span class="el_source">OpenApiServerMojo.java</span></div><h1>OpenApiServerMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2021 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.openapi;
+
+import io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+
+/**
+ * Generates an OpenAPI server.
+ * The sources are generated in the target directory.
+ */
+@Mojo(name = OpenApiServerMojo.MOJO_NAME, defaultPhase = LifecyclePhase.GENERATE_SOURCES)
+<span class="nc" id="L29">public class OpenApiServerMojo extends AbstractOpenApiMojo {</span>
+
+    public static final String MOJO_NAME = &quot;generate-openapi-server&quot;;
+
+    private static final String SERVER_PREFIX = MICRONAUT_OPENAPI_PREFIX + &quot;.server.&quot;;
+
+    /**
+     * The package name of the controller if controller implementation files are generated.
+     */
+    @Parameter(property = SERVER_PREFIX + &quot;controller.package.name&quot;, defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + &quot;.controller.package.name&quot;, required = true)
+    protected String controllerPackageName;
+
+    /**
+     * Whether to generate authentication annotations for APIs.
+     */
+    @Parameter(property = SERVER_PREFIX + &quot;use.auth&quot;, defaultValue = &quot;false&quot;)
+    protected boolean useAuth;
+
+    /**
+     * Determines if the server should use lombok.
+     *
+     * @since 4.2.2
+     */
+    @Parameter(property = SERVER_PREFIX + &quot;lombok&quot;)
+    protected boolean lombok;
+
+    /**
+     * Determines if the server should use flux for arrays.
+     *
+     * @since 4.2.2
+     */
+    @Parameter(property = SERVER_PREFIX + &quot;flux.for.arrays&quot;)
+    protected boolean fluxForArrays;
+
+    /**
+     * If set to true, the `javax.annotation.Generated` annotation will be added to all generated classes.
+     *
+     * @since 4.2.2
+     */
+    @Parameter(property = SERVER_PREFIX + &quot;generated.annotation&quot;, defaultValue = &quot;true&quot;)
+    protected boolean generatedAnnotation;
+
+    /**
+     * If set to true, the generated code should be made compatible with Micronaut AOT.
+     *
+     * @since 4.2.2
+     */
+    @Parameter(property = SERVER_PREFIX + &quot;aot.compatible&quot;)
+    protected boolean aotCompatible;
+
+    /**
+     * The property that defines if this mojo should be used in configuration.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.generate.server&quot;)
+    protected boolean enabled;
+
+    @Override
+    protected void validateLanguage() throws MojoExecutionException {
+<span class="nc" id="L87">        rejectUnsupportedKotlinLanguage(&quot;server&quot;);</span>
+<span class="nc" id="L88">    }</span>
+
+    @Override
+    protected boolean isEnabled() {
+<span class="nc" id="L92">        return enabled;</span>
+    }
+
+    @Override
+    protected void configureBuilder(MicronautCodeGeneratorBuilder builder) {
+<span class="nc bnc" id="L97" title="All 2 branches missed.">        if (&quot;java&quot;.equalsIgnoreCase(lang)) {</span>
+<span class="nc" id="L98">            builder.forJavaServer(spec -&gt; spec</span>
+<span class="nc" id="L99">                .withControllerPackage(controllerPackageName)</span>
+<span class="nc" id="L100">                .withAuthentication(useAuth)</span>
+<span class="nc" id="L101">                .withAot(aotCompatible)</span>
+                // we don't want these to be configurable in the plugin for now
+<span class="nc" id="L103">                .withGenerateImplementationFiles(false)</span>
+<span class="nc" id="L104">                .withGenerateControllerFromExamples(false)</span>
+<span class="nc" id="L105">                .withGenerateOperationsToReturnNotImplemented(false)</span>
+<span class="nc" id="L106">                .withGeneratedAnnotation(generatedAnnotation)</span>
+<span class="nc" id="L107">                .withFluxForArrays(fluxForArrays)</span>
+<span class="nc" id="L108">                .withLombok(lombok)</span>
+            );
+        } else {
+<span class="nc" id="L111">            throw new UnsupportedOperationException(&quot;Unsupported language: &quot; + lang);</span>
+        }
+<span class="nc" id="L113">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
