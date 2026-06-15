@@ -1,4 +1,4 @@
-=== Integration with Micronaut Test Resources
+= Integration with Micronaut Test Resources
 
 https://micronaut-projects.github.io/micronaut-test-resources/latest/guide/index.html[Micronaut Test Resources] adds
 support for managing external resources which are required during development or testing. In particular, it integrates
@@ -33,7 +33,7 @@ configuration properties will automatically be injected to your application.
 Please refer to the https://micronaut-projects.github.io/micronaut-test-resources/latest/guide/index.html[Micronaut Test
 Resources documentation] for a list of all supported modules and their configuration options.
 
-==== Standalone Test Resource Service
+== Standalone Test Resource Service
 
 The default behaviour works particularly well in single-module projects, or in multi-module projects where test resources
 are not shared between modules. However, in some cases, you may want to reuse test containers for multiple projects of
@@ -52,7 +52,7 @@ However, you might want to run the consumer in one terminal, and the producer in
 the same Kafka cluster. For this you can use a shared test server, by passing the `micronaut.test.resources.shared`
 system property, or setting `<shared>true</shared>` in the Micronaut Maven Plugin configuration.
 
-==== Test Resource Service lifecycle
+== Test Resource Service lifecycle
 
 Test resources are handled by a service which is, by default, started at the beginning of a build, and stopped at the end.
 
@@ -76,7 +76,7 @@ $ mvn mn:run
 Then the test resources will be spawned before the application starts, and shutdown when you Ctrl+C the `mn:run`
 execution.
 
-==== Keeping the Test Resources Service alive
+== Keeping the Test Resources Service alive
 
 If you want to start the test resources service in the background, and keep it alive for multiple, independent builds
 (different invocations on the command line for example), you can run the `mn:start-testresources-service` goal:
@@ -106,7 +106,7 @@ $ mvn mn:start-testresources-service
 
 To stop it, use the `mn:stop-testresources-service` goal.
 
-==== Adding modules or libraries to the Test Resources service classpath
+== Adding modules or libraries to the Test Resources service classpath
 
 If not using classpath inference, or when the inference doesn't produce the desired result, you can add dependencies
 to the Test Resources service classpath with a `<testResourcesDependencies>` block.
@@ -141,7 +141,7 @@ it like this:
 
 The versions of those dependencies will be resolved against the Micronaut BOM.
 
-==== Using a sibling reactor module for custom resolvers
+== Using a sibling reactor module for custom resolvers
 
 If you want to implement a custom `TestResourcesResolver` in the same multi-module Maven build as the application which
 uses it, put the resolver in a dedicated sibling module and add that module to `<testResourcesDependencies>` in the
@@ -218,7 +218,7 @@ reactor and the plugin adds that artifact to the Test Resources service classpat
 The list of supported modules is described in the
 https://micronaut-projects.github.io/micronaut-test-resources/latest/guide/#modules[Micronaut Test Resources documentation].
 
-==== Additional configuration options
+== Additional configuration options
 
 You can see all the additional configuration options in the
 link:../start-testresources-service-mojo.html[`start-testresources-service` goal documentation].
