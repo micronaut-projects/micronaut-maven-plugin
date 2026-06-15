@@ -409,7 +409,8 @@ public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {
             return;
         }
 
-        project.addCompileSourceRoot(outputDirectory.getAbsolutePath());
+        var sourceFolder = "src/main/" + lang.toLowerCase(Locale.ENGLISH);
+        project.addCompileSourceRoot(new File(outputDirectory, sourceFolder).getAbsolutePath());
         var builder = MicronautCodeGeneratorEntryPoint.builder()
             .withDefinitionFile(definitionFile.toURI())
             .withOutputDirectory(outputDirectory)
