@@ -72,7 +72,7 @@ class BuildInfoGeneratorTest {
 
         String content = Files.readString(output);
         assertTrue(content.startsWith("a\\ key=value\\:with\\=special\\#chars"));
-        assertTrue(content.contains(System.lineSeparator() + "z=last"));
+        assertTrue(content.contains("\nz=last"));
         assertFalse(content.startsWith("#"));
     }
 
