@@ -1,0 +1,143 @@
+= Generating build and git info
+
+The `mn:generate-info` goal generates metadata resources that Micronaut Management can expose from the `/info` endpoint.
+The goal is opt-in: existing builds do not generate new files unless you invoke the goal directly or bind it in your build.
+
+== Enable the goal
+
+Bind the goal to `generate-resources` so the files are available under `target/classes` before packaging:
+
+[source,xml]
+----
+<plugin>
+    <groupId>io.micronaut.maven</groupId>
+    <artifactId>micronaut-maven-plugin</artifactId>
+    <executions>
+        <execution>
+            <phase>generate-resources</phase>
+            <goals>
+                <goal>generate-info</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+----
+
+You can also run it directly:
+
+[source,bash]
+----
+./mvnw mn:generate-info
+----
+
+By default the goal writes:
+
+* `target/classes/META-INF/build-info.properties`
+* `target/classes/git.properties`, when the project is inside a git checkout
+
+These locations match the default locations used by Micronaut Management's build and git info sources.
+If your application uses different management locations, configure the corresponding output files for this goal as well.
+
+== Runtime `/info` endpoint
+
+Generating the files does not enable the HTTP endpoint by itself.
+Your application must include `micronaut-management` and enable the info endpoint according to the Micronaut Management documentation.
+For example, a development configuration may include:
+
+[source,yaml]
+----
+endpoints:
+  info:
+    enabled: true
+    sensitive: false
+----
+
+After packaging and running the application, verify the generated data by querying `/info` or by inspecting the generated files under `target/classes`.
+
+== Configuration
+
+[cols="1,1,3"]
+|===
+|Parameter |Property |Description
+
+|`skip`
+|`micronaut.info.skip`
+|Skips all info metadata generation. Defaults to `false`.
+
+|`buildEnabled`
+|`micronaut.info.build.enabled`
+|Generates `META-INF/build-info.properties`. Defaults to `true`.
+
+|`gitEnabled`
+|`micronaut.info.git.enabled`
+|Generates `git.properties` when git metadata is available. Defaults to `true`.
+
+|`failOnNoGit`
+|`micronaut.info.failOnNoGit`
+|Fails the build when git metadata is enabled but unavailable. Defaults to `false`, so source archives and non-git checkouts still generate build info.
+
+|`includeDirty`
+|`micronaut.info.includeDirty`
+|Includes `git.dirty` as a boolean. Defaults to `true`; file names are never written.
+
+|`includeRemoteUrl`
+|`micronaut.info.includeRemoteUrl`
+|Includes `git.remote.origin.url`. Defaults to `false` because remote URLs may expose private hosts or repository names.
+
+|`includeUser`
+|`micronaut.info.includeUser`
+|Includes local git user name and email as `git.build.user.*`. Defaults to `false`.
+
+|`time`
+|`micronaut.info.time`
+|Overrides `build.time`. Use an ISO-8601 instant such as `2026-01-02T03:04:05Z`.
+
+|`buildOutputFile`
+|`micronaut.info.build.outputFile`
+|Build metadata output file. Defaults to `${project.build.outputDirectory}/META-INF/build-info.properties`.
+
+|`gitOutputFile`
+|`micronaut.info.git.outputFile`
+|Git metadata output file. Defaults to `${project.build.outputDirectory}/git.properties`.
+|===
+
+You may add extra properties with `additionalBuildProperties` or `additionalGitProperties`:
+
+[source,xml]
+----
+<configuration>
+    <additionalBuildProperties>
+        <build.environment>production</build.environment>
+    </additionalBuildProperties>
+</configuration>
+----
+
+== Reproducible build time
+
+`build.time` is chosen in this order:
+
+1. `micronaut.info.time`, when set.
+2. Maven's `project.build.outputTimestamp`, when set.
+3. The Maven session start time.
+4. The current instant as a final fallback.
+
+Set `project.build.outputTimestamp` or `micronaut.info.time` when you need reproducible metadata.
+
+== Git metadata and sensitive data
+
+The default git metadata is conservative and local-only.
+It includes commit id, abbreviated commit id, commit time, branch, and the boolean dirty state when available.
+It does not read CI variables, perform network calls, include dirty file names, include remote URLs, or include local user identity by default.
+
+Only enable `includeRemoteUrl` or `includeUser` after reviewing whether the `/info` endpoint is exposed and whether those values are safe for your deployment.
+You can disable git metadata completely with:
+
+[source,xml]
+----
+<configuration>
+    <gitEnabled>false</gitEnabled>
+</configuration>
+----
+
+Outside a git checkout, the default `failOnNoGit=false` behavior logs a warning, skips `git.properties`, and still writes build metadata.
+Set `failOnNoGit=true` if your release process requires git provenance to be present.
