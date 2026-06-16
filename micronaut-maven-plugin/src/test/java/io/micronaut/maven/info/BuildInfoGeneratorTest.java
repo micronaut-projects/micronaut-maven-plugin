@@ -76,6 +76,15 @@ class BuildInfoGeneratorTest {
         assertFalse(content.startsWith("#"));
     }
 
+    @Test
+    void escapesAllPropertiesSpecialCharacters() {
+        assertEquals("a\\ b", PropertiesFileWriter.escape("a b", true));
+        assertEquals("a b", PropertiesFileWriter.escape("a b", false));
+        assertEquals("\\ leading", PropertiesFileWriter.escape(" leading", false));
+        assertEquals("tab\\tnewline\\nreturn\\rform\\f", PropertiesFileWriter.escape("tab\tnewline\nreturn\rform\f", false));
+        assertEquals("key\\\\value\\=x\\:y\\#z\\!", PropertiesFileWriter.escape("key\\value=x:y#z!", true));
+    }
+
     private MavenProject project() {
         var project = new MavenProject();
         project.setGroupId("io.micronaut.test");

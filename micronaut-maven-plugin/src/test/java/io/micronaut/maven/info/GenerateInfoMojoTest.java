@@ -23,7 +23,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
@@ -95,6 +97,48 @@ class GenerateInfoMojoTest {
         assertTrue(exception.getMessage().startsWith("Git metadata is unavailable:"));
     }
 
+    @Test
+    void missingGitMetadataIsSkippedWhenFailureIsDisabled(@TempDir Path tempDir) throws Exception {
+        GenerateInfoMojo mojo = mojo(tempDir);
+        File gitInfo = tempDir.resolve("classes/git.properties").toFile();
+        set(mojo, "buildEnabled", false);
+        set(mojo, "gitEnabled", true);
+        set(mojo, "failOnNoGit", false);
+        set(mojo, "gitOutputFile", gitInfo);
+
+        mojo.execute();
+
+        assertFalse(gitInfo.exists());
+    }
+
+    @Test
+    void generatesGitInfoWhenGitRepositoryIsAvailable(@TempDir Path tempDir) throws Exception {
+        git(tempDir, "init");
+        git(tempDir, "config", "user.email", "dev@example.com");
+        git(tempDir, "config", "user.name", "Dev User");
+        Files.writeString(tempDir.resolve("README.md"), "test");
+        git(tempDir, "add", "README.md");
+        git(tempDir, "commit", "-m", "Initial commit");
+
+        GenerateInfoMojo mojo = mojo(tempDir);
+        File gitInfo = tempDir.resolve("classes/git.properties").toFile();
+        set(mojo, "buildEnabled", false);
+        set(mojo, "gitEnabled", true);
+        set(mojo, "gitOutputFile", gitInfo);
+        set(mojo, "includeDirty", true);
+        set(mojo, "includeRemoteUrl", false);
+        set(mojo, "includeUser", false);
+
+        mojo.execute();
+
+        Properties properties = new Properties();
+        try (var reader = Files.newBufferedReader(gitInfo.toPath())) {
+            properties.load(reader);
+        }
+        assertEquals(gitOutput(tempDir, "rev-parse", "HEAD"), properties.getProperty("git.commit.id"));
+        assertTrue(properties.containsKey("git.commit.time"));
+    }
+
     private GenerateInfoMojo mojo(Path tempDir) throws Exception {
         var mojo = new GenerateInfoMojo();
         mojo.setLog(new SystemStreamLog());
@@ -119,5 +163,31 @@ class GenerateInfoMojoTest {
         Field field = GenerateInfoMojo.class.getDeclaredField(fieldName);
         field.setAccessible(true);
         field.set(mojo, value);
+    }
+
+    private void git(Path directory, String... args) throws IOException, InterruptedException {
+        Process process = new ProcessBuilder(command(args))
+            .directory(directory.toFile())
+            .redirectErrorStream(true)
+            .start();
+        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        assertEquals(0, process.waitFor(), output);
+    }
+
+    private String gitOutput(Path directory, String... args) throws IOException, InterruptedException {
+        Process process = new ProcessBuilder(command(args))
+            .directory(directory.toFile())
+            .redirectErrorStream(true)
+            .start();
+        String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
+        assertEquals(0, process.waitFor(), output);
+        return output;
+    }
+
+    private String[] command(String... args) {
+        String[] command = new String[args.length + 1];
+        command[0] = "git";
+        System.arraycopy(args, 0, command, 1, args.length);
+        return command;
     }
 }
