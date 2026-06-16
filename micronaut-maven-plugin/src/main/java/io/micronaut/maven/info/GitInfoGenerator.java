@@ -34,6 +34,9 @@ import java.util.concurrent.TimeUnit;
 final class GitInfoGenerator {
 
     private static final Duration COMMAND_TIMEOUT = Duration.ofSeconds(10);
+    private static final String CONFIG = "config";
+    private static final String CONFIG_GET = "--get";
+    private static final String REV_PARSE = "rev-parse";
 
     private final Path workingDirectory;
     private final boolean includeDirty;
@@ -48,17 +51,17 @@ final class GitInfoGenerator {
     }
 
     Result generate(Map<String, String> additionalProperties) {
-        CommandResult root = runGit("rev-parse", "--show-toplevel");
+        CommandResult root = runGit(REV_PARSE, "--show-toplevel");
         if (!root.isSuccess()) {
             return Result.unavailable(root.message());
         }
-        CommandResult commitId = runGit("rev-parse", "HEAD");
+        CommandResult commitId = runGit(REV_PARSE, "HEAD");
         if (!commitId.isSuccess()) {
             return Result.unavailable(commitId.message());
         }
         var properties = new TreeMap<String, String>();
         properties.put("git.commit.id", commitId.output());
-        putIfPresent(properties, "git.commit.id.abbrev", runGit("rev-parse", "--short", "HEAD"));
+        putIfPresent(properties, "git.commit.id.abbrev", runGit(REV_PARSE, "--short", "HEAD"));
         putIfPresent(properties, "git.commit.time", runGit("show", "-s", "--format=%cI", "HEAD"));
         putBranch(properties);
         if (includeDirty) {
@@ -68,11 +71,11 @@ final class GitInfoGenerator {
             }
         }
         if (includeRemoteUrl) {
-            putIfPresent(properties, "git.remote.origin.url", runGit("config", "--get", "remote.origin.url"));
+            putIfPresent(properties, "git.remote.origin.url", runGit(CONFIG, CONFIG_GET, "remote.origin.url"));
         }
         if (includeUser) {
-            putIfPresent(properties, "git.build.user.name", runGit("config", "--get", "user.name"));
-            putIfPresent(properties, "git.build.user.email", runGit("config", "--get", "user.email"));
+            putIfPresent(properties, "git.build.user.name", runGit(CONFIG, CONFIG_GET, "user.name"));
+            putIfPresent(properties, "git.build.user.email", runGit(CONFIG, CONFIG_GET, "user.email"));
         }
         if (additionalProperties != null) {
             additionalProperties.forEach((key, value) -> putIfNotBlank(properties, key, value));
@@ -81,7 +84,7 @@ final class GitInfoGenerator {
     }
 
     private void putBranch(Map<String, String> properties) {
-        CommandResult branch = runGit("rev-parse", "--abbrev-ref", "HEAD");
+        CommandResult branch = runGit(REV_PARSE, "--abbrev-ref", "HEAD");
         if (branch.isSuccess() && !"HEAD".equals(branch.output())) {
             properties.put("git.branch", branch.output());
         }
@@ -115,7 +118,7 @@ final class GitInfoGenerator {
             return CommandResult.success(output);
         } catch (IOException e) {
             return CommandResult.failure(e.toString());
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
             return CommandResult.failure("git command was interrupted");
         } finally {

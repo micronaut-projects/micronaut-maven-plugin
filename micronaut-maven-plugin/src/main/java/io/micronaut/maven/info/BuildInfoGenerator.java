@@ -90,7 +90,7 @@ final class BuildInfoGenerator {
         } catch (DateTimeParseException e) {
             try {
                 return Instant.ofEpochSecond(Long.parseLong(value.trim()));
-            } catch (NumberFormatException ignored) {
+            } catch (NumberFormatException _) {
                 throw new IllegalArgumentException("Unsupported timestamp format: " + value, e);
             }
         }
