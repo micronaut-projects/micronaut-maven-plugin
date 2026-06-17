@@ -26,7 +26,7 @@ import org.apache.maven.plugins.annotations.Parameter;
  * The sources are generated in the target directory.
  */
 @Mojo(name = OpenApiServerMojo.MOJO_NAME, defaultPhase = LifecyclePhase.GENERATE_SOURCES)
-<span class="nc" id="L29">public class OpenApiServerMojo extends AbstractOpenApiMojo {</span>
+<span class="fc" id="L29">public class OpenApiServerMojo extends AbstractOpenApiMojo {</span>
 
     public static final String MOJO_NAME = &quot;generate-openapi-server&quot;;
 
@@ -84,12 +84,12 @@ import org.apache.maven.plugins.annotations.Parameter;
 
     @Override
     protected void validateLanguage() throws MojoExecutionException {
-<span class="nc" id="L87">        rejectUnsupportedKotlinLanguage(&quot;server&quot;);</span>
-<span class="nc" id="L88">    }</span>
+<span class="fc" id="L87">        rejectUnsupportedKotlinLanguage(&quot;server&quot;);</span>
+<span class="fc" id="L88">    }</span>
 
     @Override
     protected boolean isEnabled() {
-<span class="nc" id="L92">        return enabled;</span>
+<span class="fc" id="L92">        return enabled;</span>
     }
 
     @Override

@@ -428,89 +428,90 @@
 <span class="source-line-no">415</span><span id="line-415">        }</span>
 <span class="source-line-no">416</span><span id="line-416"></span>
 <span class="source-line-no">417</span><span id="line-417">        validateLanguage();</span>
-<span class="source-line-no">418</span><span id="line-418">        project.addCompileSourceRoot(outputDirectory.getAbsolutePath());</span>
-<span class="source-line-no">419</span><span id="line-419">        var builder = MicronautCodeGeneratorEntryPoint.builder()</span>
-<span class="source-line-no">420</span><span id="line-420">            .withDefinitionFile(definitionFile.toURI())</span>
-<span class="source-line-no">421</span><span id="line-421">            .withOutputDirectory(outputDirectory)</span>
-<span class="source-line-no">422</span><span id="line-422">            .withOutputs(</span>
-<span class="source-line-no">423</span><span id="line-423">                outputKinds.stream().map(String::toUpperCase).map(MicronautCodeGeneratorEntryPoint.OutputKind::valueOf).toList().toArray(new MicronautCodeGeneratorEntryPoint.OutputKind[0])</span>
-<span class="source-line-no">424</span><span id="line-424">            )</span>
-<span class="source-line-no">425</span><span id="line-425">            .withOptions(options -&gt; options</span>
-<span class="source-line-no">426</span><span id="line-426">                .withLang(MicronautCodeGeneratorOptionsBuilder.GeneratorLanguage.valueOf(lang.toUpperCase(Locale.ENGLISH)))</span>
-<span class="source-line-no">427</span><span id="line-427">                .withApiPackage(apiPackageName)</span>
-<span class="source-line-no">428</span><span id="line-428">                .withModelPackage(modelPackageName)</span>
-<span class="source-line-no">429</span><span id="line-429">                .withInvokerPackage(invokerPackageName)</span>
-<span class="source-line-no">430</span><span id="line-430">                .withBeanValidation(useBeanValidation)</span>
-<span class="source-line-no">431</span><span id="line-431">                .withUseOneOfInterfaces(useOneOfInterfaces)</span>
-<span class="source-line-no">432</span><span id="line-432">                .withOptional(useOptional)</span>
-<span class="source-line-no">433</span><span id="line-433">                .withReactive(useReactive)</span>
-<span class="source-line-no">434</span><span id="line-434">                .withSerializationLibrary(SerializationLibraryKind.valueOf(serializationFramework.toUpperCase(Locale.ENGLISH)))</span>
-<span class="source-line-no">435</span><span id="line-435">                .withGenerateHttpResponseAlways(alwaysUseGenerateHttpResponse)</span>
-<span class="source-line-no">436</span><span id="line-436">                .withGenerateHttpResponseWhereRequired(generateHttpResponseWhereRequired)</span>
-<span class="source-line-no">437</span><span id="line-437">                .withDateTimeFormat(MicronautCodeGeneratorOptionsBuilder.DateTimeFormat.valueOf(dateTimeFormat.toUpperCase(Locale.ENGLISH)))</span>
-<span class="source-line-no">438</span><span id="line-438">                .withParameterMappings(parameterMappings.stream()</span>
-<span class="source-line-no">439</span><span id="line-439">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ParameterMapping(</span>
-<span class="source-line-no">440</span><span id="line-440">                        mapping.getName(),</span>
-<span class="source-line-no">441</span><span id="line-441">                        io.micronaut.openapi.generator.ParameterMapping.ParameterLocation.valueOf(</span>
-<span class="source-line-no">442</span><span id="line-442">                            mapping.getLocation().name()</span>
-<span class="source-line-no">443</span><span id="line-443">                        ),</span>
-<span class="source-line-no">444</span><span id="line-444">                        mapping.getMappedType(),</span>
-<span class="source-line-no">445</span><span id="line-445">                        mapping.getMappedName(),</span>
-<span class="source-line-no">446</span><span id="line-446">                        mapping.isValidated()</span>
-<span class="source-line-no">447</span><span id="line-447">                    ))</span>
-<span class="source-line-no">448</span><span id="line-448">                    .toList()</span>
-<span class="source-line-no">449</span><span id="line-449">                )</span>
-<span class="source-line-no">450</span><span id="line-450">                .withResponseBodyMappings(responseBodyMappings.stream()</span>
-<span class="source-line-no">451</span><span id="line-451">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ResponseBodyMapping(</span>
-<span class="source-line-no">452</span><span id="line-452">                        mapping.getHeaderName(),</span>
-<span class="source-line-no">453</span><span id="line-453">                        mapping.getMappedBodyType(),</span>
-<span class="source-line-no">454</span><span id="line-454">                        mapping.isListWrapper(),</span>
-<span class="source-line-no">455</span><span id="line-455">                        mapping.isValidated()</span>
-<span class="source-line-no">456</span><span id="line-456">                    ))</span>
-<span class="source-line-no">457</span><span id="line-457">                    .toList()</span>
-<span class="source-line-no">458</span><span id="line-458">                )</span>
-<span class="source-line-no">459</span><span id="line-459">                .withSchemaMapping(schemaMapping)</span>
-<span class="source-line-no">460</span><span id="line-460">                .withImportMapping(importMapping)</span>
-<span class="source-line-no">461</span><span id="line-461">                .withNameMapping(nameMapping)</span>
-<span class="source-line-no">462</span><span id="line-462">                .withTypeMapping(typeMapping)</span>
-<span class="source-line-no">463</span><span id="line-463">                .withEnumNameMapping(enumNameMapping)</span>
-<span class="source-line-no">464</span><span id="line-464">                .withModelNameMapping(modelNameMapping)</span>
-<span class="source-line-no">465</span><span id="line-465">                .withInlineSchemaNameMapping(inlineSchemaNameMapping)</span>
-<span class="source-line-no">466</span><span id="line-466">                .withInlineSchemaOption(inlineSchemaOption)</span>
-<span class="source-line-no">467</span><span id="line-467">                .withOpenapiNormalizer(openapiNormalizer)</span>
-<span class="source-line-no">468</span><span id="line-468">                .withApiNamePrefix(apiNamePrefix != null ? apiNamePrefix : "")</span>
-<span class="source-line-no">469</span><span id="line-469">                .withApiNameSuffix(apiNameSuffix != null ? apiNameSuffix : "")</span>
-<span class="source-line-no">470</span><span id="line-470">                .withModelNamePrefix(modelNamePrefix != null ? modelNamePrefix : "")</span>
-<span class="source-line-no">471</span><span id="line-471">                .withModelNameSuffix(modelNameSuffix != null ? modelNameSuffix : "")</span>
-<span class="source-line-no">472</span><span id="line-472">                .withGenerateSwaggerAnnotations(generateSwaggerAnnotations)</span>
-<span class="source-line-no">473</span><span id="line-473">                .withImplicitHeaders(implicitHeaders)</span>
-<span class="source-line-no">474</span><span id="line-474">                .withImplicitHeadersRegex(implicitHeadersRegex != null ? implicitHeadersRegex : "")</span>
-<span class="source-line-no">475</span><span id="line-475">                .withUseEnumCaseInsensitive(useEnumCaseInsensitive)</span>
-<span class="source-line-no">476</span><span id="line-476">                .withAdditionalEnumTypeAnnotations(additionalEnumTypeAnnotations)</span>
-<span class="source-line-no">477</span><span id="line-477">                .withAdditionalModelTypeAnnotations(additionalModelTypeAnnotations)</span>
-<span class="source-line-no">478</span><span id="line-478">                .withAdditionalOneOfTypeAnnotations(additionalOneOfTypeAnnotations)</span>
-<span class="source-line-no">479</span><span id="line-479">                .withAdditionalProperties(additionalProperties)</span>
-<span class="source-line-no">480</span><span id="line-480"></span>
-<span class="source-line-no">481</span><span id="line-481">                .withUseJakartaEe(useJakartaEe)</span>
-<span class="source-line-no">482</span><span id="line-482">                .withSortParamsByRequiredFlag(sortParamsByRequiredFlag)</span>
-<span class="source-line-no">483</span><span id="line-483">                .withSkipOperationExample(skipOperationExample)</span>
-<span class="source-line-no">484</span><span id="line-484">                .withSkipSortingOperations(skipSortingOperations)</span>
-<span class="source-line-no">485</span><span id="line-485">                .withRemoveOperationIdPrefixDelimiter(removeOperationIdPrefixDelimiter)</span>
-<span class="source-line-no">486</span><span id="line-486">                .withRemoveOperationIdPrefixCount(removeOperationIdPrefixCount)</span>
-<span class="source-line-no">487</span><span id="line-487">                .withSortModelPropertiesByRequiredFlag(sortModelPropertiesByRequiredFlag)</span>
-<span class="source-line-no">488</span><span id="line-488">                .withEnsureUniqueParams(ensureUniqueParams)</span>
-<span class="source-line-no">489</span><span id="line-489">                .withAllowUnicodeIdentifiers(allowUnicodeIdentifiers)</span>
-<span class="source-line-no">490</span><span id="line-490">                .withPrependFormOrBodyParameters(prependFormOrBodyParameters)</span>
-<span class="source-line-no">491</span><span id="line-491"></span>
-<span class="source-line-no">492</span><span id="line-492">                .withUseSealed(useSealed)</span>
-<span class="source-line-no">493</span><span id="line-493">                .withJsonIncludeAlwaysForRequiredFields(jsonIncludeAlwaysForRequiredFields)</span>
-<span class="source-line-no">494</span><span id="line-494">                .withRequiredPropertiesInConstructor(requiredPropertiesInConstructor)</span>
-<span class="source-line-no">495</span><span id="line-495">                .withGenerateControllerAsAbstract(generateControllerAsAbstract)</span>
-<span class="source-line-no">496</span><span id="line-496">            );</span>
-<span class="source-line-no">497</span><span id="line-497">        configureBuilder(builder);</span>
-<span class="source-line-no">498</span><span id="line-498">        builder.build().generate();</span>
-<span class="source-line-no">499</span><span id="line-499">    }</span>
-<span class="source-line-no">500</span><span id="line-500">}</span>
+<span class="source-line-no">418</span><span id="line-418">        var sourceFolder = "src/main/" + lang.toLowerCase(Locale.ENGLISH);</span>
+<span class="source-line-no">419</span><span id="line-419">        project.addCompileSourceRoot(new File(outputDirectory, sourceFolder).getAbsolutePath());</span>
+<span class="source-line-no">420</span><span id="line-420">        var builder = MicronautCodeGeneratorEntryPoint.builder()</span>
+<span class="source-line-no">421</span><span id="line-421">            .withDefinitionFile(definitionFile.toURI())</span>
+<span class="source-line-no">422</span><span id="line-422">            .withOutputDirectory(outputDirectory)</span>
+<span class="source-line-no">423</span><span id="line-423">            .withOutputs(</span>
+<span class="source-line-no">424</span><span id="line-424">                outputKinds.stream().map(String::toUpperCase).map(MicronautCodeGeneratorEntryPoint.OutputKind::valueOf).toList().toArray(new MicronautCodeGeneratorEntryPoint.OutputKind[0])</span>
+<span class="source-line-no">425</span><span id="line-425">            )</span>
+<span class="source-line-no">426</span><span id="line-426">            .withOptions(options -&gt; options</span>
+<span class="source-line-no">427</span><span id="line-427">                .withLang(MicronautCodeGeneratorOptionsBuilder.GeneratorLanguage.valueOf(lang.toUpperCase(Locale.ENGLISH)))</span>
+<span class="source-line-no">428</span><span id="line-428">                .withApiPackage(apiPackageName)</span>
+<span class="source-line-no">429</span><span id="line-429">                .withModelPackage(modelPackageName)</span>
+<span class="source-line-no">430</span><span id="line-430">                .withInvokerPackage(invokerPackageName)</span>
+<span class="source-line-no">431</span><span id="line-431">                .withBeanValidation(useBeanValidation)</span>
+<span class="source-line-no">432</span><span id="line-432">                .withUseOneOfInterfaces(useOneOfInterfaces)</span>
+<span class="source-line-no">433</span><span id="line-433">                .withOptional(useOptional)</span>
+<span class="source-line-no">434</span><span id="line-434">                .withReactive(useReactive)</span>
+<span class="source-line-no">435</span><span id="line-435">                .withSerializationLibrary(SerializationLibraryKind.valueOf(serializationFramework.toUpperCase(Locale.ENGLISH)))</span>
+<span class="source-line-no">436</span><span id="line-436">                .withGenerateHttpResponseAlways(alwaysUseGenerateHttpResponse)</span>
+<span class="source-line-no">437</span><span id="line-437">                .withGenerateHttpResponseWhereRequired(generateHttpResponseWhereRequired)</span>
+<span class="source-line-no">438</span><span id="line-438">                .withDateTimeFormat(MicronautCodeGeneratorOptionsBuilder.DateTimeFormat.valueOf(dateTimeFormat.toUpperCase(Locale.ENGLISH)))</span>
+<span class="source-line-no">439</span><span id="line-439">                .withParameterMappings(parameterMappings.stream()</span>
+<span class="source-line-no">440</span><span id="line-440">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ParameterMapping(</span>
+<span class="source-line-no">441</span><span id="line-441">                        mapping.getName(),</span>
+<span class="source-line-no">442</span><span id="line-442">                        io.micronaut.openapi.generator.ParameterMapping.ParameterLocation.valueOf(</span>
+<span class="source-line-no">443</span><span id="line-443">                            mapping.getLocation().name()</span>
+<span class="source-line-no">444</span><span id="line-444">                        ),</span>
+<span class="source-line-no">445</span><span id="line-445">                        mapping.getMappedType(),</span>
+<span class="source-line-no">446</span><span id="line-446">                        mapping.getMappedName(),</span>
+<span class="source-line-no">447</span><span id="line-447">                        mapping.isValidated()</span>
+<span class="source-line-no">448</span><span id="line-448">                    ))</span>
+<span class="source-line-no">449</span><span id="line-449">                    .toList()</span>
+<span class="source-line-no">450</span><span id="line-450">                )</span>
+<span class="source-line-no">451</span><span id="line-451">                .withResponseBodyMappings(responseBodyMappings.stream()</span>
+<span class="source-line-no">452</span><span id="line-452">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ResponseBodyMapping(</span>
+<span class="source-line-no">453</span><span id="line-453">                        mapping.getHeaderName(),</span>
+<span class="source-line-no">454</span><span id="line-454">                        mapping.getMappedBodyType(),</span>
+<span class="source-line-no">455</span><span id="line-455">                        mapping.isListWrapper(),</span>
+<span class="source-line-no">456</span><span id="line-456">                        mapping.isValidated()</span>
+<span class="source-line-no">457</span><span id="line-457">                    ))</span>
+<span class="source-line-no">458</span><span id="line-458">                    .toList()</span>
+<span class="source-line-no">459</span><span id="line-459">                )</span>
+<span class="source-line-no">460</span><span id="line-460">                .withSchemaMapping(schemaMapping)</span>
+<span class="source-line-no">461</span><span id="line-461">                .withImportMapping(importMapping)</span>
+<span class="source-line-no">462</span><span id="line-462">                .withNameMapping(nameMapping)</span>
+<span class="source-line-no">463</span><span id="line-463">                .withTypeMapping(typeMapping)</span>
+<span class="source-line-no">464</span><span id="line-464">                .withEnumNameMapping(enumNameMapping)</span>
+<span class="source-line-no">465</span><span id="line-465">                .withModelNameMapping(modelNameMapping)</span>
+<span class="source-line-no">466</span><span id="line-466">                .withInlineSchemaNameMapping(inlineSchemaNameMapping)</span>
+<span class="source-line-no">467</span><span id="line-467">                .withInlineSchemaOption(inlineSchemaOption)</span>
+<span class="source-line-no">468</span><span id="line-468">                .withOpenapiNormalizer(openapiNormalizer)</span>
+<span class="source-line-no">469</span><span id="line-469">                .withApiNamePrefix(apiNamePrefix != null ? apiNamePrefix : "")</span>
+<span class="source-line-no">470</span><span id="line-470">                .withApiNameSuffix(apiNameSuffix != null ? apiNameSuffix : "")</span>
+<span class="source-line-no">471</span><span id="line-471">                .withModelNamePrefix(modelNamePrefix != null ? modelNamePrefix : "")</span>
+<span class="source-line-no">472</span><span id="line-472">                .withModelNameSuffix(modelNameSuffix != null ? modelNameSuffix : "")</span>
+<span class="source-line-no">473</span><span id="line-473">                .withGenerateSwaggerAnnotations(generateSwaggerAnnotations)</span>
+<span class="source-line-no">474</span><span id="line-474">                .withImplicitHeaders(implicitHeaders)</span>
+<span class="source-line-no">475</span><span id="line-475">                .withImplicitHeadersRegex(implicitHeadersRegex != null ? implicitHeadersRegex : "")</span>
+<span class="source-line-no">476</span><span id="line-476">                .withUseEnumCaseInsensitive(useEnumCaseInsensitive)</span>
+<span class="source-line-no">477</span><span id="line-477">                .withAdditionalEnumTypeAnnotations(additionalEnumTypeAnnotations)</span>
+<span class="source-line-no">478</span><span id="line-478">                .withAdditionalModelTypeAnnotations(additionalModelTypeAnnotations)</span>
+<span class="source-line-no">479</span><span id="line-479">                .withAdditionalOneOfTypeAnnotations(additionalOneOfTypeAnnotations)</span>
+<span class="source-line-no">480</span><span id="line-480">                .withAdditionalProperties(additionalProperties)</span>
+<span class="source-line-no">481</span><span id="line-481"></span>
+<span class="source-line-no">482</span><span id="line-482">                .withUseJakartaEe(useJakartaEe)</span>
+<span class="source-line-no">483</span><span id="line-483">                .withSortParamsByRequiredFlag(sortParamsByRequiredFlag)</span>
+<span class="source-line-no">484</span><span id="line-484">                .withSkipOperationExample(skipOperationExample)</span>
+<span class="source-line-no">485</span><span id="line-485">                .withSkipSortingOperations(skipSortingOperations)</span>
+<span class="source-line-no">486</span><span id="line-486">                .withRemoveOperationIdPrefixDelimiter(removeOperationIdPrefixDelimiter)</span>
+<span class="source-line-no">487</span><span id="line-487">                .withRemoveOperationIdPrefixCount(removeOperationIdPrefixCount)</span>
+<span class="source-line-no">488</span><span id="line-488">                .withSortModelPropertiesByRequiredFlag(sortModelPropertiesByRequiredFlag)</span>
+<span class="source-line-no">489</span><span id="line-489">                .withEnsureUniqueParams(ensureUniqueParams)</span>
+<span class="source-line-no">490</span><span id="line-490">                .withAllowUnicodeIdentifiers(allowUnicodeIdentifiers)</span>
+<span class="source-line-no">491</span><span id="line-491">                .withPrependFormOrBodyParameters(prependFormOrBodyParameters)</span>
+<span class="source-line-no">492</span><span id="line-492"></span>
+<span class="source-line-no">493</span><span id="line-493">                .withUseSealed(useSealed)</span>
+<span class="source-line-no">494</span><span id="line-494">                .withJsonIncludeAlwaysForRequiredFields(jsonIncludeAlwaysForRequiredFields)</span>
+<span class="source-line-no">495</span><span id="line-495">                .withRequiredPropertiesInConstructor(requiredPropertiesInConstructor)</span>
+<span class="source-line-no">496</span><span id="line-496">                .withGenerateControllerAsAbstract(generateControllerAsAbstract)</span>
+<span class="source-line-no">497</span><span id="line-497">            );</span>
+<span class="source-line-no">498</span><span id="line-498">        configureBuilder(builder);</span>
+<span class="source-line-no">499</span><span id="line-499">        builder.build().generate();</span>
+<span class="source-line-no">500</span><span id="line-500">    }</span>
+<span class="source-line-no">501</span><span id="line-501">}</span>
 
 
 

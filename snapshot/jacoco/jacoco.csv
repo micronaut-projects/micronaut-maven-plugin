@@ -5,8 +5,8 @@ Micronaut Maven Plugin - Plugin,io.micronaut.maven.openapi,ResponseBodyMapping,3
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.openapi,ParameterMapping,38,0,0,0,16,0,11,0,11,0
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.openapi,OpenApiGenericMojo.OpenAPIInvocationException,8,0,0,0,4,0,2,0,2,0
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.openapi,OpenApiClientMojo,83,0,12,0,22,0,11,0,5,0
-Micronaut Maven Plugin - Plugin,io.micronaut.maven.openapi,OpenApiServerMojo,56,0,2,0,17,0,6,0,5,0
-Micronaut Maven Plugin - Plugin,io.micronaut.maven.openapi,AbstractOpenApiMojo,308,0,14,0,89,0,14,0,7,0
+Micronaut Maven Plugin - Plugin,io.micronaut.maven.openapi,OpenApiServerMojo,46,10,2,0,13,4,3,3,2,3
+Micronaut Maven Plugin - Plugin,io.micronaut.maven.openapi,AbstractOpenApiMojo,264,54,12,2,75,15,11,3,4,3
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.testresources,StartTestResourcesServerMojo,20,101,2,4,6,19,2,5,0,4
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.testresources,TestResourcesConfiguration,21,7,0,0,9,3,6,2,6,2
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.testresources,TestResourcesHelper.SharedServerLock,0,18,0,0,0,7,0,2,0,2

@@ -36,7 +36,7 @@ import java.util.Map;
  * must implement the {@link #isEnabled()} and {@link #configureBuilder(MicronautCodeGeneratorBuilder)}
  * methods.
  */
-<span class="nc" id="L39">public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {</span>
+<span class="fc" id="L39">public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {</span>
     static final String MICRONAUT_OPENAPI_PREFIX = &quot;micronaut.openapi&quot;;
     static final String IO_MICRONAUT_OPENAPI_PREFIX = &quot;io.micronaut.openapi&quot;;
     static final String KOTLIN_MAVEN_UNSUPPORTED_MESSAGE =
@@ -279,14 +279,14 @@ import java.util.Map;
     /**
      * Flag to indicate whether to use the &quot;jakarta&quot; or &quot;javax&quot; package.
      */
-<span class="nc" id="L282">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.useJakartaEe&quot;, defaultValue = &quot;true&quot;)</span>
+<span class="fc" id="L282">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.useJakartaEe&quot;, defaultValue = &quot;true&quot;)</span>
     protected boolean useJakartaEe = true;
 
     /**
      * Sort method arguments to place required parameters before optional parameters.
      * Default: true
      */
-<span class="nc" id="L289">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.sortParamsByRequiredFlag&quot;, defaultValue = &quot;true&quot;)</span>
+<span class="fc" id="L289">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.sortParamsByRequiredFlag&quot;, defaultValue = &quot;true&quot;)</span>
     protected boolean sortParamsByRequiredFlag = true;
 
     /**
@@ -306,25 +306,25 @@ import java.util.Map;
     /**
      * Character to use as a delimiter for the prefix. Default: '_'
      */
-<span class="nc" id="L309">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.removeOperationIdPrefixDelimiter&quot;, defaultValue = &quot;_&quot;)</span>
+<span class="fc" id="L309">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.removeOperationIdPrefixDelimiter&quot;, defaultValue = &quot;_&quot;)</span>
     protected String removeOperationIdPrefixDelimiter = &quot;_&quot;;
 
     /**
      * Count of delimiter for the prefix. Use -1 for last. Default: 1
      */
-<span class="nc" id="L315">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.removeOperationIdPrefixCount&quot;, defaultValue = &quot;1&quot;)</span>
+<span class="fc" id="L315">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.removeOperationIdPrefixCount&quot;, defaultValue = &quot;1&quot;)</span>
     protected int removeOperationIdPrefixCount = 1;
 
     /**
      * Sort model properties to place required parameters before optional parameters.
      */
-<span class="nc" id="L321">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.sortModelPropertiesByRequiredFlag&quot;, defaultValue = &quot;true&quot;)</span>
+<span class="fc" id="L321">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.sortModelPropertiesByRequiredFlag&quot;, defaultValue = &quot;true&quot;)</span>
     protected boolean sortModelPropertiesByRequiredFlag = true;
 
     /**
      * Whether to ensure parameter names are unique in an operation (rename parameters that are not).
      */
-<span class="nc" id="L327">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.ensureUniqueParams&quot;, defaultValue = &quot;true&quot;)</span>
+<span class="fc" id="L327">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.ensureUniqueParams&quot;, defaultValue = &quot;true&quot;)</span>
     protected boolean ensureUniqueParams = true;
 
     /**
@@ -360,7 +360,7 @@ import java.util.Map;
      *
      * @since 4.8.0
      */
-<span class="nc" id="L363">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.requiredPropertiesInConstructor&quot;, defaultValue = &quot;true&quot;)</span>
+<span class="fc" id="L363">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.requiredPropertiesInConstructor&quot;, defaultValue = &quot;true&quot;)</span>
     protected boolean requiredPropertiesInConstructor = true;
 
     /**
@@ -399,103 +399,104 @@ import java.util.Map;
 <span class="nc" id="L399">    }</span>
 
     protected final void rejectUnsupportedKotlinLanguage(String generatorType) throws MojoExecutionException {
-<span class="nc bnc" id="L402" title="All 2 branches missed.">        if (&quot;kotlin&quot;.equalsIgnoreCase(lang)) {</span>
+<span class="pc bpc" id="L402" title="1 of 2 branches missed.">        if (&quot;kotlin&quot;.equalsIgnoreCase(lang)) {</span>
 <span class="nc" id="L403">            throw new MojoExecutionException(</span>
                 &quot;Kotlin OpenAPI &quot; + generatorType + &quot; generation is not supported by the Micronaut Maven Plugin. &quot;
                     + KOTLIN_MAVEN_UNSUPPORTED_MESSAGE
             );
         }
-<span class="nc" id="L408">    }</span>
+<span class="fc" id="L408">    }</span>
 
     @Override
     public final void execute() throws MojoExecutionException, MojoFailureException {
-<span class="nc bnc" id="L412" title="All 2 branches missed.">        if (!isEnabled()) {</span>
+<span class="pc bpc" id="L412" title="1 of 2 branches missed.">        if (!isEnabled()) {</span>
 <span class="nc" id="L413">            getLog().debug(this.getClass().getSimpleName() + &quot; is disabled&quot;);</span>
 <span class="nc" id="L414">            return;</span>
         }
 
-<span class="nc" id="L417">        validateLanguage();</span>
-<span class="nc" id="L418">        project.addCompileSourceRoot(outputDirectory.getAbsolutePath());</span>
-<span class="nc" id="L419">        var builder = MicronautCodeGeneratorEntryPoint.builder()</span>
-<span class="nc" id="L420">            .withDefinitionFile(definitionFile.toURI())</span>
-<span class="nc" id="L421">            .withOutputDirectory(outputDirectory)</span>
-<span class="nc" id="L422">            .withOutputs(</span>
-<span class="nc" id="L423">                outputKinds.stream().map(String::toUpperCase).map(MicronautCodeGeneratorEntryPoint.OutputKind::valueOf).toList().toArray(new MicronautCodeGeneratorEntryPoint.OutputKind[0])</span>
+<span class="fc" id="L417">        validateLanguage();</span>
+<span class="fc" id="L418">        var sourceFolder = &quot;src/main/&quot; + lang.toLowerCase(Locale.ENGLISH);</span>
+<span class="fc" id="L419">        project.addCompileSourceRoot(new File(outputDirectory, sourceFolder).getAbsolutePath());</span>
+<span class="fc" id="L420">        var builder = MicronautCodeGeneratorEntryPoint.builder()</span>
+<span class="nc" id="L421">            .withDefinitionFile(definitionFile.toURI())</span>
+<span class="nc" id="L422">            .withOutputDirectory(outputDirectory)</span>
+<span class="nc" id="L423">            .withOutputs(</span>
+<span class="nc" id="L424">                outputKinds.stream().map(String::toUpperCase).map(MicronautCodeGeneratorEntryPoint.OutputKind::valueOf).toList().toArray(new MicronautCodeGeneratorEntryPoint.OutputKind[0])</span>
             )
-<span class="nc" id="L425">            .withOptions(options -&gt; options</span>
-<span class="nc" id="L426">                .withLang(MicronautCodeGeneratorOptionsBuilder.GeneratorLanguage.valueOf(lang.toUpperCase(Locale.ENGLISH)))</span>
-<span class="nc" id="L427">                .withApiPackage(apiPackageName)</span>
-<span class="nc" id="L428">                .withModelPackage(modelPackageName)</span>
-<span class="nc" id="L429">                .withInvokerPackage(invokerPackageName)</span>
-<span class="nc" id="L430">                .withBeanValidation(useBeanValidation)</span>
-<span class="nc" id="L431">                .withUseOneOfInterfaces(useOneOfInterfaces)</span>
-<span class="nc" id="L432">                .withOptional(useOptional)</span>
-<span class="nc" id="L433">                .withReactive(useReactive)</span>
-<span class="nc" id="L434">                .withSerializationLibrary(SerializationLibraryKind.valueOf(serializationFramework.toUpperCase(Locale.ENGLISH)))</span>
-<span class="nc" id="L435">                .withGenerateHttpResponseAlways(alwaysUseGenerateHttpResponse)</span>
-<span class="nc" id="L436">                .withGenerateHttpResponseWhereRequired(generateHttpResponseWhereRequired)</span>
-<span class="nc" id="L437">                .withDateTimeFormat(MicronautCodeGeneratorOptionsBuilder.DateTimeFormat.valueOf(dateTimeFormat.toUpperCase(Locale.ENGLISH)))</span>
-<span class="nc" id="L438">                .withParameterMappings(parameterMappings.stream()</span>
-<span class="nc" id="L439">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ParameterMapping(</span>
-<span class="nc" id="L440">                        mapping.getName(),</span>
-<span class="nc" id="L441">                        io.micronaut.openapi.generator.ParameterMapping.ParameterLocation.valueOf(</span>
-<span class="nc" id="L442">                            mapping.getLocation().name()</span>
+<span class="nc" id="L426">            .withOptions(options -&gt; options</span>
+<span class="nc" id="L427">                .withLang(MicronautCodeGeneratorOptionsBuilder.GeneratorLanguage.valueOf(lang.toUpperCase(Locale.ENGLISH)))</span>
+<span class="nc" id="L428">                .withApiPackage(apiPackageName)</span>
+<span class="nc" id="L429">                .withModelPackage(modelPackageName)</span>
+<span class="nc" id="L430">                .withInvokerPackage(invokerPackageName)</span>
+<span class="nc" id="L431">                .withBeanValidation(useBeanValidation)</span>
+<span class="nc" id="L432">                .withUseOneOfInterfaces(useOneOfInterfaces)</span>
+<span class="nc" id="L433">                .withOptional(useOptional)</span>
+<span class="nc" id="L434">                .withReactive(useReactive)</span>
+<span class="nc" id="L435">                .withSerializationLibrary(SerializationLibraryKind.valueOf(serializationFramework.toUpperCase(Locale.ENGLISH)))</span>
+<span class="nc" id="L436">                .withGenerateHttpResponseAlways(alwaysUseGenerateHttpResponse)</span>
+<span class="nc" id="L437">                .withGenerateHttpResponseWhereRequired(generateHttpResponseWhereRequired)</span>
+<span class="nc" id="L438">                .withDateTimeFormat(MicronautCodeGeneratorOptionsBuilder.DateTimeFormat.valueOf(dateTimeFormat.toUpperCase(Locale.ENGLISH)))</span>
+<span class="nc" id="L439">                .withParameterMappings(parameterMappings.stream()</span>
+<span class="nc" id="L440">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ParameterMapping(</span>
+<span class="nc" id="L441">                        mapping.getName(),</span>
+<span class="nc" id="L442">                        io.micronaut.openapi.generator.ParameterMapping.ParameterLocation.valueOf(</span>
+<span class="nc" id="L443">                            mapping.getLocation().name()</span>
                         ),
-<span class="nc" id="L444">                        mapping.getMappedType(),</span>
-<span class="nc" id="L445">                        mapping.getMappedName(),</span>
-<span class="nc" id="L446">                        mapping.isValidated()</span>
+<span class="nc" id="L445">                        mapping.getMappedType(),</span>
+<span class="nc" id="L446">                        mapping.getMappedName(),</span>
+<span class="nc" id="L447">                        mapping.isValidated()</span>
                     ))
-<span class="nc" id="L448">                    .toList()</span>
+<span class="nc" id="L449">                    .toList()</span>
                 )
-<span class="nc" id="L450">                .withResponseBodyMappings(responseBodyMappings.stream()</span>
-<span class="nc" id="L451">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ResponseBodyMapping(</span>
-<span class="nc" id="L452">                        mapping.getHeaderName(),</span>
-<span class="nc" id="L453">                        mapping.getMappedBodyType(),</span>
-<span class="nc" id="L454">                        mapping.isListWrapper(),</span>
-<span class="nc" id="L455">                        mapping.isValidated()</span>
+<span class="nc" id="L451">                .withResponseBodyMappings(responseBodyMappings.stream()</span>
+<span class="nc" id="L452">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ResponseBodyMapping(</span>
+<span class="nc" id="L453">                        mapping.getHeaderName(),</span>
+<span class="nc" id="L454">                        mapping.getMappedBodyType(),</span>
+<span class="nc" id="L455">                        mapping.isListWrapper(),</span>
+<span class="nc" id="L456">                        mapping.isValidated()</span>
                     ))
-<span class="nc" id="L457">                    .toList()</span>
+<span class="nc" id="L458">                    .toList()</span>
                 )
-<span class="nc" id="L459">                .withSchemaMapping(schemaMapping)</span>
-<span class="nc" id="L460">                .withImportMapping(importMapping)</span>
-<span class="nc" id="L461">                .withNameMapping(nameMapping)</span>
-<span class="nc" id="L462">                .withTypeMapping(typeMapping)</span>
-<span class="nc" id="L463">                .withEnumNameMapping(enumNameMapping)</span>
-<span class="nc" id="L464">                .withModelNameMapping(modelNameMapping)</span>
-<span class="nc" id="L465">                .withInlineSchemaNameMapping(inlineSchemaNameMapping)</span>
-<span class="nc" id="L466">                .withInlineSchemaOption(inlineSchemaOption)</span>
-<span class="nc" id="L467">                .withOpenapiNormalizer(openapiNormalizer)</span>
-<span class="nc bnc" id="L468" title="All 2 branches missed.">                .withApiNamePrefix(apiNamePrefix != null ? apiNamePrefix : &quot;&quot;)</span>
-<span class="nc bnc" id="L469" title="All 2 branches missed.">                .withApiNameSuffix(apiNameSuffix != null ? apiNameSuffix : &quot;&quot;)</span>
-<span class="nc bnc" id="L470" title="All 2 branches missed.">                .withModelNamePrefix(modelNamePrefix != null ? modelNamePrefix : &quot;&quot;)</span>
-<span class="nc bnc" id="L471" title="All 2 branches missed.">                .withModelNameSuffix(modelNameSuffix != null ? modelNameSuffix : &quot;&quot;)</span>
-<span class="nc" id="L472">                .withGenerateSwaggerAnnotations(generateSwaggerAnnotations)</span>
-<span class="nc" id="L473">                .withImplicitHeaders(implicitHeaders)</span>
-<span class="nc bnc" id="L474" title="All 2 branches missed.">                .withImplicitHeadersRegex(implicitHeadersRegex != null ? implicitHeadersRegex : &quot;&quot;)</span>
-<span class="nc" id="L475">                .withUseEnumCaseInsensitive(useEnumCaseInsensitive)</span>
-<span class="nc" id="L476">                .withAdditionalEnumTypeAnnotations(additionalEnumTypeAnnotations)</span>
-<span class="nc" id="L477">                .withAdditionalModelTypeAnnotations(additionalModelTypeAnnotations)</span>
-<span class="nc" id="L478">                .withAdditionalOneOfTypeAnnotations(additionalOneOfTypeAnnotations)</span>
-<span class="nc" id="L479">                .withAdditionalProperties(additionalProperties)</span>
+<span class="nc" id="L460">                .withSchemaMapping(schemaMapping)</span>
+<span class="nc" id="L461">                .withImportMapping(importMapping)</span>
+<span class="nc" id="L462">                .withNameMapping(nameMapping)</span>
+<span class="nc" id="L463">                .withTypeMapping(typeMapping)</span>
+<span class="nc" id="L464">                .withEnumNameMapping(enumNameMapping)</span>
+<span class="nc" id="L465">                .withModelNameMapping(modelNameMapping)</span>
+<span class="nc" id="L466">                .withInlineSchemaNameMapping(inlineSchemaNameMapping)</span>
+<span class="nc" id="L467">                .withInlineSchemaOption(inlineSchemaOption)</span>
+<span class="nc" id="L468">                .withOpenapiNormalizer(openapiNormalizer)</span>
+<span class="nc bnc" id="L469" title="All 2 branches missed.">                .withApiNamePrefix(apiNamePrefix != null ? apiNamePrefix : &quot;&quot;)</span>
+<span class="nc bnc" id="L470" title="All 2 branches missed.">                .withApiNameSuffix(apiNameSuffix != null ? apiNameSuffix : &quot;&quot;)</span>
+<span class="nc bnc" id="L471" title="All 2 branches missed.">                .withModelNamePrefix(modelNamePrefix != null ? modelNamePrefix : &quot;&quot;)</span>
+<span class="nc bnc" id="L472" title="All 2 branches missed.">                .withModelNameSuffix(modelNameSuffix != null ? modelNameSuffix : &quot;&quot;)</span>
+<span class="nc" id="L473">                .withGenerateSwaggerAnnotations(generateSwaggerAnnotations)</span>
+<span class="nc" id="L474">                .withImplicitHeaders(implicitHeaders)</span>
+<span class="nc bnc" id="L475" title="All 2 branches missed.">                .withImplicitHeadersRegex(implicitHeadersRegex != null ? implicitHeadersRegex : &quot;&quot;)</span>
+<span class="nc" id="L476">                .withUseEnumCaseInsensitive(useEnumCaseInsensitive)</span>
+<span class="nc" id="L477">                .withAdditionalEnumTypeAnnotations(additionalEnumTypeAnnotations)</span>
+<span class="nc" id="L478">                .withAdditionalModelTypeAnnotations(additionalModelTypeAnnotations)</span>
+<span class="nc" id="L479">                .withAdditionalOneOfTypeAnnotations(additionalOneOfTypeAnnotations)</span>
+<span class="nc" id="L480">                .withAdditionalProperties(additionalProperties)</span>
 
-<span class="nc" id="L481">                .withUseJakartaEe(useJakartaEe)</span>
-<span class="nc" id="L482">                .withSortParamsByRequiredFlag(sortParamsByRequiredFlag)</span>
-<span class="nc" id="L483">                .withSkipOperationExample(skipOperationExample)</span>
-<span class="nc" id="L484">                .withSkipSortingOperations(skipSortingOperations)</span>
-<span class="nc" id="L485">                .withRemoveOperationIdPrefixDelimiter(removeOperationIdPrefixDelimiter)</span>
-<span class="nc" id="L486">                .withRemoveOperationIdPrefixCount(removeOperationIdPrefixCount)</span>
-<span class="nc" id="L487">                .withSortModelPropertiesByRequiredFlag(sortModelPropertiesByRequiredFlag)</span>
-<span class="nc" id="L488">                .withEnsureUniqueParams(ensureUniqueParams)</span>
-<span class="nc" id="L489">                .withAllowUnicodeIdentifiers(allowUnicodeIdentifiers)</span>
-<span class="nc" id="L490">                .withPrependFormOrBodyParameters(prependFormOrBodyParameters)</span>
+<span class="nc" id="L482">                .withUseJakartaEe(useJakartaEe)</span>
+<span class="nc" id="L483">                .withSortParamsByRequiredFlag(sortParamsByRequiredFlag)</span>
+<span class="nc" id="L484">                .withSkipOperationExample(skipOperationExample)</span>
+<span class="nc" id="L485">                .withSkipSortingOperations(skipSortingOperations)</span>
+<span class="nc" id="L486">                .withRemoveOperationIdPrefixDelimiter(removeOperationIdPrefixDelimiter)</span>
+<span class="nc" id="L487">                .withRemoveOperationIdPrefixCount(removeOperationIdPrefixCount)</span>
+<span class="nc" id="L488">                .withSortModelPropertiesByRequiredFlag(sortModelPropertiesByRequiredFlag)</span>
+<span class="nc" id="L489">                .withEnsureUniqueParams(ensureUniqueParams)</span>
+<span class="nc" id="L490">                .withAllowUnicodeIdentifiers(allowUnicodeIdentifiers)</span>
+<span class="nc" id="L491">                .withPrependFormOrBodyParameters(prependFormOrBodyParameters)</span>
 
-<span class="nc" id="L492">                .withUseSealed(useSealed)</span>
-<span class="nc" id="L493">                .withJsonIncludeAlwaysForRequiredFields(jsonIncludeAlwaysForRequiredFields)</span>
-<span class="nc" id="L494">                .withRequiredPropertiesInConstructor(requiredPropertiesInConstructor)</span>
-<span class="nc" id="L495">                .withGenerateControllerAsAbstract(generateControllerAsAbstract)</span>
+<span class="nc" id="L493">                .withUseSealed(useSealed)</span>
+<span class="nc" id="L494">                .withJsonIncludeAlwaysForRequiredFields(jsonIncludeAlwaysForRequiredFields)</span>
+<span class="nc" id="L495">                .withRequiredPropertiesInConstructor(requiredPropertiesInConstructor)</span>
+<span class="nc" id="L496">                .withGenerateControllerAsAbstract(generateControllerAsAbstract)</span>
             );
-<span class="nc" id="L497">        configureBuilder(builder);</span>
-<span class="nc" id="L498">        builder.build().generate();</span>
-<span class="nc" id="L499">    }</span>
+<span class="nc" id="L498">        configureBuilder(builder);</span>
+<span class="nc" id="L499">        builder.build().generate();</span>
+<span class="nc" id="L500">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
