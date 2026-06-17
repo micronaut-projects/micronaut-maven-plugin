@@ -5,8 +5,8 @@ support for managing external resources which are required during development or
 with https://www.testcontainers.org/[Testcontainers] to provide throwaway containers for resources like databases or
 other external services like Kafka or RabbitMQ.
 
-Test resources are handled by a "test resources service" which is a server accepting requests for test resources, which
-lifecycle is handled by the Maven plugin. A test resources request is, to simplify, a request to resolve a missing
+Test resources are handled by a "test resources service", which is a server that accepts requests for test resources.
+The Maven plugin manages the service lifecycle. A test resources request is, to simplify, a request to resolve a missing
 configuration property. For example, if the kafka.bootstrap-servers property isn’t set, Micronaut will query the test
 resources service for the value of this property. This will trigger the creation of a Kafka test container, and the
 service will answer with the URI to the bootstrap server.
@@ -46,7 +46,7 @@ For example, imagine a multi-project build which consists of :
 * Functional tests integrating both.
 
 If each project enables the Test Resources integration independently, then each project will use its own Test Resources
-server, separate of the others.
+server, separate from the others.
 
 However, you might want to run the consumer in one terminal, and the producer in another, and still want them to talk to
 the same Kafka cluster. For this you can use a shared test server, by passing the `micronaut.test.resources.shared`
@@ -129,8 +129,8 @@ it like this:
                         <artifactId>micronaut-test-resources-jdbc-mysql</artifactId>
                     </dependency>
                     <dependency>
-                        <groupId>mysql</groupId>
-                        <artifactId>mysql-connector-java</artifactId>
+                        <groupId>com.mysql</groupId>
+                        <artifactId>mysql-connector-j</artifactId>
                     </dependency>
                 </testResourcesDependencies>
             </configuration>
