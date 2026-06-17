@@ -16,16 +16,14 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 /**
- * Reproduces the source-root registration bug in {@link AbstractOpenApiMojo}.
+ * Guards against the source-root registration bug in {@link AbstractOpenApiMojo}.
  *
  * <p>The mojo passes {@code outputDirectory} to the generator via
  * {@code withOutputDirectory(outputDirectory)}, and the generator writes Java sources under
- * {@code outputDirectory/src/main/java}. However the mojo registers {@code outputDirectory}
- * itself (the base) as the compile source root, not the {@code src/main/java} sub-directory
- * where the files actually land. In reactor / incremental builds this causes the Micronaut
- * annotation processor to miss the generated types, so {@code $Introspection} classes are
- * never produced and downstream compilation fails with NoSuchFileException on the missing
- * {@code .class} files.
+ * {@code outputDirectory/src/main/java}. The registered compile source root must be that
+ * language-specific source directory, not the {@code outputDirectory} base, otherwise reactor /
+ * incremental builds can miss generated types and fail when downstream compilation expects the
+ * corresponding {@code $Introspection} classes.
  */
 class OpenApiMojoSourceRootTest {
 
@@ -50,7 +48,7 @@ class OpenApiMojoSourceRootTest {
         // already been registered by that point, which is all this test asserts.
         try {
             mojo.execute();
-        } catch (Throwable ignored) {
+        } catch (Exception ignored) {
             // generation failure is irrelevant to source-root registration
         }
 
