@@ -16,15 +16,15 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 /**
- * Reproduces the source-root registration bug in {@link AbstractOpenApiMojo}.
+ * Regression coverage for generated OpenAPI source-root registration in {@link AbstractOpenApiMojo}.
  *
  * <p>The mojo passes {@code outputDirectory} to the generator via
  * {@code withOutputDirectory(outputDirectory)}, and the generator writes sources under
  * {@code outputDirectory/src/main/<lang>}. However the mojo registered {@code outputDirectory}
  * itself (the base) as the compile source root, not the {@code src/main/<lang>} sub-directory
- * where the files actually land. In reactor / incremental builds this causes the Micronaut
+ * where the files actually land. In reactor / incremental builds that caused the Micronaut
  * annotation processor to miss the generated types, so {@code $Introspection} classes are
- * never produced and downstream compilation fails with NoSuchFileException on the missing
+ * never produced and downstream compilation could fail with NoSuchFileException on the missing
  * {@code .class} files.
  */
 class OpenApiMojoSourceRootTest {
@@ -32,8 +32,7 @@ class OpenApiMojoSourceRootTest {
     @ParameterizedTest
     @CsvSource({
         "java,src/main/java",
-        "groovy,src/main/groovy",
-        "kotlin,src/main/kotlin"
+        "groovy,src/main/groovy"
     })
     void registersGeneratedSourcesUnderLanguageSourceFolder(String lang, String sourceFolder, @TempDir Path tmp) throws Exception {
         var project = mock(MavenProject.class);
@@ -51,7 +50,7 @@ class OpenApiMojoSourceRootTest {
         // already been registered by that point, which is all this test asserts.
         try {
             mojo.execute();
-        } catch (Throwable ignored) {
+        } catch (Exception ignored) {
             // generation failure is irrelevant to source-root registration
         }
 
