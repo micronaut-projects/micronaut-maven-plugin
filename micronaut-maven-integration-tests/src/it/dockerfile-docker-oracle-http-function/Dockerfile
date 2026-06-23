@@ -1,4 +1,4 @@
-ARG BASE_JAVA_IMAGE=eclipse-temurin:25-jre
+ARG BASE_JAVA_IMAGE=eclipse-temurin:25.0.3_9-jre
 
 FROM fnproject/fn-java-fdk:jre17-1.1.7@sha256:50a0b8138fec3dde64aaedbe66406da6c2c17fc88446726c75446cb4c4fc681f AS fnfdk
 
