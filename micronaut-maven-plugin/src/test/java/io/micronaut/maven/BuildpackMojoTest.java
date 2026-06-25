@@ -365,6 +365,7 @@ class BuildpackMojoTest {
 
     private static final class FailingRunRunner implements BuildpackMojo.BuildpackCommandRunner {
         private final Exception exception;
+        private boolean verified;
 
         private FailingRunRunner(Exception exception) {
             this.exception = exception;
@@ -372,10 +373,12 @@ class BuildpackMojoTest {
 
         @Override
         public void verifyPack(String executable, File workingDirectory, Consumer<String> output) {
+            verified = true;
         }
 
         @Override
         public int run(List<String> command, File workingDirectory, Consumer<String> output) throws IOException, InterruptedException {
+            assertTrue(verified);
             if (exception instanceof IOException ioException) {
                 throw ioException;
             }
