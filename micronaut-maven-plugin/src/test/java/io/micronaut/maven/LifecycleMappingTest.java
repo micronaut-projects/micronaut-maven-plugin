@@ -56,6 +56,20 @@ class LifecycleMappingTest {
         assertFalse(hasPhase(component, "deploy"));
     }
 
+    @Test
+    void buildpackPackagingBuildsJarThenRunsBuildpackGoal() throws Exception {
+        Element component = findLifecycleComponent("buildpack");
+
+        String packagePhase = phase(component, "package");
+
+        assertTrue(packagePhase.contains("org.apache.maven.plugins:maven-jar-plugin:jar"));
+        assertTrue(packagePhase.contains("org.apache.maven.plugins:maven-shade-plugin:shade"));
+        assertTrue(packagePhase.matches("(?s).*" + MICRONAUT_MAVEN_PLUGIN_COORDINATES + "[^,\\s]+:buildpack.*"));
+        assertTrue(packagePhase.indexOf("maven-jar-plugin:jar") < packagePhase.indexOf("maven-shade-plugin:shade"));
+        assertTrue(packagePhase.indexOf("maven-shade-plugin:shade") < packagePhase.indexOf(":buildpack"));
+        assertFalse(hasPhase(component, "deploy"));
+    }
+
     private static Element findLifecycleComponent(String roleHint) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);

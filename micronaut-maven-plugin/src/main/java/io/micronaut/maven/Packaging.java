@@ -24,6 +24,7 @@ public enum Packaging {
     JAR("jar"),
     NATIVE_IMAGE("native-image"),
     DOCKER("docker"),
+    BUILDPACK("buildpack"),
     DOCKER_NATIVE("docker-native"),
     DOCKER_CRAC("docker-crac"),
     K8S("k8s"),
