@@ -51,7 +51,7 @@ class LifecycleMappingTest {
         String packagePhase = phase(component, "package");
 
         assertTrue(packagePhase.contains("org.graalvm.buildtools:native-maven-plugin:compile-no-fork"));
-        assertTrue(packagePhase.matches("(?s).*" + MICRONAUT_MAVEN_PLUGIN_COORDINATES + "[^,\\s]+:native-image-jib.*"));
+        assertTrue(hasMicronautGoal(packagePhase, "native-image-jib"));
         assertTrue(packagePhase.indexOf("compile-no-fork") < packagePhase.indexOf("native-image-jib"));
         assertFalse(hasPhase(component, "deploy"));
     }
@@ -64,7 +64,7 @@ class LifecycleMappingTest {
 
         assertTrue(packagePhase.contains("org.apache.maven.plugins:maven-jar-plugin:jar"));
         assertTrue(packagePhase.contains("org.apache.maven.plugins:maven-shade-plugin:shade"));
-        assertTrue(packagePhase.matches("(?s).*" + MICRONAUT_MAVEN_PLUGIN_COORDINATES + "[^,\\s]+:buildpack.*"));
+        assertTrue(hasMicronautGoal(packagePhase, "buildpack"));
         assertTrue(packagePhase.indexOf("maven-jar-plugin:jar") < packagePhase.indexOf("maven-shade-plugin:shade"));
         assertTrue(packagePhase.indexOf("maven-shade-plugin:shade") < packagePhase.indexOf(":buildpack"));
         assertFalse(hasPhase(component, "deploy"));
@@ -100,5 +100,12 @@ class LifecycleMappingTest {
     private static boolean hasPhase(Element component, String phaseName) {
         Element phases = (Element) component.getElementsByTagName("phases").item(0);
         return phases != null && phases.getElementsByTagName(phaseName).getLength() > 0;
+    }
+
+    private static boolean hasMicronautGoal(String phase, String goal) {
+        return phase.lines()
+            .map(String::trim)
+            .map(line -> line.endsWith(",") ? line.substring(0, line.length() - 1) : line)
+            .anyMatch(line -> line.startsWith(MICRONAUT_MAVEN_PLUGIN_COORDINATES) && line.endsWith(":" + goal));
     }
 }

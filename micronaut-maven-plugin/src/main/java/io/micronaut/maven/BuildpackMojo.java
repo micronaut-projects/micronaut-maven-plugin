@@ -196,7 +196,7 @@ public class BuildpackMojo extends AbstractMicronautMojo {
         if (jibConfigurationService != null) {
             return jibConfigurationService.getToImage()
                 .filter(StringUtils::isNotEmpty)
-                .orElseThrow(() -> missingImageName());
+                .orElseThrow(this::missingImageName);
         }
         throw missingImageName();
     }
@@ -249,10 +249,10 @@ public class BuildpackMojo extends AbstractMicronautMojo {
     }
 
     private static String validateEnvironmentVariable(String name, String value) throws MojoExecutionException {
-        if (StringUtils.isEmpty(name) || !name.matches("[A-Za-z_][A-Za-z0-9_]*")) {
-            throw new MojoExecutionException("Buildpack environment variable names must match [A-Za-z_][A-Za-z0-9_]*: " + name);
+        if (StringUtils.isEmpty(name) || !name.matches("[A-Za-z_]\\w*")) {
+            throw new MojoExecutionException("Buildpack environment variable names must match [A-Za-z_]\\w*: " + name);
         }
-        return name + "=" + AbstractDockerMojo.validateDockerfileValue("micronaut.buildpack.environment." + name, value == null ? "" : value);
+        return name + "=" + AbstractDockerMojo.validateDockerfileValue(ENVIRONMENT_PROPERTY_PREFIX + name, value == null ? "" : value);
     }
 
     private static String requireText(String name, String value) throws MojoExecutionException {
