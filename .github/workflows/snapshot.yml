@@ -113,7 +113,7 @@ jobs:
 
       - name: "🔧 Setup GraalVM CE"
         if: steps.preflight_scope.outputs.should_run == 'true'
-        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1
+        uses: graalvm/setup-graalvm@0def53c0fd8534bc13416c9469f5be45265824fd # v1
         with:
           distribution: 'graalvm'
           java-version: '25'
@@ -196,7 +196,7 @@ jobs:
           server-password: SONATYPE_PASSWORD
 
       - name: "🔧 Setup GraalVM CE"
-        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1
+        uses: graalvm/setup-graalvm@0def53c0fd8534bc13416c9469f5be45265824fd # v1
         with:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
@@ -332,7 +332,7 @@ jobs:
           cache: 'maven'
 
       - name: "🔧 Setup GraalVM CE"
-        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1
+        uses: graalvm/setup-graalvm@0def53c0fd8534bc13416c9469f5be45265824fd # v1
         with:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
