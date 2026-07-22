@@ -31,7 +31,7 @@ jobs:
         run: bash .github/scripts/verify-maven-wrapper-checksum.sh
 
       - name: "☕️ Install Java and Maven"
-        uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
         with:
           distribution: 'temurin'
           java-version: '25'
@@ -68,7 +68,7 @@ jobs:
           gpg --list-secret-keys --keyid-format LONG
 
       - name: "☕️ Set up Apache Maven Central"
-        uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
         with:
           distribution: 'temurin'
           java-version: '25'
