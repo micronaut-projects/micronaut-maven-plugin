@@ -1,0 +1,16 @@
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains('Running ./pack-stub build example.com/micronaut/package-buildpack-stub:0.1')
+assert log.text.contains('--builder paketobuildpacks/builder-jammy-base:latest')
+assert log.text.contains('--run-image paketobuildpacks/run-jammy-base:latest')
+assert log.text.contains('BP_JVM_VERSION=<redacted>')
+assert !log.text.contains("BP_JVM_VERSION=${System.getProperty('java.specification.version')}.*")
+
+File packArgs = new File(basedir, 'target/pack-args.txt')
+assert packArgs.exists()
+String args = packArgs.text
+assert args.contains('build example.com/micronaut/package-buildpack-stub:0.1')
+assert args.contains('--builder paketobuildpacks/builder-jammy-base:latest')
+assert args.contains('--run-image paketobuildpacks/run-jammy-base:latest')
+assert args.contains("--env BP_JVM_VERSION=${System.getProperty('java.specification.version')}.*")
+assert args.contains('target/package-buildpack-stub-0.1.jar')
