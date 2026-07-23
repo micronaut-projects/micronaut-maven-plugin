@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OpenApiGenericMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.openapi</a> &gt; <span class="el_source">OpenApiGenericMojo.java</span></div><h1>OpenApiGenericMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2021 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.openapi;
+
+import io.micronaut.openapi.generator.AbstractMicronautJavaCodegen;
+import io.micronaut.openapi.generator.GeneratorOptionsBuilder;
+import io.micronaut.openapi.generator.MicronautCodeGenerator;
+import io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Locale;
+import java.util.Map;
+
+/**
+ * A generic OpenAPI mojo that will be used for configuring custom Micronaut OpenAPI generator extensions.
+ */
+@Mojo(name = OpenApiGenericMojo.MOJO_NAME, defaultPhase = LifecyclePhase.GENERATE_SOURCES)
+<span class="nc" id="L37">public class OpenApiGenericMojo extends AbstractOpenApiMojo {</span>
+
+    public static final String MOJO_NAME = &quot;generate-openapi-generic&quot;;
+    public static final String CONFIGURATION_PROPERTIES = MICRONAUT_OPENAPI_PREFIX + &quot;.generator.properties&quot;;
+
+    /**
+     * The classname of the generator to be used for code generation.
+     *
+     * &lt;p&gt;The generator must property overwrite the {@link AbstractMicronautJavaCodegen#optionsBuilder()} method
+     * and the builder should have setters or withers for the properties to be used in maven configuration.&lt;/p&gt;
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.generator.builder.classname&quot;)
+    protected String generatorClassName;
+
+    /**
+     * The configuration properties that will be passed on to the custom generator options builder.
+     *
+     * &lt;p&gt;Any configuration parameters with key {@code micronaut.openapi.generator.properties.[PROPERTY_NAME]}
+     * will be passed on to the generator options builder. String, integer and boolean value types are supported
+     * for additional properties.&lt;/p&gt;
+     */
+    @Parameter(property = CONFIGURATION_PROPERTIES)
+    protected Map&lt;String, String&gt; properties;
+
+    @Override
+    protected boolean isEnabled() {
+<span class="nc bnc" id="L63" title="All 2 branches missed.">        return generatorClassName != null;</span>
+    }
+
+    @Override
+    protected void configureBuilder(MicronautCodeGeneratorBuilder builder) throws MojoExecutionException {
+<span class="nc" id="L68">        MicronautCodeGenerator&lt;? extends GeneratorOptionsBuilder&gt; generator = instantiateGenerator();</span>
+
+        try {
+<span class="nc" id="L71">            builder.forCodeGenerator(generator, config -&gt; {</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">                for (Map.Entry&lt;String, String&gt; entry : properties.entrySet()) {</span>
+<span class="nc" id="L73">                    String name = entry.getKey().substring(CONFIGURATION_PROPERTIES.length() + 1);</span>
+<span class="nc" id="L74">                    String value = entry.getValue();</span>
+<span class="nc" id="L75">                    invokeMethod(name, config, value);</span>
+<span class="nc" id="L76">                }</span>
+<span class="nc" id="L77">            });</span>
+<span class="nc" id="L78">        } catch (OpenAPIInvocationException e) {</span>
+<span class="nc" id="L79">            throw new MojoExecutionException(e);</span>
+<span class="nc" id="L80">        }</span>
+<span class="nc" id="L81">    }</span>
+
+    private MicronautCodeGenerator&lt;? extends GeneratorOptionsBuilder&gt; instantiateGenerator() {
+        MicronautCodeGenerator&lt;? extends GeneratorOptionsBuilder&gt; generator;
+        try {
+<span class="nc" id="L86">            generator = (MicronautCodeGenerator&lt;? extends GeneratorOptionsBuilder&gt;) this.getClass()</span>
+<span class="nc" id="L87">                .getClassLoader()</span>
+<span class="nc" id="L88">                .loadClass(generatorClassName)</span>
+<span class="nc" id="L89">                .getDeclaredConstructor()</span>
+<span class="nc" id="L90">                .newInstance();</span>
+<span class="nc" id="L91">        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | ClassNotFoundException e) {</span>
+<span class="nc" id="L92">            throw new RuntimeException(e);</span>
+<span class="nc" id="L93">        }</span>
+<span class="nc" id="L94">        return generator;</span>
+    }
+
+    private static void invokeMethod(String name, GeneratorOptionsBuilder builder, String value) {
+        try {
+<span class="nc" id="L99">            String witherName = &quot;with&quot; + StringUtils.capitalize(name);</span>
+<span class="nc" id="L100">            String setterName = &quot;set&quot; + StringUtils.capitalize(name);</span>
+<span class="nc" id="L101">            Class&lt;? extends GeneratorOptionsBuilder&gt; builderClazz = builder.getClass();</span>
+<span class="nc" id="L102">            var methods = builderClazz.getDeclaredMethods();</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">            for (Method method : methods) {</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">                if (invokeIfMatches(name, builder, value, witherName, setterName, method)) {</span>
+<span class="nc" id="L105">                    return;</span>
+                }
+            }
+<span class="nc" id="L108">            throw new OpenAPIInvocationException(&quot;Unable to find a method on builder &quot; + builderClazz + &quot; with name '&quot; + name + &quot;' which accepts argument '&quot; + value + &quot;'&quot;);</span>
+<span class="nc" id="L109">        } catch (IllegalAccessException | InvocationTargetException ex) {</span>
+<span class="nc" id="L110">            throw new OpenAPIInvocationException(ex);</span>
+        }
+    }
+
+    private static boolean invokeIfMatches(String name, GeneratorOptionsBuilder builder, String value, String witherName, String setterName, Method method) throws IllegalAccessException, InvocationTargetException {
+<span class="nc" id="L115">        var methodName = method.getName();</span>
+<span class="nc bnc" id="L116" title="All 8 branches missed.">        if ((methodName.equals(name) || methodName.equals(witherName) || methodName.equals(setterName)) &amp;&amp; method.getParameterCount() == 1) {</span>
+<span class="nc" id="L117">            Class&lt;?&gt; parameterType = method.getParameterTypes()[0];</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">            if (parameterType.equals(String.class)) {</span>
+<span class="nc" id="L119">                method.invoke(builder, value);</span>
+<span class="nc" id="L120">                return true;</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">            } else if (parameterType.equals(Boolean.TYPE)) {</span>
+<span class="nc" id="L122">                var coerced = value.toLowerCase(Locale.ENGLISH);</span>
+<span class="nc bnc" id="L123" title="All 4 branches missed.">                if (&quot;true&quot;.equals(coerced) || &quot;false&quot;.equals(coerced)) {</span>
+<span class="nc" id="L124">                    method.invoke(builder, Boolean.parseBoolean(coerced));</span>
+<span class="nc" id="L125">                    return true;</span>
+                }
+<span class="nc bnc" id="L127" title="All 4 branches missed.">            } else if (parameterType.equals(Integer.TYPE) &amp;&amp; (value.matches(&quot;[0-9]+&quot;))) {</span>
+<span class="nc" id="L128">                method.invoke(builder, Integer.parseInt(value));</span>
+<span class="nc" id="L129">                return true;</span>
+
+            }
+        }
+<span class="nc" id="L133">        return false;</span>
+    }
+
+    /**
+     * Exception to be thrown when OpenAPI generator configuration fails.
+     */
+    static class OpenAPIInvocationException extends RuntimeException {
+
+        public OpenAPIInvocationException(String message) {
+<span class="nc" id="L142">            super(message);</span>
+<span class="nc" id="L143">        }</span>
+
+        public OpenAPIInvocationException(Throwable throwable) {
+<span class="nc" id="L146">            super(throwable);</span>
+<span class="nc" id="L147">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

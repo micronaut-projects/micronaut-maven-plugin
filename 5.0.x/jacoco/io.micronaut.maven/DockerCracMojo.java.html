@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DockerCracMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven</a> &gt; <span class="el_source">DockerCracMojo.java</span></div><h1>DockerCracMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven;
+
+import com.github.dockerjava.api.command.BuildImageCmd;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import io.micronaut.core.annotation.Experimental;
+import io.micronaut.maven.core.MicronautRuntime;
+import io.micronaut.maven.jib.JibConfigurationService;
+import io.micronaut.maven.services.ApplicationConfigurationService;
+import io.micronaut.maven.services.DockerService;
+import org.apache.commons.io.IOUtils;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.filtering.MavenFilteringException;
+import org.apache.maven.shared.filtering.MavenReaderFilter;
+import org.apache.maven.shared.filtering.MavenReaderFilterRequest;
+
+import javax.inject.Inject;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Properties;
+
+/**
+ * &lt;p&gt;Implementation of the &lt;code&gt;docker-crac&lt;/code&gt; packaging.&lt;/p&gt;
+ * &lt;p&gt;&lt;strong&gt;WARNING&lt;/strong&gt;: this goal is not intended to be executed directly. Instead, specify the packaging type
+ * using the &lt;code&gt;packaging&lt;/code&gt; property, eg:&lt;/p&gt;
+ *
+ * &lt;pre&gt;mvn package -Dpackaging=docker-crac&lt;/pre&gt;
+ * &lt;p&gt;
+ * This is a two stage process. First a docker image is built that runs the application under a CRaC enabled JDK. Then
+ * the application is warmed up via a shell script. And then a checkpoint is taken via a signal using jcmd.
+ * &lt;p&gt;
+ * The second stage takes this checkpoint, and creates the final image containing it plus a run script which passes the
+ * correct flags to the CRaC enabled JDK.
+ *
+ * @author Tim Yates
+ * @since 3.5.0
+ */
+@Experimental
+@Mojo(name = DockerCracMojo.DOCKER_CRAC_PACKAGING, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+public class DockerCracMojo extends AbstractDockerMojo {
+
+    public static final String DOCKER_CRAC_PACKAGING = &quot;docker-crac&quot;;
+    public static final String CHECKPOINT_SCRIPT_NAME = &quot;checkpoint.sh&quot;;
+    public static final String WARMUP_SCRIPT_NAME = &quot;warmup.sh&quot;;
+    public static final String RUN_SCRIPT_NAME = &quot;run.sh&quot;;
+    public static final String DEFAULT_READINESS_COMMAND = &quot;curl --output /dev/null --silent --head http://localhost:8080&quot;;
+    public static final String CRAC_READINESS_PROPERTY = &quot;crac.readiness&quot;;
+    public static final String DEFAULT_CRAC_CHECKPOINT_TIMEOUT = &quot;60&quot;;
+    public static final String CRAC_CHECKPOINT_NETWORK_PROPERTY = &quot;crac.checkpoint.network&quot;;
+    public static final String CRAC_CHECKPOINT_TIMEOUT_PROPERTY = &quot;crac.checkpoint.timeout&quot;;
+
+    public static final String CRAC_JAVA_VERSION = &quot;crac.java.version&quot;;
+
+    public static final String CRAC_ARCHITECTURE = &quot;crac.arch&quot;;
+
+    public static final String CRAC_OS = &quot;crac.os&quot;;
+    public static final String DEFAULT_CRAC_OS = &quot;linux-glibc&quot;;
+
+    public static final String DEFAULT_BASE_IMAGE = &quot;ubuntu:22.04&quot;;
+
+    public static final String ARM_ARCH = &quot;aarch64&quot;;
+    public static final String X86_64_ARCH = &quot;amd64&quot;;
+
+<span class="nc" id="L95">    private static final EnumSet&lt;PosixFilePermission&gt; POSIX_FILE_PERMISSIONS = EnumSet.of(</span>
+        PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+        PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_WRITE, PosixFilePermission.GROUP_EXECUTE,
+        PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
+    );
+    private final MavenReaderFilter mavenReaderFilter;
+
+    /**
+     * The command to execute to determine if the application is ready to receive traffic.
+     */
+    @Parameter(property = DockerCracMojo.CRAC_READINESS_PROPERTY, defaultValue = DockerCracMojo.DEFAULT_READINESS_COMMAND)
+    private String readinessCommand;
+
+    /**
+     * The timeout in seconds to wait for the checkpoint to complete.
+     */
+    @Parameter(property = DockerCracMojo.CRAC_CHECKPOINT_TIMEOUT_PROPERTY, defaultValue = DockerCracMojo.DEFAULT_CRAC_CHECKPOINT_TIMEOUT)
+    private Integer checkpointTimeoutSeconds;
+
+    /**
+     * The name of the docker network to run the checkpoint container in.
+     */
+    @Parameter(property = DockerCracMojo.CRAC_CHECKPOINT_NETWORK_PROPERTY)
+    private String checkpointNetworkName;
+
+    /**
+     * The version of the Azul CRaC enabled JDK to use.
+     */
+    @Parameter(property = DockerCracMojo.CRAC_JAVA_VERSION, defaultValue = &quot;${jdk.version}&quot;)
+    private String cracJavaVersion;
+
+    /**
+     * The architecture to use for the CRaC enabled JDK. Defaults to {@code os.arch}
+     */
+    @Parameter(property = DockerCracMojo.CRAC_ARCHITECTURE)
+    private String cracArchitecture;
+
+    /**
+     * The os to use for the CRaC enabled JDK.
+     */
+    @Parameter(property = DockerCracMojo.CRAC_OS, defaultValue = DEFAULT_CRAC_OS)
+    private String cracOs;
+
+    @SuppressWarnings(&quot;CdiInjectionPointsInspection&quot;)
+    @Inject
+    public DockerCracMojo(
+        MavenProject mavenProject,
+        JibConfigurationService jibConfigurationService,
+        ApplicationConfigurationService applicationConfigurationService,
+        DockerService dockerService,
+        MavenReaderFilter mavenReaderFilter,
+        MavenSession mavenSession,
+        MojoExecution mojoExecution
+    ) {
+<span class="nc" id="L149">        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession, mojoExecution);</span>
+<span class="nc" id="L150">        this.mavenReaderFilter = mavenReaderFilter;</span>
+<span class="nc" id="L151">    }</span>
+
+    @Override
+    public void execute() throws MojoExecutionException {
+        try {
+<span class="nc" id="L156">            copyDependencies();</span>
+
+<span class="nc" id="L158">            MicronautRuntime runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());</span>
+
+<span class="nc bnc" id="L160" title="All 4 branches missed.">            switch (runtime.getBuildStrategy()) {</span>
+<span class="nc" id="L161">                case LAMBDA -&gt; throw new MojoExecutionException(&quot;Lambda Functions are currently unsupported&quot;);</span>
+<span class="nc" id="L162">                case ORACLE_FUNCTION -&gt; throw new MojoExecutionException(&quot;Oracle Functions are currently unsupported&quot;);</span>
+<span class="nc" id="L163">                case DEFAULT -&gt; buildDockerCrac();</span>
+<span class="nc" id="L164">                default -&gt; throw new IllegalStateException(&quot;Unexpected value: &quot; + runtime.getBuildStrategy());</span>
+            }
+<span class="nc" id="L166">        } catch (InvalidImageReferenceException iire) {</span>
+<span class="nc" id="L167">            String message = &quot;Invalid image reference &quot;</span>
+<span class="nc" id="L168">                + iire.getInvalidReference()</span>
+                + &quot;, perhaps you should check that the reference is formatted correctly according to &quot; +
+                &quot;https://docs.docker.com/engine/reference/commandline/tag/#extended-description&quot; +
+                &quot;\nFor example, slash-separated name components cannot have uppercase letters&quot;;
+<span class="nc" id="L172">            throw new MojoExecutionException(message);</span>
+<span class="nc" id="L173">        } catch (IOException | IllegalArgumentException | MavenFilteringException e) {</span>
+<span class="nc" id="L174">            throw new MojoExecutionException(e.getMessage(), e);</span>
+<span class="nc" id="L175">        }</span>
+<span class="nc" id="L176">    }</span>
+
+    private void buildDockerCrac() throws IOException, InvalidImageReferenceException, MavenFilteringException {
+<span class="nc" id="L179">        String checkpointImage = buildCheckpointDockerfile();</span>
+<span class="nc" id="L180">        getLog().info(&quot;CRaC Checkpoint image: &quot; + checkpointImage);</span>
+<span class="nc" id="L181">        File checkpointDir = new File(mavenProject.getBuild().getDirectory(), &quot;cr&quot;);</span>
+        // We need to make this folder first, or else Docker on linux will make it as root and break clean on CI
+<span class="nc" id="L183">        checkpointDir.mkdirs();</span>
+<span class="nc" id="L184">        dockerService.runPrivilegedImageAndWait(</span>
+            checkpointImage,
+            checkpointTimeoutSeconds,
+            checkpointNetworkName,
+<span class="nc" id="L188">            checkpointDir.getAbsolutePath() + &quot;:/home/app/cr&quot;</span>
+        );
+<span class="nc" id="L190">        buildFinalDockerfile(checkpointImage);</span>
+<span class="nc" id="L191">    }</span>
+
+    private String limitArchitecture(String architecture) {
+<span class="nc bnc" id="L194" title="All 2 branches missed.">        if (architecture == null) {</span>
+<span class="nc" id="L195">            return null;</span>
+        }
+<span class="nc bnc" id="L197" title="All 2 branches missed.">        if (ARM_ARCH.equals(architecture)) {</span>
+<span class="nc" id="L198">            return architecture;</span>
+        }
+<span class="nc" id="L200">        return X86_64_ARCH;</span>
+    }
+
+    private String buildCheckpointDockerfile() throws IOException, MavenFilteringException {
+<span class="nc" id="L204">        String name = mavenProject.getArtifactId() + &quot;-crac-checkpoint&quot;;</span>
+<span class="nc" id="L205">        var checkpointTags = Collections.singleton(name);</span>
+<span class="nc" id="L206">        copyScripts(CHECKPOINT_SCRIPT_NAME, WARMUP_SCRIPT_NAME, RUN_SCRIPT_NAME);</span>
+<span class="nc" id="L207">        File dockerfile = dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_CRAC_CHECKPOINT);</span>
+
+<span class="nc" id="L209">        String systemArchitecture = limitArchitecture(System.getProperty(&quot;os.arch&quot;));</span>
+<span class="nc" id="L210">        String filteredCracArchitecture = limitArchitecture(cracArchitecture);</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">        String finalArchitecture = filteredCracArchitecture == null ? systemArchitecture : filteredCracArchitecture;</span>
+<span class="nc" id="L212">        String baseImage = getFromImage().orElse(DEFAULT_BASE_IMAGE);</span>
+
+<span class="nc" id="L214">        getLog().info(&quot;Using BASE_IMAGE: &quot; + baseImage);</span>
+<span class="nc" id="L215">        getLog().info(&quot;Using CRAC_ARCH: &quot; + finalArchitecture);</span>
+<span class="nc" id="L216">        getLog().info(&quot;Using CRAC_JDK_VERSION: &quot; + cracJavaVersion);</span>
+<span class="nc" id="L217">        getLog().info(&quot;Using CRAC_OS: &quot; + cracOs);</span>
+
+<span class="nc" id="L219">        BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
+<span class="nc" id="L220">            .withDockerfile(dockerfile)</span>
+<span class="nc" id="L221">            .withBuildArg(&quot;BASE_IMAGE&quot;, baseImage)</span>
+<span class="nc" id="L222">            .withBuildArg(&quot;CRAC_ARCH&quot;, finalArchitecture)</span>
+<span class="nc" id="L223">            .withBuildArg(&quot;CRAC_OS&quot;, cracOs)</span>
+<span class="nc" id="L224">            .withBuildArg(&quot;CRAC_JDK_VERSION&quot;, cracJavaVersion)</span>
+<span class="nc" id="L225">            .withTags(checkpointTags);</span>
+<span class="nc" id="L226">        getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
+<span class="nc" id="L227">        dockerService.buildImage(buildImageCmd);</span>
+<span class="nc" id="L228">        return name;</span>
+    }
+
+    private void buildFinalDockerfile(String checkpointContainerId) throws IOException, InvalidImageReferenceException, MavenFilteringException {
+<span class="nc" id="L232">        var tags = getTags();</span>
+<span class="nc bnc" id="L233" title="All 2 branches missed.">        for (String tag : tags) {</span>
+<span class="nc" id="L234">            ImageReference.parse(tag);</span>
+<span class="nc" id="L235">        }</span>
+
+<span class="nc" id="L237">        String ports = getPorts();</span>
+<span class="nc" id="L238">        getLog().info(&quot;Exposing port(s): &quot; + ports);</span>
+
+<span class="nc" id="L240">        copyScripts(RUN_SCRIPT_NAME);</span>
+<span class="nc" id="L241">        File dockerfile = dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_CRAC);</span>
+<span class="nc" id="L242">        String baseImage = getFromImage().orElse(DEFAULT_BASE_IMAGE);</span>
+
+<span class="nc" id="L244">        getLog().info(&quot;Using BASE_IMAGE: &quot; + baseImage);</span>
+<span class="nc" id="L245">        getLog().info(&quot;Using CHECKPOINT_IMAGE: &quot; + checkpointContainerId);</span>
+
+<span class="nc" id="L247">        BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
+<span class="nc" id="L248">            .withDockerfile(dockerfile)</span>
+<span class="nc" id="L249">            .withBuildArg(&quot;PORTS&quot;, ports)</span>
+<span class="nc" id="L250">            .withBuildArg(&quot;BASE_IMAGE&quot;, getFromImage().orElse(DEFAULT_BASE_IMAGE))</span>
+<span class="nc" id="L251">            .withBuildArg(&quot;CHECKPOINT_IMAGE&quot;, checkpointContainerId)</span>
+<span class="nc" id="L252">            .withTags(getTags());</span>
+<span class="nc" id="L253">        getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
+<span class="nc" id="L254">        dockerService.buildImage(buildImageCmd);</span>
+
+<span class="nc" id="L256">        getLog().warn(&quot;**********************************************************&quot;);</span>
+<span class="nc" id="L257">        getLog().warn(&quot; CRaC checkpoint files may contain sensitive information.&quot;);</span>
+<span class="nc" id="L258">        getLog().warn(&quot;**********************************************************&quot;);</span>
+<span class="nc" id="L259">    }</span>
+
+    private Properties replacementProperties(String readinessCommand, String mainClass) {
+<span class="nc" id="L262">        Properties properties = new Properties();</span>
+<span class="nc" id="L263">        properties.setProperty(&quot;READINESS&quot;, readinessCommand);</span>
+<span class="nc" id="L264">        properties.setProperty(&quot;MAINCLASS&quot;, mainClass);</span>
+<span class="nc" id="L265">        return properties;</span>
+    }
+
+    private void copyScripts(String... scriptNames) throws IOException, MavenFilteringException {
+<span class="nc" id="L269">        var target = new File(mavenProject.getBuild().getDirectory(), &quot;scripts&quot;);</span>
+<span class="nc bnc" id="L270" title="All 2 branches missed.">        if (!target.exists()) {</span>
+<span class="nc" id="L271">            target.mkdirs();</span>
+        }
+<span class="nc" id="L273">        processScripts(target, replacementProperties(readinessCommand, mainClass), scriptNames);</span>
+<span class="nc" id="L274">    }</span>
+
+    private void processScripts(File target, Properties replacements, String... scriptNames) throws IOException, MavenFilteringException {
+<span class="nc bnc" id="L277" title="All 2 branches missed.">        for (String script : scriptNames) {</span>
+<span class="nc" id="L278">            var localOverride = new File(mavenProject.getBasedir(), script);</span>
+<span class="nc" id="L279">            InputStream resourceStream = DockerCracMojo.class.getResourceAsStream(&quot;/cracScripts/&quot; + script);</span>
+<span class="nc bnc" id="L280" title="All 2 branches missed.">            Reader resourceReader = resourceStream == null ? null : new InputStreamReader(resourceStream);</span>
+<span class="nc bnc" id="L281" title="All 2 branches missed.">            try (Reader reader = localOverride.exists() ? Files.newBufferedReader(localOverride.toPath()) : resourceReader) {</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">                if (reader == null) {</span>
+<span class="nc" id="L283">                    throw new IOException(&quot;Could not find script &quot; + script);</span>
+                }
+<span class="nc" id="L285">                var req = new MavenReaderFilterRequest();</span>
+<span class="nc" id="L286">                req.setFrom(reader);</span>
+<span class="nc" id="L287">                req.setFiltering(true);</span>
+<span class="nc" id="L288">                req.setAdditionalProperties(replacements);</span>
+<span class="nc" id="L289">                Path outputPath = target.toPath().resolve(script);</span>
+<span class="nc" id="L290">                try (Writer writer = Files.newBufferedWriter(outputPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {</span>
+<span class="nc" id="L291">                    IOUtils.copy(mavenReaderFilter.filter(req), writer);</span>
+                }
+<span class="nc" id="L293">                Files.setPosixFilePermissions(outputPath, POSIX_FILE_PERMISSIONS);</span>
+            }
+        }
+<span class="nc" id="L296">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

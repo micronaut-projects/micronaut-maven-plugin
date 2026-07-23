@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConfigurationValidationExecutor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.jsonschema</a> &gt; <span class="el_source">ConfigurationValidationExecutor.java</span></div><h1>ConfigurationValidationExecutor.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.jsonschema;
+
+import io.micronaut.json.JsonMapper;
+import io.micronaut.jsonschema.configuration.validator.ConfigurationError;
+import io.micronaut.jsonschema.configuration.validator.ConfigurationJsonSchemaValidator;
+import io.micronaut.jsonschema.configuration.validator.DependencyInjectionError;
+import io.micronaut.jsonschema.configuration.validator.cli.DependencyInjectionConfigurationValidator;
+import io.micronaut.jsonschema.configuration.validator.cli.JsonSchemaConfigurationValidator;
+import io.micronaut.jsonschema.configuration.validator.report.HtmlConfigurationErrorReporter;
+import io.micronaut.jsonschema.configuration.validator.report.JsonConfigurationErrorReporter;
+import io.micronaut.jsonschema.configuration.validator.report.SystemErrConfigurationErrorReporter;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+/**
+ * Executes Micronaut configuration validation using the Micronaut JSON Schema configuration validator.
+ */
+final class ConfigurationValidationExecutor {
+    private ConfigurationValidationExecutor() {
+    }
+
+    /**
+     * Validate configuration and write reports.
+     *
+     * @param classpath Path-separator separated classpath to validate
+     * @param environments Environments to enable
+     * @param suppressions Suppression patterns
+     * @param suppressInjectErrors Dependency-injection suppression patterns
+     * @param failOnNotPresent Whether to fail when properties are not present in schema
+     * @param deduceEnvironments Whether to allow Micronaut to deduce environments
+     * @param validateDependencyInjection Whether to validate dependency injection
+     * @param outputDir Output directory
+     * @param format Report format
+     * @param projectBaseDir Project base directory for relative path resolution in error reports
+     * @param resourcesDirs Resource directories used to resolve and render relative origin paths in error output
+     * @param err Error stream for reporting
+     * @return The validation result
+     * @throws IOException If validation or report writing fails
+     */
+    static ValidationResult validate(
+        String classpath,
+        List&lt;String&gt; environments,
+        List&lt;String&gt; suppressions,
+        List&lt;String&gt; suppressInjectErrors,
+        boolean failOnNotPresent,
+        boolean deduceEnvironments,
+        boolean validateDependencyInjection,
+        Path outputDir,
+        ConfigurationValidationFormat format,
+        Path projectBaseDir,
+        List&lt;Path&gt; resourcesDirs,
+        PrintStream err
+    ) throws IOException {
+<span class="nc" id="L80">        Files.createDirectories(outputDir);</span>
+
+<span class="nc" id="L82">        ConfigurationJsonSchemaValidator validator = new ConfigurationJsonSchemaValidator();</span>
+<span class="nc" id="L83">        validator.setFailOnNotPresent(failOnNotPresent);</span>
+<span class="nc" id="L84">        validator.setSuppressionPatterns(suppressions);</span>
+
+<span class="nc" id="L86">        JsonSchemaConfigurationValidator facade = JsonSchemaConfigurationValidator.forClasspath(</span>
+            classpath,
+            environments,
+            deduceEnvironments,
+            validator
+        );
+
+<span class="nc" id="L93">        Set&lt;ConfigurationError&gt; errors = facade.validate();</span>
+<span class="nc" id="L94">        Set&lt;DependencyInjectionError&gt; dependencyInjectionErrors = Set.of();</span>
+
+<span class="nc bnc" id="L96" title="All 2 branches missed.">        if (validateDependencyInjection) {</span>
+<span class="nc" id="L97">            dependencyInjectionErrors = validateDependencyInjection(</span>
+                classpath,
+                environments,
+                deduceEnvironments,
+                suppressInjectErrors
+            );
+        }
+
+<span class="nc" id="L105">        Path jsonFile = null;</span>
+<span class="nc" id="L106">        Path htmlFile = null;</span>
+
+<span class="nc bnc" id="L108" title="All 4 branches missed.">        if (format == ConfigurationValidationFormat.JSON || format == ConfigurationValidationFormat.BOTH) {</span>
+<span class="nc" id="L109">            jsonFile = outputDir.resolve(&quot;configuration-errors.json&quot;);</span>
+<span class="nc" id="L110">            try (OutputStream os = Files.newOutputStream(jsonFile)) {</span>
+<span class="nc" id="L111">                new JsonConfigurationErrorReporter(JsonMapper.createDefault(), os).report(errors, dependencyInjectionErrors);</span>
+            }
+        }
+<span class="nc bnc" id="L114" title="All 4 branches missed.">        if (format == ConfigurationValidationFormat.HTML || format == ConfigurationValidationFormat.BOTH) {</span>
+<span class="nc" id="L115">            htmlFile = outputDir.resolve(&quot;configuration-errors.html&quot;);</span>
+<span class="nc" id="L116">            try (OutputStream os = Files.newOutputStream(htmlFile)) {</span>
+<span class="nc" id="L117">                new HtmlConfigurationErrorReporter(os).report(errors, dependencyInjectionErrors);</span>
+            }
+        }
+
+<span class="nc" id="L121">        new SystemErrConfigurationErrorReporter(err, htmlFile, jsonFile, projectBaseDir, resourcesDirs).report(errors, dependencyInjectionErrors);</span>
+
+<span class="nc bnc" id="L123" title="All 2 branches missed.">        boolean hasErrors = errors.stream().anyMatch(e -&gt; e.type() == ConfigurationError.Type.ERROR);</span>
+<span class="nc bnc" id="L124" title="All 4 branches missed.">        hasErrors = hasErrors || !dependencyInjectionErrors.isEmpty();</span>
+<span class="nc" id="L125">        return new ValidationResult(errors, dependencyInjectionErrors, hasErrors, outputDir.toFile());</span>
+    }
+
+    private static Set&lt;DependencyInjectionError&gt; validateDependencyInjection(
+        String classpath,
+        List&lt;String&gt; environments,
+        boolean deduceEnvironments,
+        List&lt;String&gt; suppressInjectErrors
+    ) {
+<span class="fc" id="L134">        Optional&lt;Set&lt;DependencyInjectionError&gt;&gt; errors = validateWithSuppressionAwareValidator(</span>
+            classpath,
+            environments,
+            deduceEnvironments,
+            suppressInjectErrors
+        );
+<span class="pc bpc" id="L140" title="1 of 2 branches missed.">        if (errors.isPresent()) {</span>
+<span class="fc" id="L141">            return errors.get();</span>
+        }
+<span class="nc" id="L143">        Set&lt;DependencyInjectionError&gt; legacyErrors = DependencyInjectionConfigurationValidator.forClasspath(</span>
+            classpath,
+            environments,
+            deduceEnvironments
+<span class="nc" id="L147">        ).validate();</span>
+<span class="nc" id="L148">        return applyLegacySuppressions(legacyErrors, suppressInjectErrors);</span>
+    }
+
+    private static Optional&lt;Set&lt;DependencyInjectionError&gt;&gt; validateWithSuppressionAwareValidator(
+        String classpath,
+        List&lt;String&gt; environments,
+        boolean deduceEnvironments,
+        List&lt;String&gt; suppressInjectErrors
+    ) {
+<span class="fc" id="L157">        var validator = DependencyInjectionConfigurationValidator.forClasspath(classpath, environments, deduceEnvironments, suppressInjectErrors);</span>
+<span class="fc" id="L158">        return Optional.of(validator.validate());</span>
+    }
+
+    private static Set&lt;DependencyInjectionError&gt; applyLegacySuppressions(
+        Set&lt;DependencyInjectionError&gt; errors,
+        List&lt;String&gt; suppressInjectErrors
+    ) {
+<span class="pc bpc" id="L165" title="1 of 4 branches missed.">        if (suppressInjectErrors.isEmpty() || errors.isEmpty()) {</span>
+<span class="fc" id="L166">            return errors;</span>
+        }
+<span class="fc" id="L168">        List&lt;Pattern&gt; patterns = compileSuppressionPatterns(suppressInjectErrors);</span>
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">        if (patterns.isEmpty()) {</span>
+<span class="nc" id="L170">            return errors;</span>
+        }
+<span class="fc" id="L172">        return errors.stream()</span>
+<span class="fc bfc" id="L173" title="All 2 branches covered.">            .filter(error -&gt; !isSuppressed(error, patterns))</span>
+<span class="fc" id="L174">            .collect(Collectors.toCollection(java.util.LinkedHashSet::new));</span>
+    }
+
+    private static List&lt;Pattern&gt; compileSuppressionPatterns(List&lt;String&gt; suppressInjectErrors) {
+<span class="fc" id="L178">        List&lt;Pattern&gt; patterns = new ArrayList&lt;&gt;(suppressInjectErrors.size());</span>
+<span class="fc bfc" id="L179" title="All 2 branches covered.">        for (String rawPattern : suppressInjectErrors) {</span>
+<span class="pc bpc" id="L180" title="2 of 4 branches missed.">            if (rawPattern == null || rawPattern.isBlank()) {</span>
+<span class="nc" id="L181">                continue;</span>
+            }
+<span class="fc" id="L183">            String pattern = rawPattern.trim();</span>
+<span class="fc bfc" id="L184" title="All 2 branches covered.">            if (pattern.indexOf('*') &gt; -1) {</span>
+<span class="fc" id="L185">                patterns.add(Pattern.compile(wildcardToRegex(pattern)));</span>
+            } else {
+<span class="fc" id="L187">                patterns.add(Pattern.compile(&quot;^&quot; + Pattern.quote(pattern) + &quot;$&quot;));</span>
+            }
+<span class="fc" id="L189">        }</span>
+<span class="fc" id="L190">        return patterns;</span>
+    }
+
+    private static boolean isSuppressed(DependencyInjectionError error, List&lt;Pattern&gt; patterns) {
+<span class="fc bfc" id="L194" title="All 2 branches covered.">        return matches(error.rootBean(), patterns)</span>
+<span class="fc bfc" id="L195" title="All 2 branches covered.">            || matches(error.bean(), patterns)</span>
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">            || matches(error.injectionPoint(), patterns);</span>
+    }
+
+    private static boolean matches(String value, List&lt;Pattern&gt; patterns) {
+<span class="pc bpc" id="L200" title="2 of 4 branches missed.">        if (value == null || value.isBlank()) {</span>
+<span class="nc" id="L201">            return false;</span>
+        }
+<span class="fc bfc" id="L203" title="All 2 branches covered.">        for (Pattern pattern : patterns) {</span>
+<span class="fc bfc" id="L204" title="All 2 branches covered.">            if (pattern.matcher(value).find()) {</span>
+<span class="fc" id="L205">                return true;</span>
+            }
+<span class="fc" id="L207">        }</span>
+<span class="fc" id="L208">        return false;</span>
+    }
+
+    private static String wildcardToRegex(String wildcardPattern) {
+<span class="fc" id="L212">        StringBuilder out = new StringBuilder(wildcardPattern.length() + 16);</span>
+<span class="fc" id="L213">        out.append('^');</span>
+<span class="fc bfc" id="L214" title="All 2 branches covered.">        for (int i = 0; i &lt; wildcardPattern.length(); i++) {</span>
+<span class="fc" id="L215">            char c = wildcardPattern.charAt(i);</span>
+<span class="fc bfc" id="L216" title="All 2 branches covered.">            if (c == '*') {</span>
+<span class="fc" id="L217">                out.append(&quot;.*&quot;);</span>
+<span class="fc bfc" id="L218" title="All 2 branches covered.">            } else if (&quot;\\.[]{}()+-^$|?&quot;.indexOf(c) &gt;= 0) {</span>
+<span class="fc" id="L219">                out.append('\\').append(c);</span>
+            } else {
+<span class="fc" id="L221">                out.append(c);</span>
+            }
+        }
+<span class="fc" id="L224">        out.append('$');</span>
+<span class="fc" id="L225">        return out.toString();</span>
+    }
+
+    /**
+     * Result of a validation run.
+     *
+     * @param errors All errors and warnings
+     * @param dependencyInjectionErrors Dependency injection errors detected during validation
+     * @param hasErrors Whether any error-level entries are present
+     * @param outputDirectory Output directory where reports were written
+     */
+<span class="nc" id="L236">    record ValidationResult(Set&lt;ConfigurationError&gt; errors,</span>
+                            Set&lt;DependencyInjectionError&gt; dependencyInjectionErrors,
+                            boolean hasErrors,
+                            File outputDirectory) {
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

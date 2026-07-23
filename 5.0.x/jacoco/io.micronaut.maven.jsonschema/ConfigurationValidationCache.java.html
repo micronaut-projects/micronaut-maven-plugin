@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConfigurationValidationCache.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.jsonschema</a> &gt; <span class="el_source">ConfigurationValidationCache.java</span></div><h1>ConfigurationValidationCache.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.jsonschema;
+
+import org.jspecify.annotations.Nullable;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+/**
+ * Simple on-disk cache for configuration validation.
+ */
+final class ConfigurationValidationCache {
+    private static final String KEY_INPUTS_FINGERPRINT = &quot;inputsFingerprint&quot;;
+    private static final String KEY_MAIN_RESOURCES_FINGERPRINT = &quot;mainResourcesFingerprint&quot;;
+    private static final String KEY_LAST_RESULT = &quot;lastResult&quot;;
+    private static final String MISSING = &quot;missing&quot;;
+    private static final String UNREADABLE = &quot;&lt;unreadable&gt;&quot;;
+
+    private ConfigurationValidationCache() {
+    }
+
+    /**
+     * @param cacheFile The cache file path
+     * @param inputsFingerprint Fingerprint of all inputs (options + computed classpath)
+     * @param resourcesFingerprint Fingerprint of resource directories relevant to this scenario
+     * @return The cache entry if it matches the provided fingerprints, otherwise {@code null}
+     */
+    static CacheEntry readIfUpToDate(Path cacheFile, String inputsFingerprint, String resourcesFingerprint) {
+<span class="fc bfc" id="L56" title="All 2 branches covered.">        if (!Files.isRegularFile(cacheFile)) {</span>
+<span class="fc" id="L57">            return null;</span>
+        }
+<span class="fc" id="L59">        Properties props = new Properties();</span>
+<span class="fc" id="L60">        try (InputStream is = Files.newInputStream(cacheFile)) {</span>
+<span class="fc" id="L61">            props.load(is);</span>
+<span class="nc" id="L62">        } catch (IOException _) {</span>
+<span class="nc" id="L63">            return null;</span>
+<span class="fc" id="L64">        }</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        boolean matches = Objects.equals(inputsFingerprint, props.getProperty(KEY_INPUTS_FINGERPRINT))</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">            &amp;&amp; Objects.equals(resourcesFingerprint, props.getProperty(KEY_MAIN_RESOURCES_FINGERPRINT));</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        if (!matches) {</span>
+<span class="fc" id="L68">            return null;</span>
+        }
+
+<span class="fc" id="L71">        String lastResult = props.getProperty(KEY_LAST_RESULT);</span>
+        LastResult parsed;
+        try {
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">            parsed = lastResult != null ? LastResult.valueOf(lastResult) : LastResult.SUCCESS;</span>
+<span class="nc" id="L75">        } catch (IllegalArgumentException _) {</span>
+<span class="nc" id="L76">            parsed = LastResult.SUCCESS;</span>
+<span class="fc" id="L77">        }</span>
+<span class="fc" id="L78">        return new CacheEntry(parsed);</span>
+    }
+
+    /**
+     * Writes cache data to disk.
+     *
+     * @param cacheFile The cache file path
+     * @param inputsFingerprint Fingerprint of all inputs (options + computed classpath)
+     * @param resourcesFingerprint Fingerprint of resource directories relevant to this scenario
+     * @throws IOException If writing fails
+     */
+    static void write(Path cacheFile, String inputsFingerprint, String resourcesFingerprint, LastResult lastResult) throws IOException {
+<span class="fc" id="L90">        Files.createDirectories(cacheFile.getParent());</span>
+<span class="fc" id="L91">        Properties props = new Properties();</span>
+<span class="fc" id="L92">        props.setProperty(KEY_INPUTS_FINGERPRINT, inputsFingerprint);</span>
+<span class="fc" id="L93">        props.setProperty(KEY_MAIN_RESOURCES_FINGERPRINT, resourcesFingerprint);</span>
+<span class="fc" id="L94">        props.setProperty(KEY_LAST_RESULT, lastResult.name());</span>
+<span class="fc" id="L95">        try (OutputStream os = Files.newOutputStream(cacheFile)) {</span>
+<span class="fc" id="L96">            props.store(os, &quot;Micronaut configuration validation cache&quot;);</span>
+        }
+<span class="fc" id="L98">    }</span>
+
+    /**
+     * Computes a fingerprint for multiple resource directories.
+     *
+     * @param resourceDirs The resource directories to fingerprint
+     * @param ignorePatterns Resource patterns to ignore (glob syntax, relative to each resource directory)
+     * @return A combined SHA-256 hex digest
+     * @throws IOException If walking directories fails
+     */
+    static String fingerprintResources(List&lt;Path&gt; resourceDirs, @Nullable Iterable&lt;String&gt; ignorePatterns) throws IOException {
+<span class="nc bnc" id="L109" title="All 4 branches missed.">        if (resourceDirs == null || resourceDirs.isEmpty()) {</span>
+<span class="nc" id="L110">            return &quot;no-resources&quot;;</span>
+        }
+<span class="nc" id="L112">        MessageDigest digest = sha256();</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        for (Path dir : resourceDirs) {</span>
+<span class="nc" id="L114">            update(digest, dir.toString());</span>
+<span class="nc" id="L115">            update(digest, fingerprintMainResources(dir, ignorePatterns));</span>
+<span class="nc" id="L116">        }</span>
+<span class="nc" id="L117">        return HexFormat.of().formatHex(digest.digest());</span>
+    }
+
+    /**
+     * Computes a fingerprint for classpath entries and their content metadata.
+     * Uses cheap metadata (size + last-modified time) for directories to avoid
+     * excessive I/O overhead on large compiled output directories.
+     *
+     * @param classpathElements The classpath entries used by validation
+     * @return A combined SHA-256 hex digest
+     */
+    static String fingerprintClasspath(List&lt;String&gt; classpathElements) {
+<span class="pc bpc" id="L129" title="2 of 4 branches missed.">        if (classpathElements == null || classpathElements.isEmpty()) {</span>
+<span class="nc" id="L130">            return &quot;no-classpath&quot;;</span>
+        }
+<span class="fc" id="L132">        MessageDigest digest = sha256();</span>
+<span class="fc bfc" id="L133" title="All 2 branches covered.">        for (String classpathElement : classpathElements) {</span>
+<span class="fc" id="L134">            fingerprintClasspathElement(digest, classpathElement);</span>
+<span class="fc" id="L135">        }</span>
+<span class="fc" id="L136">        return HexFormat.of().formatHex(digest.digest());</span>
+    }
+
+    private static void fingerprintClasspathElement(MessageDigest digest, String classpathElement) {
+<span class="pc bpc" id="L140" title="1 of 4 branches missed.">        if (classpathElement == null || classpathElement.isBlank()) {</span>
+<span class="fc" id="L141">            return;</span>
+        }
+        Path path;
+        try {
+<span class="fc" id="L145">            path = Path.of(classpathElement).normalize();</span>
+<span class="fc" id="L146">        } catch (Exception _) {</span>
+<span class="fc" id="L147">            update(digest, &quot;invalid:&quot; + classpathElement);</span>
+<span class="fc" id="L148">            return;</span>
+<span class="fc" id="L149">        }</span>
+<span class="fc" id="L150">        update(digest, path.toString());</span>
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">        if (!Files.exists(path)) {</span>
+<span class="fc" id="L152">            update(digest, MISSING);</span>
+<span class="fc" id="L153">            return;</span>
+        }
+        try {
+<span class="nc bnc" id="L156" title="All 2 branches missed.">            if (Files.isDirectory(path)) {</span>
+<span class="nc" id="L157">                update(digest, fingerprintDirectoryContents(path));</span>
+            } else {
+<span class="nc" id="L159">                update(digest, Long.toString(Files.size(path)));</span>
+<span class="nc" id="L160">                FileTime lastModifiedTime = Files.getLastModifiedTime(path);</span>
+<span class="nc" id="L161">                update(digest, Long.toString(lastModifiedTime.toMillis()));</span>
+            }
+<span class="nc" id="L163">        } catch (IOException _) {</span>
+<span class="nc" id="L164">            update(digest, UNREADABLE);</span>
+<span class="nc" id="L165">        }</span>
+<span class="nc" id="L166">    }</span>
+
+    /**
+     * Computes a cheap fingerprint for a directory by hashing relative file paths,
+     * sizes, and last-modified times. Does not read file contents.
+     *
+     * @param dir The directory to fingerprint
+     * @return A SHA-256 hex digest, or &quot;missing&quot; if the directory is absent
+     * @throws IOException If walking the directory fails
+     */
+    static String fingerprintDirectoryContents(Path dir) throws IOException {
+<span class="pc bpc" id="L177" title="2 of 4 branches missed.">        if (dir == null || !Files.isDirectory(dir)) {</span>
+<span class="fc" id="L178">            return MISSING;</span>
+        }
+<span class="nc" id="L180">        MessageDigest digest = sha256();</span>
+<span class="nc" id="L181">        try (Stream&lt;Path&gt; s = Files.walk(dir)) {</span>
+<span class="nc" id="L182">            s.filter(Files::isRegularFile)</span>
+<span class="nc" id="L183">                .sorted()</span>
+<span class="nc" id="L184">                .forEach(p -&gt; {</span>
+<span class="nc" id="L185">                    update(digest, dir.relativize(p).toString());</span>
+                    try {
+<span class="nc" id="L187">                        update(digest, Long.toString(Files.size(p)));</span>
+<span class="nc" id="L188">                        update(digest, Long.toString(Files.getLastModifiedTime(p).toMillis()));</span>
+<span class="nc" id="L189">                    } catch (IOException _) {</span>
+<span class="nc" id="L190">                        update(digest, UNREADABLE);</span>
+<span class="nc" id="L191">                    }</span>
+<span class="nc" id="L192">                });</span>
+        }
+<span class="nc" id="L194">        return HexFormat.of().formatHex(digest.digest());</span>
+    }
+
+    /**
+     * Computes a best-effort fingerprint for the directory contents.
+     *
+     * @param mainResourcesDir The main resources directory
+     * @return A SHA-256 hex digest, or &quot;missing&quot; if the directory is absent
+     * @throws IOException If walking the directory fails
+     */
+    static String fingerprintMainResources(Path mainResourcesDir) throws IOException {
+<span class="nc" id="L205">        return fingerprintMainResources(mainResourcesDir, null);</span>
+    }
+
+    /**
+     * Computes a best-effort fingerprint for the directory contents.
+     *
+     * @param mainResourcesDir The main resources directory
+     * @param ignorePatterns Resource patterns to ignore (glob syntax, relative to main resources)
+     * @return A SHA-256 hex digest, or &quot;missing&quot; if the directory is absent
+     * @throws IOException If walking the directory fails
+     */
+    static String fingerprintMainResources(Path mainResourcesDir, @Nullable Iterable&lt;String&gt; ignorePatterns) throws IOException {
+<span class="pc bpc" id="L217" title="2 of 4 branches missed.">        if (mainResourcesDir == null || !Files.isDirectory(mainResourcesDir)) {</span>
+<span class="nc" id="L218">            return MISSING;</span>
+        }
+<span class="fc" id="L220">        List&lt;Glob&gt; globs = Glob.compile(ignorePatterns);</span>
+<span class="fc" id="L221">        MessageDigest digest = sha256();</span>
+<span class="fc" id="L222">        try (Stream&lt;Path&gt; s = Files.walk(mainResourcesDir)) {</span>
+<span class="fc" id="L223">            s.filter(Files::isRegularFile)</span>
+<span class="fc" id="L224">                .sorted()</span>
+<span class="fc" id="L225">                .forEach(p -&gt; {</span>
+<span class="fc" id="L226">                    Path rel = mainResourcesDir.relativize(p);</span>
+<span class="fc bfc" id="L227" title="All 2 branches covered.">                    if (Glob.matchesAny(globs, rel)) {</span>
+<span class="fc" id="L228">                        return;</span>
+                    }
+<span class="fc" id="L230">                    update(digest, rel.toString());</span>
+                    try {
+                        // Include contents to avoid false cache hits when timestamps don't change (coarse FS resolution).
+<span class="fc" id="L233">                        update(digest, Long.toString(Files.size(p)));</span>
+<span class="fc" id="L234">                        try (InputStream is = Files.newInputStream(p)) {</span>
+<span class="fc" id="L235">                            byte[] buffer = new byte[8192];</span>
+                            int len;
+<span class="fc bfc" id="L237" title="All 2 branches covered.">                            while ((len = is.read(buffer)) &gt; -1) {</span>
+<span class="fc" id="L238">                                digest.update(buffer, 0, len);</span>
+                            }
+                        }
+<span class="nc" id="L241">                    } catch (IOException _) {</span>
+                        // best effort
+<span class="nc" id="L243">                        update(digest, UNREADABLE);</span>
+<span class="fc" id="L244">                    }</span>
+<span class="fc" id="L245">                });</span>
+        }
+<span class="fc" id="L247">        return HexFormat.of().formatHex(digest.digest());</span>
+    }
+
+    private static void update(MessageDigest digest, String s) {
+<span class="fc" id="L251">        digest.update(s.getBytes(StandardCharsets.UTF_8));</span>
+<span class="fc" id="L252">        digest.update((byte) 0);</span>
+<span class="fc" id="L253">    }</span>
+
+    private static MessageDigest sha256() {
+        try {
+<span class="fc" id="L257">            return MessageDigest.getInstance(&quot;SHA-256&quot;);</span>
+<span class="nc" id="L258">        } catch (NoSuchAlgorithmException e) {</span>
+<span class="nc" id="L259">            throw new IllegalStateException(e);</span>
+        }
+    }
+
+    /**
+     * Minimal glob matcher that operates on normalized {@code /}-separated relative paths.
+     *
+     * @param pattern The compiled regex pattern
+     */
+<span class="fc" id="L268">    private record Glob(Pattern pattern) {</span>
+        static List&lt;Glob&gt; compile(@Nullable Iterable&lt;String&gt; patterns) {
+<span class="fc bfc" id="L270" title="All 2 branches covered.">            if (patterns == null) {</span>
+<span class="fc" id="L271">                return List.of();</span>
+            }
+<span class="fc" id="L273">            List&lt;Glob&gt; result = new java.util.ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L274" title="All 2 branches covered.">            for (String p : patterns) {</span>
+<span class="pc bpc" id="L275" title="2 of 4 branches missed.">                if (p == null || p.isBlank()) {</span>
+<span class="nc" id="L276">                    continue;</span>
+                }
+<span class="fc" id="L278">                result.add(new Glob(Pattern.compile(toRegex(p.trim()))));</span>
+<span class="fc" id="L279">            }</span>
+<span class="fc" id="L280">            return List.copyOf(result);</span>
+        }
+
+        static boolean matchesAny(List&lt;Glob&gt; globs, Path relativePath) {
+<span class="pc bpc" id="L284" title="2 of 6 branches missed.">            if (globs == null || globs.isEmpty() || relativePath == null) {</span>
+<span class="fc" id="L285">                return false;</span>
+            }
+<span class="fc" id="L287">            String normalized = relativePath.toString().replace('\\', '/');</span>
+<span class="fc bfc" id="L288" title="All 2 branches covered.">            for (Glob g : globs) {</span>
+<span class="fc bfc" id="L289" title="All 2 branches covered.">                if (g.pattern.matcher(normalized).matches()) {</span>
+<span class="fc" id="L290">                    return true;</span>
+                }
+<span class="fc" id="L292">            }</span>
+<span class="fc" id="L293">            return false;</span>
+        }
+
+        private static String toRegex(String glob) {
+            // Supports '*' (segment), '**' (multi-segment), and '?' (single char) for /-separated paths.
+<span class="fc" id="L298">            StringBuilder out = new StringBuilder(glob.length() * 2);</span>
+<span class="fc" id="L299">            out.append('^');</span>
+<span class="fc bfc" id="L300" title="All 2 branches covered.">            for (int i = 0; i &lt; glob.length(); i++) {</span>
+<span class="fc" id="L301">                char c = glob.charAt(i);</span>
+<span class="fc bfc" id="L302" title="All 2 branches covered.">                if (c == '*') {</span>
+<span class="pc bpc" id="L303" title="3 of 4 branches missed.">                    boolean doubleStar = (i + 1 &lt; glob.length()) &amp;&amp; glob.charAt(i + 1) == '*';</span>
+<span class="pc bpc" id="L304" title="1 of 2 branches missed.">                    if (doubleStar) {</span>
+<span class="nc" id="L305">                        out.append(&quot;.*&quot;);</span>
+<span class="nc" id="L306">                        i++;</span>
+                    } else {
+<span class="fc" id="L308">                        out.append(&quot;[^/]*&quot;);</span>
+                    }
+<span class="pc bpc" id="L310" title="1 of 2 branches missed.">                } else if (c == '?') {</span>
+<span class="nc" id="L311">                    out.append(&quot;[^/]&quot;);</span>
+                } else {
+<span class="pc bpc" id="L313" title="1 of 2 branches missed.">                    if (&quot;.()[]{}+$^|\\&quot;.indexOf(c) &gt;= 0) {</span>
+<span class="nc" id="L314">                        out.append('\\');</span>
+                    }
+<span class="fc" id="L316">                    out.append(c);</span>
+                }
+            }
+<span class="fc" id="L319">            out.append('$');</span>
+<span class="fc" id="L320">            return out.toString();</span>
+        }
+    }
+
+    /**
+     * Cached result of the last validation execution.
+     */
+<span class="fc" id="L327">    enum LastResult {</span>
+<span class="fc" id="L328">        SUCCESS,</span>
+<span class="fc" id="L329">        FAILURE</span>
+    }
+
+<span class="fc" id="L332">    record CacheEntry(LastResult lastResult) {</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ImportFactoryMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven</a> &gt; <span class="el_source">ImportFactoryMojo.java</span></div><h1>ImportFactoryMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven;
+
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+
+import javax.inject.Inject;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.regex.Pattern;
+
+import static io.micronaut.maven.core.MojoUtils.THIS_PLUGIN;
+
+/**
+ * Import beans from project dependencies by generating factories annotated with
+ * &lt;code&gt;@Import&lt;/code&gt; containing the list of packages.
+ *
+ * @author Auke Schrijnen
+ * @since 4.5.0
+ */
+@Mojo(name = ImportFactoryMojo.MOJO_NAME, defaultPhase = LifecyclePhase.GENERATE_SOURCES, threadSafe = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+public class ImportFactoryMojo extends AbstractMicronautMojo {
+
+    /**
+     * Name of the import factory mojo.
+     */
+    public static final String MOJO_NAME = &quot;generate-import-factory&quot;;
+
+    private static final String MICRONAUT_IMPORTFACTORY_PREFIX = &quot;micronaut.importfactory&quot;;
+
+    /**
+     * Reference to the Maven project on which the plugin is invoked.
+     */
+    private final MavenProject project;
+
+    /**
+     * Whether to enable or disable the generation of the import factory.
+     *
+     * @since 4.5.0
+     */
+    @Parameter(property = MICRONAUT_IMPORTFACTORY_PREFIX + &quot;.enabled&quot;, defaultValue = &quot;false&quot;)
+    private boolean enabled;
+
+    /**
+     * The output directory to which all the sources will be generated.
+     *
+     * @since 4.5.0
+     */
+    @Parameter(defaultValue = &quot;${project.build.directory}/generated-sources/importfactory&quot;, property = MICRONAUT_IMPORTFACTORY_PREFIX + &quot;.outputDirectory&quot;, required = true)
+    private File outputDirectory;
+
+    /**
+     * Add the output directory to the project as a source root in order to let the generated java
+     * classes be compiled and included in the project artifact.
+     *
+     * @since 4.5.0
+     */
+    @Parameter(defaultValue = &quot;true&quot;, property = MICRONAUT_IMPORTFACTORY_PREFIX + &quot;.addCompileSourceRoot&quot;)
+    private boolean addCompileSourceRoot;
+
+    /**
+     * Regexp pattern which allows including certain dependencies.
+     *
+     * @since 4.5.0
+     */
+    @Parameter(defaultValue = &quot;^.*:.*$&quot;, property = MICRONAUT_IMPORTFACTORY_PREFIX + &quot;.includeDependenciesFilter&quot;, required = true)
+    private String includeDependenciesFilter;
+
+    /**
+     * Regexp pattern which allows excluding certain dependencies.
+     *
+     * @since 4.5.0
+     */
+    @Parameter(defaultValue = &quot;^$&quot;, property = MICRONAUT_IMPORTFACTORY_PREFIX + &quot;.excludeDependenciesFilter&quot;, required = true)
+    private String excludeDependenciesFilter;
+
+    /**
+     * Regexp pattern which allows including certain packages.
+     *
+     * @since 4.5.0
+     */
+    @Parameter(defaultValue = &quot;^.*$&quot;, property = MICRONAUT_IMPORTFACTORY_PREFIX + &quot;.includePackagesFilter&quot;, required = true)
+    private String includePackagesFilter;
+
+    /**
+     * Regexp pattern which allows excluding certain packages.
+     *
+     * @since 4.5.0
+     */
+    @Parameter(defaultValue = &quot;^$&quot;, property = MICRONAUT_IMPORTFACTORY_PREFIX + &quot;.excludePackagesFilter&quot;, required = true)
+    private String excludePackagesFilter;
+
+    /**
+     * The package name which is used for the generated import factories. When not specified a factory
+     * is generated for each package within that package in order to access package protected fields.
+     *
+     * @since 4.5.0
+     */
+    @Parameter(property = MICRONAUT_IMPORTFACTORY_PREFIX + &quot;.targetPackage&quot;)
+    private String targetPackage;
+
+    @Inject
+<span class="nc" id="L131">    public ImportFactoryMojo(MavenProject project) {</span>
+<span class="nc" id="L132">        this.project = project;</span>
+<span class="nc" id="L133">    }</span>
+
+    @Override
+    public void execute() throws MojoExecutionException {
+<span class="nc bnc" id="L137" title="All 2 branches missed.">        if (!enabled) {</span>
+<span class="nc" id="L138">            getLog().debug(this.getClass().getSimpleName() + &quot; is disabled&quot;);</span>
+<span class="nc" id="L139">            return;</span>
+        }
+
+<span class="nc bnc" id="L142" title="All 2 branches missed.">        if (addCompileSourceRoot) {</span>
+<span class="nc" id="L143">            project.addCompileSourceRoot(outputDirectory.getPath());</span>
+        }
+
+<span class="nc" id="L146">        List&lt;Artifact&gt; dependencies = getFilteredDependencies();</span>
+
+<span class="nc bnc" id="L148" title="All 2 branches missed.">        if (dependencies.isEmpty()) {</span>
+<span class="nc" id="L149">            getLog().warn(&quot;No matching dependencies.&quot;);</span>
+<span class="nc" id="L150">            return;</span>
+        }
+
+<span class="nc" id="L153">        getLog().info(&quot;Found &quot; + dependencies.size() + &quot; matching dependencies:&quot;);</span>
+<span class="nc" id="L154">        dependencies.forEach(</span>
+<span class="nc" id="L155">            dependency -&gt; getLog().info(getIdentifier(dependency) + &quot; at &quot; + dependency.getFile()));</span>
+
+<span class="nc" id="L157">        List&lt;String&gt; packages = getFilteredPackages(dependencies);</span>
+
+<span class="nc bnc" id="L159" title="All 2 branches missed.">        if (packages.isEmpty()) {</span>
+<span class="nc" id="L160">            getLog().warn(&quot;No matching packages.&quot;);</span>
+<span class="nc" id="L161">            return;</span>
+        }
+
+<span class="nc" id="L164">        getLog().info(&quot;Found &quot; + packages.size() + &quot; matching packages:&quot;);</span>
+<span class="nc" id="L165">        packages.forEach(getLog()::info);</span>
+
+<span class="nc bnc" id="L167" title="All 4 branches missed.">        if (targetPackage == null || targetPackage.isEmpty()) {</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">            for (String packageName : packages) {</span>
+                try {
+<span class="nc" id="L170">                    generateImportFactory(packageName, Collections.singletonList(packageName));</span>
+<span class="nc" id="L171">                } catch (IOException e) {</span>
+<span class="nc" id="L172">                    throw new MojoExecutionException(&quot;Error creating factory for &quot; + packageName, e);</span>
+<span class="nc" id="L173">                }</span>
+<span class="nc" id="L174">            }</span>
+        } else {
+            try {
+<span class="nc" id="L177">                generateImportFactory(targetPackage, packages);</span>
+<span class="nc" id="L178">            } catch (IOException e) {</span>
+<span class="nc" id="L179">                throw new MojoExecutionException(&quot;Error creating factory for &quot; + targetPackage, e);</span>
+<span class="nc" id="L180">            }</span>
+        }
+<span class="nc" id="L182">    }</span>
+
+    /**
+     * Get the list of matching packages from the given list of dependencies.
+     *
+     * @param dependencies the Maven dependencies
+     * @return a list of matching packages
+     * @throws MojoExecutionException when the artifacts can't be read
+     */
+    private List&lt;String&gt; getFilteredPackages(List&lt;Artifact&gt; dependencies) throws MojoExecutionException {
+<span class="nc" id="L192">        var packages = new ArrayList&lt;String&gt;();</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">        for (Artifact dependency : dependencies) {</span>
+<span class="nc" id="L194">            packages.addAll(getPackages(dependency));</span>
+<span class="nc" id="L195">        }</span>
+
+<span class="nc" id="L197">        var includePackages = Pattern.compile(includePackagesFilter);</span>
+<span class="nc" id="L198">        var excludePackages = Pattern.compile(excludePackagesFilter);</span>
+
+<span class="nc" id="L200">        return packages.stream()</span>
+<span class="nc" id="L201">            .filter(includePackages.asMatchPredicate())</span>
+<span class="nc" id="L202">            .filter(excludePackages.asMatchPredicate().negate())</span>
+<span class="nc" id="L203">            .sorted()</span>
+<span class="nc" id="L204">            .toList();</span>
+    }
+
+    /**
+     * Get the list of matching dependencies.
+     *
+     * @return the matching dependencies
+     */
+    private List&lt;Artifact&gt; getFilteredDependencies() {
+<span class="nc" id="L213">        var includeDependency = Pattern.compile(includeDependenciesFilter);</span>
+<span class="nc" id="L214">        var excludeDependency = Pattern.compile(excludeDependenciesFilter);</span>
+
+<span class="nc" id="L216">        return project.getArtifacts().stream()</span>
+<span class="nc" id="L217">            .filter(dependency -&gt; includeDependency.matcher(getIdentifier(dependency)).matches())</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">            .filter(dependency -&gt; !excludeDependency.matcher(getIdentifier(dependency)).matches())</span>
+<span class="nc" id="L219">            .toList();</span>
+    }
+
+    /**
+     * Get the packages from the given artifact.
+     *
+     * @param artifact the Maven artifact
+     * @return the list of packages
+     * @throws MojoExecutionException when the artifacts can't be read
+     */
+    private List&lt;String&gt; getPackages(Artifact artifact) throws MojoExecutionException {
+<span class="nc" id="L230">        try (var file = new JarFile(artifact.getFile(), false)) {</span>
+<span class="nc" id="L231">            return file.stream()</span>
+<span class="nc bnc" id="L232" title="All 4 branches missed.">                .filter(entry -&gt; entry.getName().endsWith(&quot;.class&quot;) &amp;&amp; entry.getName().contains(&quot;/&quot;))</span>
+<span class="nc" id="L233">                .map(this::getPackageName).distinct().sorted().toList();</span>
+<span class="nc" id="L234">        } catch (IOException e) {</span>
+<span class="nc" id="L235">            throw new MojoExecutionException(&quot;Unable to read &quot; + artifact.getFile(), e);</span>
+        }
+    }
+
+    /**
+     * Get the identifier for the given Maven artifact.
+     *
+     * @param artifact the Maven artifact
+     * @return the identifier for the artifact
+     */
+    private String getIdentifier(Artifact artifact) {
+<span class="nc" id="L246">        return artifact.getGroupId() + &quot;:&quot; + artifact.getArtifactId();</span>
+    }
+
+    /**
+     * Get the Java package name from the given Jar entry.
+     *
+     * @param entry the Jar entry
+     * @return the Java package name
+     */
+    private String getPackageName(JarEntry entry) {
+<span class="nc" id="L256">        String entryName = entry.getName();</span>
+        // remove .class from the end and change format to use periods instead of forward slashes
+<span class="nc" id="L258">        return entryName.substring(0, entryName.lastIndexOf('/')).replace('/', '.');</span>
+    }
+
+    /**
+     * Generate the import factory with the given packages in the given package.
+     *
+     * @param packageName the package in which the factory is generated
+     * @param packages the list of the packages which are imported
+     * @throws IOException when the writing of the factory class fails
+     */
+    private void generateImportFactory(String packageName, List&lt;String&gt; packages) throws IOException {
+<span class="nc" id="L269">        Path factoryPath = outputDirectory.toPath().resolve(packageName.replace('.', '/'))</span>
+<span class="nc" id="L270">            .resolve(&quot;ImportFactory.java&quot;);</span>
+
+<span class="nc" id="L272">        var code = new ArrayList&lt;String&gt;();</span>
+<span class="nc" id="L273">        code.add(&quot;package &quot; + packageName + &quot;;&quot;);</span>
+<span class="nc" id="L274">        code.add(&quot;&quot;);</span>
+<span class="nc" id="L275">        code.add(&quot;import io.micronaut.context.annotation.Factory;&quot;);</span>
+<span class="nc" id="L276">        code.add(&quot;import io.micronaut.context.annotation.Import;&quot;);</span>
+<span class="nc" id="L277">        code.add(&quot;import jakarta.annotation.Generated;&quot;);</span>
+<span class="nc" id="L278">        code.add(&quot;&quot;);</span>
+<span class="nc" id="L279">        code.add(&quot;/** Factory which allows Micronaut to import beans from the specified packages. */&quot;);</span>
+<span class="nc" id="L280">        code.add(&quot;@Generated(\&quot;%s\&quot;)&quot;.formatted(THIS_PLUGIN));</span>
+<span class="nc" id="L281">        code.add(&quot;@Factory&quot;);</span>
+<span class="nc" id="L282">        code.add(&quot;@Import(&quot;);</span>
+<span class="nc" id="L283">        code.add(&quot;    packages = {&quot;);</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">        for (String name : packages) {</span>
+<span class="nc" id="L285">            code.add(&quot;      \&quot;&quot; + name + &quot;\&quot;,&quot;);</span>
+<span class="nc" id="L286">        }</span>
+<span class="nc" id="L287">        code.add(&quot;    })&quot;);</span>
+<span class="nc" id="L288">        code.add(&quot;public class ImportFactory { }\n&quot;);</span>
+
+<span class="nc" id="L290">        Files.createDirectories(factoryPath.getParent());</span>
+<span class="nc" id="L291">        Files.write(factoryPath, code, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);</span>
+<span class="nc" id="L292">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

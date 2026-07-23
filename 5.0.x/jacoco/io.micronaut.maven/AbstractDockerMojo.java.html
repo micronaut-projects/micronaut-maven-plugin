@@ -1,0 +1,706 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractDockerMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven</a> &gt; <span class="el_source">AbstractDockerMojo.java</span></div><h1>AbstractDockerMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven;
+
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.common.io.FileWriteMode;
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.maven.core.DockerBuildStrategy;
+import io.micronaut.maven.core.MicronautRuntime;
+import io.micronaut.maven.core.MojoUtils;
+import io.micronaut.maven.jib.JibConfigurationService;
+import io.micronaut.maven.jib.JibMicronautExtension;
+import io.micronaut.maven.services.ApplicationConfigurationService;
+import io.micronaut.maven.services.DockerService;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.versioning.ArtifactVersion;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static io.micronaut.maven.services.ApplicationConfigurationService.DEFAULT_PORT;
+
+/**
+ * Abstract base class for mojos related to Docker files and builds.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @author Iván López
+ * @since 1.1
+ */
+public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
+
+    public static final String LATEST_TAG = &quot;latest&quot;;
+    public static final String DEFAULT_BASE_IMAGE_GRAALVM_RUN = &quot;cgr.dev/chainguard/wolfi-base@sha256:52e71f61c6afd1f8d2625cff4465d8ecee156668ca665f7e9c582d1cc914eb6a&quot;;
+    public static final String DEFAULT_BASE_IMAGE_GRAALVM_BUILD = &quot;container-registry.oracle.com/graalvm/native-image&quot;;
+    public static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = &quot;-H:+StaticExecutableWithDynamicLibC&quot;;
+    public static final String ARM_ARCH = &quot;aarch64&quot;;
+    public static final String X86_64_ARCH = &quot;x64&quot;;
+    public static final String ORACLE_CLOUD_FUNCTION_DEFAULT_CMD = &quot;CMD [\&quot;io.micronaut.oraclecloud.function.http.HttpFunction::handleRequest\&quot;]&quot;;
+    public static final String GDS_DOWNLOAD_URL = &quot;https://gds.oracle.com/download/graal/%s/latest-gftc/graalvm-jdk-%s_linux-%s_bin.tar.gz&quot;;
+    public static final String LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER = &quot;${LAMBDA_BOOTSTRAP_DOCKER_COMMAND}&quot;;
+    protected static final String JIB_BUILD_GOAL_DOCKER_BUILD = &quot;dockerBuild&quot;;
+    protected static final String JIB_BUILD_GOAL_BUILD = &quot;build&quot;;
+    protected static final String JIB_BUILD_GOAL_BUILD_TAR = &quot;buildTar&quot;;
+<span class="fc" id="L83">    protected static final List&lt;String&gt; SUPPORTED_JIB_BUILD_GOALS = List.of(</span>
+        JIB_BUILD_GOAL_DOCKER_BUILD,
+        JIB_BUILD_GOAL_BUILD,
+        JIB_BUILD_GOAL_BUILD_TAR
+    );
+    static final String JIB_FROM_IMAGE_PROPERTY = &quot;jib.from.image&quot;;
+    private static final String DEPENDENCY_DIRECTORY = &quot;dependency&quot;;
+    private static final String RELEASE_DEPENDENCY_DIRECTORY = &quot;release&quot;;
+    private static final String SNAPSHOT_DEPENDENCY_DIRECTORY = &quot;snapshot&quot;;
+<span class="fc" id="L92">    private static final Pattern LEADING_MAJOR_VERSION = Pattern.compile(&quot;([1-9][0-9]*)(?:[.-].*)?&quot;);</span>
+<span class="fc" id="L93">    private static final NavigableSet&lt;Integer&gt; GRAALVM_VERSIONS = new TreeSet&lt;&gt;(Set.of(25));</span>
+<span class="fc" id="L94">    private static final List&lt;String&gt; DEFAULT_LAMBDA_BOOTSTRAP_ARGUMENTS = List.of(</span>
+        &quot;-XX:MaximumHeapSizePercent=80&quot;,
+        &quot;-Dio.netty.allocator.numDirectArenas=0&quot;,
+        &quot;-Dio.netty.noPreferDirect=true&quot;,
+        &quot;-Djava.library.path=$(pwd)&quot;
+    );
+
+    protected final MavenProject mavenProject;
+    protected final MavenSession mavenSession;
+    protected final JibConfigurationService jibConfigurationService;
+    protected final ApplicationConfigurationService applicationConfigurationService;
+    protected final DockerService dockerService;
+    protected final PluginParameterExpressionEvaluator expressionEvaluator;
+
+
+    /**
+     * Additional arguments that will be passed to the &lt;code&gt;native-image&lt;/code&gt; executable. Note that this will only
+     * be used when using a packaging of type &lt;code&gt;docker-native&lt;/code&gt;. For &lt;code&gt;native-image&lt;/code&gt; packaging
+     * you should use the
+     * &lt;a href=&quot;https://www.graalvm.org/reference-manual/native-image/NativeImageMavenPlugin/#maven-plugin-customization&quot;&gt;
+     * Native Image Maven Plugin
+     * &lt;/a&gt; configuration options.
+     */
+    @Parameter(property = &quot;micronaut.native-image.args&quot;)
+    protected List&lt;String&gt; nativeImageBuildArgs;
+
+    /**
+     * List of additional arguments that will be passed to the application.
+     */
+    @Parameter(property = RunMojo.MN_APP_ARGS)
+    protected List&lt;String&gt; appArguments;
+
+    /**
+     * Additional arguments that will be appended to the generated AWS Lambda native bootstrap command.
+     *
+     * @since 5.0.0
+     */
+    @Parameter(property = &quot;micronaut.lambda.bootstrap.args&quot;)
+    protected List&lt;String&gt; lambdaBootstrapArguments;
+
+    /**
+     * The main class of the application, as defined in the
+     * &lt;a href=&quot;https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass&quot;&gt;Exec Maven Plugin&lt;/a&gt;.
+     */
+    @Parameter(defaultValue = RunMojo.EXEC_MAIN_CLASS, required = true)
+    protected String mainClass;
+
+    /**
+     * Whether to produce a static native image when using &lt;code&gt;docker-native&lt;/code&gt; packaging.
+     */
+    @Parameter(defaultValue = &quot;false&quot;, property = &quot;micronaut.native-image.static&quot;)
+    protected Boolean staticNativeImage;
+
+    /**
+     * The target runtime of the application.
+     */
+    @Parameter(property = MicronautRuntime.PROPERTY, defaultValue = &quot;NONE&quot;)
+    protected String micronautRuntime;
+
+    /**
+     * The Docker image used to run the native image.
+     *
+     * @since 1.2
+     */
+    @Parameter(property = &quot;micronaut.native-image.base-image-run&quot;, defaultValue = DEFAULT_BASE_IMAGE_GRAALVM_RUN)
+    protected String baseImageRun;
+
+    /**
+     * The builder-stage base image used to build the native image for docker-native packaging variants.
+     *
+     * @since 5.0.0
+     */
+    @Parameter(property = &quot;micronaut.native-image.base-image&quot;)
+    protected String baseImage;
+
+    /**
+     * The version of Oracle Linux to use as a native-compile base when building a native image inside a Docker container.
+     */
+    @Parameter(property = &quot;micronaut.native-image.ol.version&quot;, defaultValue = &quot;ol9&quot;)
+    protected String oracleLinuxVersion;
+
+    /**
+     * Networking mode for the RUN instructions during build.
+     *
+     * @since 4.0.0
+     */
+    @Parameter(property = &quot;docker.networkMode&quot;)
+    protected String networkMode;
+
+    /**
+     * &lt;p&gt;
+     * Jib goal used to build Docker images for {@code docker} packaging.
+     * &lt;/p&gt;
+     * &lt;p&gt;
+     * Defaults to {@code dockerBuild}. Set it to {@code buildTar} or {@code build} to avoid talking to a local Docker daemon during {@code package}.
+     * &lt;/p&gt;
+     *
+     * @since 5.0.0
+     */
+    @Parameter(property = &quot;jib.buildGoal&quot;, defaultValue = &quot;dockerBuild&quot;)
+    protected String jibBuildGoal;
+
+    protected AbstractDockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
+                                 ApplicationConfigurationService applicationConfigurationService,
+<span class="fc" id="L198">                                 DockerService dockerService, MavenSession mavenSession, MojoExecution mojoExecution) {</span>
+<span class="fc" id="L199">        this.mavenProject = mavenProject;</span>
+<span class="fc" id="L200">        this.mavenSession = mavenSession;</span>
+<span class="fc" id="L201">        this.jibConfigurationService = jibConfigurationService;</span>
+<span class="fc" id="L202">        this.applicationConfigurationService = applicationConfigurationService;</span>
+<span class="fc" id="L203">        this.dockerService = dockerService;</span>
+<span class="fc" id="L204">        this.expressionEvaluator = new PluginParameterExpressionEvaluator(mavenSession, mojoExecution);</span>
+<span class="fc" id="L205">    }</span>
+
+    /**
+     * @return the Java version from either the &lt;code&gt;maven.compiler.target&lt;/code&gt; property or the &lt;code&gt;java.version&lt;/code&gt; property.
+     */
+    protected ArtifactVersion javaVersion() {
+<span class="fc" id="L211">        return new DefaultArtifactVersion(getJdkVersion());</span>
+    }
+
+    private String getJdkVersion() {
+<span class="fc" id="L215">        var releaseVersion = getPropertyValue(mavenProject, &quot;maven.compiler.release&quot;);</span>
+<span class="fc" id="L216">        var targetVersion = getPropertyValue(mavenProject, &quot;maven.compiler.target&quot;);</span>
+<span class="fc" id="L217">        return releaseVersion.or(() -&gt; targetVersion).orElseGet(() -&gt; System.getProperty(&quot;java.version&quot;));</span>
+    }
+
+    private static Optional&lt;String&gt; getPropertyValue(MavenProject project, String propertName) {
+<span class="fc" id="L221">        var systemProperty = Optional.of(propertName).map(System::getProperty);</span>
+<span class="fc" id="L222">        var properties = project.getProperties();</span>
+<span class="fc" id="L223">        var projectProperty = Optional.of(propertName).map(properties::getProperty);</span>
+<span class="fc" id="L224">        return systemProperty.or(() -&gt; projectProperty);</span>
+    }
+
+    protected final void validateJibBuildGoal() throws MojoExecutionException {
+<span class="fc bfc" id="L228" title="All 2 branches covered.">        if (!SUPPORTED_JIB_BUILD_GOALS.contains(jibBuildGoal)) {</span>
+<span class="fc" id="L229">            throw new MojoExecutionException(&quot;Unsupported jib.buildGoal '&quot; + jibBuildGoal</span>
+<span class="fc" id="L230">                + &quot;'. Supported values are: &quot; + String.join(&quot;, &quot;, SUPPORTED_JIB_BUILD_GOALS));</span>
+        }
+<span class="fc" id="L232">    }</span>
+
+    protected final Optional&lt;String&gt; getConfiguredToImage() {
+<span class="fc" id="L235">        return jibConfigurationService.getToImage().filter(StringUtils::hasText);</span>
+    }
+
+    protected final String requireConfiguredToImageForJibRegistryBuild() throws MojoExecutionException {
+<span class="fc" id="L239">        return getConfiguredToImage()</span>
+<span class="fc" id="L240">            .orElseThrow(() -&gt; new MojoExecutionException(&quot;jib.buildGoal=build requires a configured target image. &quot;</span>
+                + &quot;Set jib.to.image to the registry image to publish, and configure registry credentials with &quot;
+                + &quot;Jib-supported options such as jib.to.auth.*, jib.to.credHelper, Maven settings, or environment-backed &quot;
+                + &quot;configuration.&quot;));
+    }
+
+    protected final boolean shouldBuildWithDockerfile(File providedDockerfile) {
+<span class="fc" id="L247">        var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());</span>
+<span class="pc bpc" id="L248" title="2 of 4 branches missed.">        return providedDockerfile.exists() || runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION;</span>
+    }
+
+    /**
+     * @return the JVM version to use for GraalVM.
+     */
+    protected String graalVmJvmVersion() {
+<span class="fc" id="L255">        return Integer.toString(resolveGraalVersion());</span>
+    }
+
+    /**
+     * @return the GraalVM download URL depending on the Java version.
+     */
+    protected String graalVmDownloadUrl() {
+<span class="fc" id="L262">        Integer version = resolveGraalVersion();</span>
+
+<span class="fc" id="L264">        return GDS_DOWNLOAD_URL.formatted(version, version, graalVmArch());</span>
+    }
+
+    private Integer resolveGraalVersion() {
+<span class="fc" id="L268">        int target = javaVersion().getMajorVersion();</span>
+<span class="fc" id="L269">        Integer version = GRAALVM_VERSIONS.floor(target);</span>
+
+<span class="fc bfc" id="L271" title="All 2 branches covered.">        return version != null ? version : GRAALVM_VERSIONS.first();</span>
+    }
+
+    /**
+     * @return the OS architecture to use for GraalVM depending on the &lt;code&gt;os.arch&lt;/code&gt; system property.
+     */
+    protected String graalVmArch() {
+<span class="pc bpc" id="L278" title="1 of 2 branches missed.">        return isArm() ? ARM_ARCH : X86_64_ARCH;</span>
+    }
+
+    /**
+     * @return the base FROM image for the native image.
+     */
+    protected String getFrom() {
+<span class="fc" id="L285">        return getJibFromImageSystemProperty()</span>
+<span class="fc" id="L286">            .or(() -&gt; Optional.ofNullable(baseImage).filter(StringUtils::hasText))</span>
+<span class="fc" id="L287">            .or(() -&gt; getFromImage().filter(StringUtils::hasText))</span>
+<span class="fc" id="L288">            .orElse(DEFAULT_BASE_IMAGE_GRAALVM_BUILD + &quot;:&quot; + graalVmTag(graalVmJvmVersion(), staticNativeImage, oracleLinuxVersion));</span>
+    }
+
+    /**
+     * @return whether the selected native-image builder is known to support {@code -H:+SharedArenaSupport}.
+     */
+    protected boolean supportsSharedArena() {
+<span class="fc" id="L295">        return sharedArenaBuilderMajorVersion()</span>
+<span class="fc" id="L296">            .map(MojoUtils::supportsSharedArena)</span>
+<span class="fc" id="L297">            .orElse(false);</span>
+    }
+
+    private Optional&lt;Integer&gt; sharedArenaBuilderMajorVersion() {
+<span class="fc" id="L301">        return getJibFromImageSystemProperty()</span>
+<span class="fc" id="L302">            .or(() -&gt; Optional.ofNullable(baseImage).filter(StringUtils::hasText))</span>
+<span class="fc" id="L303">            .or(() -&gt; getFromImage().filter(StringUtils::hasText))</span>
+<span class="fc" id="L304">            .map(AbstractDockerMojo::graalVmNativeImageBuilderMajorVersion)</span>
+<span class="fc" id="L305">            .orElseGet(() -&gt; Optional.of(resolveGraalVersion()));</span>
+    }
+
+    static Optional&lt;Integer&gt; graalVmNativeImageBuilderMajorVersion(String image) {
+<span class="pc bpc" id="L309" title="1 of 2 branches missed.">        if (!StringUtils.hasText(image)) {</span>
+<span class="nc" id="L310">            return Optional.empty();</span>
+        }
+
+<span class="fc" id="L313">        int digestStart = image.indexOf('@');</span>
+<span class="fc bfc" id="L314" title="All 2 branches covered.">        String imageWithoutDigest = digestStart &gt;= 0 ? image.substring(0, digestStart) : image;</span>
+<span class="fc" id="L315">        int lastSlash = imageWithoutDigest.lastIndexOf('/');</span>
+<span class="fc" id="L316">        int tagSeparator = imageWithoutDigest.lastIndexOf(':');</span>
+<span class="fc bfc" id="L317" title="All 2 branches covered.">        if (tagSeparator &lt;= lastSlash) {</span>
+<span class="fc" id="L318">            return Optional.empty();</span>
+        }
+
+<span class="fc" id="L321">        String repository = imageWithoutDigest.substring(0, tagSeparator).toLowerCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L322" title="All 2 branches covered.">        if (!isGraalVmNativeImageRepository(repository)) {</span>
+<span class="fc" id="L323">            return Optional.empty();</span>
+        }
+
+<span class="fc" id="L326">        String tag = imageWithoutDigest.substring(tagSeparator + 1);</span>
+<span class="fc" id="L327">        Matcher matcher = LEADING_MAJOR_VERSION.matcher(tag);</span>
+<span class="fc bfc" id="L328" title="All 2 branches covered.">        if (!matcher.matches()) {</span>
+<span class="fc" id="L329">            return Optional.empty();</span>
+        }
+        try {
+<span class="fc" id="L332">            return Optional.of(Integer.parseInt(matcher.group(1)));</span>
+<span class="fc" id="L333">        } catch (NumberFormatException e) {</span>
+<span class="fc" id="L334">            return Optional.empty();</span>
+        }
+    }
+
+    private static boolean isGraalVmNativeImageRepository(String repository) {
+<span class="fc" id="L339">        int lastSlash = repository.lastIndexOf('/');</span>
+<span class="pc bpc" id="L340" title="1 of 2 branches missed.">        String imageName = lastSlash &gt;= 0 ? repository.substring(lastSlash + 1) : repository;</span>
+<span class="pc bpc" id="L341" title="1 of 4 branches missed.">        return (repository.startsWith(&quot;graalvm/&quot;) || repository.contains(&quot;/graalvm/&quot;))</span>
+<span class="pc bpc" id="L342" title="1 of 2 branches missed.">            &amp;&amp; imageName.startsWith(&quot;native-image&quot;);</span>
+    }
+
+    /**
+     * @param graalVmJvmVersion the JVM version string
+     * @param staticNativeImage whether to produce a static native image
+     * @param oracleLinuxVersion the Oracle Linux version to use
+     * @return the GraalVM Docker image tag based on the provided parameters
+     */
+    protected String graalVmTag(String graalVmJvmVersion, Boolean staticNativeImage, String oracleLinuxVersion) {
+<span class="fc bfc" id="L352" title="All 2 branches covered.">        String suffix = Boolean.TRUE.equals(staticNativeImage)</span>
+<span class="fc bfc" id="L353" title="All 2 branches covered.">            ? &quot;-muslib&quot; + (StringUtils.hasText(oracleLinuxVersion) ? &quot;-&quot; + oracleLinuxVersion : &quot;&quot;)</span>
+<span class="fc bfc" id="L354" title="All 2 branches covered.">            : (StringUtils.hasText(oracleLinuxVersion) ? &quot;-&quot; + oracleLinuxVersion : &quot;&quot;);</span>
+<span class="fc" id="L355">        return graalVmJvmVersion + suffix;</span>
+    }
+
+    /**
+     * Check os.arch against known ARM architecture identifiers.
+     *
+     * @return true if we think we're running on an arm JDK
+     */
+    protected boolean isArm() {
+<span class="pc bpc" id="L364" title="1 of 2 branches missed.">        return switch (System.getProperty(&quot;os.arch&quot;)) {</span>
+<span class="nc" id="L365">            case ARM_ARCH, &quot;arm64&quot; -&gt; true;</span>
+<span class="fc" id="L366">            default -&gt; false;</span>
+        };
+    }
+
+    /**
+     * @return the base image from the jib configuration (if any).
+     */
+    protected Optional&lt;String&gt; getFromImage() {
+<span class="fc" id="L374">        return jibConfigurationService.getFromImage();</span>
+    }
+
+    /**
+     * @return the base image from the Jib system property override, if any.
+     */
+    protected Optional&lt;String&gt; getJibFromImageSystemProperty() {
+<span class="fc" id="L381">        return Optional.ofNullable(System.getProperty(JIB_FROM_IMAGE_PROPERTY))</span>
+<span class="fc" id="L382">            .filter(StringUtils::hasText);</span>
+    }
+
+    /**
+     * @return the Docker image tags by looking at the Jib plugin configuration.
+     */
+    protected Set&lt;String&gt; getTags() {
+<span class="fc" id="L389">        var tags = new HashSet&lt;String&gt;();</span>
+<span class="fc" id="L390">        Optional&lt;String&gt; toImageOptional = jibConfigurationService.getToImage();</span>
+<span class="fc" id="L391">        String imageName = mavenProject.getArtifactId();</span>
+<span class="pc bpc" id="L392" title="1 of 2 branches missed.">        if (toImageOptional.isPresent()) {</span>
+<span class="nc" id="L393">            String toImage = toImageOptional.get();</span>
+<span class="nc bnc" id="L394" title="All 2 branches missed.">            if (toImage.contains(&quot;:&quot;)) {</span>
+<span class="nc" id="L395">                tags.add(toImage);</span>
+<span class="nc" id="L396">                imageName = toImageOptional.get().split(&quot;:&quot;)[0];</span>
+            } else {
+<span class="nc" id="L398">                tags.add(toImage + &quot;:&quot; + LATEST_TAG);</span>
+<span class="nc" id="L399">                imageName = toImage;</span>
+            }
+<span class="nc" id="L401">        } else {</span>
+<span class="fc" id="L402">            tags.add(imageName + &quot;:&quot; + LATEST_TAG);</span>
+        }
+<span class="pc bpc" id="L404" title="1 of 2 branches missed.">        for (String tag : jibConfigurationService.getTags()) {</span>
+<span class="nc bnc" id="L405" title="All 4 branches missed.">            if (LATEST_TAG.equals(tag) &amp;&amp; tags.stream().anyMatch(t -&gt; t.contains(LATEST_TAG))) {</span>
+<span class="nc" id="L406">                continue;</span>
+            }
+<span class="nc" id="L408">            tags.add(String.format(&quot;%s:%s&quot;, imageName, tag));</span>
+<span class="nc" id="L409">        }</span>
+<span class="fc" id="L410">        return tags.stream()</span>
+<span class="fc" id="L411">            .map(this::evaluateExpression)</span>
+<span class="fc" id="L412">            .collect(Collectors.toSet());</span>
+    }
+
+    private String evaluateExpression(String expression) {
+        try {
+<span class="fc" id="L417">            return expressionEvaluator.evaluate(expression, String.class).toString();</span>
+<span class="nc" id="L418">        } catch (Exception e) {</span>
+<span class="nc" id="L419">            return expression;</span>
+        }
+    }
+
+    /**
+     * @return the application ports to expose by looking at the Jib configuration or the application configuration.
+     */
+    protected String getPorts() {
+<span class="fc" id="L427">        return jibConfigurationService.getPorts().orElseGet(() -&gt; {</span>
+<span class="fc" id="L428">            String port = applicationConfigurationService.getServerPort();</span>
+<span class="pc bpc" id="L429" title="1 of 2 branches missed.">            return &quot;-1&quot;.equals(port) ? DEFAULT_PORT : port;</span>
+        });
+    }
+
+    /**
+     * Copy project dependencies to a &lt;code&gt;target/dependency&lt;/code&gt; directory.
+     */
+    protected void copyDependencies() throws IOException {
+<span class="fc" id="L437">        var imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);</span>
+<span class="fc" id="L438">        var target = new File(mavenProject.getBuild().getDirectory(), DEPENDENCY_DIRECTORY).toPath();</span>
+<span class="fc" id="L439">        Files.createDirectories(target);</span>
+<span class="fc" id="L440">        Files.createDirectories(target.resolve(RELEASE_DEPENDENCY_DIRECTORY));</span>
+<span class="fc" id="L441">        Files.createDirectories(target.resolve(SNAPSHOT_DEPENDENCY_DIRECTORY));</span>
+<span class="fc bfc" id="L442" title="All 2 branches covered.">        for (Artifact dependency : mavenProject.getArtifacts()) {</span>
+<span class="fc bfc" id="L443" title="All 2 branches covered.">            if (!imageClasspathScopes.contains(dependency.getScope())) {</span>
+<span class="fc" id="L444">                continue;</span>
+            }
+<span class="fc" id="L446">            var dependencyFile = dependency.getFile().toPath();</span>
+<span class="fc" id="L447">            var dependencyName = dependency.getFile().getName();</span>
+<span class="fc" id="L448">            var layeredPath = target.resolve(dependencyLayerDirectory(dependency)).resolve(dependencyName);</span>
+<span class="fc" id="L449">            Files.copy(dependencyFile, layeredPath, StandardCopyOption.REPLACE_EXISTING);</span>
+<span class="fc" id="L450">            Files.copy(dependencyFile, target.resolve(dependencyName), StandardCopyOption.REPLACE_EXISTING);</span>
+<span class="fc" id="L451">        }</span>
+<span class="fc" id="L452">    }</span>
+
+    private static String dependencyLayerDirectory(Artifact dependency) {
+<span class="fc bfc" id="L455" title="All 2 branches covered.">        return dependency.isSnapshot() ? SNAPSHOT_DEPENDENCY_DIRECTORY : RELEASE_DEPENDENCY_DIRECTORY;</span>
+    }
+
+    /**
+     * @return the Docker CMD command.
+     */
+    protected String getCmd() throws MojoExecutionException {
+<span class="fc" id="L462">        var escapedArguments = new ArrayList&lt;String&gt;(appArguments.size());</span>
+<span class="fc bfc" id="L463" title="All 2 branches covered.">        for (String argument : appArguments) {</span>
+<span class="fc" id="L464">            escapedArguments.add(jsonStringLiteral(&quot;mn.app.args&quot;, argument));</span>
+<span class="fc" id="L465">        }</span>
+<span class="fc" id="L466">        return &quot;CMD [&quot; + String.join(&quot;, &quot;, escapedArguments) + &quot;]&quot;;</span>
+    }
+
+    /**
+     * @return the generated AWS Lambda bootstrap command.
+     */
+    protected String getLambdaBootstrapCommand() throws MojoExecutionException {
+<span class="fc" id="L473">        var command = new StringBuilder(&quot;./func&quot;);</span>
+<span class="fc bfc" id="L474" title="All 2 branches covered.">        for (String bootstrapArgument : DEFAULT_LAMBDA_BOOTSTRAP_ARGUMENTS) {</span>
+<span class="fc" id="L475">            command.append(' ').append(bootstrapArgument);</span>
+<span class="fc" id="L476">        }</span>
+<span class="pc bpc" id="L477" title="2 of 4 branches missed.">        if (lambdaBootstrapArguments != null &amp;&amp; !lambdaBootstrapArguments.isEmpty()) {</span>
+<span class="fc bfc" id="L478" title="All 2 branches covered.">            for (String lambdaBootstrapArgument : lambdaBootstrapArguments) {</span>
+<span class="fc" id="L479">                command.append(' ').append(escapeBootstrapArgument(lambdaBootstrapArgument));</span>
+<span class="fc" id="L480">            }</span>
+        }
+<span class="fc" id="L482">        return command.toString();</span>
+    }
+
+    /**
+     * Applies the generated AWS Lambda bootstrap script to a dockerfile template.
+     *
+     * @param dockerfile the docker file
+     */
+    protected void lambdaBootstrapCommand(File dockerfile) throws IOException, MojoExecutionException {
+<span class="nc bnc" id="L491" title="All 2 branches missed.">        if (dockerfile == null) {</span>
+<span class="nc" id="L492">            return;</span>
+        }
+<span class="nc" id="L494">        String lambdaBootstrapDockerCommand = getLambdaBootstrapDockerCommand();</span>
+<span class="nc bnc" id="L495" title="All 4 branches missed.">        if (lambdaBootstrapArguments != null &amp;&amp; !lambdaBootstrapArguments.isEmpty()) {</span>
+<span class="nc" id="L496">            getLog().info(&quot;Using AWS Lambda bootstrap arguments: &quot; + lambdaBootstrapArguments);</span>
+        }
+<span class="nc" id="L498">        var allLines = Files.readAllLines(dockerfile.toPath());</span>
+<span class="nc" id="L499">        var result = new ArrayList&lt;String&gt;(allLines.size());</span>
+<span class="nc bnc" id="L500" title="All 2 branches missed.">        for (String line : allLines) {</span>
+<span class="nc bnc" id="L501" title="All 2 branches missed.">            if (line.contains(LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER)) {</span>
+<span class="nc" id="L502">                result.add(line.replace(LAMBDA_BOOTSTRAP_DOCKER_COMMAND_PLACEHOLDER, lambdaBootstrapDockerCommand));</span>
+            } else {
+<span class="nc" id="L504">                result.add(line);</span>
+            }
+<span class="nc" id="L506">        }</span>
+<span class="nc" id="L507">        Files.write(dockerfile.toPath(), result);</span>
+<span class="nc" id="L508">    }</span>
+
+    private String getLambdaBootstrapDockerCommand() throws MojoExecutionException {
+<span class="fc" id="L511">        var quotedLines = new ArrayList&lt;String&gt;();</span>
+<span class="nc bnc" id="L512" title="All 2 branches missed.">        for (String line : List.of(&quot;#!/bin/sh&quot;, &quot;set -euo pipefail&quot;, getLambdaBootstrapCommand())) {</span>
+<span class="nc" id="L513">            quotedLines.add(quoteShellLiteral(&quot;AWS Lambda bootstrap command&quot;, line));</span>
+<span class="nc" id="L514">        }</span>
+<span class="nc" id="L515">        return &quot;printf '%s\\n' &quot; + String.join(&quot; &quot;, quotedLines) + &quot; &gt; bootstrap&quot;;</span>
+    }
+
+    private static String escapeBootstrapArgument(String argument) throws MojoExecutionException {
+<span class="fc" id="L519">        String sanitized = validateDockerfileValue(&quot;micronaut.lambda.bootstrap.args&quot;, argument);</span>
+<span class="fc bfc" id="L520" title="All 2 branches covered.">        if (isShellSafe(sanitized)) {</span>
+<span class="fc" id="L521">            return sanitized;</span>
+        }
+<span class="fc" id="L523">        return quoteShellLiteral(&quot;micronaut.lambda.bootstrap.args&quot;, sanitized);</span>
+    }
+
+    private static boolean isShellSafe(String argument) {
+<span class="pc bpc" id="L527" title="2 of 4 branches missed.">        if (argument == null || argument.isEmpty()) {</span>
+<span class="nc" id="L528">            return false;</span>
+        }
+<span class="fc bfc" id="L530" title="All 2 branches covered.">        for (int i = 0; i &lt; argument.length(); i++) {</span>
+<span class="fc" id="L531">            char c = argument.charAt(i);</span>
+<span class="fc bfc" id="L532" title="All 2 branches covered.">            if (!Character.isLetterOrDigit(c)</span>
+<span class="fc bfc" id="L533" title="All 2 branches covered.">                &amp;&amp; &quot;_@%+=:,./-&quot;.indexOf(c) == -1) {</span>
+<span class="fc" id="L534">                return false;</span>
+            }
+        }
+<span class="fc" id="L537">        return true;</span>
+    }
+
+    static String quoteShellLiteral(String source, String value) throws MojoExecutionException {
+<span class="fc" id="L541">        validateDockerfileValue(source, value);</span>
+<span class="fc" id="L542">        return &quot;'&quot; + value.replace(&quot;'&quot;, &quot;'\&quot;'\&quot;'&quot;) + &quot;'&quot;;</span>
+    }
+
+    protected static String validateDockerfileValue(String source, String value) throws MojoExecutionException {
+<span class="pc bpc" id="L546" title="1 of 2 branches missed.">        if (value == null) {</span>
+<span class="nc" id="L547">            throw new MojoExecutionException(source + &quot; must not be null when generating a Dockerfile&quot;);</span>
+        }
+<span class="fc bfc" id="L549" title="All 2 branches covered.">        for (int i = 0; i &lt; value.length(); i++) {</span>
+<span class="fc" id="L550">            char c = value.charAt(i);</span>
+<span class="fc bfc" id="L551" title="All 2 branches covered.">            if (Character.isISOControl(c)) {</span>
+<span class="fc" id="L552">                throw new MojoExecutionException(source + &quot; contains an unsupported control character at index &quot; + i</span>
+                    + &quot; and cannot be written into a generated Dockerfile&quot;);
+            }
+        }
+<span class="fc" id="L556">        return value;</span>
+    }
+
+    protected static String validateImageReference(String source, String value) throws MojoExecutionException {
+<span class="fc" id="L560">        String sanitized = validateDockerfileValue(source, value);</span>
+        try {
+<span class="fc" id="L562">            ImageReference.parse(sanitized);</span>
+<span class="fc" id="L563">        } catch (InvalidImageReferenceException e) {</span>
+<span class="fc" id="L564">            throw new MojoExecutionException(source + &quot; is not a valid Docker image reference: &quot; + sanitized, e);</span>
+<span class="fc" id="L565">        }</span>
+<span class="fc" id="L566">        return sanitized;</span>
+    }
+
+    protected static String validateExposedPorts(String source, String value) throws MojoExecutionException {
+<span class="fc" id="L570">        String sanitized = validateDockerfileValue(source, value);</span>
+<span class="fc bfc" id="L571" title="All 2 branches covered.">        for (String token : sanitized.split(&quot;\\s+&quot;)) {</span>
+<span class="pc bpc" id="L572" title="1 of 2 branches missed.">            if (token.isEmpty()) {</span>
+<span class="nc" id="L573">                continue;</span>
+            }
+<span class="fc bfc" id="L575" title="All 2 branches covered.">            if (!token.matches(&quot;\\d+(/(?:tcp|udp))?&quot;)) {</span>
+<span class="fc" id="L576">                throw new MojoExecutionException(source + &quot; contains an invalid exposed port token: &quot; + token);</span>
+            }
+        }
+<span class="fc" id="L579">        return sanitized;</span>
+    }
+
+    protected static String validateDownloadUrl(String source, String value) throws MojoExecutionException {
+<span class="fc" id="L583">        String sanitized = validateDockerfileValue(source, value);</span>
+        try {
+<span class="fc" id="L585">            URI uri = new URI(sanitized);</span>
+<span class="fc" id="L586">            String scheme = uri.getScheme();</span>
+<span class="pc bpc" id="L587" title="3 of 4 branches missed.">            if (!&quot;https&quot;.equalsIgnoreCase(scheme) &amp;&amp; !&quot;http&quot;.equalsIgnoreCase(scheme)) {</span>
+<span class="nc" id="L588">                throw new MojoExecutionException(source + &quot; must use an http or https URL: &quot; + sanitized);</span>
+            }
+<span class="pc bpc" id="L590" title="1 of 2 branches missed.">            if (!uri.isAbsolute()) {</span>
+<span class="nc" id="L591">                throw new MojoExecutionException(source + &quot; must be an absolute URL: &quot; + sanitized);</span>
+            }
+<span class="nc" id="L593">        } catch (URISyntaxException e) {</span>
+<span class="nc" id="L594">            throw new MojoExecutionException(source + &quot; is not a valid URL: &quot; + sanitized, e);</span>
+<span class="fc" id="L595">        }</span>
+<span class="fc" id="L596">        return sanitized;</span>
+    }
+
+    protected static String jsonStringLiteral(String source, String value) throws MojoExecutionException {
+<span class="fc" id="L600">        return &quot;\&quot;&quot; + escapeJsonString(source, value) + &quot;\&quot;&quot;;</span>
+    }
+
+    protected static String escapeJsonString(String source, String value) throws MojoExecutionException {
+<span class="fc" id="L604">        String sanitized = validateDockerfileValue(source, value);</span>
+<span class="fc" id="L605">        var result = new StringBuilder(sanitized.length() + 8);</span>
+<span class="fc bfc" id="L606" title="All 2 branches covered.">        for (int i = 0; i &lt; sanitized.length(); i++) {</span>
+<span class="fc" id="L607">            char c = sanitized.charAt(i);</span>
+<span class="pc bpc" id="L608" title="5 of 8 branches missed.">            switch (c) {</span>
+<span class="fc" id="L609">                case '&quot;' -&gt; result.append(&quot;\\\&quot;&quot;);</span>
+<span class="fc" id="L610">                case '\\' -&gt; result.append(&quot;\\\\&quot;);</span>
+<span class="nc" id="L611">                case '\b' -&gt; result.append(&quot;\\b&quot;);</span>
+<span class="nc" id="L612">                case '\f' -&gt; result.append(&quot;\\f&quot;);</span>
+<span class="nc" id="L613">                case '\n' -&gt; result.append(&quot;\\n&quot;);</span>
+<span class="nc" id="L614">                case '\r' -&gt; result.append(&quot;\\r&quot;);</span>
+<span class="nc" id="L615">                case '\t' -&gt; result.append(&quot;\\t&quot;);</span>
+                default -&gt; {
+<span class="pc bpc" id="L617" title="1 of 2 branches missed.">                    if (c &lt; 0x20) {</span>
+<span class="nc" id="L618">                        result.append(String.format(&quot;\\u%04x&quot;, (int) c));</span>
+                    } else {
+<span class="fc" id="L620">                        result.append(c);</span>
+                    }
+                }
+            }
+        }
+<span class="fc" id="L625">        return result.toString();</span>
+    }
+
+    protected static String shellLiteral(String source, String value) throws MojoExecutionException {
+<span class="fc" id="L629">        return quoteShellLiteral(source, validateDockerfileValue(source, value));</span>
+    }
+
+    protected static String escapeShellDoubleQuoted(String source, String value) throws MojoExecutionException {
+<span class="fc" id="L633">        return validateDockerfileValue(source, value)</span>
+<span class="fc" id="L634">            .replace(&quot;\\&quot;, &quot;\\\\&quot;)</span>
+<span class="fc" id="L635">            .replace(&quot;\&quot;&quot;, &quot;\\\&quot;&quot;)</span>
+<span class="fc" id="L636">            .replace(&quot;$&quot;, &quot;\\$&quot;)</span>
+<span class="fc" id="L637">            .replace(&quot;`&quot;, &quot;\\`&quot;);</span>
+    }
+
+    /**
+     * @return Networking mode for the RUN instructions during build (if any).
+     */
+    protected Optional&lt;String&gt; getNetworkMode() {
+<span class="fc" id="L644">        return Optional.ofNullable(networkMode);</span>
+    }
+
+    /**
+     * @return Map of proxy-related build arguments for Docker builds.
+     */
+    protected Map&lt;String, String&gt; getProxyBuildArgs() {
+<span class="fc" id="L651">        var proxyArgs = new java.util.HashMap&lt;String, String&gt;();</span>
+        
+        // HTTP proxy configuration from standard JVM properties
+<span class="fc" id="L654">        String httpProxyHost = System.getProperty(&quot;http.proxyHost&quot;);</span>
+<span class="fc" id="L655">        String httpProxyPort = System.getProperty(&quot;http.proxyPort&quot;, &quot;80&quot;);</span>
+<span class="fc bfc" id="L656" title="All 2 branches covered.">        if (StringUtils.hasText(httpProxyHost)) {</span>
+<span class="fc" id="L657">            String httpProxy = &quot;http://&quot; + httpProxyHost + &quot;:&quot; + httpProxyPort;</span>
+<span class="fc" id="L658">            proxyArgs.put(&quot;HTTP_PROXY&quot;, httpProxy);</span>
+<span class="fc" id="L659">            proxyArgs.put(&quot;http_proxy&quot;, httpProxy);</span>
+        }
+        
+        // HTTPS proxy configuration from standard JVM properties
+<span class="fc" id="L663">        String httpsProxyHost = System.getProperty(&quot;https.proxyHost&quot;);</span>
+<span class="fc" id="L664">        String httpsProxyPort = System.getProperty(&quot;https.proxyPort&quot;, &quot;443&quot;);</span>
+<span class="fc bfc" id="L665" title="All 2 branches covered.">        if (StringUtils.hasText(httpsProxyHost)) {</span>
+<span class="fc" id="L666">            String httpsProxy = &quot;http://&quot; + httpsProxyHost + &quot;:&quot; + httpsProxyPort;</span>
+<span class="fc" id="L667">            proxyArgs.put(&quot;HTTPS_PROXY&quot;, httpsProxy);</span>
+<span class="fc" id="L668">            proxyArgs.put(&quot;https_proxy&quot;, httpsProxy);</span>
+        }
+        
+        // No proxy configuration from standard JVM properties
+<span class="fc" id="L672">        String nonProxyHosts = System.getProperty(&quot;http.nonProxyHosts&quot;);</span>
+<span class="fc bfc" id="L673" title="All 2 branches covered.">        if (StringUtils.hasText(nonProxyHosts)) {</span>
+            // Convert Java format (e.g., &quot;*.company.com|localhost&quot;) to standard format (e.g., &quot;*.company.com,localhost&quot;)
+<span class="fc" id="L675">            String noProxy = nonProxyHosts.replace(&quot;|&quot;, &quot;,&quot;);</span>
+<span class="fc" id="L676">            proxyArgs.put(&quot;NO_PROXY&quot;, noProxy);</span>
+<span class="fc" id="L677">            proxyArgs.put(&quot;no_proxy&quot;, noProxy);</span>
+        }
+        
+<span class="fc" id="L680">        return proxyArgs;</span>
+    }
+
+    /**
+     * @return the base image to use for the Dockerfile.
+     */
+    protected String getBaseImage() {
+<span class="fc" id="L687">        return JibMicronautExtension.determineBaseImage(JibMicronautExtension.getJdkVersion(mavenSession), MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy());</span>
+    }
+
+    /**
+     * Adds cmd to docker oracle cloud function file.
+     *
+     * @param dockerfile the docker file
+     */
+    protected void oracleCloudFunctionCmd(File dockerfile) throws IOException, MojoExecutionException {
+<span class="pc bpc" id="L696" title="3 of 4 branches missed.">        if (appArguments != null &amp;&amp; !appArguments.isEmpty()) {</span>
+<span class="nc" id="L697">            getLog().info(&quot;Using application arguments: &quot; + appArguments);</span>
+<span class="nc" id="L698">            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND)</span>
+<span class="nc" id="L699">                .write(System.lineSeparator() + getCmd());</span>
+        } else {
+<span class="fc" id="L701">            com.google.common.io.Files.asCharSink(dockerfile, Charset.defaultCharset(), FileWriteMode.APPEND).write(System.lineSeparator() + ORACLE_CLOUD_FUNCTION_DEFAULT_CMD);</span>
+        }
+<span class="fc" id="L703">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

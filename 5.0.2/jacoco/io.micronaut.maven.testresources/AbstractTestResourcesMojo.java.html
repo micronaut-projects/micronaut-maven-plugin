@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractTestResourcesMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.testresources</a> &gt; <span class="el_source">AbstractTestResourcesMojo.java</span></div><h1>AbstractTestResourcesMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2021 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.testresources;
+
+import io.micronaut.maven.JansiLog;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.plugin.ContextEnabled;
+import org.apache.maven.plugin.Mojo;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugin.logging.SystemStreamLog;
+import org.apache.maven.plugins.annotations.Parameter;
+
+import java.io.File;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Base mojo for Micronaut test resources service handling.
+ */
+<span class="fc" id="L34">public abstract class AbstractTestResourcesMojo extends TestResourcesConfiguration implements Mojo, ContextEnabled {</span>
+
+    private static final String DEFAULT_CLASSPATH_INFERENCE = &quot;true&quot;;
+    private static final String DEFAULT_CLIENT_TIMEOUT = &quot;60&quot;;
+
+    /**
+     * Instance logger.
+     */
+    protected Log log;
+
+    /**
+     * Plugin container context.
+     */
+    protected Map&lt;?, ?&gt; pluginContext;
+
+    @Parameter(defaultValue = &quot;${project.build.directory}&quot;, required = true)
+    protected File buildDirectory;
+
+    /**
+     * Micronaut Test Resources version. Should be defined by the Micronaut BOM, but this parameter can be used to
+     * define a different version.
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + &quot;version&quot;, required = true)
+    protected String testResourcesVersion;
+
+    /**
+     * If set to true, Micronaut will attempt to infer which dependencies should be added to the Test Resources server
+     * classpath, based on the project dependencies. In general the result will consist of modules from the
+     * test-resources project, but it may consist of additional entries, for example database drivers.
+     */
+<span class="fc" id="L64">    @Parameter(defaultValue = DEFAULT_CLASSPATH_INFERENCE)</span>
+<span class="fc" id="L65">    protected Boolean classpathInference = Boolean.valueOf(DEFAULT_CLASSPATH_INFERENCE);</span>
+
+    /**
+     * Additional dependencies to add to the Test Resources server classpath when not using classpath inference, or when
+     * the inference doesn't produce the desired result.
+     */
+    @Parameter
+    protected List&lt;Dependency&gt; testResourcesDependencies;
+
+    /**
+     * By default, the Test Resources server will be started on a random (available) port, but it can be set a fixed port
+     * by using this parameter.
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + &quot;port&quot;)
+    protected Integer explicitPort;
+
+    /**
+     * Configures the maximum amount of time to wait for the server to start a test resource. Some containers may take
+     * a long amount of time to start with slow internet connections.
+     */
+<span class="fc" id="L85">    @Parameter(property = CONFIG_PROPERTY_PREFIX + &quot;client-timeout&quot;, defaultValue = DEFAULT_CLIENT_TIMEOUT)</span>
+<span class="fc" id="L86">    protected Integer clientTimeout = Integer.valueOf(DEFAULT_CLIENT_TIMEOUT);</span>
+
+    /**
+     * Configures the duration after which the test resources service will automatically shut down if it doesn't
+     * get any request.
+     *
+     * @since 4.2.0
+     */
+<span class="fc" id="L94">    @Parameter(property = CONFIG_PROPERTY_PREFIX + &quot;server-idle-timeout-minutes&quot;)</span>
+<span class="fc" id="L95">    protected Integer serverIdleTimeoutMinutes = Integer.valueOf(DEFAULT_CLIENT_TIMEOUT);</span>
+
+    /**
+     * System properties that will be passed to the Test Resources service, e.g.
+     * &lt;pre&gt;
+     * &amp;lt;testResourcesSystemProperties&amp;gt;
+     *     &amp;lt;docker.check.timeout.seconds&amp;gt;30&amp;lt;/docker.check.timeout.seconds&amp;gt;
+     * &amp;lt;/testResourcesSystemProperties&amp;gt;
+     * &lt;/pre&gt;
+     * @since 4.7.2
+     */
+    @Parameter
+    protected Map&lt;String, String&gt; testResourcesSystemProperties;
+
+    public static Path serverSettingsDirectoryOf(Path buildDir) {
+<span class="nc" id="L110">        return buildDir.resolve(&quot;../.micronaut/test-resources&quot;);</span>
+    }
+
+    @Override
+    public void setLog(Log log) {
+<span class="nc" id="L115">        this.log = new JansiLog(log);</span>
+<span class="nc" id="L116">    }</span>
+
+    @Override
+    public Log getLog() {
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        if (log == null) {</span>
+<span class="fc" id="L121">            log = new SystemStreamLog();</span>
+        }
+<span class="fc" id="L123">        return log;</span>
+    }
+
+    @Override
+    public Map&lt;?, ?&gt; getPluginContext() {
+<span class="nc" id="L128">        return pluginContext;</span>
+    }
+
+    @Override
+    public void setPluginContext(Map pluginContext) {
+<span class="nc" id="L133">        this.pluginContext = pluginContext;</span>
+<span class="nc" id="L134">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

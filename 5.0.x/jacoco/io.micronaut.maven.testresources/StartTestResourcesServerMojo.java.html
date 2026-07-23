@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StartTestResourcesServerMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.testresources</a> &gt; <span class="el_source">StartTestResourcesServerMojo.java</span></div><h1>StartTestResourcesServerMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.testresources;
+
+import io.micronaut.maven.core.MojoUtils;
+import io.micronaut.maven.services.DependencyResolutionService;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.toolchain.ToolchainManager;
+import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluationException;
+
+import javax.inject.Inject;
+
+/**
+ * Starts the Micronaut test resources server.
+ */
+@Mojo(name = StartTestResourcesServerMojo.NAME, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+public class StartTestResourcesServerMojo extends AbstractTestResourcesMojo {
+    public static final String NAME = &quot;start-testresources-service&quot;;
+
+    private final MavenProject mavenProject;
+
+    private final MavenSession mavenSession;
+
+    private final DependencyResolutionService dependencyResolutionService;
+
+    private final ToolchainManager toolchainManager;
+
+    @Inject
+    @SuppressWarnings(&quot;CdiInjectionPointsInspection&quot;)
+    public StartTestResourcesServerMojo(MavenProject mavenProject,
+                                        MavenSession mavenSession,
+                                        DependencyResolutionService dependencyResolutionService,
+<span class="fc" id="L52">                                        ToolchainManager toolchainManager) {</span>
+<span class="fc" id="L53">        this.mavenProject = mavenProject;</span>
+<span class="fc" id="L54">        this.mavenSession = mavenSession;</span>
+<span class="fc" id="L55">        this.dependencyResolutionService = dependencyResolutionService;</span>
+<span class="fc" id="L56">        this.toolchainManager = toolchainManager;</span>
+<span class="fc" id="L57">    }</span>
+
+    @Override
+    public final void execute() throws MojoExecutionException {
+        // Skip starting test resources if tests are being skipped
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">        if (isTestExecutionSkipped()) {</span>
+<span class="nc" id="L63">            getLog().warn(&quot;Skipping Test Resources service start because integration test execution is disabled with skipITs&quot;);</span>
+<span class="nc" id="L64">            return;</span>
+        }
+        
+<span class="fc" id="L67">        var helper = new TestResourcesHelper(testResourcesEnabled, shared, buildDirectory, explicitPort, clientTimeout,</span>
+                serverIdleTimeoutMinutes, mavenProject, mavenSession, dependencyResolutionService, toolchainManager,
+<span class="fc" id="L69">                testResourcesVersion, classpathInference, testResourcesDependencies, sharedServerNamespace, debugServer,</span>
+                foreground, testResourcesSystemProperties);
+<span class="fc" id="L71">        helper.start();</span>
+
+<span class="fc" id="L73">    }</span>
+
+    /**
+     * Checks whether integration test execution is skipped using skipITs properties.
+     *
+     * @return true if tests are being skipped, false otherwise
+     */
+    boolean isTestExecutionSkipped() {
+        try {
+<span class="fc" id="L82">            var execution = new MojoExecution(mavenProject.getPlugin(MojoUtils.THIS_PLUGIN), null, null);</span>
+<span class="fc" id="L83">            var evaluator = new PluginParameterExpressionEvaluator(mavenSession, execution);</span>
+            
+            // Check skip properties (from maven-surefire-plugin, maven-compiler-plugin, and maven-failsafe-plugin)
+<span class="fc" id="L86">            return isPropertyTrue(evaluator, &quot;skipITs&quot;);</span>
+            
+<span class="nc" id="L88">        } catch (ExpressionEvaluationException e) {</span>
+<span class="nc" id="L89">            getLog().debug(&quot;Could not evaluate test skip properties: &quot; + e.getMessage());</span>
+        }
+<span class="nc" id="L91">        return false;</span>
+    }
+
+    /**
+     * Checks if a property evaluates to true.
+     *
+     * @param evaluator the expression evaluator
+     * @param propertyName the property name to check
+     * @return true if the property is set to true, false otherwise
+     * @throws ExpressionEvaluationException if the property cannot be evaluated
+     */
+    private boolean isPropertyTrue(PluginParameterExpressionEvaluator evaluator, String propertyName) throws ExpressionEvaluationException {
+<span class="fc" id="L103">        Object propertyValue = evaluator.evaluate(&quot;${&quot; + propertyName + &quot;}&quot;);</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">        if (propertyValue instanceof Boolean b) {</span>
+<span class="nc" id="L105">            return b;</span>
+        }
+<span class="fc bfc" id="L107" title="All 2 branches covered.">        if (propertyValue instanceof String s) {</span>
+<span class="fc" id="L108">            return Boolean.parseBoolean(s);</span>
+        }
+<span class="fc" id="L110">        return false;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

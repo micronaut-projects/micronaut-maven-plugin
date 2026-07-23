@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractConfigurationValidationMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.jsonschema</a> &gt; <span class="el_source">AbstractConfigurationValidationMojo.java</span></div><h1>AbstractConfigurationValidationMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.jsonschema;
+
+import io.micronaut.jsonschema.configuration.validator.DependencyInjectionError;
+import io.micronaut.maven.AbstractMicronautMojo;
+import io.micronaut.maven.services.CompilerService;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
+import org.eclipse.aether.graph.Dependency;
+
+import javax.inject.Inject;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+/**
+ * Base mojo for validating Micronaut configuration using JSON Schema.
+ */
+abstract class AbstractConfigurationValidationMojo extends AbstractMicronautMojo {
+
+<span class="fc" id="L47">    private static final List&lt;String&gt; DEFAULT_CACHE_IGNORE = List.of(</span>
+        &quot;META-INF/*&quot;,
+        &quot;logback.xml&quot;,
+        &quot;logback-test.xml&quot;
+    );
+
+    protected final MavenProject project;
+    protected final CompilerService compilerService;
+
+    @Parameter
+    private ConfigurationValidationConfiguration configurationValidation;
+
+    @Inject
+<span class="fc" id="L60">    protected AbstractConfigurationValidationMojo(MavenProject project, CompilerService compilerService) {</span>
+<span class="fc" id="L61">        this.project = project;</span>
+<span class="fc" id="L62">        this.compilerService = compilerService;</span>
+<span class="fc" id="L63">    }</span>
+
+    @Override
+    public final void execute() throws MojoExecutionException, MojoFailureException {
+<span class="nc" id="L67">        ConfigurationValidationConfiguration cfg = configurationValidation;</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">        if (cfg == null) {</span>
+<span class="nc" id="L69">            cfg = new ConfigurationValidationConfiguration();</span>
+        }
+
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        if (!isEnabled(cfg)) {</span>
+<span class="nc" id="L73">            return;</span>
+        }
+<span class="nc" id="L75">        ConfigurationValidationConfiguration.ValidationSet set = validationSet(cfg);</span>
+<span class="nc bnc" id="L76" title="All 4 branches missed.">        if (set != null &amp;&amp; Boolean.FALSE.equals(set.getEnabled())) {</span>
+<span class="nc" id="L77">            return;</span>
+        }
+
+        try {
+<span class="nc" id="L81">            doValidate(cfg, set);</span>
+<span class="nc" id="L82">        } catch (MojoFailureException | MojoExecutionException e) {</span>
+<span class="nc" id="L83">            throw e;</span>
+<span class="nc" id="L84">        } catch (Exception e) {</span>
+<span class="nc" id="L85">            throw new MojoExecutionException(&quot;Configuration validation failed&quot;, e);</span>
+<span class="nc" id="L86">        }</span>
+<span class="nc" id="L87">    }</span>
+
+    protected abstract String scenarioName();
+
+    protected abstract ConfigurationValidationConfiguration.ValidationSet validationSet(ConfigurationValidationConfiguration cfg);
+
+    protected abstract List&lt;String&gt; defaultEnvironments();
+
+    protected abstract List&lt;String&gt; defaultClasspath(MavenProject project);
+
+    protected abstract String[] dependencyScopes();
+
+    /**
+     * Default resource directories for origin rewriting.
+     *
+     * @return Resource directories (typically relative to the project base directory)
+     */
+    protected abstract List&lt;Path&gt; defaultResourceDirectories();
+
+    private void doValidate(ConfigurationValidationConfiguration cfg, ConfigurationValidationConfiguration.ValidationSet set)
+        throws MojoExecutionException, MojoFailureException, IOException {
+
+<span class="nc" id="L109">        List&lt;String&gt; environments = computeEnvironments(set, defaultEnvironments());</span>
+<span class="nc" id="L110">        List&lt;String&gt; suppressions = copyList(cfg.getSuppressions());</span>
+<span class="nc" id="L111">        List&lt;String&gt; suppressInjectErrors = copyList(cfg.getSuppressInjectErrors());</span>
+<span class="nc bnc" id="L112" title="All 4 branches missed.">        boolean failOnNotPresent = cfg.getFailOnNotPresent() == null || cfg.getFailOnNotPresent();</span>
+<span class="nc bnc" id="L113" title="All 4 branches missed.">        boolean deduceEnvironments = cfg.getDeduceEnvironments() != null &amp;&amp; cfg.getDeduceEnvironments();</span>
+<span class="nc bnc" id="L114" title="All 4 branches missed.">        boolean validateDependencyInjection = cfg.getValidateDependencyInjection() != null &amp;&amp; cfg.getValidateDependencyInjection();</span>
+<span class="nc" id="L115">        ConfigurationValidationFormat format = parseFormat(cfg.getFormat());</span>
+
+<span class="nc" id="L117">        Path outputDir = determineOutputDir(cfg, set);</span>
+<span class="nc" id="L118">        Path cacheFile = outputDir.resolve(&quot;.cache.properties&quot;);</span>
+
+<span class="nc bnc" id="L120" title="All 4 branches missed.">        boolean cacheEnabled = cfg.getCacheEnabled() == null || cfg.getCacheEnabled();</span>
+
+<span class="nc" id="L122">        List&lt;String&gt; classpathElements = computeClasspathElements(set);</span>
+<span class="nc" id="L123">        String classpath = String.join(File.pathSeparator, classpathElements);</span>
+<span class="nc" id="L124">        String classpathFingerprint = computeClasspathFingerprint(cacheEnabled, validateDependencyInjection, classpathElements);</span>
+
+<span class="nc" id="L126">        String inputsFingerprint = computeInputsFingerprint(</span>
+            environments,
+            suppressions,
+            suppressInjectErrors,
+            failOnNotPresent,
+            deduceEnvironments,
+            validateDependencyInjection,
+            format,
+            classpath,
+            classpathFingerprint
+        );
+<span class="nc bnc" id="L137" title="All 2 branches missed.">        List&lt;String&gt; cacheIgnore = cfg.getCacheIgnore() == null ? DEFAULT_CACHE_IGNORE : cfg.getCacheIgnore();</span>
+
+<span class="nc" id="L139">        List&lt;Path&gt; cacheResourceDirs = computeCacheResourceDirectories(set);</span>
+<span class="nc" id="L140">        String resourcesFingerprint = ConfigurationValidationCache.fingerprintResources(cacheResourceDirs, cacheIgnore);</span>
+
+<span class="nc bnc" id="L142" title="All 4 branches missed.">        if (cacheEnabled &amp;&amp; handleCacheHit(cacheFile, inputsFingerprint, resourcesFingerprint, outputDir, format)) {</span>
+<span class="nc" id="L143">            return;</span>
+        }
+
+<span class="nc" id="L146">        logValidationStart();</span>
+
+<span class="nc" id="L148">        cleanupStaleReports(outputDir, format);</span>
+
+<span class="nc" id="L150">        ConfigurationValidationExecutor.ValidationResult result = ConfigurationValidationExecutor.validate(</span>
+            classpath,
+            environments,
+            suppressions,
+            suppressInjectErrors,
+            failOnNotPresent,
+            deduceEnvironments,
+            validateDependencyInjection,
+            outputDir,
+            format,
+<span class="nc" id="L160">            project.getBasedir().toPath(),</span>
+<span class="nc" id="L161">            resolveResourceDirectories(set),</span>
+            System.err
+        );
+
+<span class="nc" id="L165">        writeCache(cacheEnabled, cacheFile, inputsFingerprint, resourcesFingerprint, result);</span>
+<span class="nc" id="L166">        throwIfValidationFailed(result);</span>
+<span class="nc" id="L167">    }</span>
+
+    private static &lt;T&gt; List&lt;T&gt; copyList(List&lt;T&gt; values) {
+<span class="nc bnc" id="L170" title="All 2 branches missed.">        return values == null ? List.of() : List.copyOf(values);</span>
+    }
+
+    private String computeClasspathFingerprint(boolean cacheEnabled,
+                                               boolean validateDependencyInjection,
+                                               List&lt;String&gt; classpathElements) {
+<span class="nc bnc" id="L176" title="All 4 branches missed.">        if (!cacheEnabled || !validateDependencyInjection) {</span>
+<span class="nc" id="L177">            return &quot;classpath-fingerprint-disabled&quot;;</span>
+        }
+<span class="nc" id="L179">        return ConfigurationValidationCache.fingerprintClasspath(classpathElements);</span>
+    }
+
+    private String computeInputsFingerprint(List&lt;String&gt; environments,
+                                            List&lt;String&gt; suppressions,
+                                            List&lt;String&gt; suppressInjectErrors,
+                                            boolean failOnNotPresent,
+                                            boolean deduceEnvironments,
+                                            boolean validateDependencyInjection,
+                                            ConfigurationValidationFormat format,
+                                            String classpath,
+                                            String classpathFingerprint) {
+<span class="nc" id="L191">        return String.join(&quot;|&quot;,</span>
+<span class="nc" id="L192">            scenarioName(),</span>
+<span class="nc" id="L193">            environments.toString(),</span>
+<span class="nc" id="L194">            suppressions.toString(),</span>
+<span class="nc" id="L195">            suppressInjectErrors.toString(),</span>
+<span class="nc" id="L196">            Boolean.toString(failOnNotPresent),</span>
+<span class="nc" id="L197">            Boolean.toString(deduceEnvironments),</span>
+<span class="nc" id="L198">            Boolean.toString(validateDependencyInjection),</span>
+<span class="nc" id="L199">            format.name(),</span>
+            classpath,
+            classpathFingerprint
+        );
+    }
+
+    private void logValidationStart() {
+<span class="nc bnc" id="L206" title="All 2 branches missed.">        if (getLog().isInfoEnabled()) {</span>
+<span class="nc" id="L207">            getLog().info(&quot;Validating Micronaut configuration (&quot; + scenarioName() + &quot;)&quot;);</span>
+        }
+<span class="nc" id="L209">    }</span>
+
+    private static void writeCache(boolean cacheEnabled,
+                                   Path cacheFile,
+                                   String inputsFingerprint,
+                                   String resourcesFingerprint,
+                                   ConfigurationValidationExecutor.ValidationResult result) throws IOException {
+<span class="nc bnc" id="L216" title="All 2 branches missed.">        if (!cacheEnabled) {</span>
+<span class="nc" id="L217">            return;</span>
+        }
+<span class="nc" id="L219">        ConfigurationValidationCache.write(</span>
+            cacheFile,
+            inputsFingerprint,
+            resourcesFingerprint,
+<span class="nc bnc" id="L223" title="All 2 branches missed.">            result.hasErrors() ? ConfigurationValidationCache.LastResult.FAILURE : ConfigurationValidationCache.LastResult.SUCCESS</span>
+        );
+<span class="nc" id="L225">    }</span>
+
+    private void throwIfValidationFailed(ConfigurationValidationExecutor.ValidationResult result) throws MojoFailureException {
+<span class="nc bnc" id="L228" title="All 2 branches missed.">        if (!result.hasErrors()) {</span>
+<span class="nc" id="L229">            return;</span>
+        }
+<span class="nc" id="L231">        String message = &quot;Micronaut configuration is not valid. See reports in: &quot; + result.outputDirectory();</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">        if (!result.dependencyInjectionErrors().isEmpty()) {</span>
+<span class="nc" id="L233">            String suppressionHint = buildDependencyInjectionSuppressionHint(result.dependencyInjectionErrors());</span>
+<span class="nc bnc" id="L234" title="All 2 branches missed.">            if (!suppressionHint.isEmpty()) {</span>
+<span class="nc" id="L235">                message += suppressionHint;</span>
+            }
+        }
+<span class="nc" id="L238">        throw new MojoFailureException(message);</span>
+    }
+
+    private String buildDependencyInjectionSuppressionHint(Set&lt;DependencyInjectionError&gt; dependencyInjectionErrors) {
+<span class="fc" id="L242">        Set&lt;String&gt; suppressionCandidates = dependencyInjectionErrors.stream()</span>
+<span class="fc" id="L243">            .flatMap(AbstractConfigurationValidationMojo::suppressionCandidates)</span>
+<span class="fc bfc" id="L244" title="All 2 branches covered.">            .filter(candidate -&gt; !candidate.isBlank())</span>
+<span class="fc" id="L245">            .collect(Collectors.toCollection(TreeSet::new));</span>
+
+<span class="fc bfc" id="L247" title="All 2 branches covered.">        if (suppressionCandidates.isEmpty()) {</span>
+<span class="fc" id="L248">            return &quot;&quot;;</span>
+        }
+
+<span class="fc" id="L251">        String suppressions = suppressionCandidates.stream()</span>
+<span class="fc" id="L252">            .map(suppressionCandidate -&gt; &quot;        &lt;suppressInjectError&gt;&quot; + suppressionCandidate + &quot;&lt;/suppressInjectError&gt;&quot;)</span>
+<span class="fc" id="L253">            .collect(Collectors.joining(System.lineSeparator()));</span>
+
+<span class="fc" id="L255">        return &quot;&quot;&quot;</span>
+
+            If these dependency injection errors can be ignored, add the following to your pom.xml:
+            &lt;configurationValidation&gt;
+                &lt;enabled&gt;true&lt;/enabled&gt;
+                &lt;validateDependencyInjection&gt;true&lt;/validateDependencyInjection&gt;
+                &lt;suppressInjectErrors&gt;
+            %s
+                &lt;/suppressInjectErrors&gt;
+<span class="fc" id="L264">            &lt;/configurationValidation&gt;&quot;&quot;&quot;.formatted(suppressions);</span>
+    }
+
+    private static Stream&lt;String&gt; suppressionCandidates(DependencyInjectionError error) {
+<span class="fc" id="L268">        return Stream.of(error.rootBean(), error.bean());</span>
+    }
+
+    private ConfigurationValidationFormat parseFormat(String format) throws MojoFailureException {
+        try {
+<span class="nc" id="L273">            return ConfigurationValidationFormat.parse(format);</span>
+<span class="nc" id="L274">        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L275">            throw new MojoFailureException(e.getMessage());</span>
+        }
+    }
+
+    private boolean handleCacheHit(Path cacheFile,
+                                   String inputsFingerprint,
+                                   String resourcesFingerprint,
+                                   Path outputDir,
+                                   ConfigurationValidationFormat format) throws MojoFailureException {
+<span class="nc" id="L284">        ConfigurationValidationCache.CacheEntry entry = ConfigurationValidationCache.readIfUpToDate(cacheFile, inputsFingerprint, resourcesFingerprint);</span>
+<span class="nc bnc" id="L285" title="All 2 branches missed.">        if (entry == null) {</span>
+<span class="nc" id="L286">            return false;</span>
+        }
+<span class="nc bnc" id="L288" title="All 2 branches missed.">        if (entry.lastResult() == ConfigurationValidationCache.LastResult.FAILURE) {</span>
+<span class="nc" id="L289">            throw cachedFailure(outputDir, format);</span>
+        }
+<span class="nc bnc" id="L291" title="All 2 branches missed.">        if (getLog().isDebugEnabled()) {</span>
+<span class="nc" id="L292">            getLog().debug(&quot;Skipping configuration validation (cache hit) for scenario: &quot; + scenarioName());</span>
+        }
+<span class="nc" id="L294">        return true;</span>
+    }
+
+    private void cleanupStaleReports(Path outputDir, ConfigurationValidationFormat format) {
+        // Remove reports that won't be generated in the current format to avoid pointing users to stale files
+<span class="nc" id="L299">        Path html = outputDir.resolve(&quot;configuration-errors.html&quot;);</span>
+<span class="nc" id="L300">        Path json = outputDir.resolve(&quot;configuration-errors.json&quot;);</span>
+
+        try {
+<span class="nc bnc" id="L303" title="All 4 branches missed.">            if (format != ConfigurationValidationFormat.HTML &amp;&amp; format != ConfigurationValidationFormat.BOTH) {</span>
+<span class="nc" id="L304">                Files.deleteIfExists(html);</span>
+            }
+<span class="nc bnc" id="L306" title="All 4 branches missed.">            if (format != ConfigurationValidationFormat.JSON &amp;&amp; format != ConfigurationValidationFormat.BOTH) {</span>
+<span class="nc" id="L307">                Files.deleteIfExists(json);</span>
+            }
+<span class="nc" id="L309">        } catch (IOException e) {</span>
+            // Best effort cleanup; log at debug level if needed
+<span class="nc bnc" id="L311" title="All 2 branches missed.">            if (getLog().isDebugEnabled()) {</span>
+<span class="nc" id="L312">                getLog().debug(&quot;Failed to clean up stale reports&quot;, e);</span>
+            }
+<span class="nc" id="L314">        }</span>
+<span class="nc" id="L315">    }</span>
+
+    private MojoFailureException cachedFailure(Path outputDir, ConfigurationValidationFormat format) {
+<span class="nc" id="L318">        Path html = outputDir.resolve(&quot;configuration-errors.html&quot;);</span>
+<span class="nc" id="L319">        Path json = outputDir.resolve(&quot;configuration-errors.json&quot;);</span>
+        String report;
+<span class="nc bnc" id="L321" title="All 4 branches missed.">        if (format == ConfigurationValidationFormat.JSON &amp;&amp; Files.isRegularFile(json)) {</span>
+<span class="nc" id="L322">            report = json.toAbsolutePath().normalize().toUri().toString();</span>
+<span class="nc bnc" id="L323" title="All 4 branches missed.">        } else if (format == ConfigurationValidationFormat.HTML &amp;&amp; Files.isRegularFile(html)) {</span>
+<span class="nc" id="L324">            report = html.toAbsolutePath().normalize().toUri().toString();</span>
+<span class="nc bnc" id="L325" title="All 2 branches missed.">        } else if (Files.isRegularFile(html)) {</span>
+<span class="nc" id="L326">            report = html.toAbsolutePath().normalize().toUri().toString();</span>
+<span class="nc bnc" id="L327" title="All 2 branches missed.">        } else if (Files.isRegularFile(json)) {</span>
+<span class="nc" id="L328">            report = json.toAbsolutePath().normalize().toUri().toString();</span>
+        } else {
+<span class="nc" id="L330">            report = outputDir.toAbsolutePath().normalize().toUri().toString();</span>
+        }
+<span class="nc" id="L332">        return new MojoFailureException(&quot;Micronaut configuration is not valid (cached). Report: &quot; + report);</span>
+    }
+
+    private boolean isEnabled(ConfigurationValidationConfiguration cfg) {
+<span class="nc" id="L336">        return Boolean.TRUE.equals(cfg.getEnabled());</span>
+    }
+
+    private Path determineOutputDir(ConfigurationValidationConfiguration cfg, ConfigurationValidationConfiguration.ValidationSet set) {
+<span class="nc" id="L340">        File base = cfg.getOutputDirectory();</span>
+<span class="nc bnc" id="L341" title="All 2 branches missed.">        if (base == null) {</span>
+<span class="nc" id="L342">            base = new File(project.getBuild().getDirectory(), &quot;micronaut/config-validation&quot;);</span>
+        }
+        File output;
+<span class="nc bnc" id="L345" title="All 4 branches missed.">        if (set != null &amp;&amp; set.getOutputDirectory() != null) {</span>
+<span class="nc" id="L346">            output = set.getOutputDirectory();</span>
+        } else {
+<span class="nc" id="L348">            output = new File(base, scenarioName());</span>
+        }
+<span class="nc" id="L350">        return output.toPath();</span>
+    }
+
+    private List&lt;String&gt; computeEnvironments(ConfigurationValidationConfiguration.ValidationSet set, List&lt;String&gt; defaults) {
+<span class="nc bnc" id="L354" title="All 4 branches missed.">        List&lt;String&gt; configured = set == null || set.getEnvironments() == null ? List.of() : set.getEnvironments();</span>
+<span class="nc bnc" id="L355" title="All 6 branches missed.">        boolean includeDefault = set == null || set.getIncludeDefaultEnvironment() == null || set.getIncludeDefaultEnvironment();</span>
+
+<span class="nc" id="L357">        List&lt;String&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L358" title="All 2 branches missed.">        if (includeDefault) {</span>
+<span class="nc" id="L359">            result.addAll(defaults);</span>
+        }
+<span class="nc bnc" id="L361" title="All 2 branches missed.">        if (configured != null) {</span>
+<span class="nc bnc" id="L362" title="All 2 branches missed.">            for (String env : configured) {</span>
+<span class="nc bnc" id="L363" title="All 4 branches missed.">                if (env == null || env.isBlank()) {</span>
+<span class="nc" id="L364">                    continue;</span>
+                }
+<span class="nc bnc" id="L366" title="All 2 branches missed.">                if (!result.contains(env)) {</span>
+<span class="nc" id="L367">                    result.add(env);</span>
+                }
+<span class="nc" id="L369">            }</span>
+        }
+<span class="nc" id="L371">        return List.copyOf(result);</span>
+    }
+
+    private List&lt;String&gt; computeClasspathElements(ConfigurationValidationConfiguration.ValidationSet set) {
+<span class="nc" id="L375">        Set&lt;String&gt; elements = new LinkedHashSet&lt;&gt;();</span>
+
+<span class="nc" id="L377">        addNonBlankElements(elements, chooseBaseClasspath(set));</span>
+<span class="nc bnc" id="L378" title="All 2 branches missed.">        addNonBlankElements(elements, set == null ? null : set.getAdditionalClasspathElements());</span>
+
+<span class="nc" id="L380">        addDependencyClasspath(elements);</span>
+
+<span class="nc" id="L382">        return new ArrayList&lt;&gt;(elements);</span>
+    }
+
+    private List&lt;String&gt; chooseBaseClasspath(ConfigurationValidationConfiguration.ValidationSet set) {
+<span class="nc bnc" id="L386" title="All 6 branches missed.">        if (set != null &amp;&amp; set.getClasspathElements() != null &amp;&amp; !set.getClasspathElements().isEmpty()) {</span>
+<span class="nc" id="L387">            return set.getClasspathElements();</span>
+        }
+<span class="nc" id="L389">        return defaultClasspath(project);</span>
+    }
+
+    private void addNonBlankElements(Set&lt;String&gt; elements, List&lt;String&gt; candidates) {
+<span class="nc bnc" id="L393" title="All 2 branches missed.">        if (candidates == null) {</span>
+<span class="nc" id="L394">            return;</span>
+        }
+<span class="nc bnc" id="L396" title="All 2 branches missed.">        for (String candidate : candidates) {</span>
+<span class="nc bnc" id="L397" title="All 4 branches missed.">            if (candidate != null &amp;&amp; !candidate.isBlank()) {</span>
+<span class="nc" id="L398">                elements.add(candidate);</span>
+            }
+<span class="nc" id="L400">        }</span>
+<span class="nc" id="L401">    }</span>
+
+    private void addDependencyClasspath(Set&lt;String&gt; elements) {
+<span class="nc" id="L404">        List&lt;Dependency&gt; deps = compilerService.resolveDependencies(project, false, dependencyScopes());</span>
+<span class="nc" id="L405">        String depsClasspath = compilerService.buildClasspath(deps);</span>
+<span class="nc bnc" id="L406" title="All 4 branches missed.">        if (depsClasspath == null || depsClasspath.isBlank()) {</span>
+<span class="nc" id="L407">            return;</span>
+        }
+<span class="nc" id="L409">        Collections.addAll(elements, depsClasspath.split(java.util.regex.Pattern.quote(File.pathSeparator)));</span>
+<span class="nc" id="L410">    }</span>
+
+    private List&lt;Path&gt; computeCacheResourceDirectories(ConfigurationValidationConfiguration.ValidationSet set) {
+<span class="nc bnc" id="L413" title="All 6 branches missed.">        if (set != null &amp;&amp; set.getResourceDirectories() != null &amp;&amp; !set.getResourceDirectories().isEmpty()) {</span>
+<span class="nc" id="L414">            return resolvedPaths(set.getResourceDirectories().stream().filter(Objects::nonNull).map(File::toPath).toList(), false);</span>
+        }
+<span class="nc" id="L416">        List&lt;Path&gt; defaults = defaultResourceDirectories();</span>
+<span class="nc bnc" id="L417" title="All 4 branches missed.">        if (defaults == null || defaults.isEmpty()) {</span>
+<span class="nc" id="L418">            return List.of();</span>
+        }
+<span class="nc" id="L420">        return resolvedPaths(defaults.stream().filter(Objects::nonNull).toList(), false);</span>
+    }
+
+    private List&lt;Path&gt; resolveResourceDirectories(ConfigurationValidationConfiguration.ValidationSet set) {
+<span class="nc bnc" id="L424" title="All 6 branches missed.">        if (set != null &amp;&amp; set.getResourceDirectories() != null &amp;&amp; !set.getResourceDirectories().isEmpty()) {</span>
+<span class="nc" id="L425">            return existingPathsFromFiles(set.getResourceDirectories());</span>
+        }
+<span class="nc" id="L427">        List&lt;Path&gt; defaults = defaultResourceDirectories();</span>
+<span class="nc bnc" id="L428" title="All 4 branches missed.">        if (defaults == null || defaults.isEmpty()) {</span>
+<span class="nc" id="L429">            return List.of();</span>
+        }
+
+<span class="nc" id="L432">        return existingPathsFromPaths(defaults);</span>
+    }
+
+    private List&lt;Path&gt; existingPathsFromFiles(List&lt;File&gt; files) {
+<span class="nc" id="L436">        return existingPaths(files.stream().filter(Objects::nonNull).map(File::toPath).toList());</span>
+    }
+
+    private List&lt;Path&gt; existingPathsFromPaths(List&lt;Path&gt; paths) {
+<span class="nc" id="L440">        return existingPaths(paths.stream().filter(Objects::nonNull).toList());</span>
+    }
+
+    private List&lt;Path&gt; existingPaths(List&lt;Path&gt; paths) {
+<span class="nc" id="L444">        return resolvedPaths(paths, true);</span>
+    }
+
+    private List&lt;Path&gt; resolvedPaths(List&lt;Path&gt; paths, boolean existingOnly) {
+<span class="nc bnc" id="L448" title="All 2 branches missed.">        if (paths.isEmpty()) {</span>
+<span class="nc" id="L449">            return List.of();</span>
+        }
+<span class="nc" id="L451">        List&lt;Path&gt; result = new ArrayList&lt;&gt;(paths.size());</span>
+<span class="nc" id="L452">        Path baseDir = project.getBasedir().toPath();</span>
+<span class="nc bnc" id="L453" title="All 2 branches missed.">        for (Path p : paths) {</span>
+<span class="nc bnc" id="L454" title="All 2 branches missed.">            Path resolved = p.isAbsolute() ? p : baseDir.resolve(p);</span>
+<span class="nc" id="L455">            resolved = resolved.normalize();</span>
+<span class="nc bnc" id="L456" title="All 4 branches missed.">            if (!existingOnly || Files.exists(resolved)) {</span>
+<span class="nc" id="L457">                result.add(resolved);</span>
+            }
+<span class="nc" id="L459">        }</span>
+<span class="nc" id="L460">        return List.copyOf(result);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

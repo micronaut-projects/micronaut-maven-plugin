@@ -1,0 +1,791 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TestResourcesHelper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.testresources</a> &gt; <span class="el_source">TestResourcesHelper.java</span></div><h1>TestResourcesHelper.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.testresources;
+
+import io.micronaut.core.io.socket.SocketUtils;
+import io.micronaut.maven.services.DependencyResolutionService;
+import io.micronaut.testresources.buildtools.MavenDependency;
+import io.micronaut.testresources.buildtools.ModuleIdentifier;
+import io.micronaut.testresources.buildtools.ServerFactory;
+import io.micronaut.testresources.buildtools.ServerSettings;
+import io.micronaut.testresources.buildtools.ServerUtils;
+import io.micronaut.testresources.buildtools.TestResourcesClasspath;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugin.logging.SystemStreamLog;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.toolchain.ToolchainManager;
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.resolution.DependencyResolutionException;
+
+import java.io.File;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.FileAlreadyExistsException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
+import java.util.WeakHashMap;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
+
+import static io.micronaut.maven.services.DependencyResolutionService.toClasspathFiles;
+import static io.micronaut.testresources.buildtools.ServerUtils.PROPERTIES_FILE_NAME;
+import static java.util.stream.Stream.concat;
+
+/**
+ * Utility class to stop Test Resources service.
+ */
+public class TestResourcesHelper {
+
+    private static final String TEST_RESOURCES_PROPERTIES = PROPERTIES_FILE_NAME;
+    private static final String PORT_FILE_NAME = &quot;test-resources-port.txt&quot;;
+    private static final String APPLICATION_TEST_PROPERTIES = &quot;application-test.properties&quot;;
+    private static final String TEST_RESOURCES_SCOPE_PROPERTY = &quot;micronaut.test.resources.scope&quot;;
+    private static final String SCOPE_PREFIX = &quot;mvn&quot;;
+    private static final String TEST_RESOURCES_REQUIREMENTS_ENTRIES_PATH = &quot;/requirements/entries&quot;;
+    private static final String ACCESS_TOKEN_HEADER = &quot;Access-Token&quot;;
+    private static final int SERVER_PROBE_TIMEOUT_MS = 1_000;
+
+    private static final String TEST_RESOURCES_CLIENT_SYSTEM_PROP_PREFIX = &quot;micronaut.test.resources.&quot;;
+
+    private static final String TEST_RESOURCES_PROP_SERVER_URI = TEST_RESOURCES_CLIENT_SYSTEM_PROP_PREFIX + &quot;server.uri&quot;;
+    private static final String TEST_RESOURCES_PROP_ACCESS_TOKEN = TEST_RESOURCES_CLIENT_SYSTEM_PROP_PREFIX + &quot;server.access.token&quot;;
+    private static final String TEST_RESOURCES_PROP_CLIENT_READ_TIMEOUT = TEST_RESOURCES_CLIENT_SYSTEM_PROP_PREFIX + &quot;server.client.read.timeout&quot;;
+<span class="fc" id="L91">    private static final Object SESSION_STATE_MONITOR = new Object();</span>
+<span class="fc" id="L92">    private static final Map&lt;MavenSession, SessionState&gt; SESSION_STATES = new WeakHashMap&lt;&gt;();</span>
+<span class="fc" id="L93">    private static final Map&lt;Path, ReentrantLock&gt; SHARED_SERVER_LOCKS = new ConcurrentHashMap&lt;&gt;();</span>
+
+    private final boolean enabled;
+
+    private final MavenSession mavenSession;
+
+    private final boolean shared;
+
+    private final File buildDirectory;
+
+    private final Log log;
+
+    private Integer explicitPort;
+
+    private Integer clientTimeout;
+
+    private Integer serverIdleTimeoutMinutes;
+
+    private MavenProject mavenProject;
+
+    private DependencyResolutionService dependencyResolutionService;
+
+    private ToolchainManager toolchainManager;
+
+    private String testResourcesVersion;
+
+    private boolean classpathInference;
+
+    private List&lt;Dependency&gt; testResourcesDependencies;
+
+    private String sharedServerNamespace;
+
+    private boolean debugServer;
+
+<span class="fc" id="L127">    private boolean foreground = false;</span>
+
+    private Map&lt;String, String&gt; testResourcesSystemProperties;
+
+    public TestResourcesHelper(boolean enabled,
+                               boolean shared,
+                               File buildDirectory,
+                               Integer explicitPort,
+                               Integer clientTimeout,
+                               Integer serverIdleTimeoutMinutes,
+                               MavenProject mavenProject,
+                               MavenSession mavenSession,
+                               DependencyResolutionService dependencyResolutionService,
+                               ToolchainManager toolchainManager,
+                               String testResourcesVersion,
+                               boolean classpathInference,
+                               List&lt;Dependency&gt; testResourcesDependencies,
+                               String sharedServerNamespace,
+                               boolean debugServer,
+                               boolean foreground, final Map&lt;String, String&gt; testResourcesSystemProperties) {
+<span class="fc" id="L147">        this(mavenSession, enabled, shared, buildDirectory);</span>
+<span class="fc" id="L148">        this.explicitPort = explicitPort;</span>
+<span class="fc" id="L149">        this.clientTimeout = clientTimeout;</span>
+<span class="fc" id="L150">        this.serverIdleTimeoutMinutes = serverIdleTimeoutMinutes;</span>
+<span class="fc" id="L151">        this.mavenProject = mavenProject;</span>
+<span class="fc" id="L152">        this.dependencyResolutionService = dependencyResolutionService;</span>
+<span class="fc" id="L153">        this.toolchainManager = toolchainManager;</span>
+<span class="fc" id="L154">        this.testResourcesVersion = testResourcesVersion;</span>
+<span class="fc" id="L155">        this.classpathInference = classpathInference;</span>
+<span class="fc" id="L156">        this.testResourcesDependencies = testResourcesDependencies;</span>
+<span class="fc" id="L157">        this.sharedServerNamespace = sharedServerNamespace;</span>
+<span class="fc" id="L158">        this.debugServer = debugServer;</span>
+<span class="fc" id="L159">        this.foreground = foreground;</span>
+<span class="fc" id="L160">        this.testResourcesSystemProperties = testResourcesSystemProperties;</span>
+<span class="fc" id="L161">    }</span>
+
+<span class="fc" id="L163">    public TestResourcesHelper(MavenSession mavenSession, boolean enabled, boolean shared, File buildDirectory) {</span>
+<span class="fc" id="L164">        this.mavenSession = mavenSession;</span>
+<span class="fc" id="L165">        this.enabled = enabled;</span>
+<span class="fc" id="L166">        this.shared = shared;</span>
+<span class="fc" id="L167">        this.buildDirectory = buildDirectory;</span>
+<span class="fc" id="L168">        this.log = new SystemStreamLog();</span>
+<span class="fc" id="L169">    }</span>
+
+    private boolean isKeepAlive() {
+<span class="fc" id="L172">        boolean hasKeepAliveFile = Files.isRegularFile(getKeepAliveFile(), LinkOption.NOFOLLOW_LINKS);</span>
+<span class="pc bpc" id="L173" title="1 of 4 branches missed.">        return hasKeepAliveFile || isStartExplicitlyInvoked();</span>
+    }
+
+    private boolean isStartExplicitlyInvoked() {
+<span class="fc" id="L177">        return mavenSession.getGoals()</span>
+<span class="fc" id="L178">            .stream()</span>
+<span class="fc" id="L179">            .anyMatch(goal -&gt; goal.equals(&quot;mn:&quot; + StartTestResourcesServerMojo.NAME));</span>
+    }
+
+    /**
+     * Starts the Test Resources Service.
+     */
+    public void start() throws MojoExecutionException {
+<span class="pc bpc" id="L186" title="1 of 2 branches missed.">        if (!enabled) {</span>
+<span class="fc" id="L187">            return;</span>
+        }
+        try {
+<span class="nc" id="L190">            doStart();</span>
+<span class="nc" id="L191">        } catch (Exception e) {</span>
+<span class="nc" id="L192">            throw new MojoExecutionException(&quot;Unable to start test resources server&quot;, e);</span>
+<span class="nc" id="L193">        }</span>
+<span class="nc" id="L194">    }</span>
+
+    private void doStart() throws IOException {
+<span class="nc" id="L197">        var accessToken = UUID.randomUUID().toString();</span>
+<span class="nc" id="L198">        Path buildDir = buildDirectory.toPath();</span>
+<span class="nc" id="L199">        Path serverSettingsDirectory = getServerSettingsDirectory();</span>
+<span class="nc" id="L200">        var serverStarted = new AtomicBoolean(false);</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">        var serverFactory = new DefaultServerFactory(log, toolchainManager, mavenSession, serverStarted, testResourcesVersion, debugServer, foreground, !isKeepAlive(), testResourcesSystemProperties);</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">        if (shared) {</span>
+<span class="nc" id="L203">            try (var ignored = sharedServerLock(serverSettingsDirectory)) {</span>
+<span class="nc" id="L204">                doStart(accessToken, buildDir, serverSettingsDirectory, serverFactory, serverStarted);</span>
+            }
+<span class="nc" id="L206">            return;</span>
+        }
+<span class="nc" id="L208">        doStart(accessToken, buildDir, serverSettingsDirectory, serverFactory, serverStarted);</span>
+<span class="nc" id="L209">    }</span>
+
+    private void doStart(String accessToken,
+                         Path buildDir,
+                         Path serverSettingsDirectory,
+                         ServerFactory serverFactory,
+                         AtomicBoolean serverStarted) throws IOException {
+<span class="fc" id="L216">        Optional&lt;ServerSettings&gt; sessionSharedServerSettings = findSessionSharedServer(serverSettingsDirectory);</span>
+<span class="fc bfc" id="L217" title="All 2 branches covered.">        if (sessionSharedServerSettings.isPresent()) {</span>
+<span class="fc" id="L218">            ServerSettings serverSettings = sessionSharedServerSettings.get();</span>
+<span class="fc" id="L219">            writePortFile(buildDir.resolve(PORT_FILE_NAME), serverSettings.getPort());</span>
+<span class="fc" id="L220">            registerSharedServerUse(serverSettingsDirectory, serverSettings.getPort(), false);</span>
+<span class="fc" id="L221">            logSharedMode(serverSettingsDirectory);</span>
+<span class="fc" id="L222">            writeSharedScopeConfiguration();</span>
+<span class="fc" id="L223">            setSystemProperties(serverSettings);</span>
+<span class="fc" id="L224">            return;</span>
+        }
+<span class="fc" id="L226">        Optional&lt;ServerSettings&gt; existingServerSettings = findReachableRecordedServer(serverSettingsDirectory);</span>
+<span class="fc bfc" id="L227" title="All 2 branches covered.">        if (existingServerSettings.isPresent()) {</span>
+<span class="fc" id="L228">            useServerSettings(buildDir, serverSettingsDirectory, existingServerSettings.get(), false);</span>
+<span class="fc" id="L229">            return;</span>
+        }
+<span class="fc" id="L231">        Optional&lt;ServerSettings&gt; optionalServerSettings = startOrConnectToExistingServer(accessToken, buildDir, serverSettingsDirectory, serverFactory);</span>
+<span class="pc bpc" id="L232" title="1 of 2 branches missed.">        if (optionalServerSettings.isEmpty()) {</span>
+<span class="nc" id="L233">            return;</span>
+        }
+<span class="fc" id="L235">        ServerSettings serverSettings = optionalServerSettings.get();</span>
+<span class="fc" id="L236">        useServerSettings(buildDir, serverSettingsDirectory, serverSettings, serverStarted.get());</span>
+<span class="pc bpc" id="L237" title="2 of 4 branches missed.">        if (serverStarted.get() &amp;&amp; isKeepAlive()) {</span>
+<span class="nc" id="L238">            log.info(&quot;Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:&quot; + StopTestResourcesServerMojo.NAME + &quot;'&quot;);</span>
+        }
+<span class="fc" id="L240">    }</span>
+
+    private Optional&lt;ServerSettings&gt; findSessionSharedServer(Path serverSettingsDirectory) {
+<span class="pc bpc" id="L243" title="1 of 4 branches missed.">        if (!shared || mavenProject == null) {</span>
+<span class="fc" id="L244">            return Optional.empty();</span>
+        }
+<span class="fc" id="L246">        synchronized (SESSION_STATE_MONITOR) {</span>
+<span class="fc" id="L247">            SessionState sessionState = SESSION_STATES.get(mavenSession);</span>
+<span class="fc bfc" id="L248" title="All 2 branches covered.">            if (sessionState == null) {</span>
+<span class="fc" id="L249">                return Optional.empty();</span>
+            }
+<span class="fc" id="L251">            SharedServerState sharedServerState = sessionState.sharedServers.get(normalize(serverSettingsDirectory));</span>
+<span class="pc bpc" id="L252" title="1 of 2 branches missed.">            if (sharedServerState == null) {</span>
+<span class="nc" id="L253">                return Optional.empty();</span>
+            }
+<span class="fc" id="L255">            return ServerUtils.readServerSettings(serverSettingsDirectory)</span>
+<span class="fc bfc" id="L256" title="All 2 branches covered.">                .filter(settings -&gt; settings.getPort() == sharedServerState.port);</span>
+        }
+    }
+
+    private Optional&lt;ServerSettings&gt; findReachableRecordedServer(Path serverSettingsDirectory) {
+<span class="fc" id="L261">        return ServerUtils.readServerSettings(serverSettingsDirectory)</span>
+<span class="pc bpc" id="L262" title="1 of 4 branches missed.">            .filter(serverSettings -&gt; explicitPort == null || serverSettings.getPort() == explicitPort)</span>
+<span class="fc" id="L263">            .filter(this::isReusableTestResourcesServer);</span>
+    }
+
+    private boolean isReusableTestResourcesServer(ServerSettings serverSettings) {
+<span class="fc" id="L267">        HttpURLConnection connection = null;</span>
+        try {
+<span class="fc" id="L269">            var url = URI.create(&quot;http://localhost:&quot; + serverSettings.getPort() + TEST_RESOURCES_REQUIREMENTS_ENTRIES_PATH).toURL();</span>
+<span class="fc" id="L270">            connection = (HttpURLConnection) url.openConnection();</span>
+<span class="fc" id="L271">            connection.setConnectTimeout(SERVER_PROBE_TIMEOUT_MS);</span>
+<span class="fc" id="L272">            connection.setReadTimeout(SERVER_PROBE_TIMEOUT_MS);</span>
+<span class="fc" id="L273">            connection.setRequestMethod(&quot;GET&quot;);</span>
+<span class="fc" id="L274">            connection.setRequestProperty(&quot;Accept&quot;, &quot;application/json&quot;);</span>
+<span class="fc" id="L275">            String accessToken = serverSettings.getAccessToken().orElse(null);</span>
+<span class="pc bpc" id="L276" title="1 of 2 branches missed.">            if (accessToken != null) {</span>
+<span class="fc" id="L277">                connection.setRequestProperty(ACCESS_TOKEN_HEADER, accessToken);</span>
+            }
+<span class="fc bfc" id="L279" title="All 4 branches covered.">            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK || !isJsonContentType(connection.getContentType())) {</span>
+<span class="fc" id="L280">                return false;</span>
+            }
+<span class="fc" id="L282">            try (InputStream input = connection.getInputStream()) {</span>
+<span class="fc" id="L283">                return isJsonStringArray(new String(input.readAllBytes(), StandardCharsets.UTF_8));</span>
+            }
+<span class="fc" id="L285">        } catch (IOException _) {</span>
+<span class="fc" id="L286">            return false;</span>
+        } finally {
+<span class="pc bpc" id="L288" title="1 of 2 branches missed.">            if (connection != null) {</span>
+<span class="fc" id="L289">                connection.disconnect();</span>
+            }
+        }
+    }
+
+    private static boolean isJsonContentType(String contentType) {
+<span class="pc bpc" id="L295" title="1 of 2 branches missed.">        if (contentType == null) {</span>
+<span class="nc" id="L296">            return false;</span>
+        }
+<span class="fc bfc" id="L298" title="All 4 branches covered.">        return contentType.equals(&quot;application/json&quot;) || contentType.startsWith(&quot;application/json;&quot;);</span>
+    }
+
+    private static boolean isJsonStringArray(String body) {
+<span class="fc" id="L302">        String trimmed = body.trim();</span>
+<span class="pc bpc" id="L303" title="2 of 6 branches missed.">        return trimmed.length() &gt;= 2 &amp;&amp; trimmed.charAt(0) == '[' &amp;&amp; trimmed.charAt(trimmed.length() - 1) == ']';</span>
+    }
+
+    private void useServerSettings(Path buildDir, Path serverSettingsDirectory, ServerSettings serverSettings, boolean serverStarted) throws IOException {
+<span class="fc" id="L307">        writePortFile(buildDir.resolve(PORT_FILE_NAME), serverSettings.getPort());</span>
+<span class="pc bpc" id="L308" title="3 of 4 branches missed.">        boolean sessionOwnedSharedServer = shared &amp;&amp; registerSharedServerUse(serverSettingsDirectory, serverSettings.getPort(), serverStarted);</span>
+<span class="pc bpc" id="L309" title="1 of 2 branches missed.">        if (shared) {</span>
+<span class="nc" id="L310">            logSharedMode(serverSettingsDirectory);</span>
+<span class="nc" id="L311">            writeSharedScopeConfiguration();</span>
+        }
+<span class="fc" id="L313">        setSystemProperties(serverSettings);</span>
+<span class="pc bpc" id="L314" title="1 of 4 branches missed.">        if (!serverStarted &amp;&amp; !sessionOwnedSharedServer) {</span>
+            // A server was already listening before this build started, so leave it running.
+<span class="fc" id="L316">            createKeepAliveFile();</span>
+        }
+<span class="fc" id="L318">    }</span>
+
+    /**
+     * Computes the system properties to set for the test resources client to be able to connect to the server.
+     *
+     * @param serverSettings The server settings
+     * @return The system properties
+     */
+    public Map&lt;String, String&gt; computeSystemProperties(ServerSettings serverSettings) {
+<span class="fc" id="L327">        var systemProperties = new HashMap&lt;String, String&gt;(3);</span>
+<span class="fc" id="L328">        String uri = String.format(&quot;http://localhost:%d&quot;, serverSettings.getPort());</span>
+<span class="fc" id="L329">        systemProperties.put(TEST_RESOURCES_PROP_SERVER_URI, uri);</span>
+<span class="fc" id="L330">        serverSettings.getAccessToken().ifPresent(accessToken -&gt; systemProperties.put(TEST_RESOURCES_PROP_ACCESS_TOKEN, accessToken));</span>
+<span class="fc" id="L331">        serverSettings.getClientTimeout().ifPresent(timeout -&gt; systemProperties.put(TEST_RESOURCES_PROP_CLIENT_READ_TIMEOUT, String.valueOf(timeout)));</span>
+<span class="fc" id="L332">        return systemProperties;</span>
+    }
+
+    private void setSystemProperties(ServerSettings serverSettings) {
+<span class="fc" id="L336">        computeSystemProperties(serverSettings).forEach(System::setProperty);</span>
+<span class="fc" id="L337">    }</span>
+
+    private static void writePortFile(Path file, int port) throws IOException {
+<span class="fc" id="L340">        Files.createDirectories(file.getParent());</span>
+<span class="fc" id="L341">        Files.writeString(file, Integer.toString(port));</span>
+<span class="fc" id="L342">    }</span>
+
+    private Optional&lt;ServerSettings&gt; startOrConnectToExistingServer(String accessToken, Path buildDir, Path serverSettingsDirectory, ServerFactory serverFactory) {
+        try {
+<span class="fc" id="L346">            return Optional.ofNullable(</span>
+<span class="fc" id="L347">                ServerUtils.startOrConnectToExistingServer(</span>
+                    explicitPort,
+<span class="fc" id="L349">                    buildDir.resolve(PORT_FILE_NAME),</span>
+                    serverSettingsDirectory,
+                    accessToken,
+<span class="fc" id="L352">                    resolveServerClasspath(),</span>
+                    clientTimeout,
+                    serverIdleTimeoutMinutes,
+                    serverFactory
+                )
+            );
+<span class="nc" id="L358">        } catch (Exception e) {</span>
+<span class="nc" id="L359">            log.error(&quot;Error starting Micronaut Test Resources service&quot;, e);</span>
+<span class="nc" id="L360">            return Optional.empty();</span>
+        }
+    }
+
+    private List&lt;File&gt; resolveServerClasspath() throws DependencyResolutionException {
+<span class="fc" id="L365">        List&lt;MavenDependency&gt; applicationDependencies = Collections.emptyList();</span>
+<span class="pc bpc" id="L366" title="1 of 2 branches missed.">        if (classpathInference) {</span>
+<span class="nc" id="L367">            applicationDependencies = getApplicationDependencies();</span>
+        }
+<span class="fc" id="L369">        Stream&lt;Artifact&gt; serverDependencies =</span>
+<span class="fc" id="L370">            TestResourcesClasspath.inferTestResourcesClasspath(applicationDependencies, testResourcesVersion)</span>
+<span class="fc" id="L371">                .stream()</span>
+<span class="fc" id="L372">                .map(DependencyResolutionService::testResourcesDependencyToAetherArtifact);</span>
+
+        List&lt;org.apache.maven.model.Dependency&gt; extraDependencies =
+<span class="pc bpc" id="L375" title="1 of 2 branches missed.">            testResourcesDependencies != null ? testResourcesDependencies : Collections.emptyList();</span>
+
+<span class="fc" id="L377">        Stream&lt;Artifact&gt; extraDependenciesStream = extraDependencies.stream()</span>
+<span class="fc" id="L378">            .map(DependencyResolutionService::mavenDependencyToAetherArtifact);</span>
+
+<span class="fc" id="L380">        Stream&lt;Artifact&gt; artifacts = concat(serverDependencies, extraDependenciesStream);</span>
+
+<span class="fc" id="L382">        var resolutionResult = dependencyResolutionService.artifactResultsFor(artifacts, true);</span>
+<span class="fc" id="L383">        var filteredArtifacts = resolutionResult.stream()</span>
+<span class="fc" id="L384">            .filter(result -&gt; {</span>
+<span class="nc" id="L385">                var artifact = result.getArtifact();</span>
+<span class="nc" id="L386">                var id = new ModuleIdentifier(artifact.getGroupId(), artifact.getArtifactId());</span>
+<span class="nc" id="L387">                return TestResourcesClasspath.isDependencyAllowedOnServerClasspath(id);</span>
+            })
+<span class="fc" id="L389">            .toList();</span>
+<span class="fc" id="L390">        return toClasspathFiles(filteredArtifacts);</span>
+    }
+
+    private List&lt;MavenDependency&gt; getApplicationDependencies() {
+<span class="nc" id="L394">        return this.mavenProject.getDependencies().stream()</span>
+<span class="nc" id="L395">            .map(DependencyResolutionService::mavenDependencyToTestResourcesDependency)</span>
+<span class="nc" id="L396">            .toList();</span>
+    }
+
+    /**
+     * Contains the logic to stop the Test Resources Service.
+     *
+     * @param quiet Whether to perform logging or not.
+     */
+    public void stop(boolean quiet) throws MojoExecutionException {
+<span class="nc bnc" id="L405" title="All 2 branches missed.">        if (!enabled) {</span>
+<span class="nc" id="L406">            return;</span>
+        }
+<span class="nc bnc" id="L408" title="All 2 branches missed.">        if (shared) {</span>
+<span class="nc" id="L409">            try (var ignored = sharedServerLock(getServerSettingsDirectory())) {</span>
+<span class="nc" id="L410">                stopSharedServer(quiet);</span>
+            }
+<span class="nc" id="L412">            return;</span>
+        }
+<span class="nc" id="L414">        stopServer(quiet);</span>
+<span class="nc" id="L415">    }</span>
+
+    private void stopSharedServer(boolean quiet) throws MojoExecutionException {
+<span class="nc bnc" id="L418" title="All 2 branches missed.">        if (releaseSharedServerUse(getServerSettingsDirectory())) {</span>
+            try {
+<span class="nc" id="L420">                cleanupSharedProjectSettings();</span>
+<span class="nc" id="L421">            } catch (IOException e) {</span>
+<span class="nc" id="L422">                throw new MojoExecutionException(&quot;Unable to clean shared test resources settings&quot;, e);</span>
+<span class="nc" id="L423">            }</span>
+<span class="nc" id="L424">            log(&quot;Keeping Micronaut Test Resources service alive for another parallel reactor module&quot;, quiet);</span>
+<span class="nc" id="L425">            return;</span>
+        }
+<span class="nc" id="L427">        stopServer(quiet);</span>
+<span class="nc" id="L428">    }</span>
+
+    private void stopServer(boolean quiet) throws MojoExecutionException {
+<span class="nc bnc" id="L431" title="All 2 branches missed.">        if (isKeepAlive()) {</span>
+<span class="nc" id="L432">            log(&quot;Keeping Micronaut Test Resources service alive&quot;, quiet);</span>
+<span class="nc" id="L433">            return;</span>
+        }
+        try {
+<span class="nc" id="L436">            Optional&lt;ServerSettings&gt; optionalServerSettings = ServerUtils.readServerSettings(getServerSettingsDirectory());</span>
+<span class="nc bnc" id="L437" title="All 2 branches missed.">            if (optionalServerSettings.isPresent()) {</span>
+<span class="nc bnc" id="L438" title="All 2 branches missed.">                if (isServerStarted(optionalServerSettings.get().getPort())) {</span>
+<span class="nc" id="L439">                    log(&quot;Shutting down Micronaut Test Resources service&quot;, quiet);</span>
+<span class="nc" id="L440">                    doStop();</span>
+                } else {
+<span class="nc" id="L442">                    log(&quot;Cannot find Micronaut Test Resources service settings, server may already be shutdown&quot;, quiet);</span>
+<span class="nc" id="L443">                    Files.deleteIfExists(getServerSettingsDirectory().resolve(PROPERTIES_FILE_NAME));</span>
+                }
+<span class="nc" id="L445">                cleanupSharedProjectSettings();</span>
+            }
+<span class="nc" id="L447">        } catch (Exception e) {</span>
+<span class="nc" id="L448">            var message = &quot;Unable to stop test resources server&quot;;</span>
+<span class="nc bnc" id="L449" title="All 2 branches missed.">            if (quiet) {</span>
+<span class="nc" id="L450">                log.warn(message, e);</span>
+            } else {
+<span class="nc" id="L452">                throw new MojoExecutionException(message, e);</span>
+            }
+<span class="nc" id="L454">        }</span>
+<span class="nc" id="L455">    }</span>
+
+    private void logSharedMode(Path serverSettingsDirectory) throws IOException {
+<span class="pc bpc" id="L458" title="1 of 2 branches missed.">        if (sharedServerNamespace != null) {</span>
+<span class="nc" id="L459">            log.info(&quot;Test Resources is configured in shared mode with the namespace: &quot; + sharedServerNamespace);</span>
+<span class="nc" id="L460">            Path projectSettingsDirectory = serverSettingsDirectoryOf(buildDirectory.toPath());</span>
+<span class="nc" id="L461">            Files.createDirectories(projectSettingsDirectory);</span>
+<span class="nc" id="L462">            Path source = serverSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES);</span>
+<span class="nc" id="L463">            Path target = projectSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES);</span>
+<span class="nc" id="L464">            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);</span>
+<span class="nc" id="L465">        } else {</span>
+<span class="fc" id="L466">            log.info(&quot;Test Resources is configured in shared mode&quot;);</span>
+        }
+<span class="fc" id="L468">    }</span>
+
+    private void writeSharedScopeConfiguration() throws IOException {
+<span class="fc" id="L471">        String scope = sharedScope();</span>
+<span class="pc bpc" id="L472" title="1 of 2 branches missed.">        if (scope == null) {</span>
+<span class="nc" id="L473">            return;</span>
+        }
+<span class="fc" id="L475">        Path testClassesDirectory = testOutputDirectory(mavenProject, buildDirectory);</span>
+<span class="fc" id="L476">        Files.createDirectories(testClassesDirectory);</span>
+<span class="fc" id="L477">        updateApplicationTestProperties(testClassesDirectory.resolve(APPLICATION_TEST_PROPERTIES), scope);</span>
+<span class="fc" id="L478">        log.info(&quot;Using Micronaut Test Resources scope &quot; + scope + &quot; for &quot; + moduleKey());</span>
+<span class="fc" id="L479">    }</span>
+
+    static Path testOutputDirectory(MavenProject mavenProject, File buildDirectory) {
+<span class="pc bpc" id="L482" title="2 of 4 branches missed.">        if (mavenProject != null &amp;&amp; mavenProject.getBuild() != null) {</span>
+<span class="fc" id="L483">            String testOutputDirectory = mavenProject.getBuild().getTestOutputDirectory();</span>
+<span class="pc bpc" id="L484" title="1 of 4 branches missed.">            if (testOutputDirectory != null &amp;&amp; !testOutputDirectory.isBlank()) {</span>
+<span class="fc" id="L485">                return Path.of(testOutputDirectory);</span>
+            }
+        }
+<span class="fc" id="L488">        return buildDirectory.toPath().resolve(&quot;test-classes&quot;);</span>
+    }
+
+    static void updateApplicationTestProperties(Path file, String scope) throws IOException {
+<span class="fc" id="L492">        Properties properties = new Properties();</span>
+<span class="fc bfc" id="L493" title="All 2 branches covered.">        if (Files.exists(file)) {</span>
+<span class="fc" id="L494">            try (InputStream input = Files.newInputStream(file)) {</span>
+<span class="fc" id="L495">                properties.load(input);</span>
+            }
+        }
+<span class="fc" id="L498">        properties.setProperty(TEST_RESOURCES_SCOPE_PROPERTY, scope);</span>
+<span class="fc" id="L499">        try (OutputStream output = Files.newOutputStream(file)) {</span>
+<span class="fc" id="L500">            properties.store(output, &quot;Generated by micronaut-maven-plugin&quot;);</span>
+        }
+<span class="fc" id="L502">    }</span>
+
+    static String sanitizeScopeSegment(String value) {
+<span class="fc" id="L505">        String sanitized = value.replaceAll(&quot;[/\\\\]+&quot;, &quot;.&quot;)</span>
+<span class="fc" id="L506">            .replaceAll(&quot;[^A-Za-z0-9_.-]&quot;, &quot;-&quot;)</span>
+<span class="fc" id="L507">            .replaceAll(&quot;[.]{2,}&quot;, &quot;.&quot;)</span>
+<span class="fc" id="L508">            .replaceAll(&quot;-{2,}&quot;, &quot;-&quot;);</span>
+<span class="fc" id="L509">        sanitized = trimScopeDelimiters(sanitized);</span>
+<span class="fc bfc" id="L510" title="All 2 branches covered.">        return sanitized.isEmpty() ? &quot;root&quot; : sanitized;</span>
+    }
+
+    private static String trimScopeDelimiters(String value) {
+<span class="fc" id="L514">        int start = 0;</span>
+<span class="fc" id="L515">        int end = value.length();</span>
+<span class="fc bfc" id="L516" title="All 4 branches covered.">        while (start &lt; end &amp;&amp; isScopeDelimiter(value.charAt(start))) {</span>
+<span class="fc" id="L517">            start++;</span>
+        }
+<span class="fc bfc" id="L519" title="All 4 branches covered.">        while (end &gt; start &amp;&amp; isScopeDelimiter(value.charAt(end - 1))) {</span>
+<span class="fc" id="L520">            end--;</span>
+        }
+<span class="fc" id="L522">        return value.substring(start, end);</span>
+    }
+
+    private static boolean isScopeDelimiter(char c) {
+<span class="fc bfc" id="L526" title="All 4 branches covered.">        return c == '.' || c == '-';</span>
+    }
+
+    private String sharedScope() {
+<span class="pc bpc" id="L530" title="2 of 4 branches missed.">        if (!shared || mavenProject == null) {</span>
+<span class="nc" id="L531">            return null;</span>
+        }
+<span class="pc bpc" id="L533" title="1 of 2 branches missed.">        Path multiModuleDirectory = mavenSession.getRequest().getMultiModuleProjectDirectory() == null</span>
+<span class="nc" id="L534">            ? null</span>
+<span class="fc" id="L535">            : mavenSession.getRequest().getMultiModuleProjectDirectory().toPath().toAbsolutePath().normalize();</span>
+<span class="pc bpc" id="L536" title="1 of 2 branches missed.">        Path projectDirectory = mavenProject.getBasedir() == null</span>
+<span class="nc" id="L537">            ? null</span>
+<span class="fc" id="L538">            : mavenProject.getBasedir().toPath().toAbsolutePath().normalize();</span>
+<span class="fc" id="L539">        String projectSegment = mavenProject.getArtifactId();</span>
+<span class="pc bpc" id="L540" title="3 of 6 branches missed.">        if (multiModuleDirectory != null &amp;&amp; projectDirectory != null &amp;&amp; projectDirectory.startsWith(multiModuleDirectory)) {</span>
+<span class="fc" id="L541">            Path relativePath = multiModuleDirectory.relativize(projectDirectory);</span>
+<span class="pc bpc" id="L542" title="1 of 2 branches missed.">            if (relativePath.getNameCount() &gt; 0) {</span>
+<span class="fc" id="L543">                projectSegment = relativePath.toString();</span>
+            }
+        }
+<span class="fc" id="L546">        return sessionState().scopePrefix + &quot;.&quot; + sanitizeScopeSegment(projectSegment);</span>
+    }
+
+    private boolean registerSharedServerUse(Path serverSettingsDirectory, int port, boolean serverStarted) {
+<span class="pc bpc" id="L550" title="1 of 2 branches missed.">        if (mavenProject == null) {</span>
+<span class="nc" id="L551">            return false;</span>
+        }
+<span class="fc" id="L553">        synchronized (SESSION_STATE_MONITOR) {</span>
+<span class="fc" id="L554">            Path key = normalize(serverSettingsDirectory);</span>
+<span class="fc" id="L555">            SessionState sessionState = sessionState();</span>
+<span class="fc" id="L556">            SharedServerState sharedServerState = sessionState.sharedServers.get(key);</span>
+<span class="fc bfc" id="L557" title="All 2 branches covered.">            if (serverStarted) {</span>
+<span class="fc" id="L558">                sharedServerState = new SharedServerState(port);</span>
+<span class="fc" id="L559">                sessionState.sharedServers.put(key, sharedServerState);</span>
+<span class="pc bpc" id="L560" title="2 of 4 branches missed.">            } else if (sharedServerState == null || sharedServerState.port != port) {</span>
+<span class="nc" id="L561">                return false;</span>
+            }
+<span class="fc" id="L563">            sharedServerState.owners.add(moduleKey());</span>
+<span class="fc" id="L564">            return true;</span>
+        }
+    }
+
+    private boolean releaseSharedServerUse(Path serverSettingsDirectory) {
+<span class="nc bnc" id="L569" title="All 2 branches missed.">        if (mavenProject == null) {</span>
+<span class="nc" id="L570">            return false;</span>
+        }
+<span class="nc" id="L572">        synchronized (SESSION_STATE_MONITOR) {</span>
+<span class="nc" id="L573">            SessionState sessionState = SESSION_STATES.get(mavenSession);</span>
+<span class="nc bnc" id="L574" title="All 2 branches missed.">            if (sessionState == null) {</span>
+<span class="nc" id="L575">                return false;</span>
+            }
+<span class="nc" id="L577">            SharedServerState sharedServerState = sessionState.sharedServers.get(normalize(serverSettingsDirectory));</span>
+<span class="nc bnc" id="L578" title="All 2 branches missed.">            if (sharedServerState == null) {</span>
+<span class="nc" id="L579">                return false;</span>
+            }
+<span class="nc" id="L581">            sharedServerState.owners.remove(moduleKey());</span>
+<span class="nc bnc" id="L582" title="All 2 branches missed.">            if (!sharedServerState.owners.isEmpty()) {</span>
+<span class="nc" id="L583">                return true;</span>
+            }
+<span class="nc" id="L585">            sessionState.sharedServers.remove(normalize(serverSettingsDirectory));</span>
+<span class="nc" id="L586">            return false;</span>
+        }
+    }
+
+    private SessionState sessionState() {
+<span class="fc" id="L591">        synchronized (SESSION_STATE_MONITOR) {</span>
+<span class="fc" id="L592">            return SESSION_STATES.computeIfAbsent(mavenSession, ignored -&gt; new SessionState());</span>
+        }
+    }
+
+    private String moduleKey() {
+<span class="pc bpc" id="L597" title="2 of 4 branches missed.">        if (mavenProject == null || mavenProject.getBasedir() == null) {</span>
+<span class="nc" id="L598">            return buildDirectory.toPath().toAbsolutePath().normalize().toString();</span>
+        }
+<span class="fc" id="L600">        return mavenProject.getBasedir().toPath().toAbsolutePath().normalize().toString();</span>
+    }
+
+    private static Path normalize(Path path) {
+<span class="fc" id="L604">        return path.toAbsolutePath().normalize();</span>
+    }
+
+    static SharedServerLock sharedServerLock(Path serverSettingsDirectory) {
+<span class="fc" id="L608">        Path key = normalize(serverSettingsDirectory);</span>
+<span class="fc" id="L609">        ReentrantLock lock = SHARED_SERVER_LOCKS.computeIfAbsent(key, ignored -&gt; new ReentrantLock());</span>
+<span class="fc" id="L610">        return new SharedServerLock(key, lock);</span>
+    }
+
+    static int sharedServerLockCount() {
+<span class="fc" id="L614">        return SHARED_SERVER_LOCKS.size();</span>
+    }
+
+    private static void releaseSharedServerLock(Path key, ReentrantLock lock) {
+<span class="fc" id="L618">        lock.unlock();</span>
+<span class="pc bpc" id="L619" title="1 of 4 branches missed.">        if (!lock.isLocked() &amp;&amp; !lock.hasQueuedThreads()) {</span>
+<span class="fc" id="L620">            SHARED_SERVER_LOCKS.remove(key, lock);</span>
+        }
+<span class="fc" id="L622">    }</span>
+
+    private void createKeepAliveFile() throws IOException {
+<span class="fc" id="L625">        Path keepalive = getKeepAliveFile();</span>
+<span class="fc" id="L626">        createKeepAliveDirectory();</span>
+<span class="fc bfc" id="L627" title="All 2 branches covered.">        if (Files.exists(keepalive, LinkOption.NOFOLLOW_LINKS)) {</span>
+<span class="pc bpc" id="L628" title="1 of 2 branches missed.">            if (!Files.isRegularFile(keepalive, LinkOption.NOFOLLOW_LINKS)) {</span>
+<span class="fc" id="L629">                throw new IOException(&quot;Keepalive path exists but is not a regular file: &quot; + keepalive);</span>
+            }
+        } else {
+<span class="fc" id="L632">            Files.writeString(keepalive, &quot;true&quot;, StandardOpenOption.CREATE_NEW);</span>
+<span class="fc" id="L633">            Runtime.getRuntime().addShutdownHook(new Thread(() -&gt; {</span>
+                try {
+<span class="fc" id="L635">                    deleteKeepAliveFile();</span>
+<span class="nc" id="L636">                } catch (MojoExecutionException e) {</span>
+                    // ignore, we're in a shutdown hook
+<span class="fc" id="L638">                }</span>
+<span class="fc" id="L639">            }));</span>
+        }
+<span class="fc" id="L641">    }</span>
+
+    private void createKeepAliveDirectory() throws IOException {
+<span class="fc" id="L644">        synchronized (SESSION_STATE_MONITOR) {</span>
+<span class="fc" id="L645">            Path keepAliveDirectory = sessionState().keepAliveDirectory;</span>
+<span class="fc bfc" id="L646" title="All 2 branches covered.">            if (Files.exists(keepAliveDirectory, LinkOption.NOFOLLOW_LINKS)) {</span>
+<span class="fc bfc" id="L647" title="All 2 branches covered.">                if (!Files.isDirectory(keepAliveDirectory, LinkOption.NOFOLLOW_LINKS)) {</span>
+<span class="fc" id="L648">                    throw new IOException(&quot;Keepalive directory exists but is not a directory: &quot; + keepAliveDirectory);</span>
+                }
+<span class="fc" id="L650">                return;</span>
+            }
+            try {
+<span class="fc" id="L653">                FileAttribute&lt;?&gt;[] attributes = keepAliveDirectoryAttributes(keepAliveDirectory.getParent());</span>
+<span class="pc bpc" id="L654" title="1 of 2 branches missed.">                if (attributes.length == 0) {</span>
+<span class="nc" id="L655">                    Files.createDirectory(keepAliveDirectory);</span>
+                } else {
+<span class="fc" id="L657">                    Files.createDirectory(keepAliveDirectory, attributes);</span>
+                }
+<span class="nc" id="L659">            } catch (FileAlreadyExistsException e) {</span>
+<span class="nc bnc" id="L660" title="All 2 branches missed.">                if (!Files.isDirectory(keepAliveDirectory, LinkOption.NOFOLLOW_LINKS)) {</span>
+<span class="nc" id="L661">                    throw new IOException(&quot;Keepalive directory exists but is not a directory: &quot; + keepAliveDirectory, e);</span>
+                }
+<span class="fc" id="L663">            }</span>
+<span class="fc" id="L664">        }</span>
+<span class="fc" id="L665">    }</span>
+
+    private static boolean isServerStarted(int port) {
+<span class="nc bnc" id="L668" title="All 2 branches missed.">        if (System.getProperty(&quot;test.resources.internal.server.started&quot;) != null) {</span>
+<span class="nc" id="L669">            return Boolean.getBoolean(&quot;test.resources.internal.server.started&quot;);</span>
+        } else {
+<span class="nc bnc" id="L671" title="All 2 branches missed.">            return !SocketUtils.isTcpPortAvailable(port);</span>
+        }
+    }
+
+    private void log(String message, boolean quiet) {
+<span class="nc bnc" id="L676" title="All 2 branches missed.">        if (quiet) {</span>
+<span class="nc bnc" id="L677" title="All 2 branches missed.">            if (log.isDebugEnabled()) {</span>
+<span class="nc" id="L678">                log.debug(message);</span>
+            }
+        } else {
+<span class="nc" id="L681">            log.info(message);</span>
+        }
+<span class="nc" id="L683">    }</span>
+
+    private void doStop() throws IOException, MojoExecutionException {
+        try {
+<span class="nc" id="L687">            Path settingsDirectory = getServerSettingsDirectory();</span>
+<span class="nc" id="L688">            ServerUtils.stopServer(settingsDirectory);</span>
+        } finally {
+<span class="nc" id="L690">            deleteKeepAliveFile();</span>
+        }
+<span class="nc" id="L692">    }</span>
+
+    private void deleteKeepAliveFile() throws MojoExecutionException {
+<span class="fc bfc" id="L695" title="All 2 branches covered.">        if (Files.exists(getKeepAliveFile(), LinkOption.NOFOLLOW_LINKS)) {</span>
+            try {
+<span class="fc" id="L697">                Files.delete(getKeepAliveFile());</span>
+<span class="nc" id="L698">            } catch (IOException e) {</span>
+<span class="nc" id="L699">                throw new MojoExecutionException(&quot;Failed to delete keepalive file&quot;, e);</span>
+<span class="fc" id="L700">            }</span>
+        }
+<span class="fc" id="L702">        tryDeleteKeepAliveDirectory();</span>
+<span class="fc" id="L703">    }</span>
+
+    private Path getServerSettingsDirectory() {
+<span class="nc bnc" id="L706" title="All 2 branches missed.">        if (shared) {</span>
+<span class="nc" id="L707">            return ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace);</span>
+        }
+<span class="nc" id="L709">        return serverSettingsDirectoryOf(buildDirectory.toPath());</span>
+    }
+
+    private Path getKeepAliveFile() {
+<span class="fc" id="L713">        return sessionState().keepAliveDirectory.resolve(&quot;keepalive-&quot; + mavenSession.getRequest().getBuilderId());</span>
+    }
+
+    private void tryDeleteKeepAliveDirectory() throws MojoExecutionException {
+<span class="fc" id="L717">        Path keepAliveDirectory = sessionState().keepAliveDirectory;</span>
+        try {
+<span class="fc" id="L719">            Files.deleteIfExists(keepAliveDirectory);</span>
+<span class="fc" id="L720">        } catch (DirectoryNotEmptyException ignored) {</span>
+            // Another keepalive file in the same session still owns the directory.
+<span class="nc" id="L722">        } catch (IOException e) {</span>
+<span class="nc" id="L723">            throw new MojoExecutionException(&quot;Failed to delete keepalive directory&quot;, e);</span>
+<span class="fc" id="L724">        }</span>
+<span class="fc" id="L725">    }</span>
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private static FileAttribute&lt;?&gt;[] keepAliveDirectoryAttributes(Path directory) {
+        try {
+<span class="pc bpc" id="L730" title="1 of 4 branches missed.">            if (directory == null || !Files.getFileStore(directory).supportsFileAttributeView(&quot;posix&quot;)) {</span>
+<span class="fc" id="L731">                return new FileAttribute[0];</span>
+            }
+<span class="fc" id="L733">            return new FileAttribute&lt;?&gt;[]{</span>
+<span class="fc" id="L734">                PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString(&quot;rwx------&quot;))</span>
+            };
+<span class="nc" id="L736">        } catch (IOException | UnsupportedOperationException | SecurityException e) {</span>
+<span class="nc" id="L737">            return new FileAttribute[0];</span>
+        }
+    }
+
+    private void cleanupSharedProjectSettings() throws IOException {
+<span class="nc bnc" id="L742" title="All 4 branches missed.">        if (shared &amp;&amp; sharedServerNamespace != null) {</span>
+<span class="nc" id="L743">            Path projectSettingsDirectory = serverSettingsDirectoryOf(buildDirectory.toPath());</span>
+<span class="nc" id="L744">            Files.deleteIfExists(projectSettingsDirectory.resolve(TEST_RESOURCES_PROPERTIES));</span>
+        }
+<span class="nc" id="L746">    }</span>
+
+    private Path serverSettingsDirectoryOf(Path buildDir) {
+<span class="nc" id="L749">        return buildDir.resolve(&quot;../.micronaut/test-resources&quot;);</span>
+    }
+
+    /**
+     * @param sharedServerNamespace The shared server namespace (if any).
+     */
+    public void setSharedServerNamespace(String sharedServerNamespace) {
+<span class="nc" id="L756">        this.sharedServerNamespace = sharedServerNamespace;</span>
+<span class="nc" id="L757">    }</span>
+
+<span class="fc" id="L759">    private static final class SessionState {</span>
+<span class="fc" id="L760">        private final String scopePrefix = SCOPE_PREFIX + &quot;-&quot; + UUID.randomUUID();</span>
+<span class="fc" id="L761">        private final Path keepAliveDirectory = Path.of(System.getProperty(&quot;java.io.tmpdir&quot;))</span>
+<span class="fc" id="L762">            .resolve(&quot;mn-test-resources-&quot; + UUID.randomUUID());</span>
+<span class="fc" id="L763">        private final Map&lt;Path, SharedServerState&gt; sharedServers = new LinkedHashMap&lt;&gt;();</span>
+    }
+
+    private static final class SharedServerState {
+        private final int port;
+<span class="fc" id="L768">        private final Set&lt;String&gt; owners = new HashSet&lt;&gt;();</span>
+
+<span class="fc" id="L770">        private SharedServerState(int port) {</span>
+<span class="fc" id="L771">            this.port = port;</span>
+<span class="fc" id="L772">        }</span>
+    }
+
+    static final class SharedServerLock implements AutoCloseable {
+        private final Path key;
+        private final ReentrantLock lock;
+
+<span class="fc" id="L779">        private SharedServerLock(Path key, ReentrantLock lock) {</span>
+<span class="fc" id="L780">            this.key = key;</span>
+<span class="fc" id="L781">            this.lock = lock;</span>
+<span class="fc" id="L782">            this.lock.lock();</span>
+<span class="fc" id="L783">        }</span>
+
+        @Override
+        public void close() {
+<span class="fc" id="L787">            releaseSharedServerLock(key, lock);</span>
+<span class="fc" id="L788">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

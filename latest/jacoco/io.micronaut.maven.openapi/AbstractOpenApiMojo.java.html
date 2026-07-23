@@ -1,0 +1,502 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractOpenApiMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.openapi</a> &gt; <span class="el_source">AbstractOpenApiMojo.java</span></div><h1>AbstractOpenApiMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2021 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.openapi;
+
+import io.micronaut.maven.AbstractMicronautMojo;
+import io.micronaut.openapi.generator.MicronautCodeGeneratorBuilder;
+import io.micronaut.openapi.generator.MicronautCodeGeneratorEntryPoint;
+import io.micronaut.openapi.generator.MicronautCodeGeneratorOptionsBuilder;
+import io.micronaut.openapi.generator.SerializationLibraryKind;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
+
+import java.io.File;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+/**
+ * Base class for OpenAPI generator mojos. This provides the common
+ * parameters for all generators and the invoker logic. Subclasses
+ * must implement the {@link #isEnabled()} and {@link #configureBuilder(MicronautCodeGeneratorBuilder)}
+ * methods.
+ */
+<span class="fc" id="L39">public abstract class AbstractOpenApiMojo extends AbstractMicronautMojo {</span>
+    static final String MICRONAUT_OPENAPI_PREFIX = &quot;micronaut.openapi&quot;;
+    static final String IO_MICRONAUT_OPENAPI_PREFIX = &quot;io.micronaut.openapi&quot;;
+    static final String KOTLIN_MAVEN_UNSUPPORTED_MESSAGE =
+        &quot;Kotlin applications built with Maven are no longer supported in Micronaut Platform 5. &quot;
+            + &quot;Use Java or Groovy with Maven, or use Gradle for Kotlin applications.&quot;;
+
+    /**
+     * The OpenAPI specification file path relative to the project's root path.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.definition&quot;, defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + &quot;.invoker&quot;, required = true)
+    protected File definitionFile;
+
+    /**
+     * The name of the package that can be used for various classes required for invocation.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.invoker.package.name&quot;, defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + &quot;.invoker&quot;, required = true)
+    protected String invokerPackageName;
+
+    /**
+     * The package name for the APIs (controller interfaces).
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.api.package.name&quot;, defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + &quot;.api&quot;, required = true)
+    protected String apiPackageName;
+
+    /**
+     * The package name for the model classes.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.model.package.name&quot;, defaultValue = IO_MICRONAUT_OPENAPI_PREFIX + &quot;.model&quot;, required = true)
+    protected String modelPackageName;
+
+    /**
+     * Whether to generate validation annotations for models and APIs.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.use.bean.validation&quot;, defaultValue = &quot;true&quot;, required = true)
+    protected boolean useBeanValidation;
+
+    /**
+     * Flag to indicate whether to use the utils.OneOfImplementorAdditionalData related logic.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.use.one.of.interfaces&quot;, defaultValue = &quot;true&quot;, required = true)
+    protected boolean useOneOfInterfaces;
+
+    /**
+     * Whether to use {@link java.util.Optional} for non-required model properties and API parameters.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.use.optional&quot;, defaultValue = &quot;false&quot;, required = true)
+    protected boolean useOptional;
+
+    /**
+     * Whether to use reactor types for operation responses.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.use.reactive&quot;, defaultValue = &quot;true&quot;, required = true)
+    protected boolean useReactive;
+
+    /**
+     * Configure the serialization library.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.serialization.framework&quot;, defaultValue = &quot;MICRONAUT_SERDE_JACKSON&quot;, required = true)
+    protected String serializationFramework;
+
+    /**
+     * If true, the generated operation return types will be wrapped in HttpResponse.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.always.use.generate.http.response&quot;, defaultValue = &quot;false&quot;, required = true)
+    protected boolean alwaysUseGenerateHttpResponse;
+
+    /**
+     * Wrap the operations response in HttpResponse object where non-200 HTTP status codes or additional headers are defined.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.generate.http.response.where.required&quot;, defaultValue = &quot;true&quot;, required = true)
+    protected boolean generateHttpResponseWhereRequired;
+
+    /**
+     * Configure the date-time format.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.date.time.format&quot;, defaultValue = &quot;ZONED_DATETIME&quot;, required = true)
+    protected String dateTimeFormat;
+
+    /**
+     * Comma-separated values of output kinds to generate. The values are defined by the
+     * {@link MicronautCodeGeneratorEntryPoint.OutputKind} enum.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.outputs&quot;, required = true, defaultValue = &quot;apis,models,supporting_files&quot;)
+    protected List&lt;String&gt; outputKinds;
+
+    /**
+     * The output directory to which all the sources will be generated.
+     */
+    @Parameter(defaultValue = &quot;${project.build.directory}/generated-sources/openapi&quot;, required = true)
+    protected File outputDirectory;
+
+    /**
+     * Define parameter mappings that allow using custom types for parameter binding.
+     * See {@link ParameterMapping} for details.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.parameterMappings&quot;)
+    protected List&lt;ParameterMapping&gt; parameterMappings;
+
+    /**
+     * Define parameter mappings that allow using custom types for parameter binding.
+     * See {@link ResponseBodyMapping} for details.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.responseBodyMappings&quot;)
+    protected List&lt;ResponseBodyMapping&gt; responseBodyMappings;
+
+    /**
+     * Add the schema mappings.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.schemaMapping&quot;)
+    protected Map&lt;String, String&gt; schemaMapping;
+
+    /**
+     * Add the import mappings.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.importMapping&quot;)
+    protected Map&lt;String, String&gt; importMapping;
+
+    /**
+     * Add the name mappings.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.nameMapping&quot;)
+    protected Map&lt;String, String&gt; nameMapping;
+
+    /**
+     * Add the type mappings.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.typeMapping&quot;)
+    protected Map&lt;String, String&gt; typeMapping;
+
+    /**
+     * Add the enum name mappings.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.enumNameMapping&quot;)
+    protected Map&lt;String, String&gt; enumNameMapping;
+
+    /**
+     * Add the model name mappings.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.modelNameMapping&quot;)
+    protected Map&lt;String, String&gt; modelNameMapping;
+
+    /**
+     * Add the inline schema name mappings.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.inlineSchemaNameMapping&quot;)
+    protected Map&lt;String, String&gt; inlineSchemaNameMapping;
+
+    /**
+     * Add the inline schema options.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.inlineSchemaOption&quot;)
+    protected Map&lt;String, String&gt; inlineSchemaOption;
+
+    /**
+     * Add the OpenAPI normalizer options.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.openapiNormalizer&quot;)
+    protected Map&lt;String, String&gt; openapiNormalizer;
+
+    /**
+     * Set the api name prefix.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.apiNamePrefix&quot;)
+    protected String apiNamePrefix;
+
+    /**
+     * Set the api name suffix.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.apiNameSuffix&quot;)
+    protected String apiNameSuffix;
+
+    /**
+     * Set the model name prefix.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.modelNamePrefix&quot;)
+    protected String modelNamePrefix;
+
+    /**
+     * Set the model name suffix.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.modelNameSuffix&quot;)
+    protected String modelNameSuffix;
+
+    /**
+     * Allows specifying the language of the generated code.
+     *
+     * @since 4.3.0
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.lang&quot;, defaultValue = &quot;java&quot;)
+    protected String lang;
+
+    /**
+     * If set to true, the generated enums check enum value with ignoring case.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.useEnumCaseInsensitive&quot;, defaultValue = &quot;false&quot;)
+    protected boolean useEnumCaseInsensitive;
+
+    /**
+     * Additional annotations for enum type (class level annotations).
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.additionalEnumTypeAnnotations&quot;)
+    protected List&lt;String&gt; additionalEnumTypeAnnotations;
+
+    /**
+     * Additional annotations for model type (class level annotations).
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.additionalModelTypeAnnotations&quot;)
+    protected List&lt;String&gt; additionalModelTypeAnnotations;
+
+    /**
+     * Additional annotations for oneOf interfaces (class level annotations).
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.additionalOneOfTypeAnnotations&quot;)
+    protected List&lt;String&gt; additionalOneOfTypeAnnotations;
+
+    /**
+     * Additional generator properties.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.additionalProperties&quot;)
+    protected Map&lt;String, Object&gt; additionalProperties;
+
+    /**
+     * If set to true, controller and client method will be generated with openAPI annotations.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.generateSwaggerAnnotations&quot;, defaultValue = &quot;false&quot;)
+    protected boolean generateSwaggerAnnotations;
+
+    /**
+     * Set the implicit headers flag.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.implicitHeaders&quot;, defaultValue = &quot;false&quot;)
+    protected boolean implicitHeaders;
+
+    /**
+     * Set the implicit headers regex.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.implicitHeadersRegex&quot;)
+    protected String implicitHeadersRegex;
+
+    /**
+     * Flag to indicate whether to use the &quot;jakarta&quot; or &quot;javax&quot; package.
+     */
+<span class="fc" id="L282">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.useJakartaEe&quot;, defaultValue = &quot;true&quot;)</span>
+    protected boolean useJakartaEe = true;
+
+    /**
+     * Sort method arguments to place required parameters before optional parameters.
+     * Default: true
+     */
+<span class="fc" id="L289">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.sortParamsByRequiredFlag&quot;, defaultValue = &quot;true&quot;)</span>
+    protected boolean sortParamsByRequiredFlag = true;
+
+    /**
+     * Skip examples defined in operations to avoid out of memory errors.
+     * Default: false
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.skipOperationExample&quot;)
+    protected boolean skipOperationExample;
+
+    /**
+     * Skip sorting operations.
+     * Default: false
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.skipSortingOperations&quot;)
+    protected boolean skipSortingOperations;
+
+    /**
+     * Character to use as a delimiter for the prefix. Default: '_'
+     */
+<span class="fc" id="L309">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.removeOperationIdPrefixDelimiter&quot;, defaultValue = &quot;_&quot;)</span>
+    protected String removeOperationIdPrefixDelimiter = &quot;_&quot;;
+
+    /**
+     * Count of delimiter for the prefix. Use -1 for last. Default: 1
+     */
+<span class="fc" id="L315">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.removeOperationIdPrefixCount&quot;, defaultValue = &quot;1&quot;)</span>
+    protected int removeOperationIdPrefixCount = 1;
+
+    /**
+     * Sort model properties to place required parameters before optional parameters.
+     */
+<span class="fc" id="L321">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.sortModelPropertiesByRequiredFlag&quot;, defaultValue = &quot;true&quot;)</span>
+    protected boolean sortModelPropertiesByRequiredFlag = true;
+
+    /**
+     * Whether to ensure parameter names are unique in an operation (rename parameters that are not).
+     */
+<span class="fc" id="L327">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.ensureUniqueParams&quot;, defaultValue = &quot;true&quot;)</span>
+    protected boolean ensureUniqueParams = true;
+
+    /**
+     * boolean, toggles whether Unicode identifiers are allowed in names or not, default is false.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.allowUnicodeIdentifiers&quot;)
+    protected boolean allowUnicodeIdentifiers;
+
+    /**
+     * Add form or body parameters to the beginning of the parameter list.
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.prependFormOrBodyParameters&quot;)
+    protected boolean prependFormOrBodyParameters;
+
+    /**
+     * Whether to generate sealed model interfaces and classes. Only for java generator.
+     *
+     * @since 4.8.0
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.useSealed&quot;)
+    protected boolean useSealed;
+
+    /**
+     * If set to true, {@literal @}JsonInclude annotation will be with value ALWAYS for required properties in POJO's.
+     *
+     * @since 4.8.0
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.jsonIncludeAlwaysForRequiredFields&quot;)
+    protected boolean jsonIncludeAlwaysForRequiredFields;
+
+    /**
+     * Generate or not required properties constructor. Only for java generator.
+     *
+     * @since 4.8.0
+     */
+<span class="fc" id="L363">    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.requiredPropertiesInConstructor&quot;, defaultValue = &quot;true&quot;)</span>
+    protected boolean requiredPropertiesInConstructor = true;
+
+    /**
+     * If true, the generated controller interface will be without `@Controller` annotation.
+     *
+     * @since 4.8.0
+     */
+    @Parameter(property = MICRONAUT_OPENAPI_PREFIX + &quot;.generateControllerAsAbstract&quot;)
+    protected boolean generateControllerAsAbstract;
+
+    @Parameter(defaultValue = &quot;${project}&quot;, readonly = true)
+    protected MavenProject project;
+
+    /**
+     * Determines if this mojo must be executed.
+     *
+     * @return true if the mojo is enabled
+     */
+    protected abstract boolean isEnabled();
+
+    /**
+     * Configures the OpenAPI generator. When this method is called,
+     * common properties shared by all generators have already been
+     * configured, so this method should only take care of configuring
+     * the generator specific parameters.
+     *
+     * @param builder the generator configuration builder
+     */
+    protected abstract void configureBuilder(MicronautCodeGeneratorBuilder builder) throws MojoExecutionException;
+
+    /**
+     * Validates generator-specific language support before common generator options are resolved.
+     */
+    protected void validateLanguage() throws MojoExecutionException {
+        // Default implementation accepts the common generator language configuration.
+<span class="nc" id="L399">    }</span>
+
+    protected final void rejectUnsupportedKotlinLanguage(String generatorType) throws MojoExecutionException {
+<span class="pc bpc" id="L402" title="1 of 2 branches missed.">        if (&quot;kotlin&quot;.equalsIgnoreCase(lang)) {</span>
+<span class="nc" id="L403">            throw new MojoExecutionException(</span>
+                &quot;Kotlin OpenAPI &quot; + generatorType + &quot; generation is not supported by the Micronaut Maven Plugin. &quot;
+                    + KOTLIN_MAVEN_UNSUPPORTED_MESSAGE
+            );
+        }
+<span class="fc" id="L408">    }</span>
+
+    @Override
+    public final void execute() throws MojoExecutionException, MojoFailureException {
+<span class="pc bpc" id="L412" title="1 of 2 branches missed.">        if (!isEnabled()) {</span>
+<span class="nc" id="L413">            getLog().debug(this.getClass().getSimpleName() + &quot; is disabled&quot;);</span>
+<span class="nc" id="L414">            return;</span>
+        }
+
+<span class="fc" id="L417">        validateLanguage();</span>
+<span class="fc" id="L418">        var sourceFolder = &quot;src/main/&quot; + lang.toLowerCase(Locale.ENGLISH);</span>
+<span class="fc" id="L419">        project.addCompileSourceRoot(new File(outputDirectory, sourceFolder).getAbsolutePath());</span>
+<span class="fc" id="L420">        var builder = MicronautCodeGeneratorEntryPoint.builder()</span>
+<span class="nc" id="L421">            .withDefinitionFile(definitionFile.toURI())</span>
+<span class="nc" id="L422">            .withOutputDirectory(outputDirectory)</span>
+<span class="nc" id="L423">            .withOutputs(</span>
+<span class="nc" id="L424">                outputKinds.stream().map(String::toUpperCase).map(MicronautCodeGeneratorEntryPoint.OutputKind::valueOf).toList().toArray(new MicronautCodeGeneratorEntryPoint.OutputKind[0])</span>
+            )
+<span class="nc" id="L426">            .withOptions(options -&gt; options</span>
+<span class="nc" id="L427">                .withLang(MicronautCodeGeneratorOptionsBuilder.GeneratorLanguage.valueOf(lang.toUpperCase(Locale.ENGLISH)))</span>
+<span class="nc" id="L428">                .withApiPackage(apiPackageName)</span>
+<span class="nc" id="L429">                .withModelPackage(modelPackageName)</span>
+<span class="nc" id="L430">                .withInvokerPackage(invokerPackageName)</span>
+<span class="nc" id="L431">                .withBeanValidation(useBeanValidation)</span>
+<span class="nc" id="L432">                .withUseOneOfInterfaces(useOneOfInterfaces)</span>
+<span class="nc" id="L433">                .withOptional(useOptional)</span>
+<span class="nc" id="L434">                .withReactive(useReactive)</span>
+<span class="nc" id="L435">                .withSerializationLibrary(SerializationLibraryKind.valueOf(serializationFramework.toUpperCase(Locale.ENGLISH)))</span>
+<span class="nc" id="L436">                .withGenerateHttpResponseAlways(alwaysUseGenerateHttpResponse)</span>
+<span class="nc" id="L437">                .withGenerateHttpResponseWhereRequired(generateHttpResponseWhereRequired)</span>
+<span class="nc" id="L438">                .withDateTimeFormat(MicronautCodeGeneratorOptionsBuilder.DateTimeFormat.valueOf(dateTimeFormat.toUpperCase(Locale.ENGLISH)))</span>
+<span class="nc" id="L439">                .withParameterMappings(parameterMappings.stream()</span>
+<span class="nc" id="L440">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ParameterMapping(</span>
+<span class="nc" id="L441">                        mapping.getName(),</span>
+<span class="nc" id="L442">                        io.micronaut.openapi.generator.ParameterMapping.ParameterLocation.valueOf(</span>
+<span class="nc" id="L443">                            mapping.getLocation().name()</span>
+                        ),
+<span class="nc" id="L445">                        mapping.getMappedType(),</span>
+<span class="nc" id="L446">                        mapping.getMappedName(),</span>
+<span class="nc" id="L447">                        mapping.isValidated()</span>
+                    ))
+<span class="nc" id="L449">                    .toList()</span>
+                )
+<span class="nc" id="L451">                .withResponseBodyMappings(responseBodyMappings.stream()</span>
+<span class="nc" id="L452">                    .map(mapping -&gt; new io.micronaut.openapi.generator.ResponseBodyMapping(</span>
+<span class="nc" id="L453">                        mapping.getHeaderName(),</span>
+<span class="nc" id="L454">                        mapping.getMappedBodyType(),</span>
+<span class="nc" id="L455">                        mapping.isListWrapper(),</span>
+<span class="nc" id="L456">                        mapping.isValidated()</span>
+                    ))
+<span class="nc" id="L458">                    .toList()</span>
+                )
+<span class="nc" id="L460">                .withSchemaMapping(schemaMapping)</span>
+<span class="nc" id="L461">                .withImportMapping(importMapping)</span>
+<span class="nc" id="L462">                .withNameMapping(nameMapping)</span>
+<span class="nc" id="L463">                .withTypeMapping(typeMapping)</span>
+<span class="nc" id="L464">                .withEnumNameMapping(enumNameMapping)</span>
+<span class="nc" id="L465">                .withModelNameMapping(modelNameMapping)</span>
+<span class="nc" id="L466">                .withInlineSchemaNameMapping(inlineSchemaNameMapping)</span>
+<span class="nc" id="L467">                .withInlineSchemaOption(inlineSchemaOption)</span>
+<span class="nc" id="L468">                .withOpenapiNormalizer(openapiNormalizer)</span>
+<span class="nc bnc" id="L469" title="All 2 branches missed.">                .withApiNamePrefix(apiNamePrefix != null ? apiNamePrefix : &quot;&quot;)</span>
+<span class="nc bnc" id="L470" title="All 2 branches missed.">                .withApiNameSuffix(apiNameSuffix != null ? apiNameSuffix : &quot;&quot;)</span>
+<span class="nc bnc" id="L471" title="All 2 branches missed.">                .withModelNamePrefix(modelNamePrefix != null ? modelNamePrefix : &quot;&quot;)</span>
+<span class="nc bnc" id="L472" title="All 2 branches missed.">                .withModelNameSuffix(modelNameSuffix != null ? modelNameSuffix : &quot;&quot;)</span>
+<span class="nc" id="L473">                .withGenerateSwaggerAnnotations(generateSwaggerAnnotations)</span>
+<span class="nc" id="L474">                .withImplicitHeaders(implicitHeaders)</span>
+<span class="nc bnc" id="L475" title="All 2 branches missed.">                .withImplicitHeadersRegex(implicitHeadersRegex != null ? implicitHeadersRegex : &quot;&quot;)</span>
+<span class="nc" id="L476">                .withUseEnumCaseInsensitive(useEnumCaseInsensitive)</span>
+<span class="nc" id="L477">                .withAdditionalEnumTypeAnnotations(additionalEnumTypeAnnotations)</span>
+<span class="nc" id="L478">                .withAdditionalModelTypeAnnotations(additionalModelTypeAnnotations)</span>
+<span class="nc" id="L479">                .withAdditionalOneOfTypeAnnotations(additionalOneOfTypeAnnotations)</span>
+<span class="nc" id="L480">                .withAdditionalProperties(additionalProperties)</span>
+
+<span class="nc" id="L482">                .withUseJakartaEe(useJakartaEe)</span>
+<span class="nc" id="L483">                .withSortParamsByRequiredFlag(sortParamsByRequiredFlag)</span>
+<span class="nc" id="L484">                .withSkipOperationExample(skipOperationExample)</span>
+<span class="nc" id="L485">                .withSkipSortingOperations(skipSortingOperations)</span>
+<span class="nc" id="L486">                .withRemoveOperationIdPrefixDelimiter(removeOperationIdPrefixDelimiter)</span>
+<span class="nc" id="L487">                .withRemoveOperationIdPrefixCount(removeOperationIdPrefixCount)</span>
+<span class="nc" id="L488">                .withSortModelPropertiesByRequiredFlag(sortModelPropertiesByRequiredFlag)</span>
+<span class="nc" id="L489">                .withEnsureUniqueParams(ensureUniqueParams)</span>
+<span class="nc" id="L490">                .withAllowUnicodeIdentifiers(allowUnicodeIdentifiers)</span>
+<span class="nc" id="L491">                .withPrependFormOrBodyParameters(prependFormOrBodyParameters)</span>
+
+<span class="nc" id="L493">                .withUseSealed(useSealed)</span>
+<span class="nc" id="L494">                .withJsonIncludeAlwaysForRequiredFields(jsonIncludeAlwaysForRequiredFields)</span>
+<span class="nc" id="L495">                .withRequiredPropertiesInConstructor(requiredPropertiesInConstructor)</span>
+<span class="nc" id="L496">                .withGenerateControllerAsAbstract(generateControllerAsAbstract)</span>
+            );
+<span class="nc" id="L498">        configureBuilder(builder);</span>
+<span class="nc" id="L499">        builder.build().generate();</span>
+<span class="nc" id="L500">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
