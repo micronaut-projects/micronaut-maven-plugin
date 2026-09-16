@@ -32,8 +32,8 @@ Micronaut Maven Plugin - Plugin,io.micronaut.maven.jsonschema,ConfigurationValid
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.jsonschema,ConfigurationValidationConfiguration.ValidationSet,52,0,0,0,22,0,15,0,15,0
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.jsonschema,ConfigurationValidationCache.LastResult,0,15,0,0,0,3,0,1,0,1
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.jsonschema,ConfigurationValidationConfiguration,84,10,0,0,36,4,24,3,24,3
-Micronaut Maven Plugin - Plugin,io.micronaut.maven.jsonschema,ConfigurationValidationExecutor,140,199,24,30,29,41,18,19,2,8
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.jsonschema,ValidateDevConfigurationMojo,37,0,0,0,8,0,7,0,7,0
+Micronaut Maven Plugin - Plugin,io.micronaut.maven.jsonschema,ConfigurationValidationExecutor,140,199,24,30,29,41,18,19,2,8
 Micronaut Maven Plugin - Plugin,io.micronaut.maven,DockerPushMojo,112,65,13,7,26,15,11,5,2,4
 Micronaut Maven Plugin - Plugin,io.micronaut.maven,ImportFactoryMojo,390,0,24,0,81,0,24,0,12,0
 Micronaut Maven Plugin - Plugin,io.micronaut.maven,NativeImageAgentSupport,4,402,8,50,1,74,8,40,0,19
