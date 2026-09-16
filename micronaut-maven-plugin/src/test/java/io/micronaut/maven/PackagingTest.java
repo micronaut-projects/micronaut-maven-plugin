@@ -10,6 +10,7 @@ class PackagingTest {
     @ParameterizedTest
     @CsvSource({
         "native-image,NATIVE_IMAGE",
+        "buildpack,BUILDPACK",
         "k8s,K8S",
         "openshift,OPENSHIFT"
     })

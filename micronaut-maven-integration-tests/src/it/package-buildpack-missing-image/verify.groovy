@@ -1,0 +1,5 @@
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains('Buildpack image name is required')
+assert log.text.contains('micronaut.buildpack.image-name')
+assert !new File(basedir, 'target/pack-args.txt').exists()
