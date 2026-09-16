@@ -1,4 +1,4 @@
-=== Deploying an application
+= Deploying an application
 
 Similarly to the link:package.html[packaging support], with this plugin you can use `mvn deploy` as the only command
 required to deploy an application that, depending on the `<packaging>`:

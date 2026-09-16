@@ -1,4 +1,4 @@
-=== Integration with Micronaut OpenAPI
+= Integration with Micronaut OpenAPI
 
 This plugin integrates with https://micronaut-projects.github.io/micronaut-openapi/latest/guide/index.html[Micronaut OpenAPI] to provide support for generating https://www.openapis.org/[OpenAPI] clients or servers.
 
@@ -10,7 +10,7 @@ The plugin adds a couple goals which can be used to generate code:
 In both cases, the code is generated in your `target` directory and integrated into the build lifecycle.
 In particular, in case you are generating a server, the generated code will be interfaces that you will have to implement in your main sources.
 
-==== Generating a client
+== Generating a client
 
 In order to generate a client, the minimal thing to do is to configure a couple properties:
 
@@ -39,7 +39,7 @@ It is however recommended to define the packages which will be used for code gen
 
 The full list of configuration properties can be found link:../generate-openapi-client-mojo.html[here].
 
-==== Generating a server
+== Generating a server
 
 Generating a server can be done in a similar way to generating a client, except that the code which is generated for the server (not the model) is simply interfaces that you will have to implement:
 

@@ -39,6 +39,9 @@ import java.nio.file.FileAlreadyExistsException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -76,6 +79,9 @@ public class TestResourcesHelper {
     private static final String APPLICATION_TEST_PROPERTIES = "application-test.properties";
     private static final String TEST_RESOURCES_SCOPE_PROPERTY = "micronaut.test.resources.scope";
     private static final String SCOPE_PREFIX = "mvn";
+    private static final String TEST_RESOURCES_REQUIREMENTS_ENTRIES_PATH = "/requirements/entries";
+    private static final String ACCESS_TOKEN_HEADER = "Access-Token";
+    private static final int SERVER_PROBE_TIMEOUT_MS = 1_000;
 
     private static final String TEST_RESOURCES_CLIENT_SYSTEM_PROP_PREFIX = "micronaut.test.resources.";
 
@@ -217,25 +223,19 @@ public class TestResourcesHelper {
             setSystemProperties(serverSettings);
             return;
         }
+        Optional<ServerSettings> existingServerSettings = findReachableRecordedServer(serverSettingsDirectory);
+        if (existingServerSettings.isPresent()) {
+            useServerSettings(buildDir, serverSettingsDirectory, existingServerSettings.get(), false);
+            return;
+        }
         Optional<ServerSettings> optionalServerSettings = startOrConnectToExistingServer(accessToken, buildDir, serverSettingsDirectory, serverFactory);
         if (optionalServerSettings.isEmpty()) {
             return;
         }
         ServerSettings serverSettings = optionalServerSettings.get();
-        writePortFile(buildDir.resolve(PORT_FILE_NAME), serverSettings.getPort());
-        boolean sessionOwnedSharedServer = shared && registerSharedServerUse(serverSettingsDirectory, serverSettings.getPort(), serverStarted.get());
-        if (shared) {
-            logSharedMode(serverSettingsDirectory);
-            writeSharedScopeConfiguration();
-        }
-        setSystemProperties(serverSettings);
-        if (serverStarted.get()) {
-            if (isKeepAlive()) {
-                log.info("Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:" + StopTestResourcesServerMojo.NAME + "'");
-            }
-        } else if (!sessionOwnedSharedServer) {
-            // A server was already listening before this build started, so leave it running.
-            createKeepAliveFile();
+        useServerSettings(buildDir, serverSettingsDirectory, serverSettings, serverStarted.get());
+        if (serverStarted.get() && isKeepAlive()) {
+            log.info("Micronaut Test Resources service is started in the background. To stop it, run the following command: 'mvn mn:" + StopTestResourcesServerMojo.NAME + "'");
         }
     }
 
@@ -254,6 +254,66 @@ public class TestResourcesHelper {
             }
             return ServerUtils.readServerSettings(serverSettingsDirectory)
                 .filter(settings -> settings.getPort() == sharedServerState.port);
+        }
+    }
+
+    private Optional<ServerSettings> findReachableRecordedServer(Path serverSettingsDirectory) {
+        return ServerUtils.readServerSettings(serverSettingsDirectory)
+            .filter(serverSettings -> explicitPort == null || serverSettings.getPort() == explicitPort)
+            .filter(this::isReusableTestResourcesServer);
+    }
+
+    private boolean isReusableTestResourcesServer(ServerSettings serverSettings) {
+        HttpURLConnection connection = null;
+        try {
+            var url = URI.create("http://localhost:" + serverSettings.getPort() + TEST_RESOURCES_REQUIREMENTS_ENTRIES_PATH).toURL();
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(SERVER_PROBE_TIMEOUT_MS);
+            connection.setReadTimeout(SERVER_PROBE_TIMEOUT_MS);
+            connection.setRequestMethod("GET");
+            connection.setRequestProperty("Accept", "application/json");
+            String accessToken = serverSettings.getAccessToken().orElse(null);
+            if (accessToken != null) {
+                connection.setRequestProperty(ACCESS_TOKEN_HEADER, accessToken);
+            }
+            if (connection.getResponseCode() != HttpURLConnection.HTTP_OK || !isJsonContentType(connection.getContentType())) {
+                return false;
+            }
+            try (InputStream input = connection.getInputStream()) {
+                return isJsonStringArray(new String(input.readAllBytes(), StandardCharsets.UTF_8));
+            }
+        } catch (IOException _) {
+            return false;
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+
+    private static boolean isJsonContentType(String contentType) {
+        if (contentType == null) {
+            return false;
+        }
+        return contentType.equals("application/json") || contentType.startsWith("application/json;");
+    }
+
+    private static boolean isJsonStringArray(String body) {
+        String trimmed = body.trim();
+        return trimmed.length() >= 2 && trimmed.charAt(0) == '[' && trimmed.charAt(trimmed.length() - 1) == ']';
+    }
+
+    private void useServerSettings(Path buildDir, Path serverSettingsDirectory, ServerSettings serverSettings, boolean serverStarted) throws IOException {
+        writePortFile(buildDir.resolve(PORT_FILE_NAME), serverSettings.getPort());
+        boolean sessionOwnedSharedServer = shared && registerSharedServerUse(serverSettingsDirectory, serverSettings.getPort(), serverStarted);
+        if (shared) {
+            logSharedMode(serverSettingsDirectory);
+            writeSharedScopeConfiguration();
+        }
+        setSystemProperties(serverSettings);
+        if (!serverStarted && !sessionOwnedSharedServer) {
+            // A server was already listening before this build started, so leave it running.
+            createKeepAliveFile();
         }
     }
 

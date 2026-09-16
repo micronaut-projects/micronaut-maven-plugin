@@ -2,6 +2,7 @@ package io.micronaut.maven.testresources;
 
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
+import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.testresources.buildtools.ServerFactory;
 import io.micronaut.testresources.buildtools.ServerSettings;
 import io.micronaut.testresources.buildtools.ServerUtils;
@@ -10,15 +11,21 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.apache.maven.model.Build;
 import org.apache.maven.project.MavenProject;
+import com.sun.net.httpserver.HttpServer;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
+import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -32,6 +39,8 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -300,6 +309,150 @@ class TestResourcesHelperTest {
     }
 
     @Test
+    void doStartReusesReachableRecordedStandaloneServerBeforeFallback() throws Exception {
+        Path serverSettingsDirectory = tempDir.resolve("standalone-settings");
+        Path buildDirectory = tempDir.resolve("build");
+
+        HttpServer server = startReusableTestResourcesServer("standalone-token");
+        try {
+            int port = server.getAddress().getPort();
+            ServerUtils.writeServerSettings(serverSettingsDirectory, new ServerSettings(port, "standalone-token", 45, 60));
+            TestResourcesHelper helper = helperWithDependencyResolution(buildDirectory, null);
+            assertTrue(invokeFindReachableRecordedServer(helper, serverSettingsDirectory).isPresent());
+            AtomicBoolean serverStarted = new AtomicBoolean(false);
+            ServerFactory serverFactory = new ServerFactory() {
+                @Override
+                public void startServer(ServerUtils.ProcessParameters processParameters) {
+                    throw new AssertionError("Reachable recorded standalone server should be reused before fallback");
+                }
+
+                @Override
+                public void waitFor(Duration timeout) {
+                    throw new AssertionError("Reachable recorded standalone server should be reused before fallback");
+                }
+            };
+
+            String previousServerUri = System.getProperty("micronaut.test.resources.server.uri");
+            String previousAccessToken = System.getProperty("micronaut.test.resources.server.access.token");
+            String previousReadTimeout = System.getProperty("micronaut.test.resources.server.client.read.timeout");
+            try {
+                invokeDoStart(helper, buildDirectory, serverSettingsDirectory, serverFactory, serverStarted);
+
+                assertFalse(serverStarted.get());
+                assertEquals(Integer.toString(port), Files.readString(buildDirectory.resolve("test-resources-port.txt")));
+                assertEquals("http://localhost:" + port, System.getProperty("micronaut.test.resources.server.uri"));
+                assertEquals("standalone-token", System.getProperty("micronaut.test.resources.server.access.token"));
+                assertEquals("45", System.getProperty("micronaut.test.resources.server.client.read.timeout"));
+                assertTrue(invokeIsKeepAlive(helper), "Ordinary builds must leave reused standalone servers alive during cleanup");
+            } finally {
+                restoreSystemProperty("micronaut.test.resources.server.uri", previousServerUri);
+                restoreSystemProperty("micronaut.test.resources.server.access.token", previousAccessToken);
+                restoreSystemProperty("micronaut.test.resources.server.client.read.timeout", previousReadTimeout);
+            }
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void findReachableRecordedStandaloneServerRejectsRawListener() throws Exception {
+        Path serverSettingsDirectory = tempDir.resolve("standalone-settings");
+
+        try (ServerSocket server = new ServerSocket(0)) {
+            int port = server.getLocalPort();
+            ServerUtils.writeServerSettings(serverSettingsDirectory, new ServerSettings(port, "standalone-token", 45, 60));
+            TestResourcesHelper helper = helperWithDependencyResolution(tempDir.resolve("build"), null);
+
+            assertTrue(invokeFindReachableRecordedServer(helper, serverSettingsDirectory).isEmpty());
+        }
+    }
+
+    @Test
+    void findReachableRecordedStandaloneServerRejectsWrongToken() throws Exception {
+        Path serverSettingsDirectory = tempDir.resolve("standalone-settings");
+        HttpServer server = startReusableTestResourcesServer("expected-token");
+        try {
+            ServerUtils.writeServerSettings(serverSettingsDirectory, new ServerSettings(server.getAddress().getPort(), "recorded-token", 45, 60));
+            TestResourcesHelper helper = helperWithDependencyResolution(tempDir.resolve("build"), null);
+
+            assertTrue(invokeFindReachableRecordedServer(helper, serverSettingsDirectory).isEmpty());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void findReachableRecordedStandaloneServerRejectsUnexpectedResponseShape() throws Exception {
+        Path serverSettingsDirectory = tempDir.resolve("standalone-settings");
+        HttpServer server = startTestResourcesProbeServer("standalone-token", 200, "application/json", "{}");
+        try {
+            ServerUtils.writeServerSettings(serverSettingsDirectory, new ServerSettings(server.getAddress().getPort(), "standalone-token", 45, 60));
+            TestResourcesHelper helper = helperWithDependencyResolution(tempDir.resolve("build"), null);
+
+            assertTrue(invokeFindReachableRecordedServer(helper, serverSettingsDirectory).isEmpty());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void findReachableRecordedStandaloneServerRejectsUnexpectedContentType() throws Exception {
+        Path serverSettingsDirectory = tempDir.resolve("standalone-settings");
+        HttpServer server = startTestResourcesProbeServer("standalone-token", 200, "text/plain", "[]");
+        try {
+            ServerUtils.writeServerSettings(serverSettingsDirectory, new ServerSettings(server.getAddress().getPort(), "standalone-token", 45, 60));
+            TestResourcesHelper helper = helperWithDependencyResolution(tempDir.resolve("build"), null);
+
+            assertTrue(invokeFindReachableRecordedServer(helper, serverSettingsDirectory).isEmpty());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void findReachableRecordedStandaloneServerHonorsExplicitPort() throws Exception {
+        Path serverSettingsDirectory = tempDir.resolve("standalone-settings");
+        HttpServer server = startReusableTestResourcesServer("standalone-token");
+        try {
+            ServerUtils.writeServerSettings(serverSettingsDirectory, new ServerSettings(server.getAddress().getPort(), "standalone-token", 45, 60));
+            TestResourcesHelper helper = helperWithDependencyResolution(tempDir.resolve("build"), availableTcpPort());
+
+            assertTrue(invokeFindReachableRecordedServer(helper, serverSettingsDirectory).isEmpty());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void doStartFallsBackWhenRecordedStandaloneServerIsStale() throws Exception {
+        Path serverSettingsDirectory = tempDir.resolve("standalone-settings");
+        Path buildDirectory = tempDir.resolve("build");
+        int stalePort = availableTcpPort();
+        int fallbackPort = availableTcpPort();
+        ServerUtils.writeServerSettings(serverSettingsDirectory, new ServerSettings(stalePort, "stale-token", 45, 60));
+        TestResourcesHelper helper = helperWithDependencyResolution(buildDirectory, fallbackPort);
+        AtomicBoolean fallbackInvoked = new AtomicBoolean(false);
+        AtomicBoolean serverStarted = new AtomicBoolean(false);
+        ServerFactory serverFactory = new ServerFactory() {
+            @Override
+            public void startServer(ServerUtils.ProcessParameters processParameters) {
+                fallbackInvoked.set(true);
+                serverStarted.set(true);
+            }
+
+            @Override
+            public void waitFor(Duration timeout) {
+                // No-op; explicit fallback ports do not need a port-file wait.
+            }
+        };
+
+        invokeDoStart(helper, buildDirectory, serverSettingsDirectory, serverFactory, serverStarted);
+
+        assertTrue(fallbackInvoked.get());
+        assertEquals(Integer.toString(fallbackPort), Files.readString(buildDirectory.resolve("test-resources-port.txt")));
+    }
+
+    @Test
     void findSessionSharedServerRequiresSharedMode() throws Exception {
         TestResourcesHelper helper = new TestResourcesHelper(mock(MavenSession.class), true, false, tempDir.toFile());
 
@@ -357,6 +510,60 @@ class TestResourcesHelperTest {
         when(mavenSession.getRequest()).thenReturn(request);
 
         return new TestResourcesHelper(mavenSession, true, false, new File("."));
+    }
+
+    private static TestResourcesHelper helperWithDependencyResolution(Path buildDirectory, Integer explicitPort) throws Exception {
+        MavenExecutionRequest request = mock(MavenExecutionRequest.class);
+        when(request.getBuilderId()).thenReturn("builder-123");
+        MavenSession mavenSession = mock(MavenSession.class);
+        when(mavenSession.getRequest()).thenReturn(request);
+        when(mavenSession.getGoals()).thenReturn(List.of("test"));
+        DependencyResolutionService dependencyResolutionService = mock(DependencyResolutionService.class);
+        when(dependencyResolutionService.artifactResultsFor(any(), eq(true))).thenReturn(List.of());
+        return new TestResourcesHelper(
+            true,
+            false,
+            buildDirectory.toFile(),
+            explicitPort,
+            null,
+            null,
+            new MavenProject(),
+            mavenSession,
+            dependencyResolutionService,
+            null,
+            "4.0.0",
+            false,
+            null,
+            null,
+            false,
+            false,
+            Map.of()
+        );
+    }
+
+    private static int availableTcpPort() throws IOException {
+        try (ServerSocket server = new ServerSocket(0)) {
+            return server.getLocalPort();
+        }
+    }
+
+    private static HttpServer startReusableTestResourcesServer(String accessToken) throws IOException {
+        return startTestResourcesProbeServer(accessToken, 200, "application/json; charset=utf-8", "[]");
+    }
+
+    private static HttpServer startTestResourcesProbeServer(String accessToken, int successStatus, String contentType, String responseBody) throws IOException {
+        HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+        server.createContext("/requirements/entries", exchange -> {
+            byte[] body = responseBody.getBytes(StandardCharsets.UTF_8);
+            int status = accessToken.equals(exchange.getRequestHeaders().getFirst("Access-Token")) ? successStatus : 401;
+            exchange.getResponseHeaders().set("Content-Type", contentType);
+            exchange.sendResponseHeaders(status, body.length);
+            try (var output = exchange.getResponseBody()) {
+                output.write(body);
+            }
+        });
+        server.start();
+        return server;
     }
 
     private static Path invokeGetKeepAliveFile(TestResourcesHelper helper) throws Exception {
@@ -435,7 +642,18 @@ class TestResourcesHelperTest {
         return (Optional<ServerSettings>) method.invoke(helper, serverSettingsDirectory);
     }
 
+    @SuppressWarnings("unchecked")
+    private static Optional<ServerSettings> invokeFindReachableRecordedServer(TestResourcesHelper helper, Path serverSettingsDirectory) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod("findReachableRecordedServer", Path.class);
+        method.setAccessible(true);
+        return (Optional<ServerSettings>) method.invoke(helper, serverSettingsDirectory);
+    }
+
     private static void invokeDoStart(TestResourcesHelper helper, Path buildDirectory, Path serverSettingsDirectory, ServerFactory serverFactory) throws Exception {
+        invokeDoStart(helper, buildDirectory, serverSettingsDirectory, serverFactory, new AtomicBoolean(false));
+    }
+
+    private static void invokeDoStart(TestResourcesHelper helper, Path buildDirectory, Path serverSettingsDirectory, ServerFactory serverFactory, AtomicBoolean serverStarted) throws Exception {
         Method method = TestResourcesHelper.class.getDeclaredMethod(
             "doStart",
             String.class,
@@ -445,7 +663,7 @@ class TestResourcesHelperTest {
             AtomicBoolean.class
         );
         method.setAccessible(true);
-        method.invoke(helper, "new-token", buildDirectory, serverSettingsDirectory, serverFactory, new AtomicBoolean(false));
+        method.invoke(helper, "new-token", buildDirectory, serverSettingsDirectory, serverFactory, serverStarted);
     }
 
     @FunctionalInterface

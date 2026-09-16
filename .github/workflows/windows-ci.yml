@@ -22,27 +22,31 @@ permissions:
 
 jobs:
   build:
+    name: "build"
     runs-on: windows-latest
+    env:
+      NATIVE_IMAGE_OPTIONS: "-H:+ReportExceptionStackTraces"
     strategy:
       matrix:
         java: ['25']
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Verify Maven wrapper checksum
         shell: bash
         run: bash .github/scripts/verify-maven-wrapper-checksum.sh
       - name: Cache Maven packages
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       - name: Setup GraalVM
-        uses: graalvm/setup-graalvm@bef4b0e916c7dd079bf60fb95d49139f67e32c5f
+        uses: graalvm/setup-graalvm@0def53c0fd8534bc13416c9469f5be45265824fd # v1
         with:
           distribution: 'graalvm'
           java-version: ${{ matrix.java }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          native-image-job-reports: true
       - name: Windows wrapper preflight
         shell: cmd
         run: .github\scripts\windows-preflight.cmd
