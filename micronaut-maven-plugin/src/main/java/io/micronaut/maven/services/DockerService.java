@@ -104,6 +104,18 @@ public class DockerService {
         this.config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
     }
 
+    /**
+     * Uses the given Docker client instead of connecting to the configured Docker host. For tests.
+     *
+     * @param mavenProject the Maven project
+     * @param jibConfigurationService the Jib configuration service
+     * @param dockerClient the Docker client
+     */
+    DockerService(MavenProject mavenProject, JibConfigurationService jibConfigurationService, DockerClient dockerClient) {
+        this(mavenProject, jibConfigurationService);
+        this.dockerClient = dockerClient;
+    }
+
     private DockerClient getDockerClient() {
         if (dockerClient == null) {
             var httpClient = new ZerodepDockerHttpClient.Builder()

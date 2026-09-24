@@ -99,20 +99,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
             }
         }
 
-        Optional<Platform> jdkAotCachePlatform = JdkAotCachePlan.platform(mavenData);
-        if (jdkAotCachePlatform.isPresent()) {
-            if (runtime.getBuildStrategy() != DockerBuildStrategy.DEFAULT) {
-                throw new JibPluginExtensionException(JibMicronautExtension.class,
-                    "micronaut.docker.jdkAotCache only supports the default runtime, not " + runtime.getBuildStrategy());
-            }
-            JdkAotCachePlan.apply(buildPlan, baseImage, builder, jdkAotCachePlatform.get(), mavenData, logger);
-        } else {
-            var detectedPlatform = detectPlatform();
-            if (buildPlan.getPlatforms() == null || buildPlan.getPlatforms().isEmpty() || !buildPlan.getPlatforms().contains(detectedPlatform)) {
-                LOG.info("Adding Detected platform: {}/{}", LINUX, detectedPlatform.getArchitecture());
-                builder.addPlatform(detectedPlatform.getArchitecture(), LINUX);
-            }
-        }
+        configurePlatforms(buildPlan, baseImage, builder, runtime, mavenData, logger);
 
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION -> {
@@ -140,6 +127,29 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
             }
         }
         return builder.build();
+    }
+
+    /**
+     * Builds for the Docker daemon's platform only when the {@code docker} goal trains a JDK AOT cache, and adds the
+     * detected platform otherwise.
+     */
+    private void configurePlatforms(ContainerBuildPlan buildPlan, String baseImage, ContainerBuildPlan.Builder builder,
+                                    MicronautRuntime runtime, MavenData mavenData, ExtensionLogger logger)
+        throws JibPluginExtensionException {
+        Optional<Platform> jdkAotCachePlatform = JdkAotCachePlan.platform(mavenData);
+        if (jdkAotCachePlatform.isPresent()) {
+            if (runtime.getBuildStrategy() != DockerBuildStrategy.DEFAULT) {
+                throw new JibPluginExtensionException(JibMicronautExtension.class,
+                    "micronaut.docker.jdkAotCache only supports the default runtime, not " + runtime.getBuildStrategy());
+            }
+            JdkAotCachePlan.apply(buildPlan, baseImage, builder, jdkAotCachePlatform.get(), mavenData, logger);
+            return;
+        }
+        var detectedPlatform = detectPlatform();
+        if (buildPlan.getPlatforms() == null || buildPlan.getPlatforms().isEmpty() || !buildPlan.getPlatforms().contains(detectedPlatform)) {
+            LOG.info("Adding Detected platform: {}/{}", LINUX, detectedPlatform.getArchitecture());
+            builder.addPlatform(detectedPlatform.getArchitecture(), LINUX);
+        }
     }
 
     public static List<String> buildProjectFnEntrypoint() {

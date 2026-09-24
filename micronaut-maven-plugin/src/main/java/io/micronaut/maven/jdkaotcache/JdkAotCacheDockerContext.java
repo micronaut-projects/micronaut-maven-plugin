@@ -131,19 +131,25 @@ public final class JdkAotCacheDockerContext {
         entries.remove(JarFile.MANIFEST_NAME);
         try (OutputStream out = Files.newOutputStream(jar);
              var jarOut = new JarOutputStream(out)) {
-            jarOut.putNextEntry(entry(META_INF));
-            jarOut.closeEntry();
+            writeEntry(jarOut, META_INF, null);
             jarOut.putNextEntry(entry(JarFile.MANIFEST_NAME));
             manifest.write(jarOut);
             jarOut.closeEntry();
             for (Map.Entry<String, Path> named : entries.entrySet()) {
-                jarOut.putNextEntry(entry(named.getKey()));
-                if (!named.getKey().endsWith("/")) {
-                    Files.copy(named.getValue(), jarOut);
-                }
-                jarOut.closeEntry();
+                writeEntry(jarOut, named.getKey(), named.getValue());
             }
         }
+    }
+
+    /**
+     * Writes a JAR entry: a directory, if the name ends with {@code /}, or the content of a file.
+     */
+    private static void writeEntry(JarOutputStream jarOut, String name, Path file) throws IOException {
+        jarOut.putNextEntry(entry(name));
+        if (!name.endsWith("/")) {
+            Files.copy(file, jarOut);
+        }
+        jarOut.closeEntry();
     }
 
     /**
