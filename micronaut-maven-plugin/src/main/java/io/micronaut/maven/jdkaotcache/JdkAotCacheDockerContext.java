@@ -25,6 +25,10 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.StringJoiner;
+import java.util.TreeMap;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -81,6 +85,8 @@ public final class JdkAotCacheDockerContext {
      */
     private static final LocalDateTime ENTRY_TIME = LocalDateTime.of(1980, 2, 1, 0, 0);
 
+    private static final String META_INF = "META-INF/";
+
     private JdkAotCacheDockerContext() {
     }
 
@@ -103,7 +109,9 @@ public final class JdkAotCacheDockerContext {
     }
 
     /**
-     * Writes the content of a directory into a JAR, in a stable order and with fixed timestamps.
+     * Writes the content of a directory into a JAR, in a stable order and with fixed timestamps. The entries are sorted
+     * by name, not by path, because the order of paths depends on the operating system: Windows compares them ignoring
+     * case and with {@code \} as the separator.
      *
      * @param classesDirectory the directory
      * @param jar the JAR to write
@@ -112,34 +120,44 @@ public final class JdkAotCacheDockerContext {
     static void writeApplicationJar(Path classesDirectory, Path jar) throws IOException {
         var manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-        List<Path> paths;
+        SortedMap<String, Path> entries = new TreeMap<>();
         if (Files.isDirectory(classesDirectory)) {
             try (Stream<Path> walk = Files.walk(classesDirectory)) {
-                paths = walk.filter(path -> !path.equals(classesDirectory)).sorted().toList();
+                walk.filter(path -> !path.equals(classesDirectory))
+                    .forEach(path -> entries.put(entryName(classesDirectory.relativize(path), Files.isDirectory(path)), path));
             }
-        } else {
-            paths = List.of();
         }
+        entries.remove(META_INF);
+        entries.remove(JarFile.MANIFEST_NAME);
         try (OutputStream out = Files.newOutputStream(jar);
              var jarOut = new JarOutputStream(out)) {
-            jarOut.putNextEntry(entry("META-INF/"));
+            jarOut.putNextEntry(entry(META_INF));
             jarOut.closeEntry();
             jarOut.putNextEntry(entry(JarFile.MANIFEST_NAME));
             manifest.write(jarOut);
             jarOut.closeEntry();
-            for (Path path : paths) {
-                String name = classesDirectory.relativize(path).toString().replace('\\', '/');
-                if ("META-INF".equals(name) || JarFile.MANIFEST_NAME.equals(name)) {
-                    continue;
-                }
-                boolean directory = Files.isDirectory(path);
-                jarOut.putNextEntry(entry(directory ? name + "/" : name));
-                if (!directory) {
-                    Files.copy(path, jarOut);
+            for (Map.Entry<String, Path> named : entries.entrySet()) {
+                jarOut.putNextEntry(entry(named.getKey()));
+                if (!named.getKey().endsWith("/")) {
+                    Files.copy(named.getValue(), jarOut);
                 }
                 jarOut.closeEntry();
             }
         }
+    }
+
+    /**
+     * @param relativePath a path relative to the classes directory
+     * @param directory whether the path is a directory
+     * @return the JAR entry name of the path, which always uses {@code /} as the separator, whatever the operating
+     * system, and ends with {@code /} for a directory
+     */
+    static String entryName(Path relativePath, boolean directory) {
+        var name = new StringJoiner("/", "", directory ? "/" : "");
+        for (Path element : relativePath) {
+            name.add(element.toString());
+        }
+        return name.toString();
     }
 
     private static ZipEntry entry(String name) {

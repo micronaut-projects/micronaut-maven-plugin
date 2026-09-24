@@ -50,6 +50,32 @@ class JdkAotCacheDockerContextTest {
     }
 
     @Test
+    void sortsTheEntriesByNameWhateverTheOperatingSystem(@TempDir Path tempDir) throws IOException {
+        Path classes = tempDir.resolve("classes");
+        Files.createDirectories(classes.resolve("example"));
+        Files.writeString(classes.resolve("example/Application.class"), "class");
+        Files.writeString(classes.resolve("example-a.txt"), "a");
+        Files.writeString(classes.resolve("a.txt"), "a");
+        Files.writeString(classes.resolve("Z.class"), "z");
+        Path jarPath = tempDir.resolve("application.jar");
+
+        JdkAotCacheDockerContext.writeApplicationJar(classes, jarPath);
+
+        try (var jar = new JarFile(jarPath.toFile())) {
+            assertEquals(List.of("META-INF/", "META-INF/MANIFEST.MF", "Z.class", "a.txt", "example-a.txt", "example/",
+                "example/Application.class"), jar.stream().map(ZipEntry::getName).toList());
+        }
+    }
+
+    @Test
+    void entryNamesUseSlashesWhateverTheOperatingSystem() {
+        assertEquals("example/sub/Application.class",
+            JdkAotCacheDockerContext.entryName(Path.of("example", "sub", "Application.class"), false));
+        assertEquals("example/sub/", JdkAotCacheDockerContext.entryName(Path.of("example", "sub"), true));
+        assertEquals("application.yml", JdkAotCacheDockerContext.entryName(Path.of("application.yml"), false));
+    }
+
+    @Test
     void writesAnEmptyJarWithoutClasses(@TempDir Path tempDir) throws IOException {
         Path jarPath = tempDir.resolve("application.jar");
 
