@@ -320,6 +320,75 @@ For example, you can define the `jib-maven-plugin` in your POM as follows to pas
 </plugin>
 ----
 
+=== Training a JDK AOT cache
+
+----
+$ mvn package -Dpackaging=docker -Dmicronaut.docker.jdkAotCache=true -Dmicronaut.docker.jdkAotCache.trainingPaths=/hello
+----
+
+A JDK AOT cache (https://openjdk.org/jeps/483[JEP 483], Java 25 or later) holds the application and dependency classes
+already loaded and linked, so the application starts faster. The cache is only valid for the JDK build, operating
+system and CPU architecture that trained it, so the image build trains it with the image's own `java`. It is not the
+same as link:aot.html[Micronaut AOT], which optimizes the application at build time and can be combined with it.
+
+With `micronaut.docker.jdkAotCache=true`, for the default runtime:
+
+. Jib builds a training image in `packaged` mode, where the application JAR comes first on the class path. A JDK AOT
+cache cannot load classes from a non-empty directory, such as the classes and resources layers of the default
+`exploded` mode, so the option sets `jib.containerizingMode=packaged`. The `docker` packaging builds the application
+JAR for it.
+. The plugin runs the training image once, with its own entrypoint and `-XX:AOTCacheOutput` in `JDK_JAVA_OPTIONS`. It
+waits until the application answers on its first exposed port, sends a `GET` request to every path in
+`micronaut.docker.jdkAotCache.trainingPaths`, stops it with `SIGTERM` and copies the cache out of the container. A
+failed request, or a status of 400 or more, fails the build. If the application's Micronaut version has the
+training-run switch (`micronaut.application.training.enabled`), the application sends the requests itself and exits.
+. Jib builds the image again with the configured `jib.buildGoal`. Its layers are the ones that trained the cache, the
+base image is pinned to the digest that the training build pulled, and the entrypoint starts `java` with
+`-XX:AOTCache`. The cache is an extra layer.
+
+The training runs the application. If it needs external services to start, they must be reachable from the training
+container, which runs on the `docker.networkMode` network when it is set.
+
+The option has these requirements:
+
+* A Docker daemon, which runs the training, also with `jib.buildGoal=buildTar` or `build`. The image is built for the
+daemon's platform only, so `from.platforms` must be empty or name that platform.
+* An explicit garbage collector in the Jib `container.jvmFlags`, for example `-XX:+UseSerialGC` or `-XX:+UseG1GC`.
+Parts of the cache depend on the collector, and without the flag the JVM picks it from the CPUs and memory it finds,
+which differ between the build and the deployment.
+* Jib's default entrypoint: `container.entrypoint` must not be set.
+* A base image with Java 25 or later and, unless the application's Micronaut version has the training-run switch,
+`bash`, which the warm-up uses to reach the application through `/dev/tcp`. On JDK 27 and later, the training adds
+`-XX:+AOTCompatibleOopCompression` so that the cache works with any heap size.
+
+[source,xml]
+----
+<properties>
+  <micronaut.docker.jdkAotCache>true</micronaut.docker.jdkAotCache>
+  <micronaut.docker.jdkAotCache.trainingPaths>/hello,/books</micronaut.docker.jdkAotCache.trainingPaths>
+</properties>
+...
+<plugin>
+  <groupId>com.google.cloud.tools</groupId>
+  <artifactId>jib-maven-plugin</artifactId>
+  <configuration>
+    <container>
+      <jvmFlags>
+        <jvmFlag>-XX:+UseSerialGC</jvmFlag>
+      </jvmFlags>
+    </container>
+  </configuration>
+</plugin>
+----
+
+The `micronaut.docker.jdkAotCache.trainingTimeout` property (180 seconds by default) bounds each step of the training
+run: waiting for the application, each request, and waiting for the application to exit and write the cache.
+
+The `Dockerfile` that `mn:dockerfile -Dpackaging=docker -Dmicronaut.docker.jdkAotCache=true` generates trains the cache
+in a `RUN` instruction, with the same script. It lists the dependency JARs one by one and an application JAR last,
+instead of `*` entries and the classes directory, and starts `java` with `-XX:+UseG1GC` and `-XX:AOTCache` in both the
+`RUN` instruction and the `ENTRYPOINT`.
+
 == Delegating packaging to Eclipse JKube
 
 ----

@@ -56,6 +56,17 @@ class LifecycleMappingTest {
         assertFalse(hasPhase(component, "deploy"));
     }
 
+    @Test
+    void dockerPackagingBuildsTheJarAfterAotAnalysis() throws Exception {
+        Element component = findLifecycleComponent("docker");
+
+        String preparePackage = phase(component, "prepare-package");
+
+        assertTrue(preparePackage.endsWith("org.apache.maven.plugins:maven-jar-plugin:jar"));
+        assertTrue(preparePackage.indexOf(":aot-analysis") < preparePackage.indexOf("maven-jar-plugin:jar"));
+        assertTrue(phase(component, "package").matches(MICRONAUT_MAVEN_PLUGIN_COORDINATES + "[^,\\s]+:docker"));
+    }
+
     private static Element findLifecycleComponent(String roleHint) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);

@@ -21,6 +21,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
@@ -404,6 +406,79 @@ class DockerfileMojoTest {
         invokeProcessDockerfile(mojo, dockerfile);
 
         assertFalse(Files.readString(findConvertedArgsFile(tempDir.resolve("target"))).contains(MojoUtils.SHARED_ARENA_SUPPORT));
+    }
+
+    @Test
+    void jdkAotCacheGeneratesATrainingDockerfileWithAJarOnlyClassPath(@TempDir Path tempDir) throws Exception {
+        var project = mockProject(tempDir);
+        when(project.getPackaging()).thenReturn("docker");
+        Path classes = Files.createDirectories(tempDir.resolve("target/classes/example"));
+        Files.writeString(classes.resolve("Application.class"), "class");
+        when(project.getBuild().getOutputDirectory()).thenReturn(tempDir.resolve("target/classes").toString());
+        var release = dependency(tempDir, "a-1.0.jar", Artifact.SCOPE_COMPILE, false);
+        var snapshot = dependency(tempDir, "b-1.0-SNAPSHOT.jar", Artifact.SCOPE_RUNTIME, true);
+        var test = dependency(tempDir, "c-1.0.jar", Artifact.SCOPE_TEST, false);
+        var artifacts = new LinkedHashSet<Artifact>(List.of(snapshot, test, release));
+        when(project.getArtifacts()).thenReturn(artifacts);
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getPorts()).thenReturn(Optional.of("8080 8443/tcp"));
+        var dockerService = mock(DockerService.class);
+        when(dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_JDK_AOT_CACHE)).thenAnswer(invocation -> {
+            Path dockerfile = tempDir.resolve("target/Dockerfile");
+            Files.copy(Path.of("src/main/resources/dockerfiles", DockerfileMojo.DOCKERFILE_JDK_AOT_CACHE), dockerfile);
+            return dockerfile.toFile();
+        });
+        var mojo = new DockerfileMojo(project, dockerService, jibConfigurationService,
+            mock(ApplicationConfigurationService.class), mock(ExecutorService.class), mockSession(project), mock(MojoExecution.class));
+        mojo.micronautRuntime = "netty";
+        mojo.mainClass = "example.Application";
+        mojo.jdkAotCache = true;
+        mojo.jdkAotCacheTrainingPaths = List.of("/hello", "/it's");
+        mojo.jdkAotCacheTrainingTimeout = 90;
+
+        mojo.execute();
+
+        assertEquals(List.of(
+            "FROM eclipse-temurin:25-jre",
+            "WORKDIR /home/app",
+            "COPY dependency/release/ /home/app/libs/release/",
+            "COPY dependency/snapshot/ /home/app/libs/snapshot/",
+            "COPY jdk-aot-cache/application.jar jdk-aot-cache/classpath jdk-aot-cache/training.sh /home/app/",
+            "RUN bash /home/app/training.sh train /home/app/app.aot 8080 90 sigterm '/hello' '/it'\"'\"'s' -- java -XX:+UseG1GC "
+                + "-cp @/home/app/classpath 'example.Application' && rm /home/app/training.sh",
+            "EXPOSE 8080 8443/tcp",
+            "ENTRYPOINT [\"java\", \"-XX:+UseG1GC\", \"-XX:AOTCache=/home/app/app.aot\", \"-cp\", \"@/home/app/classpath\", "
+                + "\"example.Application\"]"
+        ), Files.readAllLines(tempDir.resolve("target/Dockerfile")));
+        assertEquals("\"/home/app/libs/snapshot/b-1.0-SNAPSHOT.jar:/home/app/libs/release/a-1.0.jar:/home/app/application.jar\"\n",
+            Files.readString(tempDir.resolve("target/jdk-aot-cache/classpath")));
+        assertTrue(Files.size(tempDir.resolve("target/jdk-aot-cache/application.jar")) > 0);
+        assertTrue(Files.exists(tempDir.resolve("target/jdk-aot-cache/training.sh")));
+        assertTrue(Files.exists(tempDir.resolve("target/dependency/release/a-1.0.jar")));
+    }
+
+    @Test
+    void jdkAotCacheOnlySupportsTheDefaultRuntime(@TempDir Path tempDir) {
+        var project = mockProject(tempDir);
+        when(project.getPackaging()).thenReturn("docker");
+        when(project.getBuild().getOutputDirectory()).thenReturn(tempDir.resolve("target/classes").toString());
+        var mojo = new DockerfileMojo(project, mock(DockerService.class), mock(JibConfigurationService.class),
+            mock(ApplicationConfigurationService.class), mock(ExecutorService.class), mockSession(project), mock(MojoExecution.class));
+        mojo.micronautRuntime = "lambda";
+        mojo.jdkAotCache = true;
+
+        var ex = assertThrows(MojoExecutionException.class, mojo::execute);
+
+        assertEquals("micronaut.docker.jdkAotCache only supports the default runtime, not lambda", ex.getMessage());
+    }
+
+    private static Artifact dependency(Path tempDir, String fileName, String scope, boolean snapshot) throws IOException {
+        Path file = Files.writeString(tempDir.resolve(fileName), fileName);
+        var artifact = mock(Artifact.class);
+        when(artifact.getFile()).thenReturn(file.toFile());
+        when(artifact.getScope()).thenReturn(scope);
+        when(artifact.isSnapshot()).thenReturn(snapshot);
+        return artifact;
     }
 
     private static DockerfileMojo newDockerfileMojo(MavenProject project, Optional<String> fromImage) {
