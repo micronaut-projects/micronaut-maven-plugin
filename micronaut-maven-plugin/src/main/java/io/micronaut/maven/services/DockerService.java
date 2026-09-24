@@ -16,22 +16,33 @@
 package io.micronaut.maven.services;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.command.BuildImageResultCallback;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.ExecCreateCmd;
+import com.github.dockerjava.api.command.InspectImageCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.command.KillContainerCmd;
 import com.github.dockerjava.api.command.PushImageCmd;
+import com.github.dockerjava.api.command.RemoveContainerCmd;
+import com.github.dockerjava.api.command.RemoveImageCmd;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.command.WaitContainerCmd;
 import com.github.dockerjava.api.command.WaitContainerResultCallback;
 import com.github.dockerjava.api.exception.DockerClientException;
+import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.AuthConfigurations;
 import com.github.dockerjava.api.model.AuthResponse;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.BuildResponseItem;
+import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.Info;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -58,9 +69,16 @@ import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * Provides methods to work with Docker images.
@@ -84,6 +102,18 @@ public class DockerService {
         this.mavenProject = mavenProject;
         this.jibConfigurationService = jibConfigurationService;
         this.config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+    }
+
+    /**
+     * Uses the given Docker client instead of connecting to the configured Docker host. For tests.
+     *
+     * @param mavenProject the Maven project
+     * @param jibConfigurationService the Jib configuration service
+     * @param dockerClient the Docker client
+     */
+    DockerService(MavenProject mavenProject, JibConfigurationService jibConfigurationService, DockerClient dockerClient) {
+        this(mavenProject, jibConfigurationService);
+        this.dockerClient = dockerClient;
     }
 
     private DockerClient getDockerClient() {
@@ -171,48 +201,292 @@ public class DockerService {
      * @param binds the bind mounts to use
      */
     public void runPrivilegedImageAndWait(String imageId, Integer timeoutSeconds, String checkpointNetworkName, String... binds) throws IOException {
+        String containerId = createContainer(imageId, checkpointNetworkName, true, Map.of(), binds);
+        startAndWait(containerId, imageId, timeoutSeconds);
+    }
+
+    /**
+     * Creates a container from the given image, without starting it.
+     *
+     * @param imageId the image to use
+     * @param networkName the name of the network to use for the container, if any
+     * @param privileged whether the container is privileged
+     * @param environment the environment variables to set, on top of the image ones
+     * @param binds the bind mounts to use
+     * @return the container ID
+     * @since 5.1.0
+     */
+    public String createContainer(String imageId, String networkName, boolean privileged, Map<String, String> environment,
+                                  String... binds) {
         verifyDockerRunning();
         try (CreateContainerCmd create = getDockerClient().createContainerCmd(imageId)) {
             HostConfig hostConfig = create.getHostConfig();
             if (hostConfig == null) {
                 throw new DockerClientException("When setting binds and privileged, hostConfig was null.  Please check your docker installation and try again");
             }
-            hostConfig.withPrivileged(true);
-            if (checkpointNetworkName != null) {
-                hostConfig.withNetworkMode(checkpointNetworkName);
+            if (privileged) {
+                hostConfig.withPrivileged(true);
+            }
+            if (networkName != null) {
+                hostConfig.withNetworkMode(networkName);
             }
             for (String bind : binds) {
                 hostConfig.withBinds(Bind.parse(bind));
             }
-            CreateContainerResponse createResponse = create.exec();
-            try (StartContainerCmd start = getDockerClient().startContainerCmd(createResponse.getId())) {
-                start.exec();
-                LOG.info("Container started: {} {}", createResponse.getId(), start.getContainerId());
-                try (WaitContainerCmd wait = getDockerClient().waitContainerCmd(createResponse.getId())) {
-                    WaitContainerResultCallback waitResult = wait.start();
-                    LOG.info("Waiting {} seconds for completion", timeoutSeconds);
-                    Integer exitCode = waitResult.awaitStatusCode(timeoutSeconds, TimeUnit.SECONDS);
-                    if (exitCode != 0) {
-                        final Slf4jLogConsumer stdoutConsumer = new Slf4jLogConsumer(LOG);
-                        final Slf4jLogConsumer stderrConsumer = new Slf4jLogConsumer(LOG);
+            if (!environment.isEmpty()) {
+                create.withEnv(environment.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).toList());
+            }
+            return create.exec().getId();
+        }
+    }
 
-                        try (var callback = new FrameConsumerResultCallback()) {
-                            callback.addConsumer(OutputFrame.OutputType.STDOUT, stdoutConsumer);
-                            callback.addConsumer(OutputFrame.OutputType.STDERR, stderrConsumer);
+    /**
+     * Starts a container and waits for it to exit with status 0. Otherwise, logs its output and fails.
+     *
+     * @param containerId the container
+     * @param imageId the image of the container, for the error message
+     * @param timeoutSeconds the timeout in seconds for the container to finish execution
+     * @throws IOException if the container does not exit with status 0 within the timeout
+     * @since 5.1.0
+     */
+    public void startAndWait(String containerId, String imageId, Integer timeoutSeconds) throws IOException {
+        startContainer(containerId);
+        LOG.info("Waiting {} seconds for completion", timeoutSeconds);
+        int exitCode;
+        try {
+            exitCode = awaitExit(containerId, timeoutSeconds);
+        } catch (IOException e) {
+            logContainerOutput(containerId);
+            throw e;
+        }
+        if (exitCode != 0) {
+            logContainerOutput(containerId);
+            throw new IOException("Image " + imageId + " exited with code " + exitCode);
+        }
+    }
 
-                            getDockerClient().logContainerCmd(start.getContainerId())
-                                .withStdOut(true)
-                                .withStdErr(true)
-                                .exec(callback)
-                                .awaitCompletion();
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
-                        throw new IOException("Image " + imageId + " exited with code " + exitCode);
-                    }
-                }
+    /**
+     * Starts a container.
+     *
+     * @param containerId the container
+     * @since 5.1.0
+     */
+    public void startContainer(String containerId) {
+        try (StartContainerCmd start = getDockerClient().startContainerCmd(containerId)) {
+            start.exec();
+            LOG.info("Container started: {}", containerId);
+        }
+    }
+
+    /**
+     * Waits for a container to exit.
+     *
+     * @param containerId the container
+     * @param timeoutSeconds the timeout in seconds
+     * @return the exit code of the container
+     * @throws IOException if the container does not exit within the timeout
+     * @since 5.1.0
+     */
+    public int awaitExit(String containerId, int timeoutSeconds) throws IOException {
+        try (WaitContainerCmd wait = getDockerClient().waitContainerCmd(containerId)) {
+            WaitContainerResultCallback waitResult = wait.start();
+            try {
+                return waitResult.awaitStatusCode(timeoutSeconds, TimeUnit.SECONDS);
+            } catch (DockerClientException e) {
+                throw new IOException("Container " + containerId + " did not exit within " + timeoutSeconds + " seconds", e);
             }
         }
+    }
+
+    /**
+     * Sends a signal to the main process of a running container.
+     *
+     * @param containerId the container
+     * @param signal the signal, for example {@code SIGTERM}
+     * @since 5.1.0
+     */
+    public void signalContainer(String containerId, String signal) {
+        try (KillContainerCmd kill = getDockerClient().killContainerCmd(containerId)) {
+            kill.withSignal(signal).exec();
+        } catch (ConflictException | NotFoundException e) {
+            LOG.debug("Container {} is not running: {}", containerId, e.getMessage());
+        }
+    }
+
+    /**
+     * Runs a command in a running container and waits for it.
+     *
+     * @param containerId the container
+     * @param timeoutSeconds the timeout in seconds
+     * @param output receives the output of the command, line by line
+     * @param command the command and its arguments
+     * @return the exit code of the command
+     * @throws IOException if the command does not finish within the timeout
+     * @since 5.1.0
+     */
+    public int execInContainer(String containerId, int timeoutSeconds, Consumer<String> output, String... command) throws IOException {
+        String execId;
+        try (ExecCreateCmd create = getDockerClient().execCreateCmd(containerId)) {
+            execId = create.withCmd(command).withAttachStdout(true).withAttachStderr(true).exec().getId();
+        }
+        try (var callback = new LineCallback(output)) {
+            boolean completed = getDockerClient().execStartCmd(execId).exec(callback).awaitCompletion(timeoutSeconds, TimeUnit.SECONDS);
+            callback.flush();
+            if (!completed) {
+                throw new IOException("Command " + command[0] + " did not finish within " + timeoutSeconds + " seconds");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted while running " + command[0], e);
+        }
+        Long exitCode = getDockerClient().inspectExecCmd(execId).exec().getExitCodeLong();
+        return exitCode == null ? -1 : exitCode.intValue();
+    }
+
+    /**
+     * Runs an image with the given entrypoint, waits for it and returns its output.
+     *
+     * @param imageId the image to use
+     * @param timeoutSeconds the timeout in seconds
+     * @param entrypoint the entrypoint, which replaces the image entrypoint and command
+     * @return the exit code and the output of the container
+     * @throws IOException if the container does not exit within the timeout
+     * @since 5.1.0
+     */
+    public ContainerOutput runAndCaptureOutput(String imageId, int timeoutSeconds, List<String> entrypoint) throws IOException {
+        verifyDockerRunning();
+        String containerId;
+        try (CreateContainerCmd create = getDockerClient().createContainerCmd(imageId)) {
+            containerId = create.withEntrypoint(entrypoint).exec().getId();
+        }
+        try {
+            startContainer(containerId);
+            int exitCode = awaitExit(containerId, timeoutSeconds);
+            var lines = new ArrayList<String>();
+            try (var callback = new LineCallback(lines::add)) {
+                getDockerClient().logContainerCmd(containerId).withStdOut(true).withStdErr(true).exec(callback).awaitCompletion();
+                callback.flush();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return new ContainerOutput(exitCode, String.join("\n", lines));
+        } finally {
+            removeContainer(containerId);
+        }
+    }
+
+    /**
+     * Logs the output of a container.
+     *
+     * @param containerId the container
+     * @since 5.1.0
+     */
+    public void logContainerOutput(String containerId) {
+        final Slf4jLogConsumer stdoutConsumer = new Slf4jLogConsumer(LOG);
+        final Slf4jLogConsumer stderrConsumer = new Slf4jLogConsumer(LOG);
+
+        try (var callback = new FrameConsumerResultCallback()) {
+            callback.addConsumer(OutputFrame.OutputType.STDOUT, stdoutConsumer);
+            callback.addConsumer(OutputFrame.OutputType.STDERR, stderrConsumer);
+
+            getDockerClient().logContainerCmd(containerId)
+                .withStdOut(true)
+                .withStdErr(true)
+                .exec(callback)
+                .awaitCompletion();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (IOException e) {
+            LOG.warn("Could not read the output of container {}: {}", containerId, e.getMessage());
+        }
+    }
+
+    /**
+     * Copies a regular file out of a container, which may have exited.
+     *
+     * @param containerId the container
+     * @param containerPath the absolute path of the file in the container
+     * @param target the file to write
+     * @throws IOException if the file cannot be copied
+     * @since 5.1.0
+     */
+    public void copyFileFromContainer(String containerId, String containerPath, Path target) throws IOException {
+        try (InputStream archive = getDockerClient().copyArchiveFromContainerCmd(containerId, containerPath).exec();
+             var tar = new TarArchiveInputStream(archive)) {
+            TarArchiveEntry entry = tar.getNextEntry();
+            if (entry == null || !entry.isFile()) {
+                throw new IOException(containerPath + " is not a file in container " + containerId);
+            }
+            Files.createDirectories(target.toAbsolutePath().getParent());
+            Files.copy(tar, target, StandardCopyOption.REPLACE_EXISTING);
+        } catch (NotFoundException e) {
+            throw new IOException(containerPath + " does not exist in container " + containerId, e);
+        }
+    }
+
+    /**
+     * Removes a container, stopping it if it is running.
+     *
+     * @param containerId the container
+     * @since 5.1.0
+     */
+    public void removeContainer(String containerId) {
+        try (RemoveContainerCmd remove = getDockerClient().removeContainerCmd(containerId)) {
+            remove.withForce(true).withRemoveVolumes(true).exec();
+        } catch (NotFoundException e) {
+            LOG.debug("Container {} was already removed", containerId);
+        }
+    }
+
+    /**
+     * Removes an image and its tags.
+     *
+     * @param imageId the image
+     * @since 5.1.0
+     */
+    public void removeImage(String imageId) {
+        try (RemoveImageCmd remove = getDockerClient().removeImageCmd(imageId)) {
+            remove.withForce(true).exec();
+        } catch (NotFoundException e) {
+            LOG.debug("Image {} was already removed", imageId);
+        }
+    }
+
+    /**
+     * @param image the image name or ID
+     * @return the image details
+     * @since 5.1.0
+     */
+    public InspectImageResponse inspectImage(String image) {
+        verifyDockerRunning();
+        try (InspectImageCmd inspect = getDockerClient().inspectImageCmd(image)) {
+            return inspect.exec();
+        }
+    }
+
+    /**
+     * @return the platform of the Docker daemon, as {@code os/architecture} with Go architecture names such as
+     * {@code linux/amd64} or {@code linux/arm64}
+     * @throws IllegalStateException if the Docker daemon is not reachable
+     * @since 5.1.0
+     */
+    public String getDaemonPlatform() {
+        verifyDockerRunning();
+        Info info = getDockerClient().infoCmd().exec();
+        return info.getOsType() + "/" + goArchitecture(info.getArchitecture());
+    }
+
+    /**
+     * @param architecture an architecture name, as the Docker daemon or Jib configuration gives it
+     * @return the Go architecture name used in image platforms, such as {@code amd64} or {@code arm64}
+     * @since 5.1.0
+     */
+    public static String goArchitecture(String architecture) {
+        return switch (architecture) {
+            case "x86_64", "amd64" -> "amd64";
+            case "aarch64", "arm64" -> "arm64";
+            default -> architecture;
+        };
     }
 
     /**
@@ -322,6 +596,46 @@ public class DockerService {
             throw new IllegalStateException(e.getMessage());
         } catch (RuntimeException e) {
             throw new IllegalStateException("Cannot connect to the Docker daemon at " + config.getDockerHost() + ". Is the docker daemon running?", e);
+        }
+    }
+
+    /**
+     * The exit code and the output of a container.
+     *
+     * @param exitCode the exit code
+     * @param output the standard output and error, interleaved
+     * @since 5.1.0
+     */
+    public record ContainerOutput(int exitCode, String output) {
+    }
+
+    /**
+     * Splits the frames of a container stream into lines.
+     */
+    private static final class LineCallback extends ResultCallback.Adapter<Frame> {
+        private final Consumer<String> lines;
+        private final StringBuilder pending = new StringBuilder();
+
+        private LineCallback(Consumer<String> lines) {
+            this.lines = lines;
+        }
+
+        @Override
+        public void onNext(Frame frame) {
+            pending.append(new String(frame.getPayload(), StandardCharsets.UTF_8));
+            int newLine = pending.indexOf("\n");
+            while (newLine >= 0) {
+                lines.accept(StringUtils.removeEnd(pending.substring(0, newLine), "\r"));
+                pending.delete(0, newLine + 1);
+                newLine = pending.indexOf("\n");
+            }
+        }
+
+        private void flush() {
+            if (!pending.isEmpty()) {
+                lines.accept(pending.toString());
+                pending.setLength(0);
+            }
         }
     }
 }
