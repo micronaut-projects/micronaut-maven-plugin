@@ -73,6 +73,8 @@ class JdkAotCacheTrainingTest {
         assertEquals(Optional.of(new JdkAotCacheTraining.JavaRuntime(25, false)), JdkAotCacheTraining.JavaRuntime.parse(
             "NOTE: Picked up JDK_JAVA_OPTIONS: -XX:+AOTCompatibleOopCompression\nopenjdk version \"25\""));
         assertEquals(Optional.empty(), JdkAotCacheTraining.JavaRuntime.parse("bash: java: command not found"));
+        assertEquals(Optional.empty(), JdkAotCacheTraining.JavaRuntime.parse("openjdk version \"99999999999\""));
+        assertEquals(Optional.empty(), JdkAotCacheTraining.JavaRuntime.parse("java version \"1.99999999999\""));
     }
 
     @Test

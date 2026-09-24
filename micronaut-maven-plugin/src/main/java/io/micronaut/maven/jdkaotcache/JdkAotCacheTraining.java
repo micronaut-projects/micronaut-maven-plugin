@@ -298,18 +298,23 @@ public final class JdkAotCacheTraining {
 
         /**
          * @param output the output of {@code java -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal -version}
-         * @return the Java runtime, if the output has a version line
+         * @return the Java runtime, if the output has a version line with a valid version number
          */
         static Optional<JavaRuntime> parse(String output) {
             Matcher matcher = JAVA_VERSION.matcher(output);
             if (!matcher.find()) {
                 return Optional.empty();
             }
-            int major = Integer.parseInt(matcher.group(1));
-            if (major == 1 && matcher.group(2) != null) {
-                major = Integer.parseInt(matcher.group(2));
+            try {
+                int major = Integer.parseInt(matcher.group(1));
+                if (major == 1 && matcher.group(2) != null) {
+                    major = Integer.parseInt(matcher.group(2));
+                }
+                return Optional.of(new JavaRuntime(major, COMPATIBLE_OOP_COMPRESSION.matcher(output).find()));
+            } catch (NumberFormatException _) {
+                // a version number too large for an int
+                return Optional.empty();
             }
-            return Optional.of(new JavaRuntime(major, COMPATIBLE_OOP_COMPRESSION.matcher(output).find()));
         }
     }
 }
