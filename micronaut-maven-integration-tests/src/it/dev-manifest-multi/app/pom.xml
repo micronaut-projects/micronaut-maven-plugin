@@ -33,6 +33,21 @@
         <groupId>io.micronaut.maven</groupId>
         <artifactId>micronaut-maven-plugin</artifactId>
         <version>${micronaut-maven-plugin.version}</version>
+        <configuration>
+          <strategy>restart</strategy>
+          <retain>devmulti.lib.Greeter</retain>
+          <liveReloadPort>35730</liveReloadPort>
+        </configuration>
+        <executions>
+          <!-- what a direct `mvn mn:dev` in this module applies, and what an aggregator invocation must apply too -->
+          <execution>
+            <id>default-cli</id>
+            <configuration>
+              <liveReloadPort>35731</liveReloadPort>
+              <manifestOnly>true</manifestOnly>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

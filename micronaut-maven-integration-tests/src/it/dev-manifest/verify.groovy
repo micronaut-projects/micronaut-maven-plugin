@@ -34,6 +34,8 @@ assert manifest.'micronaut.dev.processor-path' == '@processors.argfile'
 List<String> processors = new File(basedir, 'target/micronaut-dev/processors.argfile').readLines()
 assert processors.any { it.contains('micronaut-http-validation-') }
 assert processors.any { it.contains('micronaut-inject-java-') }
+// the path's exclusion is honoured, as Maven honours it
+assert processors.every { !it.contains('reactor-core-') }
 assert manifest.'micronaut.dev.compile.java.options' == '@java-options.argfile'
 List<String> options = new File(basedir, 'target/micronaut-dev/java-options.argfile').readLines()
 assert options.containsAll(['-parameters', '-Amicronaut.processing.group=devmanifest', '-Amicronaut.processing.module=dev-manifest', '-Xlint:unchecked,deprecation'])

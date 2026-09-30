@@ -26,3 +26,9 @@ List<String> runtime = new File(basedir, 'app/target/micronaut-dev/runtime.argfi
 assert runtime.every { !it.contains('target' + File.separator + 'classes') && !it.contains('devmulti') }
 List<String> options = new File(basedir, 'app/target/micronaut-dev/java-options.argfile').readLines()
 assert options.contains('-Amicronaut.processing.group=devmulti')
+
+// invoked from the reactor root, the goal reads the selected application's own plugin configuration
+assert manifest.'micronaut.dev.main-class' == 'devmulti.app.Application'
+assert manifest.'micronaut.dev.strategy' == 'restart'
+assert manifest.'micronaut.dev.retain' == 'devmulti.lib.Greeter'
+assert manifest.'micronaut.dev.livereload.port' == '35731'

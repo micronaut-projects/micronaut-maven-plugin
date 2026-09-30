@@ -24,6 +24,9 @@ import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluator
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.graph.Exclusion;
+import org.eclipse.aether.util.artifact.JavaScopes;
 
 import java.io.File;
 import java.io.IOException;
@@ -188,8 +191,9 @@ public final class DevManifest {
 
     /**
      * The annotation processor path the compiler plugin is configured with: every {@code <path>} of
-     * {@code annotationProcessorPaths}, as artifacts to resolve, versioned by the dependency management
-     * when {@code annotationProcessorPathsUseDepMgmt} is set or the path names no version.
+     * {@code annotationProcessorPaths}, as dependencies to resolve with the exclusions the path declares,
+     * versioned by the dependency management when {@code annotationProcessorPathsUseDepMgmt} is set or the
+     * path names no version.
      *
      * @param project the project
      * @param evaluator what evaluates expressions
@@ -198,7 +202,7 @@ public final class DevManifest {
      */
     public static ProcessorPaths processorPaths(MavenProject project, ExpressionEvaluator evaluator) throws ExpressionEvaluationException {
         Xpp3Dom configuration = compilerConfiguration(project);
-        List<Artifact> artifacts = new ArrayList<>();
+        List<Dependency> dependencies = new ArrayList<>();
         boolean managed = false;
         if (configuration != null) {
             managed = Boolean.parseBoolean(childValue(configuration, "annotationProcessorPathsUseDepMgmt", evaluator));
@@ -215,11 +219,30 @@ public final class DevManifest {
                     if (version == null || version.isEmpty()) {
                         managed = true;
                     }
-                    artifacts.add(new DefaultArtifact(groupId, artifactId, classifier == null ? "" : classifier, "jar", version == null ? "" : version));
+                    Artifact artifact = new DefaultArtifact(groupId, artifactId, classifier == null ? "" : classifier, "jar", version == null ? "" : version);
+                    dependencies.add(new Dependency(artifact, JavaScopes.RUNTIME, false, exclusions(path, evaluator)));
                 }
             }
         }
-        return new ProcessorPaths(artifacts, managed);
+        return new ProcessorPaths(dependencies, managed);
+    }
+
+    /**
+     * The exclusions of a processor path entry, as Maven applies them: every classifier and extension of the
+     * excluded module, and a {@code *} matching any group or artifact.
+     */
+    private static List<Exclusion> exclusions(Xpp3Dom path, ExpressionEvaluator evaluator) throws ExpressionEvaluationException {
+        Xpp3Dom exclusions = path.getChild("exclusions");
+        if (exclusions == null) {
+            return List.of();
+        }
+        List<Exclusion> result = new ArrayList<>();
+        for (Xpp3Dom exclusion : exclusions.getChildren("exclusion")) {
+            String groupId = childValue(exclusion, "groupId", evaluator);
+            String artifactId = childValue(exclusion, "artifactId", evaluator);
+            result.add(new Exclusion(groupId == null ? "*" : groupId, artifactId == null ? "*" : artifactId, "*", "*"));
+        }
+        return result;
     }
 
     /**
@@ -419,9 +442,9 @@ public final class DevManifest {
     /**
      * The annotation processor path to resolve.
      *
-     * @param artifacts the artifacts, some without a version
+     * @param dependencies the dependencies, some without a version, with their exclusions
      * @param managed whether the dependency management supplies versions
      */
-    public record ProcessorPaths(List<Artifact> artifacts, boolean managed) {
+    public record ProcessorPaths(List<Dependency> dependencies, boolean managed) {
     }
 }
