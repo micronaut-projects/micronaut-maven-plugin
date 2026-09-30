@@ -52,6 +52,10 @@ class JdkAotCacheTrainingTest {
         openjdk version "27" 2026-09-15
         """;
 
+    private static final TrainingRun SCRIPT = new TrainingRun(TrainingMode.START, false, "start, script");
+    private static final TrainingRun SWITCH = new TrainingRun(TrainingMode.START, true, "start, switch");
+    private static final TrainingRun LOAD = new TrainingRun(TrainingMode.LOAD, true, "load");
+
     private final DockerService dockerService = mock(DockerService.class);
     private final Log log = mock(Log.class);
 
@@ -82,18 +86,27 @@ class JdkAotCacheTrainingTest {
         var java25 = new JdkAotCacheTraining.JavaRuntime(25, false);
 
         assertEquals(Map.of("JDK_JAVA_OPTIONS", "-XX:AOTCacheOutput=/tmp/app.aot"),
-            JdkAotCacheTraining.trainingEnvironment(null, java25, false, List.of("/hello")));
+            JdkAotCacheTraining.trainingEnvironment(null, java25, SCRIPT, List.of("/hello")));
         assertEquals(Map.of("JDK_JAVA_OPTIONS", "-Xss1m -XX:AOTCacheOutput=/tmp/app.aot"),
-            JdkAotCacheTraining.trainingEnvironment(new String[] {"PATH=/bin", "JDK_JAVA_OPTIONS=-Xss1m"}, java25, false, List.of()));
+            JdkAotCacheTraining.trainingEnvironment(new String[] {"PATH=/bin", "JDK_JAVA_OPTIONS=-Xss1m"}, java25, SCRIPT, List.of()));
         assertEquals(Map.of("JDK_JAVA_OPTIONS", "-XX:AOTCacheOutput=/tmp/app.aot -Dmicronaut.application.training.enabled=true "
-                + "-Dmicronaut.application.training.warmup.paths[0]=/hello"),
-            JdkAotCacheTraining.trainingEnvironment(null, java25, true, List.of("/hello")));
+                + "-Dmicronaut.application.training.mode=start -Dmicronaut.application.training.warmup.paths[0]=/hello"),
+            JdkAotCacheTraining.trainingEnvironment(null, java25, SWITCH, List.of("/hello")));
+    }
+
+    @Test
+    void trainingEnvironmentSelectsTheLoadMode() {
+        var java25 = new JdkAotCacheTraining.JavaRuntime(25, false);
+
+        assertEquals(Map.of("JDK_JAVA_OPTIONS", "-Xss1m -XX:AOTCacheOutput=/tmp/app.aot "
+                + "-Dmicronaut.application.training.enabled=true -Dmicronaut.application.training.mode=load"),
+            JdkAotCacheTraining.trainingEnvironment(new String[] {"JDK_JAVA_OPTIONS=-Xss1m"}, java25, LOAD, List.of()));
     }
 
     @Test
     void trainingEnvironmentAddsTheJdk27CreationFlag() {
         var environment = JdkAotCacheTraining.trainingEnvironment(new String[] {"JDK_AOT_VM_OPTIONS=-Xlog:aot"},
-            new JdkAotCacheTraining.JavaRuntime(27, true), false, List.of());
+            new JdkAotCacheTraining.JavaRuntime(27, true), SCRIPT, List.of());
 
         assertEquals("-Xlog:aot -XX:+UnlockDiagnosticVMOptions -XX:+AOTCompatibleOopCompression", environment.get("JDK_AOT_VM_OPTIONS"));
     }
@@ -119,7 +132,7 @@ class JdkAotCacheTrainingTest {
         mockCopy("cache");
         Path cacheFile = tempDir.resolve("app.aot");
 
-        training(List.of("/hello")).train("sha256:training", false, cacheFile);
+        training(List.of("/hello")).train("sha256:training", SCRIPT, cacheFile);
 
         assertEquals("cache", Files.readString(cacheFile));
         @SuppressWarnings("unchecked")
@@ -148,11 +161,58 @@ class JdkAotCacheTrainingTest {
         when(dockerService.createContainer(eq("sha256:training"), eq("host"), eq(false), anyMap())).thenReturn("container");
         mockCopy("cache");
 
-        new JdkAotCacheTraining(dockerService, log, List.of("/hello"), 180, "host").train("sha256:training", true, tempDir.resolve("app.aot"));
+        new JdkAotCacheTraining(dockerService, log, List.of("/hello"), 180, "host").train("sha256:training", SWITCH, tempDir.resolve("app.aot"));
 
         verify(dockerService).startAndWait("container", "sha256:training", 180);
         verify(dockerService, never()).execInContainer(any(), anyInt(), any(), any(String[].class));
         verify(dockerService, never()).signalContainer(any(), any());
+        verify(dockerService, never()).logContainerOutput(any());
+        verify(dockerService).removeContainer("container");
+    }
+
+    @Test
+    void loadRunNeedsNoPortNoScriptAndNoSignal(@TempDir Path tempDir) throws Exception {
+        // No exposed port: the application is not started, so nothing has to reach it
+        mockImage(new String[] {"JDK_JAVA_OPTIONS=-Xss1m"});
+        mockJava(JAVA_25_OUTPUT);
+        when(dockerService.createContainer(eq("sha256:training"), isNull(), eq(false), anyMap())).thenReturn("container");
+        mockCopy("cache");
+        Path cacheFile = tempDir.resolve("app.aot");
+
+        training(List.of()).train("sha256:training", LOAD, cacheFile);
+
+        assertEquals("cache", Files.readString(cacheFile));
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, String>> environment = ArgumentCaptor.forClass(Map.class);
+        InOrder order = inOrder(dockerService);
+        order.verify(dockerService).createContainer(eq("sha256:training"), isNull(), eq(false), environment.capture());
+        order.verify(dockerService).startAndWait("container", "sha256:training", 180);
+        order.verify(dockerService).logContainerOutput("container");
+        order.verify(dockerService).copyFileFromContainer("container", "/tmp/app.aot", cacheFile);
+        order.verify(dockerService).removeContainer("container");
+        assertEquals(Map.of("JDK_JAVA_OPTIONS", "-Xss1m -XX:AOTCacheOutput=/tmp/app.aot "
+            + "-Dmicronaut.application.training.enabled=true -Dmicronaut.application.training.mode=load"), environment.getValue());
+        verify(dockerService, never()).startContainer(any());
+        verify(dockerService, never()).execInContainer(any(), anyInt(), any(), any(String[].class));
+        verify(dockerService, never()).signalContainer(any(), any());
+        verify(log).info("JDK AOT cache: the application loads its bean definitions and exits without starting "
+            + "(Micronaut training mode load)");
+    }
+
+    @Test
+    void failsWhenTheLoadRunFails(@TempDir Path tempDir) throws Exception {
+        mockImage(null);
+        mockJava(JAVA_25_OUTPUT);
+        when(dockerService.createContainer(any(), any(), eq(false), anyMap())).thenReturn("container");
+        doThrow(new IOException("Image sha256:training exited with code 1"))
+            .when(dockerService).startAndWait("container", "sha256:training", 180);
+        Path cacheFile = tempDir.resolve("app.aot");
+
+        var e = assertThrows(MojoExecutionException.class, () -> training(List.of()).train("sha256:training", LOAD, cacheFile));
+
+        assertEquals("JDK AOT cache training failed: Image sha256:training exited with code 1", e.getMessage());
+        assertFalse(Files.exists(cacheFile));
+        verify(dockerService, never()).copyFileFromContainer(any(), any(), any());
         verify(dockerService).removeContainer("container");
     }
 
@@ -168,7 +228,7 @@ class JdkAotCacheTrainingTest {
             return 1;
         });
 
-        var e = assertThrows(MojoExecutionException.class, () -> training(List.of("/hello", "/missing")).train("sha256:training", false, tempDir.resolve("app.aot")));
+        var e = assertThrows(MojoExecutionException.class, () -> training(List.of("/hello", "/missing")).train("sha256:training", SCRIPT, tempDir.resolve("app.aot")));
 
         assertEquals("JDK AOT cache training failed: [jdk-aot-cache] GET /missing answered 404", e.getMessage());
         verify(dockerService).logContainerOutput("container");
@@ -183,7 +243,7 @@ class JdkAotCacheTrainingTest {
         when(dockerService.createContainer(any(), any(), eq(false), anyMap())).thenReturn("container");
         when(dockerService.execInContainer(eq("container"), anyInt(), any(), any(String[].class))).thenReturn(127);
 
-        var e = assertThrows(MojoExecutionException.class, () -> training(List.of()).train("sha256:training", false, tempDir.resolve("app.aot")));
+        var e = assertThrows(MojoExecutionException.class, () -> training(List.of()).train("sha256:training", SCRIPT, tempDir.resolve("app.aot")));
 
         assertTrue(e.getMessage().contains("the warm-up needs bash in the image"));
     }
@@ -195,7 +255,7 @@ class JdkAotCacheTrainingTest {
         when(dockerService.createContainer(any(), any(), eq(false), anyMap())).thenReturn("container");
         when(dockerService.awaitExit("container", 180)).thenReturn(1);
 
-        var e = assertThrows(MojoExecutionException.class, () -> training(List.of()).train("sha256:training", false, tempDir.resolve("app.aot")));
+        var e = assertThrows(MojoExecutionException.class, () -> training(List.of()).train("sha256:training", SCRIPT, tempDir.resolve("app.aot")));
 
         assertEquals("JDK AOT cache training failed: the application exited with status 1 after SIGTERM", e.getMessage());
         verify(dockerService).removeContainer("container");
@@ -210,7 +270,7 @@ class JdkAotCacheTrainingTest {
         doThrow(new IOException("/tmp/app.aot does not exist in container container"))
             .when(dockerService).copyFileFromContainer(eq("container"), eq("/tmp/app.aot"), any());
 
-        var e = assertThrows(MojoExecutionException.class, () -> training(List.of()).train("sha256:training", false, tempDir.resolve("app.aot")));
+        var e = assertThrows(MojoExecutionException.class, () -> training(List.of()).train("sha256:training", SCRIPT, tempDir.resolve("app.aot")));
 
         assertTrue(e.getMessage().startsWith("JDK AOT cache training failed: the training run did not write the cache"));
         verify(dockerService).logContainerOutput("container");
@@ -221,7 +281,7 @@ class JdkAotCacheTrainingTest {
         mockImage(null, ExposedPort.tcp(8080));
         mockJava("openjdk version \"21.0.8\" 2025-07-15");
 
-        var e = assertThrows(MojoExecutionException.class, () -> training(List.of()).train("sha256:training", false, tempDir.resolve("app.aot")));
+        var e = assertThrows(MojoExecutionException.class, () -> training(List.of()).train("sha256:training", SCRIPT, tempDir.resolve("app.aot")));
 
         assertTrue(e.getMessage().contains("needs Java 25 or later in the image, but the base image runs Java 21"));
         verify(dockerService, never()).createContainer(any(), any(), eq(false), anyMap());
@@ -232,7 +292,7 @@ class JdkAotCacheTrainingTest {
         mockImage(null);
         mockJava(JAVA_25_OUTPUT);
 
-        var e = assertThrows(MojoExecutionException.class, () -> training(List.of()).train("sha256:training", false, tempDir.resolve("app.aot")));
+        var e = assertThrows(MojoExecutionException.class, () -> training(List.of()).train("sha256:training", SCRIPT, tempDir.resolve("app.aot")));
 
         assertTrue(e.getMessage().contains("Expose the port with the Jib container.ports configuration"));
         verify(dockerService, never()).createContainer(any(), any(), eq(false), anyMap());

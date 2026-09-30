@@ -22,6 +22,15 @@
 
         <it.micronaut.core.version>5.0.0</it.micronaut.core.version>
         <it.micronaut.version>5.0.0-RC1</it.micronaut.version>
+        <!--
+          A Micronaut core version that has micronaut.application.training.mode (micronaut-projects/micronaut-core#13402),
+          for the *-jdk-aot-cache-load projects, which train a JDK AOT cache without starting the application. They are
+          skipped while this is empty, because no such version is released yet. To run them, publish that core build to
+          the local Maven repository under a version that no remote repository has, because Maven prefers the published
+          5.3.0-SNAPSHOT of the 5.3.x branch to a local one, and pass the version, for example
+          -Dit.micronaut.core.trainingMode.version=5.3.0-pr13402-SNAPSHOT
+        -->
+        <it.micronaut.core.trainingMode.version/>
 
         <!-- Enable recording of coverage during execution of maven-invoker-plugin -->
         <jacoco.propertyName>invoker.mavenOpts</jacoco.propertyName>
@@ -105,9 +114,13 @@
                     <selectorScript>selector</selectorScript>
                     <localRepositoryPath>../target/local-repo</localRepositoryPath>
                     <settingsFile>src/it/settings.xml</settingsFile>
+                    <filterProperties>
+                        <trainingModeCoreVersion>${it.micronaut.core.trainingMode.version}</trainingModeCoreVersion>
+                    </filterProperties>
                     <scriptVariables>
                         <nativeMavenPluginVersion>${native-maven-plugin.version}</nativeMavenPluginVersion>
                         <pluginVersion>${project.version}</pluginVersion>
+                        <trainingModeCoreVersion>${it.micronaut.core.trainingMode.version}</trainingModeCoreVersion>
                     </scriptVariables>
                     <goals>
                         <goal>clean</goal>

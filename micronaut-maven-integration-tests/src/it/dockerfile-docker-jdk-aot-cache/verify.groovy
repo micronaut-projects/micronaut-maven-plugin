@@ -15,7 +15,11 @@ File log = new File(basedir, 'build.log')
 assert log.exists()
 String text = log.text
 
-// Micronaut 5.0 has no training-run switch: the script warms the application up and stops it with SIGTERM
+// Micronaut 5.0 has no training mode that does not start the application, so the default training run starts it,
+// and the build says why
+assert text.contains("JDK AOT cache: training mode start: the training run starts the application, because its Micronaut version has no training mode that loads it without starting it (micronaut.application.training.mode).")
+
+// Micronaut 5.0 has no training-run switch either: the script warms the application up and stops it with SIGTERM
 assert text.contains("[jdk-aot-cache] GET /hello: 200")
 assert text.contains("[jdk-aot-cache] Stopping the application with SIGTERM")
 assert text.contains("[jdk-aot-cache] Wrote the JDK AOT cache /home/app/app.aot")

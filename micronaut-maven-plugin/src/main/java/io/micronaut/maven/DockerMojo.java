@@ -23,7 +23,7 @@ import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.jdkaotcache.JdkAotCacheDockerContext;
 import io.micronaut.maven.jdkaotcache.JdkAotCacheTraining;
-import io.micronaut.maven.jdkaotcache.TrainingRunSwitch;
+import io.micronaut.maven.jdkaotcache.TrainingRun;
 import io.micronaut.maven.jib.JdkAotCachePlan;
 import io.micronaut.maven.jib.JibConfiguration;
 import io.micronaut.maven.jib.JibConfigurationService;
@@ -119,9 +119,10 @@ public class DockerMojo extends AbstractDockerMojo {
      */
     private void buildWithJdkAotCache() throws MojoExecutionException {
         List<String> trainingPaths = validateJdkAotCacheConfiguration();
+        TrainingRun trainingRun = TrainingRun.resolve(jdkAotCacheTrainingMode, trainingPaths, mavenProject.getArtifacts());
         String platform = daemonPlatform();
         requireDaemonPlatform(platform);
-        boolean useSwitch = TrainingRunSwitch.isAvailable(mavenProject.getArtifacts(), !trainingPaths.isEmpty());
+        getLog().info("JDK AOT cache: " + trainingRun.description());
 
         Path workDirectory = Path.of(mavenProject.getBuild().getDirectory(), JdkAotCacheDockerContext.CONTEXT_DIRECTORY);
         Path cacheFile = workDirectory.resolve(JdkAotCachePlan.CACHE_FILE_NAME);
@@ -147,7 +148,7 @@ public class DockerMojo extends AbstractDockerMojo {
             restoreProperty(properties, PropertyNames.TO_IMAGE, savedProperties.get(PropertyNames.TO_IMAGE));
 
             new JdkAotCacheTraining(dockerService, getLog(), trainingPaths, jdkAotCacheTrainingTimeout, networkMode)
-                .train(trainingImageId, useSwitch, cacheFile);
+                .train(trainingImageId, trainingRun, cacheFile);
 
             properties.setProperty(JdkAotCachePlan.CACHE_FILE_PROPERTY, cacheFile.toAbsolutePath().toString());
             properties.setProperty(JdkAotCachePlan.PIN_BASE_IMAGE_PROPERTY, String.valueOf(isRegistryBaseImage()));

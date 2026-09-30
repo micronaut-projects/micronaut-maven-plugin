@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -31,9 +32,15 @@ import java.util.jar.JarFile;
 
 /**
  * The training-run switch of Micronaut core (micronaut-projects/micronaut-core#13391): with
- * {@value #ENABLED_PROPERTY} set, {@code Micronaut.run} starts the application, sends the GET requests of
- * {@value #WARMUP_PATHS_PROPERTY} to it, stops it and exits with status 0, which ends the JDK AOT cache training
- * without a script.
+ * {@value #ENABLED_PROPERTY} set, {@code Micronaut.run} ends the JDK AOT cache training without a script and exits
+ * with status 0. {@value #MODE_PROPERTY} says how far it goes before that:
+ * <ul>
+ *     <li>{@code start}: it starts the application, sends the GET requests of {@value #WARMUP_PATHS_PROPERTY} to it
+ *     and stops it.</li>
+ *     <li>{@code load}: it loads the bean definitions and the classes they name, creates no bean and does not start
+ *     the application.</li>
+ * </ul>
+ * Older versions with the switch have no mode and always start the application.
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 5.1.0
@@ -45,6 +52,11 @@ public final class TrainingRunSwitch {
      * Turns the training run on.
      */
     public static final String ENABLED_PROPERTY = "micronaut.application.training.enabled";
+
+    /**
+     * Selects the mode of the training run.
+     */
+    public static final String MODE_PROPERTY = "micronaut.application.training.mode";
 
     /**
      * The paths of the warm-up requests.
@@ -83,12 +95,30 @@ public final class TrainingRunSwitch {
     }
 
     /**
-     * @param paths the warm-up paths
-     * @return the Java system properties that turn the switch on and set the warm-up paths
+     * Looks for the training mode in the application's {@code micronaut-context} JAR, which has it when it defines
+     * {@value #MODE_PROPERTY} next to the switch.
+     *
+     * @param artifacts the resolved dependencies of the application
+     * @return whether the application's Micronaut version can train without starting the application
      */
-    public static List<String> systemProperties(List<String> paths) {
-        var properties = new ArrayList<String>(paths.size() + 1);
+    public static boolean hasLoadMode(Collection<Artifact> artifacts) {
+        return findJar(artifacts, CONTEXT_ARTIFACT_ID)
+            .filter(context -> entryContains(context, APPLICATION_CONFIGURATION_CLASS, ENABLED_PROPERTY, MODE_PROPERTY))
+            .isPresent();
+    }
+
+    /**
+     * The mode is always passed, also when it is the default of Micronaut core, so that the training does not change
+     * if that default does. A Micronaut version without the mode ignores the property.
+     *
+     * @param mode the mode of the training run
+     * @param paths the warm-up paths, which only a run that starts the application sends
+     * @return the Java system properties that turn the switch on, select the mode and set the warm-up paths
+     */
+    public static List<String> systemProperties(TrainingMode mode, List<String> paths) {
+        var properties = new ArrayList<String>(paths.size() + 2);
         properties.add("-D" + ENABLED_PROPERTY + "=true");
+        properties.add("-D" + MODE_PROPERTY + "=" + mode.id());
         for (int i = 0; i < paths.size(); i++) {
             properties.add("-D" + WARMUP_PATHS_PROPERTY + "[" + i + "]=" + paths.get(i));
         }
@@ -103,10 +133,14 @@ public final class TrainingRunSwitch {
             .findFirst();
     }
 
-    private static boolean entryContains(File jar, String entryName, String text) {
+    private static boolean entryContains(File jar, String entryName, String... texts) {
         try (var jarFile = new JarFile(jar)) {
             JarEntry entry = jarFile.getJarEntry(entryName);
-            return entry != null && contains(jarFile, entry, text);
+            if (entry == null) {
+                return false;
+            }
+            String content = read(jarFile, entry);
+            return Arrays.stream(texts).allMatch(content::contains);
         } catch (IOException e) {
             return false;
         }
@@ -118,7 +152,7 @@ public final class TrainingRunSwitch {
             while (entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
                 if (entry.getName().startsWith(HTTP_SERVER_PACKAGE) && entry.getName().endsWith(".class")
-                    && contains(jarFile, entry, text)) {
+                    && read(jarFile, entry).contains(text)) {
                     return true;
                 }
             }
@@ -132,9 +166,9 @@ public final class TrainingRunSwitch {
      * Class files keep string constants as modified UTF-8, which is plain ASCII for property names, so decoding the
      * bytes as ISO-8859-1 keeps them as they are.
      */
-    private static boolean contains(JarFile jarFile, JarEntry entry, String text) throws IOException {
+    private static String read(JarFile jarFile, JarEntry entry) throws IOException {
         try (InputStream in = jarFile.getInputStream(entry)) {
-            return new String(in.readAllBytes(), StandardCharsets.ISO_8859_1).contains(text);
+            return new String(in.readAllBytes(), StandardCharsets.ISO_8859_1);
         }
     }
 }

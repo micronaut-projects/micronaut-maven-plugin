@@ -20,7 +20,8 @@ import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.jdkaotcache.JdkAotCacheDockerContext;
 import io.micronaut.maven.jdkaotcache.JdkAotCacheTraining;
-import io.micronaut.maven.jdkaotcache.TrainingRunSwitch;
+import io.micronaut.maven.jdkaotcache.TrainingMode;
+import io.micronaut.maven.jdkaotcache.TrainingRun;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.jib.JibMicronautExtension;
 import io.micronaut.maven.services.ApplicationConfigurationService;
@@ -144,22 +145,25 @@ public class DockerfileMojo extends AbstractDockerMojo {
                 + micronautRuntime);
         }
         List<String> trainingPaths = JdkAotCacheTraining.validateTrainingPaths(jdkAotCacheTrainingPaths);
-        boolean useSwitch = TrainingRunSwitch.isAvailable(mavenProject.getArtifacts(), !trainingPaths.isEmpty());
-        getLog().info(useSwitch
-            ? "JDK AOT cache: the application warms itself up and exits (Micronaut training-run switch)"
-            : "JDK AOT cache: the training script warms the application up and stops it with SIGTERM");
-        jdkAotCacheTrainingArguments = jdkAotCacheTrainingArguments(trainingPaths, useSwitch);
+        TrainingRun trainingRun = TrainingRun.resolve(jdkAotCacheTrainingMode, trainingPaths, mavenProject.getArtifacts());
+        getLog().info("JDK AOT cache: " + trainingRun.description());
+        if (trainingRun.mode() == TrainingMode.START) {
+            getLog().info(trainingRun.usesSwitch()
+                ? "JDK AOT cache: the application warms itself up and exits (Micronaut training-run switch)"
+                : "JDK AOT cache: the training script warms the application up and stops it with SIGTERM");
+        }
+        jdkAotCacheTrainingArguments = jdkAotCacheTrainingArguments(trainingPaths, trainingRun);
         File dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_JDK_AOT_CACHE);
         processDockerfile(dockerfile);
         return Optional.ofNullable(dockerfile);
     }
 
-    private String jdkAotCacheTrainingArguments(List<String> trainingPaths, boolean useSwitch) throws MojoExecutionException {
+    private String jdkAotCacheTrainingArguments(List<String> trainingPaths, TrainingRun trainingRun) throws MojoExecutionException {
         if (jdkAotCacheTrainingTimeout <= 0) {
             throw new MojoExecutionException("micronaut.docker.jdkAotCache.trainingTimeout must be positive");
         }
         String port = validateExposedPorts("jib.container.ports", getPorts()).trim().split("[\\s/]+")[0];
-        if (!useSwitch && port.isEmpty()) {
+        if (!trainingRun.usesSwitch() && port.isEmpty()) {
             throw new MojoExecutionException("micronaut.docker.jdkAotCache needs the HTTP port of the application to "
                 + "warm it up. Set it with the Jib container.ports configuration.");
         }
@@ -167,7 +171,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
         arguments.add(JdkAotCacheDockerContext.IMAGE_CACHE_FILE);
         arguments.add(port.isEmpty() ? "0" : port);
         arguments.add(String.valueOf(jdkAotCacheTrainingTimeout));
-        arguments.add(useSwitch ? "switch" : "sigterm");
+        arguments.add(trainingRun.scriptArgument());
         for (String path : trainingPaths) {
             arguments.add(shellLiteral("micronaut.docker.jdkAotCache.trainingPaths", path));
         }

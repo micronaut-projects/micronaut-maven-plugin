@@ -1,5 +1,6 @@
 package io.micronaut.maven;
 
+import io.micronaut.maven.jdkaotcache.MicronautJars;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.services.ApplicationConfigurationService;
@@ -470,6 +471,112 @@ class DockerfileMojoTest {
         var ex = assertThrows(MojoExecutionException.class, mojo::execute);
 
         assertEquals("micronaut.docker.jdkAotCache only supports the default runtime, not lambda", ex.getMessage());
+    }
+
+    @Test
+    void jdkAotCacheTrainsWithoutStartingTheApplicationWhenTheMicronautVersionCan(@TempDir Path tempDir) throws Exception {
+        var mojo = jdkAotCacheMojo(tempDir, MicronautJars.withLoadMode(tempDir), Optional.of("8080"));
+
+        mojo.execute();
+
+        assertEquals("RUN bash /home/app/training.sh train /home/app/app.aot 8080 180 load -- java -XX:+UseG1GC "
+            + "-cp @/home/app/classpath 'example.Application' && rm /home/app/training.sh", runInstruction(tempDir));
+    }
+
+    @Test
+    void jdkAotCacheLoadModeCanBeConfiguredInAnyCase(@TempDir Path tempDir) throws Exception {
+        var mojo = jdkAotCacheMojo(tempDir, MicronautJars.withLoadMode(tempDir), Optional.of("9090 9091"));
+        mojo.jdkAotCacheTrainingMode = "LOAD";
+
+        mojo.execute();
+
+        assertTrue(runInstruction(tempDir).startsWith("RUN bash /home/app/training.sh train /home/app/app.aot 9090 180 load -- java "),
+            runInstruction(tempDir));
+    }
+
+    @Test
+    void jdkAotCacheStartsTheApplicationWhenStartIsConfigured(@TempDir Path tempDir) throws Exception {
+        var mojo = jdkAotCacheMojo(tempDir, MicronautJars.withLoadMode(tempDir), Optional.of("8080"));
+        mojo.jdkAotCacheTrainingMode = "start";
+        mojo.jdkAotCacheTrainingPaths = List.of("/hello");
+
+        mojo.execute();
+
+        assertEquals("RUN bash /home/app/training.sh train /home/app/app.aot 8080 180 switch '/hello' -- java -XX:+UseG1GC "
+            + "-cp @/home/app/classpath 'example.Application' && rm /home/app/training.sh", runInstruction(tempDir));
+    }
+
+    @Test
+    void jdkAotCacheStartsTheApplicationWhenTheMicronautVersionHasNoTrainingMode(@TempDir Path tempDir) throws Exception {
+        var withSwitch = jdkAotCacheMojo(tempDir.resolve("switch"), MicronautJars.withSwitch(tempDir), Optional.of("8080"));
+        var withoutSwitch = jdkAotCacheMojo(tempDir.resolve("script"), MicronautJars.withoutSwitch(tempDir), Optional.of("8080"));
+
+        withSwitch.execute();
+        withoutSwitch.execute();
+
+        assertTrue(runInstruction(tempDir.resolve("switch")).contains(" train /home/app/app.aot 8080 180 switch -- java "));
+        assertTrue(runInstruction(tempDir.resolve("script")).contains(" train /home/app/app.aot 8080 180 sigterm -- java "));
+    }
+
+    @Test
+    void jdkAotCacheRejectsTrainingPathsWithTheLoadMode(@TempDir Path tempDir) throws Exception {
+        var byDefault = jdkAotCacheMojo(tempDir.resolve("default"), MicronautJars.withLoadMode(tempDir), Optional.of("8080"));
+        byDefault.jdkAotCacheTrainingPaths = List.of("/hello");
+        var configured = jdkAotCacheMojo(tempDir.resolve("configured"), MicronautJars.withLoadMode(tempDir), Optional.of("8080"));
+        configured.jdkAotCacheTrainingPaths = List.of("/hello");
+        configured.jdkAotCacheTrainingMode = "load";
+
+        var defaultFailure = assertThrows(MojoExecutionException.class, byDefault::execute);
+        var configuredFailure = assertThrows(MojoExecutionException.class, configured::execute);
+
+        assertTrue(defaultFailure.getMessage().startsWith("micronaut.docker.jdkAotCache.trainingPaths is set, but the "
+            + "training mode is load, the default with this Micronaut version"), defaultFailure.getMessage());
+        assertTrue(configuredFailure.getMessage().startsWith("micronaut.docker.jdkAotCache.trainingPaths cannot be used "
+            + "with micronaut.docker.jdkAotCache.trainingMode=load"), configuredFailure.getMessage());
+        assertFalse(Files.exists(tempDir.resolve("default/target/Dockerfile")));
+    }
+
+    @Test
+    void jdkAotCacheRejectsTheLoadModeOnAMicronautVersionWithoutIt(@TempDir Path tempDir) throws Exception {
+        var mojo = jdkAotCacheMojo(tempDir, MicronautJars.withoutSwitch(tempDir), Optional.of("8080"));
+        mojo.jdkAotCacheTrainingMode = "load";
+
+        var ex = assertThrows(MojoExecutionException.class, mojo::execute);
+
+        assertTrue(ex.getMessage().startsWith("micronaut.docker.jdkAotCache.trainingMode=load needs a Micronaut version "
+            + "with the load training mode"), ex.getMessage());
+    }
+
+    private static DockerfileMojo jdkAotCacheMojo(Path baseDir, List<Artifact> artifacts, Optional<String> ports) throws IOException {
+        var project = mockProject(baseDir);
+        when(project.getPackaging()).thenReturn("docker");
+        Path classes = Files.createDirectories(baseDir.resolve("target/classes/example"));
+        Files.writeString(classes.resolve("Application.class"), "class");
+        when(project.getBuild().getOutputDirectory()).thenReturn(baseDir.resolve("target/classes").toString());
+        var dependencies = new LinkedHashSet<>(artifacts);
+        when(project.getArtifacts()).thenReturn(dependencies);
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getPorts()).thenReturn(ports);
+        var dockerService = mock(DockerService.class);
+        when(dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_JDK_AOT_CACHE)).thenAnswer(invocation -> {
+            Path dockerfile = baseDir.resolve("target/Dockerfile");
+            Files.copy(Path.of("src/main/resources/dockerfiles", DockerfileMojo.DOCKERFILE_JDK_AOT_CACHE), dockerfile);
+            return dockerfile.toFile();
+        });
+        var mojo = new DockerfileMojo(project, dockerService, jibConfigurationService,
+            mock(ApplicationConfigurationService.class), mock(ExecutorService.class), mockSession(project), mock(MojoExecution.class));
+        mojo.micronautRuntime = "netty";
+        mojo.mainClass = "example.Application";
+        mojo.jdkAotCache = true;
+        mojo.jdkAotCacheTrainingTimeout = 180;
+        return mojo;
+    }
+
+    private static String runInstruction(Path baseDir) throws IOException {
+        return Files.readAllLines(baseDir.resolve("target/Dockerfile")).stream()
+            .filter(line -> line.startsWith("RUN "))
+            .findFirst()
+            .orElseThrow();
     }
 
     private static Artifact dependency(Path tempDir, String fileName, String scope, boolean snapshot) throws IOException {

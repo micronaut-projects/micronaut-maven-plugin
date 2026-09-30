@@ -40,9 +40,15 @@ import java.util.regex.Pattern;
 
 /**
  * Trains a JDK AOT cache in a container of the training image that the {@code docker} goal built with Jib. The
- * container runs the image's own entrypoint, with {@code -XX:AOTCacheOutput} in {@code JDK_JAVA_OPTIONS}. If the
- * application's Micronaut version has the training-run switch, the application warms itself up and exits. Otherwise,
- * the warm-up script runs in the container with {@code docker exec} and the application is stopped with SIGTERM.
+ * container runs the image's own entrypoint, with {@code -XX:AOTCacheOutput} in {@code JDK_JAVA_OPTIONS}. What the
+ * application does in it is the {@link TrainingRun}:
+ * <ul>
+ *     <li>In a {@link TrainingMode#LOAD} run, it loads its bean definitions and exits without starting.</li>
+ *     <li>In a {@link TrainingMode#START} run, if its Micronaut version has the training-run switch, it starts, warms
+ *     itself up and exits.</li>
+ *     <li>Otherwise, it starts, the warm-up script runs in the container with {@code docker exec} and the application
+ *     is stopped with SIGTERM.</li>
+ * </ul>
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 5.1.0
@@ -96,21 +102,27 @@ public final class JdkAotCacheTraining {
      * Runs the training image once and copies the cache it writes out of the container.
      *
      * @param imageId the training image
-     * @param useSwitch whether to end the training with the Micronaut training-run switch
+     * @param run the training run
      * @param cacheFile where to write the cache
      * @throws MojoExecutionException if the training fails
      */
-    public void train(String imageId, boolean useSwitch, Path cacheFile) throws MojoExecutionException {
+    public void train(String imageId, TrainingRun run, Path cacheFile) throws MojoExecutionException {
         InspectImageResponse image = dockerService.inspectImage(imageId);
         String[] imageEnvironment = image.getConfig() == null ? null : image.getConfig().getEnv();
         JavaRuntime java = probeJava(imageId);
-        Integer port = useSwitch ? null : httpPort(image);
-        Map<String, String> environment = trainingEnvironment(imageEnvironment, java, useSwitch, trainingPaths);
+        Integer port = run.usesSwitch() ? null : httpPort(image);
+        Map<String, String> environment = trainingEnvironment(imageEnvironment, java, run, trainingPaths);
         environment.forEach((name, value) -> log.info("JDK AOT cache: training with " + name + "=" + value));
 
         String containerId = dockerService.createContainer(imageId, networkMode, false, environment);
         try {
-            if (useSwitch) {
+            if (run.mode() == TrainingMode.LOAD) {
+                log.info("JDK AOT cache: the application loads its bean definitions and exits without starting "
+                    + "(Micronaut training mode load)");
+                dockerService.startAndWait(containerId, imageId, timeoutSeconds);
+                // The summary of the run and the bean definitions it skipped say what the cache was trained on
+                dockerService.logContainerOutput(containerId);
+            } else if (run.usesSwitch()) {
                 log.info("JDK AOT cache: the application warms itself up and exits (Micronaut training-run switch)");
                 dockerService.startAndWait(containerId, imageId, timeoutSeconds);
             } else {
@@ -172,15 +184,13 @@ public final class JdkAotCacheTraining {
         }
     }
 
-    static Map<String, String> trainingEnvironment(String[] imageEnvironment, JavaRuntime java, boolean useSwitch,
+    static Map<String, String> trainingEnvironment(String[] imageEnvironment, JavaRuntime java, TrainingRun run,
                                                   List<String> trainingPaths) {
         var environment = new LinkedHashMap<String, String>();
         var options = new ArrayList<String>();
         imageVariable(imageEnvironment, JDK_JAVA_OPTIONS).ifPresent(options::add);
         options.add("-XX:AOTCacheOutput=" + CONTAINER_CACHE_FILE);
-        if (useSwitch) {
-            options.addAll(TrainingRunSwitch.systemProperties(trainingPaths));
-        }
+        options.addAll(run.systemProperties(trainingPaths));
         environment.put(JDK_JAVA_OPTIONS, String.join(" ", options));
         if (java.compatibleOopCompression()) {
             // JDK 27 and later: lets the cache work with another compressed oops encoding than the training one

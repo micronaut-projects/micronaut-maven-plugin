@@ -8,7 +8,11 @@ assert text.contains("JDK AOT cache: building the training image package-docker-
 assert text =~ /JDK AOT cache: building for the Docker daemon's platform linux\/(amd64|arm64) only/
 assert text.contains("Container entrypoint set to [java, -XX:+UseSerialGC, -cp, @/app/jib-classpath-file, io.micronaut.build.examples.Application]")
 
-// Micronaut 5.0 has no training-run switch: the plugin warms the application up and stops it with SIGTERM
+// Micronaut 5.0 has no training mode that does not start the application, so the default training run starts it,
+// and the build says why
+assert text.contains("JDK AOT cache: training mode start: the training run starts the application, because its Micronaut version has no training mode that loads it without starting it (micronaut.application.training.mode).")
+
+// Micronaut 5.0 has no training-run switch either: the plugin warms the application up and stops it with SIGTERM
 assert text.contains("JDK AOT cache: training with JDK_JAVA_OPTIONS=-XX:AOTCacheOutput=/tmp/app.aot")
 assert text.contains("[jdk-aot-cache] GET /hello: 200")
 assert text.contains("JDK AOT cache: stopping the application with SIGTERM")

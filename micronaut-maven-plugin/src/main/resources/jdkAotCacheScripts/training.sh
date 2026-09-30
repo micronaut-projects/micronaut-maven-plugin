@@ -8,10 +8,12 @@
 #     GET request to every <path> in order. Fails on an I/O error or a status of 400 or more. The docker goal runs it
 #     with docker exec in the training container, whose entrypoint is the application.
 #
-#   training.sh train <cache> <port> <timeout> <switch|sigterm> [<path>...] -- <java> <argument>...
-#     Runs the application with -XX:AOTCacheOutput=<cache> and checks that the cache was written. With "switch", the
-#     Micronaut training-run switch warms the application up and exits. With "sigterm", the application runs in the
-#     background, this script warms it up as above and stops it with SIGTERM. Generated Dockerfiles run it.
+#   training.sh train <cache> <port> <timeout> <load|switch|sigterm> [<path>...] -- <java> <argument>...
+#     Runs the application with -XX:AOTCacheOutput=<cache> and checks that the cache was written. With "load", the
+#     Micronaut training-run switch loads the bean definitions and exits without starting the application, so no
+#     request is sent. With "switch", it starts the application, warms it up and exits. With "sigterm", the
+#     application runs in the background, this script warms it up as above and stops it with SIGTERM. Generated
+#     Dockerfiles run it.
 
 set -u
 
@@ -81,7 +83,7 @@ await_exit() {
 }
 
 train() {
-    [ $# -ge 4 ] || fail "Usage: training.sh train <cache> <port> <timeout> <switch|sigterm> [<path>...] -- <java> <argument>..."
+    [ $# -ge 4 ] || fail "Usage: training.sh train <cache> <port> <timeout> <load|switch|sigterm> [<path>...] -- <java> <argument>..."
     local cache=$1 port=$2 timeout=$3 mode=$4 paths=() output major status
     shift 4
     while [ $# -gt 0 ] && [ "$1" != "--" ]; do
@@ -90,6 +92,13 @@ train() {
     done
     [ $# -ge 2 ] || fail "Missing the java command after --"
     shift
+    case "$mode" in
+        load | switch | sigterm) ;;
+        *) fail "Unknown training run '$mode': it must be load, switch or sigterm" ;;
+    esac
+    if [ "$mode" = load ] && [ ${#paths[@]} -gt 0 ]; then
+        fail "A load training run does not start the application, so it cannot send requests to ${paths[*]}"
+    fi
 
     output=$("$1" -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal -version 2>&1) || fail "$1 -version failed"
     [[ $output =~ \ version\ \"([0-9]+)(\.([0-9]+))? ]] || fail "Could not read the Java version of $1"
@@ -106,8 +115,11 @@ train() {
     fi
 
     local options="-XX:AOTCacheOutput=$cache" i
-    if [ "$mode" = switch ]; then
-        options+=" -Dmicronaut.application.training.enabled=true"
+    if [ "$mode" = load ]; then
+        options+=" -Dmicronaut.application.training.enabled=true -Dmicronaut.application.training.mode=load"
+    elif [ "$mode" = switch ]; then
+        # The mode is passed although it is the default, so that the run does not change if the default does
+        options+=" -Dmicronaut.application.training.enabled=true -Dmicronaut.application.training.mode=start"
         for ((i = 0; i < ${#paths[@]}; i++)); do
             options+=" -Dmicronaut.application.training.warmup.paths[$i]=${paths[$i]}"
         done
@@ -116,7 +128,7 @@ train() {
     JDK_JAVA_OPTIONS="${JDK_JAVA_OPTIONS:+$JDK_JAVA_OPTIONS }$options" "$@" &
     application_pid=$!
     trap 'kill -KILL "$application_pid" 2>/dev/null' EXIT
-    if [ "$mode" != switch ]; then
+    if [ "$mode" = sigterm ]; then
         warm_up "$port" "$timeout" "$application_pid" ${paths[@]+"${paths[@]}"}
         log "Stopping the application with SIGTERM"
         kill -TERM "$application_pid" 2>/dev/null
@@ -125,7 +137,7 @@ train() {
     status=$?
     trap - EXIT
     case "$mode:$status" in
-        switch:0 | sigterm:0 | sigterm:143) ;;
+        load:0 | switch:0 | sigterm:0 | sigterm:143) ;;
         *) fail "The training run exited with status $status" ;;
     esac
     [ -s "$cache" ] || fail "The training run did not write the JDK AOT cache $cache"
