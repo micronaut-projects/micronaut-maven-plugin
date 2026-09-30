@@ -491,11 +491,11 @@ the `ENTRYPOINT`.
 [[jdk-aot-cache-image-size]]
 ==== Image size
 
-The option adds one layer at the top of the image, which holds the cache file: `/app/app.aot` with Jib, and
-`/home/app/app.aot` in the layer of the `RUN` instruction that trains it with the generated `Dockerfile`. The base image
-and the dependency JARs do not change. The application classes and resources are in a JAR instead of directories, and
-the generated `Dockerfile` also copies a class path file and the training script. In the images below, these other
-changes make a difference of less than 0.2 MB.
+The option adds the cache file in a layer of its own: `/app/app.aot` in the top layer with Jib, and `/home/app/app.aot`
+in the layer of the `RUN` instruction that trains it with the generated `Dockerfile`. The base image and the dependency
+layers do not change. The application classes and resources are in a JAR instead of directories: with Jib, one layer
+with the JAR replaces the classes and resources layers, and the generated `Dockerfile` copies the JAR with a class path
+file and the training script. In the images below, these other changes made a difference of less than 0.2 MB.
 
 The table shows the sizes measured for two example applications, built with Jib (`-XX:+UseSerialGC`) and the default
 base image for Java 25, `eclipse-temurin:25-jre` (Temurin 25.0.4.1+1, linux/arm64), which is 368.8 MB of each image:
@@ -505,9 +505,10 @@ dependency JARs, 13.7 MB.
 * Larger: the small application plus Micronaut Data JDBC with an H2 in-memory database and HikariCP, Micronaut
 Validation, Micronaut Management and the Micronaut HTTP client. 67 dependency JARs, 20.8 MB.
 
-Both use the Micronaut core of micronaut-core#13402 (see the note above), which has the `load` mode. The `start` runs
-sent `GET` requests to `/hello` and `/hello/world` (small), and to `/books`, `/books/1` and `/health` (larger). Sizes
-are in decimal megabytes (1 MB = 10^6^ bytes), as Docker reports them. In the table:
+Both use Micronaut Platform 5.0.0-RC1 and the Netty HTTP server, with the Micronaut core of micronaut-core#13402 (see
+the note above), which has the `load` mode. The `start` runs sent `GET` requests to `/hello` and `/hello/world`
+(small), and to `/books`, `/books/1` and `/health` (larger). Sizes are in decimal megabytes (1 MB = 10^6^ bytes), the
+unit that Docker uses. In the table:
 
 * The size of an image is the sum of its uncompressed layers. The image without the cache is the one that the same
 build gives without the option, in Jib's default `exploded` mode. The increase compares the two.
@@ -523,12 +524,17 @@ build gives without the option, in Jib's default `exploded` mode. The increase c
 |Small |`load` |3,694 |34.7 MB |382.7 MB |417.3 MB |9% |8.2 MB
 |Small |`start` |5,458 |48.8 MB |382.7 MB |431.4 MB |13% |11.6 MB
 |Larger |`load` |5,376 |48.1 MB |390.1 MB |438.0 MB |12% |10.6 MB
-|Larger |`start` |7,917 |70.5 MB |390.1 MB |460.4 MB |18% |16.2 MB
+|Larger |`start` |7,911 |70.5 MB |390.1 MB |460.4 MB |18% |16.2 MB
 |===
 
 Compressed, the images without the cache are 127.1 MB (small) and 133.5 MB (larger), and the cache layer adds 6% to 12%
-to them. With the generated `Dockerfile`, which trains with `-XX:+UseG1GC`, each cache file was 0.1 MB larger, the
-increase was the same and the compressed cache layer was within 0.1 MB of the table.
+to them. With the generated `Dockerfile`, which trains with `-XX:+UseG1GC`, each cache file was 0.07 to 0.13 MB larger,
+the increase was the same and the compressed cache layer was within 0.1 MB of the table.
+
+`docker images` gives other totals, which depend on the image store. With the containerd image store (Docker 29.5.2 in
+these measurements), CONTENT SIZE is the compressed size: 127 MB without the cache and 135 MB with it, for the small
+application in `load` mode. DISK USAGE counts both the unpacked and the compressed layers: 517 MB and 560 MB. On such a
+host, the cache takes 43 MB of disk, the size of the file plus the size of its compressed layer.
 
 The size of the cache depends on:
 
@@ -545,19 +551,24 @@ The cache file is not reproducible: two training runs of the same application, i
 the same size with different content. This decides what a build pushes:
 
 * With Jib, every build trains the cache again, so every image has a new cache layer, also when nothing changed. A push
-uploads that layer (8.2 MB for the small application in `load` mode) and the image configuration. The base, dependency
-and application layers that the registry already has are not uploaded again, and a host that has the previous image
-only downloads the new cache layer.
+uploads that layer (8.2 MB for the small application in `load` mode) and the image configuration. It also uploads the
+layer of the application JAR when Maven built the JAR again, for example in a clean build, unless
+`project.build.outputTimestamp` is set. The layers that the registry already has, such as the base and dependency
+layers, are not uploaded again, and a host that has the previous image only downloads the new layers.
 * With the generated `Dockerfile`, Docker takes the `RUN` layer from its build cache as long as the layers before it are
-the same, so a build with no change gives the same cache layer. A change to an application class changes the
-application JAR, so the `RUN` instruction trains again: a push uploads the application layer and a new cache layer, and
-the dependency layers come from the build cache unchanged. A build without the build cache (`docker build --no-cache`,
-or a machine that has none) trains a new cache even when nothing changed.
+the same, so a build with no change gives the same cache layer. This holds after a clean build too, because the plugin
+writes the application JAR of the `Dockerfile` with fixed entry times. A change to an application class changes the
+JAR, so the `RUN` instruction trains again: the image gets a new application layer and a new cache layer, and the
+dependency layers come from the build cache. A build without the build cache (`docker build --no-cache`, or a machine
+that has none) trains a new cache even when nothing changed, and writes new copies of the other layers, as it does
+without the option.
 
-To check your own image, run `docker history <image>`: the cache is the top layer that `jib-maven-plugin` created
+To check your own image, run `docker history <image>`: the cache is the top layer, with the comment `jdk aot cache`
 (Jib), or the layer of the `RUN` instruction that runs `training.sh` (generated `Dockerfile`), and its size is about the
-size of the cache file. After a push, `docker manifest inspect --verbose <image>` shows the compressed size of
-every layer. Without `micronaut.docker.jdkAotCache` (it is off by default), the image has no cache layer.
+size of the cache file. With Jib, the build log also gives the size of the cache file:
+`+JDK AOT cache: trained .../app.aot (34.7 MB)+`. After a push, `docker manifest inspect --verbose <image>` shows the
+compressed size of every layer. Without `micronaut.docker.jdkAotCache` (it is off by default), the image has no cache
+layer.
 
 == Delegating packaging to Eclipse JKube
 
