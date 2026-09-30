@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -295,7 +296,9 @@ public final class JdkAotCacheTraining {
             dockerService.logContainerOutput(containerId);
             throw new MojoExecutionException("JDK AOT cache training failed: the training run wrote an empty cache");
         }
-        log.info("JDK AOT cache: trained " + cacheFile + " (" + size / (1024 * 1024) + " MiB)");
+        // Decimal megabytes, as Docker gives the size of the image layer that holds the cache
+        log.info("JDK AOT cache: trained " + cacheFile + " (" + String.format(Locale.ROOT, "%.1f MB", size / 1e6)
+            + ")");
     }
 
     private static String lastLines(String output) {

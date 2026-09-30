@@ -220,6 +220,19 @@ class JdkAotCacheTrainingTest {
     }
 
     @Test
+    void logsTheSizeOfTheCacheInDecimalMegabytes(@TempDir Path tempDir) throws Exception {
+        mockImage(null);
+        mockJava(JAVA_25_OUTPUT);
+        when(dockerService.createContainer(eq("sha256:training"), isNull(), eq(false), anyMap())).thenReturn("container");
+        mockCopy("x".repeat(1_260_000));
+        Path cacheFile = tempDir.resolve("app.aot");
+
+        training(List.of()).train("sha256:training", LOAD, cacheFile);
+
+        verify(log).info("JDK AOT cache: trained " + cacheFile + " (1.3 MB)");
+    }
+
+    @Test
     void failsWhenTheLoadRunFails(@TempDir Path tempDir) throws Exception {
         mockImage(null);
         mockJava(JAVA_25_OUTPUT);
