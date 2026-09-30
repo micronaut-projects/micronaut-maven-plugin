@@ -1,6 +1,7 @@
 package io.micronaut.maven.jdkaotcache;
 
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -10,8 +11,12 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 class TrainingRunTest {
 
@@ -28,9 +33,10 @@ class TrainingRunTest {
         assertEquals(List.of("-Dmicronaut.application.training.enabled=true", "-Dmicronaut.application.training.mode=load"),
             run.systemProperties(NO_PATHS));
         assertEquals("training mode load, the default: the application loads its bean definitions and exits without "
-            + "starting, so the training needs none of the services the application uses. If the application can start "
+            + "starting, so the training needs none of the services that its beans use. If the application can start "
             + "in the image build, micronaut.docker.jdkAotCache.trainingMode=start trains a more complete cache",
             run.description());
+        assertNull(run.warning());
     }
 
     @Test
@@ -77,6 +83,7 @@ class TrainingRunTest {
             assertTrue(run.usesSwitch());
             assertEquals("switch", run.scriptArgument());
             assertDefaultStartDescription(run);
+            assertUpgradeWarning(run, paths);
         }
     }
 
@@ -90,6 +97,7 @@ class TrainingRunTest {
             assertEquals("sigterm", run.scriptArgument());
             assertEquals(List.of(), run.systemProperties(paths));
             assertDefaultStartDescription(run);
+            assertUpgradeWarning(run, paths);
         }
     }
 
@@ -123,14 +131,28 @@ class TrainingRunTest {
     }
 
     @Test
-    void trainingPathsFailWithAConfiguredLoadModeOnEveryVersion(@TempDir Path tempDir) throws IOException {
-        for (var artifacts : List.of(MicronautJars.withLoadMode(tempDir), MicronautJars.withoutSwitch(tempDir))) {
+    void trainingPathsFailWithAConfiguredLoadMode(@TempDir Path tempDir) throws IOException {
+        var artifacts = MicronautJars.withLoadMode(tempDir);
+
+        var e = assertThrows(MojoExecutionException.class, () -> TrainingRun.resolve("load", PATHS, artifacts));
+
+        assertEquals("micronaut.docker.jdkAotCache.trainingPaths cannot be used with "
+            + "micronaut.docker.jdkAotCache.trainingMode=load: a load training run does not start the application, so "
+            + "it sends no requests. Remove the training paths, or set micronaut.docker.jdkAotCache.trainingMode=start "
+            + "if the application can start in the image build.", e.getMessage());
+    }
+
+    @Test
+    void aConfiguredLoadModeWithTrainingPathsOnAVersionWithoutTheModeNamesBothProblemsAtOnce(@TempDir Path tempDir) throws IOException {
+        for (var artifacts : List.of(MicronautJars.withSwitch(tempDir), MicronautJars.withoutSwitch(tempDir))) {
             var e = assertThrows(MojoExecutionException.class, () -> TrainingRun.resolve("load", PATHS, artifacts));
 
-            assertEquals("micronaut.docker.jdkAotCache.trainingPaths cannot be used with "
-                + "micronaut.docker.jdkAotCache.trainingMode=load: a load training run does not start the application, so "
-                + "it sends no requests. Remove the training paths, or set micronaut.docker.jdkAotCache.trainingMode=start "
-                + "if the application can start in the image build.", e.getMessage());
+            // Removing the paths alone would not fix the build, so the missing mode comes first
+            assertEquals("micronaut.docker.jdkAotCache.trainingMode=load needs a Micronaut version with the load training "
+                + "mode (micronaut.application.training.mode), which the application's Micronaut version does not have. "
+                + "Upgrade Micronaut, or remove the option: the training run then starts the application. If you "
+                + "upgrade, remove micronaut.docker.jdkAotCache.trainingPaths as well: a load training run does not "
+                + "start the application, so it sends no requests.", e.getMessage());
         }
     }
 
@@ -152,6 +174,42 @@ class TrainingRunTest {
         var e = assertThrows(MojoExecutionException.class, () -> TrainingRun.resolve("warm", NO_PATHS, artifacts));
 
         assertEquals("Invalid micronaut.docker.jdkAotCache.trainingMode 'warm': it must be load or start", e.getMessage());
+    }
+
+    @Test
+    void logsTheDescriptionAndNothingElseWithoutAWarning() {
+        Log log = mock(Log.class);
+
+        new TrainingRun(TrainingMode.LOAD, true, "training mode load").log(log);
+
+        verify(log).info("JDK AOT cache: training mode load");
+        verifyNoMoreInteractions(log);
+    }
+
+    @Test
+    void logsTheWarningAtWarnLevel() {
+        Log log = mock(Log.class);
+
+        new TrainingRun(TrainingMode.START, false, "training mode start", "set the mode").log(log);
+
+        verify(log).info("JDK AOT cache: training mode start");
+        verify(log).warn("JDK AOT cache: set the mode");
+        verifyNoMoreInteractions(log);
+    }
+
+    /**
+     * A build that sets training paths and no mode is the one that fails once the Micronaut version has the load mode.
+     */
+    private static void assertUpgradeWarning(TrainingRun run, List<String> paths) {
+        if (paths.isEmpty()) {
+            assertNull(run.warning());
+        } else {
+            assertEquals("micronaut.docker.jdkAotCache.trainingPaths is set and micronaut.docker.jdkAotCache.trainingMode "
+                + "is not. This build will fail once the application uses a Micronaut version with the load training "
+                + "mode: load becomes the default, and a load training run does not start the application, so it sends "
+                + "no requests. Set micronaut.docker.jdkAotCache.trainingMode=start now to keep starting the application",
+                run.warning());
+        }
     }
 
     private static void assertDefaultStartDescription(TrainingRun run) {

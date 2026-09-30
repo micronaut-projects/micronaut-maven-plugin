@@ -45,7 +45,8 @@ import java.util.regex.Pattern;
  * <ul>
  *     <li>In a {@link TrainingMode#LOAD} run, it loads its bean definitions and exits without starting.</li>
  *     <li>In a {@link TrainingMode#START} run, if its Micronaut version has the training-run switch, it starts, warms
- *     itself up and exits.</li>
+ *     itself up and exits. It fails on a request without a response or with a status of 500 or more, and only warns
+ *     about a status from 400 to 499, so its output is copied to the build log when there are training paths.</li>
  *     <li>Otherwise, it starts, the warm-up script runs in the container with {@code docker exec} and the application
  *     is stopped with SIGTERM.</li>
  * </ul>
@@ -125,6 +126,10 @@ public final class JdkAotCacheTraining {
             } else if (run.usesSwitch()) {
                 log.info("JDK AOT cache: the application warms itself up and exits (Micronaut training-run switch)");
                 dockerService.startAndWait(containerId, imageId, timeoutSeconds);
+                if (!trainingPaths.isEmpty()) {
+                    // Micronaut only warns about a request answered with 400 to 499, in the output of the application
+                    dockerService.logContainerOutput(containerId);
+                }
             } else {
                 log.info("JDK AOT cache: warming the application up with docker exec, then stopping it with SIGTERM "
                     + "(the application's Micronaut version has no training-run switch)");

@@ -33,8 +33,8 @@ import java.util.Optional;
 public enum TrainingMode {
 
     /**
-     * The application loads its bean definitions and the classes they name, creates no bean and exits. It does not
-     * start, so the training needs none of the services the application uses.
+     * The application reads its configuration, loads its bean definitions and the classes they name, creates no bean
+     * and exits. It does not start, so the training needs none of the services that its beans use.
      */
     LOAD,
 

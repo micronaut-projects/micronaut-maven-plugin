@@ -9,11 +9,12 @@
     <parent>
         <groupId>io.micronaut.platform</groupId>
         <artifactId>micronaut-parent</artifactId>
-        <version>@it.micronaut.version@</version>
+        <!-- A Micronaut version without the training-run switch, see the pom.xml of the integration tests -->
+        <version>@it.micronaut.noTrainingSwitch.version@</version>
     </parent>
 
     <properties>
-        <micronaut.version>@it.micronaut.version@</micronaut.version>
+        <micronaut.version>@it.micronaut.noTrainingSwitch.version@</micronaut.version>
         <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
         <exec.mainClass>io.micronaut.build.examples.Application</exec.mainClass>
         <packaging>jar</packaging>

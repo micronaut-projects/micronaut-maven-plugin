@@ -29,8 +29,21 @@
           the local Maven repository under a version that no remote repository has, because Maven prefers the published
           5.3.0-SNAPSHOT of the 5.3.x branch to a local one, and pass the version, for example
           -Dit.micronaut.core.trainingMode.version=5.3.0-pr13402-SNAPSHOT
+
+          TODO when a Micronaut core release has the mode: set this property to it, so that CI runs these projects, which
+          are the only end-to-end check of the default training mode. When it.micronaut.version itself has the mode,
+          remove the property, the selector.groovy files and the micronaut.core.version of these projects instead.
         -->
         <it.micronaut.core.trainingMode.version/>
+        <!--
+          A Micronaut version without the training-run switch (micronaut.application.training.enabled), for the projects
+          that cover the JDK AOT cache training of such a version, where the plugin's script warms the application up,
+          fails on a status of 400 or more and stops the application with SIGTERM: package-docker-jdk-aot-cache,
+          package-docker-jdk-aot-cache-failure and dockerfile-docker-jdk-aot-cache. It is not it.micronaut.version on
+          purpose: do not raise it to a version with the switch. With such a version the same builds behave differently
+          (trainingPaths without a trainingMode fails the build, and a 404 of a training path is only a warning).
+        -->
+        <it.micronaut.noTrainingSwitch.version>5.0.0-RC1</it.micronaut.noTrainingSwitch.version>
 
         <!-- Enable recording of coverage during execution of maven-invoker-plugin -->
         <jacoco.propertyName>invoker.mavenOpts</jacoco.propertyName>

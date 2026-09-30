@@ -161,13 +161,33 @@ class JdkAotCacheTrainingTest {
         when(dockerService.createContainer(eq("sha256:training"), eq("host"), eq(false), anyMap())).thenReturn("container");
         mockCopy("cache");
 
-        new JdkAotCacheTraining(dockerService, log, List.of("/hello"), 180, "host").train("sha256:training", SWITCH, tempDir.resolve("app.aot"));
+        new JdkAotCacheTraining(dockerService, log, List.of(), 180, "host").train("sha256:training", SWITCH, tempDir.resolve("app.aot"));
 
         verify(dockerService).startAndWait("container", "sha256:training", 180);
         verify(dockerService, never()).execInContainer(any(), anyInt(), any(), any(String[].class));
         verify(dockerService, never()).signalContainer(any(), any());
         verify(dockerService, never()).logContainerOutput(any());
         verify(dockerService).removeContainer("container");
+    }
+
+    @Test
+    void switchRunWithTrainingPathsCopiesTheApplicationOutputToTheBuildLog(@TempDir Path tempDir) throws Exception {
+        // Micronaut only warns about a warm-up request answered with 400 to 499: the warning is in that output
+        mockImage(null);
+        mockJava(JAVA_25_OUTPUT);
+        when(dockerService.createContainer(eq("sha256:training"), isNull(), eq(false), anyMap())).thenReturn("container");
+        mockCopy("cache");
+        Path cacheFile = tempDir.resolve("app.aot");
+
+        training(List.of("/hello")).train("sha256:training", SWITCH, cacheFile);
+
+        InOrder order = inOrder(dockerService);
+        order.verify(dockerService).startAndWait("container", "sha256:training", 180);
+        order.verify(dockerService).logContainerOutput("container");
+        order.verify(dockerService).copyFileFromContainer("container", "/tmp/app.aot", cacheFile);
+        order.verify(dockerService).removeContainer("container");
+        verify(dockerService, never()).execInContainer(any(), anyInt(), any(), any(String[].class));
+        verify(dockerService, never()).signalContainer(any(), any());
     }
 
     @Test

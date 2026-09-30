@@ -146,7 +146,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
         }
         List<String> trainingPaths = JdkAotCacheTraining.validateTrainingPaths(jdkAotCacheTrainingPaths);
         TrainingRun trainingRun = TrainingRun.resolve(jdkAotCacheTrainingMode, trainingPaths, mavenProject.getArtifacts());
-        getLog().info("JDK AOT cache: " + trainingRun.description());
+        trainingRun.log(getLog());
         if (trainingRun.mode() == TrainingMode.START) {
             getLog().info(trainingRun.usesSwitch()
                 ? "JDK AOT cache: the application warms itself up and exits (Micronaut training-run switch)"

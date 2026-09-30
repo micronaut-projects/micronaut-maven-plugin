@@ -19,6 +19,10 @@ String text = log.text
 // and the build says why
 assert text.contains("JDK AOT cache: training mode start: the training run starts the application, because its Micronaut version has no training mode that loads it without starting it (micronaut.application.training.mode).")
 
+// Training paths without a training mode: this build fails once the application's Micronaut version has the load
+// mode, and the build warns about it
+assert text.contains("[WARNING] JDK AOT cache: micronaut.docker.jdkAotCache.trainingPaths is set and micronaut.docker.jdkAotCache.trainingMode is not. This build will fail once the application uses a Micronaut version with the load training mode")
+
 // Micronaut 5.0 has no training-run switch either: the script warms the application up and stops it with SIGTERM
 assert text.contains("[jdk-aot-cache] GET /hello: 200")
 assert text.contains("[jdk-aot-cache] Stopping the application with SIGTERM")

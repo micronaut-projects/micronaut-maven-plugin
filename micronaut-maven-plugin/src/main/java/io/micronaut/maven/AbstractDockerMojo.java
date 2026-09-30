@@ -219,9 +219,10 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * What the application does in the JDK AOT cache training run ({@code micronaut.docker.jdkAotCache}):
      * </p>
      * <ul>
-     *     <li>{@code load}: it loads its bean definitions and the classes they name, creates no bean and exits. It
-     *     does not start, so the training needs no database or other service, which an image build does not have.
-     *     It needs a Micronaut version with the {@code micronaut.application.training.mode} property.</li>
+     *     <li>{@code load}: it reads its configuration, loads its bean definitions and the classes they name, creates
+     *     no bean and exits. It does not start, so the training needs none of the services that its beans use, such
+     *     as a database, which an image build does not have. It needs a Micronaut version with the
+     *     {@code micronaut.application.training.mode} property.</li>
      *     <li>{@code start}: it starts, answers the requests of {@code micronaut.docker.jdkAotCache.trainingPaths}
      *     and is stopped. The cache is more complete, but every service that the application needs to start must be
      *     reachable from the image build.</li>
@@ -237,10 +238,18 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     protected String jdkAotCacheTrainingMode;
 
     /**
+     * <p>
      * The paths of the GET requests sent to the application during the JDK AOT cache training run
      * ({@code micronaut.docker.jdkAotCache}), once it is ready. A short, representative warm-up makes a better cache.
      * Only a training run that starts the application sends them: with the {@code load} training mode, setting them
      * fails the build.
+     * </p>
+     * <p>
+     * A request that gets no response fails the build. So does a response status of 400 or more when the plugin sends
+     * the requests, which it does on a Micronaut version without the training-run switch
+     * ({@code micronaut.application.training.enabled}). With the switch, Micronaut sends them: a status of 500 or more
+     * fails the build, and a status from 400 to 499 is only a warning in the output of the training run.
+     * </p>
      *
      * @since 5.1.0
      */

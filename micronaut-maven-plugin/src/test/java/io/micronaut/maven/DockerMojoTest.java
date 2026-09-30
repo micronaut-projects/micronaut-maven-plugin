@@ -42,6 +42,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
@@ -326,9 +327,10 @@ class DockerMojoTest {
         verify(dockerService, never()).signalContainer(any(), any());
         verify(executorService, times(2)).executeGoal(project, "com.google.cloud.tools:jib-maven-plugin", "dockerBuild");
         assertTrue(infoMessages(log).contains("JDK AOT cache: training mode load, the default: the application loads its bean definitions and "
-            + "exits without starting, so the training needs none of the services the application uses. If the "
+            + "exits without starting, so the training needs none of the services that its beans use. If the "
             + "application can start in the image build, micronaut.docker.jdkAotCache.trainingMode=start trains a more "
             + "complete cache"));
+        assertEquals(List.of(), warnMessages(log));
         assertEquals("cache", Files.readString(tempDir.resolve("target/jdk-aot-cache/app.aot")));
     }
 
@@ -350,6 +352,9 @@ class DockerMojoTest {
             trainingEnvironment(dockerService).get("JDK_JAVA_OPTIONS"));
         verify(dockerService).startAndWait("container", "sha256:training", 180);
         assertTrue(infoMessages(log).contains("JDK AOT cache: training mode start: the training run starts the application"));
+        // The output of the application has the warnings of Micronaut about the requests answered with 400 to 499
+        verify(dockerService).logContainerOutput("container");
+        assertEquals(List.of(), warnMessages(log));
     }
 
     @Test
@@ -371,6 +376,29 @@ class DockerMojoTest {
             + "(micronaut.application.training.mode). The services it needs at start-up must be reachable from the image "
             + "build. With a Micronaut version that has that mode, load becomes the default: set "
             + "micronaut.docker.jdkAotCache.trainingMode=start to keep starting the application"));
+        // Training paths without a mode: the build that fails once the Micronaut version has the load mode
+        assertEquals(List.of("JDK AOT cache: micronaut.docker.jdkAotCache.trainingPaths is set and "
+            + "micronaut.docker.jdkAotCache.trainingMode is not. This build will fail once the application uses a "
+            + "Micronaut version with the load training mode: load becomes the default, and a load training run does "
+            + "not start the application, so it sends no requests. Set micronaut.docker.jdkAotCache.trainingMode=start "
+            + "now to keep starting the application"), warnMessages(log));
+    }
+
+    @Test
+    void jdkAotCacheDoesNotWarnWithoutTrainingPathsWhenTheMicronautVersionHasNoTrainingMode(@TempDir Path tempDir) throws Exception {
+        var project = mockProject(tempDir);
+        var artifacts = new LinkedHashSet<>(MicronautJars.withoutSwitch(tempDir));
+        when(project.getArtifacts()).thenReturn(artifacts);
+        var mojo = jdkAotCacheMojo(project, jdkAotCacheJibConfiguration(), trainingDockerService(), mock(ExecutorService.class));
+        mojo.jdkAotCacheTrainingPaths = null;
+        var log = mock(Log.class);
+        mojo.setLog(log);
+
+        mojo.execute();
+
+        assertTrue(infoMessages(log).stream().anyMatch(message -> message.startsWith("JDK AOT cache: training mode start: the "
+            + "training run starts the application, because its Micronaut version has no training mode")));
+        assertEquals(List.of(), warnMessages(log));
     }
 
     @Test
@@ -427,6 +455,14 @@ class DockerMojoTest {
     private static List<String> infoMessages(Log log) {
         ArgumentCaptor<CharSequence> messages = ArgumentCaptor.forClass(CharSequence.class);
         verify(log, atLeastOnce()).info(messages.capture());
+        return messages.getAllValues().stream()
+            .map(message -> message.toString().replaceAll("\u001B\\[[;\\d]*m", ""))
+            .toList();
+    }
+
+    private static List<String> warnMessages(Log log) {
+        ArgumentCaptor<CharSequence> messages = ArgumentCaptor.forClass(CharSequence.class);
+        verify(log, atLeast(0)).warn(messages.capture());
         return messages.getAllValues().stream()
             .map(message -> message.toString().replaceAll("\u001B\\[[;\\d]*m", ""))
             .toList();

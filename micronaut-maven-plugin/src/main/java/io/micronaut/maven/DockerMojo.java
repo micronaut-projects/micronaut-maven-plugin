@@ -122,7 +122,7 @@ public class DockerMojo extends AbstractDockerMojo {
         TrainingRun trainingRun = TrainingRun.resolve(jdkAotCacheTrainingMode, trainingPaths, mavenProject.getArtifacts());
         String platform = daemonPlatform();
         requireDaemonPlatform(platform);
-        getLog().info("JDK AOT cache: " + trainingRun.description());
+        trainingRun.log(getLog());
 
         Path workDirectory = Path.of(mavenProject.getBuild().getDirectory(), JdkAotCacheDockerContext.CONTEXT_DIRECTORY);
         Path cacheFile = workDirectory.resolve(JdkAotCachePlan.CACHE_FILE_NAME);
