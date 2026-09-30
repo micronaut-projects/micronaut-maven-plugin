@@ -439,16 +439,18 @@ public class DockerService {
     }
 
     /**
-     * Removes an image and its tags.
+     * Removes an image reference without force: a tag, or the ID of an image that at most one tag refers to. Docker
+     * deletes the image when no tag refers to it anymore, and fails instead of removing an image that other tags refer
+     * to or that a container uses.
      *
-     * @param imageId the image
+     * @param image the tag or the image ID
      * @since 5.1.0
      */
-    public void removeImage(String imageId) {
-        try (RemoveImageCmd remove = getDockerClient().removeImageCmd(imageId)) {
-            remove.withForce(true).exec();
+    public void removeImage(String image) {
+        try (RemoveImageCmd remove = getDockerClient().removeImageCmd(image)) {
+            remove.exec();
         } catch (NotFoundException e) {
-            LOG.debug("Image {} was already removed", imageId);
+            LOG.debug("Image {} was already removed", image);
         }
     }
 

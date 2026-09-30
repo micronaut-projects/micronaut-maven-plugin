@@ -130,6 +130,7 @@ public class DockerMojo extends AbstractDockerMojo {
         Map<String, String> savedProperties = saveProperties(properties, PropertyNames.CONTAINERIZING_MODE,
             PropertyNames.TO_IMAGE, JdkAotCachePlan.PLATFORM_PROPERTY, JdkAotCachePlan.CACHE_FILE_PROPERTY,
             JdkAotCachePlan.PIN_BASE_IMAGE_PROPERTY);
+        String trainingImage = null;
         String trainingImageId = null;
         try {
             Files.createDirectories(workDirectory);
@@ -138,13 +139,8 @@ public class DockerMojo extends AbstractDockerMojo {
             properties.setProperty(JdkAotCachePlan.PLATFORM_PROPERTY, platform);
 
             properties.setProperty(PropertyNames.TO_IMAGE, mavenProject.getArtifactId().toLowerCase(Locale.ROOT) + "-jdk-aot-training");
-            String trainingImage = targetImage();
-            getLog().info("JDK AOT cache: building the training image " + trainingImage + " for " + platform);
-            executorService.executeGoal(mavenProject, JIB_PLUGIN, JIB_BUILD_GOAL_DOCKER_BUILD);
-            trainingImageId = inspectImage(trainingImage)
-                .orElseThrow(() -> new MojoExecutionException("JDK AOT cache: Jib did not build the training image "
-                    + trainingImage + ". Is jib.skip set?"))
-                .getId();
+            trainingImage = targetImage();
+            trainingImageId = buildTrainingImage(trainingImage, platform);
             restoreProperty(properties, PropertyNames.TO_IMAGE, savedProperties.get(PropertyNames.TO_IMAGE));
 
             new JdkAotCacheTraining(dockerService, getLog(), trainingPaths, jdkAotCacheTrainingTimeout, networkMode)
@@ -162,9 +158,21 @@ public class DockerMojo extends AbstractDockerMojo {
         } finally {
             restoreProperties(properties, savedProperties);
             if (trainingImageId != null) {
-                removeTrainingImage(trainingImageId);
+                removeTrainingImage(trainingImage, trainingImageId);
             }
         }
+    }
+
+    /**
+     * @return the ID of the training image
+     */
+    private String buildTrainingImage(String trainingImage, String platform) throws MojoExecutionException {
+        getLog().info("JDK AOT cache: building the training image " + trainingImage + " for " + platform);
+        executorService.executeGoal(mavenProject, JIB_PLUGIN, JIB_BUILD_GOAL_DOCKER_BUILD);
+        return inspectImage(trainingImage)
+            .orElseThrow(() -> new MojoExecutionException("JDK AOT cache: Jib did not build the training image "
+                + trainingImage + ". Is jib.skip set?"))
+            .getId();
     }
 
     private List<String> validateJdkAotCacheConfiguration() throws MojoExecutionException {
@@ -266,9 +274,23 @@ public class DockerMojo extends AbstractDockerMojo {
         return image.getRootFS() == null || image.getRootFS().getLayers() == null ? List.of() : image.getRootFS().getLayers();
     }
 
-    private void removeTrainingImage(String trainingImageId) {
+    /**
+     * Removes the tag of the training image, then the training image if no tag refers to it anymore. Jib images are
+     * reproducible, so an image that the project built before in packaged mode can have the ID of the training image,
+     * and its tags stay. When {@code jib.to.image} is a user property, the training image has the tag of the final
+     * image, which the final build moved: the tag is only removed while it refers to the training image.
+     */
+    private void removeTrainingImage(String trainingImage, String trainingImageId) {
         try {
-            dockerService.removeImage(trainingImageId);
+            if (inspectImage(trainingImage).filter(image -> trainingImageId.equals(image.getId())).isPresent()) {
+                dockerService.removeImage(trainingImage);
+            }
+            boolean untagged = inspectImage(trainingImageId)
+                .filter(image -> image.getRepoTags() == null || image.getRepoTags().isEmpty())
+                .isPresent();
+            if (untagged) {
+                dockerService.removeImage(trainingImageId);
+            }
         } catch (RuntimeException e) {
             getLog().warn("JDK AOT cache: could not remove the training image " + trainingImageId + ": " + e.getMessage());
         }

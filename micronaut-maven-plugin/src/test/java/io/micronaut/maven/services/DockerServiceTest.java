@@ -277,14 +277,24 @@ class DockerServiceTest {
     }
 
     @Test
-    void removesAnImage() {
+    void removesAnImageWithoutForce() {
         RemoveImageCmd remove = mock(RemoveImageCmd.class, RETURNS_SELF);
         when(client.removeImageCmd("image")).thenReturn(remove);
 
         dockerService.removeImage("image");
 
-        verify(remove).withForce(true);
+        // With force, Docker removes an image ID with every tag that refers to it
+        verify(remove, never()).withForce(any());
         verify(remove).exec();
+    }
+
+    @Test
+    void doesNotRemoveAnImageThatOtherTagsReferTo() {
+        RemoveImageCmd remove = mock(RemoveImageCmd.class, RETURNS_SELF);
+        when(client.removeImageCmd("sha256:image")).thenReturn(remove);
+        when(remove.exec()).thenThrow(new ConflictException("image is referenced in multiple repositories"));
+
+        assertThrows(ConflictException.class, () -> dockerService.removeImage("sha256:image"));
     }
 
     @Test

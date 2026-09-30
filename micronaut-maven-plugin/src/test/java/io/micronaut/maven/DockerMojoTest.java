@@ -2,6 +2,8 @@ package io.micronaut.maven;
 
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.command.RootFS;
+import com.github.dockerjava.api.exception.ConflictException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.ContainerConfig;
 import com.github.dockerjava.api.model.ExposedPort;
 import io.micronaut.maven.jdkaotcache.MicronautJars;
@@ -25,6 +27,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -217,7 +221,8 @@ class DockerMojoTest {
     @Test
     void jdkAotCacheBuildsATrainingImageTrainsAndRebuildsWithTheConfiguredGoal(@TempDir Path tempDir) throws Exception {
         var project = mockProject(tempDir);
-        var dockerService = trainingDockerService();
+        var images = new DaemonImages();
+        var dockerService = trainingDockerService(images);
         var executorService = mock(ExecutorService.class);
         var buildProperties = new ArrayList<Properties>();
         doAnswer(invocation -> {
@@ -236,7 +241,10 @@ class DockerMojoTest {
         order.verify(dockerService).createContainer(eq("sha256:training"), isNull(), eq(false), anyMap());
         order.verify(dockerService).removeContainer("container");
         order.verify(executorService).executeGoal(project, "com.google.cloud.tools:jib-maven-plugin", "buildTar");
-        order.verify(dockerService).removeImage("sha256:training");
+        order.verify(dockerService).removeImage("demo-jdk-aot-training");
+        verify(dockerService, never()).removeImage("sha256:training");
+        assertFalse(images.exists("sha256:training"));
+        assertEquals(List.of("registry.example.com/demo:1.0"), images.tagsOf("sha256:final"));
 
         var training = buildProperties.get(0);
         assertEquals("packaged", training.getProperty("jib.containerizingMode"));
@@ -270,7 +278,57 @@ class DockerMojoTest {
         var ex = assertThrows(MojoExecutionException.class, mojo::execute);
 
         assertTrue(ex.getMessage().contains("differ from the layers of the training image"));
+        verify(dockerService).removeImage("demo-jdk-aot-training");
+    }
+
+    @Test
+    void jdkAotCacheKeepsTheOtherTagsOfTheTrainingImage(@TempDir Path tempDir) throws Exception {
+        // Jib images are reproducible: a packaged image that the project built before has the ID of the training image
+        var project = mockProject(tempDir);
+        var images = new DaemonImages();
+        var dockerService = trainingDockerService(images);
+        images.tag("demo:packaged", "sha256:training");
+        images.tag("demo:other", "sha256:training");
+
+        jdkAotCacheMojo(project, jdkAotCacheJibConfiguration(), dockerService, mock(ExecutorService.class)).execute();
+
+        verify(dockerService).removeImage("demo-jdk-aot-training");
+        verify(dockerService, never()).removeImage("sha256:training");
+        assertEquals(List.of("demo:packaged", "demo:other"), images.tagsOf("sha256:training"));
+    }
+
+    @Test
+    void jdkAotCacheKeepsTheImageWhenJibToImageIsAUserPropertyAndRemovesTheUntaggedTrainingImage(@TempDir Path tempDir)
+        throws Exception {
+        // The user property has precedence over the tag of the training image, so Jib tags the training image with the
+        // name of the final image, and the final build moves the tag
+        var project = mockProject(tempDir);
+        var images = new DaemonImages();
+        var dockerService = trainingDockerService(images);
+        images.untag("demo-jdk-aot-training");
+        images.untag("registry.example.com/demo:1.0");
+        var userProperties = new Properties();
+        userProperties.setProperty("jib.to.image", "demo:1.0");
+        var executorService = mock(ExecutorService.class);
+        var builtImages = new ArrayList<>(List.of("sha256:training", "sha256:final"));
+        doAnswer(invocation -> {
+            images.tag("demo:1.0", builtImages.remove(0));
+            return null;
+        }).when(executorService).executeGoal(eq(project), eq("com.google.cloud.tools:jib-maven-plugin"), any());
+        var mojo = new DockerMojo(project, jdkAotCacheJibConfiguration(), null, dockerService,
+            mockSession(project, userProperties), mock(MojoExecution.class), executorService);
+        mojo.micronautRuntime = "NONE";
+        mojo.jibBuildGoal = "dockerBuild";
+        mojo.jdkAotCache = true;
+        mojo.jdkAotCacheTrainingPaths = List.of("/hello");
+        mojo.jdkAotCacheTrainingTimeout = 180;
+
+        mojo.execute();
+
+        verify(dockerService, never()).removeImage("demo:1.0");
         verify(dockerService).removeImage("sha256:training");
+        assertEquals(List.of("demo:1.0"), images.tagsOf("sha256:final"));
+        assertFalse(images.exists("sha256:training"));
     }
 
     @Test
@@ -302,7 +360,7 @@ class DockerMojoTest {
 
         verify(executorService, times(1)).executeGoal(eq(project), eq("com.google.cloud.tools:jib-maven-plugin"), any());
         verify(dockerService).removeContainer("container");
-        verify(dockerService).removeImage("sha256:training");
+        verify(dockerService).removeImage("demo-jdk-aot-training");
         assertFalse(project.getProperties().containsKey(JdkAotCachePlan.PLATFORM_PROPERTY));
     }
 
@@ -495,13 +553,21 @@ class DockerMojoTest {
     }
 
     private static DockerService trainingDockerService() throws IOException {
+        return trainingDockerService(new DaemonImages());
+    }
+
+    /**
+     * @param images the images of the daemon, which get the training image as {@code demo-jdk-aot-training} and the
+     * final image as {@code registry.example.com/demo:1.0}
+     */
+    private static DockerService trainingDockerService(DaemonImages images) throws IOException {
         var dockerService = mock(DockerService.class);
         when(dockerService.getDaemonPlatform()).thenReturn("linux/arm64");
-        var trainingImage = inspectResponse("sha256:training", "sha256:base", "sha256:app");
-        when(dockerService.inspectImage("demo-jdk-aot-training")).thenReturn(trainingImage);
-        when(dockerService.inspectImage("sha256:training")).thenReturn(trainingImage);
-        var finalImage = inspectResponse("sha256:final", "sha256:base", "sha256:app", "sha256:cache");
-        when(dockerService.inspectImage("registry.example.com/demo:1.0")).thenReturn(finalImage);
+        images.stub(dockerService,
+            inspectResponse("sha256:training", "sha256:base", "sha256:app"),
+            inspectResponse("sha256:final", "sha256:base", "sha256:app", "sha256:cache"));
+        images.tag("demo-jdk-aot-training", "sha256:training");
+        images.tag("registry.example.com/demo:1.0", "sha256:final");
         when(dockerService.runAndCaptureOutput(eq("sha256:training"), anyInt(), any()))
             .thenReturn(new DockerService.ContainerOutput(0, "openjdk version \"25.0.4\" 2026-07-21 LTS"));
         when(dockerService.createContainer(eq("sha256:training"), isNull(), eq(false), anyMap())).thenReturn("container");
@@ -535,10 +601,77 @@ class DockerMojoTest {
     }
 
     private static MavenSession mockSession(MavenProject project) {
+        return mockSession(project, new Properties());
+    }
+
+    private static MavenSession mockSession(MavenProject project, Properties userProperties) {
         var session = mock(MavenSession.class);
         when(session.getCurrentProject()).thenReturn(project);
         when(session.getSystemProperties()).thenReturn(new Properties());
-        when(session.getUserProperties()).thenReturn(new Properties());
+        when(session.getUserProperties()).thenReturn(userProperties);
         return session;
+    }
+
+    /**
+     * The images of a Docker daemon, as tags that refer to image IDs. As with {@code docker rmi} without force, removing
+     * the last tag of an image deletes the image, and removing an image by its ID fails when several tags refer to it.
+     */
+    private static final class DaemonImages {
+
+        private final Map<String, InspectImageResponse> images = new HashMap<>();
+        private final Map<String, String> tags = new LinkedHashMap<>();
+
+        void stub(DockerService dockerService, InspectImageResponse... responses) {
+            for (InspectImageResponse image : responses) {
+                images.put(image.getId(), image);
+                when(image.getRepoTags()).thenAnswer(invocation -> tagsOf(image.getId()));
+            }
+            when(dockerService.inspectImage(any())).thenAnswer(invocation -> {
+                String name = invocation.getArgument(0);
+                InspectImageResponse image = images.get(tags.getOrDefault(name, name));
+                if (image == null) {
+                    throw new NotFoundException("No such image: " + name);
+                }
+                return image;
+            });
+            doAnswer(invocation -> {
+                remove(invocation.getArgument(0));
+                return null;
+            }).when(dockerService).removeImage(any());
+        }
+
+        void tag(String tag, String imageId) {
+            tags.put(tag, imageId);
+        }
+
+        void untag(String tag) {
+            tags.remove(tag);
+        }
+
+        List<String> tagsOf(String imageId) {
+            return tags.entrySet().stream()
+                .filter(tag -> tag.getValue().equals(imageId))
+                .map(Map.Entry::getKey)
+                .toList();
+        }
+
+        boolean exists(String imageId) {
+            return images.containsKey(imageId);
+        }
+
+        private void remove(String name) {
+            String imageId = tags.remove(name);
+            if (imageId == null) {
+                List<String> imageTags = tagsOf(name);
+                if (imageTags.size() > 1) {
+                    throw new ConflictException("unable to delete " + name + " (must be forced) - image is referenced "
+                        + "in multiple repositories");
+                }
+                imageTags.forEach(tags::remove);
+                images.remove(name);
+            } else if (tagsOf(imageId).isEmpty()) {
+                images.remove(imageId);
+            }
+        }
     }
 }
