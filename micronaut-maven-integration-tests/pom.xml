@@ -23,14 +23,13 @@
         <it.micronaut.core.version>5.0.0</it.micronaut.core.version>
         <it.micronaut.version>5.0.0-RC1</it.micronaut.version>
         <!--
-          A Micronaut core version that has micronaut.application.training.mode (micronaut-projects/micronaut-core#13402),
-          for the *-jdk-aot-cache-load projects, which train a JDK AOT cache without starting the application. They are
-          skipped while this is empty, because no such version is released yet. To run them, publish that core build to
-          the local Maven repository under a version that no remote repository has, because Maven prefers the published
-          5.3.0-SNAPSHOT of the 5.3.x branch to a local one, and pass the version, for example
-          -Dit.micronaut.core.trainingMode.version=5.3.0-pr13402-SNAPSHOT
+          A Micronaut core version that has micronaut.application.training.mode (micronaut-projects/micronaut-core#13402,
+          merged into micronaut-core 5.3.x, ships with Micronaut Core 5.3.0), for the *-jdk-aot-cache-load projects, which
+          train a JDK AOT cache without starting the application. They are skipped while this is empty, because no such
+          version is released yet. To run them before the release, pass the published snapshot of the 5.3.x branch, which
+          has the mode: -Dit.micronaut.core.trainingMode.version=5.3.0-SNAPSHOT
 
-          TODO when a Micronaut core release has the mode ({{LOAD_ITS_ISSUE}}): set this property to it, so that CI runs
+          TODO when a Micronaut core release has the mode (#1729): set this property to it, so that CI runs
           these projects, which are the only end-to-end check of the default training mode. When it.micronaut.version
           itself has the mode, remove the property, the selector.groovy files and the micronaut.core.version of these
           projects instead.
