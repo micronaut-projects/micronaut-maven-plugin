@@ -233,7 +233,7 @@ public final class JdkAotCachePlan {
                 .map(digest -> ImageReference.of(reference.getRegistry(), reference.getRepository(),
                     reference.getTag().orElse(null), digest).toString());
         } catch (InvalidImageReferenceException | CacheDirectoryCreationException | CacheCorruptedException
-                 | IOException | RuntimeException e) {
+                 | IOException | RuntimeException _) {
             return Optional.empty();
         }
     }

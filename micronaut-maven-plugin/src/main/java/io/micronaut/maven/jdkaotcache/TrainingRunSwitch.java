@@ -141,7 +141,7 @@ public final class TrainingRunSwitch {
             }
             String content = read(jarFile, entry);
             return Arrays.stream(texts).allMatch(content::contains);
-        } catch (IOException e) {
+        } catch (IOException _) {
             return false;
         }
     }
@@ -157,7 +157,7 @@ public final class TrainingRunSwitch {
                 }
             }
             return false;
-        } catch (IOException e) {
+        } catch (IOException _) {
             return false;
         }
     }

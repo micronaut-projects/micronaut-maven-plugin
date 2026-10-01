@@ -265,7 +265,7 @@ public class DockerMojo extends AbstractDockerMojo {
     private Optional<InspectImageResponse> inspectImage(String image) {
         try {
             return Optional.of(dockerService.inspectImage(image));
-        } catch (NotFoundException e) {
+        } catch (NotFoundException _) {
             return Optional.empty();
         }
     }

@@ -355,8 +355,8 @@ class JdkAotCacheTrainingTest {
 
     private void mockJava(String output) {
         try {
-            when(dockerService.runAndCaptureOutput(eq("sha256:training"), eq(180), eq(List.of("java",
-                "-XX:+UnlockDiagnosticVMOptions", "-XX:+PrintFlagsFinal", "-version"))))
+            when(dockerService.runAndCaptureOutput("sha256:training", 180, List.of("java",
+                "-XX:+UnlockDiagnosticVMOptions", "-XX:+PrintFlagsFinal", "-version")))
                 .thenReturn(new DockerService.ContainerOutput(0, output));
         } catch (IOException e) {
             throw new AssertionError(e);

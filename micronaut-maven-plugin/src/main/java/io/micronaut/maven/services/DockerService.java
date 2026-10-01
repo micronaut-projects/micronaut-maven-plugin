@@ -366,7 +366,7 @@ public class DockerService {
             try (var callback = new LineCallback(lines::add)) {
                 getDockerClient().logContainerCmd(containerId).withStdOut(true).withStdErr(true).exec(callback).awaitCompletion();
                 callback.flush();
-            } catch (InterruptedException e) {
+            } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
             }
             return new ContainerOutput(exitCode, String.join("\n", lines));
@@ -433,7 +433,7 @@ public class DockerService {
     public void removeContainer(String containerId) {
         try (RemoveContainerCmd remove = getDockerClient().removeContainerCmd(containerId)) {
             remove.withForce(true).withRemoveVolumes(true).exec();
-        } catch (NotFoundException e) {
+        } catch (NotFoundException _) {
             LOG.debug("Container {} was already removed", containerId);
         }
     }
@@ -449,7 +449,7 @@ public class DockerService {
     public void removeImage(String image) {
         try (RemoveImageCmd remove = getDockerClient().removeImageCmd(image)) {
             remove.exec();
-        } catch (NotFoundException e) {
+        } catch (NotFoundException _) {
             LOG.debug("Image {} was already removed", image);
         }
     }
