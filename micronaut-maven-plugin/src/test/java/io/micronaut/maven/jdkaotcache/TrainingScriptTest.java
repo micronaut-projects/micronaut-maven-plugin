@@ -226,11 +226,12 @@ class TrainingScriptTest {
      */
     private static final class HttpStandIn implements AutoCloseable {
 
-        private final ServerSocket server = new ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"));
+        private final ServerSocket server;
         private final List<String> requestLines = new CopyOnWriteArrayList<>();
         private final Path running;
 
         private HttpStandIn(Path running) throws IOException {
+            this.server = new ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"));
             this.running = running;
         }
 
