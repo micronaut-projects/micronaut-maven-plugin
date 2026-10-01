@@ -434,10 +434,11 @@ the container and stops the application with `SIGTERM`.
 |===
 
 NOTE: The training-run switch and the training mode come with
-https://github.com/micronaut-projects/micronaut-core/pull/13402[micronaut-core#13402], which is not part of a Micronaut
-release yet. With every Micronaut version released so far, the default is therefore the last row: a training run that
-starts the application, so the services it needs to start must be reachable from the image build. The build log says
-which mode the training uses and why. To keep starting the application when its Micronaut version gets the mode, set
+https://github.com/micronaut-projects/micronaut-core/pull/13402[micronaut-core#13402], merged into micronaut-core 5.3.x:
+it ships with Micronaut Core 5.3.0 and is not part of a Micronaut release yet. With every Micronaut version released so
+far, the default is therefore the last row: a training run that starts the application, so the services it needs to
+start must be reachable from the image build. The build log says which mode the training uses and why. To keep
+starting the application when its Micronaut version gets the mode, set
 `micronaut.docker.jdkAotCache.trainingMode=start`. A build that sets `micronaut.docker.jdkAotCache.trainingPaths` and
 no mode needs it: it works today, logs a warning that says so, and fails once the Micronaut version has the mode,
 because `load` is then the default.
@@ -493,6 +494,12 @@ the switch. The `Dockerfile` lists the dependency JARs one by one and an applica
 and the classes directory, and starts `java` with `-XX:+UseG1GC` in both the `RUN` instruction and the `ENTRYPOINT`. In
 the `RUN` instruction, the script trains with `-XX:AOTCacheOutput` and `-XX:-UsePerfData` in `JDK_JAVA_OPTIONS`. The
 `ENTRYPOINT` adds `-XX:AOTCache`.
+
+IMPORTANT: If you keep the generated `Dockerfile` in the project and build it with
+`mvn package -Dpackaging=docker -Dmicronaut.docker.jdkAotCache=true`, generate it again with `mn:dockerfile` after you
+upgrade the plugin. Its `RUN` instruction calls the training script with the arguments of the plugin version that
+generated it, and copies files from `target/jdk-aot-cache`, which the build writes with the training script of the
+current plugin version. The arguments of the script and the names of those files can change between plugin versions.
 
 [[jdk-aot-cache-image-size]]
 ==== Image size
