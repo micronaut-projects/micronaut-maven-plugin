@@ -487,8 +487,9 @@ in a `RUN` instruction, in the same training mode and with the same script. The 
 training in every mode, so the base image of that `Dockerfile` needs `bash` also for a `load` run and for a `start` run
 with the training-run switch. The port of the application is only used by a `start` run on a Micronaut version without
 the switch. The `Dockerfile` lists the dependency JARs one by one and an application JAR last, instead of `*` entries
-and the classes directory, and starts `java` with `-XX:+UseG1GC` and `-XX:AOTCache` in both the `RUN` instruction and
-the `ENTRYPOINT`.
+and the classes directory, and starts `java` with `-XX:+UseG1GC` in both the `RUN` instruction and the `ENTRYPOINT`. In
+the `RUN` instruction, the script trains with `-XX:AOTCacheOutput` and `-XX:-UsePerfData` in `JDK_JAVA_OPTIONS`. The
+`ENTRYPOINT` adds `-XX:AOTCache`.
 
 [[jdk-aot-cache-image-size]]
 ==== Image size
