@@ -51,3 +51,8 @@ configured.
 
 A resource directory with `filtering` enabled is not read live, since the build expands it: the launcher reads its copy
 from the class output, and a change to it is applied by `mvn process-resources` in `build-tool` mode.
+
+== Continuous testing
+
+`mn:test` runs the project's tests on the same runtime, in test mode: see
+link:test.html[Running tests continuously with `mn:test`].

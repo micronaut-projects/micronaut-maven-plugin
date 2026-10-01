@@ -23,6 +23,7 @@
         <menu name="Examples">
             <item name="Running in development mode" href="examples/run.html"/>
             <item name="Development mode with mn:dev" href="examples/dev.html"/>
+            <item name="Continuous testing with mn:test" href="examples/test.html"/>
             <item name="Packaging" href="examples/package.html"/>
             <item name="Generating Dockerfiles" href="dockerfile-mojo.html"/>
             <item name="Deploying Docker images" href="examples/deploy.html"/>
