@@ -17,7 +17,7 @@ assert text.contains("JDK AOT cache: training mode start: the training run start
 assert text.contains("[WARNING] JDK AOT cache: micronaut.docker.jdkAotCache.trainingPaths is set and micronaut.docker.jdkAotCache.trainingMode is not. This build will fail once the application uses a Micronaut version with the load training mode")
 
 // Micronaut 5.0 has no training-run switch either: the plugin warms the application up and stops it with SIGTERM
-assert text.contains("JDK AOT cache: training with JDK_JAVA_OPTIONS=-XX:AOTCacheOutput=/tmp/app.aot")
+assert text =~ /(?m)JDK AOT cache: training with JDK_JAVA_OPTIONS=-XX:AOTCacheOutput=\/tmp\/app\.aot -XX:-UsePerfData$/
 assert text.contains("[jdk-aot-cache] GET /hello: 200")
 assert text.contains("JDK AOT cache: stopping the application with SIGTERM")
 assert new File(basedir, 'target/jdk-aot-cache/app.aot').length() > 0

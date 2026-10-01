@@ -24,6 +24,7 @@ assert text.contains("JDK AOT cache: training mode start: the training run start
 assert text.contains("[WARNING] JDK AOT cache: micronaut.docker.jdkAotCache.trainingPaths is set and micronaut.docker.jdkAotCache.trainingMode is not. This build will fail once the application uses a Micronaut version with the load training mode")
 
 // Micronaut 5.0 has no training-run switch either: the script warms the application up and stops it with SIGTERM
+assert text.contains("[jdk-aot-cache] Training with JDK_JAVA_OPTIONS=-XX:AOTCacheOutput=/home/app/app.aot -XX:-UsePerfData")
 assert text.contains("[jdk-aot-cache] GET /hello: 200")
 assert text.contains("[jdk-aot-cache] Stopping the application with SIGTERM")
 assert text.contains("[jdk-aot-cache] Wrote the JDK AOT cache /home/app/app.aot")
@@ -34,3 +35,11 @@ assert text.contains("[alvarosanchez/dockerfile-docker-jdk-aot-cache:0.1]: Built
 assert text =~ /\[class,load\] io\.micronaut\.build\.examples\.HelloController source: shared objects file/
 assert text =~ /\[class,load\] io\.micronaut\.runtime\.Micronaut source: shared objects file/
 assert text.contains("io.micronaut.runtime.Micronaut - Startup completed")
+
+// No JVM of the training writes a performance data file (-XX:-UsePerfData), so the layer of the RUN instruction has
+// no /tmp/hsperfdata_<user>/<pid> file
+def find = ['docker', 'run', '--rm', '--entrypoint', 'find', 'alvarosanchez/dockerfile-docker-jdk-aot-cache:0.1', '/tmp', '-path', '/tmp/hsperfdata_*/*'].execute()
+def found = new StringBuilder()
+find.waitForProcessOutput(found, found)
+assert find.exitValue() == 0
+assert found.toString().isEmpty()

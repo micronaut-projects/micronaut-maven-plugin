@@ -32,6 +32,7 @@ class TrainingScriptTest {
         directory=$(dirname "$0")
         for argument in "$@"; do
             if [ "$argument" = "-version" ]; then
+                printf '%s\\n' "$@" > "$directory/version-arguments"
                 echo 'openjdk version "25.0.4" 2026-07-21 LTS' >&2
                 exit 0
             fi
@@ -66,7 +67,7 @@ class TrainingScriptTest {
         Result result = train("load");
 
         assertEquals(0, result.status(), result.output());
-        assertEquals("-XX:AOTCacheOutput=" + cache + " -Dmicronaut.application.training.enabled=true "
+        assertEquals("-XX:AOTCacheOutput=" + cache + " -XX:-UsePerfData -Dmicronaut.application.training.enabled=true "
             + "-Dmicronaut.application.training.mode=load", Files.readString(tempDir.resolve("options")));
         assertEquals(List.of("-cp", "@/home/app/classpath", "example.Application"), Files.readAllLines(tempDir.resolve("arguments")));
         assertEquals("cache", Files.readString(cache));
@@ -80,7 +81,7 @@ class TrainingScriptTest {
         Result result = train(List.of("JDK_JAVA_OPTIONS=-Xss1m"), "load");
 
         assertEquals(0, result.status(), result.output());
-        assertEquals("-Xss1m -XX:AOTCacheOutput=" + cache + " -Dmicronaut.application.training.enabled=true "
+        assertEquals("-Xss1m -XX:AOTCacheOutput=" + cache + " -XX:-UsePerfData -Dmicronaut.application.training.enabled=true "
             + "-Dmicronaut.application.training.mode=load", Files.readString(tempDir.resolve("options")));
     }
 
@@ -89,9 +90,23 @@ class TrainingScriptTest {
         Result result = train("switch", "/hello", "/books?ids=1,2");
 
         assertEquals(0, result.status(), result.output());
-        assertEquals("-XX:AOTCacheOutput=" + cache + " -Dmicronaut.application.training.enabled=true "
+        assertEquals("-XX:AOTCacheOutput=" + cache + " -XX:-UsePerfData -Dmicronaut.application.training.enabled=true "
             + "-Dmicronaut.application.training.mode=start -Dmicronaut.application.training.warmup.paths[0]=/hello "
             + "-Dmicronaut.application.training.warmup.paths[1]=/books?ids=1,2", Files.readString(tempDir.resolve("options")));
+    }
+
+    @Test
+    void noJvmOfTheTrainingWritesPerformanceData() throws Exception {
+        // The layer of the RUN instruction would keep a /tmp/hsperfdata_<user>/<pid> file
+        Result result = train("switch");
+
+        assertEquals(0, result.status(), result.output());
+        assertEquals(List.of("-XX:-UsePerfData", "-XX:+UnlockDiagnosticVMOptions", "-XX:+PrintFlagsFinal", "-version"),
+            Files.readAllLines(tempDir.resolve("version-arguments")));
+        assertEquals("-XX:AOTCacheOutput=" + cache + " -XX:-UsePerfData -Dmicronaut.application.training.enabled=true "
+            + "-Dmicronaut.application.training.mode=start", Files.readString(tempDir.resolve("options")));
+        assertTrue(result.output().contains("[jdk-aot-cache] Training with JDK_JAVA_OPTIONS=-XX:AOTCacheOutput=" + cache
+            + " -XX:-UsePerfData "), result.output());
     }
 
     @Test

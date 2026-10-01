@@ -85,11 +85,11 @@ class JdkAotCacheTrainingTest {
     void trainingEnvironmentAddsTheCacheOutputToTheImageOptions() {
         var java25 = new JdkAotCacheTraining.JavaRuntime(25, false);
 
-        assertEquals(Map.of("JDK_JAVA_OPTIONS", "-XX:AOTCacheOutput=/tmp/app.aot"),
+        assertEquals(Map.of("JDK_JAVA_OPTIONS", "-XX:AOTCacheOutput=/tmp/app.aot -XX:-UsePerfData"),
             JdkAotCacheTraining.trainingEnvironment(null, java25, SCRIPT, List.of("/hello")));
-        assertEquals(Map.of("JDK_JAVA_OPTIONS", "-Xss1m -XX:AOTCacheOutput=/tmp/app.aot"),
+        assertEquals(Map.of("JDK_JAVA_OPTIONS", "-Xss1m -XX:AOTCacheOutput=/tmp/app.aot -XX:-UsePerfData"),
             JdkAotCacheTraining.trainingEnvironment(new String[] {"PATH=/bin", "JDK_JAVA_OPTIONS=-Xss1m"}, java25, SCRIPT, List.of()));
-        assertEquals(Map.of("JDK_JAVA_OPTIONS", "-XX:AOTCacheOutput=/tmp/app.aot -Dmicronaut.application.training.enabled=true "
+        assertEquals(Map.of("JDK_JAVA_OPTIONS", "-XX:AOTCacheOutput=/tmp/app.aot -XX:-UsePerfData -Dmicronaut.application.training.enabled=true "
                 + "-Dmicronaut.application.training.mode=start -Dmicronaut.application.training.warmup.paths[0]=/hello"),
             JdkAotCacheTraining.trainingEnvironment(null, java25, SWITCH, List.of("/hello")));
     }
@@ -98,9 +98,22 @@ class JdkAotCacheTrainingTest {
     void trainingEnvironmentSelectsTheLoadMode() {
         var java25 = new JdkAotCacheTraining.JavaRuntime(25, false);
 
-        assertEquals(Map.of("JDK_JAVA_OPTIONS", "-Xss1m -XX:AOTCacheOutput=/tmp/app.aot "
+        assertEquals(Map.of("JDK_JAVA_OPTIONS", "-Xss1m -XX:AOTCacheOutput=/tmp/app.aot -XX:-UsePerfData "
                 + "-Dmicronaut.application.training.enabled=true -Dmicronaut.application.training.mode=load"),
             JdkAotCacheTraining.trainingEnvironment(new String[] {"JDK_JAVA_OPTIONS=-Xss1m"}, java25, LOAD, List.of()));
+    }
+
+    @Test
+    void noTrainingRunWritesPerformanceData() {
+        // The JVM that writes the cache reads JDK_JAVA_OPTIONS too, and leaves /tmp/hsperfdata_<user>/<pid> otherwise
+        var java25 = new JdkAotCacheTraining.JavaRuntime(25, false);
+
+        for (TrainingRun run : List.of(SCRIPT, SWITCH, LOAD)) {
+            String options = JdkAotCacheTraining.trainingEnvironment(new String[] {"JDK_JAVA_OPTIONS=-Xss1m"}, java25, run,
+                List.of()).get("JDK_JAVA_OPTIONS");
+            assertTrue((options + " ").startsWith("-Xss1m -XX:AOTCacheOutput=/tmp/app.aot -XX:-UsePerfData "),
+                run.description() + ": " + options);
+        }
     }
 
     @Test
@@ -146,7 +159,7 @@ class JdkAotCacheTrainingTest {
         order.verify(dockerService).awaitExit("container", 180);
         order.verify(dockerService).copyFileFromContainer("container", "/tmp/app.aot", cacheFile);
         order.verify(dockerService).removeContainer("container");
-        assertEquals(Map.of("JDK_JAVA_OPTIONS", "-Xss1m -XX:AOTCacheOutput=/tmp/app.aot"), environment.getValue());
+        assertEquals(Map.of("JDK_JAVA_OPTIONS", "-Xss1m -XX:AOTCacheOutput=/tmp/app.aot -XX:-UsePerfData"), environment.getValue());
         var arguments = command.getValue();
         assertEquals(List.of("bash", "-c"), List.of(arguments).subList(0, 2));
         assertEquals(JdkAotCacheTraining.readScript(), arguments[2]);
@@ -210,7 +223,7 @@ class JdkAotCacheTrainingTest {
         order.verify(dockerService).logContainerOutput("container");
         order.verify(dockerService).copyFileFromContainer("container", "/tmp/app.aot", cacheFile);
         order.verify(dockerService).removeContainer("container");
-        assertEquals(Map.of("JDK_JAVA_OPTIONS", "-Xss1m -XX:AOTCacheOutput=/tmp/app.aot "
+        assertEquals(Map.of("JDK_JAVA_OPTIONS", "-Xss1m -XX:AOTCacheOutput=/tmp/app.aot -XX:-UsePerfData "
             + "-Dmicronaut.application.training.enabled=true -Dmicronaut.application.training.mode=load"), environment.getValue());
         verify(dockerService, never()).startContainer(any());
         verify(dockerService, never()).execInContainer(any(), anyInt(), any(), any(String[].class));

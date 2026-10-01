@@ -41,8 +41,8 @@ import java.util.regex.Pattern;
 
 /**
  * Trains a JDK AOT cache in a container of the training image that the {@code docker} goal built with Jib. The
- * container runs the image's own entrypoint, with {@code -XX:AOTCacheOutput} in {@code JDK_JAVA_OPTIONS}. What the
- * application does in it is the {@link TrainingRun}:
+ * container runs the image's own entrypoint, with {@code -XX:AOTCacheOutput} and {@code -XX:-UsePerfData} in
+ * {@code JDK_JAVA_OPTIONS}. What the application does in it is the {@link TrainingRun}:
  * <ul>
  *     <li>In a {@link TrainingMode#LOAD} run, it loads its bean definitions and exits without starting.</li>
  *     <li>In a {@link TrainingMode#START} run, if its Micronaut version has the training-run switch, it starts, warms
@@ -69,6 +69,13 @@ public final class JdkAotCacheTraining {
     public static final String SCRIPT_RESOURCE = "/jdkAotCacheScripts/training.sh";
 
     static final String CONTAINER_CACHE_FILE = "/tmp/app.aot";
+    /**
+     * Keeps the training JVMs from writing performance data files ({@code /tmp/hsperfdata_<user>/<pid>}). The JVM that
+     * {@code -XX:AOTCacheOutput} starts to write the cache reads {@code JDK_JAVA_OPTIONS} too, and leaves its file
+     * behind. The training script passes the same option, because the layer of the {@code RUN} instruction that trains
+     * the cache in the generated Dockerfile would keep that file.
+     */
+    static final String NO_PERF_DATA = "-XX:-UsePerfData";
     static final String JDK_JAVA_OPTIONS = "JDK_JAVA_OPTIONS";
     static final String JDK_AOT_VM_OPTIONS = "JDK_AOT_VM_OPTIONS";
     static final String COMPATIBLE_OOP_COMPRESSION_FLAG = "AOTCompatibleOopCompression";
@@ -197,6 +204,7 @@ public final class JdkAotCacheTraining {
         var options = new ArrayList<String>();
         imageVariable(imageEnvironment, JDK_JAVA_OPTIONS).ifPresent(options::add);
         options.add("-XX:AOTCacheOutput=" + CONTAINER_CACHE_FILE);
+        options.add(NO_PERF_DATA);
         options.addAll(run.systemProperties(trainingPaths));
         environment.put(JDK_JAVA_OPTIONS, String.join(" ", options));
         if (java.compatibleOopCompression()) {

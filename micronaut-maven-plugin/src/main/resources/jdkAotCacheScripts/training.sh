@@ -9,11 +9,11 @@
 #     with docker exec in the training container, whose entrypoint is the application.
 #
 #   training.sh train <cache> <port> <timeout> <load|switch|sigterm> [<path>...] -- <java> <argument>...
-#     Runs the application with -XX:AOTCacheOutput=<cache> and checks that the cache was written. With "load", the
-#     Micronaut training-run switch loads the bean definitions and exits without starting the application, so no
-#     request is sent. With "switch", it starts the application, warms it up and exits. With "sigterm", the
-#     application runs in the background, this script warms it up as above and stops it with SIGTERM. Generated
-#     Dockerfiles run it.
+#     Runs the application with -XX:AOTCacheOutput=<cache> and -XX:-UsePerfData, and checks that the cache was
+#     written. With "load", the Micronaut training-run switch loads the bean definitions and exits without starting
+#     the application, so no request is sent. With "switch", it starts the application, warms it up and exits. With
+#     "sigterm", the application runs in the background, this script warms it up as above and stops it with SIGTERM.
+#     Generated Dockerfiles run it.
 
 set -u
 
@@ -100,7 +100,9 @@ train() {
         fail "A load training run does not start the application, so it cannot send requests to ${paths[*]}"
     fi
 
-    output=$("$1" -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal -version 2>&1) || fail "$1 -version failed"
+    # -XX:-UsePerfData here and in the training run: no JVM of the training writes a performance data file
+    # (/tmp/hsperfdata_<user>/<pid>), which would stay in the image layer of a Dockerfile RUN instruction
+    output=$("$1" -XX:-UsePerfData -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal -version 2>&1) || fail "$1 -version failed"
     [[ $output =~ \ version\ \"([0-9]+)(\.([0-9]+))? ]] || fail "Could not read the Java version of $1"
     major=${BASH_REMATCH[1]}
     if [ "$major" = 1 ]; then
@@ -114,7 +116,9 @@ train() {
         export JDK_AOT_VM_OPTIONS="${JDK_AOT_VM_OPTIONS:+$JDK_AOT_VM_OPTIONS }-XX:+UnlockDiagnosticVMOptions -XX:+AOTCompatibleOopCompression"
     fi
 
-    local options="-XX:AOTCacheOutput=$cache" i
+    # The JVM that -XX:AOTCacheOutput starts to write the cache reads JDK_JAVA_OPTIONS too, and would leave its
+    # performance data file behind without -XX:-UsePerfData
+    local options="-XX:AOTCacheOutput=$cache -XX:-UsePerfData" i
     if [ "$mode" = load ]; then
         options+=" -Dmicronaut.application.training.enabled=true -Dmicronaut.application.training.mode=load"
     elif [ "$mode" = switch ]; then

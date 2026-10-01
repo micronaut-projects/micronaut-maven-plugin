@@ -378,7 +378,7 @@ class DockerMojoTest {
 
         mojo.execute();
 
-        assertEquals("-XX:AOTCacheOutput=/tmp/app.aot -Dmicronaut.application.training.enabled=true "
+        assertEquals("-XX:AOTCacheOutput=/tmp/app.aot -XX:-UsePerfData -Dmicronaut.application.training.enabled=true "
             + "-Dmicronaut.application.training.mode=load", trainingEnvironment(dockerService).get("JDK_JAVA_OPTIONS"));
         verify(dockerService).startAndWait("container", "sha256:training", 180);
         verify(dockerService, never()).execInContainer(any(), anyInt(), any(), any(String[].class));
@@ -405,7 +405,7 @@ class DockerMojoTest {
 
         mojo.execute();
 
-        assertEquals("-XX:AOTCacheOutput=/tmp/app.aot -Dmicronaut.application.training.enabled=true "
+        assertEquals("-XX:AOTCacheOutput=/tmp/app.aot -XX:-UsePerfData -Dmicronaut.application.training.enabled=true "
             + "-Dmicronaut.application.training.mode=start -Dmicronaut.application.training.warmup.paths[0]=/hello",
             trainingEnvironment(dockerService).get("JDK_JAVA_OPTIONS"));
         verify(dockerService).startAndWait("container", "sha256:training", 180);
@@ -427,7 +427,7 @@ class DockerMojoTest {
 
         mojo.execute();
 
-        assertEquals("-XX:AOTCacheOutput=/tmp/app.aot", trainingEnvironment(dockerService).get("JDK_JAVA_OPTIONS"));
+        assertEquals("-XX:AOTCacheOutput=/tmp/app.aot -XX:-UsePerfData", trainingEnvironment(dockerService).get("JDK_JAVA_OPTIONS"));
         verify(dockerService).signalContainer("container", "SIGTERM");
         assertTrue(infoMessages(log).contains("JDK AOT cache: training mode start: the training run starts the application, because its "
             + "Micronaut version has no training mode that loads it without starting it "
