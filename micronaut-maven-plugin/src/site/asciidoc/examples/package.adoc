@@ -496,9 +496,11 @@ the `RUN` instruction, the script trains with `-XX:AOTCacheOutput` and `-XX:-Use
 
 The option adds the cache file in a layer of its own: `/app/app.aot` in the top layer with Jib, and `/home/app/app.aot`
 in the layer of the `RUN` instruction that trains it with the generated `Dockerfile`. The training runs `java` with
-`-XX:-UsePerfData`, so it writes no performance data file (`/tmp/hsperfdata_<user>/<pid>`, 32 KiB): the layer of that
-`RUN` instruction has the cache file, removes the training script and has no other file. With Jib, the training runs in
-a container that the plugin removes once it has copied the cache out. The base image and the dependency layers do not
+`-XX:-UsePerfData`, so it writes no performance data file (`/tmp/hsperfdata_<user>/<pid>`, 32 KiB): in the layer of
+that `RUN` instruction, the plugin adds the cache file, removes the training script and adds no other file. The
+application runs in that `RUN` instruction too, so a file that it writes during the training run and does not delete,
+such as a log file, a database file or a temporary file, stays in that layer. With Jib, the training runs in a container
+that the plugin removes once it has copied the cache out. The base image and the dependency layers do not
 change. The application classes and resources are in a JAR instead of directories: with Jib, one layer
 with the JAR replaces the classes and resources layers, and the generated `Dockerfile` copies the JAR with a class path
 file and the training script. In the images below, these other changes made a difference of less than 0.2 MB.
