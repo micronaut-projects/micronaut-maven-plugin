@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -104,11 +103,8 @@ public final class JdkAotCacheDockerContext {
         Path context = buildDirectory.resolve(CONTEXT_DIRECTORY);
         Files.createDirectories(context);
         writeApplicationJar(classesDirectory, context.resolve(APPLICATION_JAR));
-        var classpath = new ArrayList<String>(dependencies.size() + 1);
-        for (String dependency : dependencies) {
-            classpath.add(IMAGE_LIBS + dependency);
-        }
-        classpath.add(IMAGE_HOME + "/" + APPLICATION_JAR);
+        List<String> classpath = Stream.concat(dependencies.stream().map(dependency -> IMAGE_LIBS + dependency),
+            Stream.of(IMAGE_HOME + "/" + APPLICATION_JAR)).toList();
         Files.writeString(context.resolve(CLASSPATH_FILE), "\"" + String.join(":", classpath) + "\"\n", StandardCharsets.UTF_8);
         Files.writeString(context.resolve(TRAINING_SCRIPT), JdkAotCacheTraining.readScript(), StandardCharsets.UTF_8);
     }

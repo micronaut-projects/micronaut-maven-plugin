@@ -91,6 +91,8 @@ public class DockerMojo extends AbstractDockerMojo {
     private static final String DOCKER_URI_PREFIX = "docker://";
     private static final String TAR_URI_PREFIX = "tar://";
     private static final String PACKAGED = "packaged";
+    private static final String AMD64 = "amd64";
+    private static final String ARM64 = "arm64";
 
     private final ExecutorService executorService;
 
@@ -300,7 +302,7 @@ public class DockerMojo extends AbstractDockerMojo {
             return;
         }
         List<String> configured = platforms.stream()
-            .map(p -> p.os().orElse("linux") + "/" + goArchitecture(p.architecture().orElse("amd64")))
+            .map(p -> p.os().orElse("linux") + "/" + goArchitecture(p.architecture().orElse(AMD64)))
             .distinct()
             .toList();
         if (!configured.equals(List.of(platform))) {
@@ -316,8 +318,8 @@ public class DockerMojo extends AbstractDockerMojo {
      */
     private static String goArchitecture(String architecture) {
         return switch (architecture) {
-            case "x86_64", "amd64" -> "amd64";
-            case "aarch64", "arm64" -> "arm64";
+            case "x86_64", AMD64 -> AMD64;
+            case "aarch64", ARM64 -> ARM64;
             default -> architecture;
         };
     }
