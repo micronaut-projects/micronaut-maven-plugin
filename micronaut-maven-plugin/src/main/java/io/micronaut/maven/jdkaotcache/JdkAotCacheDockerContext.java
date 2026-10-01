@@ -79,6 +79,11 @@ public final class JdkAotCacheDockerContext {
     private static final String IMAGE_LIBS = IMAGE_HOME + "/libs/";
 
     /**
+     * The application JAR in the image, last on the class path.
+     */
+    private static final String IMAGE_APPLICATION_JAR = IMAGE_HOME + "/" + APPLICATION_JAR;
+
+    /**
      * A fixed timestamp for the JAR entries, independent of the time zone, so that unchanged classes give an identical
      * JAR and Docker can reuse the cached training layer.
      */
@@ -104,7 +109,7 @@ public final class JdkAotCacheDockerContext {
         Files.createDirectories(context);
         writeApplicationJar(classesDirectory, context.resolve(APPLICATION_JAR));
         List<String> classpath = Stream.concat(dependencies.stream().map(dependency -> IMAGE_LIBS + dependency),
-            Stream.of(IMAGE_HOME + "/" + APPLICATION_JAR)).toList();
+            Stream.of(IMAGE_APPLICATION_JAR)).toList();
         Files.writeString(context.resolve(CLASSPATH_FILE), "\"" + String.join(":", classpath) + "\"\n", StandardCharsets.UTF_8);
         Files.writeString(context.resolve(TRAINING_SCRIPT), JdkAotCacheTraining.readScript(), StandardCharsets.UTF_8);
     }
