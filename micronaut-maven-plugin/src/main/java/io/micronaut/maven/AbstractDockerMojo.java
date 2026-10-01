@@ -247,8 +247,9 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * <p>
      * A request that gets no response fails the build. So does a response status of 400 or more when the plugin sends
      * the requests, which it does on a Micronaut version without the training-run switch
-     * ({@code micronaut.application.training.enabled}). With the switch, Micronaut sends them: a status of 500 or more
-     * fails the build, and a status from 400 to 499 is only a warning in the output of the training run.
+     * ({@code micronaut.application.training.enabled}). With the switch, Micronaut sends them and its rule applies: a
+     * status of 500 or more fails the build, and a status from 400 to 499 does not. Micronaut logs it as a warning
+     * ({@code WARN}) in the output of the training run, and the build succeeds.
      * </p>
      *
      * @since 5.1.0

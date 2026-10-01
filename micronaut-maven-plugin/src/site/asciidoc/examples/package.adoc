@@ -392,11 +392,12 @@ Set the mode to `start`, or remove the paths.
 
 In a `start` run, who sends the requests decides which ones fail the build (see the table below):
 
-* On a Micronaut version with the training-run switch, the application sends them to itself. A request without a
-response, or with a status of 500 or more, fails the training run and the build. A status from 400 to 499 does not:
-Micronaut logs a warning and goes on, so a path that does not exist (404) or that is secured (401, 403) leaves the
-build green. The warnings are in the output of the application. With Jib, the plugin copies that output to the build
-log when there are training paths. With the generated `Dockerfile`, it is the output of the `RUN` instruction. Check it.
+* On a Micronaut version with the training-run switch, the application sends them to itself, and Micronaut's rule
+applies. A request without a response, or with a status of 500 or more, fails the training run and the build. A status
+from 400 to 499 does not fail the build: Micronaut logs a `WARN` message and goes on, and the plugin keeps that rule, so
+a path that does not exist (404) or that is secured (401, 403) leaves the build green. The warnings are in the output of
+the application. With Jib, the plugin copies that output to the build log when there are training paths. With the
+generated `Dockerfile`, it is the output of the `RUN` instruction. Check it.
 * On a Micronaut version without the switch, the plugin's script sends them. A request without a response, or with a
 status of 400 or more, fails the build.
 
