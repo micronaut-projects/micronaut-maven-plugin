@@ -20,6 +20,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -443,9 +444,9 @@ class DockerfileMojoTest {
             mock(ApplicationConfigurationService.class), mock(ExecutorService.class), mockSession(project), mock(MojoExecution.class));
         mojo.micronautRuntime = "netty";
         mojo.mainClass = "example.Application";
-        mojo.jdkAotCache = true;
-        mojo.jdkAotCacheTrainingPaths = List.of("/hello", "/it's");
-        mojo.jdkAotCacheTrainingTimeout = 90;
+        setParameter(mojo, "jdkAotCache", true);
+        setParameter(mojo, "jdkAotCacheTrainingPaths", List.of("/hello", "/it's"));
+        setParameter(mojo, "jdkAotCacheTrainingTimeout", 90);
 
         mojo.execute();
 
@@ -476,7 +477,7 @@ class DockerfileMojoTest {
         var mojo = new DockerfileMojo(project, mock(DockerService.class), mock(JibConfigurationService.class),
             mock(ApplicationConfigurationService.class), mock(ExecutorService.class), mockSession(project), mock(MojoExecution.class));
         mojo.micronautRuntime = "lambda";
-        mojo.jdkAotCache = true;
+        setParameter(mojo, "jdkAotCache", true);
 
         var ex = assertThrows(MojoExecutionException.class, mojo::execute);
 
@@ -503,7 +504,7 @@ class DockerfileMojoTest {
     @Test
     void jdkAotCacheLoadModeCanBeConfiguredInAnyCase(@TempDir Path tempDir) throws Exception {
         var mojo = jdkAotCacheMojo(tempDir, MicronautJars.withLoadMode(tempDir), Optional.of("9090 9091"));
-        mojo.jdkAotCacheTrainingMode = "LOAD";
+        setParameter(mojo, "jdkAotCacheTrainingMode", "LOAD");
 
         mojo.execute();
 
@@ -514,8 +515,8 @@ class DockerfileMojoTest {
     @Test
     void jdkAotCacheStartsTheApplicationWhenStartIsConfigured(@TempDir Path tempDir) throws Exception {
         var mojo = jdkAotCacheMojo(tempDir, MicronautJars.withLoadMode(tempDir), Optional.of("8080"));
-        mojo.jdkAotCacheTrainingMode = "start";
-        mojo.jdkAotCacheTrainingPaths = List.of("/hello");
+        setParameter(mojo, "jdkAotCacheTrainingMode", "start");
+        setParameter(mojo, "jdkAotCacheTrainingPaths", List.of("/hello"));
         var log = mock(Log.class);
         mojo.setLog(log);
 
@@ -560,7 +561,7 @@ class DockerfileMojoTest {
     @Test
     void jdkAotCacheWarnsAboutTrainingPathsWithoutAModeWhenTheMicronautVersionHasNoTrainingMode(@TempDir Path tempDir) throws Exception {
         var mojo = jdkAotCacheMojo(tempDir, MicronautJars.withoutSwitch(tempDir), Optional.of("8080"));
-        mojo.jdkAotCacheTrainingPaths = List.of("/hello");
+        setParameter(mojo, "jdkAotCacheTrainingPaths", List.of("/hello"));
         var log = mock(Log.class);
         mojo.setLog(log);
 
@@ -579,10 +580,10 @@ class DockerfileMojoTest {
     @Test
     void jdkAotCacheRejectsTrainingPathsWithTheLoadMode(@TempDir Path tempDir) throws Exception {
         var byDefault = jdkAotCacheMojo(tempDir.resolve("default"), MicronautJars.withLoadMode(tempDir), Optional.of("8080"));
-        byDefault.jdkAotCacheTrainingPaths = List.of("/hello");
+        setParameter(byDefault, "jdkAotCacheTrainingPaths", List.of("/hello"));
         var configured = jdkAotCacheMojo(tempDir.resolve("configured"), MicronautJars.withLoadMode(tempDir), Optional.of("8080"));
-        configured.jdkAotCacheTrainingPaths = List.of("/hello");
-        configured.jdkAotCacheTrainingMode = "load";
+        setParameter(configured, "jdkAotCacheTrainingPaths", List.of("/hello"));
+        setParameter(configured, "jdkAotCacheTrainingMode", "load");
 
         var defaultFailure = assertThrows(MojoExecutionException.class, byDefault::execute);
         var configuredFailure = assertThrows(MojoExecutionException.class, configured::execute);
@@ -597,7 +598,7 @@ class DockerfileMojoTest {
     @Test
     void jdkAotCacheRejectsTheLoadModeOnAMicronautVersionWithoutIt(@TempDir Path tempDir) throws Exception {
         var mojo = jdkAotCacheMojo(tempDir, MicronautJars.withoutSwitch(tempDir), Optional.of("8080"));
-        mojo.jdkAotCacheTrainingMode = "load";
+        setParameter(mojo, "jdkAotCacheTrainingMode", "load");
 
         var ex = assertThrows(MojoExecutionException.class, mojo::execute);
 
@@ -625,8 +626,8 @@ class DockerfileMojoTest {
             mock(ApplicationConfigurationService.class), mock(ExecutorService.class), mockSession(project), mock(MojoExecution.class));
         mojo.micronautRuntime = "netty";
         mojo.mainClass = "example.Application";
-        mojo.jdkAotCache = true;
-        mojo.jdkAotCacheTrainingTimeout = 180;
+        setParameter(mojo, "jdkAotCache", true);
+        setParameter(mojo, "jdkAotCacheTrainingTimeout", 180);
         return mojo;
     }
 
@@ -733,6 +734,19 @@ class DockerfileMojoTest {
             throw new AssertionError(cause);
         } catch (ReflectiveOperationException e) {
             throw new AssertionError(e);
+        }
+    }
+
+    /**
+     * Sets a parameter of the mojo, which Maven injects into a private field.
+     */
+    private static void setParameter(DockerfileMojo mojo, String name, Object value) {
+        try {
+            Field field = DockerfileMojo.class.getDeclaredField(name);
+            field.setAccessible(true);
+            field.set(mojo, value);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
         }
     }
 }

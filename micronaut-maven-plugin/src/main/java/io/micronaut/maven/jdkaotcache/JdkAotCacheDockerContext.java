@@ -52,32 +52,32 @@ public final class JdkAotCacheDockerContext {
     /**
      * The directory of the build context that holds the files.
      */
-    public static final String CONTEXT_DIRECTORY = "jdk-aot-cache";
+    private static final String CONTEXT_DIRECTORY = "jdk-aot-cache";
 
     /**
      * The application JAR.
      */
-    public static final String APPLICATION_JAR = "application.jar";
+    private static final String APPLICATION_JAR = "application.jar";
 
     /**
      * The class path argument file, used as {@code -cp @classpath}.
      */
-    public static final String CLASSPATH_FILE = "classpath";
+    private static final String CLASSPATH_FILE = "classpath";
 
     /**
      * The training script.
      */
-    public static final String TRAINING_SCRIPT = "training.sh";
+    private static final String TRAINING_SCRIPT = "training.sh";
 
     /**
      * The working directory of the generated Dockerfile.
      */
-    public static final String IMAGE_HOME = "/home/app";
+    private static final String IMAGE_HOME = "/home/app";
 
     /**
-     * Where the generated Dockerfile writes the cache.
+     * Where the generated Dockerfile copies the dependency JARs, in their layer directories.
      */
-    public static final String IMAGE_CACHE_FILE = IMAGE_HOME + "/app.aot";
+    private static final String IMAGE_LIBS = IMAGE_HOME + "/libs/";
 
     /**
      * A fixed timestamp for the JAR entries, independent of the time zone, so that unchanged classes give an identical
@@ -91,18 +91,23 @@ public final class JdkAotCacheDockerContext {
     }
 
     /**
-     * Writes the application JAR, the class path argument file and the training script.
+     * Writes the application JAR, the class path argument file and the training script to {@code jdk-aot-cache} in the
+     * build context.
      *
      * @param buildDirectory the build context, usually {@code target}
      * @param classesDirectory the compiled classes and resources
-     * @param dependencies the dependencies as paths in the image, in class path order
+     * @param dependencies the dependency JARs in class path order, as paths relative to the directory that the generated
+     * Dockerfile copies them to, such as {@code release/foo.jar}
      * @throws IOException if a file cannot be written
      */
     public static void write(Path buildDirectory, Path classesDirectory, List<String> dependencies) throws IOException {
         Path context = buildDirectory.resolve(CONTEXT_DIRECTORY);
         Files.createDirectories(context);
         writeApplicationJar(classesDirectory, context.resolve(APPLICATION_JAR));
-        var classpath = new ArrayList<>(dependencies);
+        var classpath = new ArrayList<String>(dependencies.size() + 1);
+        for (String dependency : dependencies) {
+            classpath.add(IMAGE_LIBS + dependency);
+        }
         classpath.add(IMAGE_HOME + "/" + APPLICATION_JAR);
         Files.writeString(context.resolve(CLASSPATH_FILE), "\"" + String.join(":", classpath) + "\"\n", StandardCharsets.UTF_8);
         Files.writeString(context.resolve(TRAINING_SCRIPT), JdkAotCacheTraining.readScript(), StandardCharsets.UTF_8);

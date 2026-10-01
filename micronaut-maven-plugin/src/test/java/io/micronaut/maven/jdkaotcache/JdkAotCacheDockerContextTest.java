@@ -22,7 +22,7 @@ class JdkAotCacheDockerContextTest {
         Path classes = classes(tempDir);
         Path target = tempDir.resolve("target");
 
-        JdkAotCacheDockerContext.write(target, classes, List.of("/home/app/libs/release/a.jar", "/home/app/libs/snapshot/b-1.0-SNAPSHOT.jar"));
+        JdkAotCacheDockerContext.write(target, classes, List.of("release/a.jar", "snapshot/b-1.0-SNAPSHOT.jar"));
 
         Path context = target.resolve("jdk-aot-cache");
         assertEquals("\"/home/app/libs/release/a.jar:/home/app/libs/snapshot/b-1.0-SNAPSHOT.jar:/home/app/application.jar\"\n",

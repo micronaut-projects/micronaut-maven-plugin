@@ -31,7 +31,6 @@ import com.google.cloud.tools.jib.image.json.ManifestListTemplate;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
 import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
-import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
 
 import java.io.IOException;
@@ -56,36 +55,35 @@ import java.util.stream.Stream;
  * @author Álvaro Sánchez-Mariscal
  * @since 5.1.0
  */
-@Internal
-public final class JdkAotCachePlan {
+final class JdkAotCachePlan {
 
     /**
      * The {@code os/architecture} of the Docker daemon that trains the cache. The {@code docker} goal sets it for both
      * the training build and the final build.
      */
-    public static final String PLATFORM_PROPERTY = "micronaut.docker.jdkAotCache.internal.platform";
+    static final String PLATFORM_PROPERTY = "micronaut.docker.jdkAotCache.internal.platform";
 
     /**
      * The trained cache on the build host. The {@code docker} goal sets it for the final build only.
      */
-    public static final String CACHE_FILE_PROPERTY = "micronaut.docker.jdkAotCache.internal.file";
+    static final String CACHE_FILE_PROPERTY = "micronaut.docker.jdkAotCache.internal.file";
 
     /**
      * Whether the final build pins a registry base image to the digest that the training build pulled.
      */
-    public static final String PIN_BASE_IMAGE_PROPERTY = "micronaut.docker.jdkAotCache.internal.pinBaseImage";
+    static final String PIN_BASE_IMAGE_PROPERTY = "micronaut.docker.jdkAotCache.internal.pinBaseImage";
 
     /**
      * The name of the layer that holds the cache.
      */
-    public static final String LAYER_NAME = "jdk aot cache";
+    static final String LAYER_NAME = "jdk aot cache";
+
+    static final String BASE_IMAGE_CACHE_PROPERTY = "jib.baseImageCache";
 
     /**
      * The file name of the cache in the image, next to Jib's class path file.
      */
-    public static final String CACHE_FILE_NAME = "app.aot";
-
-    static final String BASE_IMAGE_CACHE_PROPERTY = "jib.baseImageCache";
+    private static final String CACHE_FILE_NAME = "app.aot";
     private static final Pattern GARBAGE_COLLECTOR_FLAG = Pattern.compile("-XX:\\+Use(Serial|Parallel|G1|Z|Shenandoah|Epsilon)GC");
     private static final List<String> JVM_OPTIONS_VARIABLES = List.of("JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS");
     private static final String JIB_CLASSPATH_FILE = "jib-classpath-file";

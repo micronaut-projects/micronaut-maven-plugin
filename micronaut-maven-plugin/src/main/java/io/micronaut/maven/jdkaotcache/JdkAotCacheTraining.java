@@ -44,8 +44,8 @@ import java.util.regex.Pattern;
  * container runs the image's own entrypoint, with {@code -XX:AOTCacheOutput} and {@code -XX:-UsePerfData} in
  * {@code JDK_JAVA_OPTIONS}. What the application does in it is the {@link TrainingRun}:
  * <ul>
- *     <li>In a {@link TrainingMode#LOAD} run, it loads its bean definitions and exits without starting.</li>
- *     <li>In a {@link TrainingMode#START} run, if its Micronaut version has the training-run switch, it starts, warms
+ *     <li>In a {@code load} run, it loads its bean definitions and exits without starting.</li>
+ *     <li>In a {@code start} run, if its Micronaut version has the training-run switch, it starts, warms
  *     itself up and exits. It fails on a request without a response or with a status of 500 or more, and only warns
  *     about a status from 400 to 499, so its output is copied to the build log when there are training paths.</li>
  *     <li>Otherwise, it starts, the warm-up script runs in the container with {@code docker exec} and the application
@@ -58,27 +58,28 @@ import java.util.regex.Pattern;
 @Internal
 public final class JdkAotCacheTraining {
 
+    static final String JDK_JAVA_OPTIONS = "JDK_JAVA_OPTIONS";
+    static final String JDK_AOT_VM_OPTIONS = "JDK_AOT_VM_OPTIONS";
+
     /**
      * The minimum Java version that can train a JDK AOT cache in one step ({@code -XX:AOTCacheOutput}).
      */
-    public static final int MINIMUM_JAVA_VERSION = 25;
+    private static final int MINIMUM_JAVA_VERSION = 25;
 
     /**
      * The warm-up and training script, shipped with the plugin.
      */
-    public static final String SCRIPT_RESOURCE = "/jdkAotCacheScripts/training.sh";
+    private static final String SCRIPT_RESOURCE = "/jdkAotCacheScripts/training.sh";
 
-    static final String CONTAINER_CACHE_FILE = "/tmp/app.aot";
+    private static final String CONTAINER_CACHE_FILE = "/tmp/app.aot";
     /**
      * Keeps the training JVMs from writing performance data files ({@code /tmp/hsperfdata_<user>/<pid>}). The JVM that
      * {@code -XX:AOTCacheOutput} starts to write the cache reads {@code JDK_JAVA_OPTIONS} too, and leaves its file
      * behind. The training script passes the same option, because the layer of the {@code RUN} instruction that trains
      * the cache in the generated Dockerfile would keep that file.
      */
-    static final String NO_PERF_DATA = "-XX:-UsePerfData";
-    static final String JDK_JAVA_OPTIONS = "JDK_JAVA_OPTIONS";
-    static final String JDK_AOT_VM_OPTIONS = "JDK_AOT_VM_OPTIONS";
-    static final String COMPATIBLE_OOP_COMPRESSION_FLAG = "AOTCompatibleOopCompression";
+    private static final String NO_PERF_DATA = "-XX:-UsePerfData";
+    private static final String COMPATIBLE_OOP_COMPRESSION_FLAG = "AOTCompatibleOopCompression";
     private static final int SIGTERM_EXIT_CODE = 143;
     private static final int COMMAND_NOT_EXECUTABLE = 126;
     private static final int COMMAND_NOT_FOUND = 127;
@@ -123,7 +124,7 @@ public final class JdkAotCacheTraining {
         Map<String, String> environment = trainingEnvironment(imageEnvironment, java, run, trainingPaths);
         environment.forEach((name, value) -> log.info("JDK AOT cache: training with " + name + "=" + value));
 
-        String containerId = dockerService.createContainer(imageId, networkMode, false, environment);
+        String containerId = dockerService.createContainer(imageId, networkMode, environment);
         try {
             if (run.mode() == TrainingMode.LOAD) {
                 log.info("JDK AOT cache: the application loads its bean definitions and exits without starting "
@@ -189,7 +190,7 @@ public final class JdkAotCacheTraining {
      * @return the warm-up and training script
      * @throws IOException if the script cannot be read
      */
-    public static String readScript() throws IOException {
+    static String readScript() throws IOException {
         try (InputStream in = JdkAotCacheTraining.class.getResourceAsStream(SCRIPT_RESOURCE)) {
             if (in == null) {
                 throw new IOException("Could not find " + SCRIPT_RESOURCE);

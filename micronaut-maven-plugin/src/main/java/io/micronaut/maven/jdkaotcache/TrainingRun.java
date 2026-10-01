@@ -27,45 +27,48 @@ import java.util.Optional;
 
 /**
  * The JDK AOT cache training run of an application: the mode, and what ends the run. It is resolved from
- * {@value TrainingMode#OPTION}, the training paths and what the application's Micronaut version can do.
+ * {@code micronaut.docker.jdkAotCache.trainingMode}, the training paths and what the application's Micronaut version can
+ * do.
  *
- * <p>Without a configured mode, the run is a {@link TrainingMode#LOAD} run if the Micronaut version has that mode,
- * because it creates no bean and so needs none of the services the beans use, which an image build does not have.
- * Otherwise, it starts the application, as every Micronaut version can.</p>
+ * <p>Without a configured mode, the run is a {@code load} run if the Micronaut version has that mode, because it creates
+ * no bean and so needs none of the services the beans use, which an image build does not have. Otherwise, it starts the
+ * application, as every Micronaut version can.</p>
  *
- * @param mode how far the application goes
- * @param usesSwitch whether the Micronaut training-run switch ends the run. Otherwise, the training script warms the
- * application up and stops it with SIGTERM
- * @param description what the run does and why, for the build log
- * @param warning what the build has to change before the application moves to a Micronaut version with the
- * {@link TrainingMode#LOAD} mode, or {@code null} if nothing
  * @author Álvaro Sánchez-Mariscal
  * @since 5.1.0
  */
 @Internal
-public record TrainingRun(TrainingMode mode, boolean usesSwitch, String description, @Nullable String warning) {
+public final class TrainingRun {
 
-    /**
-     * The argument of the training script for a run that loads the bean definitions and exits.
-     */
-    public static final String SCRIPT_LOAD = "load";
-
-    /**
-     * The argument of the training script for a run that the Micronaut training-run switch warms up and ends.
-     */
-    public static final String SCRIPT_SWITCH = "switch";
-
-    /**
-     * The argument of the training script for a run that the script warms up and stops with SIGTERM.
-     */
-    public static final String SCRIPT_SIGTERM = "sigterm";
-
+    private static final String SCRIPT_LOAD = "load";
+    private static final String SCRIPT_SWITCH = "switch";
+    private static final String SCRIPT_SIGTERM = "sigterm";
     private static final String LOG_PREFIX = "JDK AOT cache: ";
     private static final String PATHS_OPTION = "micronaut.docker.jdkAotCache.trainingPaths";
     private static final String LOAD_OPTION = TrainingMode.OPTION + "=" + TrainingMode.LOAD.id();
     private static final String START_OPTION = TrainingMode.OPTION + "=" + TrainingMode.START.id();
     private static final String LOAD_SENDS_NO_REQUESTS = "a load training run does not start the application, so it "
         + "sends no requests.";
+
+    private final TrainingMode mode;
+    private final boolean usesSwitch;
+    private final String description;
+    private final @Nullable String warning;
+
+    /**
+     * @param mode how far the application goes
+     * @param usesSwitch whether the Micronaut training-run switch ends the run. Otherwise, the training script warms the
+     * application up and stops it with SIGTERM
+     * @param description what the run does and why, for the build log
+     * @param warning what the build has to change before the application moves to a Micronaut version with the load
+     * mode, or {@code null} if nothing
+     */
+    TrainingRun(TrainingMode mode, boolean usesSwitch, String description, @Nullable String warning) {
+        this.mode = mode;
+        this.usesSwitch = usesSwitch;
+        this.description = description;
+        this.warning = warning;
+    }
 
     /**
      * A training run with nothing to warn about.
@@ -74,12 +77,13 @@ public record TrainingRun(TrainingMode mode, boolean usesSwitch, String descript
      * @param usesSwitch whether the Micronaut training-run switch ends the run
      * @param description what the run does and why, for the build log
      */
-    public TrainingRun(TrainingMode mode, boolean usesSwitch, String description) {
+    TrainingRun(TrainingMode mode, boolean usesSwitch, String description) {
         this(mode, usesSwitch, description, null);
     }
 
     /**
-     * @param configuredMode the configured {@value TrainingMode#OPTION}, which may be {@code null} or blank
+     * @param configuredMode the configured {@code micronaut.docker.jdkAotCache.trainingMode}, which may be {@code null}
+     * or blank
      * @param trainingPaths the validated training paths
      * @param artifacts the resolved dependencies of the application
      * @return the training run
@@ -143,6 +147,36 @@ public record TrainingRun(TrainingMode mode, boolean usesSwitch, String descript
     }
 
     /**
+     * @return how far the application goes
+     */
+    TrainingMode mode() {
+        return mode;
+    }
+
+    /**
+     * @return whether the Micronaut training-run switch ends the run. Otherwise, the training script warms the
+     * application up and stops it with SIGTERM
+     */
+    public boolean usesSwitch() {
+        return usesSwitch;
+    }
+
+    /**
+     * @return what the run does and why, for the build log
+     */
+    String description() {
+        return description;
+    }
+
+    /**
+     * @return what the build has to change before the application moves to a Micronaut version with the load mode, or
+     * {@code null} if nothing
+     */
+    @Nullable String warning() {
+        return warning;
+    }
+
+    /**
      * Writes what the run does and why to the build log, and the warning, if there is one.
      *
      * @param log the Maven log
@@ -155,17 +189,32 @@ public record TrainingRun(TrainingMode mode, boolean usesSwitch, String descript
     }
 
     /**
+     * Writes what {@link #log(Log)} writes and, for a run that starts the application, how the training script of the
+     * generated Dockerfile ends it.
+     *
+     * @param log the Maven log
+     */
+    public void logGeneratedDockerfileRun(Log log) {
+        log(log);
+        if (mode == TrainingMode.START) {
+            log.info(LOG_PREFIX + (usesSwitch
+                ? "the application warms itself up and exits (Micronaut training-run switch)"
+                : "the training script warms the application up and stops it with SIGTERM"));
+        }
+    }
+
+    /**
      * @param trainingPaths the validated training paths
      * @return the Java system properties of the training JVM: those of the Micronaut training-run switch when it ends
      * the run, none when the training script does
      */
-    public List<String> systemProperties(List<String> trainingPaths) {
+    List<String> systemProperties(List<String> trainingPaths) {
         return usesSwitch ? TrainingRunSwitch.systemProperties(mode, trainingPaths) : List.of();
     }
 
     /**
-     * @return the argument that tells the training script how to run the application: {@value #SCRIPT_LOAD},
-     * {@value #SCRIPT_SWITCH} or {@value #SCRIPT_SIGTERM}
+     * @return the argument that tells the training script how to run the application: {@code load}, {@code switch} or
+     * {@code sigterm}
      */
     public String scriptArgument() {
         if (mode == TrainingMode.LOAD) {

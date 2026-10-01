@@ -15,7 +15,6 @@
  */
 package io.micronaut.maven.jdkaotcache;
 
-import io.micronaut.core.annotation.Internal;
 import org.apache.maven.plugin.MojoExecutionException;
 
 import java.util.Locale;
@@ -29,8 +28,7 @@ import java.util.Optional;
  * @author Álvaro Sánchez-Mariscal
  * @since 5.1.0
  */
-@Internal
-public enum TrainingMode {
+enum TrainingMode {
 
     /**
      * The application reads its configuration, loads its bean definitions and the classes they name, creates no bean
@@ -46,12 +44,12 @@ public enum TrainingMode {
     /**
      * The plugin parameter that selects the mode.
      */
-    public static final String OPTION = "micronaut.docker.jdkAotCache.trainingMode";
+    static final String OPTION = "micronaut.docker.jdkAotCache.trainingMode";
 
     /**
      * @return the value of the mode, in the plugin parameter and in the Micronaut property
      */
-    public String id() {
+    String id() {
         return name().toLowerCase(Locale.ROOT);
     }
 
@@ -60,7 +58,7 @@ public enum TrainingMode {
      * @return the mode, in any case, or empty if none is configured
      * @throws MojoExecutionException if the value is not a mode
      */
-    public static Optional<TrainingMode> parse(String configured) throws MojoExecutionException {
+    static Optional<TrainingMode> parse(String configured) throws MojoExecutionException {
         if (configured == null || configured.isBlank()) {
             return Optional.empty();
         }

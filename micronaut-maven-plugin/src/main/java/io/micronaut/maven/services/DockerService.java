@@ -49,6 +49,7 @@ import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 import com.google.cloud.tools.jib.api.Credential;
 import io.micronaut.maven.DockerfileMojo;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.maven.jib.JibConfigurationService;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -206,18 +207,21 @@ public class DockerService {
     }
 
     /**
-     * Creates a container from the given image, without starting it.
+     * Creates an unprivileged container from the given image, without starting it.
      *
      * @param imageId the image to use
      * @param networkName the name of the network to use for the container, if any
-     * @param privileged whether the container is privileged
      * @param environment the environment variables to set, on top of the image ones
-     * @param binds the bind mounts to use
      * @return the container ID
      * @since 5.1.0
      */
-    public String createContainer(String imageId, String networkName, boolean privileged, Map<String, String> environment,
-                                  String... binds) {
+    @Internal
+    public String createContainer(String imageId, String networkName, Map<String, String> environment) {
+        return createContainer(imageId, networkName, false, environment);
+    }
+
+    private String createContainer(String imageId, String networkName, boolean privileged, Map<String, String> environment,
+                                   String... binds) {
         verifyDockerRunning();
         try (CreateContainerCmd create = getDockerClient().createContainerCmd(imageId)) {
             HostConfig hostConfig = create.getHostConfig();
@@ -249,6 +253,7 @@ public class DockerService {
      * @throws IOException if the container does not exit with status 0 within the timeout
      * @since 5.1.0
      */
+    @Internal
     public void startAndWait(String containerId, String imageId, Integer timeoutSeconds) throws IOException {
         startContainer(containerId);
         LOG.info("Waiting {} seconds for completion", timeoutSeconds);
@@ -271,6 +276,7 @@ public class DockerService {
      * @param containerId the container
      * @since 5.1.0
      */
+    @Internal
     public void startContainer(String containerId) {
         try (StartContainerCmd start = getDockerClient().startContainerCmd(containerId)) {
             start.exec();
@@ -287,6 +293,7 @@ public class DockerService {
      * @throws IOException if the container does not exit within the timeout
      * @since 5.1.0
      */
+    @Internal
     public int awaitExit(String containerId, int timeoutSeconds) throws IOException {
         try (WaitContainerCmd wait = getDockerClient().waitContainerCmd(containerId)) {
             WaitContainerResultCallback waitResult = wait.start();
@@ -305,6 +312,7 @@ public class DockerService {
      * @param signal the signal, for example {@code SIGTERM}
      * @since 5.1.0
      */
+    @Internal
     public void signalContainer(String containerId, String signal) {
         try (KillContainerCmd kill = getDockerClient().killContainerCmd(containerId)) {
             kill.withSignal(signal).exec();
@@ -324,6 +332,7 @@ public class DockerService {
      * @throws IOException if the command does not finish within the timeout
      * @since 5.1.0
      */
+    @Internal
     public int execInContainer(String containerId, int timeoutSeconds, Consumer<String> output, String... command) throws IOException {
         String execId;
         try (ExecCreateCmd create = getDockerClient().execCreateCmd(containerId)) {
@@ -353,6 +362,7 @@ public class DockerService {
      * @throws IOException if the container does not exit within the timeout
      * @since 5.1.0
      */
+    @Internal
     public ContainerOutput runAndCaptureOutput(String imageId, int timeoutSeconds, List<String> entrypoint) throws IOException {
         verifyDockerRunning();
         String containerId;
@@ -381,6 +391,7 @@ public class DockerService {
      * @param containerId the container
      * @since 5.1.0
      */
+    @Internal
     public void logContainerOutput(String containerId) {
         final Slf4jLogConsumer stdoutConsumer = new Slf4jLogConsumer(LOG);
         final Slf4jLogConsumer stderrConsumer = new Slf4jLogConsumer(LOG);
@@ -410,6 +421,7 @@ public class DockerService {
      * @throws IOException if the file cannot be copied
      * @since 5.1.0
      */
+    @Internal
     public void copyFileFromContainer(String containerId, String containerPath, Path target) throws IOException {
         try (InputStream archive = getDockerClient().copyArchiveFromContainerCmd(containerId, containerPath).exec();
              var tar = new TarArchiveInputStream(archive)) {
@@ -430,6 +442,7 @@ public class DockerService {
      * @param containerId the container
      * @since 5.1.0
      */
+    @Internal
     public void removeContainer(String containerId) {
         try (RemoveContainerCmd remove = getDockerClient().removeContainerCmd(containerId)) {
             remove.withForce(true).withRemoveVolumes(true).exec();
@@ -446,6 +459,7 @@ public class DockerService {
      * @param image the tag or the image ID
      * @since 5.1.0
      */
+    @Internal
     public void removeImage(String image) {
         try (RemoveImageCmd remove = getDockerClient().removeImageCmd(image)) {
             remove.exec();
@@ -459,6 +473,7 @@ public class DockerService {
      * @return the image details
      * @since 5.1.0
      */
+    @Internal
     public InspectImageResponse inspectImage(String image) {
         verifyDockerRunning();
         try (InspectImageCmd inspect = getDockerClient().inspectImageCmd(image)) {
@@ -472,6 +487,7 @@ public class DockerService {
      * @throws IllegalStateException if the Docker daemon is not reachable
      * @since 5.1.0
      */
+    @Internal
     public String getDaemonPlatform() {
         verifyDockerRunning();
         Info info = getDockerClient().infoCmd().exec();
@@ -481,9 +497,8 @@ public class DockerService {
     /**
      * @param architecture an architecture name, as the Docker daemon or Jib configuration gives it
      * @return the Go architecture name used in image platforms, such as {@code amd64} or {@code arm64}
-     * @since 5.1.0
      */
-    public static String goArchitecture(String architecture) {
+    static String goArchitecture(String architecture) {
         return switch (architecture) {
             case "x86_64", "amd64" -> "amd64";
             case "aarch64", "arm64" -> "arm64";
@@ -608,6 +623,7 @@ public class DockerService {
      * @param output the standard output and error, interleaved
      * @since 5.1.0
      */
+    @Internal
     public record ContainerOutput(int exitCode, String output) {
     }
 

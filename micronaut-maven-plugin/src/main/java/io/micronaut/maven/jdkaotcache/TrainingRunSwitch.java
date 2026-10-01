@@ -15,7 +15,6 @@
  */
 package io.micronaut.maven.jdkaotcache;
 
-import io.micronaut.core.annotation.Internal;
 import org.apache.maven.artifact.Artifact;
 
 import java.io.File;
@@ -45,23 +44,22 @@ import java.util.jar.JarFile;
  * @author Álvaro Sánchez-Mariscal
  * @since 5.1.0
  */
-@Internal
-public final class TrainingRunSwitch {
-
-    /**
-     * Turns the training run on.
-     */
-    public static final String ENABLED_PROPERTY = "micronaut.application.training.enabled";
+final class TrainingRunSwitch {
 
     /**
      * Selects the mode of the training run.
      */
-    public static final String MODE_PROPERTY = "micronaut.application.training.mode";
+    static final String MODE_PROPERTY = "micronaut.application.training.mode";
+
+    /**
+     * Turns the training run on.
+     */
+    private static final String ENABLED_PROPERTY = "micronaut.application.training.enabled";
 
     /**
      * The paths of the warm-up requests.
      */
-    public static final String WARMUP_PATHS_PROPERTY = "micronaut.application.training.warmup.paths";
+    private static final String WARMUP_PATHS_PROPERTY = "micronaut.application.training.warmup.paths";
 
     private static final String MICRONAUT_GROUP_ID = "io.micronaut";
     private static final String CONTEXT_ARTIFACT_ID = "micronaut-context";
@@ -82,7 +80,7 @@ public final class TrainingRunSwitch {
      * @param warmUp whether the training sends warm-up requests
      * @return whether the application's Micronaut version has the switch
      */
-    public static boolean isAvailable(Collection<Artifact> artifacts, boolean warmUp) {
+    static boolean isAvailable(Collection<Artifact> artifacts, boolean warmUp) {
         Optional<File> context = findJar(artifacts, CONTEXT_ARTIFACT_ID);
         if (context.isEmpty() || !entryContains(context.get(), APPLICATION_CONFIGURATION_CLASS, ENABLED_PROPERTY)) {
             return false;
@@ -101,7 +99,7 @@ public final class TrainingRunSwitch {
      * @param artifacts the resolved dependencies of the application
      * @return whether the application's Micronaut version can train without starting the application
      */
-    public static boolean hasLoadMode(Collection<Artifact> artifacts) {
+    static boolean hasLoadMode(Collection<Artifact> artifacts) {
         return findJar(artifacts, CONTEXT_ARTIFACT_ID)
             .filter(context -> entryContains(context, APPLICATION_CONFIGURATION_CLASS, ENABLED_PROPERTY, MODE_PROPERTY))
             .isPresent();
@@ -115,7 +113,7 @@ public final class TrainingRunSwitch {
      * @param paths the warm-up paths, which only a run that starts the application sends
      * @return the Java system properties that turn the switch on, select the mode and set the warm-up paths
      */
-    public static List<String> systemProperties(TrainingMode mode, List<String> paths) {
+    static List<String> systemProperties(TrainingMode mode, List<String> paths) {
         var properties = new ArrayList<String>(paths.size() + 2);
         properties.add("-D" + ENABLED_PROPERTY + "=true");
         properties.add("-D" + MODE_PROPERTY + "=" + mode.id());

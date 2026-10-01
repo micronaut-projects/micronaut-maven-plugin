@@ -78,15 +78,14 @@ class DockerServiceTest {
     }
 
     @Test
-    void createsAContainerWithTheNetworkTheEnvironmentAndTheBinds() {
+    void createsAnUnprivilegedContainerWithTheNetworkAndTheEnvironment() {
         var hostConfig = new HostConfig();
         CreateContainerCmd create = stubCreate(hostConfig);
 
-        assertEquals("container", dockerService.createContainer("image", "network", true, Map.of("NAME", "value"), "/host:/container"));
+        assertEquals("container", dockerService.createContainer("image", "network", Map.of("NAME", "value")));
 
-        assertTrue(hostConfig.getPrivileged());
+        assertNull(hostConfig.getPrivileged());
         assertEquals("network", hostConfig.getNetworkMode());
-        assertEquals("/container", hostConfig.getBinds()[0].getVolume().getPath());
         verify(create).withEnv(List.of("NAME=value"));
     }
 
@@ -95,7 +94,7 @@ class DockerServiceTest {
         var hostConfig = new HostConfig();
         CreateContainerCmd create = stubCreate(hostConfig);
 
-        assertEquals("container", dockerService.createContainer("image", null, false, Map.of()));
+        assertEquals("container", dockerService.createContainer("image", null, Map.of()));
 
         assertNull(hostConfig.getPrivileged());
         assertNull(hostConfig.getNetworkMode());
@@ -106,7 +105,7 @@ class DockerServiceTest {
     void failsToCreateAContainerWithoutHostConfig() {
         stubCreate(null);
 
-        assertThrows(DockerClientException.class, () -> dockerService.createContainer("image", null, false, Map.of()));
+        assertThrows(DockerClientException.class, () -> dockerService.createContainer("image", null, Map.of()));
     }
 
     @Test
@@ -120,6 +119,7 @@ class DockerServiceTest {
 
         assertTrue(hostConfig.getPrivileged());
         assertEquals("checkpoint", hostConfig.getNetworkMode());
+        assertEquals("/container", hostConfig.getBinds()[0].getVolume().getPath());
         verify(start).exec();
     }
 

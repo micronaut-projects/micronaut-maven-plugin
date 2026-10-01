@@ -7,7 +7,6 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.ContainerConfig;
 import com.github.dockerjava.api.model.ExposedPort;
 import io.micronaut.maven.jdkaotcache.MicronautJars;
-import io.micronaut.maven.jib.JdkAotCachePlan;
 import io.micronaut.maven.jib.JibConfiguration;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.DockerService;
@@ -23,6 +22,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -238,7 +238,7 @@ class DockerMojoTest {
 
         var order = inOrder(executorService, dockerService);
         order.verify(executorService).executeGoal(project, "com.google.cloud.tools:jib-maven-plugin", "dockerBuild");
-        order.verify(dockerService).createContainer(eq("sha256:training"), isNull(), eq(false), anyMap());
+        order.verify(dockerService).createContainer(eq("sha256:training"), isNull(), anyMap());
         order.verify(dockerService).removeContainer("container");
         order.verify(executorService).executeGoal(project, "com.google.cloud.tools:jib-maven-plugin", "buildTar");
         order.verify(dockerService).removeImage("demo-jdk-aot-training");
@@ -248,21 +248,21 @@ class DockerMojoTest {
 
         var training = buildProperties.get(0);
         assertEquals("packaged", training.getProperty("jib.containerizingMode"));
-        assertEquals("linux/arm64", training.getProperty(JdkAotCachePlan.PLATFORM_PROPERTY));
+        assertEquals("linux/arm64", training.getProperty(DockerMojo.JDK_AOT_CACHE_PLATFORM_PROPERTY));
         assertEquals("demo-jdk-aot-training", training.getProperty("jib.to.image"));
-        assertNull(training.getProperty(JdkAotCachePlan.CACHE_FILE_PROPERTY));
+        assertNull(training.getProperty(DockerMojo.JDK_AOT_CACHE_FILE_PROPERTY));
 
         var cacheFile = tempDir.resolve("target/jdk-aot-cache/app.aot");
         var image = buildProperties.get(1);
         assertEquals("packaged", image.getProperty("jib.containerizingMode"));
-        assertEquals("linux/arm64", image.getProperty(JdkAotCachePlan.PLATFORM_PROPERTY));
+        assertEquals("linux/arm64", image.getProperty(DockerMojo.JDK_AOT_CACHE_PLATFORM_PROPERTY));
         assertNull(image.getProperty("jib.to.image"));
-        assertEquals(cacheFile.toAbsolutePath().toString(), image.getProperty(JdkAotCachePlan.CACHE_FILE_PROPERTY));
-        assertEquals("true", image.getProperty(JdkAotCachePlan.PIN_BASE_IMAGE_PROPERTY));
+        assertEquals(cacheFile.toAbsolutePath().toString(), image.getProperty(DockerMojo.JDK_AOT_CACHE_FILE_PROPERTY));
+        assertEquals("true", image.getProperty(DockerMojo.JDK_AOT_CACHE_PIN_BASE_IMAGE_PROPERTY));
         assertEquals("cache", Files.readString(cacheFile));
 
-        for (String property : List.of("jib.containerizingMode", "jib.to.image", JdkAotCachePlan.PLATFORM_PROPERTY,
-            JdkAotCachePlan.CACHE_FILE_PROPERTY, JdkAotCachePlan.PIN_BASE_IMAGE_PROPERTY)) {
+        for (String property : List.of("jib.containerizingMode", "jib.to.image", DockerMojo.JDK_AOT_CACHE_PLATFORM_PROPERTY,
+            DockerMojo.JDK_AOT_CACHE_FILE_PROPERTY, DockerMojo.JDK_AOT_CACHE_PIN_BASE_IMAGE_PROPERTY)) {
             assertFalse(project.getProperties().containsKey(property), property);
         }
     }
@@ -319,9 +319,9 @@ class DockerMojoTest {
             mockSession(project, userProperties), mock(MojoExecution.class), executorService);
         mojo.micronautRuntime = "NONE";
         mojo.jibBuildGoal = "dockerBuild";
-        mojo.jdkAotCache = true;
-        mojo.jdkAotCacheTrainingPaths = List.of("/hello");
-        mojo.jdkAotCacheTrainingTimeout = 180;
+        setParameter(mojo, "jdkAotCache", true);
+        setParameter(mojo, "jdkAotCacheTrainingPaths", List.of("/hello"));
+        setParameter(mojo, "jdkAotCacheTrainingTimeout", 180);
 
         mojo.execute();
 
@@ -339,7 +339,7 @@ class DockerMojoTest {
         var executorService = mock(ExecutorService.class);
         var pinned = new ArrayList<String>();
         doAnswer(invocation -> {
-            pinned.add(project.getProperties().getProperty(JdkAotCachePlan.PIN_BASE_IMAGE_PROPERTY));
+            pinned.add(project.getProperties().getProperty(DockerMojo.JDK_AOT_CACHE_PIN_BASE_IMAGE_PROPERTY));
             return null;
         }).when(executorService).executeGoal(eq(project), eq("com.google.cloud.tools:jib-maven-plugin"), any());
 
@@ -361,7 +361,7 @@ class DockerMojoTest {
         verify(executorService, times(1)).executeGoal(eq(project), eq("com.google.cloud.tools:jib-maven-plugin"), any());
         verify(dockerService).removeContainer("container");
         verify(dockerService).removeImage("demo-jdk-aot-training");
-        assertFalse(project.getProperties().containsKey(JdkAotCachePlan.PLATFORM_PROPERTY));
+        assertFalse(project.getProperties().containsKey(DockerMojo.JDK_AOT_CACHE_PLATFORM_PROPERTY));
     }
 
     @Test
@@ -372,7 +372,7 @@ class DockerMojoTest {
         var dockerService = trainingDockerService();
         var executorService = mock(ExecutorService.class);
         var mojo = jdkAotCacheMojo(project, jdkAotCacheJibConfiguration(), dockerService, executorService);
-        mojo.jdkAotCacheTrainingPaths = null;
+        setParameter(mojo, "jdkAotCacheTrainingPaths", null);
         var log = mock(Log.class);
         mojo.setLog(log);
 
@@ -399,7 +399,7 @@ class DockerMojoTest {
         when(project.getArtifacts()).thenReturn(artifacts);
         var dockerService = trainingDockerService();
         var mojo = jdkAotCacheMojo(project, jdkAotCacheJibConfiguration(), dockerService, mock(ExecutorService.class));
-        mojo.jdkAotCacheTrainingMode = "start";
+        setParameter(mojo, "jdkAotCacheTrainingMode", "start");
         var log = mock(Log.class);
         mojo.setLog(log);
 
@@ -448,7 +448,7 @@ class DockerMojoTest {
         var artifacts = new LinkedHashSet<>(MicronautJars.withoutSwitch(tempDir));
         when(project.getArtifacts()).thenReturn(artifacts);
         var mojo = jdkAotCacheMojo(project, jdkAotCacheJibConfiguration(), trainingDockerService(), mock(ExecutorService.class));
-        mojo.jdkAotCacheTrainingPaths = null;
+        setParameter(mojo, "jdkAotCacheTrainingPaths", null);
         var log = mock(Log.class);
         mojo.setLog(log);
 
@@ -483,8 +483,8 @@ class DockerMojoTest {
         var dockerService = mock(DockerService.class);
         var executorService = mock(ExecutorService.class);
         var mojo = jdkAotCacheMojo(project, jdkAotCacheJibConfiguration(), dockerService, executorService);
-        mojo.jdkAotCacheTrainingPaths = List.of();
-        mojo.jdkAotCacheTrainingMode = "load";
+        setParameter(mojo, "jdkAotCacheTrainingPaths", List.of());
+        setParameter(mojo, "jdkAotCacheTrainingMode", "load");
 
         var ex = assertThrows(MojoExecutionException.class, mojo::execute);
 
@@ -499,7 +499,7 @@ class DockerMojoTest {
         var dockerService = mock(DockerService.class);
         var executorService = mock(ExecutorService.class);
         var mojo = jdkAotCacheMojo(project, jdkAotCacheJibConfiguration(), dockerService, executorService);
-        mojo.jdkAotCacheTrainingMode = "warm-up";
+        setParameter(mojo, "jdkAotCacheTrainingMode", "warm-up");
 
         var ex = assertThrows(MojoExecutionException.class, mojo::execute);
 
@@ -529,7 +529,7 @@ class DockerMojoTest {
     private static Map<String, String> trainingEnvironment(DockerService dockerService) {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, String>> environment = ArgumentCaptor.forClass(Map.class);
-        verify(dockerService).createContainer(eq("sha256:training"), isNull(), eq(false), environment.capture());
+        verify(dockerService).createContainer(eq("sha256:training"), isNull(), environment.capture());
         return environment.getValue();
     }
 
@@ -539,9 +539,9 @@ class DockerMojoTest {
             mock(MojoExecution.class), executorService);
         mojo.micronautRuntime = "NONE";
         mojo.jibBuildGoal = "dockerBuild";
-        mojo.jdkAotCache = true;
-        mojo.jdkAotCacheTrainingPaths = List.of("/hello");
-        mojo.jdkAotCacheTrainingTimeout = 180;
+        setParameter(mojo, "jdkAotCache", true);
+        setParameter(mojo, "jdkAotCacheTrainingPaths", List.of("/hello"));
+        setParameter(mojo, "jdkAotCacheTrainingTimeout", 180);
         return mojo;
     }
 
@@ -570,7 +570,7 @@ class DockerMojoTest {
         images.tag("registry.example.com/demo:1.0", "sha256:final");
         when(dockerService.runAndCaptureOutput(eq("sha256:training"), anyInt(), any()))
             .thenReturn(new DockerService.ContainerOutput(0, "openjdk version \"25.0.4\" 2026-07-21 LTS"));
-        when(dockerService.createContainer(eq("sha256:training"), isNull(), eq(false), anyMap())).thenReturn("container");
+        when(dockerService.createContainer(eq("sha256:training"), isNull(), anyMap())).thenReturn("container");
         when(dockerService.awaitExit("container", 180)).thenReturn(143);
         doAnswer(invocation -> {
             Files.writeString(invocation.<Path>getArgument(2), "cache");
@@ -672,6 +672,19 @@ class DockerMojoTest {
             } else if (tagsOf(imageId).isEmpty()) {
                 images.remove(imageId);
             }
+        }
+    }
+
+    /**
+     * Sets a parameter of the mojo, which Maven injects into a private field.
+     */
+    private static void setParameter(DockerMojo mojo, String name, Object value) {
+        try {
+            Field field = DockerMojo.class.getDeclaredField(name);
+            field.setAccessible(true);
+            field.set(mojo, value);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException(e);
         }
     }
 }

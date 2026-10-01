@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -106,8 +107,13 @@ class TrainingRunTest {
         TrainingRun withSwitch = TrainingRun.resolve("start", PATHS, MicronautJars.withSwitch(tempDir));
         TrainingRun withoutSwitch = TrainingRun.resolve("start", PATHS, MicronautJars.withoutSwitch(tempDir));
 
-        assertEquals(new TrainingRun(TrainingMode.START, true, "training mode start: the training run starts the application"), withSwitch);
-        assertEquals(new TrainingRun(TrainingMode.START, false, "training mode start: the training run starts the application"), withoutSwitch);
+        for (TrainingRun run : List.of(withSwitch, withoutSwitch)) {
+            assertEquals(TrainingMode.START, run.mode());
+            assertEquals("training mode start: the training run starts the application", run.description());
+            assertNull(run.warning());
+        }
+        assertTrue(withSwitch.usesSwitch());
+        assertFalse(withoutSwitch.usesSwitch());
     }
 
     @Test
@@ -195,6 +201,30 @@ class TrainingRunTest {
         verify(log).info("JDK AOT cache: training mode start");
         verify(log).warn("JDK AOT cache: set the mode");
         verifyNoMoreInteractions(log);
+    }
+
+    @Test
+    void logsHowTheGeneratedDockerfileEndsARunThatStartsTheApplication() {
+        Log switchLog = mock(Log.class);
+        Log scriptLog = mock(Log.class);
+        Log loadLog = mock(Log.class);
+
+        new TrainingRun(TrainingMode.START, true, "training mode start", "set the mode").logGeneratedDockerfileRun(switchLog);
+        new TrainingRun(TrainingMode.START, false, "training mode start").logGeneratedDockerfileRun(scriptLog);
+        new TrainingRun(TrainingMode.LOAD, true, "training mode load").logGeneratedDockerfileRun(loadLog);
+
+        var switchOrder = inOrder(switchLog);
+        switchOrder.verify(switchLog).info("JDK AOT cache: training mode start");
+        switchOrder.verify(switchLog).warn("JDK AOT cache: set the mode");
+        switchOrder.verify(switchLog).info("JDK AOT cache: the application warms itself up and exits (Micronaut "
+            + "training-run switch)");
+        verifyNoMoreInteractions(switchLog);
+        verify(scriptLog).info("JDK AOT cache: training mode start");
+        verify(scriptLog).info("JDK AOT cache: the training script warms the application up and stops it with SIGTERM");
+        verifyNoMoreInteractions(scriptLog);
+        // The description of a load run already says that the application exits without starting
+        verify(loadLog).info("JDK AOT cache: training mode load");
+        verifyNoMoreInteractions(loadLog);
     }
 
     /**
