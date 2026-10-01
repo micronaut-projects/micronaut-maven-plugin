@@ -58,8 +58,8 @@ import java.util.regex.Pattern;
 @Internal
 public final class JdkAotCacheTraining {
 
-    static final String JDK_JAVA_OPTIONS = "JDK_JAVA_OPTIONS";
-    static final String JDK_AOT_VM_OPTIONS = "JDK_AOT_VM_OPTIONS";
+    private static final String JDK_JAVA_OPTIONS = "JDK_JAVA_OPTIONS";
+    private static final String JDK_AOT_VM_OPTIONS = "JDK_AOT_VM_OPTIONS";
 
     /**
      * The minimum Java version that can train a JDK AOT cache in one step ({@code -XX:AOTCacheOutput}).
