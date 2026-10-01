@@ -5,13 +5,21 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -21,8 +29,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Runs the {@code train} command of the training script, which the generated Dockerfile runs, with a stand-in for
- * {@code java} that records the options it is started with and exits, as an application does when the Micronaut
- * training-run switch ends its run.
+ * {@code java} that records the options it is started with. With the Micronaut training-run switch, the stand-in exits,
+ * as an application does when the switch ends its run. Without it, the stand-in runs until it gets {@code SIGTERM}, and
+ * a stand-in HTTP server on 127.0.0.1 answers the warm-up requests of the script while the stand-in runs.
  */
 @EnabledOnOs({OS.LINUX, OS.MAC})
 class TrainingScriptTest {
@@ -43,8 +52,18 @@ class TrainingScriptTest {
         if [ ! -f "$directory/no-cache" ] && [[ $JDK_JAVA_OPTIONS =~ $cache_option ]]; then
             printf 'cache' > "${BASH_REMATCH[1]}"
         fi
+        if [[ $JDK_JAVA_OPTIONS != *-Dmicronaut.application.training.enabled=true* ]]; then
+            # Without the training-run switch, the application runs until it is stopped, and the HttpStandIn
+            # answers once it runs
+            trap 'exit 143' TERM
+            : > "$directory/running"
+            while :; do sleep 0.1; done
+        fi
         exit "$(cat "$directory/status")"
         """;
+
+    // Only a sigterm run sends requests, to the port of an HttpStandIn
+    private static final String UNUSED_PORT = "8080";
 
     @TempDir
     Path tempDir;
@@ -96,17 +115,35 @@ class TrainingScriptTest {
     }
 
     @Test
-    void noJvmOfTheTrainingWritesPerformanceData() throws Exception {
-        // The layer of the RUN instruction would keep a /tmp/hsperfdata_<user>/<pid> file
-        Result result = train("switch");
+    void sigtermRunWarmsTheApplicationUpAndStopsIt() throws Exception {
+        try (var server = HttpStandIn.start(tempDir.resolve("running"))) {
+            Result result = train(server, "sigterm", "/hello", "/books?ids=1,2");
 
-        assertEquals(0, result.status(), result.output());
-        assertEquals(List.of("-XX:-UsePerfData", "-XX:+UnlockDiagnosticVMOptions", "-XX:+PrintFlagsFinal", "-version"),
-            Files.readAllLines(tempDir.resolve("version-arguments")));
-        assertEquals("-XX:AOTCacheOutput=" + cache + " -XX:-UsePerfData -Dmicronaut.application.training.enabled=true "
-            + "-Dmicronaut.application.training.mode=start", Files.readString(tempDir.resolve("options")));
-        assertTrue(result.output().contains("[jdk-aot-cache] Training with JDK_JAVA_OPTIONS=-XX:AOTCacheOutput=" + cache
-            + " -XX:-UsePerfData "), result.output());
+            assertEquals(0, result.status(), result.output());
+            // A run without the training-run switch passes no Micronaut property
+            assertEquals("-XX:AOTCacheOutput=" + cache + " -XX:-UsePerfData", Files.readString(tempDir.resolve("options")));
+            assertEquals(List.of("GET /hello HTTP/1.1", "GET /hello HTTP/1.1", "GET /books?ids=1,2 HTTP/1.1"), server.requestLines());
+            assertEquals("cache", Files.readString(cache));
+            assertTrue(result.output().contains("[jdk-aot-cache] GET /books?ids=1,2: 200"), result.output());
+            assertTrue(result.output().contains("[jdk-aot-cache] Stopping the application with SIGTERM"), result.output());
+            assertTrue(result.output().contains("[jdk-aot-cache] Wrote the JDK AOT cache " + cache), result.output());
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"load", "switch", "sigterm"})
+    void noJvmOfTheTrainingWritesPerformanceData(String run) throws Exception {
+        // The layer of the RUN instruction would keep a /tmp/hsperfdata_<user>/<pid> file
+        try (var server = HttpStandIn.start(tempDir.resolve("running"))) {
+            Result result = train(server, run);
+
+            assertEquals(0, result.status(), result.output());
+            assertEquals(List.of("-XX:-UsePerfData", "-XX:+UnlockDiagnosticVMOptions", "-XX:+PrintFlagsFinal", "-version"),
+                Files.readAllLines(tempDir.resolve("version-arguments")));
+            String options = Files.readString(tempDir.resolve("options"));
+            assertTrue((options + " ").startsWith("-XX:AOTCacheOutput=" + cache + " -XX:-UsePerfData "), options);
+            assertTrue(result.output().contains("[jdk-aot-cache] Training with JDK_JAVA_OPTIONS=" + options + "\n"), result.output());
+        }
     }
 
     @Test
@@ -154,7 +191,16 @@ class TrainingScriptTest {
     }
 
     private Result train(List<String> environment, String run, String... paths) throws IOException, InterruptedException {
-        var command = new ArrayList<>(List.of("bash", script.toString(), "train", cache.toString(), "8080", "30", run));
+        return runTheScript(environment, UNUSED_PORT, run, paths);
+    }
+
+    private Result train(HttpStandIn server, String run, String... paths) throws IOException, InterruptedException {
+        return runTheScript(List.of(), server.port(), run, paths);
+    }
+
+    private Result runTheScript(List<String> environment, String port, String run, String... paths)
+        throws IOException, InterruptedException {
+        var command = new ArrayList<>(List.of("bash", script.toString(), "train", cache.toString(), port, "30", run));
         command.addAll(List.of(paths));
         command.addAll(List.of("--", java.toString(), "-cp", "@/home/app/classpath", "example.Application"));
         var builder = new ProcessBuilder(command).redirectErrorStream(true);
@@ -171,5 +217,62 @@ class TrainingScriptTest {
     }
 
     private record Result(int status, String output) {
+    }
+
+    /**
+     * Once the {@code running} file exists, answers every request on 127.0.0.1 with an empty 200 response and records
+     * its request line. Before, it closes the connection without a response, as the port of an application that has
+     * not started yet would.
+     */
+    private static final class HttpStandIn implements AutoCloseable {
+
+        private final ServerSocket server = new ServerSocket(0, 50, InetAddress.getByName("127.0.0.1"));
+        private final List<String> requestLines = new CopyOnWriteArrayList<>();
+        private final Path running;
+
+        private HttpStandIn(Path running) throws IOException {
+            this.running = running;
+        }
+
+        static HttpStandIn start(Path running) throws IOException {
+            var standIn = new HttpStandIn(running);
+            var thread = new Thread(standIn::answer, "http-stand-in");
+            thread.setDaemon(true);
+            thread.start();
+            return standIn;
+        }
+
+        String port() {
+            return String.valueOf(server.getLocalPort());
+        }
+
+        List<String> requestLines() {
+            return List.copyOf(requestLines);
+        }
+
+        private void answer() {
+            while (!server.isClosed()) {
+                try (Socket socket = server.accept();
+                     var reader = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.US_ASCII))) {
+                    String requestLine = reader.readLine();
+                    String header = requestLine;
+                    while (header != null && !header.isEmpty()) {
+                        header = reader.readLine();
+                    }
+                    if (requestLine != null && Files.exists(running)) {
+                        requestLines.add(requestLine);
+                        socket.getOutputStream().write("HTTP/1.1 200 OK\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+                            .getBytes(StandardCharsets.US_ASCII));
+                    }
+                } catch (IOException _) {
+                    // The server was closed, or the script closed the connection
+                }
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            server.close();
+        }
     }
 }
