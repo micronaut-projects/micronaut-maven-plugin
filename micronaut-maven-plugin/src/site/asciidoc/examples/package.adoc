@@ -335,8 +335,9 @@ With `micronaut.docker.jdkAotCache=true`, for the default runtime:
 
 . Jib builds a training image in `packaged` mode, where the application JAR comes first on the class path. A JDK AOT
 cache cannot load classes from a non-empty directory, such as the classes and resources layers of the default
-`exploded` mode, so the option sets `jib.containerizingMode=packaged`. The `docker` packaging builds the application
-JAR for it.
+`exploded` mode, so the option sets `jib.containerizingMode=packaged`, and the `docker` goal runs
+`maven-jar-plugin:jar` first to build the application JAR for it. Without the option, the `docker` packaging builds no
+JAR.
 . The plugin runs the training image once, with its own entrypoint and `-XX:AOTCacheOutput` and `-XX:-UsePerfData` in
 `JDK_JAVA_OPTIONS`, in one of the <<jdk-aot-cache-training-modes,training modes>> below, and copies the cache out of
 the container.
@@ -449,6 +450,8 @@ daemon's platform only, so `from.platforms` must be empty or name that platform.
 Parts of the cache depend on the collector, and without the flag the JVM picks it from the CPUs and memory it finds,
 which differ between the build and the deployment.
 * Jib's default entrypoint: `container.entrypoint` must not be set.
+* With Jib, the `maven-jar-plugin` in the build plugins or the plugin management of the project, as the Micronaut parent
+POM declares it: the `docker` goal runs it to build the application JAR.
 * A base image with Java 25 or later. On JDK 27 and later, the training adds `-XX:+AOTCompatibleOopCompression` so that
 the cache works with any heap size.
 * With Jib, only for a `start` run on a Micronaut version without the training-run switch: an exposed port, and `bash`

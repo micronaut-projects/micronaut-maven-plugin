@@ -75,6 +75,8 @@ class DockerMojoTest {
         mojo.execute();
 
         verify(executorService).executeGoal(project, "com.google.cloud.tools:jib-maven-plugin", "buildTar");
+        // Only Jib's packaged mode, which the JDK AOT cache uses, needs the application JAR
+        verify(executorService, never()).executeGoal(project, "org.apache.maven.plugins:maven-jar-plugin", "jar");
     }
 
     @Test
@@ -237,6 +239,8 @@ class DockerMojoTest {
         mojo.execute();
 
         var order = inOrder(executorService, dockerService);
+        // Jib's packaged mode puts the application JAR in the image
+        order.verify(executorService).executeGoal(project, "org.apache.maven.plugins:maven-jar-plugin", "jar");
         order.verify(executorService).executeGoal(project, "com.google.cloud.tools:jib-maven-plugin", "dockerBuild");
         order.verify(dockerService).createContainer(eq("sha256:training"), isNull(), anyMap());
         order.verify(dockerService).removeContainer("container");

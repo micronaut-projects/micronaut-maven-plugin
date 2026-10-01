@@ -85,6 +85,7 @@ public class DockerMojo extends AbstractDockerMojo {
     static final String JDK_AOT_CACHE_PIN_BASE_IMAGE_PROPERTY = "micronaut.docker.jdkAotCache.internal.pinBaseImage";
 
     private static final String JIB_PLUGIN = "com.google.cloud.tools:jib-maven-plugin";
+    private static final String JAR_PLUGIN = "org.apache.maven.plugins:maven-jar-plugin";
     private static final String JDK_AOT_CACHE_DIRECTORY = "jdk-aot-cache";
     private static final String JDK_AOT_CACHE_FILE = "app.aot";
     private static final String DOCKER_URI_PREFIX = "docker://";
@@ -212,6 +213,9 @@ public class DockerMojo extends AbstractDockerMojo {
         String platform = daemonPlatform();
         requireDaemonPlatform(platform);
         trainingRun.log(getLog());
+        // Jib's packaged mode puts the JAR of the maven-jar-plugin in the image, so only a build with the cache needs it
+        getLog().info("JDK AOT cache: building the application JAR for Jib's packaged mode");
+        executorService.executeGoal(mavenProject, JAR_PLUGIN, "jar");
 
         Path workDirectory = Path.of(mavenProject.getBuild().getDirectory(), JDK_AOT_CACHE_DIRECTORY);
         Path cacheFile = workDirectory.resolve(JDK_AOT_CACHE_FILE);

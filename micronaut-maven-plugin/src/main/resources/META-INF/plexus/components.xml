@@ -154,8 +154,7 @@
                             </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:validate-configuration,
-                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
-                                org.apache.maven.plugins:maven-jar-plugin:jar
+                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
                             </prepare-package>
                             <package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:docker
