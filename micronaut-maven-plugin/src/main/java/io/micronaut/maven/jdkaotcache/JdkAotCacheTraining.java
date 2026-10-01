@@ -135,7 +135,8 @@ public final class JdkAotCacheTraining {
                 log.info("JDK AOT cache: warming the application up with docker exec, then stopping it with SIGTERM "
                     + "(the application's Micronaut version has no training-run switch)");
                 dockerService.startContainer(containerId);
-                warmUp(containerId, port);
+                // httpPort(image) set the port, because this run does not use the switch
+                warmUp(containerId, Objects.requireNonNull(port, "port"));
                 log.info("JDK AOT cache: stopping the application with SIGTERM");
                 dockerService.signalContainer(containerId, "SIGTERM");
                 int exitCode = dockerService.awaitExit(containerId, timeoutSeconds);
