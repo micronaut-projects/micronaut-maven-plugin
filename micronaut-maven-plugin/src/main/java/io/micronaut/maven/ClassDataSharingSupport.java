@@ -84,6 +84,7 @@ final class ClassDataSharingSupport {
     static final String LOG_OFF = "-Xlog:cds*=off,aot*=off";
     static final String MANAGEMENT_AGENT_MODULE = "jdk.management.agent";
     static final String INSTRUMENT_MODULE = "java.instrument";
+    static final String JVMCI_MODULE = "jdk.internal.vm.ci";
     static final int CTRL_C_STATUS = 130;
 
     private static final int FORMAT = 1;
@@ -111,6 +112,7 @@ final class ClassDataSharingSupport {
     private static final Set<String> OPTION_FILE_FLAGS = Set.of("VMOptionsFile", "Flags");
     private static final Set<String> UNRELATED_FLAGS = Set.of("StartFlightRecording", "FlightRecorderOptions");
     private static final Pattern NOTICE_FILE = Pattern.compile("(?i)(META-INF/)?(LICEN[CS]E|NOTICE|COPYRIGHT)([._-][^/]*)?");
+    private static final Pattern ENABLE_JVMCI = Pattern.compile("\\bbool\\s+EnableJVMCI\\s*=\\s*true\\b");
     private static final Pattern SIGNATURE_FILE = Pattern.compile("(?i)META-INF/[^/]+\\.(SF|RSA|DSA|EC)");
 
     private final Log log;
@@ -675,12 +677,17 @@ final class ClassDataSharingSupport {
         Path temporary = directory.resolve(key + ARCHIVE + "." + ProcessHandle.current().pid() + "-" + System.nanoTime() + TEMPORARY);
         long start = System.nanoTime();
         try {
+            Set<String> rootModules = new TreeSet<>(request.rootModules());
+            if (jvmciEnabled(request.archiveOptions(), temporary)) {
+                // HotSpot adds this module when JVMCI is enabled (GraalVM), but a dump always runs without JVMCI
+                rootModules.add(JVMCI_MODULE);
+            }
             var dumpCommand = new ArrayList<String>();
             dumpCommand.add(javaExecutable);
             dumpCommand.add("-Xshare:dump");
             dumpCommand.add("-XX:SharedClassListFile=" + request.classList());
             dumpCommand.add("-XX:SharedArchiveFile=" + temporary);
-            addModulesOption(dumpCommand, request.rootModules());
+            addModulesOption(dumpCommand, rootModules);
             dumpCommand.addAll(request.archiveOptions());
             dumpCommand.add("-cp");
             dumpCommand.add(join(request.jars()));
@@ -693,7 +700,7 @@ final class ClassDataSharingSupport {
             probe.add(javaExecutable);
             probe.add("-Xshare:on");
             probe.add("-XX:SharedArchiveFile=" + temporary);
-            addModulesOption(probe, request.rootModules());
+            addModulesOption(probe, rootModules);
             probe.addAll(request.moduleOptions());
             probe.addAll(request.archiveOptions());
             probe.add("-cp");
@@ -720,6 +727,22 @@ final class ClassDataSharingSupport {
                 dumpProcess = null;
                 dumpTemporary = null;
             }
+        }
+    }
+
+    // whether the launch JVM, with the options of the launch, enables JVMCI (GraalVM does by default)
+    private boolean jvmciEnabled(List<String> archiveOptions, Path temporary) throws IOException, InterruptedException {
+        var command = new ArrayList<String>();
+        command.add(javaExecutable);
+        command.addAll(archiveOptions);
+        command.add("-XX:+PrintFlagsFinal");
+        command.add("-version");
+        Path flags = temporary.resolveSibling(temporary.getFileName() + ".flags");
+        try {
+            return run(command, flags, false, PROBE_TIMEOUT, temporary) == 0
+                && Files.readAllLines(flags).stream().anyMatch(line -> ENABLE_JVMCI.matcher(line).find());
+        } finally {
+            deleteQuietly(flags);
         }
     }
 
