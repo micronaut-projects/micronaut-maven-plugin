@@ -78,7 +78,7 @@ final class ClassDataSharingSupport {
     /**
      * The directory, under the build directory of the runnable project, that holds the archives and their inputs.
      */
-    static final String DIRECTORY = "mn-cds";
+    static final String DIRECTORY_NAME = "mn-cds";
 
     static final int MINIMUM_JDK = 25;
     static final String LOG_OFF = "-Xlog:cds*=off,aot*=off";
@@ -86,6 +86,7 @@ final class ClassDataSharingSupport {
     static final String INSTRUMENT_MODULE = "java.instrument";
     static final String JVMCI_MODULE = "jdk.internal.vm.ci";
     static final int CTRL_C_STATUS = 130;
+    static final String SHARED_ARCHIVE_FILE = "-XX:SharedArchiveFile=";
 
     private static final int FORMAT = 1;
     private static final int KEY_BYTES = 8;
@@ -95,17 +96,18 @@ final class ClassDataSharingSupport {
     private static final Duration DUMP_TIMEOUT = Duration.ofMinutes(5);
     private static final Duration PROBE_TIMEOUT = Duration.ofMinutes(1);
     private static final Duration STALE_TEMPORARY = Duration.ofHours(1);
-    private static final String ARCHIVE = ".jsa";
-    private static final String CLASS_LIST = ".classlist";
-    private static final String RECORDING = ".recording";
-    private static final String ENTRIES = ".entries";
-    private static final String FAILED = ".failed";
-    private static final String LOG = ".log";
-    private static final String TEMPORARY = ".tmp";
+    private static final String ARCHIVE_SUFFIX = ".jsa";
+    private static final String CLASS_LIST_SUFFIX = ".classlist";
+    private static final String RECORDING_SUFFIX = ".recording";
+    private static final String ENTRIES_SUFFIX = ".entries";
+    private static final String FAILED_SUFFIX = ".failed";
+    private static final String LOG_SUFFIX = ".log";
+    private static final String TEMPORARY_SUFFIX = ".tmp";
     private static final String ADD_MODULES = "--add-modules";
+    private static final String VERSION = "-version";
     private static final List<String> ENVIRONMENT_OPTIONS = List.of("JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA_OPTIONS");
     private static final List<String> MODULE_OPTIONS = List.of("--add-opens", "--add-exports", "--add-reads", "--enable-native-access");
-    private static final List<String> MODULE_GRAPH_OPTIONS = List.of("--limit-modules", "--upgrade-module-path", "--patch-module", "--module-path");
+    private static final List<String> MODULE_GRAPH_OPTIONS = List.of("--limit-modules", "--upgrade-module-path", "--patch-module", "--module-path", "-p");
     private static final Set<String> CDS_FLAGS = Set.of("SharedArchiveFile", "SharedClassListFile", "ArchiveClassesAtExit",
         "AutoCreateSharedArchive", "DumpLoadedClassList", "AOTCache", "AOTCacheOutput", "AOTMode", "AOTConfiguration",
         "UseSharedSpaces", "RecordDynamicDumpInfo", "SharedBaseAddress");
@@ -120,7 +122,8 @@ final class ClassDataSharingSupport {
     private final String javaExecutable;
     private final Map<String, String> environment;
     private final Set<String> announcedKeys = new HashSet<>();
-    private Optional<Jdk> jdk;
+    private Jdk jdk;
+    private boolean jdkRead;
     private boolean jdkReported;
     private boolean failureReported;
     private boolean staleTemporariesDeleted;
@@ -159,7 +162,8 @@ final class ClassDataSharingSupport {
         this.directory = directory.toAbsolutePath();
         this.javaExecutable = javaExecutable;
         this.environment = Map.copyOf(environment);
-        this.jdk = jdk == null ? null : Optional.of(jdk);
+        this.jdk = jdk;
+        this.jdkRead = jdk != null;
     }
 
     /**
@@ -238,7 +242,7 @@ final class ClassDataSharingSupport {
         }
         lastDuplicateWarning = null;
         String classpath = layout.classpath();
-        var request = new DumpRequest(key, file(key, CLASS_LIST), layout.jars(), rootModules, moduleOptions, archiveOptions, classpath);
+        var request = new DumpRequest(key, file(key, CLASS_LIST_SUFFIX), layout.jars(), rootModules, moduleOptions, archiveOptions, classpath);
         List<String> flags = flags(request);
         var result = new ArrayList<String>(args.size() + flags.size());
         result.add(args.get(0));
@@ -288,7 +292,7 @@ final class ClassDataSharingSupport {
             log.info("Class data sharing: waiting for the CDS archive of the dependency JARs to be created");
             try {
                 running.get();
-            } catch (InterruptedException e) {
+            } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
             } catch (ExecutionException e) {
                 debug("the archive could not be created: " + e.getCause());
@@ -318,9 +322,9 @@ final class ClassDataSharingSupport {
             running.destroyForcibly();
             try {
                 running.onExit().get(1, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException _) {
                 Thread.currentThread().interrupt();
-            } catch (ExecutionException | TimeoutException e) {
+            } catch (ExecutionException | TimeoutException _) {
                 // the dump leaves a temporary file at worst, which the next goal deletes
             }
             deleteQuietly(temporary);
@@ -357,24 +361,7 @@ final class ClassDataSharingSupport {
      * from a file, if any
      */
     static Optional<String> userManagedOption(List<String> options) {
-        for (String option : options) {
-            if (option.startsWith("-Xshare") || option.startsWith("@")) {
-                return Optional.of(option);
-            }
-            String flag = flagName(option);
-            if (flag != null && (CDS_FLAGS.contains(flag) || OPTION_FILE_FLAGS.contains(flag))) {
-                return Optional.of(option);
-            }
-            for (String moduleGraphOption : MODULE_GRAPH_OPTIONS) {
-                if (option.equals(moduleGraphOption) || option.startsWith(moduleGraphOption + "=")) {
-                    return Optional.of(option);
-                }
-            }
-            if (option.equals("-p")) {
-                return Optional.of(option);
-            }
-        }
-        return Optional.empty();
+        return joinOptionValues(options).stream().filter(ClassDataSharingSupport::managesCdsOrModuleGraph).findFirst();
     }
 
     /**
@@ -387,16 +374,16 @@ final class ClassDataSharingSupport {
      */
     static Set<String> rootModules(List<String> options) {
         var modules = new TreeSet<String>();
-        for (int i = 0; i < options.size(); i++) {
-            String option = options.get(i);
+        for (String option : joinOptionValues(options)) {
             if (option.startsWith("-Dcom.sun.management")) {
                 modules.add(MANAGEMENT_AGENT_MODULE);
             } else if (option.startsWith("-javaagent:")) {
                 modules.add(INSTRUMENT_MODULE);
             } else if (option.startsWith(ADD_MODULES + "=")) {
-                addModules(modules, option.substring(ADD_MODULES.length() + 1));
-            } else if (option.equals(ADD_MODULES) && i + 1 < options.size()) {
-                addModules(modules, options.get(++i));
+                Arrays.stream(option.substring(ADD_MODULES.length() + 1).split(","))
+                    .map(String::trim)
+                    .filter(module -> !module.isEmpty())
+                    .forEach(modules::add);
             }
         }
         return modules;
@@ -407,18 +394,33 @@ final class ClassDataSharingSupport {
      * @return the module options other than {@code --add-modules}, each as one {@code --option=value} argument
      */
     static List<String> moduleOptions(List<String> options) {
-        var result = new ArrayList<String>();
-        for (int i = 0; i < options.size(); i++) {
-            String option = options.get(i);
-            for (String moduleOption : MODULE_OPTIONS) {
-                if (option.startsWith(moduleOption + "=")) {
-                    result.add(option);
-                } else if (option.equals(moduleOption) && i + 1 < options.size()) {
-                    result.add(moduleOption + "=" + options.get(++i));
-                }
+        return joinOptionValues(options).stream()
+            .filter(option -> MODULE_OPTIONS.stream().anyMatch(moduleOption -> option.startsWith(moduleOption + "=")))
+            .toList();
+    }
+
+    /**
+     * @param options JVM options
+     * @return the options, with the value of each module option that takes it as the next argument joined to it with
+     * {@code =}
+     */
+    static List<String> joinOptionValues(List<String> options) {
+        var joined = new ArrayList<String>(options.size());
+        String pending = null;
+        for (String option : options) {
+            if (pending != null) {
+                joined.add(pending + "=" + option);
+                pending = null;
+            } else if (option.equals(ADD_MODULES) || MODULE_OPTIONS.contains(option) || MODULE_GRAPH_OPTIONS.contains(option)) {
+                pending = option;
+            } else {
+                joined.add(option);
             }
         }
-        return result;
+        if (pending != null) {
+            joined.add(pending);
+        }
+        return joined;
     }
 
     /**
@@ -580,7 +582,7 @@ final class ClassDataSharingSupport {
         if (end == 0) {
             return false;
         }
-        Path temporary = target.resolveSibling(target.getFileName() + TEMPORARY);
+        Path temporary = target.resolveSibling(target.getFileName() + TEMPORARY_SUFFIX);
         Files.write(temporary, Arrays.copyOf(content, end));
         Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
         return true;
@@ -588,13 +590,13 @@ final class ClassDataSharingSupport {
 
     private List<String> flags(DumpRequest request) {
         String key = request.key();
-        Path archive = file(key, ARCHIVE);
+        Path archive = file(key, ARCHIVE_SUFFIX);
         if (Files.isRegularFile(archive)) {
             debug("launching with %s, which was validated when it was created, so without a probe".formatted(archive));
-            return List.of("-XX:SharedArchiveFile=" + archive, LOG_OFF);
+            return List.of(SHARED_ARCHIVE_FILE + archive, LOG_OFF);
         }
-        if (Files.exists(file(key, FAILED))) {
-            debug("the archive for this class path could not be created, see %s: launching without it".formatted(file(key, LOG)));
+        if (Files.exists(file(key, FAILED_SUFFIX))) {
+            debug("the archive for this class path could not be created, see %s: launching without it".formatted(file(key, LOG_SUFFIX)));
             return List.of();
         }
         if (dumpKey != null) {
@@ -610,7 +612,7 @@ final class ClassDataSharingSupport {
             debug("creating the CDS archive from %s: this launch runs without it".formatted(request.classList()));
             return List.of();
         }
-        Path recordingFile = file(key, RECORDING);
+        Path recordingFile = file(key, RECORDING_SUFFIX);
         try {
             Files.createDirectories(directory);
             Files.deleteIfExists(recordingFile);
@@ -673,8 +675,8 @@ final class ClassDataSharingSupport {
 
     private void dump(DumpRequest request) {
         String key = request.key();
-        Path logFile = file(key, LOG);
-        Path temporary = directory.resolve(key + ARCHIVE + "." + ProcessHandle.current().pid() + "-" + System.nanoTime() + TEMPORARY);
+        Path logFile = file(key, LOG_SUFFIX);
+        Path temporary = directory.resolve(key + ARCHIVE_SUFFIX + "." + ProcessHandle.current().pid() + "-" + System.nanoTime() + TEMPORARY_SUFFIX);
         long start = System.nanoTime();
         try {
             Set<String> rootModules = new TreeSet<>(request.rootModules());
@@ -686,7 +688,7 @@ final class ClassDataSharingSupport {
             dumpCommand.add(javaExecutable);
             dumpCommand.add("-Xshare:dump");
             dumpCommand.add("-XX:SharedClassListFile=" + request.classList());
-            dumpCommand.add("-XX:SharedArchiveFile=" + temporary);
+            dumpCommand.add(SHARED_ARCHIVE_FILE + temporary);
             addModulesOption(dumpCommand, rootModules);
             dumpCommand.addAll(request.archiveOptions());
             dumpCommand.add("-cp");
@@ -699,26 +701,26 @@ final class ClassDataSharingSupport {
             var probe = new ArrayList<String>();
             probe.add(javaExecutable);
             probe.add("-Xshare:on");
-            probe.add("-XX:SharedArchiveFile=" + temporary);
+            probe.add(SHARED_ARCHIVE_FILE + temporary);
             addModulesOption(probe, rootModules);
             probe.addAll(request.moduleOptions());
             probe.addAll(request.archiveOptions());
             probe.add("-cp");
             probe.add(request.launchClasspath());
-            probe.add("-version");
+            probe.add(VERSION);
             status = run(probe, logFile, true, PROBE_TIMEOUT, temporary);
             if (status != 0) {
                 failed(key, "the JVM refused it in an -Xshare:on probe (status %d)".formatted(status), logFile);
                 return;
             }
-            Path archive = file(key, ARCHIVE);
+            Path archive = file(key, ARCHIVE_SUFFIX);
             Files.move(temporary, archive, StandardCopyOption.ATOMIC_MOVE);
             log.info(String.format(Locale.ROOT, "Class data sharing: created %s (%.1f MB) in %.1f s. The next launches use it",
                 archive, Files.size(archive) / MEGABYTE, (System.nanoTime() - start) / NANOS_PER_SECOND));
             deleteOtherKeys(key);
         } catch (IOException e) {
             failed(key, e.toString(), logFile);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
         } finally {
             deleteQuietly(temporary);
@@ -736,7 +738,7 @@ final class ClassDataSharingSupport {
         command.add(javaExecutable);
         command.addAll(archiveOptions);
         command.add("-XX:+PrintFlagsFinal");
-        command.add("-version");
+        command.add(VERSION);
         Path flags = temporary.resolveSibling(temporary.getFileName() + ".flags");
         try {
             return run(command, flags, false, PROBE_TIMEOUT, temporary) == 0
@@ -782,7 +784,7 @@ final class ClassDataSharingSupport {
             }
         }
         try {
-            Files.writeString(file(key, FAILED), reason + System.lineSeparator());
+            Files.writeString(file(key, FAILED_SUFFIX), reason + System.lineSeparator());
         } catch (IOException e) {
             debug("could not record the failure: " + e.getMessage());
         }
@@ -814,12 +816,12 @@ final class ClassDataSharingSupport {
         staleTemporariesDeleted = true;
         Instant limit = Instant.now().minus(STALE_TEMPORARY);
         try (Stream<Path> files = Files.list(directory)) {
-            files.filter(file -> file.getFileName().toString().endsWith(TEMPORARY))
+            files.filter(file -> file.getFileName().toString().endsWith(TEMPORARY_SUFFIX))
                 .filter(file -> {
                     try {
                         FileTime modified = Files.getLastModifiedTime(file);
                         return modified.toInstant().isBefore(limit);
-                    } catch (IOException e) {
+                    } catch (IOException _) {
                         return false;
                     }
                 })
@@ -831,12 +833,12 @@ final class ClassDataSharingSupport {
         if (key.equals(entriesKey)) {
             return entries;
         }
-        Path file = file(key, ENTRIES);
-        Map<String, Integer> index = Files.isRegularFile(file) ? readIndex(file, jars.size()) : null;
+        Path file = file(key, ENTRIES_SUFFIX);
+        Map<String, Integer> index = Files.isRegularFile(file) ? readIndex(file, jars.size()).orElse(null) : null;
         if (index == null) {
             index = readEntries(jars);
             Files.createDirectories(directory);
-            Path temporary = file.resolveSibling(file.getFileName() + TEMPORARY);
+            Path temporary = file.resolveSibling(file.getFileName() + TEMPORARY_SUFFIX);
             Files.write(temporary, index.entrySet().stream()
                 .map(entry -> entry.getValue() + "\t" + entry.getKey())
                 .sorted()
@@ -848,21 +850,21 @@ final class ClassDataSharingSupport {
         return index;
     }
 
-    private static Map<String, Integer> readIndex(Path file, int jarCount) throws IOException {
+    private static Optional<Map<String, Integer>> readIndex(Path file, int jarCount) throws IOException {
         var index = new HashMap<String, Integer>();
         for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {
             int tab = line.indexOf('\t');
             try {
                 int jar = Integer.parseInt(line.substring(0, Math.max(tab, 0)));
                 if (tab < 0 || jar < 0 || jar >= jarCount) {
-                    return null;
+                    return Optional.empty();
                 }
                 index.put(line.substring(tab + 1), jar);
-            } catch (NumberFormatException e) {
-                return null;
+            } catch (NumberFormatException _) {
+                return Optional.empty();
             }
         }
-        return index;
+        return Optional.of(index);
     }
 
     private void warnAboutDuplicates(List<Duplicate> duplicates) {
@@ -884,21 +886,23 @@ final class ClassDataSharingSupport {
     }
 
     private Optional<Jdk> jdk() {
-        if (jdk == null) {
-            jdk = readJdk();
-            if (jdk.isEmpty()) {
+        if (!jdkRead) {
+            jdkRead = true;
+            jdk = readJdk().orElse(null);
+            if (jdk == null) {
                 log.info("Class data sharing: could not read the version of %s, so mn:run launches the application without a CDS archive"
                     .formatted(javaExecutable));
             }
         }
-        return jdk;
+        return Optional.ofNullable(jdk);
     }
 
     private Optional<Jdk> readJdk() {
         Path output = null;
         try {
-            output = Files.createTempFile("mn-run-java-properties", ".txt");
-            var builder = new ProcessBuilder(javaExecutable, "-XshowSettings:properties", "-version")
+            Files.createDirectories(directory);
+            output = directory.resolve("java-properties-" + ProcessHandle.current().pid() + TEMPORARY_SUFFIX);
+            var builder = new ProcessBuilder(javaExecutable, "-XshowSettings:properties", VERSION)
                 .redirectErrorStream(true)
                 .redirectOutput(output.toFile());
             ENVIRONMENT_OPTIONS.forEach(builder.environment()::remove);
@@ -914,7 +918,7 @@ final class ClassDataSharingSupport {
         } catch (IOException e) {
             debug("could not run %s: %s".formatted(javaExecutable, e.getMessage()));
             return Optional.empty();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
             return Optional.empty();
         } finally {
@@ -939,9 +943,20 @@ final class ClassDataSharingSupport {
         }
         try {
             return Arrays.asList(CommandLineUtils.translateCommandline(value));
-        } catch (Exception e) {
+        } catch (Exception _) {
             return Arrays.asList(value.trim().split("\\s+"));
         }
+    }
+
+    private static boolean managesCdsOrModuleGraph(String option) {
+        if (option.startsWith("-Xshare") || option.startsWith("@")) {
+            return true;
+        }
+        String flag = flagName(option);
+        if (flag != null) {
+            return CDS_FLAGS.contains(flag) || OPTION_FILE_FLAGS.contains(flag);
+        }
+        return MODULE_GRAPH_OPTIONS.stream().anyMatch(graphOption -> option.equals(graphOption) || option.startsWith(graphOption + "="));
     }
 
     private static String flagName(String option) {
@@ -954,10 +969,6 @@ final class ClassDataSharingSupport {
         }
         int equals = flag.indexOf('=');
         return equals < 0 ? flag : flag.substring(0, equals);
-    }
-
-    private static void addModules(Set<String> modules, String value) {
-        Arrays.stream(value.split(",")).map(String::trim).filter(module -> !module.isEmpty()).forEach(modules::add);
     }
 
     private static void addModulesOption(List<String> command, Set<String> rootModules) {
@@ -986,7 +997,7 @@ final class ClassDataSharingSupport {
         if (Files.isRegularFile(entry)) {
             try (var zip = new ZipFile(entry.toFile())) {
                 return zip.stream().filter(zipEntry -> !zipEntry.isDirectory()).map(ZipEntry::getName).toList();
-            } catch (IOException e) {
+            } catch (IOException _) {
                 return List.of();
             }
         }
@@ -997,7 +1008,7 @@ final class ClassDataSharingSupport {
         if (file != null) {
             try {
                 Files.deleteIfExists(file);
-            } catch (IOException e) {
+            } catch (IOException _) {
                 // a running JVM may still map it (Windows refuses to delete a mapped file)
             }
         }
@@ -1039,7 +1050,7 @@ final class ClassDataSharingSupport {
                 String major = specification.startsWith("1.") ? specification.substring(2) : specification;
                 int dot = major.indexOf('.');
                 return Optional.of(new Jdk(home, vmVersion, Integer.parseInt(dot < 0 ? major : major.substring(0, dot))));
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
                 return Optional.empty();
             }
         }

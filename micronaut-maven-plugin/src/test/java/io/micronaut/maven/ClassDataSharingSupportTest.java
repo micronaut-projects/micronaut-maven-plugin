@@ -113,6 +113,111 @@ class ClassDataSharingSupportTest {
     }
 
     @Test
+    void aJavaWhoseVersionCannotBeReadKeepsTodaysArguments() throws IOException {
+        Path dependency = jar("a.jar", "com/acme/A.class");
+        Path app = classes("app", "com/example/Application.class");
+        var launch = new Launch(List.of(app), List.of(dependency));
+        var log = new CapturingLog();
+        var support = new ClassDataSharingSupport(log, tempDir.resolve("mn-cds"), tempDir.resolve("no-such-java").toString(), Map.of());
+
+        assertSame(launch.args(), launch.prepare(support));
+        assertSame(launch.args(), launch.prepare(support));
+        assertEquals(1, log.lines.stream().filter(line -> line.startsWith("[info]") && line.contains("could not read the version")).count(), log.lines.toString());
+    }
+
+    @Test
+    void aClassPathWithoutJarsKeepsTodaysArguments() throws IOException {
+        Path other = Files.createDirectories(tempDir.resolve("other-entry"));
+        Path app = classes("app", "com/example/Application.class");
+        var launch = new Launch(List.of(app), List.of(other));
+
+        assertSame(launch.args(), launch.prepare(support(JDK_25)));
+    }
+
+    @Test
+    void aKeyWhoseArchiveFailedLaunchesWithoutRecording() throws IOException {
+        Path dependency = jar("a.jar", "com/acme/A.class");
+        Path app = classes("app", "com/example/Application.class");
+        var launch = new Launch(List.of(app), List.of(dependency));
+        var support = support(JDK_25);
+        Path recorded = recordingFile(launch.prepare(support));
+        Files.writeString(Path.of(recorded.toString().replace(".recording", ".failed")), "the dump exited with status 1");
+
+        List<String> next = launch.prepare(support);
+
+        assertEquals(launch.args().subList(1, launch.classpathIndex), next.subList(1, launch.classpathIndex));
+    }
+
+    @Test
+    void aLaunchPreparedWhileTheRecordingOneStillRunsRecordsNothing() throws IOException {
+        Path dependency = jar("a.jar", "com/acme/A.class");
+        Path app = classes("app", "com/example/Application.class");
+        var launch = new Launch(List.of(app), List.of(dependency));
+        var log = new CapturingLog();
+        var support = support(log, JDK_25);
+        recordingFile(launch.prepare(support));
+        support.launched(new FakeProcess(0));
+
+        List<String> restart = launch.prepare(support);
+
+        assertEquals(launch.args().subList(1, launch.classpathIndex), restart.subList(1, launch.classpathIndex));
+        assertTrue(log.contains("[debug]", "is recording its class list"), log.lines.toString());
+    }
+
+    @Test
+    void aRecordingLaunchThatFailedOnItsOwnIsRecordedAgainByTheNextLaunch() throws IOException {
+        Path dependency = jar("a.jar", "com/acme/A.class");
+        Path app = classes("app", "com/example/Application.class");
+        var launch = new Launch(List.of(app), List.of(dependency));
+        var support = support(JDK_25);
+        Path recorded = recordingFile(launch.prepare(support));
+        Files.writeString(recorded, "java/lang/Object id: 1\n");
+        var failed = new FakeProcess(1);
+        support.launched(failed);
+        failed.alive = false;
+
+        assertEquals(recorded, recordingFile(launch.prepare(support)));
+        assertFalse(Files.exists(recorded));
+        assertFalse(Files.exists(Path.of(recorded.toString().replace(".recording", ".classlist"))));
+    }
+
+    @Test
+    void aRecordingWithoutACompleteLineIsNotKept() throws IOException {
+        Path dependency = jar("a.jar", "com/acme/A.class");
+        Path app = classes("app", "com/example/Application.class");
+        var launch = new Launch(List.of(app), List.of(dependency));
+        var support = support(JDK_25);
+        Path recorded = recordingFile(launch.prepare(support));
+        Files.writeString(recorded, "java/lang/Obj");
+        var process = new FakeProcess(0);
+        support.launched(process);
+        process.alive = false;
+
+        support.launchEnded(process, false);
+
+        assertFalse(Files.exists(Path.of(recorded.toString().replace(".recording", ".classlist"))));
+    }
+
+    @Test
+    void duplicatesInAZipEntryAreFoundAndAWarningListsFiveOfThemOnce() throws IOException {
+        String[] files = {"a.txt", "b.txt", "c.txt", "d.txt", "e.txt", "f.txt"};
+        Path dependency = jar("a.jar", files);
+        Path zip = jar("resources.zip", files);
+        Path app = classes("app", "com/example/Application.class");
+        var launch = new Launch(List.of(app), List.of(dependency, zip));
+        var log = new CapturingLog();
+        var support = support(log, JDK_25);
+
+        assertSame(launch.args(), launch.prepare(support));
+        assertSame(launch.args(), launch.prepare(support));
+
+        List<String> warnings = log.lines.stream().filter(line -> line.startsWith("[warn]")).toList();
+        assertEquals(1, warnings.size(), log.lines.toString());
+        assertTrue(warnings.get(0).contains("and 1 more"), warnings.get(0));
+        assertTrue(warnings.get(0).contains(zip.toString()), warnings.get(0));
+    }
+
+    @Test
     void mergedAndDescriptiveFilesAreNotDuplicates() throws IOException {
         String beanReferences = "META-INF/micronaut/io.micronaut.inject.BeanDefinitionReference/";
         Path dependency = jar("dependency.jar", beanReferences + "io.acme.$Bean$Definition$Reference",
@@ -173,7 +278,7 @@ class ClassDataSharingSupportTest {
         assertEquals(Set.of("jdk.management.agent"), ClassDataSharingSupport.rootModules(List.of("-Dcom.sun.management.foo=bar")));
         assertEquals(Set.of("java.instrument"), ClassDataSharingSupport.rootModules(List.of("-javaagent:/agents/agent.jar=opt")));
         assertEquals(Set.of("java.sql", "jdk.httpserver", "jdk.jfr"),
-            ClassDataSharingSupport.rootModules(List.of("--add-modules=jdk.httpserver,java.sql", "--add-modules", "jdk.jfr")));
+            ClassDataSharingSupport.rootModules(List.of("--add-modules=jdk.httpserver,,java.sql", "--add-modules", "jdk.jfr", "--add-modules")));
         assertEquals(Set.of(), ClassDataSharingSupport.rootModules(List.of("-Dmn.jvmArgs=-Dcom.sun.management.jmxremote", "-agentlib:jdwp=transport=dt_socket")));
 
         List<String> options = ClassDataSharingSupport.effectiveOptions(
@@ -356,6 +461,8 @@ class ClassDataSharingSupportTest {
         var recordingLaunch = new Launch(java, List.of(app), List.of(dependency), vmOption);
         List<String> recording = recordingLaunch.prepare(support);
         assertTrue(recording.get(1).startsWith("-XX:DumpLoadedClassList="), recording.toString());
+        // the archive of an older class path, which a successful dump deletes
+        Path olderArchive = Files.writeString(directory.resolve("0123456789abcdef.jsa"), "older");
         Process first = start(recording, tempDir.resolve("first.out"));
         support.launched(first);
         assertEquals(0, first.waitFor());
@@ -370,6 +477,7 @@ class ClassDataSharingSupportTest {
         try (var files = Files.list(directory)) {
             archive = files.filter(file -> file.toString().endsWith(".jsa")).findFirst().orElseThrow(() -> new AssertionError(log.lines.toString()));
         }
+        assertFalse(Files.exists(olderArchive));
 
         // the next launch uses the archive, without a probe; the CDS warnings that the user option turns back on
         // would report a dump whose module graph differs from the launch's (jdk.management.agent, for jmxremote)
@@ -389,6 +497,31 @@ class ClassDataSharingSupportTest {
         assertTrue(loaded.lines().anyMatch(line -> line.contains("com.example.Application source: file:")), loaded);
         String dumpLog = Files.readString(Path.of(archive.toString().replace(".jsa", ".log")));
         assertEquals(1, dumpLog.lines().filter(line -> line.contains(" version \"")).count(), dumpLog);
+    }
+
+    @Test
+    void shutdownStopsARunningDumpWithoutRecordingAFailure() throws Exception {
+        String java = Path.of(System.getProperty("java.home"), "bin", File.separatorChar == '\\' ? "java.exe" : "java").toString();
+        Path dependency = compiledJar("greeter.jar", "com/acme/Greeter.java", "package com.acme; public final class Greeter { }");
+        Path app = classes("app", "com/example/Application.class");
+        Path directory = tempDir.resolve("mn-cds");
+        var support = new ClassDataSharingSupport(new CapturingLog(), directory, java, Map.of(), JDK_25);
+        var launch = new Launch(java, List.of(app), List.of(dependency));
+        Path recorded = recordingFile(launch.prepare(support));
+        Files.writeString(recorded, "java/lang/Object id: 1\ncom/acme/Greeter id: 2\n");
+        var process = new FakeProcess(0);
+        support.launched(process);
+        process.alive = false;
+        support.launchEnded(process, false);
+
+        support.shutdown();
+        support.awaitBackgroundWork();
+
+        try (var files = Files.list(directory)) {
+            List<String> names = files.map(file -> file.getFileName().toString()).toList();
+            assertTrue(names.stream().noneMatch(name -> name.endsWith(".jsa") || name.endsWith(".failed") || name.endsWith(".tmp")), names.toString());
+            assertTrue(names.stream().anyMatch(name -> name.endsWith(".classlist")), names.toString());
+        }
     }
 
     @Test

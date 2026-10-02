@@ -333,7 +333,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         this.targetDirectory = new File(runnableProject.getBuild().getDirectory());
         if (classDataSharing) {
             this.classDataSharingSupport = new ClassDataSharingSupport(getLog(),
-                targetDirectory.toPath().resolve(ClassDataSharingSupport.DIRECTORY), javaExecutable, System.getenv());
+                targetDirectory.toPath().resolve(ClassDataSharingSupport.DIRECTORY_NAME), javaExecutable, System.getenv());
         }
         this.testResourcesHelper = new TestResourcesHelper(testResourcesEnabled, shared, buildDirectory, explicitPort,
                 clientTimeout, serverIdleTimeoutMinutes, runnableProject, mavenSession, dependencyResolutionService,

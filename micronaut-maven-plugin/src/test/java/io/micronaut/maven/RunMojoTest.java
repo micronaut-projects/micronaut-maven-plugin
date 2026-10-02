@@ -30,6 +30,7 @@ import java.util.zip.ZipOutputStream;
 
 import static io.micronaut.maven.core.MojoUtils.THIS_PLUGIN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
@@ -41,6 +42,8 @@ class RunMojoTest {
 
     @TempDir
     Path tempDir;
+
+    private RunMojo recordingMojo;
 
     @Test
     void runAotPassesExplicitEnabledConfiguration() throws Exception {
@@ -102,6 +105,63 @@ class RunMojoTest {
         assertTrue(args.get(1).startsWith("-XX:DumpLoadedClassList=" + tempDir.resolve("app/target/mn-cds")), args.toString());
         assertEquals(List.of("-Xmx256m", "-Dmicronaut.environments=dev", "-classpath", dependency + File.pathSeparator + output,
             "-XX:TieredStopAtLevel=1", "-Dcom.sun.management.jmxremote", "com.example.Application", "--verbose"), args.subList(2, args.size()));
+    }
+
+    @Test
+    void aRestartKeepsTheClassListOfARecordingLaunchAndStartsTheDump() throws Exception {
+        Path recorded = startRecordingLaunch();
+        RunMojo mojo = recordingMojo;
+
+        invoke(mojo, "killProcess");
+        supportOf(mojo).awaitBackgroundWork();
+
+        assertTrue(Files.isRegularFile(sibling(recorded, ".classlist")));
+        // the test java does not exist, so the dump fails and says so
+        assertTrue(Files.isRegularFile(sibling(recorded, ".failed")));
+    }
+
+    @Test
+    void ctrlCKeepsTheClassListOfARecordingLaunchWithoutStartingTheDump() throws Exception {
+        Path recorded = startRecordingLaunch();
+        RunMojo mojo = recordingMojo;
+
+        invoke(mojo, "stopOnShutdown");
+        supportOf(mojo).awaitBackgroundWork();
+
+        assertTrue(Files.isRegularFile(sibling(recorded, ".classlist")));
+        assertFalse(Files.exists(sibling(recorded, ".failed")));
+    }
+
+    private Path startRecordingLaunch() throws Exception {
+        Path dependency = zip(tempDir.resolve("repository/dependency.jar"));
+        Path output = Files.createDirectories(tempDir.resolve("app/target/classes"));
+        recordingMojo = mojoForBuildRunArguments(output, dependency);
+        var support = new ClassDataSharingSupport(new SystemStreamLog(), tempDir.resolve("app/target/mn-cds"),
+            tempDir.resolve("no-such-java").toString(), Map.of(), new ClassDataSharingSupport.Jdk("/jdks/25", "25.0.4.1", 25));
+        setField(recordingMojo, "classDataSharingSupport", support);
+        List<String> args = invokeBuildRunArguments(recordingMojo);
+        Path recorded = Path.of(args.get(1).substring("-XX:DumpLoadedClassList=".length()));
+        Files.writeString(recorded, "java/lang/Object id: 1\n");
+        var process = new ClassDataSharingSupportTest.FakeProcess(143);
+        setField(recordingMojo, "process", process);
+        support.launched(process);
+        return recorded;
+    }
+
+    private static ClassDataSharingSupport supportOf(RunMojo mojo) throws Exception {
+        Field field = RunMojo.class.getDeclaredField("classDataSharingSupport");
+        field.setAccessible(true);
+        return (ClassDataSharingSupport) field.get(mojo);
+    }
+
+    private static Path sibling(Path recorded, String suffix) {
+        return Path.of(recorded.toString().replace(".recording", suffix));
+    }
+
+    private static void invoke(RunMojo mojo, String methodName) throws Exception {
+        Method method = RunMojo.class.getDeclaredMethod(methodName);
+        method.setAccessible(true);
+        method.invoke(mojo);
     }
 
     private RunMojo mojoForBuildRunArguments(Path output, Path dependency) throws Exception {
