@@ -554,7 +554,6 @@ public class RunMojo extends AbstractTestResourcesMojo {
         args.add("-classpath");
         args.add(classpathArgument);
         args.add("-XX:TieredStopAtLevel=1");
-        args.add("-Dcom.sun.management.jmxremote");
         args.add(resolveMainClass());
         args.addAll(translateArguments(appArguments));
         return args;
