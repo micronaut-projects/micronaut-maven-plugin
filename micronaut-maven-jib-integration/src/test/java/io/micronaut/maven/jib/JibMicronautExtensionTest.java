@@ -9,6 +9,7 @@ import com.google.cloud.tools.jib.api.buildplan.LayerObject;
 import com.google.cloud.tools.jib.api.buildplan.Port;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
+import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.core.DockerBuildStrategy;
 import org.apache.maven.execution.MavenSession;
@@ -136,7 +137,7 @@ class JibMicronautExtensionTest {
 
     @Test
     @SetSystemProperty(key = "os.arch", value = "x64")
-    void testDetectPlatforms() {
+    void testDetectPlatforms() throws JibPluginExtensionException {
         var originalPlan = ContainerBuildPlan.builder().build();
         var finalPlan = extendContainerBuildPlan(originalPlan);
 
@@ -149,7 +150,7 @@ class JibMicronautExtensionTest {
 
     @Test
     @SetSystemProperty(key = "os.arch", value = "arm64")
-    void testDetectPlatformsForArm64() {
+    void testDetectPlatformsForArm64() throws JibPluginExtensionException {
         var originalPlan = ContainerBuildPlan.builder().build();
         var finalPlan = extendContainerBuildPlan(originalPlan);
 
@@ -158,7 +159,7 @@ class JibMicronautExtensionTest {
     }
 
     @Test
-    void testConfigurePlatforms() {
+    void testConfigurePlatforms() throws JibPluginExtensionException {
         var originalPlan = ContainerBuildPlan.builder()
                 .addPlatform("amd64", "linux")
                 .addPlatform("arm64", "linux")
@@ -178,7 +179,7 @@ class JibMicronautExtensionTest {
     }
 
     @Test
-    void testDetectPorts() {
+    void testDetectPorts() throws JibPluginExtensionException {
         var originalPlan = ContainerBuildPlan.builder().build();
         var finalPlan = extendContainerBuildPlan(originalPlan);
 
@@ -187,7 +188,7 @@ class JibMicronautExtensionTest {
     }
 
     @Test
-    void testConfigurePorts() {
+    void testConfigurePorts() throws JibPluginExtensionException {
         var originalPlan = ContainerBuildPlan.builder()
                 .addExposedPort(Port.tcp(8080))
                 .addExposedPort(Port.tcp(8081))
@@ -200,7 +201,7 @@ class JibMicronautExtensionTest {
     }
 
     @Test
-    void testSupportsHttpServerJdkRuntimeProperty() {
+    void testSupportsHttpServerJdkRuntimeProperty() throws JibPluginExtensionException {
         var originalPlan = ContainerBuildPlan.builder()
                 .setBaseImage("")
                 .build();
@@ -259,11 +260,11 @@ class JibMicronautExtensionTest {
         assertEquals("25", version);
     }
 
-    private ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan originalPlan) {
+    private ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan originalPlan) throws JibPluginExtensionException {
         return extendContainerBuildPlan(originalPlan, new Properties());
     }
 
-    private ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan originalPlan, Properties properties) {
+    private ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan originalPlan, Properties properties) throws JibPluginExtensionException {
         var extension = new JibMicronautExtension();
         var project = mock(MavenProject.class);
         when(project.getProperties()).thenReturn(properties);
