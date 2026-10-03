@@ -11,6 +11,8 @@ assert !text.contains('Timed out waiting for the CDS archive')
 // The launch commands, from RunMojo's debug log
 List<String> commands = lines.findAll { it.startsWith('[DEBUG] Running ') && it.contains(' -classpath ') }
 assert commands.size() == 3 : commands
+// mn:run adds no -Dcom.sun.management… property, so neither the launches nor the archive involve the JMX agent
+assert !commands.any { it.contains('-Dcom.sun.management') }
 // 1. records its class list
 assert commands[0].contains('-XX:DumpLoadedClassList=')
 assert !commands[0].contains('-XX:SharedArchiveFile=')

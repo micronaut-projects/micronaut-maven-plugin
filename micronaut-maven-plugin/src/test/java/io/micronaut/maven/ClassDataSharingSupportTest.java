@@ -447,10 +447,13 @@ class ClassDataSharingSupportTest {
     /**
      * Runs real launches, a real dump and a real probe with the JDK that runs the tests. Without compressed oops, an
      * archive is only usable when the dump got the launch's {@code -XX:} options as well. A JFR option adds
-     * {@code jdk.jfr} to the root modules of the launch, so the dump has to add it too.
+     * {@code jdk.jfr} to the root modules of the launch, and a {@code -Dcom.sun.management…} property, which
+     * {@code mn:run} only passes when the user asks for the JMX agent, adds {@code jdk.management.agent}, so the dump
+     * has to add them too.
      */
     @ParameterizedTest
-    @ValueSource(strings = {"-XX:TieredStopAtLevel=1", "-XX:-UseCompressedOops", "-XX:FlightRecorderOptions=stackdepth=128"})
+    @ValueSource(strings = {"-XX:TieredStopAtLevel=1", "-XX:-UseCompressedOops", "-XX:FlightRecorderOptions=stackdepth=128",
+        "-Dcom.sun.management.jmxremote"})
     void recordsThenDumpsInTheBackgroundThenLaunchesWithTheArchiveWithoutAProbe(String vmOption) throws Exception {
         String java = Path.of(System.getProperty("java.home"), "bin", File.separatorChar == '\\' ? "java.exe" : "java").toString();
         Path dependency = compiledJar("greeter.jar", "com/acme/Greeter.java",
@@ -486,7 +489,8 @@ class ClassDataSharingSupportTest {
         assertFalse(Files.exists(olderArchive));
 
         // the next launch uses the archive, without a probe; the CDS warnings that the user option turns back on
-        // would report a dump whose module graph differs from the launch's (jdk.management.agent, for jmxremote)
+        // would report a dump whose module graph differs from the launch's (jdk.jfr for a JFR option,
+        // jdk.management.agent for jmxremote)
         Path classLoading = tempDir.resolve("class-load.log");
         var archivedLaunch = new Launch(java, List.of(app), List.of(dependency), vmOption, "-Xlog:cds=warning", "-Xlog:class+load:file=" + classLoading);
         List<String> withArchive = archivedLaunch.prepare(support);
@@ -670,7 +674,6 @@ class ClassDataSharingSupportTest {
             this.classpathIndex = arguments.size();
             arguments.add(String.join(File.pathSeparator, this.outputs) + File.pathSeparator + this.dependencies);
             arguments.add("-XX:TieredStopAtLevel=1");
-            arguments.add("-Dcom.sun.management.jmxremote");
             this.mainClassIndex = arguments.size();
             arguments.add(MAIN_CLASS);
             arguments.add("--verbose");

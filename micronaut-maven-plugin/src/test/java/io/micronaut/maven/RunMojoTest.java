@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -39,6 +40,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class RunMojoTest {
+
+    private static final String JMXREMOTE = "-Dcom.sun.management.jmxremote";
+    private static final String MAIN_CLASS = "com.example.Application";
+    private static final String OUTPUT_DIRECTORY = "/project/target/classes";
+    private static final String DEPENDENCIES = "/repo/micronaut-inject.jar";
+    private static final ClassDataSharingSupport.Jdk JDK_25 = new ClassDataSharingSupport.Jdk("/jdks/25", "25.0.4.1", 25);
 
     @TempDir
     Path tempDir;
@@ -79,6 +86,51 @@ class RunMojoTest {
     }
 
     @Test
+    void runArgumentsDoNotStartTheJmxAgentByDefault() throws Exception {
+        RunMojo mojo = runMojoForArguments(new Properties());
+
+        List<String> args = invokeBuildRunArguments(mojo);
+
+        assertEquals(List.of(
+            "-classpath", OUTPUT_DIRECTORY + File.pathSeparator + DEPENDENCIES,
+            "-XX:TieredStopAtLevel=1",
+            MAIN_CLASS
+        ), args.subList(1, args.size()));
+    }
+
+    @Test
+    void runArgumentsStartTheJmxAgentWhenTheJvmArgumentsAskForIt() throws Exception {
+        RunMojo mojo = runMojoForArguments(new Properties());
+        setField(mojo, "jvmArguments", JMXREMOTE);
+
+        List<String> args = invokeBuildRunArguments(mojo);
+
+        assertEquals(List.of(
+            JMXREMOTE,
+            "-classpath", OUTPUT_DIRECTORY + File.pathSeparator + DEPENDENCIES,
+            "-XX:TieredStopAtLevel=1",
+            MAIN_CLASS
+        ), args.subList(1, args.size()));
+    }
+
+    @Test
+    void runArgumentsStartTheJmxAgentWhenAUserPropertyAsksForIt() throws Exception {
+        var userProperties = new Properties();
+        // Maven gives a -D without a value the value "true"
+        userProperties.setProperty("com.sun.management.jmxremote", "true");
+        RunMojo mojo = runMojoForArguments(userProperties);
+
+        List<String> args = invokeBuildRunArguments(mojo);
+
+        assertEquals(List.of(
+            JMXREMOTE + "=true",
+            "-classpath", OUTPUT_DIRECTORY + File.pathSeparator + DEPENDENCIES,
+            "-XX:TieredStopAtLevel=1",
+            MAIN_CLASS
+        ), args.subList(1, args.size()));
+    }
+
+    @Test
     void buildRunArgumentsIsTodaysCommandLineWhenClassDataSharingIsOff() throws Exception {
         Path dependency = zip(tempDir.resolve("repository/dependency.jar"));
         Path output = Files.createDirectories(tempDir.resolve("app/target/classes"));
@@ -87,7 +139,7 @@ class RunMojoTest {
         List<String> args = invokeBuildRunArguments(mojo);
 
         assertEquals(List.of(javaExecutable(), "-Xmx256m", "-Dmicronaut.environments=dev", "-classpath",
-            output + File.pathSeparator + dependency, "-XX:TieredStopAtLevel=1", "-Dcom.sun.management.jmxremote",
+            output + File.pathSeparator + dependency, "-XX:TieredStopAtLevel=1",
             "com.example.Application", "--verbose"), args);
     }
 
@@ -96,15 +148,40 @@ class RunMojoTest {
         Path dependency = zip(tempDir.resolve("repository/dependency.jar"));
         Path output = Files.createDirectories(tempDir.resolve("app/target/classes"));
         RunMojo mojo = mojoForBuildRunArguments(output, dependency);
-        setField(mojo, "classDataSharingSupport", new ClassDataSharingSupport(new SystemStreamLog(), tempDir.resolve("app/target/mn-cds"),
-            javaExecutable(), Map.of(), new ClassDataSharingSupport.Jdk("/jdks/25", "25.0.4.1", 25)));
+        setField(mojo, "classDataSharingSupport", classDataSharingSupport(javaExecutable()));
 
         List<String> args = invokeBuildRunArguments(mojo);
 
         assertEquals(javaExecutable(), args.get(0));
-        assertTrue(args.get(1).startsWith("-XX:DumpLoadedClassList=" + tempDir.resolve("app/target/mn-cds")), args.toString());
+        // the launch adds no -Dcom.sun.management… property, so the archive has no root module to add
+        assertEquals(recordingFlag(Set.of(), dependency), args.get(1));
         assertEquals(List.of("-Xmx256m", "-Dmicronaut.environments=dev", "-classpath", dependency + File.pathSeparator + output,
-            "-XX:TieredStopAtLevel=1", "-Dcom.sun.management.jmxremote", "com.example.Application", "--verbose"), args.subList(2, args.size()));
+            "-XX:TieredStopAtLevel=1", "com.example.Application", "--verbose"), args.subList(2, args.size()));
+    }
+
+    @Test
+    void theArchiveFollowsAJmxAgentRequestedThroughTheJvmArguments() throws Exception {
+        Path dependency = zip(tempDir.resolve("repository/dependency.jar"));
+        Path output = Files.createDirectories(tempDir.resolve("app/target/classes"));
+        RunMojo mojo = mojoForBuildRunArguments(output, dependency);
+        setField(mojo, "jvmArguments", "-Xmx256m " + JMXREMOTE);
+        setField(mojo, "classDataSharingSupport", classDataSharingSupport(javaExecutable()));
+
+        List<String> args = invokeBuildRunArguments(mojo);
+
+        assertEquals(recordingFlag(Set.of("jdk.management.agent"), dependency), args.get(1));
+    }
+
+    @Test
+    void theArchiveFollowsAJmxAgentRequestedThroughAUserProperty() throws Exception {
+        Path dependency = zip(tempDir.resolve("repository/dependency.jar"));
+        Path output = Files.createDirectories(tempDir.resolve("app/target/classes"));
+        RunMojo mojo = mojoForBuildRunArguments(output, dependency, Map.of("com.sun.management.jmxremote", "true"));
+        setField(mojo, "classDataSharingSupport", classDataSharingSupport(javaExecutable()));
+
+        List<String> args = invokeBuildRunArguments(mojo);
+
+        assertEquals(recordingFlag(Set.of("jdk.management.agent"), dependency), args.get(1));
     }
 
     @Test
@@ -136,8 +213,7 @@ class RunMojoTest {
         Path dependency = zip(tempDir.resolve("repository/dependency.jar"));
         Path output = Files.createDirectories(tempDir.resolve("app/target/classes"));
         recordingMojo = mojoForBuildRunArguments(output, dependency);
-        var support = new ClassDataSharingSupport(new SystemStreamLog(), tempDir.resolve("app/target/mn-cds"),
-            tempDir.resolve("no-such-java").toString(), Map.of(), new ClassDataSharingSupport.Jdk("/jdks/25", "25.0.4.1", 25));
+        var support = classDataSharingSupport(tempDir.resolve("no-such-java").toString());
         setField(recordingMojo, "classDataSharingSupport", support);
         List<String> args = invokeBuildRunArguments(recordingMojo);
         Path recorded = Path.of(args.get(1).substring("-XX:DumpLoadedClassList=".length()));
@@ -146,6 +222,20 @@ class RunMojoTest {
         setField(recordingMojo, "process", process);
         support.launched(process);
         return recorded;
+    }
+
+    private ClassDataSharingSupport classDataSharingSupport(String javaExecutable) {
+        return new ClassDataSharingSupport(new SystemStreamLog(), tempDir.resolve("app/target/mn-cds"), javaExecutable, Map.of(), JDK_25);
+    }
+
+    /**
+     * @return the flag of a launch that records the class list of the archive with these root modules, for the JVM
+     * options of {@link #mojoForBuildRunArguments(Path, Path, Map)}
+     */
+    private String recordingFlag(Set<String> rootModules, Path dependency) throws Exception {
+        String key = ClassDataSharingSupport.key(JDK_25, rootModules, List.of(), List.of("-Xmx256m", "-XX:TieredStopAtLevel=1"),
+            List.of(dependency));
+        return "-XX:DumpLoadedClassList=" + tempDir.resolve("app/target/mn-cds").resolve(key + ".recording");
     }
 
     private static ClassDataSharingSupport supportOf(RunMojo mojo) throws Exception {
@@ -164,7 +254,36 @@ class RunMojoTest {
         method.invoke(mojo);
     }
 
+    private static RunMojo runMojoForArguments(Properties userProperties) throws Exception {
+        MavenSession mavenSession = mock(MavenSession.class);
+        ToolchainManager toolchainManager = mock(ToolchainManager.class);
+        when(toolchainManager.getToolchainFromBuildContext("jdk", mavenSession)).thenReturn(null);
+        MavenProject runnableProject = new MavenProject();
+        runnableProject.getBuild().setOutputDirectory(OUTPUT_DIRECTORY);
+        when(mavenSession.getAllProjects()).thenReturn(List.of(runnableProject));
+        when(mavenSession.getUserProperties()).thenReturn(userProperties);
+        when(mavenSession.getSystemProperties()).thenReturn(new Properties());
+        RunMojo mojo = new RunMojo(
+            mavenSession,
+            mock(BuildPluginManager.class),
+            mock(ProjectBuilder.class),
+            toolchainManager,
+            mock(CompilerService.class),
+            mock(ExecutorService.class),
+            mock(DependencyResolutionService.class)
+        );
+        setField(mojo, "runnableProject", runnableProject);
+        setField(mojo, "targetDirectory", new File("/project/target"));
+        setField(mojo, "classpath", DEPENDENCIES);
+        setField(mojo, "mainClass", MAIN_CLASS);
+        return mojo;
+    }
+
     private RunMojo mojoForBuildRunArguments(Path output, Path dependency) throws Exception {
+        return mojoForBuildRunArguments(output, dependency, Map.of());
+    }
+
+    private RunMojo mojoForBuildRunArguments(Path output, Path dependency, Map<String, String> moreUserProperties) throws Exception {
         MavenSession mavenSession = mock(MavenSession.class);
         ToolchainManager toolchainManager = mock(ToolchainManager.class);
         when(toolchainManager.getToolchainFromBuildContext("jdk", mavenSession)).thenReturn(null);
@@ -175,6 +294,7 @@ class RunMojoTest {
         runnableProject.setBuild(build);
         var userProperties = new Properties();
         userProperties.setProperty("micronaut.environments", "dev");
+        userProperties.putAll(moreUserProperties);
         when(mavenSession.getAllProjects()).thenReturn(List.of(runnableProject));
         when(mavenSession.getUserProperties()).thenReturn(userProperties);
         when(mavenSession.getSystemProperties()).thenReturn(new Properties());
@@ -209,13 +329,6 @@ class RunMojoTest {
         return file;
     }
 
-    @SuppressWarnings("unchecked")
-    private static List<String> invokeBuildRunArguments(RunMojo mojo) throws Exception {
-        Method method = RunMojo.class.getDeclaredMethod("buildRunArguments");
-        method.setAccessible(true);
-        return (List<String>) method.invoke(mojo);
-    }
-
     private static void setField(RunMojo mojo, String fieldName, Object value) throws Exception {
         Field field = RunMojo.class.getDeclaredField(fieldName);
         field.setAccessible(true);
@@ -226,5 +339,12 @@ class RunMojoTest {
         Method method = RunMojo.class.getDeclaredMethod("runAotIfNeeded");
         method.setAccessible(true);
         method.invoke(mojo);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> invokeBuildRunArguments(RunMojo mojo) throws Exception {
+        Method method = RunMojo.class.getDeclaredMethod("buildRunArguments");
+        method.setAccessible(true);
+        return (List<String>) method.invoke(mojo);
     }
 }

@@ -93,6 +93,31 @@ Debugging options can be specified on the command line directly:
 * Changing the debugger host: `mvn mn:run -Dmn.debug -Dmn.debug.host=192.168.1.8` or `mvn mn:run -Dmn.debug -Dmn.debug.host=*`
 * Suspending the debugger execution: `mn:run -Dmn.debug -Dmn.debug.suspend`.
 
+=== Monitoring with JMX
+
+Since 5.1.0, `mn:run` no longer adds `-Dcom.sun.management.jmxremote` to the application's command line, so the JVM
+no longer starts the JMX management agent before `main` on every start and restart.
+
+Local tools do not need it. JConsole, VisualVM and Java Mission Control attach to the running application and start
+the local agent on demand, and `jcmd` does not use the agent.
+
+To start the agent with the application anyway, for example when the JVM runs with `-XX:+DisableAttachMechanism`,
+pass the property yourself in one of these ways:
+
+* As a user property, which `mn:run` passes on to the application: `mvn mn:run -Dcom.sun.management.jmxremote`.
+* As a JVM argument: `mvn mn:run -Dmn.jvmArgs=-Dcom.sun.management.jmxremote`.
+* In the plugin configuration:
++
+[source,xml]
+----
+<configuration>
+    <jvmArguments>-Dcom.sun.management.jmxremote</jvmArguments>
+</configuration>
+----
+
+For remote JMX, set `com.sun.management.jmxremote.port` together with the authentication and SSL properties your
+setup needs. The JVM then starts the agent, and `-Dcom.sun.management.jmxremote` is not needed.
+
 [[class-data-sharing]]
 === Class data sharing (experimental)
 
@@ -123,6 +148,9 @@ runs without it. With `-Dmn.watch=false`, the goal waits for the archive before 
 options, the heap size, the module options and the modules that `-Dcom.sun.management…` properties, JFR options and Java
 agents add), and to the path, size and modification time of every dependency JAR. When one of them changes, the next launch records
 again and the archive is created again. Editing the code or the resources of the project never does.
+* `mn:run` adds no `-Dcom.sun.management…` property of its own, so the archive leaves out the JMX agent's module
+(`jdk.management.agent`) unless you start the agent as the previous section describes. Turning that on or off
+records again.
 * Everything lives in `target/mn-cds`: the archive (about 50 MB for an application with 50 dependency JARs), the recorded
 class list, the list of the files of the JARs, and the log of the dump. `mvn clean` deletes it, so `mvn clean mn:run`
 records again.
