@@ -280,6 +280,10 @@ class ClassDataSharingSupportTest {
         assertEquals(Set.of("java.sql", "jdk.httpserver", "jdk.jfr"),
             ClassDataSharingSupport.rootModules(List.of("--add-modules=jdk.httpserver,,java.sql", "--add-modules", "jdk.jfr", "--add-modules")));
         assertEquals(Set.of(), ClassDataSharingSupport.rootModules(List.of("-Dmn.jvmArgs=-Dcom.sun.management.jmxremote", "-agentlib:jdwp=transport=dt_socket")));
+        assertEquals(Set.of("jdk.jfr"), ClassDataSharingSupport.rootModules(List.of("-XX:StartFlightRecording")));
+        assertEquals(Set.of("jdk.jfr"), ClassDataSharingSupport.rootModules(List.of("-XX:FlightRecorderOptions=stackdepth=128")));
+        assertEquals(Set.of("jdk.jfr", "jdk.management.agent"),
+            ClassDataSharingSupport.rootModules(List.of("-Dcom.sun.management.jmxremote", "-XX:StartFlightRecording:filename=recording.jfr")));
 
         List<String> options = ClassDataSharingSupport.effectiveOptions(
             Map.of("JAVA_TOOL_OPTIONS", "-javaagent:/agents/agent.jar -Dcom.sun.management.jmxremote.port=9010"), List.of("-XX:TieredStopAtLevel=1"));
@@ -306,7 +310,8 @@ class ClassDataSharingSupportTest {
     void theArchiveOptionsAreTheXxAndHeapOptions() {
         assertEquals(List.of("-XX:TieredStopAtLevel=1", "-Xmx1g", "-XX:+UseZGC", "--enable-preview"),
             ClassDataSharingSupport.archiveOptions(List.of("-XX:TieredStopAtLevel=1", "-Dfoo=bar", "-Xmx1g", "-agentlib:jdwp=x",
-                "-XX:+UseZGC", "-XX:StartFlightRecording=duration=30s", "-Xlog:gc", "--enable-preview")));
+                "-XX:+UseZGC", "-XX:StartFlightRecording=duration=30s", "-XX:FlightRecorderOptions:stackdepth=128", "-Xlog:gc",
+                "--enable-preview")));
         assertEquals(List.of("--add-opens=java.base/java.lang=ALL-UNNAMED", "--enable-native-access=ALL-UNNAMED"),
             ClassDataSharingSupport.moduleOptions(List.of("--add-opens", "java.base/java.lang=ALL-UNNAMED", "--add-modules=java.sql",
                 "--enable-native-access=ALL-UNNAMED")));
@@ -399,7 +404,7 @@ class ClassDataSharingSupportTest {
     @ParameterizedTest
     @ValueSource(strings = {"-Xshare:off", "-Xshare:auto", "-XX:SharedArchiveFile=/tmp/app.jsa", "-XX:SharedClassListFile=/tmp/app.classlist",
         "-XX:ArchiveClassesAtExit=/tmp/app.jsa", "-XX:+AutoCreateSharedArchive", "-XX:DumpLoadedClassList=/tmp/app.classlist",
-        "-XX:AOTCache=/tmp/app.aot", "-XX:AOTCacheOutput=/tmp/app.aot", "-XX:AOTMode=record", "--limit-modules=java.base",
+        "-XX:AOTCache=/tmp/app.aot", "-XX:AOTCacheOutput=/tmp/app.aot", "-XX:AOTMode=record", "-XX:+AOTClassLinking", "--limit-modules=java.base",
         "--upgrade-module-path=/tmp/modules", "--patch-module=java.base=/tmp/patch", "--module-path=/tmp/modules", "@/tmp/jvm.args",
         "-XX:VMOptionsFile=/tmp/vm.options"})
     void jvmArgumentsThatManageCdsOrTheModuleGraphKeepTodaysArguments(String option) throws IOException {
@@ -441,10 +446,11 @@ class ClassDataSharingSupportTest {
 
     /**
      * Runs real launches, a real dump and a real probe with the JDK that runs the tests. Without compressed oops, an
-     * archive is only usable when the dump got the launch's {@code -XX:} options as well.
+     * archive is only usable when the dump got the launch's {@code -XX:} options as well. A JFR option adds
+     * {@code jdk.jfr} to the root modules of the launch, so the dump has to add it too.
      */
     @ParameterizedTest
-    @ValueSource(strings = {"-XX:TieredStopAtLevel=1", "-XX:-UseCompressedOops"})
+    @ValueSource(strings = {"-XX:TieredStopAtLevel=1", "-XX:-UseCompressedOops", "-XX:FlightRecorderOptions=stackdepth=128"})
     void recordsThenDumpsInTheBackgroundThenLaunchesWithTheArchiveWithoutAProbe(String vmOption) throws Exception {
         String java = Path.of(System.getProperty("java.home"), "bin", File.separatorChar == '\\' ? "java.exe" : "java").toString();
         Path dependency = compiledJar("greeter.jar", "com/acme/Greeter.java",

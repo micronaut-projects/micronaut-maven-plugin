@@ -80,14 +80,14 @@ final class ClassDataSharingSupport {
      */
     static final String DIRECTORY_NAME = "mn-cds";
 
-    static final int MINIMUM_JDK = 25;
-    static final String LOG_OFF = "-Xlog:cds*=off,aot*=off";
-    static final String MANAGEMENT_AGENT_MODULE = "jdk.management.agent";
-    static final String INSTRUMENT_MODULE = "java.instrument";
-    static final String JVMCI_MODULE = "jdk.internal.vm.ci";
-    static final int CTRL_C_STATUS = 130;
-    static final String SHARED_ARCHIVE_FILE = "-XX:SharedArchiveFile=";
-
+    private static final int MINIMUM_JDK = 25;
+    private static final String LOG_OFF = "-Xlog:cds*=off,aot*=off";
+    private static final String MANAGEMENT_AGENT_MODULE = "jdk.management.agent";
+    private static final String INSTRUMENT_MODULE = "java.instrument";
+    private static final String JFR_MODULE = "jdk.jfr";
+    private static final String JVMCI_MODULE = "jdk.internal.vm.ci";
+    private static final int CTRL_C_STATUS = 130;
+    private static final String SHARED_ARCHIVE_FILE = "-XX:SharedArchiveFile=";
     private static final int FORMAT = 1;
     private static final int KEY_BYTES = 8;
     private static final int MAX_REPORTED_DUPLICATES = 5;
@@ -110,9 +110,9 @@ final class ClassDataSharingSupport {
     private static final List<String> MODULE_GRAPH_OPTIONS = List.of("--limit-modules", "--upgrade-module-path", "--patch-module", "--module-path", "-p");
     private static final Set<String> CDS_FLAGS = Set.of("SharedArchiveFile", "SharedClassListFile", "ArchiveClassesAtExit",
         "AutoCreateSharedArchive", "DumpLoadedClassList", "AOTCache", "AOTCacheOutput", "AOTMode", "AOTConfiguration",
-        "UseSharedSpaces", "RecordDynamicDumpInfo", "SharedBaseAddress");
+        "AOTClassLinking", "UseSharedSpaces", "RecordDynamicDumpInfo", "SharedBaseAddress");
     private static final Set<String> OPTION_FILE_FLAGS = Set.of("VMOptionsFile", "Flags");
-    private static final Set<String> UNRELATED_FLAGS = Set.of("StartFlightRecording", "FlightRecorderOptions");
+    private static final Set<String> JFR_FLAGS = Set.of("StartFlightRecording", "FlightRecorderOptions");
     private static final Pattern NOTICE_FILE = Pattern.compile("(?i)(META-INF/)?(LICEN[CS]E|NOTICE|COPYRIGHT)([._-][^/]*)?");
     private static final Pattern ENABLE_JVMCI = Pattern.compile("\\bbool\\s+EnableJVMCI\\s*=\\s*true\\b");
     private static final Pattern SIGNATURE_FILE = Pattern.compile("(?i)META-INF/[^/]+\\.(SF|RSA|DSA|EC)");
@@ -367,7 +367,8 @@ final class ClassDataSharingSupport {
     /**
      * Derives the root modules that the JVM adds on its own, as the dump has to add them too: HotSpot adds
      * {@code jdk.management.agent} for any {@code -Dcom.sun.management…} property, {@code java.instrument} for a
-     * {@code -javaagent:}, and the modules of every {@code --add-modules}.
+     * {@code -javaagent:}, {@code jdk.jfr} for {@code -XX:StartFlightRecording} or {@code -XX:FlightRecorderOptions},
+     * and the modules of every {@code --add-modules}.
      *
      * @param options the effective JVM options
      * @return the root modules, sorted
@@ -379,6 +380,8 @@ final class ClassDataSharingSupport {
                 modules.add(MANAGEMENT_AGENT_MODULE);
             } else if (option.startsWith("-javaagent:")) {
                 modules.add(INSTRUMENT_MODULE);
+            } else if (JFR_FLAGS.contains(String.valueOf(flagName(option)))) {
+                modules.add(JFR_MODULE);
             } else if (option.startsWith(ADD_MODULES + "=")) {
                 Arrays.stream(option.substring(ADD_MODULES.length() + 1).split(","))
                     .map(String::trim)
@@ -426,7 +429,8 @@ final class ClassDataSharingSupport {
     /**
      * Selects the options that decide whether the JVM can map an archive: the {@code -XX:} options (the collector,
      * compressed oops and class pointers among them), the heap size, which turns compressed oops off when it is large,
-     * and {@code --enable-preview}. The dump and the probe get them too.
+     * and {@code --enable-preview}. The dump and the probe get them too. The JFR options are left out, so that the dump
+     * does not start a recording; {@link #rootModules(List)} adds their module instead.
      *
      * @param options the effective JVM options
      * @return those options, in order
@@ -435,7 +439,7 @@ final class ClassDataSharingSupport {
         return options.stream()
             .filter(option -> {
                 String flag = flagName(option);
-                return (flag != null && !UNRELATED_FLAGS.contains(flag))
+                return (flag != null && !JFR_FLAGS.contains(flag))
                     || option.startsWith("-Xmx") || option.startsWith("-Xms") || option.equals("--enable-preview");
             })
             .toList();
@@ -967,8 +971,12 @@ final class ClassDataSharingSupport {
         if (flag.startsWith("+") || flag.startsWith("-")) {
             flag = flag.substring(1);
         }
-        int equals = flag.indexOf('=');
-        return equals < 0 ? flag : flag.substring(0, equals);
+        // the JFR options also take their value after a colon, as in -XX:StartFlightRecording:filename=recording.jfr
+        int end = 0;
+        while (end < flag.length() && flag.charAt(end) != '=' && flag.charAt(end) != ':') {
+            end++;
+        }
+        return flag.substring(0, end);
     }
 
     private static void addModulesOption(List<String> command, Set<String> rootModules) {

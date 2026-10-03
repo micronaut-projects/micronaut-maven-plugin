@@ -120,8 +120,8 @@ runs without it. With `-Dmn.watch=false`, the goal waits for the archive before 
 * The launches and restarts after that get `-XX:SharedArchiveFile=… -Xlog:cds*=off,aot*=off`, before the arguments of
 `mn.jvmArgs`. They run no extra check.
 * The archive is specific to the JDK build, to the JVM options that decide whether the JVM can use an archive (the `-XX:`
-options, the heap size, the module options and the modules that `-Dcom.sun.management…` properties and Java agents add),
-and to the path, size and modification time of every dependency JAR. When one of them changes, the next launch records
+options, the heap size, the module options and the modules that `-Dcom.sun.management…` properties, JFR options and Java
+agents add), and to the path, size and modification time of every dependency JAR. When one of them changes, the next launch records
 again and the archive is created again. Editing the code or the resources of the project never does.
 * Everything lives in `target/mn-cds`: the archive (about 50 MB for an application with 50 dependency JARs), the recorded
 class list, the list of the files of the JARs, and the log of the dump. `mvn clean` deletes it, so `mvn clean mn:run`
@@ -176,7 +176,7 @@ options, from `mn.jvmArgs` or from the `JAVA_TOOL_OPTIONS`, `JDK_JAVA_OPTIONS` o
 
 * already decide what CDS or the JDK AOT cache does: `-Xshare:…`, `-XX:SharedArchiveFile`, `-XX:SharedClassListFile`,
 `-XX:ArchiveClassesAtExit`, `-XX:+AutoCreateSharedArchive`, `-XX:DumpLoadedClassList`, `-XX:AOTCache`,
-`-XX:AOTCacheOutput`, `-XX:AOTMode` or `-XX:AOTConfiguration`;
+`-XX:AOTCacheOutput`, `-XX:AOTMode`, `-XX:AOTConfiguration` or `-XX:+AOTClassLinking`;
 * change the module graph with `--limit-modules`, `--upgrade-module-path`, `--patch-module` or `--module-path`;
 * or read more options from a file (`@argfile`, `-XX:VMOptionsFile`, `-XX:Flags`).
 
