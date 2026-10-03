@@ -1,0 +1,1124 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ClassDataSharingSupport.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven</a> &gt; <span class="el_source">ClassDataSharingSupport.java</span></div><h1>ClassDataSharingSupport.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven;
+
+import org.apache.maven.plugin.logging.Log;
+import org.codehaus.plexus.util.cli.CommandLineUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
+/**
+ * Keeps the classes of the dependency JARs of {@code mn:run} in a static CDS archive.
+ *
+ * &lt;p&gt;While it is enabled, every launch puts the regular JAR files of the resolved class path first, then the output
+ * directories of the reactor, then any other dependency entry. Only the JARs go into the archive: the JDK refuses an
+ * archive whose class path holds a non-empty directory. The first launch records the classes it loads with
+ * {@code -XX:DumpLoadedClassList}; when it ends, the archive is dumped and validated once in the background, and later
+ * launches use it until its key (the JDK, the JVM options that decide whether an archive can be used, and the path,
+ * size and modification time of every JAR) changes.&lt;/p&gt;
+ *
+ * &lt;p&gt;A launch keeps today's command line when the JDK is older than 25, when the JVM options manage CDS or the module
+ * graph themselves, or when a file of a reactor output (or of another entry that moves) also exists in a JAR, because
+ * the new order would change which copy the application sees.&lt;/p&gt;
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 5.1.0
+ */
+final class ClassDataSharingSupport {
+
+    /**
+     * The directory, under the build directory of the runnable project, that holds the archives and their inputs.
+     */
+    static final String DIRECTORY_NAME = &quot;mn-cds&quot;;
+
+    private static final int MINIMUM_JDK = 25;
+    private static final String LOG_OFF = &quot;-Xlog:cds*=off,aot*=off&quot;;
+    private static final String MANAGEMENT_AGENT_MODULE = &quot;jdk.management.agent&quot;;
+    private static final String INSTRUMENT_MODULE = &quot;java.instrument&quot;;
+    private static final String JFR_MODULE = &quot;jdk.jfr&quot;;
+    private static final String JVMCI_MODULE = &quot;jdk.internal.vm.ci&quot;;
+    private static final int CTRL_C_STATUS = 130;
+    private static final String SHARED_ARCHIVE_FILE = &quot;-XX:SharedArchiveFile=&quot;;
+    private static final int FORMAT = 1;
+    private static final int KEY_BYTES = 8;
+    private static final int MAX_REPORTED_DUPLICATES = 5;
+    private static final double MEGABYTE = 1_000_000d;
+    private static final double NANOS_PER_SECOND = 1_000_000_000d;
+<span class="fc" id="L96">    private static final Duration DUMP_TIMEOUT = Duration.ofMinutes(5);</span>
+<span class="fc" id="L97">    private static final Duration PROBE_TIMEOUT = Duration.ofMinutes(1);</span>
+<span class="fc" id="L98">    private static final Duration STALE_TEMPORARY = Duration.ofHours(1);</span>
+    private static final String ARCHIVE_SUFFIX = &quot;.jsa&quot;;
+    private static final String CLASS_LIST_SUFFIX = &quot;.classlist&quot;;
+    private static final String RECORDING_SUFFIX = &quot;.recording&quot;;
+    private static final String ENTRIES_SUFFIX = &quot;.entries&quot;;
+    private static final String FAILED_SUFFIX = &quot;.failed&quot;;
+    private static final String LOG_SUFFIX = &quot;.log&quot;;
+    private static final String TEMPORARY_SUFFIX = &quot;.tmp&quot;;
+    private static final String ADD_MODULES = &quot;--add-modules&quot;;
+    private static final String VERSION = &quot;-version&quot;;
+<span class="fc" id="L108">    private static final List&lt;String&gt; ENVIRONMENT_OPTIONS = List.of(&quot;JAVA_TOOL_OPTIONS&quot;, &quot;JDK_JAVA_OPTIONS&quot;, &quot;_JAVA_OPTIONS&quot;);</span>
+<span class="fc" id="L109">    private static final List&lt;String&gt; MODULE_OPTIONS = List.of(&quot;--add-opens&quot;, &quot;--add-exports&quot;, &quot;--add-reads&quot;, &quot;--enable-native-access&quot;);</span>
+<span class="fc" id="L110">    private static final List&lt;String&gt; MODULE_GRAPH_OPTIONS = List.of(&quot;--limit-modules&quot;, &quot;--upgrade-module-path&quot;, &quot;--patch-module&quot;, &quot;--module-path&quot;, &quot;-p&quot;);</span>
+<span class="fc" id="L111">    private static final Set&lt;String&gt; CDS_FLAGS = Set.of(&quot;SharedArchiveFile&quot;, &quot;SharedClassListFile&quot;, &quot;ArchiveClassesAtExit&quot;,</span>
+        &quot;AutoCreateSharedArchive&quot;, &quot;DumpLoadedClassList&quot;, &quot;AOTCache&quot;, &quot;AOTCacheOutput&quot;, &quot;AOTMode&quot;, &quot;AOTConfiguration&quot;,
+        &quot;AOTClassLinking&quot;, &quot;UseSharedSpaces&quot;, &quot;RecordDynamicDumpInfo&quot;, &quot;SharedBaseAddress&quot;);
+<span class="fc" id="L114">    private static final Set&lt;String&gt; OPTION_FILE_FLAGS = Set.of(&quot;VMOptionsFile&quot;, &quot;Flags&quot;);</span>
+<span class="fc" id="L115">    private static final Set&lt;String&gt; JFR_FLAGS = Set.of(&quot;StartFlightRecording&quot;, &quot;FlightRecorderOptions&quot;);</span>
+<span class="fc" id="L116">    private static final Pattern NOTICE_FILE = Pattern.compile(&quot;(?i)(META-INF/)?(LICEN[CS]E|NOTICE|COPYRIGHT)([._-][^/]*)?&quot;);</span>
+<span class="fc" id="L117">    private static final Pattern ENABLE_JVMCI = Pattern.compile(&quot;\\bbool\\s+EnableJVMCI\\s*=\\s*true\\b&quot;);</span>
+<span class="fc" id="L118">    private static final Pattern SIGNATURE_FILE = Pattern.compile(&quot;(?i)META-INF/[^/]+\\.(SF|RSA|DSA|EC)&quot;);</span>
+
+    private final Log log;
+    private final Path directory;
+    private final String javaExecutable;
+    private final Map&lt;String, String&gt; environment;
+<span class="fc" id="L124">    private final Set&lt;String&gt; announcedKeys = new HashSet&lt;&gt;();</span>
+    private Jdk jdk;
+    private boolean jdkRead;
+    private boolean jdkReported;
+    private boolean failureReported;
+    private boolean staleTemporariesDeleted;
+    private String currentKey;
+    private String lastDuplicateWarning;
+    private String entriesKey;
+    private Map&lt;String, Integer&gt; entries;
+    private Recording pendingRecording;
+    private Recording recording;
+    private ExecutorService executor;
+    private Future&lt;?&gt; dump;
+    private String dumpKey;
+    private Process dumpProcess;
+    private Path dumpTemporary;
+    private boolean shuttingDown;
+
+    /**
+     * @param log the Maven log
+     * @param directory the directory that holds the archives, under the build directory of the runnable project
+     * @param javaExecutable the {@code java} that launches the application
+     * @param environment the environment that the application inherits
+     */
+    ClassDataSharingSupport(Log log, Path directory, String javaExecutable, Map&lt;String, String&gt; environment) {
+<span class="fc" id="L150">        this(log, directory, javaExecutable, environment, null);</span>
+<span class="fc" id="L151">    }</span>
+
+    /**
+     * @param log the Maven log
+     * @param directory the directory that holds the archives, under the build directory of the runnable project
+     * @param javaExecutable the {@code java} that launches the application
+     * @param environment the environment that the application inherits
+     * @param jdk the JDK of {@code javaExecutable}, or {@code null} to read it from {@code javaExecutable} once
+     */
+<span class="fc" id="L160">    ClassDataSharingSupport(Log log, Path directory, String javaExecutable, Map&lt;String, String&gt; environment, Jdk jdk) {</span>
+<span class="fc" id="L161">        this.log = log;</span>
+<span class="fc" id="L162">        this.directory = directory.toAbsolutePath();</span>
+<span class="fc" id="L163">        this.javaExecutable = javaExecutable;</span>
+<span class="fc" id="L164">        this.environment = Map.copyOf(environment);</span>
+<span class="fc" id="L165">        this.jdk = jdk;</span>
+<span class="fc bfc" id="L166" title="All 2 branches covered.">        this.jdkRead = jdk != null;</span>
+<span class="fc" id="L167">    }</span>
+
+    /**
+     * Adapts the arguments of one launch.
+     *
+     * @param args the arguments that {@code mn:run} launches without this option: {@code java} first, then the JVM
+     * options, {@code -classpath} and its value, more JVM options, the main class and the application arguments
+     * @param classpathIndex the index of the class path value in {@code args}
+     * @param mainClassIndex the index of the main class in {@code args}
+     * @param reactorOutputs the output directories of the runnable project and of the reactor projects it depends on,
+     * in the order of the class path
+     * @param dependencyClasspath the resolved dependencies, joined with the path separator
+     * @return {@code args} itself when this launch keeps today's command line, otherwise the adapted arguments
+     */
+    synchronized List&lt;String&gt; prepareLaunch(List&lt;String&gt; args, int classpathIndex, int mainClassIndex,
+                                            List&lt;String&gt; reactorOutputs, String dependencyClasspath) {
+        try {
+<span class="fc" id="L184">            return prepare(args, classpathIndex, mainClassIndex, reactorOutputs, dependencyClasspath);</span>
+<span class="nc" id="L185">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L186">            pendingRecording = null;</span>
+<span class="nc bnc" id="L187" title="All 2 branches missed.">            if (!failureReported) {</span>
+<span class="nc" id="L188">                failureReported = true;</span>
+<span class="nc" id="L189">                log.warn(&quot;Class data sharing: could not prepare the launch (%s), so mn:run launches the application without it&quot;.formatted(e));</span>
+            }
+<span class="nc" id="L191">            debug(&quot;could not prepare the launch: &quot; + e);</span>
+<span class="nc" id="L192">            return args;</span>
+        }
+    }
+
+    private List&lt;String&gt; prepare(List&lt;String&gt; args, int classpathIndex, int mainClassIndex, List&lt;String&gt; reactorOutputs,
+                                 String dependencyClasspath) {
+<span class="fc" id="L198">        pendingRecording = null;</span>
+<span class="fc" id="L199">        finishEndedRecording();</span>
+<span class="fc" id="L200">        Optional&lt;Jdk&gt; launchJdk = jdk();</span>
+<span class="fc bfc" id="L201" title="All 2 branches covered.">        if (launchJdk.isEmpty()) {</span>
+<span class="fc" id="L202">            return args;</span>
+        }
+<span class="fc bfc" id="L204" title="All 2 branches covered.">        if (launchJdk.get().feature() &lt; MINIMUM_JDK) {</span>
+<span class="fc bfc" id="L205" title="All 2 branches covered.">            if (!jdkReported) {</span>
+<span class="fc" id="L206">                jdkReported = true;</span>
+<span class="fc" id="L207">                log.info(&quot;Class data sharing needs JDK %d or later, and %s is JDK %d: mn:run launches the application without a CDS archive&quot;</span>
+<span class="fc" id="L208">                    .formatted(MINIMUM_JDK, javaExecutable, launchJdk.get().feature()));</span>
+            }
+<span class="fc" id="L210">            return args;</span>
+        }
+<span class="fc" id="L212">        var launchOptions = new ArrayList&lt;&gt;(args.subList(1, classpathIndex - 1));</span>
+<span class="fc" id="L213">        launchOptions.addAll(args.subList(classpathIndex + 1, mainClassIndex));</span>
+<span class="fc" id="L214">        List&lt;String&gt; options = effectiveOptions(environment, launchOptions);</span>
+<span class="fc" id="L215">        Optional&lt;String&gt; managed = userManagedOption(options);</span>
+<span class="fc bfc" id="L216" title="All 2 branches covered.">        if (managed.isPresent()) {</span>
+<span class="fc" id="L217">            debug(&quot;the JVM options contain %s, so they decide what CDS does: launching without changes&quot;.formatted(managed.get()));</span>
+<span class="fc" id="L218">            return args;</span>
+        }
+<span class="fc" id="L220">        Layout layout = layout(dependencyClasspath, reactorOutputs);</span>
+<span class="fc bfc" id="L221" title="All 2 branches covered.">        if (layout.jars().isEmpty()) {</span>
+<span class="fc" id="L222">            debug(&quot;the class path has no JAR to archive: launching without changes&quot;);</span>
+<span class="fc" id="L223">            return args;</span>
+        }
+<span class="fc" id="L225">        Set&lt;String&gt; rootModules = rootModules(options);</span>
+<span class="fc" id="L226">        List&lt;String&gt; moduleOptions = moduleOptions(options);</span>
+<span class="fc" id="L227">        List&lt;String&gt; archiveOptions = archiveOptions(options);</span>
+        String key;
+        List&lt;Duplicate&gt; duplicates;
+        try {
+<span class="fc" id="L231">            deleteStaleTemporaries();</span>
+<span class="fc" id="L232">            key = key(launchJdk.get(), rootModules, moduleOptions, archiveOptions, layout.jars());</span>
+<span class="fc" id="L233">            duplicates = findDuplicates(layout, entries(key, layout.jars()));</span>
+<span class="nc" id="L234">        } catch (IOException | UncheckedIOException e) {</span>
+<span class="nc" id="L235">            debug(&quot;could not read the class path (%s): launching without changes&quot;.formatted(e.getMessage()));</span>
+<span class="nc" id="L236">            return args;</span>
+<span class="fc" id="L237">        }</span>
+<span class="fc" id="L238">        currentKey = key;</span>
+<span class="fc bfc" id="L239" title="All 2 branches covered.">        if (!duplicates.isEmpty()) {</span>
+<span class="fc" id="L240">            warnAboutDuplicates(duplicates);</span>
+<span class="fc" id="L241">            return args;</span>
+        }
+<span class="fc" id="L243">        lastDuplicateWarning = null;</span>
+<span class="fc" id="L244">        String classpath = layout.classpath();</span>
+<span class="fc" id="L245">        var request = new DumpRequest(key, file(key, CLASS_LIST_SUFFIX), layout.jars(), rootModules, moduleOptions, archiveOptions, classpath);</span>
+<span class="fc" id="L246">        List&lt;String&gt; flags = flags(request);</span>
+<span class="fc" id="L247">        var result = new ArrayList&lt;String&gt;(args.size() + flags.size());</span>
+<span class="fc" id="L248">        result.add(args.get(0));</span>
+<span class="fc" id="L249">        result.addAll(flags);</span>
+<span class="fc" id="L250">        result.addAll(args.subList(1, classpathIndex));</span>
+<span class="fc" id="L251">        result.add(classpath);</span>
+<span class="fc" id="L252">        result.addAll(args.subList(classpathIndex + 1, args.size()));</span>
+<span class="fc" id="L253">        return result;</span>
+    }
+
+    /**
+     * Tells this support that the launch prepared last has started.
+     *
+     * @param process the application process
+     */
+    synchronized void launched(Process process) {
+<span class="pc bpc" id="L262" title="1 of 2 branches missed.">        if (pendingRecording != null) {</span>
+<span class="fc" id="L263">            pendingRecording.process = process;</span>
+<span class="fc" id="L264">            recording = pendingRecording;</span>
+<span class="fc" id="L265">            pendingRecording = null;</span>
+        }
+<span class="fc" id="L267">    }</span>
+
+    /**
+     * Tells this support that a launch has ended. When that launch recorded a class list, keeps the list if the plugin
+     * stopped the application, or if it exited with status 0 or 130 (Ctrl+C), and then dumps the archive in the
+     * background unless Maven is shutting down.
+     *
+     * @param process the application process
+     * @param stoppedByPlugin whether the plugin stopped the application (on a restart or at the end of the goal)
+     */
+    synchronized void launchEnded(Process process, boolean stoppedByPlugin) {
+<span class="pc bpc" id="L278" title="3 of 6 branches missed.">        if (recording != null &amp;&amp; recording.process == process &amp;&amp; !process.isAlive()) {</span>
+<span class="fc" id="L279">            finishRecording(stoppedByPlugin);</span>
+        }
+<span class="fc" id="L281">    }</span>
+
+    /**
+     * Waits for an archive that is being dumped, so that a goal that ends on its own leaves it behind.
+     */
+    void awaitBackgroundWork() {
+        Future&lt;?&gt; running;
+<span class="fc" id="L288">        synchronized (this) {</span>
+<span class="fc" id="L289">            running = dump;</span>
+<span class="fc" id="L290">        }</span>
+<span class="pc bpc" id="L291" title="1 of 4 branches missed.">        if (running != null &amp;&amp; !running.isDone()) {</span>
+<span class="fc" id="L292">            log.info(&quot;Class data sharing: waiting for the CDS archive of the dependency JARs to be created&quot;);</span>
+            try {
+<span class="fc" id="L294">                running.get();</span>
+<span class="nc" id="L295">            } catch (InterruptedException _) {</span>
+<span class="nc" id="L296">                Thread.currentThread().interrupt();</span>
+<span class="nc" id="L297">            } catch (ExecutionException e) {</span>
+<span class="nc" id="L298">                debug(&quot;the archive could not be created: &quot; + e.getCause());</span>
+<span class="pc" id="L299">            }</span>
+        }
+<span class="fc" id="L301">        synchronized (this) {</span>
+<span class="fc bfc" id="L302" title="All 2 branches covered.">            if (executor != null) {</span>
+<span class="fc" id="L303">                executor.shutdown();</span>
+<span class="fc" id="L304">                executor = null;</span>
+            }
+<span class="fc" id="L306">        }</span>
+<span class="fc" id="L307">    }</span>
+
+    /**
+     * Called when Maven shuts down (for example on Ctrl+C): a class list recorded so far is kept for the next goal,
+     * no new dump starts, and a running dump is stopped without delaying the exit.
+     */
+    void shutdown() {
+        Process running;
+        Path temporary;
+<span class="fc" id="L316">        synchronized (this) {</span>
+<span class="fc" id="L317">            shuttingDown = true;</span>
+<span class="fc" id="L318">            running = dumpProcess;</span>
+<span class="fc" id="L319">            temporary = dumpTemporary;</span>
+<span class="fc" id="L320">        }</span>
+<span class="pc bpc" id="L321" title="1 of 2 branches missed.">        if (running != null) {</span>
+<span class="nc" id="L322">            running.destroyForcibly();</span>
+            try {
+<span class="nc" id="L324">                running.onExit().get(1, TimeUnit.SECONDS);</span>
+<span class="nc" id="L325">            } catch (InterruptedException _) {</span>
+<span class="nc" id="L326">                Thread.currentThread().interrupt();</span>
+<span class="nc" id="L327">            } catch (ExecutionException | TimeoutException _) {</span>
+                // the dump leaves a temporary file at worst, which the next goal deletes
+<span class="nc" id="L329">            }</span>
+<span class="nc" id="L330">            deleteQuietly(temporary);</span>
+        }
+<span class="fc" id="L332">    }</span>
+
+    /**
+     * @param stoppedByPlugin whether the plugin stopped the application
+     * @param exitStatus the exit status of the application, when it exited on its own
+     * @return whether the class list that the launch recorded can be used for an archive
+     */
+    static boolean keepsClassList(boolean stoppedByPlugin, int exitStatus) {
+<span class="fc bfc" id="L340" title="All 6 branches covered.">        return stoppedByPlugin || exitStatus == 0 || exitStatus == CTRL_C_STATUS;</span>
+    }
+
+    /**
+     * @param environment the environment of the application
+     * @param launchOptions the JVM options of the launch command
+     * @return the JVM options in the order in which the JVM applies them: {@code JAVA_TOOL_OPTIONS},
+     * {@code JDK_JAVA_OPTIONS}, the command line, then {@code _JAVA_OPTIONS}
+     */
+    static List&lt;String&gt; effectiveOptions(Map&lt;String, String&gt; environment, List&lt;String&gt; launchOptions) {
+<span class="fc" id="L350">        var options = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L351">        options.addAll(environmentOptions(environment, ENVIRONMENT_OPTIONS.get(0)));</span>
+<span class="fc" id="L352">        options.addAll(environmentOptions(environment, ENVIRONMENT_OPTIONS.get(1)));</span>
+<span class="fc" id="L353">        options.addAll(launchOptions);</span>
+<span class="fc" id="L354">        options.addAll(environmentOptions(environment, ENVIRONMENT_OPTIONS.get(2)));</span>
+<span class="fc" id="L355">        return options;</span>
+    }
+
+    /**
+     * @param options the effective JVM options
+     * @return the first option that manages CDS, the JDK AOT cache or the module graph, or that reads more options
+     * from a file, if any
+     */
+    static Optional&lt;String&gt; userManagedOption(List&lt;String&gt; options) {
+<span class="fc" id="L364">        return joinOptionValues(options).stream().filter(ClassDataSharingSupport::managesCdsOrModuleGraph).findFirst();</span>
+    }
+
+    /**
+     * Derives the root modules that the JVM adds on its own, as the dump has to add them too: HotSpot adds
+     * {@code jdk.management.agent} for any {@code -Dcom.sun.management…} property, {@code java.instrument} for a
+     * {@code -javaagent:}, {@code jdk.jfr} for {@code -XX:StartFlightRecording} or {@code -XX:FlightRecorderOptions},
+     * and the modules of every {@code --add-modules}.
+     *
+     * @param options the effective JVM options
+     * @return the root modules, sorted
+     */
+    static Set&lt;String&gt; rootModules(List&lt;String&gt; options) {
+<span class="fc" id="L377">        var modules = new TreeSet&lt;String&gt;();</span>
+<span class="fc bfc" id="L378" title="All 2 branches covered.">        for (String option : joinOptionValues(options)) {</span>
+<span class="fc bfc" id="L379" title="All 2 branches covered.">            if (option.startsWith(&quot;-Dcom.sun.management&quot;)) {</span>
+<span class="fc" id="L380">                modules.add(MANAGEMENT_AGENT_MODULE);</span>
+<span class="fc bfc" id="L381" title="All 2 branches covered.">            } else if (option.startsWith(&quot;-javaagent:&quot;)) {</span>
+<span class="fc" id="L382">                modules.add(INSTRUMENT_MODULE);</span>
+<span class="fc bfc" id="L383" title="All 2 branches covered.">            } else if (JFR_FLAGS.contains(String.valueOf(flagName(option)))) {</span>
+<span class="fc" id="L384">                modules.add(JFR_MODULE);</span>
+<span class="fc bfc" id="L385" title="All 2 branches covered.">            } else if (option.startsWith(ADD_MODULES + &quot;=&quot;)) {</span>
+<span class="fc" id="L386">                Arrays.stream(option.substring(ADD_MODULES.length() + 1).split(&quot;,&quot;))</span>
+<span class="fc" id="L387">                    .map(String::trim)</span>
+<span class="fc bfc" id="L388" title="All 2 branches covered.">                    .filter(module -&gt; !module.isEmpty())</span>
+<span class="fc" id="L389">                    .forEach(modules::add);</span>
+            }
+<span class="fc" id="L391">        }</span>
+<span class="fc" id="L392">        return modules;</span>
+    }
+
+    /**
+     * @param options the effective JVM options
+     * @return the module options other than {@code --add-modules}, each as one {@code --option=value} argument
+     */
+    static List&lt;String&gt; moduleOptions(List&lt;String&gt; options) {
+<span class="fc" id="L400">        return joinOptionValues(options).stream()</span>
+<span class="fc" id="L401">            .filter(option -&gt; MODULE_OPTIONS.stream().anyMatch(moduleOption -&gt; option.startsWith(moduleOption + &quot;=&quot;)))</span>
+<span class="fc" id="L402">            .toList();</span>
+    }
+
+    /**
+     * @param options JVM options
+     * @return the options, with the value of each module option that takes it as the next argument joined to it with
+     * {@code =}
+     */
+    static List&lt;String&gt; joinOptionValues(List&lt;String&gt; options) {
+<span class="fc" id="L411">        var joined = new ArrayList&lt;String&gt;(options.size());</span>
+<span class="fc" id="L412">        String pending = null;</span>
+<span class="fc bfc" id="L413" title="All 2 branches covered.">        for (String option : options) {</span>
+<span class="fc bfc" id="L414" title="All 2 branches covered.">            if (pending != null) {</span>
+<span class="fc" id="L415">                joined.add(pending + &quot;=&quot; + option);</span>
+<span class="fc" id="L416">                pending = null;</span>
+<span class="pc bpc" id="L417" title="1 of 6 branches missed.">            } else if (option.equals(ADD_MODULES) || MODULE_OPTIONS.contains(option) || MODULE_GRAPH_OPTIONS.contains(option)) {</span>
+<span class="fc" id="L418">                pending = option;</span>
+            } else {
+<span class="fc" id="L420">                joined.add(option);</span>
+            }
+<span class="fc" id="L422">        }</span>
+<span class="fc bfc" id="L423" title="All 2 branches covered.">        if (pending != null) {</span>
+<span class="fc" id="L424">            joined.add(pending);</span>
+        }
+<span class="fc" id="L426">        return joined;</span>
+    }
+
+    /**
+     * Selects the options that decide whether the JVM can map an archive: the {@code -XX:} options (the collector,
+     * compressed oops and class pointers among them), the heap size, which turns compressed oops off when it is large,
+     * and {@code --enable-preview}. The dump and the probe get them too. The JFR options are left out, so that the dump
+     * does not start a recording; {@link #rootModules(List)} adds their module instead.
+     *
+     * @param options the effective JVM options
+     * @return those options, in order
+     */
+    static List&lt;String&gt; archiveOptions(List&lt;String&gt; options) {
+<span class="fc" id="L439">        return options.stream()</span>
+<span class="fc" id="L440">            .filter(option -&gt; {</span>
+<span class="fc" id="L441">                String flag = flagName(option);</span>
+<span class="fc bfc" id="L442" title="All 4 branches covered.">                return (flag != null &amp;&amp; !JFR_FLAGS.contains(flag))</span>
+<span class="pc bpc" id="L443" title="1 of 6 branches missed.">                    || option.startsWith(&quot;-Xmx&quot;) || option.startsWith(&quot;-Xms&quot;) || option.equals(&quot;--enable-preview&quot;);</span>
+            })
+<span class="fc" id="L445">            .toList();</span>
+    }
+
+    /**
+     * Splits the class path in the order this option uses.
+     *
+     * @param dependencyClasspath the resolved dependencies, joined with the path separator
+     * @param reactorOutputs the reactor output directories
+     * @return the layout
+     */
+    static Layout layout(String dependencyClasspath, List&lt;String&gt; reactorOutputs) {
+<span class="fc" id="L456">        var jars = new ArrayList&lt;Path&gt;();</span>
+<span class="fc" id="L457">        var others = new ArrayList&lt;Path&gt;();</span>
+<span class="pc bpc" id="L458" title="1 of 2 branches missed.">        if (dependencyClasspath != null) {</span>
+<span class="fc bfc" id="L459" title="All 2 branches covered.">            for (String entry : dependencyClasspath.split(Pattern.quote(File.pathSeparator))) {</span>
+<span class="pc bpc" id="L460" title="1 of 2 branches missed.">                if (!entry.isEmpty()) {</span>
+<span class="fc" id="L461">                    Path path = Path.of(entry);</span>
+<span class="fc bfc" id="L462" title="All 2 branches covered.">                    if (isJar(path)) {</span>
+<span class="fc" id="L463">                        jars.add(path);</span>
+                    } else {
+<span class="fc" id="L465">                        others.add(path);</span>
+                    }
+                }
+            }
+        }
+<span class="fc" id="L470">        return new Layout(jars, reactorOutputs.stream().map(Path::of).toList(), others);</span>
+    }
+
+    /**
+     * @param jdk the JDK of the launch
+     * @param rootModules the root modules
+     * @param moduleOptions the other module options
+     * @param archiveOptions the {@code -XX:} and heap options
+     * @param jars the JARs of the archive, in class path order
+     * @return the key of the archive
+     * @throws IOException if a JAR cannot be read
+     */
+    static String key(Jdk jdk, Set&lt;String&gt; rootModules, List&lt;String&gt; moduleOptions, List&lt;String&gt; archiveOptions,
+                      List&lt;Path&gt; jars) throws IOException {
+        MessageDigest digest;
+        try {
+<span class="fc" id="L486">            digest = MessageDigest.getInstance(&quot;SHA-256&quot;);</span>
+<span class="nc" id="L487">        } catch (NoSuchAlgorithmException e) {</span>
+<span class="nc" id="L488">            throw new IllegalStateException(e);</span>
+<span class="fc" id="L489">        }</span>
+<span class="fc" id="L490">        var text = new StringBuilder()</span>
+<span class="fc" id="L491">            .append(&quot;format=&quot;).append(FORMAT).append('\n')</span>
+<span class="fc" id="L492">            .append(&quot;java.home=&quot;).append(jdk.home()).append('\n')</span>
+<span class="fc" id="L493">            .append(&quot;java.vm.version=&quot;).append(jdk.vmVersion()).append('\n')</span>
+<span class="fc" id="L494">            .append(&quot;mode=plain\n&quot;)</span>
+<span class="fc" id="L495">            .append(&quot;modules=&quot;).append(String.join(&quot;,&quot;, rootModules)).append('\n');</span>
+<span class="fc" id="L496">        moduleOptions.forEach(option -&gt; text.append(&quot;module-option=&quot;).append(option).append('\n'));</span>
+<span class="fc" id="L497">        archiveOptions.forEach(option -&gt; text.append(&quot;vm-option=&quot;).append(option).append('\n'));</span>
+<span class="fc bfc" id="L498" title="All 2 branches covered.">        for (Path jar : jars) {</span>
+<span class="fc" id="L499">            BasicFileAttributes attributes = Files.readAttributes(jar, BasicFileAttributes.class);</span>
+<span class="fc" id="L500">            text.append(&quot;jar=&quot;).append(jar).append('|').append(attributes.size()).append('|')</span>
+<span class="fc" id="L501">                .append(attributes.lastModifiedTime().toMillis()).append('\n');</span>
+<span class="fc" id="L502">        }</span>
+<span class="fc" id="L503">        byte[] hash = digest.digest(text.toString().getBytes(StandardCharsets.UTF_8));</span>
+<span class="fc" id="L504">        return HexFormat.of().formatHex(hash, 0, KEY_BYTES);</span>
+    }
+
+    /**
+     * @param path a path inside a JAR or an output directory, with {@code /} separators
+     * @return whether the path may exist both in an output and in a JAR: files that are merged or only describe the
+     * archive they are in
+     */
+    static boolean isExempt(String path) {
+<span class="fc bfc" id="L513" title="All 2 branches covered.">        return path.equals(&quot;META-INF/MANIFEST.MF&quot;)</span>
+<span class="pc bpc" id="L514" title="1 of 2 branches missed.">            || path.equals(&quot;META-INF/INDEX.LIST&quot;)</span>
+<span class="fc bfc" id="L515" title="All 2 branches covered.">            || path.equals(&quot;module-info.class&quot;)</span>
+<span class="fc bfc" id="L516" title="All 2 branches covered.">            || path.startsWith(&quot;META-INF/services/&quot;)</span>
+<span class="fc bfc" id="L517" title="All 2 branches covered.">            || path.startsWith(&quot;META-INF/micronaut/&quot;)</span>
+<span class="fc bfc" id="L518" title="All 2 branches covered.">            || path.startsWith(&quot;META-INF/versions/&quot;)</span>
+<span class="fc bfc" id="L519" title="All 2 branches covered.">            || path.startsWith(&quot;META-INF/maven/&quot;)</span>
+<span class="pc bpc" id="L520" title="1 of 2 branches missed.">            || SIGNATURE_FILE.matcher(path).matches()</span>
+<span class="fc bfc" id="L521" title="All 2 branches covered.">            || NOTICE_FILE.matcher(path).matches();</span>
+    }
+
+    /**
+     * @param jars the JARs, in class path order
+     * @return each file path of the JARs that is not exempt, with the index of the first JAR that has it
+     * @throws IOException if a JAR cannot be read
+     */
+    static Map&lt;String, Integer&gt; readEntries(List&lt;Path&gt; jars) throws IOException {
+<span class="fc" id="L530">        var index = new HashMap&lt;String, Integer&gt;();</span>
+<span class="fc bfc" id="L531" title="All 2 branches covered.">        for (int i = 0; i &lt; jars.size(); i++) {</span>
+<span class="fc" id="L532">            try (var zip = new ZipFile(jars.get(i).toFile())) {</span>
+<span class="fc" id="L533">                Enumeration&lt;? extends ZipEntry&gt; zipEntries = zip.entries();</span>
+<span class="fc bfc" id="L534" title="All 2 branches covered.">                while (zipEntries.hasMoreElements()) {</span>
+<span class="fc" id="L535">                    ZipEntry entry = zipEntries.nextElement();</span>
+<span class="pc bpc" id="L536" title="1 of 4 branches missed.">                    if (!entry.isDirectory() &amp;&amp; !isExempt(entry.getName())) {</span>
+<span class="fc" id="L537">                        index.putIfAbsent(entry.getName(), i);</span>
+                    }
+<span class="fc" id="L539">                }</span>
+            }
+        }
+<span class="fc" id="L542">        return index;</span>
+    }
+
+    /**
+     * Looks up every file of the entries that move after the JARs in the entry index of the JARs.
+     *
+     * @param layout the class path layout
+     * @param jarEntries the entry index of the JARs
+     * @return the files that a JAR would now hide
+     * @throws IOException if an entry cannot be read
+     */
+    static List&lt;Duplicate&gt; findDuplicates(Layout layout, Map&lt;String, Integer&gt; jarEntries) throws IOException {
+<span class="fc" id="L554">        var duplicates = new ArrayList&lt;Duplicate&gt;();</span>
+<span class="fc" id="L555">        var moved = new ArrayList&lt;&gt;(layout.outputs());</span>
+<span class="fc" id="L556">        moved.addAll(layout.others());</span>
+<span class="fc bfc" id="L557" title="All 2 branches covered.">        for (Path entry : moved) {</span>
+<span class="fc bfc" id="L558" title="All 2 branches covered.">            for (String path : files(entry)) {</span>
+<span class="fc" id="L559">                Integer jar = jarEntries.get(path);</span>
+<span class="pc bpc" id="L560" title="1 of 4 branches missed.">                if (jar != null &amp;&amp; !isExempt(path)) {</span>
+<span class="fc" id="L561">                    duplicates.add(new Duplicate(path, entry, layout.jars().get(jar)));</span>
+                }
+<span class="fc" id="L563">            }</span>
+<span class="fc" id="L564">        }</span>
+<span class="fc" id="L565">        return duplicates;</span>
+    }
+
+    /**
+     * Copies a recorded class list up to its last complete line: a JVM that was stopped forcibly (on Windows,
+     * {@code Process.destroy()} is forcible) may have written half a line.
+     *
+     * @param recorded the recorded list
+     * @param target the class list to write
+     * @return whether the list has at least one complete line
+     * @throws IOException if a file cannot be read or written
+     */
+    static boolean trimToLastCompleteLine(Path recorded, Path target) throws IOException {
+<span class="pc bpc" id="L578" title="1 of 2 branches missed.">        if (!Files.isRegularFile(recorded)) {</span>
+<span class="nc" id="L579">            return false;</span>
+        }
+<span class="fc" id="L581">        byte[] content = Files.readAllBytes(recorded);</span>
+<span class="fc" id="L582">        int end = content.length;</span>
+<span class="fc bfc" id="L583" title="All 4 branches covered.">        while (end &gt; 0 &amp;&amp; content[end - 1] != '\n') {</span>
+<span class="fc" id="L584">            end--;</span>
+        }
+<span class="fc bfc" id="L586" title="All 2 branches covered.">        if (end == 0) {</span>
+<span class="fc" id="L587">            return false;</span>
+        }
+<span class="fc" id="L589">        Path temporary = target.resolveSibling(target.getFileName() + TEMPORARY_SUFFIX);</span>
+<span class="fc" id="L590">        Files.write(temporary, Arrays.copyOf(content, end));</span>
+<span class="fc" id="L591">        Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);</span>
+<span class="fc" id="L592">        return true;</span>
+    }
+
+    private List&lt;String&gt; flags(DumpRequest request) {
+<span class="fc" id="L596">        String key = request.key();</span>
+<span class="fc" id="L597">        Path archive = file(key, ARCHIVE_SUFFIX);</span>
+<span class="fc bfc" id="L598" title="All 2 branches covered.">        if (Files.isRegularFile(archive)) {</span>
+<span class="fc" id="L599">            debug(&quot;launching with %s, which was validated when it was created, so without a probe&quot;.formatted(archive));</span>
+<span class="fc" id="L600">            return List.of(SHARED_ARCHIVE_FILE + archive, LOG_OFF);</span>
+        }
+<span class="fc bfc" id="L602" title="All 2 branches covered.">        if (Files.exists(file(key, FAILED_SUFFIX))) {</span>
+<span class="fc" id="L603">            debug(&quot;the archive for this class path could not be created, see %s: launching without it&quot;.formatted(file(key, LOG_SUFFIX)));</span>
+<span class="fc" id="L604">            return List.of();</span>
+        }
+<span class="fc bfc" id="L606" title="All 2 branches covered.">        if (dumpKey != null) {</span>
+<span class="fc" id="L607">            debug(&quot;a CDS archive is being created: this launch runs without it and records nothing&quot;);</span>
+<span class="fc" id="L608">            return List.of();</span>
+        }
+<span class="fc bfc" id="L610" title="All 2 branches covered.">        if (recording != null) {</span>
+<span class="fc" id="L611">            debug(&quot;the running launch is recording its class list: this launch runs without an archive and records nothing&quot;);</span>
+<span class="fc" id="L612">            return List.of();</span>
+        }
+<span class="fc bfc" id="L614" title="All 2 branches covered.">        if (Files.isRegularFile(request.classList())) {</span>
+<span class="fc" id="L615">            startDump(request);</span>
+<span class="fc" id="L616">            debug(&quot;creating the CDS archive from %s: this launch runs without it&quot;.formatted(request.classList()));</span>
+<span class="fc" id="L617">            return List.of();</span>
+        }
+<span class="fc" id="L619">        Path recordingFile = file(key, RECORDING_SUFFIX);</span>
+        try {
+<span class="fc" id="L621">            Files.createDirectories(directory);</span>
+<span class="fc" id="L622">            Files.deleteIfExists(recordingFile);</span>
+<span class="nc" id="L623">        } catch (IOException e) {</span>
+<span class="nc" id="L624">            debug(&quot;could not prepare %s (%s): launching without recording&quot;.formatted(recordingFile, e.getMessage()));</span>
+<span class="nc" id="L625">            return List.of();</span>
+<span class="fc" id="L626">        }</span>
+<span class="fc" id="L627">        pendingRecording = new Recording(request, recordingFile);</span>
+<span class="fc bfc" id="L628" title="All 2 branches covered.">        if (announcedKeys.add(key)) {</span>
+<span class="fc" id="L629">            log.info(&quot;Class data sharing: this launch records the classes it loads. When it ends, a CDS archive of the dependency JARs is created in %s for the next launches&quot;</span>
+<span class="fc" id="L630">                .formatted(directory));</span>
+        }
+<span class="fc" id="L632">        return List.of(&quot;-XX:DumpLoadedClassList=&quot; + recordingFile);</span>
+    }
+
+    private void finishEndedRecording() {
+<span class="fc bfc" id="L636" title="All 4 branches covered.">        if (recording != null &amp;&amp; !recording.process.isAlive()) {</span>
+<span class="fc" id="L637">            finishRecording(false);</span>
+        }
+<span class="fc" id="L639">    }</span>
+
+    private void finishRecording(boolean stoppedByPlugin) {
+<span class="fc" id="L642">        Recording ended = recording;</span>
+<span class="fc" id="L643">        recording = null;</span>
+<span class="fc bfc" id="L644" title="All 2 branches covered.">        int status = stoppedByPlugin ? 0 : ended.process.exitValue();</span>
+        try {
+<span class="fc bfc" id="L646" title="All 2 branches covered.">            if (!keepsClassList(stoppedByPlugin, status)) {</span>
+<span class="fc" id="L647">                debug(&quot;the application exited with status %d: discarding the class list it recorded&quot;.formatted(status));</span>
+<span class="fc" id="L648">                return;</span>
+            }
+<span class="fc bfc" id="L650" title="All 2 branches covered.">            if (!trimToLastCompleteLine(ended.file, ended.request.classList())) {</span>
+<span class="fc" id="L651">                debug(&quot;the launch recorded no class: nothing to archive&quot;);</span>
+<span class="fc" id="L652">                return;</span>
+            }
+<span class="nc" id="L654">        } catch (IOException e) {</span>
+<span class="nc" id="L655">            debug(&quot;could not keep the class list: &quot; + e.getMessage());</span>
+<span class="nc" id="L656">            return;</span>
+        } finally {
+<span class="fc" id="L658">            deleteQuietly(ended.file);</span>
+        }
+<span class="pc bpc" id="L660" title="1 of 4 branches missed.">        if (!shuttingDown &amp;&amp; ended.request.key().equals(currentKey)) {</span>
+<span class="fc" id="L661">            startDump(ended.request);</span>
+        }
+<span class="fc" id="L663">    }</span>
+
+    private void startDump(DumpRequest request) {
+<span class="pc bpc" id="L666" title="2 of 4 branches missed.">        if (dumpKey != null || shuttingDown) {</span>
+<span class="nc" id="L667">            return;</span>
+        }
+<span class="fc" id="L669">        dumpKey = request.key();</span>
+<span class="pc bpc" id="L670" title="1 of 2 branches missed.">        if (executor == null) {</span>
+<span class="fc" id="L671">            executor = Executors.newSingleThreadExecutor(runnable -&gt; {</span>
+<span class="fc" id="L672">                var thread = new Thread(runnable, &quot;mn-run-class-data-sharing&quot;);</span>
+<span class="fc" id="L673">                thread.setDaemon(true);</span>
+<span class="fc" id="L674">                return thread;</span>
+            });
+        }
+<span class="fc" id="L677">        dump = executor.submit(() -&gt; dump(request));</span>
+<span class="fc" id="L678">    }</span>
+
+    private void dump(DumpRequest request) {
+<span class="fc" id="L681">        String key = request.key();</span>
+<span class="fc" id="L682">        Path logFile = file(key, LOG_SUFFIX);</span>
+<span class="fc" id="L683">        Path temporary = directory.resolve(key + ARCHIVE_SUFFIX + &quot;.&quot; + ProcessHandle.current().pid() + &quot;-&quot; + System.nanoTime() + TEMPORARY_SUFFIX);</span>
+<span class="fc" id="L684">        long start = System.nanoTime();</span>
+        try {
+<span class="fc" id="L686">            Set&lt;String&gt; rootModules = new TreeSet&lt;&gt;(request.rootModules());</span>
+<span class="pc bpc" id="L687" title="1 of 2 branches missed.">            if (jvmciEnabled(request.archiveOptions(), temporary)) {</span>
+                // HotSpot adds this module when JVMCI is enabled (GraalVM), but a dump always runs without JVMCI
+<span class="fc" id="L689">                rootModules.add(JVMCI_MODULE);</span>
+            }
+<span class="fc" id="L691">            var dumpCommand = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L692">            dumpCommand.add(javaExecutable);</span>
+<span class="fc" id="L693">            dumpCommand.add(&quot;-Xshare:dump&quot;);</span>
+<span class="fc" id="L694">            dumpCommand.add(&quot;-XX:SharedClassListFile=&quot; + request.classList());</span>
+<span class="fc" id="L695">            dumpCommand.add(SHARED_ARCHIVE_FILE + temporary);</span>
+<span class="fc" id="L696">            addModulesOption(dumpCommand, rootModules);</span>
+<span class="fc" id="L697">            dumpCommand.addAll(request.archiveOptions());</span>
+<span class="fc" id="L698">            dumpCommand.add(&quot;-cp&quot;);</span>
+<span class="fc" id="L699">            dumpCommand.add(join(request.jars()));</span>
+<span class="fc" id="L700">            int status = run(dumpCommand, logFile, false, DUMP_TIMEOUT, temporary);</span>
+<span class="pc bpc" id="L701" title="2 of 4 branches missed.">            if (status != 0 || !Files.isRegularFile(temporary)) {</span>
+<span class="nc" id="L702">                failed(key, &quot;the dump exited with status &quot; + status, logFile);</span>
+<span class="nc" id="L703">                return;</span>
+            }
+<span class="fc" id="L705">            var probe = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L706">            probe.add(javaExecutable);</span>
+<span class="fc" id="L707">            probe.add(&quot;-Xshare:on&quot;);</span>
+<span class="fc" id="L708">            probe.add(SHARED_ARCHIVE_FILE + temporary);</span>
+<span class="fc" id="L709">            addModulesOption(probe, rootModules);</span>
+<span class="fc" id="L710">            probe.addAll(request.moduleOptions());</span>
+<span class="fc" id="L711">            probe.addAll(request.archiveOptions());</span>
+<span class="fc" id="L712">            probe.add(&quot;-cp&quot;);</span>
+<span class="fc" id="L713">            probe.add(request.launchClasspath());</span>
+<span class="fc" id="L714">            probe.add(VERSION);</span>
+<span class="fc" id="L715">            status = run(probe, logFile, true, PROBE_TIMEOUT, temporary);</span>
+<span class="pc bpc" id="L716" title="1 of 2 branches missed.">            if (status != 0) {</span>
+<span class="nc" id="L717">                failed(key, &quot;the JVM refused it in an -Xshare:on probe (status %d)&quot;.formatted(status), logFile);</span>
+<span class="nc" id="L718">                return;</span>
+            }
+<span class="fc" id="L720">            Path archive = file(key, ARCHIVE_SUFFIX);</span>
+<span class="fc" id="L721">            Files.move(temporary, archive, StandardCopyOption.ATOMIC_MOVE);</span>
+<span class="fc" id="L722">            log.info(String.format(Locale.ROOT, &quot;Class data sharing: created %s (%.1f MB) in %.1f s. The next launches use it&quot;,</span>
+<span class="fc" id="L723">                archive, Files.size(archive) / MEGABYTE, (System.nanoTime() - start) / NANOS_PER_SECOND));</span>
+<span class="fc" id="L724">            deleteOtherKeys(key);</span>
+<span class="fc" id="L725">        } catch (IOException e) {</span>
+<span class="fc" id="L726">            failed(key, e.toString(), logFile);</span>
+<span class="fc" id="L727">        } catch (InterruptedException _) {</span>
+<span class="fc" id="L728">            Thread.currentThread().interrupt();</span>
+        } finally {
+<span class="fc" id="L730">            deleteQuietly(temporary);</span>
+<span class="fc" id="L731">            synchronized (this) {</span>
+<span class="fc" id="L732">                dumpKey = null;</span>
+<span class="fc" id="L733">                dumpProcess = null;</span>
+<span class="fc" id="L734">                dumpTemporary = null;</span>
+<span class="fc" id="L735">            }</span>
+        }
+<span class="fc" id="L737">    }</span>
+
+    // whether the launch JVM, with the options of the launch, enables JVMCI (GraalVM does by default)
+    private boolean jvmciEnabled(List&lt;String&gt; archiveOptions, Path temporary) throws IOException, InterruptedException {
+<span class="fc" id="L741">        var command = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L742">        command.add(javaExecutable);</span>
+<span class="fc" id="L743">        command.addAll(archiveOptions);</span>
+<span class="fc" id="L744">        command.add(&quot;-XX:+PrintFlagsFinal&quot;);</span>
+<span class="fc" id="L745">        command.add(VERSION);</span>
+<span class="fc" id="L746">        Path flags = temporary.resolveSibling(temporary.getFileName() + &quot;.flags&quot;);</span>
+        try {
+<span class="pc bpc" id="L748" title="1 of 2 branches missed.">            return run(command, flags, false, PROBE_TIMEOUT, temporary) == 0</span>
+<span class="pc bpc" id="L749" title="1 of 2 branches missed.">                &amp;&amp; Files.readAllLines(flags).stream().anyMatch(line -&gt; ENABLE_JVMCI.matcher(line).find());</span>
+        } finally {
+<span class="fc" id="L751">            deleteQuietly(flags);</span>
+        }
+    }
+
+    private int run(List&lt;String&gt; command, Path logFile, boolean append, Duration timeout, Path temporary)
+        throws IOException, InterruptedException {
+<span class="fc" id="L757">        var builder = new ProcessBuilder(command)</span>
+<span class="fc" id="L758">            .directory(directory.toFile())</span>
+<span class="fc" id="L759">            .redirectErrorStream(true)</span>
+<span class="fc bfc" id="L760" title="All 2 branches covered.">            .redirectOutput(append ? ProcessBuilder.Redirect.appendTo(logFile.toFile()) : ProcessBuilder.Redirect.to(logFile.toFile()));</span>
+<span class="fc" id="L761">        ENVIRONMENT_OPTIONS.forEach(builder.environment()::remove);</span>
+        Process process;
+<span class="fc" id="L763">        synchronized (this) {</span>
+<span class="fc bfc" id="L764" title="All 2 branches covered.">            if (shuttingDown) {</span>
+<span class="fc" id="L765">                throw new InterruptedException(&quot;Maven is shutting down&quot;);</span>
+            }
+<span class="fc" id="L767">            process = builder.start();</span>
+<span class="fc" id="L768">            dumpProcess = process;</span>
+<span class="fc" id="L769">            dumpTemporary = temporary;</span>
+<span class="fc" id="L770">        }</span>
+        try {
+<span class="pc bpc" id="L772" title="1 of 2 branches missed.">            if (!process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS)) {</span>
+<span class="nc" id="L773">                process.destroyForcibly();</span>
+<span class="nc" id="L774">                process.waitFor();</span>
+<span class="nc" id="L775">                return -1;</span>
+            }
+<span class="nc" id="L777">        } catch (InterruptedException e) {</span>
+<span class="nc" id="L778">            process.destroyForcibly();</span>
+<span class="nc" id="L779">            throw e;</span>
+<span class="fc" id="L780">        }</span>
+<span class="fc" id="L781">        return process.exitValue();</span>
+    }
+
+    private void failed(String key, String reason, Path logFile) {
+<span class="fc" id="L785">        synchronized (this) {</span>
+<span class="pc bpc" id="L786" title="1 of 2 branches missed.">            if (shuttingDown) {</span>
+<span class="nc" id="L787">                return;</span>
+            }
+<span class="fc" id="L789">        }</span>
+        try {
+<span class="fc" id="L791">            Files.writeString(file(key, FAILED_SUFFIX), reason + System.lineSeparator());</span>
+<span class="nc" id="L792">        } catch (IOException e) {</span>
+<span class="nc" id="L793">            debug(&quot;could not record the failure: &quot; + e.getMessage());</span>
+<span class="fc" id="L794">        }</span>
+<span class="fc" id="L795">        log.info(&quot;Class data sharing: could not create the CDS archive of the dependency JARs: %s. Launches run without it until the dependencies, the JDK or the JVM options change. Details: %s&quot;</span>
+<span class="fc" id="L796">            .formatted(reason, logFile));</span>
+<span class="fc" id="L797">    }</span>
+
+    private void deleteOtherKeys(String key) {
+        String current;
+<span class="fc" id="L801">        synchronized (this) {</span>
+<span class="fc" id="L802">            current = currentKey;</span>
+<span class="fc" id="L803">        }</span>
+<span class="fc" id="L804">        try (Stream&lt;Path&gt; files = Files.list(directory)) {</span>
+<span class="fc" id="L805">            files.filter(file -&gt; {</span>
+<span class="fc" id="L806">                String name = file.getFileName().toString();</span>
+<span class="fc" id="L807">                int dot = name.indexOf('.');</span>
+<span class="pc bpc" id="L808" title="1 of 2 branches missed.">                String fileKey = dot &lt; 0 ? name : name.substring(0, dot);</span>
+<span class="pc bpc" id="L809" title="1 of 4 branches missed.">                return !fileKey.equals(key) &amp;&amp; !fileKey.equals(current);</span>
+<span class="fc" id="L810">            }).forEach(ClassDataSharingSupport::deleteQuietly);</span>
+<span class="nc" id="L811">        } catch (IOException e) {</span>
+<span class="nc" id="L812">            debug(&quot;could not delete older archives: &quot; + e.getMessage());</span>
+<span class="fc" id="L813">        }</span>
+<span class="fc" id="L814">    }</span>
+
+    private void deleteStaleTemporaries() throws IOException {
+<span class="fc bfc" id="L817" title="All 4 branches covered.">        if (staleTemporariesDeleted || !Files.isDirectory(directory)) {</span>
+<span class="fc" id="L818">            return;</span>
+        }
+<span class="fc" id="L820">        staleTemporariesDeleted = true;</span>
+<span class="fc" id="L821">        Instant limit = Instant.now().minus(STALE_TEMPORARY);</span>
+<span class="fc" id="L822">        try (Stream&lt;Path&gt; files = Files.list(directory)) {</span>
+<span class="fc" id="L823">            files.filter(file -&gt; file.getFileName().toString().endsWith(TEMPORARY_SUFFIX))</span>
+<span class="fc" id="L824">                .filter(file -&gt; {</span>
+                    try {
+<span class="nc" id="L826">                        FileTime modified = Files.getLastModifiedTime(file);</span>
+<span class="nc" id="L827">                        return modified.toInstant().isBefore(limit);</span>
+<span class="nc" id="L828">                    } catch (IOException _) {</span>
+<span class="nc" id="L829">                        return false;</span>
+                    }
+                })
+<span class="fc" id="L832">                .forEach(ClassDataSharingSupport::deleteQuietly);</span>
+        }
+<span class="fc" id="L834">    }</span>
+
+    private Map&lt;String, Integer&gt; entries(String key, List&lt;Path&gt; jars) throws IOException {
+<span class="fc bfc" id="L837" title="All 2 branches covered.">        if (key.equals(entriesKey)) {</span>
+<span class="fc" id="L838">            return entries;</span>
+        }
+<span class="fc" id="L840">        Path file = file(key, ENTRIES_SUFFIX);</span>
+<span class="fc bfc" id="L841" title="All 2 branches covered.">        Map&lt;String, Integer&gt; index = Files.isRegularFile(file) ? readIndex(file, jars.size()).orElse(null) : null;</span>
+<span class="fc bfc" id="L842" title="All 2 branches covered.">        if (index == null) {</span>
+<span class="fc" id="L843">            index = readEntries(jars);</span>
+<span class="fc" id="L844">            Files.createDirectories(directory);</span>
+<span class="fc" id="L845">            Path temporary = file.resolveSibling(file.getFileName() + TEMPORARY_SUFFIX);</span>
+<span class="fc" id="L846">            Files.write(temporary, index.entrySet().stream()</span>
+<span class="fc" id="L847">                .map(entry -&gt; entry.getValue() + &quot;\t&quot; + entry.getKey())</span>
+<span class="fc" id="L848">                .sorted()</span>
+<span class="fc" id="L849">                .toList(), StandardCharsets.UTF_8);</span>
+<span class="fc" id="L850">            Files.move(temporary, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);</span>
+        }
+<span class="fc" id="L852">        entriesKey = key;</span>
+<span class="fc" id="L853">        entries = index;</span>
+<span class="fc" id="L854">        return index;</span>
+    }
+
+    private static Optional&lt;Map&lt;String, Integer&gt;&gt; readIndex(Path file, int jarCount) throws IOException {
+<span class="fc" id="L858">        var index = new HashMap&lt;String, Integer&gt;();</span>
+<span class="fc bfc" id="L859" title="All 2 branches covered.">        for (String line : Files.readAllLines(file, StandardCharsets.UTF_8)) {</span>
+<span class="fc" id="L860">            int tab = line.indexOf('\t');</span>
+            try {
+<span class="fc" id="L862">                int jar = Integer.parseInt(line.substring(0, Math.max(tab, 0)));</span>
+<span class="pc bpc" id="L863" title="3 of 6 branches missed.">                if (tab &lt; 0 || jar &lt; 0 || jar &gt;= jarCount) {</span>
+<span class="nc" id="L864">                    return Optional.empty();</span>
+                }
+<span class="fc" id="L866">                index.put(line.substring(tab + 1), jar);</span>
+<span class="fc" id="L867">            } catch (NumberFormatException _) {</span>
+<span class="fc" id="L868">                return Optional.empty();</span>
+<span class="fc" id="L869">            }</span>
+<span class="fc" id="L870">        }</span>
+<span class="fc" id="L871">        return Optional.of(index);</span>
+    }
+
+    private void warnAboutDuplicates(List&lt;Duplicate&gt; duplicates) {
+<span class="fc" id="L875">        String listed = duplicates.stream()</span>
+<span class="fc" id="L876">            .limit(MAX_REPORTED_DUPLICATES)</span>
+<span class="fc" id="L877">            .map(duplicate -&gt; &quot;%s (in %s and in %s)&quot;.formatted(duplicate.path(), duplicate.entry(), duplicate.jar()))</span>
+<span class="fc" id="L878">            .collect(Collectors.joining(&quot;, &quot;));</span>
+<span class="fc bfc" id="L879" title="All 2 branches covered.">        if (duplicates.size() &gt; MAX_REPORTED_DUPLICATES) {</span>
+<span class="fc" id="L880">            listed += &quot; and %d more&quot;.formatted(duplicates.size() - MAX_REPORTED_DUPLICATES);</span>
+        }
+<span class="fc" id="L882">        String warning = (&quot;Class data sharing is off for this launch: %s. Putting the dependency JARs first would change &quot;</span>
+<span class="fc" id="L883">            + &quot;which copy the application sees, so mn:run keeps the usual class path order and runs without a CDS archive&quot;).formatted(listed);</span>
+<span class="fc bfc" id="L884" title="All 2 branches covered.">        if (warning.equals(lastDuplicateWarning)) {</span>
+<span class="fc" id="L885">            debug(warning);</span>
+        } else {
+<span class="fc" id="L887">            log.warn(warning);</span>
+<span class="fc" id="L888">            lastDuplicateWarning = warning;</span>
+        }
+<span class="fc" id="L890">    }</span>
+
+    private Optional&lt;Jdk&gt; jdk() {
+<span class="fc bfc" id="L893" title="All 2 branches covered.">        if (!jdkRead) {</span>
+<span class="fc" id="L894">            jdkRead = true;</span>
+<span class="fc" id="L895">            jdk = readJdk().orElse(null);</span>
+<span class="fc bfc" id="L896" title="All 2 branches covered.">            if (jdk == null) {</span>
+<span class="fc" id="L897">                log.info(&quot;Class data sharing: could not read the version of %s, so mn:run launches the application without a CDS archive&quot;</span>
+<span class="fc" id="L898">                    .formatted(javaExecutable));</span>
+            }
+        }
+<span class="fc" id="L901">        return Optional.ofNullable(jdk);</span>
+    }
+
+    private Optional&lt;Jdk&gt; readJdk() {
+<span class="fc" id="L905">        Path output = null;</span>
+        try {
+<span class="fc" id="L907">            Files.createDirectories(directory);</span>
+<span class="fc" id="L908">            output = directory.resolve(&quot;java-properties-&quot; + ProcessHandle.current().pid() + TEMPORARY_SUFFIX);</span>
+<span class="fc" id="L909">            var builder = new ProcessBuilder(javaExecutable, &quot;-XshowSettings:properties&quot;, VERSION)</span>
+<span class="fc" id="L910">                .redirectErrorStream(true)</span>
+<span class="fc" id="L911">                .redirectOutput(output.toFile());</span>
+<span class="fc" id="L912">            ENVIRONMENT_OPTIONS.forEach(builder.environment()::remove);</span>
+<span class="fc" id="L913">            Process process = builder.start();</span>
+<span class="pc bpc" id="L914" title="1 of 2 branches missed.">            if (!process.waitFor(PROBE_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {</span>
+<span class="nc" id="L915">                process.destroyForcibly();</span>
+<span class="nc" id="L916">                return Optional.empty();</span>
+            }
+<span class="pc bpc" id="L918" title="1 of 2 branches missed.">            if (process.exitValue() != 0) {</span>
+<span class="nc" id="L919">                return Optional.empty();</span>
+            }
+<span class="fc" id="L921">            return Jdk.parse(Files.readAllLines(output));</span>
+<span class="fc" id="L922">        } catch (IOException e) {</span>
+<span class="fc" id="L923">            debug(&quot;could not run %s: %s&quot;.formatted(javaExecutable, e.getMessage()));</span>
+<span class="fc" id="L924">            return Optional.empty();</span>
+<span class="nc" id="L925">        } catch (InterruptedException _) {</span>
+<span class="nc" id="L926">            Thread.currentThread().interrupt();</span>
+<span class="nc" id="L927">            return Optional.empty();</span>
+        } finally {
+<span class="fc" id="L929">            deleteQuietly(output);</span>
+        }
+    }
+
+    private Path file(String key, String suffix) {
+<span class="fc" id="L934">        return directory.resolve(key + suffix);</span>
+    }
+
+    private void debug(String message) {
+<span class="pc bpc" id="L938" title="1 of 2 branches missed.">        if (log.isDebugEnabled()) {</span>
+<span class="fc" id="L939">            log.debug(&quot;Class data sharing: &quot; + message);</span>
+        }
+<span class="fc" id="L941">    }</span>
+
+    private static List&lt;String&gt; environmentOptions(Map&lt;String, String&gt; environment, String variable) {
+<span class="fc" id="L944">        String value = environment.get(variable);</span>
+<span class="pc bpc" id="L945" title="1 of 4 branches missed.">        if (value == null || value.isBlank()) {</span>
+<span class="fc" id="L946">            return List.of();</span>
+        }
+        try {
+<span class="fc" id="L949">            return Arrays.asList(CommandLineUtils.translateCommandline(value));</span>
+<span class="nc" id="L950">        } catch (Exception _) {</span>
+<span class="nc" id="L951">            return Arrays.asList(value.trim().split(&quot;\\s+&quot;));</span>
+        }
+    }
+
+    private static boolean managesCdsOrModuleGraph(String option) {
+<span class="fc bfc" id="L956" title="All 4 branches covered.">        if (option.startsWith(&quot;-Xshare&quot;) || option.startsWith(&quot;@&quot;)) {</span>
+<span class="fc" id="L957">            return true;</span>
+        }
+<span class="fc" id="L959">        String flag = flagName(option);</span>
+<span class="fc bfc" id="L960" title="All 2 branches covered.">        if (flag != null) {</span>
+<span class="fc bfc" id="L961" title="All 4 branches covered.">            return CDS_FLAGS.contains(flag) || OPTION_FILE_FLAGS.contains(flag);</span>
+        }
+<span class="pc bpc" id="L963" title="1 of 4 branches missed.">        return MODULE_GRAPH_OPTIONS.stream().anyMatch(graphOption -&gt; option.equals(graphOption) || option.startsWith(graphOption + &quot;=&quot;));</span>
+    }
+
+    private static String flagName(String option) {
+<span class="fc bfc" id="L967" title="All 2 branches covered.">        if (!option.startsWith(&quot;-XX:&quot;)) {</span>
+<span class="fc" id="L968">            return null;</span>
+        }
+<span class="fc" id="L970">        String flag = option.substring(&quot;-XX:&quot;.length());</span>
+<span class="fc bfc" id="L971" title="All 4 branches covered.">        if (flag.startsWith(&quot;+&quot;) || flag.startsWith(&quot;-&quot;)) {</span>
+<span class="fc" id="L972">            flag = flag.substring(1);</span>
+        }
+        // the JFR options also take their value after a colon, as in -XX:StartFlightRecording:filename=recording.jfr
+<span class="fc" id="L975">        int end = 0;</span>
+<span class="fc bfc" id="L976" title="All 6 branches covered.">        while (end &lt; flag.length() &amp;&amp; flag.charAt(end) != '=' &amp;&amp; flag.charAt(end) != ':') {</span>
+<span class="fc" id="L977">            end++;</span>
+        }
+<span class="fc" id="L979">        return flag.substring(0, end);</span>
+    }
+
+    private static void addModulesOption(List&lt;String&gt; command, Set&lt;String&gt; rootModules) {
+<span class="pc bpc" id="L983" title="1 of 2 branches missed.">        if (!rootModules.isEmpty()) {</span>
+<span class="fc" id="L984">            command.add(ADD_MODULES + &quot;=&quot; + String.join(&quot;,&quot;, rootModules));</span>
+        }
+<span class="fc" id="L986">    }</span>
+
+    private static boolean isJar(Path path) {
+<span class="fc" id="L989">        Path name = path.getFileName();</span>
+<span class="pc bpc" id="L990" title="2 of 6 branches missed.">        return name != null &amp;&amp; name.toString().toLowerCase(Locale.ROOT).endsWith(&quot;.jar&quot;) &amp;&amp; Files.isRegularFile(path);</span>
+    }
+
+    private static String join(Collection&lt;Path&gt; paths) {
+<span class="fc" id="L994">        return paths.stream().map(Path::toString).collect(Collectors.joining(File.pathSeparator));</span>
+    }
+
+    private static List&lt;String&gt; files(Path entry) throws IOException {
+<span class="fc bfc" id="L998" title="All 2 branches covered.">        if (Files.isDirectory(entry)) {</span>
+<span class="fc" id="L999">            try (Stream&lt;Path&gt; files = Files.walk(entry)) {</span>
+<span class="fc" id="L1000">                return files.filter(Files::isRegularFile)</span>
+<span class="fc" id="L1001">                    .map(file -&gt; entry.relativize(file).toString().replace(File.separatorChar, '/'))</span>
+<span class="fc" id="L1002">                    .toList();</span>
+            }
+        }
+<span class="pc bpc" id="L1005" title="1 of 2 branches missed.">        if (Files.isRegularFile(entry)) {</span>
+<span class="fc" id="L1006">            try (var zip = new ZipFile(entry.toFile())) {</span>
+<span class="pc bpc" id="L1007" title="1 of 2 branches missed.">                return zip.stream().filter(zipEntry -&gt; !zipEntry.isDirectory()).map(ZipEntry::getName).toList();</span>
+<span class="nc" id="L1008">            } catch (IOException _) {</span>
+<span class="nc" id="L1009">                return List.of();</span>
+            }
+        }
+<span class="nc" id="L1012">        return List.of();</span>
+    }
+
+    private static void deleteQuietly(Path file) {
+<span class="pc bpc" id="L1016" title="1 of 2 branches missed.">        if (file != null) {</span>
+            try {
+<span class="fc" id="L1018">                Files.deleteIfExists(file);</span>
+<span class="nc" id="L1019">            } catch (IOException _) {</span>
+                // a running JVM may still map it (Windows refuses to delete a mapped file)
+<span class="fc" id="L1021">            }</span>
+        }
+<span class="fc" id="L1023">    }</span>
+
+    /**
+     * The JDK of the launch.
+     *
+     * @param home its {@code java.home}
+     * @param vmVersion its {@code java.vm.version}, which names the build
+     * @param feature its feature version
+     */
+<span class="fc" id="L1032">    record Jdk(String home, String vmVersion, int feature) {</span>
+
+        static Optional&lt;Jdk&gt; parse(List&lt;String&gt; showSettingsOutput) {
+<span class="fc" id="L1035">            String home = null;</span>
+<span class="fc" id="L1036">            String vmVersion = null;</span>
+<span class="fc" id="L1037">            String specification = null;</span>
+<span class="fc bfc" id="L1038" title="All 2 branches covered.">            for (String line : showSettingsOutput) {</span>
+<span class="fc" id="L1039">                String trimmed = line.trim();</span>
+<span class="fc" id="L1040">                int equals = trimmed.indexOf(&quot; = &quot;);</span>
+<span class="fc bfc" id="L1041" title="All 2 branches covered.">                if (equals &gt; 0) {</span>
+<span class="fc" id="L1042">                    String name = trimmed.substring(0, equals);</span>
+<span class="fc" id="L1043">                    String value = trimmed.substring(equals + &quot; = &quot;.length());</span>
+<span class="fc bfc" id="L1044" title="All 4 branches covered.">                    switch (name) {</span>
+<span class="fc" id="L1045">                        case &quot;java.home&quot; -&gt; home = value;</span>
+<span class="fc" id="L1046">                        case &quot;java.vm.version&quot; -&gt; vmVersion = value;</span>
+<span class="fc" id="L1047">                        case &quot;java.specification.version&quot; -&gt; specification = value;</span>
+                        default -&gt; {
+                            // not needed
+                        }
+                    }
+                }
+<span class="fc" id="L1053">            }</span>
+<span class="pc bpc" id="L1054" title="2 of 6 branches missed.">            if (home == null || vmVersion == null || specification == null) {</span>
+<span class="fc" id="L1055">                return Optional.empty();</span>
+            }
+            try {
+<span class="pc bpc" id="L1058" title="1 of 2 branches missed.">                String major = specification.startsWith(&quot;1.&quot;) ? specification.substring(2) : specification;</span>
+<span class="fc" id="L1059">                int dot = major.indexOf('.');</span>
+<span class="pc bpc" id="L1060" title="1 of 2 branches missed.">                return Optional.of(new Jdk(home, vmVersion, Integer.parseInt(dot &lt; 0 ? major : major.substring(0, dot))));</span>
+<span class="nc" id="L1061">            } catch (NumberFormatException _) {</span>
+<span class="nc" id="L1062">                return Optional.empty();</span>
+            }
+        }
+    }
+
+    /**
+     * The class path of a launch with this option: the JARs, then the reactor outputs, then the other entries.
+     *
+     * @param jars the regular JAR files of the resolved class path, in its order
+     * @param outputs the reactor output directories
+     * @param others the dependency entries that are not regular JAR files
+     */
+<span class="fc" id="L1074">    record Layout(List&lt;Path&gt; jars, List&lt;Path&gt; outputs, List&lt;Path&gt; others) {</span>
+
+        String classpath() {
+<span class="fc" id="L1077">            var all = new ArrayList&lt;&gt;(jars);</span>
+<span class="fc" id="L1078">            all.addAll(outputs);</span>
+<span class="fc" id="L1079">            all.addAll(others);</span>
+<span class="fc" id="L1080">            return join(all);</span>
+        }
+    }
+
+    /**
+     * A file of an entry that moves after the JARs, which a JAR also has.
+     *
+     * @param path the path of the file, with {@code /} separators
+     * @param entry the class path entry that has it
+     * @param jar the first JAR that has it
+     */
+<span class="fc" id="L1091">    record Duplicate(String path, Path entry, Path jar) {</span>
+    }
+
+    /**
+     * What a dump needs.
+     *
+     * @param key the key of the archive
+     * @param classList the class list
+     * @param jars the JARs to archive
+     * @param rootModules the root modules of the launch
+     * @param moduleOptions the other module options of the launch
+     * @param archiveOptions the {@code -XX:} and heap options of the launch
+     * @param launchClasspath the class path of the launch, for the probe
+     */
+<span class="fc" id="L1105">    record DumpRequest(String key, Path classList, List&lt;Path&gt; jars, Set&lt;String&gt; rootModules, List&lt;String&gt; moduleOptions,</span>
+                       List&lt;String&gt; archiveOptions, String launchClasspath) {
+    }
+
+    /**
+     * A launch that records its class list.
+     */
+    private static final class Recording {
+
+        private final DumpRequest request;
+        private final Path file;
+        private Process process;
+
+<span class="fc" id="L1118">        private Recording(DumpRequest request, Path file) {</span>
+<span class="fc" id="L1119">            this.request = request;</span>
+<span class="fc" id="L1120">            this.file = file;</span>
+<span class="fc" id="L1121">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
