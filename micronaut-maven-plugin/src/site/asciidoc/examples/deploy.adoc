@@ -5,6 +5,8 @@ required to deploy an application that, depending on the `<packaging>`:
 
 * `jar` (default): will deploy the artifact to a remote repository using `org.apache.maven.plugins:maven-deploy-plugin:deploy`.
 * `docker` or `docker-native`: will push the Docker image to the configured Docker registry.
+* `buildpack`: builds a local Cloud Native Buildpacks image during `package`; registry publish is not mapped to `deploy`
+  in the first implementation.
 * `native-image` with `micronaut.native-image.jib.enabled=true`: writes a daemonless tarball during `package` by default, or publishes during `package` when `-Djib.buildGoal=build` is set.
 * `k8s` or `openshift`: will delegate image publication to Eclipse JKube's `push` goal for the selected platform.
 
@@ -76,6 +78,12 @@ mvn package -Dpackaging=native-image \
 This path builds the local native executable, copies only that executable into a container image, and pushes with Jib registry
 credentials. `mvn deploy -Dpackaging=native-image` also runs the `package` phase, so the same Jib registry publish path
 is used when `jib.buildGoal=build` is configured.
+
+Cloud Native Buildpacks packaging is currently a local image creation path. Running `mvn package -Dpackaging=buildpack`
+invokes `pack build` with the configured `micronaut.buildpack.*` properties, but `mvn deploy -Dpackaging=buildpack` does
+not publish the image to a registry. Use `docker` packaging with `-Djib.buildGoal=build`, `native-image` with
+`micronaut.native-image.jib.enabled=true` and `-Djib.buildGoal=build`, or the JKube `k8s`/`openshift` packaging paths when
+you need plugin-managed registry publication from Maven.
 
 For JKube-backed deployments, declare the matching JKube plugin in your POM and run either:
 

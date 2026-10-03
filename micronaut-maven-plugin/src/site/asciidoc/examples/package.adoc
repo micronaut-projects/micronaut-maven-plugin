@@ -5,6 +5,7 @@ This plugin supports different `<packaging>` types:
 * `jar` (default): produces a runnable fat JAR.
 * `native-image`: generates a GraalVM native image.
 * `docker`: builds a Docker image with the application artifacts (compiled classes, resources, dependencies, etc).
+* `buildpack`: builds a JVM application image with Cloud Native Buildpacks and the `pack` CLI.
 * `docker-native`: builds a Docker image with a GraalVM native image inside.
 * `docker-crac`: builds a Docker image containing a CRaC checkpointed application.
 * `k8s`: delegates packaging to Eclipse JKube's Kubernetes Maven Plugin (`k8s:build`).
@@ -319,6 +320,80 @@ For example, you can define the `jib-maven-plugin` in your POM as follows to pas
   </configuration>
 </plugin>
 ----
+
+== Building JVM images with Cloud Native Buildpacks
+
+[source,shell]
+----
+mvn package -Dpackaging=buildpack \
+  -Dmicronaut.buildpack.builder-image=paketobuildpacks/builder-jammy-base:latest \
+  -Dmicronaut.buildpack.image-name=example.com/team/my-app:latest
+----
+
+The `buildpack` packaging type creates the normal runnable JAR first, then runs the official
+https://buildpacks.io/docs/tools/pack/[Cloud Native Buildpacks `pack` CLI] to build a local OCI image. It is a JVM-only
+packaging path in this release; native buildpack images are not enabled by `buildpack` packaging.
+
+The build requires a working `pack` executable and a local Docker daemon that can run the selected builder. Configure the
+main buildpack inputs with Micronaut Maven Plugin properties:
+
+[cols="1,2", options="header"]
+|===
+| Property
+| Description
+
+| `micronaut.buildpack.builder-image`
+| Required builder image passed to `pack build --builder`.
+
+| `micronaut.buildpack.run-image`
+| Optional run image passed to `pack build --run-image`.
+
+| `micronaut.buildpack.image-name`
+| Output image name. If omitted, the plugin uses `jib.to.image` as a compatibility fallback when it is configured.
+
+| `micronaut.buildpack.environment.<NAME>`
+| Builder environment variables passed as repeated `--env NAME=value` arguments. For example,
+`-Dmicronaut.buildpack.environment.BP_JVM_VERSION=25.*`.
+
+| `micronaut.buildpack.artifact`
+| Optional path to the runnable JAR passed to `pack build --path`. By default, the packaged project artifact is used.
+
+| `micronaut.buildpack.executable`
+| Optional path to the `pack` executable. Defaults to `pack`.
+
+| `micronaut.buildpack.trust-builder`
+| Optional `true`/`false` flag that passes `--trust-builder`. Defaults to `false`.
+|===
+
+For example, to choose both the builder and run image and set the Paketo JVM version:
+
+[source,shell]
+----
+mvn package -Dpackaging=buildpack \
+  -Dmicronaut.buildpack.builder-image=paketobuildpacks/builder-jammy-base:latest \
+  -Dmicronaut.buildpack.run-image=paketobuildpacks/run-jammy-base:latest \
+  -Dmicronaut.buildpack.image-name=example.com/team/my-app:1.0.0 \
+  -Dmicronaut.buildpack.environment.BP_JVM_VERSION=25.*
+----
+
+After the build, verify the local image with Docker or `pack`:
+
+[source,shell]
+----
+docker image inspect example.com/team/my-app:1.0.0
+pack inspect-image example.com/team/my-app:1.0.0
+----
+
+Use `docker` packaging when you want Micronaut's Jib/Dockerfile-based image layering, daemonless Jib tarballs, or direct
+Jib registry publish during `package`. Use `buildpack` packaging when your platform standardizes on Cloud Native
+Buildpacks builders, run images, and lifecycle metadata. The first buildpack implementation builds local images only;
+use the existing `docker`, `docker-native`, `native-image` with Jib, `k8s`, or `openshift` packaging paths for plugin-managed
+registry publication.
+
+Treat builder and run images as trusted supply-chain inputs. Prefer builders from a trusted source, pin digests when your
+CI needs reproducibility, and review the builder's lifecycle and buildpacks before enabling `--trust-builder`. Builder
+environment variables are not printed by the plugin, but you should still avoid committing secret values to your POM or
+CI logs.
 
 == Delegating packaging to Eclipse JKube
 
