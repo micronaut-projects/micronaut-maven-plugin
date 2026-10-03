@@ -17,6 +17,7 @@ package io.micronaut.maven;
 
 import io.methvin.watcher.DirectoryChangeEvent;
 import io.methvin.watcher.DirectoryWatcher;
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.maven.aot.AbstractAotAnalysisMojo;
 import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.services.CompilerService;
@@ -61,7 +62,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 import static io.micronaut.maven.core.MojoUtils.findJavaExecutable;
 import static io.micronaut.maven.core.MojoUtils.hasMicronautMavenPlugin;
@@ -193,6 +193,23 @@ public class RunMojo extends AbstractTestResourcesMojo {
     @Parameter(property = "micronaut.aot.enabled", defaultValue = "false")
     private boolean aotEnabled;
 
+    /**
+     * <p><b>Experimental.</b> Whether to keep the classes of the dependency JARs in a static CDS (class data sharing)
+     * archive, so that the launches and restarts after the first one load them from the archive instead of parsing
+     * and verifying them again. It needs JDK 25 or later.</p>
+     *
+     * <p>The first launch records the classes it loads. When it ends, the archive is created in the background under
+     * {@code target/mn-cds}, and later launches and restarts use it until the dependencies, the JDK or the JVM options
+     * change. While this option is on, the class path starts with the dependency JARs, followed by the
+     * {@code target/classes} directories of this project and of the reactor projects it depends on, which stay outside
+     * the archive.</p>
+     *
+     * @since 5.1.0
+     */
+    @Experimental
+    @Parameter(property = "mn.classDataSharing", defaultValue = "false")
+    private boolean classDataSharing;
+
     // These 2 flags are used in the context of watching for changes
     // the first one makes sure that only one recompilation is processed at a time
     private final AtomicBoolean recompileRequested = new AtomicBoolean();
@@ -207,6 +224,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
     private int classpathHash;
     private long lastCompilation;
     private TestResourcesHelper testResourcesHelper;
+    private ClassDataSharingSupport classDataSharingSupport;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -237,7 +255,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         try {
             maybeStartTestResourcesServer();
             runApplication();
-            Thread shutdownHook = new Thread(this::killProcess);
+            Thread shutdownHook = new Thread(this::stopOnShutdown);
             Runtime.getRuntime().addShutdownHook(shutdownHook);
 
             if (process != null && process.isAlive()) {
@@ -289,6 +307,9 @@ public class RunMojo extends AbstractTestResourcesMojo {
             throw new MojoExecutionException("Exception while watching for changes", e);
         } finally {
             killProcess();
+            if (classDataSharingSupport != null) {
+                classDataSharingSupport.awaitBackgroundWork();
+            }
             cleanup();
         }
     }
@@ -310,6 +331,10 @@ public class RunMojo extends AbstractTestResourcesMojo {
             }
         }
         this.targetDirectory = new File(runnableProject.getBuild().getDirectory());
+        if (classDataSharing) {
+            this.classDataSharingSupport = new ClassDataSharingSupport(getLog(),
+                targetDirectory.toPath().resolve(ClassDataSharingSupport.DIRECTORY_NAME), javaExecutable, System.getenv());
+        }
         this.testResourcesHelper = new TestResourcesHelper(testResourcesEnabled, shared, buildDirectory, explicitPort,
                 clientTimeout, serverIdleTimeoutMinutes, runnableProject, mavenSession, dependencyResolutionService,
                 toolchainManager, testResourcesVersion, classpathInference, testResourcesDependencies,
@@ -530,17 +555,21 @@ public class RunMojo extends AbstractTestResourcesMojo {
                 .inheritIO()
                 .directory(targetDirectory)
                 .start();
+            if (classDataSharingSupport != null) {
+                classDataSharingSupport.launched(process);
+            }
         } finally {
             restartLock.unlock();
         }
     }
 
     private List<String> buildRunArguments() throws Exception {
-        final String reactorClasses = mavenSession.getAllProjects().stream()
+        final List<String> reactorOutputs = mavenSession.getAllProjects().stream()
             .filter(this::isDependencyOfRunnableProject)
             .map(MavenProject::getBuild)
             .map(Build::getOutputDirectory)
-            .collect(Collectors.joining(File.pathSeparator));
+            .toList();
+        final String reactorClasses = String.join(File.pathSeparator, reactorOutputs);
         String classpathArgument = String.join(File.pathSeparator, reactorClasses, this.classpath);
         List<String> translatedJvmArguments = translateArguments(jvmArguments);
 
@@ -552,10 +581,15 @@ public class RunMojo extends AbstractTestResourcesMojo {
         addUserProperties(args);
         addNativeImageAgentArguments(args, translatedJvmArguments);
         args.add("-classpath");
+        int classpathIndex = args.size();
         args.add(classpathArgument);
         args.add("-XX:TieredStopAtLevel=1");
+        int mainClassIndex = args.size();
         args.add(resolveMainClass());
         args.addAll(translateArguments(appArguments));
+        if (classDataSharingSupport != null) {
+            return classDataSharingSupport.prepareLaunch(args, classpathIndex, mainClassIndex, reactorOutputs, this.classpath);
+        }
         return args;
     }
 
@@ -670,18 +704,34 @@ public class RunMojo extends AbstractTestResourcesMojo {
     }
 
     private void killProcess() {
-        if (process != null && process.isAlive()) {
+        Process current = process;
+        if (current == null) {
+            return;
+        }
+        boolean stopped = false;
+        if (current.isAlive()) {
             if (getLog().isDebugEnabled()) {
                 getLog().debug("Stopping the background process");
             }
-            process.destroy();
+            current.destroy();
+            stopped = true;
             try {
-                process.waitFor();
+                current.waitFor();
             } catch (InterruptedException e) {
-                process.destroyForcibly();
+                current.destroyForcibly();
                 Thread.currentThread().interrupt();
             }
         }
+        if (classDataSharingSupport != null) {
+            classDataSharingSupport.launchEnded(current, stopped);
+        }
+    }
+
+    private void stopOnShutdown() {
+        if (classDataSharingSupport != null) {
+            classDataSharingSupport.shutdown();
+        }
+        killProcess();
     }
 
     private static String normalize(Path path) {

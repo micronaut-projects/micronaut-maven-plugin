@@ -118,6 +118,96 @@ pass the property yourself in one of these ways:
 For remote JMX, set `com.sun.management.jmxremote.port` together with the authentication and SSL properties your
 setup needs. The JVM then starts the agent, and `-Dcom.sun.management.jmxremote` is not needed.
 
+[[class-data-sharing]]
+=== Class data sharing (experimental)
+
+On every launch and restart, the JVM parses, verifies and links the classes of all the dependency JARs again. With
+`mn.classDataSharing`, `mn:run` keeps those classes in a static
+https://docs.oracle.com/en/java/javase/25/vm/class-data-sharing.html[CDS archive], and the launches after the first one
+map them from the archive instead:
+
+[source,bash]
+----
+$ mvn mn:run -Dmn.classDataSharing
+----
+
+The option is experimental: its name, its files and its behaviour may change in a later version. It needs JDK 25 or later
+to run the application (the toolchain's JDK when one is configured). With an older JDK, `mn:run` logs one line and
+launches the application as it does without the option.
+
+==== What it does and what it costs
+
+* The first launch records the classes it loads (`-XX:DumpLoadedClassList`). When that launch ends, because of a restart,
+because the application exited with status 0, or because of Ctrl+C, `mn:run` creates the archive in the background with
+`java -Xshare:dump` and checks once that the JVM accepts it. This takes a few seconds. Launches in the meantime run
+without an archive. After Ctrl+C, the next `mn:run` creates the archive in the background instead, and its first launch
+runs without it. With `-Dmn.watch=false`, the goal waits for the archive before it ends.
+* The launches and restarts after that get `-XX:SharedArchiveFile=… -Xlog:cds*=off,aot*=off`, before the arguments of
+`mn.jvmArgs`. They run no extra check.
+* The archive is specific to the JDK build, to the JVM options that decide whether the JVM can use an archive (the `-XX:`
+options, the heap size, the module options and the modules that `-Dcom.sun.management…` properties, JFR options and Java
+agents add), and to the path, size and modification time of every dependency JAR. When one of them changes, the next launch records
+again and the archive is created again. Editing the code or the resources of the project never does.
+* `mn:run` adds no `-Dcom.sun.management…` property of its own, so the archive leaves out the JMX agent's module
+(`jdk.management.agent`) unless you start the agent as the previous section describes. Turning that on or off
+records again.
+* Everything lives in `target/mn-cds`: the archive (about 50 MB for an application with 50 dependency JARs), the recorded
+class list, the list of the files of the JARs, and the log of the dump. `mvn clean` deletes it, so `mvn clean mn:run`
+records again.
+* If the JVM cannot create or use the archive, `mn:run` logs one line that names the log file, and launches without an
+archive until one of the inputs above changes.
+
+The archive works with `-Dmn.debug` and with Java agents, including the native image agent of `-Dagent=true`.
+
+==== Class path order
+
+While the option is on, the class path of every launch is:
+
+. the dependency JARs, in the usual order;
+. the `target/classes` directories of the project and of the reactor modules it depends on;
+. any other dependency entry, such as a directory.
+
+Without the option, the `target/classes` directories come first. Only the JARs go into the archive, because the JVM does
+not archive classes from directories, so editing the project never invalidates the archive.
+
+Before each launch, `mn:run` looks up every file of the entries that move after the JARs in the files of the JARs. If a
+file exists in both, for example a class, a `logback.xml` or an `application.yml`, moving the project after the JARs
+would change which copy the application sees. `mn:run` then logs a warning that names the file and the JAR, and
+launches with the usual order and no archive. These files are not compared, because they are merged or describe the
+JAR they are in: `META-INF/services/**`, `META-INF/micronaut/**`, `META-INF/MANIFEST.MF`, `module-info.class`,
+`META-INF/versions/**`, `META-INF/maven/**`, signature files, and licence and notice files.
+
+The check cannot see one consequence of the new order: the merged files of the project (`META-INF/micronaut/**`,
+`META-INF/services/**`) are now found after those of the dependencies.
+
+* Micronaut registers an application bean of a type that a library also provides after the library's bean, so an
+injected collection of that type that has no explicit order (`@Order`, `Ordered`) can list its beans in another order.
+* A library that takes the first service provider it finds can pick another one.
+
+==== Checking that the archive is used
+
+Log the class loading of a launch that has the archive. The application runs in the `target` directory, so the file
+below is `target/class-load.log`:
+
+[source,bash]
+----
+$ mvn mn:run -Dmn.classDataSharing "-Dmn.jvmArgs=-Xlog:class+load:file=class-load.log"
+----
+
+The classes of the dependencies show `source: shared objects file`, and those of the project show their
+`target/classes` directory.
+
+==== When the option has no effect
+
+`mn:run` launches the application as it does without the option, and says why at debug level (`-X`), when the JVM
+options, from `mn.jvmArgs` or from the `JAVA_TOOL_OPTIONS`, `JDK_JAVA_OPTIONS` or `_JAVA_OPTIONS` environment variables:
+
+* already decide what CDS or the JDK AOT cache does: `-Xshare:…`, `-XX:SharedArchiveFile`, `-XX:SharedClassListFile`,
+`-XX:ArchiveClassesAtExit`, `-XX:+AutoCreateSharedArchive`, `-XX:DumpLoadedClassList`, `-XX:AOTCache`,
+`-XX:AOTCacheOutput`, `-XX:AOTMode`, `-XX:AOTConfiguration` or `-XX:+AOTClassLinking`;
+* change the module graph with `--limit-modules`, `--upgrade-module-path`, `--patch-module` or `--module-path`;
+* or read more options from a file (`@argfile`, `-XX:VMOptionsFile`, `-XX:Flags`).
+
 === Other options
 
 For a full list of configuration options, check the link:../run-mojo.html[mn:run] goal documentation.

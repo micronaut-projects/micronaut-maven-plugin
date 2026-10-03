@@ -6,6 +6,7 @@ public class Application1 {
     public static void main(String[] args) {
         Micronaut.run(Application1.class, args);
         System.out.println("Application1 running");
+        System.out.println("Class path: " + System.getProperty("java.class.path"));
         System.exit(0);
     }
 }
