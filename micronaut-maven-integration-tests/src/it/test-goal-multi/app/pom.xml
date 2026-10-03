@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>testmulti</groupId>
+    <artifactId>test-goal-multi</artifactId>
+    <version>0.1</version>
+  </parent>
+  <artifactId>app</artifactId>
+  <properties>
+    <exec.mainClass>testmulti.app.Application</exec.mainClass>
+  </properties>
+  <dependencies>
+    <dependency>
+      <groupId>testmulti</groupId>
+      <artifactId>lib</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <!-- the lib's test fixtures, from its test output in the reactor -->
+    <dependency>
+      <groupId>testmulti</groupId>
+      <artifactId>lib</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-runtime</artifactId>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.micronaut.maven</groupId>
+        <artifactId>micronaut-maven-plugin</artifactId>
+        <version>${micronaut-maven-plugin.version}</version>
+      </plugin>
+    </plugins>
+  </build>
+</project>
