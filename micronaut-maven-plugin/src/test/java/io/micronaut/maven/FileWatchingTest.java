@@ -14,6 +14,7 @@ import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.toolchain.ToolchainManager;
+import org.codehaus.plexus.component.configurator.ComponentConfigurator;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -268,7 +269,8 @@ class FileWatchingTest {
             mock(ToolchainManager.class),
             compilerService,
             mock(ExecutorService.class),
-            mock(DependencyResolutionService.class)
+            mock(DependencyResolutionService.class),
+            mock(ComponentConfigurator.class)
         ) {
             @Override
             protected void runApplication() throws Exception {
