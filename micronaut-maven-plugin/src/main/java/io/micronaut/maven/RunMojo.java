@@ -63,6 +63,8 @@ import org.eclipse.aether.util.artifact.JavaScopes;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -406,6 +408,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         MojoDescriptor descriptor = mojoExecution.getMojoDescriptor();
         Xpp3Dom configuration = Xpp3Dom.mergeXpp3Dom(runnableProjectConfiguration(runnableProject, descriptor),
             MojoDescriptorCreator.convert(descriptor));
+        resetParameters(descriptor);
         MavenSession runnableSession = mavenSession.clone();
         runnableSession.setCurrentProject(runnableProject);
         var evaluator = new PluginParameterExpressionEvaluator(runnableSession, mojoExecution);
@@ -415,6 +418,51 @@ public class RunMojo extends AbstractTestResourcesMojo {
         } catch (ComponentConfigurationException e) {
             throw new IllegalStateException("Cannot apply the micronaut-maven-plugin configuration of " + runnableProject.getArtifactId() + ": " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Resets the goal's parameters to the values a new mojo starts with, so that a value Maven resolved against the
+     * reactor root, which the application's configuration leaves unresolved, does not remain: Maven's configurator
+     * does not assign an expression that resolves to nothing.
+     *
+     * @param descriptor the goal's descriptor
+     */
+    private void resetParameters(MojoDescriptor descriptor) {
+        if (descriptor.getParameters() == null) {
+            return;
+        }
+        var pristine = new RunMojo(mavenSession, null, projectBuilder, toolchainManager, compilerService,
+            executorService, dependencyResolutionService, configurator);
+        for (org.apache.maven.plugin.descriptor.Parameter parameter : descriptor.getParameters()) {
+            if (!parameter.isEditable()) {
+                // read-only parameters, such as the mojo execution, are the same for every project
+                continue;
+            }
+            Field field = parameterField(parameter.getName());
+            if (field != null) {
+                try {
+                    field.set(this, field.get(pristine));
+                } catch (IllegalAccessException e) {
+                    throw new IllegalStateException("Cannot reset the parameter " + parameter.getName(), e);
+                }
+            }
+        }
+    }
+
+    private static Field parameterField(String name) {
+        for (Class<?> type = RunMojo.class; type != null && type != Object.class; type = type.getSuperclass()) {
+            try {
+                Field field = type.getDeclaredField(name);
+                if (Modifier.isStatic(field.getModifiers()) || Modifier.isFinal(field.getModifiers())) {
+                    return null;
+                }
+                field.setAccessible(true);
+                return field;
+            } catch (NoSuchFieldException e) {
+                // declared by a superclass
+            }
+        }
+        return null;
     }
 
     /**

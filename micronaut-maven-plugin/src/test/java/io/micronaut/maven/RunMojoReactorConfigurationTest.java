@@ -85,6 +85,20 @@ class RunMojoReactorConfigurationTest {
     }
 
     @Test
+    void aSettingResolvedOnlyInTheRootDoesNotRemain() throws Exception {
+        MavenProject root = project("root", Map.of("mn.jvmArgs", "-Xmx1g"));
+        MavenProject app = project("app", Map.of());
+        app.getBuild().addPlugin(thisPlugin(null, null));
+        // as Maven configured the goal from the root, an aggregator the application does not inherit from
+        RunMojo mojo = mojo(root, app, new Properties());
+        set(mojo, "jvmArguments", "-Xmx1g");
+
+        mojo.initialize();
+
+        assertNull(get(mojo, "jvmArguments"));
+    }
+
+    @Test
     void theCommandLineStillWins() throws Exception {
         MavenProject root = project("root", Map.of());
         MavenProject app = project("app", Map.of(ENABLED, "false"));
@@ -149,6 +163,7 @@ class RunMojoReactorConfigurationTest {
             descriptor.addParameter(parameter("shared", "boolean", "${micronaut.test.resources.shared}", "false"));
             descriptor.addParameter(parameter("buildDirectory", File.class.getName(), null, "${project.build.directory}"));
             descriptor.addParameter(parameter("testResourcesDependencies", List.class.getName(), null, null));
+            descriptor.addParameter(parameter("jvmArguments", String.class.getName(), "${mn.jvmArgs}", null));
             // the goal's configuration in plugin.xml: the expressions and defaults Maven merges the project's configuration over
             var mojoConfiguration = new XmlPlexusConfiguration("configuration");
             for (Parameter parameter : descriptor.getParameters()) {
