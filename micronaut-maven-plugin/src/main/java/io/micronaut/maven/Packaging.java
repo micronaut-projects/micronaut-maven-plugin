@@ -24,6 +24,12 @@ public enum Packaging {
     JAR("jar"),
     NATIVE_IMAGE("native-image"),
     DOCKER("docker"),
+    /**
+     * Cloud Native Buildpacks image built with the pack CLI.
+     *
+     * @since 5.1.0
+     */
+    BUILDPACK("buildpack"),
     DOCKER_NATIVE("docker-native"),
     DOCKER_CRAC("docker-crac"),
     K8S("k8s"),
