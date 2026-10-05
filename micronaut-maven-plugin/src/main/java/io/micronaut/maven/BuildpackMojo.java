@@ -42,7 +42,7 @@ import java.util.function.Consumer;
  * Builds a JVM application image with Cloud Native Buildpacks through the pack CLI.
  *
  * @author Sergio del Amo
- * @since 5.0.0
+ * @since 5.1.0
  */
 @Mojo(name = BuildpackMojo.BUILDPACK_PACKAGING, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class BuildpackMojo extends AbstractMicronautMojo {
