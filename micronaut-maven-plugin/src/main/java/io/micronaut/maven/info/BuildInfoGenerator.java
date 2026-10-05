@@ -29,7 +29,7 @@ import java.util.TreeMap;
  * Generates build metadata properties.
  *
  * @author Micronaut Authors
- * @since 5.0.1
+ * @since 5.1.0
  */
 final class BuildInfoGenerator {
 

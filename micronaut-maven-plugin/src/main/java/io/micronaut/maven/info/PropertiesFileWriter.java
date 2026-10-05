@@ -26,7 +26,7 @@ import java.util.TreeMap;
  * Writes sorted Java properties files without timestamp comments.
  *
  * @author Micronaut Authors
- * @since 5.0.1
+ * @since 5.1.0
  */
 final class PropertiesFileWriter {
 

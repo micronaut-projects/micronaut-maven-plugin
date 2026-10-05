@@ -32,7 +32,7 @@ import java.util.Map;
  * Generates Micronaut management info endpoint build and git metadata.
  *
  * @author Micronaut Authors
- * @since 5.0.1
+ * @since 5.1.0
  */
 @Mojo(name = GenerateInfoMojo.MOJO_NAME, defaultPhase = LifecyclePhase.GENERATE_RESOURCES, threadSafe = true)
 public class GenerateInfoMojo extends AbstractMicronautMojo {
@@ -59,7 +59,7 @@ public class GenerateInfoMojo extends AbstractMicronautMojo {
     /**
      * Whether to skip metadata generation.
      *
-     * @since 5.0.1
+     * @since 5.1.0
      */
     @Parameter(property = MICRONAUT_INFO_PREFIX + ".skip", defaultValue = "false")
     private boolean skip;
@@ -67,7 +67,7 @@ public class GenerateInfoMojo extends AbstractMicronautMojo {
     /**
      * Whether to generate build metadata.
      *
-     * @since 5.0.1
+     * @since 5.1.0
      */
     @Parameter(property = MICRONAUT_INFO_PREFIX + ".build.enabled", defaultValue = "true")
     private boolean buildEnabled;
@@ -75,7 +75,7 @@ public class GenerateInfoMojo extends AbstractMicronautMojo {
     /**
      * Whether to generate git metadata.
      *
-     * @since 5.0.1
+     * @since 5.1.0
      */
     @Parameter(property = MICRONAUT_INFO_PREFIX + ".git.enabled", defaultValue = "true")
     private boolean gitEnabled;
@@ -83,7 +83,7 @@ public class GenerateInfoMojo extends AbstractMicronautMojo {
     /**
      * Whether to fail the build when git metadata is enabled but unavailable.
      *
-     * @since 5.0.1
+     * @since 5.1.0
      */
     @Parameter(property = MICRONAUT_INFO_PREFIX + ".failOnNoGit", defaultValue = "false")
     private boolean failOnNoGit;
@@ -91,7 +91,7 @@ public class GenerateInfoMojo extends AbstractMicronautMojo {
     /**
      * Whether to include a boolean dirty-state flag in generated git metadata.
      *
-     * @since 5.0.1
+     * @since 5.1.0
      */
     @Parameter(property = MICRONAUT_INFO_PREFIX + ".includeDirty", defaultValue = "true")
     private boolean includeDirty;
@@ -99,7 +99,7 @@ public class GenerateInfoMojo extends AbstractMicronautMojo {
     /**
      * Whether to include the configured origin remote URL in generated git metadata.
      *
-     * @since 5.0.1
+     * @since 5.1.0
      */
     @Parameter(property = MICRONAUT_INFO_PREFIX + ".includeRemoteUrl", defaultValue = "false")
     private boolean includeRemoteUrl;
@@ -107,7 +107,7 @@ public class GenerateInfoMojo extends AbstractMicronautMojo {
     /**
      * Whether to include local git user identity in generated git metadata.
      *
-     * @since 5.0.1
+     * @since 5.1.0
      */
     @Parameter(property = MICRONAUT_INFO_PREFIX + ".includeUser", defaultValue = "false")
     private boolean includeUser;
@@ -116,7 +116,7 @@ public class GenerateInfoMojo extends AbstractMicronautMojo {
      * Build timestamp to use for build metadata. When unset, {@code project.build.outputTimestamp}
      * is used if present, then the Maven session start time, then the current instant.
      *
-     * @since 5.0.1
+     * @since 5.1.0
      */
     @Parameter(property = MICRONAUT_INFO_PREFIX + ".time")
     private String time;
@@ -124,7 +124,7 @@ public class GenerateInfoMojo extends AbstractMicronautMojo {
     /**
      * Build metadata output file.
      *
-     * @since 5.0.1
+     * @since 5.1.0
      */
     @Parameter(property = MICRONAUT_INFO_PREFIX + ".build.outputFile", defaultValue = "${project.build.outputDirectory}/META-INF/build-info.properties", required = true)
     private File buildOutputFile;
@@ -132,7 +132,7 @@ public class GenerateInfoMojo extends AbstractMicronautMojo {
     /**
      * Git metadata output file.
      *
-     * @since 5.0.1
+     * @since 5.1.0
      */
     @Parameter(property = MICRONAUT_INFO_PREFIX + ".git.outputFile", defaultValue = "${project.build.outputDirectory}/git.properties", required = true)
     private File gitOutputFile;
@@ -140,7 +140,7 @@ public class GenerateInfoMojo extends AbstractMicronautMojo {
     /**
      * Additional build metadata properties. Keys are written as provided.
      *
-     * @since 5.0.1
+     * @since 5.1.0
      */
     @Parameter
     private Map<String, String> additionalBuildProperties;
@@ -148,7 +148,7 @@ public class GenerateInfoMojo extends AbstractMicronautMojo {
     /**
      * Additional git metadata properties. Keys are written as provided.
      *
-     * @since 5.0.1
+     * @since 5.1.0
      */
     @Parameter
     private Map<String, String> additionalGitProperties;
