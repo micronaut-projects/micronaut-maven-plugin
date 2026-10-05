@@ -14,6 +14,7 @@ This plugin has the following features:
 8. link:examples/bean-import.html[Importing beans from project dependencies].
 9. link:examples/jsonschema.html[Generating Sources from JSON Schema].
 10. link:examples/configuration-validation.html[Validating Micronaut configuration and dependency injection].
+11. link:examples/generate-info.html[Generating build and git info] for the management info endpoint.
 
 == Usage
 
