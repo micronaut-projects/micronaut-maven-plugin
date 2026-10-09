@@ -15,9 +15,8 @@
  */
 package io.micronaut.maven;
 
-import io.methvin.watcher.DirectoryChangeEvent;
-import io.methvin.watcher.DirectoryWatcher;
 import io.micronaut.maven.core.MojoUtils;
+import io.micronaut.maven.dev.BuildToolWatcher;
 import io.micronaut.maven.dev.DevManifest;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
@@ -70,10 +69,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import static io.micronaut.maven.core.MojoUtils.findJavaExecutable;
 import static io.micronaut.maven.core.MojoUtils.hasMicronautMavenPlugin;
@@ -233,6 +228,10 @@ public class DevMojo extends AbstractTestResourcesMojo {
      * exits with is not a failure.
      */
     private volatile boolean stopping;
+    /**
+     * Set once the goal finishes: a compilation the watcher started no longer touches the trigger.
+     */
+    private volatile boolean finished;
 
     /**
      * Constructor.
@@ -279,6 +278,8 @@ public class DevMojo extends AbstractTestResourcesMojo {
             return;
         }
         TestResourcesHelperAccess testResources = new TestResourcesHelperAccess();
+        BuildToolWatcher watcher = null;
+        Thread shutdownHook = null;
         try {
             testResources.start();
             List<String> args = launchArguments(manifestFile);
@@ -286,12 +287,13 @@ public class DevMojo extends AbstractTestResourcesMojo {
                 getLog().debug("Running " + String.join(" ", args));
             }
             process = new ProcessBuilder(args).inheritIO().directory(runnableProject.getBasedir()).start();
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            shutdownHook = new Thread(() -> {
                 stopping = true;
                 killProcess();
-            }));
+            });
+            Runtime.getRuntime().addShutdownHook(shutdownHook);
             if (isBuildToolMode()) {
-                watchAndCompile(manifestDirectory.resolve(DevManifest.TRIGGER_FILE_NAME));
+                watcher = watchAndCompile(manifestDirectory.resolve(DevManifest.TRIGGER_FILE_NAME));
             }
             int exit = process.waitFor();
             if (exit != 0 && !stopping) {
@@ -303,8 +305,14 @@ public class DevMojo extends AbstractTestResourcesMojo {
         } catch (IOException | DependencyResolutionException e) {
             throw new MojoExecutionException("Cannot launch the development runtime: " + e.getMessage(), e);
         } finally {
+            // in a Maven host that outlives the goal, such as mvnd, nothing of it keeps watching or compiling
+            finished = true;
+            if (watcher != null) {
+                watcher.close();
+            }
             killProcess();
             testResources.stop();
+            removeShutdownHook(shutdownHook);
         }
     }
 
@@ -599,9 +607,11 @@ public class DevMojo extends AbstractTestResourcesMojo {
     /**
      * In build-tool mode: the sources of the reactor are watched, a change compiles the project through
      * Maven, as {@code mn:run} does, and the trigger the launcher watches is touched once the compilation
-     * finished, so that it applies the new classes.
+     * finished, so that it applies the new classes. The watcher lives until the goal finishes.
+     *
+     * @return the watcher, or null when there is nothing to watch
      */
-    private void watchAndCompile(Path trigger) throws IOException {
+    private BuildToolWatcher watchAndCompile(Path trigger) throws IOException {
         List<Path> paths = new ArrayList<>();
         for (MavenProject project : mavenSession.getAllProjects()) {
             if (!isDependencyOfRunnableProject(project)) {
@@ -616,30 +626,11 @@ public class DevMojo extends AbstractTestResourcesMojo {
             }
         }
         if (paths.isEmpty()) {
-            return;
+            return null;
         }
-        ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(runnable -> {
-            Thread thread = new Thread(runnable, "micronaut-dev-maven-compile");
-            thread.setDaemon(true);
-            return thread;
-        });
-        ScheduledFuture<?>[] pending = new ScheduledFuture<?>[1];
-        DirectoryWatcher watcher = DirectoryWatcher.builder()
-            .paths(paths)
-            .listener((DirectoryChangeEvent event) -> {
-                synchronized (pending) {
-                    if (pending[0] != null) {
-                        pending[0].cancel(false);
-                    }
-                    // a burst of events from one save becomes one compilation
-                    pending[0] = scheduler.schedule(() -> compileAndTouch(trigger), QUIET_PERIOD_MILLIS, TimeUnit.MILLISECONDS);
-                }
-            })
-            .build();
+        BuildToolWatcher watcher = BuildToolWatcher.start(paths, QUIET_PERIOD_MILLIS, () -> compileAndTouch(trigger));
         getLog().info("👀 Watching for changes in " + paths.stream().map(path -> runnableProject.getBasedir().toPath().relativize(path).toString()).toList());
-        Thread thread = new Thread(watcher::watch, "micronaut-dev-maven-watcher");
-        thread.setDaemon(true);
-        thread.start();
+        return watcher;
     }
 
     /**
@@ -662,6 +653,9 @@ public class DevMojo extends AbstractTestResourcesMojo {
     }
 
     private void compileAndTouch(Path trigger) {
+        if (finished) {
+            return;
+        }
         // the invocation's exit code, not merely its return: a compiler error is a normal result of the invoker
         boolean compiled;
         try {
@@ -672,10 +666,12 @@ public class DevMojo extends AbstractTestResourcesMojo {
                 getLog().warn("The compilation failed: the running application keeps the previous classes");
             }
         } catch (Exception e) {
-            getLog().warn("Cannot compile the project: " + e.getMessage());
+            if (!finished) {
+                getLog().warn("Cannot compile the project: " + e.getMessage());
+            }
             compiled = false;
         }
-        if (compiled) {
+        if (compiled && !finished) {
             try {
                 Files.createDirectories(trigger.getParent());
                 Files.writeString(trigger, String.valueOf(System.currentTimeMillis()), StandardCharsets.UTF_8);
@@ -720,6 +716,16 @@ public class DevMojo extends AbstractTestResourcesMojo {
             return Arrays.asList(CommandLineUtils.translateCommandline(arguments));
         } catch (Exception e) {
             throw new MojoExecutionException("Cannot parse the arguments: " + arguments, e);
+        }
+    }
+
+    private static void removeShutdownHook(Thread shutdownHook) {
+        if (shutdownHook != null) {
+            try {
+                Runtime.getRuntime().removeShutdownHook(shutdownHook);
+            } catch (IllegalStateException e) {
+                // the JVM is shutting down: the hook runs
+            }
         }
     }
 
