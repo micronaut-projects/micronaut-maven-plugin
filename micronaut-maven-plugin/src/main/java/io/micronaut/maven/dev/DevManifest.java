@@ -67,10 +67,17 @@ public final class DevManifest {
      */
     public static final String DIRECTORY_NAME = "micronaut-dev";
 
+    /**
+     * The name of the directory beside the manifest holding the launcher's generations.
+     */
+    public static final String GENERATIONS_DIRECTORY_NAME = "generations";
+
     private static final String PREFIX = "micronaut.dev.";
     private static final String COMPILER_PLUGIN = "org.apache.maven.plugins:maven-compiler-plugin";
     private static final String DEFAULT_COMPILE_EXECUTION = "default-compile";
+    private static final String DEFAULT_TEST_COMPILE_EXECUTION = "default-testCompile";
     private static final String GENERATED_SOURCES = "generated-sources/annotations";
+    private static final String GENERATED_TEST_SOURCES = "generated-test-sources/test-annotations";
 
     private final Map<String, String> entries = new LinkedHashMap<>();
     private final Map<String, List<String>> argumentFiles = new LinkedHashMap<>();
@@ -88,6 +95,7 @@ public final class DevManifest {
      * @param compileClasspath the compile classpath, the modules only
      * @param processorPath the annotation processor path
      * @param evaluator what evaluates the expressions of the compiler plugin's configuration
+     * @param directory the directory the manifest is written to, which holds the trigger file
      * @return the manifest
      */
     public static DevManifest of(MavenProject project,
@@ -96,10 +104,14 @@ public final class DevManifest {
                                  List<File> runtimeClasspath,
                                  List<File> compileClasspath,
                                  List<File> processorPath,
-                                 ExpressionEvaluator evaluator) {
+                                 ExpressionEvaluator evaluator,
+                                 Path directory) {
         DevManifest manifest = new DevManifest();
         Path build = Path.of(project.getBuild().getDirectory());
-        manifest.entries.put(PREFIX + "main-class", settings.mainClass());
+        // a test run has no application main: the launcher only requires one in run mode
+        if (settings.mainClass() != null) {
+            manifest.entries.put(PREFIX + "main-class", settings.mainClass());
+        }
         manifest.entries.put(PREFIX + "project-dir", project.getBasedir().getAbsolutePath());
         manifest.entries.put(PREFIX + "strategy", settings.strategy());
         manifest.entries.put(PREFIX + "runtime-classpath", manifest.argumentFile("runtime.argfile", paths(runtimeClasspath)));
@@ -143,7 +155,7 @@ public final class DevManifest {
         if (!javaSources.isEmpty()) {
             manifest.entries.put(PREFIX + "compile.java.output", output);
             manifest.entries.put(PREFIX + "compile.java.generated-sources", build.resolve(GENERATED_SOURCES).toString());
-            List<String> options = javacOptions(project, evaluator);
+            List<String> options = javacOptions(project, evaluator, false);
             if (!options.isEmpty()) {
                 manifest.entries.put(PREFIX + "compile.java.options", manifest.argumentFile("java-options.argfile", options));
             }
@@ -152,13 +164,94 @@ public final class DevManifest {
             manifest.entries.put(PREFIX + "compile.groovy.output", output);
         }
         manifest.entries.put(PREFIX + "build-tool", "maven");
-        manifest.entries.put(PREFIX + "build-tool.trigger", build.resolve(DIRECTORY_NAME).resolve(TRIGGER_FILE_NAME).toString());
+        manifest.entries.put(PREFIX + "build-tool.trigger", directory.resolve(TRIGGER_FILE_NAME).toString());
+        // the snapshots of the reloadable roots go beside the manifest, under target, never into a build directory
+        manifest.entries.put(PREFIX + "generations", directory.resolve(GENERATIONS_DIRECTORY_NAME).toString());
         if (!settings.retain().isEmpty()) {
             manifest.entries.put(PREFIX + "retain", String.join(",", settings.retain()));
         }
         manifest.entries.put(PREFIX + "livereload.port", String.valueOf(settings.liveReloadPort()));
         manifest.entries.put(PREFIX + "livereload.inject-script", String.valueOf(settings.liveReloadInjectScript()));
         return manifest;
+    }
+
+    /**
+     * Switches the manifest to test mode: the runtime runs the project's tests instead of its application. The
+     * test sources and resources of the project, their output, the test compile classpath and processor path,
+     * and the settings of the {@code mn:test} goal are added to the entries of run mode, which stay.
+     *
+     * @param project the project whose tests run
+     * @param settings the goal's test settings
+     * @param testCompileClasspath the test compile classpath: the reloadable outputs first, then the modules
+     * @param testProcessorPath the test annotation processor path
+     * @param reactorTestProjects the reactor projects whose test-jar the tests depend on: their test sources compile
+     *                            into the project's test output, which the generation reads first, as a dependency's
+     *                            sources compile into the application's output
+     * @param evaluator what evaluates the expressions of the compiler plugin's configuration
+     * @return this manifest
+     */
+    public DevManifest withTests(MavenProject project,
+                                 TestSettings settings,
+                                 List<File> testCompileClasspath,
+                                 List<File> testProcessorPath,
+                                 List<MavenProject> reactorTestProjects,
+                                 ExpressionEvaluator evaluator) {
+        Path build = Path.of(project.getBuild().getDirectory());
+        entries.put(PREFIX + "mode", "test");
+        List<String> javaSources = new ArrayList<>(existing(userTestSourceRoots(project)));
+        List<String> groovySources = new ArrayList<>(existing(List.of(groovyTestRoot(project))));
+        List<String> resources = new ArrayList<>(liveTestResourceRoots(project));
+        for (MavenProject reactorProject : reactorTestProjects) {
+            javaSources.addAll(existing(userTestSourceRoots(reactorProject)));
+            groovySources.addAll(existing(List.of(groovyTestRoot(reactorProject))));
+            resources.addAll(liveTestResourceRoots(reactorProject));
+        }
+        if (!javaSources.isEmpty()) {
+            entries.put(PREFIX + "test.sources.java", String.join(File.pathSeparator, javaSources));
+        }
+        if (!groovySources.isEmpty()) {
+            entries.put(PREFIX + "test.sources.groovy", String.join(File.pathSeparator, groovySources));
+        }
+        if (!resources.isEmpty()) {
+            entries.put(PREFIX + "test.resources.config", String.join(File.pathSeparator, resources));
+        }
+        // the tests compile into the test output whatever their language, as the build does
+        String output = project.getBuild().getTestOutputDirectory();
+        // the test output is reloadable, ahead of the application's as on the build's test classpath, even when no
+        // test source root is watched: tests generated under the build directory were compiled there by the build
+        List<String> reloadable = new ArrayList<>();
+        reloadable.add(output);
+        reloadable.add(entries.get(PREFIX + "reloadable"));
+        // a sibling's test-jar loads from its test output, after the main outputs its classes use
+        for (MavenProject reactorProject : reactorTestProjects) {
+            reloadable.add(reactorProject.getBuild().getTestOutputDirectory());
+        }
+        entries.put(PREFIX + "reloadable", String.join(File.pathSeparator, reloadable));
+        if (!javaSources.isEmpty()) {
+            entries.put(PREFIX + "test.compile.java.output", output);
+            entries.put(PREFIX + "test.compile.java.generated-sources", build.resolve(GENERATED_TEST_SOURCES).toString());
+            List<String> options = javacOptions(project, evaluator, true);
+            if (!options.isEmpty()) {
+                entries.put(PREFIX + "test.compile.java.options", argumentFile("test-java-options.argfile", options));
+            }
+        }
+        if (!groovySources.isEmpty()) {
+            entries.put(PREFIX + "test.compile.groovy.output", output);
+        }
+        entries.put(PREFIX + "test.compile-classpath", argumentFile("test-compile.argfile", paths(testCompileClasspath)));
+        entries.put(PREFIX + "test.processor-path", argumentFile("test-processors.argfile", paths(testProcessorPath)));
+        entries.put(PREFIX + "test.runner", settings.runner());
+        entries.put(PREFIX + "test.selection", settings.selection());
+        entries.put(PREFIX + "test.initial-run", String.valueOf(settings.initialRun()));
+        entries.put(PREFIX + "test.once", String.valueOf(settings.once()));
+        entries.put(PREFIX + "test.reports", settings.reports().toString());
+        entries.put(PREFIX + "test.html-report", settings.htmlReport().toString());
+        entries.put(PREFIX + "test.html-report-path", settings.reportPath());
+        if (!settings.filter().isEmpty()) {
+            entries.put(PREFIX + "test.filter", String.join(",", settings.filter()));
+        }
+        settings.parameters().forEach((key, value) -> entries.put(PREFIX + "test.parameters." + key, value));
+        return this;
     }
 
     /**
@@ -201,12 +294,30 @@ public final class DevManifest {
      * @throws ExpressionEvaluationException if an expression cannot be evaluated
      */
     public static ProcessorPaths processorPaths(MavenProject project, ExpressionEvaluator evaluator) throws ExpressionEvaluationException {
-        Xpp3Dom configuration = compilerConfiguration(project);
+        Xpp3Dom configuration = compilerConfiguration(project, DEFAULT_COMPILE_EXECUTION);
+        return processorPaths(configuration, configuration == null ? null : configuration.getChild("annotationProcessorPaths"), evaluator);
+    }
+
+    /**
+     * The annotation processor path the tests compile with, as the compiler plugin's {@code testCompile} reads it:
+     * {@code annotationProcessorPaths}, with the {@code default-testCompile} execution's configuration merged over
+     * the plugin's, where a build declares processors for its tests only.
+     *
+     * @param project the project
+     * @param evaluator what evaluates expressions
+     * @return the artifacts, and whether the dependency management applies
+     * @throws ExpressionEvaluationException if an expression cannot be evaluated
+     */
+    public static ProcessorPaths testProcessorPaths(MavenProject project, ExpressionEvaluator evaluator) throws ExpressionEvaluationException {
+        Xpp3Dom configuration = compilerConfiguration(project, DEFAULT_TEST_COMPILE_EXECUTION);
+        return processorPaths(configuration, configuration == null ? null : configuration.getChild("annotationProcessorPaths"), evaluator);
+    }
+
+    private static ProcessorPaths processorPaths(Xpp3Dom configuration, Xpp3Dom paths, ExpressionEvaluator evaluator) throws ExpressionEvaluationException {
         List<Dependency> dependencies = new ArrayList<>();
         boolean managed = false;
         if (configuration != null) {
             managed = Boolean.parseBoolean(childValue(configuration, "annotationProcessorPathsUseDepMgmt", evaluator));
-            Xpp3Dom paths = configuration.getChild("annotationProcessorPaths");
             if (paths != null) {
                 for (Xpp3Dom path : paths.getChildren()) {
                     String groupId = childValue(path, "groupId", evaluator);
@@ -247,22 +358,25 @@ public final class DevManifest {
 
     /**
      * The javac options as the compiler plugin is configured: {@code -parameters}, the release or the
-     * source and target, the encoding, and the compiler arguments.
+     * source and target, the encoding, and the compiler arguments. For the tests, the {@code default-testCompile}
+     * execution's configuration applies, and {@code testRelease}, {@code testSource}, {@code testTarget} and
+     * {@code testCompilerArgument} and {@code testCompilerArguments} win over their main counterparts, as
+     * {@code testCompile} reads them.
      */
-    static List<String> javacOptions(MavenProject project, ExpressionEvaluator evaluator) {
+    static List<String> javacOptions(MavenProject project, ExpressionEvaluator evaluator, boolean test) {
         List<String> options = new ArrayList<>();
-        Xpp3Dom configuration = compilerConfiguration(project);
+        Xpp3Dom configuration = compilerConfiguration(project, test ? DEFAULT_TEST_COMPILE_EXECUTION : DEFAULT_COMPILE_EXECUTION);
         try {
             if (Boolean.parseBoolean(setting(configuration, "parameters", "maven.compiler.parameters", project, evaluator))) {
                 options.add("-parameters");
             }
-            String release = setting(configuration, "release", "maven.compiler.release", project, evaluator);
+            String release = compilerSetting(configuration, "release", test, project, evaluator);
             if (release != null && !release.isEmpty()) {
                 options.add("--release");
                 options.add(release);
             } else {
-                String source = setting(configuration, "source", "maven.compiler.source", project, evaluator);
-                String target = setting(configuration, "target", "maven.compiler.target", project, evaluator);
+                String source = compilerSetting(configuration, "source", test, project, evaluator);
+                String target = compilerSetting(configuration, "target", test, project, evaluator);
                 if (source != null && !source.isEmpty()) {
                     options.add("-source");
                     options.add(source);
@@ -287,9 +401,27 @@ public final class DevManifest {
                         }
                     }
                 }
-                String compilerArgument = childValue(configuration, "compilerArgument", evaluator);
+                String compilerArgument = test ? childValue(configuration, "testCompilerArgument", evaluator) : null;
+                if (compilerArgument == null) {
+                    compilerArgument = childValue(configuration, "compilerArgument", evaluator);
+                }
                 if (compilerArgument != null && !compilerArgument.isBlank()) {
                     options.add(compilerArgument.trim());
+                }
+                // the map form, each key an option and each value its argument, the tests' own when configured
+                Xpp3Dom compilerArguments = test ? configuration.getChild("testCompilerArguments") : null;
+                if (compilerArguments == null) {
+                    compilerArguments = configuration.getChild("compilerArguments");
+                }
+                if (compilerArguments != null) {
+                    for (Xpp3Dom argument : compilerArguments.getChildren()) {
+                        String name = argument.getName();
+                        options.add(name.startsWith("-") ? name : "-" + name);
+                        String value = evaluate(argument.getValue(), evaluator);
+                        if (value != null && !value.isBlank()) {
+                            options.add(value.trim());
+                        }
+                    }
                 }
             }
         } catch (ExpressionEvaluationException e) {
@@ -335,6 +467,53 @@ public final class DevManifest {
     }
 
     /**
+     * The test source and resource roots of a project as configured: the test compile source roots, the test
+     * resource directories, and {@code src/test/groovy}.
+     *
+     * @param project the project
+     * @return the roots, which may not exist
+     */
+    public static List<String> testSourceRoots(MavenProject project) {
+        Set<String> roots = new LinkedHashSet<>(userTestSourceRoots(project));
+        for (Resource resource : project.getTestResources()) {
+            roots.add(resource.getDirectory());
+        }
+        roots.add(groovyTestRoot(project));
+        return new ArrayList<>(roots);
+    }
+
+    /**
+     * The test compile source roots a build declares, without the generated ones under the build directory.
+     */
+    private static List<String> userTestSourceRoots(MavenProject project) {
+        Path build = Path.of(project.getBuild().getDirectory()).toAbsolutePath().normalize();
+        List<String> roots = new ArrayList<>();
+        for (String root : project.getTestCompileSourceRoots()) {
+            if (!Path.of(root).toAbsolutePath().normalize().startsWith(build)) {
+                roots.add(root);
+            }
+        }
+        return roots;
+    }
+
+    private static String groovyTestRoot(MavenProject project) {
+        return new File(project.getBasedir(), "src/test/groovy").getAbsolutePath();
+    }
+
+    /**
+     * The test resource roots read live, a filtered one excepted, as for the main resources.
+     */
+    private static List<String> liveTestResourceRoots(MavenProject project) {
+        List<String> roots = new ArrayList<>();
+        for (Resource resource : project.getTestResources()) {
+            if (!resource.isFiltering() && new File(resource.getDirectory()).isDirectory()) {
+                roots.add(new File(resource.getDirectory()).getAbsolutePath());
+            }
+        }
+        return roots;
+    }
+
+    /**
      * The resource roots read live: a filtered one is not, since the build expands it and its copy is in the output.
      */
     private static List<String> liveResourceRoots(MavenProject project) {
@@ -348,18 +527,18 @@ public final class DevManifest {
     }
 
     /**
-     * The compiler plugin's configuration as the main compilation sees it: the plugin-level configuration
-     * with the {@code default-compile} execution's merged over it, where a build commonly puts the
-     * processor paths, the release or the compiler arguments.
+     * The compiler plugin's configuration as a compilation sees it: the plugin-level configuration with the
+     * execution's, {@code default-compile} or {@code default-testCompile}, merged over it, where a build
+     * commonly puts the processor paths, the release or the compiler arguments.
      */
-    private static Xpp3Dom compilerConfiguration(MavenProject project) {
+    private static Xpp3Dom compilerConfiguration(MavenProject project, String executionId) {
         Plugin plugin = project.getPlugin(COMPILER_PLUGIN);
         if (plugin == null) {
             return null;
         }
         Xpp3Dom configuration = plugin.getConfiguration() instanceof Xpp3Dom dom ? dom : null;
         for (PluginExecution execution : plugin.getExecutions()) {
-            if (DEFAULT_COMPILE_EXECUTION.equals(execution.getId()) && execution.getConfiguration() instanceof Xpp3Dom executionDom) {
+            if (executionId.equals(execution.getId()) && execution.getConfiguration() instanceof Xpp3Dom executionDom) {
                 configuration = configuration == null ? executionDom : Xpp3Dom.mergeXpp3Dom(new Xpp3Dom(executionDom), configuration);
             }
         }
@@ -372,6 +551,21 @@ public final class DevManifest {
             value = project.getProperties().getProperty(property);
         }
         return value;
+    }
+
+    /**
+     * A setting of the compiler plugin, {@code release}, {@code source} or {@code target}: for the tests its
+     * {@code test} counterpart and property first, as {@code testCompile} reads them.
+     */
+    private static String compilerSetting(Xpp3Dom configuration, String name, boolean test, MavenProject project, ExpressionEvaluator evaluator) throws ExpressionEvaluationException {
+        if (test) {
+            String testName = "test" + Character.toUpperCase(name.charAt(0)) + name.substring(1);
+            String value = setting(configuration, testName, "maven.compiler." + testName, project, evaluator);
+            if (value != null && !value.isEmpty()) {
+                return value;
+            }
+        }
+        return setting(configuration, name, "maven.compiler." + name, project, evaluator);
     }
 
     private static String childValue(Xpp3Dom parent, String name, ExpressionEvaluator evaluator) throws ExpressionEvaluationException {
@@ -437,6 +631,23 @@ public final class DevManifest {
      * @param liveReloadInjectScript whether the LiveReload script is injected
      */
     public record Settings(String mainClass, String strategy, String compile, boolean incremental, List<String> retain, int liveReloadPort, boolean liveReloadInjectScript) {
+    }
+
+    /**
+     * The settings of the {@code mn:test} goal that go into the manifest.
+     *
+     * @param runner the test runner, {@code junit-platform}
+     * @param selection the tests a change runs, {@code affected} or {@code all}
+     * @param initialRun whether every test runs at start
+     * @param once whether the launcher exits after one run, with its status
+     * @param reports the directory of the JUnit XML reports
+     * @param htmlReport the directory of the HTML report
+     * @param reportPath the path the LiveReload server serves the HTML report at
+     * @param filter the test patterns: globs, classes or {@code Class.method}
+     * @param parameters the JUnit Platform configuration parameters
+     */
+    public record TestSettings(String runner, String selection, boolean initialRun, boolean once, Path reports, Path htmlReport,
+                               String reportPath, List<String> filter, Map<String, String> parameters) {
     }
 
     /**

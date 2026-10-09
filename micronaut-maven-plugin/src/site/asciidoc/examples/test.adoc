@@ -1,0 +1,109 @@
+= Running tests continuously with `mn:test`
+
+`mn:test` runs the project's tests through the development runtime of Micronaut Core 5.3 (`micronaut-dev`) in test
+mode: the sources are watched, a change is compiled inside the running JVM, and the tests the change can affect run on a
+new generation, in the same JVM, so the libraries, the compilers and the JIT stay warm from one run to the next. Every run
+writes JUnit XML reports and a live HTML report. The `test` phase and Surefire are unchanged; this goal is the
+alternative to them while working.
+
+:toc:
+
+== Usage
+
+[source,bash]
+----
+$ mvn mn:test
+----
+
+The goal compiles the project up to `process-test-classes`, writes the test-mode manifest the launcher reads into
+`target/micronaut-dev/test/dev.properties`, and launches the JVM. The manifest holds everything `mn:dev` writes, plus the
+test source and resource directories, their output (`target/test-classes`), the test compile classpath, the test
+annotation processor path (the `maven-compiler-plugin`'s `annotationProcessorPaths` as `testCompile` sees them, with
+the `default-testCompile` execution's configuration merged over the plugin's), the test compiler options as `testCompile` is configured, and the settings below. The
+launch classpath is the test runtime classpath without the project's outputs, which are the reloadable tier, plus
+`micronaut-dev`, `micronaut-dev-livereload`, `micronaut-dev-test-report` and `junit-platform-launcher`, at the version of
+the project's JUnit Platform. Tests in `src/test/java` compile with `javac` and tests in `src/test/groovy`, Spock
+specifications among them, with the project's Groovy.
+
+Every test runs at start. After a change, the tests that reference a changed class, directly or through other classes,
+run again, together with those that failed in their last run; a change of resources or configuration runs every test.
+On a terminal single keys ask for runs:
+
+[cols="1,4"]
+|===
+|Key |Action
+
+|space |Runs the last tests again.
+|`a` |Runs every test.
+|`f` |Runs the tests that failed.
+|`w` |Turns watching on or off.
+|`q` |Quits. The build fails when the last run did not pass.
+|===
+
+== Running once, for CI
+
+[source,bash]
+----
+$ mvn mn:test -Dmn.test.once=true
+----
+
+The tests run once, and the build fails when any did not pass, as with `mvn test`.
+
+== Choosing tests
+
+Surefire's `-Dtest` works, mapped to the launcher's patterns: `-Dtest=CalculatorTest`, `-Dtest=CalculatorTest#adds`,
+`-Dtest=CalculatorTest#adds+subtracts` or `-Dtest='com.example.*Test'`. Exclusions (`!`) and `%regex[]` patterns are not
+supported. `mn.test.filter` takes the launcher's own patterns, comma separated: a glob, a class, by its binary or simple
+name, or `Class.method`, where `*` matches any characters, dots included.
+
+== Reports
+
+[cols="2,3"]
+|===
+|Report |Location
+
+|JUnit XML, one `TEST-<class>.xml` per class in the Surefire shape |`target/surefire-reports`
+|HTML, the latest result of every test, failures first |`target/micronaut-dev/test-report/index.html`
+|===
+
+The HTML report is also served by the LiveReload server at `http://localhost:35729/tests/`, or at the path
+`mn.test.reportPath` names, where it follows each run test by test without reloading. Opened from the file system it
+shows the state it was written with.
+
+== Settings
+
+[cols="2,1,4"]
+|===
+|Property |Default |Meaning
+
+|`mn.test.once` |`false` |Runs the tests once and exits with their status.
+|`mn.test.selection` |`affected` |`affected` runs the tests a change can affect and those that failed; `all` runs every test after a change.
+|`mn.test.initialRun` |`true` |Whether every test runs at start.
+|`mn.test.filter` | |The tests to run, comma separated: globs, classes or `Class.method`.
+|`test` | |Surefire's `-Dtest`, mapped to the filter.
+|`mn.test.runner` |`junit-platform` |The test runner. The JUnit Platform runner runs every engine on the classpath, Jupiter and Spock among them.
+|`mn.test.reportsDirectory` |`target/surefire-reports` |The directory of the JUnit XML reports, a relative one resolved against the project whose tests run.
+|`mn.test.htmlReportDirectory` |`target/micronaut-dev/test-report` |The directory of the HTML report.
+|`mn.test.reportPath` |`/tests/` |The path the LiveReload server serves the HTML report at.
+|`mn.test.htmlReport` |`true` |Adds `micronaut-dev-test-report`, which writes the HTML report, to the launcher's classpath.
+|===
+
+JUnit Platform configuration parameters are set with the `configurationParameters` map:
+
+[source,xml]
+----
+<plugin>
+  <groupId>io.micronaut.maven</groupId>
+  <artifactId>micronaut-maven-plugin</artifactId>
+  <configuration>
+    <configurationParameters>
+      <junit.jupiter.execution.parallel.enabled>true</junit.jupiter.execution.parallel.enabled>
+    </configurationParameters>
+  </configuration>
+</plugin>
+----
+
+The settings of `mn:dev` apply as well: `mn.dev.compile`, where `build-tool` compiles through `mvn test-compile` and
+tells the launcher through `target/micronaut-dev/test/reload`, `mn.dev.incremental`, `mn.dev.livereload`,
+`mn.dev.livereload.port`, `mn.dev.manifestOnly`, and `mn.debug`, `mn.jvmArgs` and the test resources settings. A test
+run beside an `mn:dev` session needs a LiveReload port of its own, such as `-Dmn.dev.livereload.port=35730`.
