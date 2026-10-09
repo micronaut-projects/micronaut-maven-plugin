@@ -1,0 +1,53 @@
+= Running an application in development mode with `mn:dev`
+
+`mn:dev` runs the application through the development launcher of Micronaut Core 5.3 (`micronaut-dev`): sources are
+compiled inside the running JVM and the application is restarted on a fresh class loader, with the singletons a
+retention policy names kept alive, or, for an edit that only changed method bodies, the classes are redefined in place.
+`mn:run` is unchanged and remains the alternative that recompiles through Maven and relaunches the JVM.
+
+:toc:
+
+== Usage
+
+[source,bash]
+----
+$ mvn mn:dev
+----
+
+The goal writes the manifest the launcher reads into `target/micronaut-dev/dev.properties`, from the project model: the
+runtime, compile and annotation processor classpaths (the processor path from the `maven-compiler-plugin`'s
+`annotationProcessorPaths`), the source and resource directories, the compiler options as the compiler plugin is
+configured (`-parameters`, the release, the encoding and `compilerArgs`), and the settings below. The outputs of the
+project and of the reactor projects it depends on are the reloadable tier; the modules are the parent tier. The
+launcher compiles Java with `javac` and Groovy with the project's Groovy. Embedded Kotlin is not offered on Maven.
+
+== Settings
+
+[cols="2,1,4"]
+|===
+|Property |Default |Meaning
+
+|`mn.dev.strategy` |`auto` |`restart`, `reload` or `auto`.
+|`mn.dev.compile` |`embedded` |`embedded` compiles inside the development JVM; `build-tool` lets this goal compile through Maven, as `mn:run` does, and tell the launcher through `target/micronaut-dev/reload`.
+|`mn.dev.incremental` |`true` |Whether the embedded compilers compile incrementally.
+|`mn.dev.retain` | |Types whose singletons are kept across a restart, comma separated.
+|`mn.dev.livereload` |`true` |Adds `micronaut-dev-livereload` to the launcher's classpath, which starts the LiveReload server.
+|`mn.dev.livereload.port` |`35729` |The LiveReload port.
+|`mn.dev.livereload.injectScript` |`true` |Whether the client script is appended to HTML responses; `false` for users of a browser extension.
+|`mn.dev.manifestOnly` |`false` |Writes the manifest and stops, for a build that launches the JVM itself.
+|===
+
+`mn.debug`, `mn.debug.suspend`, `mn.debug.port`, `mn.debug.host`, `mn.jvmArgs`, `mn.appArgs` and the test resources
+settings work as they do for `mn:run`.
+
+== Reactor dependencies
+
+The outputs of the reactor projects the runnable one depends on are reloadable too, and their sources are compiled by
+the launcher into the runnable project's output, with the runnable project's compiler settings. A reactor whose modules
+need different compiler settings runs with `-Dmn.dev.compile=build-tool`, where Maven compiles each module as it is
+configured.
+
+== A filtered resource directory
+
+A resource directory with `filtering` enabled is not read live, since the build expands it: the launcher reads its copy
+from the class output, and a change to it is applied by `mvn process-resources` in `build-tool` mode.
