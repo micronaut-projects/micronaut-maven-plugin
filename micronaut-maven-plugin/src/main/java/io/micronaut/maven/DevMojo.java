@@ -25,6 +25,7 @@ import io.micronaut.maven.testresources.AbstractTestResourcesMojo;
 import io.micronaut.testresources.buildtools.ServerSettings;
 import io.micronaut.testresources.buildtools.ServerUtils;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.lifecycle.internal.MojoDescriptorCreator;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
@@ -41,7 +42,6 @@ import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.classworlds.realm.ClassRealm;
 import org.codehaus.plexus.component.configurator.ComponentConfigurationException;
 import org.codehaus.plexus.component.configurator.ComponentConfigurator;
-import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluationException;
 import org.codehaus.plexus.configuration.xml.XmlPlexusConfiguration;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -69,6 +69,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static io.micronaut.maven.core.MojoUtils.findJavaExecutable;
 import static io.micronaut.maven.core.MojoUtils.hasMicronautMavenPlugin;
@@ -110,6 +111,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
 
     private static final String LAUNCHER_ARTIFACT = "micronaut-dev";
     private static final String LIVERELOAD_ARTIFACT = "micronaut-dev-livereload";
+    private static final String TEST_RESOURCES_CLIENT = "micronaut-test-resources-client";
     private static final long QUIET_PERIOD_MILLIS = 300;
     private static final String DEFAULT_CLI_EXECUTION = "default-cli";
 
@@ -381,30 +383,28 @@ public class DevMojo extends AbstractTestResourcesMojo {
      * application's effective configuration is applied here with Maven's own configurator: its plugin-level
      * {@code micronaut-maven-plugin} configuration with the {@code default-cli} execution's merged over it,
      * as Maven would have applied them had the goal run on the application, restricted to this goal's
-     * parameters. The main class is evaluated against the application when its configuration names none.
+     * parameters, and merged over the goal's own defaults and property expressions, as Maven merges them: those
+     * are evaluated against the application too, so that a property the application sets and the reactor root
+     * does not, such as {@code micronaut.test.resources.enabled} or {@code exec.mainClass}, applies.
      */
     private void applyRunnableProjectConfiguration() throws MojoExecutionException {
         PluginParameterExpressionEvaluator evaluator = runnableEvaluator();
         Xpp3Dom effective = effectiveConfiguration();
-        try {
-            if (effective != null) {
-                MojoDescriptor descriptor = mojoExecution.getMojoDescriptor();
-                Xpp3Dom own = new Xpp3Dom("configuration");
-                for (Xpp3Dom child : effective.getChildren()) {
-                    // another goal's settings, such as mn:run's watches, are not this goal's to apply
-                    if (isParameter(descriptor, child.getName())) {
-                        own.addChild(new Xpp3Dom(child));
-                    }
-                }
-                ClassRealm realm = descriptor.getPluginDescriptor().getClassRealm();
-                configurator.configureComponent(this, new XmlPlexusConfiguration(own), evaluator, realm);
-                if (own.getChild("mainClass") != null) {
-                    return;
+        MojoDescriptor descriptor = mojoExecution.getMojoDescriptor();
+        Xpp3Dom own = new Xpp3Dom("configuration");
+        if (effective != null) {
+            for (Xpp3Dom child : effective.getChildren()) {
+                // another goal's settings, such as mn:run's watches, are not this goal's to apply
+                if (isParameter(descriptor, child.getName())) {
+                    own.addChild(new Xpp3Dom(child));
                 }
             }
-            Object evaluated = evaluator.evaluate(RunMojo.EXEC_MAIN_CLASS);
-            mainClass = evaluated == null ? null : evaluated.toString();
-        } catch (ComponentConfigurationException | ExpressionEvaluationException e) {
+        }
+        Xpp3Dom configuration = Xpp3Dom.mergeXpp3Dom(own, MojoDescriptorCreator.convert(descriptor));
+        try {
+            ClassRealm realm = descriptor.getPluginDescriptor().getClassRealm();
+            configurator.configureComponent(this, new XmlPlexusConfiguration(configuration), evaluator, realm);
+        } catch (ComponentConfigurationException e) {
             throw new MojoExecutionException("Cannot apply the micronaut-maven-plugin configuration of " + runnableProject.getArtifactId() + ": " + e.getMessage(), e);
         }
     }
@@ -553,6 +553,11 @@ public class DevMojo extends AbstractTestResourcesMojo {
                 classpath.add(file.getAbsolutePath());
             }
         }
+        for (File file : testResourcesClient()) {
+            if (!classpath.contains(file.getAbsolutePath())) {
+                classpath.add(file.getAbsolutePath());
+            }
+        }
         List<String> translatedJvmArguments = translateArguments(jvmArguments);
         List<String> args = new ArrayList<>();
         args.add(javaExecutable);
@@ -587,6 +592,42 @@ public class DevMojo extends AbstractTestResourcesMojo {
             artifacts.add(new DefaultArtifact(LAUNCHER_GROUP, LIVERELOAD_ARTIFACT, "jar", ""));
         }
         return artifacts;
+    }
+
+    /**
+     * The Test Resources client, which resolves the application's properties through the server, when Test Resources
+     * is enabled and the runtime classpath lacks it: an application that declares it, usually in the
+     * {@code provided} scope, launches with its own. It is resolved at the version of the server, and only the
+     * modules the runtime classpath does not hold are added, so that the application's versions win.
+     *
+     * @return the client and the modules it brings, none when it is not needed
+     * @throws DependencyResolutionException if the client cannot be resolved
+     */
+    private List<File> testResourcesClient() throws DependencyResolutionException {
+        if (!testResourcesEnabled) {
+            return List.of();
+        }
+        List<String> present = new ArrayList<>();
+        for (Dependency dependency : runtimeDependencies()) {
+            org.eclipse.aether.artifact.Artifact artifact = dependency.getArtifact();
+            present.add(artifact.getGroupId() + ":" + artifact.getArtifactId());
+        }
+        String client = DependencyResolutionService.TEST_RESOURCES_GROUP + ":" + TEST_RESOURCES_CLIENT;
+        if (present.contains(client)) {
+            return List.of();
+        }
+        String version = testResourcesVersion == null ? "" : testResourcesVersion;
+        List<ArtifactResult> results = dependencyResolutionService.artifactResultsFor(
+            Stream.of(new DefaultArtifact(DependencyResolutionService.TEST_RESOURCES_GROUP, TEST_RESOURCES_CLIENT, "jar", version)), true);
+        List<File> files = new ArrayList<>();
+        for (ArtifactResult result : results) {
+            org.eclipse.aether.artifact.Artifact artifact = result.getArtifact();
+            if (artifact != null && artifact.getFile() != null && !present.contains(artifact.getGroupId() + ":" + artifact.getArtifactId())) {
+                files.add(artifact.getFile());
+            }
+        }
+        getLog().info("Adding " + client + (version.isEmpty() ? "" : ":" + version) + " to the launch classpath: Test Resources is enabled and the application does not declare the client");
+        return files;
     }
 
     private void addTestResourcesArguments(List<String> args) {

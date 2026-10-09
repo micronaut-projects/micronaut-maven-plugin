@@ -52,6 +52,17 @@ configured.
 A resource directory with `filtering` enabled is not read live, since the build expands it: the launcher reads its copy
 from the class output, and a change to it is applied by `mvn process-resources` in `build-tool` mode.
 
+[[micronaut-test-resources]]
+== Micronaut Test Resources
+
+With link:test-resources.html[Micronaut Test Resources] enabled, `mn:dev` and `mn:test` start the Test Resources
+service before the launch, or connect to a shared one, as `mn:run` and `mvn test` do, and pass its connection settings
+to the launcher's JVM as system properties. The service stays up for the whole session, through every reload and test
+run, and is stopped when the goal ends, unless it is shared or was started with `mn:start-testresources-service`. When
+the application does not declare `micronaut-test-resources-client`, the goals add it to the launch classpath, at the
+version of the service. In a reactor, `micronaut.test.resources.enabled` and the other properties are read from the
+application the goal runs, so an application can enable Test Resources on its own.
+
 == Continuous testing
 
 `mn:test` runs the project's tests on the same runtime, in test mode: see
