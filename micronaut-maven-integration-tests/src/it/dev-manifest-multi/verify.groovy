@@ -27,7 +27,7 @@ assert runtime.every { !it.contains('target' + File.separator + 'classes') && !i
 // the application turns Micronaut Control Panel off
 assert runtime.every { !it.contains('micronaut-control-panel-') }
 assert !log.text.contains("Adding Micronaut Control Panel")
-assert !new File(basedir, 'app/target/micronaut-dev/control-panel.argfile').exists()
+assert !new File(basedir, 'app/target/micronaut-dev/control-panel').exists()
 List<String> options = new File(basedir, 'app/target/micronaut-dev/java-options.argfile').readLines()
 assert options.contains('-Amicronaut.processing.group=devmulti')
 

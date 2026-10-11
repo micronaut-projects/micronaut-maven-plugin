@@ -60,9 +60,9 @@ from the class output, and a change to it is applied by `mvn process-resources` 
 development runtime, served at http://localhost:8080/control-panel. The modules are added to the runtime classpath
 of the development JVM only, versioned by the project's dependency management, the Micronaut platform BOM: the project's
 own dependencies and what it packages do not change, and a module the application already declares, at its own version,
-is not added again. Every launch gets the UI, the management panels (`micronaut-control-panel-ui` and
-`micronaut-control-panel-management`), and the testing panels (`micronaut-control-panel-testing`) when the dependency
-management versions them. The other panels are added when the runtime classpath holds a module they inspect:
+is not added again. Every launch gets the UI (`micronaut-control-panel-ui`), the management panels
+(`micronaut-control-panel-management`) and the testing panels of continuous testing (`micronaut-control-panel-testing`).
+The other panels are added when the runtime classpath holds a module they inspect:
 
 [cols="2,3"]
 |===
@@ -75,9 +75,10 @@ management versions them. The other panels are added when the runtime classpath 
 |`micronaut-control-panel-cache` |`io.micronaut.cache:micronaut-cache-caffeine`, `micronaut-cache-ehcache`, `micronaut-cache-hazelcast` or `micronaut-cache-infinispan`
 |===
 
-The goal passes these settings to the development JVM as system properties, through the JVM argument file
-`target/micronaut-dev/control-panel.argfile`, which a build that launches the JVM itself after
-`-Dmn.dev.manifestOnly=true` passes as `@target/micronaut-dev/control-panel.argfile`:
+A Control Panel module that is not published yet, or that the dependency management does not version, is left out
+with a message; any other resolution failure fails the goal.
+
+The development runtime runs with these settings:
 
 [source,properties]
 ----
@@ -86,11 +87,9 @@ micronaut.control-panel.path=/control-panel
 micronaut.control-panel.security.access=ANONYMOUS
 ----
 
-A setting the application configures itself is not passed, so that the application's value applies: one set with
-`-D` on the Maven command line, in `mn.jvmArgs`, as an environment variable such as
-`MICRONAUT_CONTROL_PANEL_SECURITY_ACCESS`, or in an `application` configuration file of the application's resources or
-of a reactor project it depends on. The file of an environment counts only when the environment is active: `dev`, which
-the development runtime activates, and those `micronaut.environments` or `MICRONAUT_ENVIRONMENTS` names.
+They are written to `target/micronaut-dev/control-panel/micronaut-control-panel/micronaut-control-panel.properties`, a
+directory of the runtime classpath, which Control Panel reads as its property source of lowest precedence: a setting
+the application configures, in `application.yml`, as a system property or as an environment variable, wins.
 
 To run without the Control Panel, turn it off on the command line:
 

@@ -15,36 +15,33 @@
  */
 package io.micronaut.maven.dev;
 
-import org.yaml.snakeyaml.LoaderOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.SafeConstructor;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.transfer.ArtifactNotFoundException;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
- * The Micronaut Control Panel {@code mn:dev} adds to the development runtime: the UI and the management panels, the
- * testing panels of continuous testing, and the optional panels whose library the application already depends on, as
- * Pyronaut infers them. What the application declares itself is never added again, and the settings the goal passes
- * are defaults: one the application configures is left to it.
+ * The Micronaut Control Panel {@code mn:dev} adds to the development runtime: the UI, the management panels and the
+ * testing panels of continuous testing, and the optional panels whose library the application already depends on,
+ * as Pyronaut infers them. What the application declares itself is never added again.
+ *
+ * <p>Its settings are written as {@value #PROPERTIES_RESOURCE} into a directory of the development runtime's
+ * classpath: Control Panel's {@code ControlPanelContextConfigurer} loads every such resource as the property source of
+ * lowest precedence, so that whatever the application configures, in a configuration file, a system property or an
+ * environment variable, wins.</p>
  *
  * @since 5.1.0
  */
@@ -56,65 +53,44 @@ public final class ControlPanel {
     public static final String GROUP = "io.micronaut.controlpanel";
 
     /**
-     * The modules added to every development runtime.
+     * The modules added to every development runtime: the UI, the management panels, and the testing panels.
      */
-    public static final List<String> BASE_MODULES = List.of("micronaut-control-panel-ui", "micronaut-control-panel-management");
+    public static final List<String> BASE_MODULES = List.of(
+        "micronaut-control-panel-ui",
+        "micronaut-control-panel-management",
+        "micronaut-control-panel-testing"
+    );
 
     /**
-     * The testing panels of continuous testing, added when the dependency management versions them.
+     * The name of the directory beside the development manifest holding {@link #PROPERTIES_RESOURCE}, which the
+     * runtime classpath holds.
      */
-    public static final String TESTING_MODULE = "micronaut-control-panel-testing";
+    public static final String RESOURCES_DIRECTORY_NAME = "control-panel";
 
     /**
-     * The key that enables the Control Panel.
+     * The resource Control Panel reads its defaults from, at the lowest precedence.
      */
-    public static final String ENABLED = "micronaut.control-panel.enabled";
+    public static final String PROPERTIES_RESOURCE = "micronaut-control-panel/micronaut-control-panel.properties";
 
     /**
-     * The key of the path the Control Panel is served at.
-     */
-    public static final String PATH = "micronaut.control-panel.path";
-
-    /**
-     * The key of who may access the Control Panel.
-     */
-    public static final String SECURITY_ACCESS = "micronaut.control-panel.security.access";
-
-    /**
-     * The name of the JVM argument file beside the development manifest holding the settings passed, for a build that
-     * launches the JVM itself: {@code java @control-panel.argfile ...}.
-     */
-    public static final String ARGUMENT_FILE_NAME = "control-panel.argfile";
-
-    /**
-     * The environment of the development runtime.
-     */
-    public static final String DEVELOPMENT_ENVIRONMENT = "dev";
-
-    /**
-     * The settings passed to the development runtime unless the application configures them.
+     * The settings of the development runtime, defaults the application's own configuration overrides.
      */
     public static final Map<String, String> DEFAULT_PROPERTIES;
 
     static {
         Map<String, String> properties = new LinkedHashMap<>();
-        properties.put(ENABLED, "true");
-        properties.put(PATH, "/control-panel");
-        properties.put(SECURITY_ACCESS, "ANONYMOUS");
+        properties.put("micronaut.control-panel.enabled", "true");
+        properties.put("micronaut.control-panel.path", "/control-panel");
+        properties.put("micronaut.control-panel.security.access", "ANONYMOUS");
         DEFAULT_PROPERTIES = Collections.unmodifiableMap(properties);
     }
-
-    /**
-     * The configuration files Micronaut reads from the classpath: {@code application} and those of an environment.
-     */
-    private static final Pattern CONFIGURATION_FILE = Pattern.compile("application(?:-([^.]+))?\\.(properties|ya?ml|json|toml|groovy|conf)");
 
     private ControlPanel() {
     }
 
     /**
      * The optional panels, each added when the application depends on one of the modules the panel inspects. Kept
-     * in line with Pyronaut's {@code ControlPanelFeature}.
+     * in line with Pyronaut's {@code ControlPanelFeature} and the Gradle plugin.
      */
     public enum Feature {
         DATASOURCE("micronaut-control-panel-datasource", List.of("io.micronaut.sql:micronaut-jdbc")),
@@ -153,7 +129,7 @@ public final class ControlPanel {
 
     /**
      * The modules to add for a runtime classpath: the base modules, then the panels its modules enable, in the order
-     * of {@link Feature}. The testing module is not among them, since it is resolved on its own.
+     * of {@link Feature}.
      *
      * @param moduleKeys the {@code group:artifact} keys of the runtime classpath
      * @return the artifact ids, in group {@link #GROUP}
@@ -169,195 +145,60 @@ public final class ControlPanel {
     }
 
     /**
-     * The settings to pass: the defaults the application does not configure.
+     * Writes {@link #PROPERTIES_RESOURCE} with the {@link #DEFAULT_PROPERTIES} under a directory.
      *
-     * @param configured whether the application configures a key
-     * @return the settings, in a stable order
+     * @param directory the directory, which the runtime classpath holds
+     * @throws IOException if it cannot be written
      */
-    public static Map<String, String> properties(Predicate<String> configured) {
-        Map<String, String> properties = new LinkedHashMap<>();
-        DEFAULT_PROPERTIES.forEach((key, value) -> {
-            if (!configured.test(key)) {
-                properties.put(key, value);
-            }
-        });
-        return properties;
-    }
-
-    /**
-     * Whether JVM arguments set a system property.
-     *
-     * @param key the property
-     * @param arguments the arguments
-     * @return true for a {@code -Dkey} or {@code -Dkey=value} among them
-     */
-    public static boolean isSystemProperty(String key, Collection<String> arguments) {
-        String property = "-D" + key;
-        return arguments.stream().anyMatch(argument -> argument.equals(property) || argument.startsWith(property + "="));
-    }
-
-    /**
-     * The environment variable Micronaut reads a key from: {@code MICRONAUT_CONTROL_PANEL_PATH} for
-     * {@code micronaut.control-panel.path}.
-     *
-     * @param key the property
-     * @return the variable's name
-     */
-    public static String environmentVariable(String key) {
-        return key.toUpperCase(Locale.ROOT).replace('.', '_').replace('-', '_');
-    }
-
-    /**
-     * The Control Panel keys the configuration files of resource directories set: every {@code application} file,
-     * and that of each active environment, read as properties, YAML or JSON; the file of an environment that is not
-     * active is not loaded by the runtime, so it configures nothing. A file of another format, TOML or Groovy,
-     * sets a key when it names its last segment within the {@code control-panel} section, a guess that only ever
-     * leaves a default out.
-     *
-     * @param resourceDirectories the resource directories
-     * @param environments the active environments
-     * @return the keys of {@link #DEFAULT_PROPERTIES} they set
-     */
-    public static Set<String> configuredKeys(Collection<Path> resourceDirectories, Collection<String> environments) {
-        Set<String> keys = new HashSet<>();
-        for (Path directory : resourceDirectories) {
-            if (!Files.isDirectory(directory)) {
-                continue;
-            }
-            try (Stream<Path> files = Files.list(directory)) {
-                for (Path file : files.filter(file -> isConfigurationFile(file, environments)).sorted().toList()) {
-                    keys.addAll(configuredKeys(file));
-                }
-            } catch (IOException e) {
-                // an unreadable directory configures nothing
-            }
-        }
-        return keys;
-    }
-
-    private static boolean isConfigurationFile(Path file, Collection<String> environments) {
-        Matcher matcher = CONFIGURATION_FILE.matcher(file.getFileName().toString());
-        if (!Files.isRegularFile(file) || !matcher.matches()) {
-            return false;
-        }
-        String environment = matcher.group(1);
-        return environment == null || environments.contains(environment);
-    }
-
-    /**
-     * The environments of the development runtime: {@code dev}, which the launcher activates, and those a
-     * {@code micronaut.environments} setting names.
-     *
-     * @param environmentsSetting the value of {@code micronaut.environments} or {@code MICRONAUT_ENVIRONMENTS}, if any
-     * @return the environments
-     */
-    public static Set<String> environments(String environmentsSetting) {
-        Set<String> environments = new LinkedHashSet<>();
-        environments.add(DEVELOPMENT_ENVIRONMENT);
-        if (environmentsSetting != null) {
-            for (String environment : environmentsSetting.split(",")) {
-                if (!environment.isBlank()) {
-                    environments.add(environment.trim());
-                }
-            }
-        }
-        return environments;
-    }
-
-    /**
-     * The value of a system property among JVM arguments.
-     *
-     * @param key the property
-     * @param arguments the arguments
-     * @return the value of the last {@code -Dkey=value}, or null
-     */
-    public static String systemProperty(String key, List<String> arguments) {
-        String property = "-D" + key + "=";
-        String value = null;
-        for (String argument : arguments) {
-            if (argument.startsWith(property)) {
-                value = argument.substring(property.length());
-            }
-        }
-        return value;
-    }
-
-    private static String extension(String name) {
-        return name.substring(name.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
-    }
-
-    static Set<String> configuredKeys(Path file) {
-        Set<String> found = new HashSet<>();
-        String extension = extension(file.getFileName().toString());
-        try {
-            Set<String> keys = new HashSet<>();
-            switch (extension) {
-                case "properties" -> {
-                    Properties properties = new Properties();
-                    try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-                        properties.load(reader);
-                    }
-                    properties.stringPropertyNames().forEach(key -> keys.add(normalize(key)));
-                }
-                case "yml", "yaml", "json" -> {
-                    Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
-                    try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-                        for (Object document : yaml.loadAll(reader)) {
-                            flatten("", document, keys);
-                        }
-                    }
-                }
-                default -> {
-                    String text = Files.readString(file, StandardCharsets.UTF_8);
-                    int section = Math.max(text.indexOf("control-panel"), text.indexOf("controlPanel"));
-                    if (section >= 0) {
-                        String rest = text.substring(section);
-                        for (String key : DEFAULT_PROPERTIES.keySet()) {
-                            if (rest.contains(key.substring(key.lastIndexOf('.') + 1))) {
-                                found.add(key);
-                            }
-                        }
-                    }
-                }
-            }
-            for (String key : DEFAULT_PROPERTIES.keySet()) {
-                if (keys.contains(key)) {
-                    found.add(key);
-                }
-            }
-        } catch (IOException | RuntimeException e) {
-            // a file that cannot be read or parsed configures nothing the goal can see; the application reports it
-        }
-        return found;
-    }
-
-    private static void flatten(String prefix, Object value, Set<String> keys) {
-        if (value instanceof Map<?, ?> map) {
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-                String key = prefix.isEmpty() ? normalize(String.valueOf(entry.getKey())) : prefix + "." + normalize(String.valueOf(entry.getKey()));
-                flatten(key, entry.getValue(), keys);
-            }
-        } else if (!prefix.isEmpty()) {
-            keys.add(prefix);
+    public static void writeResources(Path directory) throws IOException {
+        Path file = directory.resolve(PROPERTIES_RESOURCE);
+        Files.createDirectories(file.getParent());
+        Properties properties = new Properties();
+        properties.putAll(DEFAULT_PROPERTIES);
+        try (OutputStream out = Files.newOutputStream(file)) {
+            properties.store(out, "Written by the Micronaut Maven Plugin for mn:dev: defaults the application's configuration overrides");
         }
     }
 
     /**
-     * A key as Micronaut binds it: kebab case, lower case.
+     * Deletes the directory {@link #writeResources(Path)} wrote, when the Control Panel is off.
+     *
+     * @param directory the directory
+     * @throws IOException if it cannot be deleted
      */
-    private static String normalize(String key) {
-        StringBuilder normalized = new StringBuilder(key.length() + 4);
-        for (int i = 0; i < key.length(); i++) {
-            char c = key.charAt(i);
-            if (Character.isUpperCase(c)) {
-                if (i > 0 && key.charAt(i - 1) != '.' && key.charAt(i - 1) != '-') {
-                    normalized.append('-');
-                }
-                normalized.append(Character.toLowerCase(c));
-            } else {
-                normalized.append(c);
+    public static void deleteResources(Path directory) throws IOException {
+        if (!Files.exists(directory)) {
+            return;
+        }
+        try (Stream<Path> paths = Files.walk(directory)) {
+            for (Path path : paths.sorted(Comparator.reverseOrder()).toList()) {
+                Files.delete(path);
             }
         }
-        return normalized.toString();
+    }
+
+    /**
+     * Whether a resolution failed only because Control Panel artifacts are not published, such as the testing
+     * panels before their first release: the module is left out. Any other failure, an artifact of another group or a
+     * repository error, is not tolerated.
+     *
+     * @param failure the failure
+     * @return true when every artifact that failed is a missing one of {@link #GROUP}
+     */
+    public static boolean isMissingControlPanelArtifact(Throwable failure) {
+        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+            if (cause instanceof ArtifactResolutionException resolution) {
+                List<ArtifactResult> failed = resolution.getResults().stream().filter(result -> !result.isResolved()).toList();
+                return !failed.isEmpty() && failed.stream().allMatch(ControlPanel::isMissing);
+            }
+        }
+        return false;
+    }
+
+    private static boolean isMissing(ArtifactResult result) {
+        org.eclipse.aether.artifact.Artifact artifact = result.getRequest().getArtifact();
+        return artifact != null && GROUP.equals(artifact.getGroupId())
+            && !result.getExceptions().isEmpty()
+            && result.getExceptions().stream().allMatch(ArtifactNotFoundException.class::isInstance);
     }
 }

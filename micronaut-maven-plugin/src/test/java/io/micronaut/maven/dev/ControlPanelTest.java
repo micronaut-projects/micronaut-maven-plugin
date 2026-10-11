@@ -1,13 +1,27 @@
 package io.micronaut.maven.dev;
 
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.collection.CollectRequest;
+import org.eclipse.aether.collection.DependencyCollectionException;
+import org.eclipse.aether.collection.CollectResult;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.resolution.DependencyResolutionException;
+import org.eclipse.aether.resolution.DependencyResult;
+import org.eclipse.aether.resolution.DependencyRequest;
+import org.eclipse.aether.transfer.ArtifactNotFoundException;
+import org.eclipse.aether.transfer.ArtifactTransferException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,17 +32,18 @@ class ControlPanelTest {
 
     @Test
     void addsTheBaseModulesToEveryRuntime() {
-        assertEquals(List.of("micronaut-control-panel-ui", "micronaut-control-panel-management"),
+        assertEquals(List.of("micronaut-control-panel-ui", "micronaut-control-panel-management", "micronaut-control-panel-testing"),
             ControlPanel.modules(Set.of("io.micronaut:micronaut-http-server-netty")));
     }
 
     @Test
     void infersThePanelsOfTheModulesTheApplicationUses() {
-        assertEquals(List.of("micronaut-control-panel-ui", "micronaut-control-panel-management", "micronaut-control-panel-kafka"),
+        assertEquals(List.of("micronaut-control-panel-ui", "micronaut-control-panel-management", "micronaut-control-panel-testing", "micronaut-control-panel-kafka"),
             ControlPanel.modules(Set.of("io.micronaut.kafka:micronaut-kafka")));
         assertEquals(List.of(
                 "micronaut-control-panel-ui",
                 "micronaut-control-panel-management",
+                "micronaut-control-panel-testing",
                 "micronaut-control-panel-datasource",
                 "micronaut-control-panel-hibernate",
                 "micronaut-control-panel-object-storage",
@@ -39,7 +54,7 @@ class ControlPanelTest {
                 "io.micronaut.objectstorage:micronaut-object-storage-core",
                 "io.micronaut.cache:micronaut-cache-ehcache")));
         // a module of the same group that the panel does not inspect adds nothing
-        assertEquals(2, ControlPanel.modules(Set.of("io.micronaut.kafka:micronaut-kafka-streams-only", "io.micronaut.cache:micronaut-cache-core")).size());
+        assertEquals(3, ControlPanel.modules(Set.of("io.micronaut.kafka:micronaut-kafka-streams", "io.micronaut.cache:micronaut-cache-core")).size());
     }
 
     @Test
@@ -49,70 +64,62 @@ class ControlPanelTest {
         assertEquals(List.of("org.hibernate.orm:hibernate-core"), ControlPanel.Feature.HIBERNATE.triggers());
         assertEquals(List.of("io.micronaut.kafka:micronaut-kafka"), ControlPanel.Feature.KAFKA.triggers());
         assertEquals(List.of("io.micronaut.objectstorage:micronaut-object-storage-core"), ControlPanel.Feature.OBJECT_STORAGE.triggers());
-        assertEquals(4, ControlPanel.Feature.CACHE.triggers().size());
+        assertEquals(List.of(
+            "io.micronaut.cache:micronaut-cache-caffeine",
+            "io.micronaut.cache:micronaut-cache-ehcache",
+            "io.micronaut.cache:micronaut-cache-hazelcast",
+            "io.micronaut.cache:micronaut-cache-infinispan"), ControlPanel.Feature.CACHE.triggers());
     }
 
     @Test
-    void passesOnlyTheDefaultsTheApplicationDoesNotConfigure() {
+    void writesTheSettingsAsTheResourceControlPanelReadsAtTheLowestPrecedence(@TempDir Path directory) throws IOException {
+        Path resources = directory.resolve("control-panel");
+        ControlPanel.writeResources(resources);
+        Properties properties = new Properties();
+        try (Reader reader = Files.newBufferedReader(resources.resolve("micronaut-control-panel/micronaut-control-panel.properties"))) {
+            properties.load(reader);
+        }
         assertEquals(Map.of(
-                "micronaut.control-panel.enabled", "true",
-                "micronaut.control-panel.path", "/control-panel",
-                "micronaut.control-panel.security.access", "ANONYMOUS"),
-            ControlPanel.properties(key -> false));
-        assertEquals(Map.of("micronaut.control-panel.enabled", "true", "micronaut.control-panel.security.access", "ANONYMOUS"),
-            ControlPanel.properties(ControlPanel.PATH::equals));
+            "micronaut.control-panel.enabled", "true",
+            "micronaut.control-panel.path", "/control-panel",
+            "micronaut.control-panel.security.access", "ANONYMOUS"), Map.copyOf(properties));
+
+        ControlPanel.deleteResources(resources);
+        assertFalse(Files.exists(resources));
+        // nothing to delete
+        ControlPanel.deleteResources(resources);
     }
 
     @Test
-    void readsSystemPropertiesAndEnvironmentVariables() {
-        assertTrue(ControlPanel.isSystemProperty(ControlPanel.PATH, List.of("-Xmx1g", "-Dmicronaut.control-panel.path=/cp")));
-        assertTrue(ControlPanel.isSystemProperty(ControlPanel.ENABLED, List.of("-Dmicronaut.control-panel.enabled")));
-        assertFalse(ControlPanel.isSystemProperty(ControlPanel.PATH, List.of("-Dmicronaut.control-panel.path-other=x")));
-        assertEquals("cloud", ControlPanel.systemProperty("micronaut.environments", List.of("-Dmicronaut.environments=test", "-Dmicronaut.environments=cloud")));
-        assertEquals(null, ControlPanel.systemProperty("micronaut.environments", List.of("-Dother=x")));
-        assertEquals("MICRONAUT_CONTROL_PANEL_SECURITY_ACCESS", ControlPanel.environmentVariable(ControlPanel.SECURITY_ACCESS));
+    void toleratesOnlyMissingControlPanelArtifacts() {
+        assertTrue(ControlPanel.isMissingControlPanelArtifact(failure(notFound("io.micronaut.controlpanel", "micronaut-control-panel-testing"))));
+        assertFalse(ControlPanel.isMissingControlPanelArtifact(failure(notFound("io.micronaut", "micronaut-management"))));
+        assertFalse(ControlPanel.isMissingControlPanelArtifact(failure(notFound("io.micronaut.controlpanel", "micronaut-control-panel-testing"), notFound("io.micronaut", "micronaut-management"))));
+        // a repository that cannot be reached is not a module that is not published
+        DefaultArtifact artifact = new DefaultArtifact("io.micronaut.controlpanel:micronaut-control-panel-ui:2.2.0");
+        ArtifactResult unreachable = new ArtifactResult(new ArtifactRequest(artifact, List.of(), null));
+        unreachable.addException(new ArtifactTransferException(artifact, null, "Connection refused"));
+        assertFalse(ControlPanel.isMissingControlPanelArtifact(failure(unreachable)));
+        assertFalse(ControlPanel.isMissingControlPanelArtifact(new IllegalStateException("other")));
     }
 
     @Test
-    void readsTheKeysOfConfigurationFiles(@TempDir Path resources) throws IOException {
-        Files.writeString(resources.resolve("application.properties"), "micronaut.control-panel.path=/cp\n");
-        Files.writeString(resources.resolve("application-dev.yml"), """
-            micronaut:
-              controlPanel:
-                security:
-                  access: AUTHENTICATED
-            """);
-        assertEquals(Set.of(ControlPanel.PATH, ControlPanel.SECURITY_ACCESS), ControlPanel.configuredKeys(List.of(resources), ControlPanel.environments(null)));
+    void toleratesAMissingDescriptorDuringCollection() {
+        ArtifactResolutionException missingPom = new ArtifactResolutionException(List.of(notFound("io.micronaut.controlpanel", "micronaut-control-panel-testing")));
+        DependencyCollectionException collection = new DependencyCollectionException(new CollectResult(new CollectRequest()), "Cannot collect", missingPom);
+        DependencyResolutionException failure = new DependencyResolutionException(new DependencyResult(new DependencyRequest()), collection);
+        assertTrue(ControlPanel.isMissingControlPanelArtifact(failure));
     }
 
-    @Test
-    void readsFlatYamlAndJson(@TempDir Path resources) throws IOException {
-        Files.writeString(resources.resolve("application.yml"), "micronaut.control-panel.enabled: false\n");
-        Files.writeString(resources.resolve("application-local.json"), "{\"micronaut\": {\"control-panel\": {\"path\": \"/x\"}}}");
-        assertEquals(Set.of(ControlPanel.ENABLED, ControlPanel.PATH), ControlPanel.configuredKeys(List.of(resources), ControlPanel.environments("local")));
+    private static ArtifactResult notFound(String group, String artifactId) {
+        DefaultArtifact artifact = new DefaultArtifact(group + ":" + artifactId + ":2.2.0");
+        ArtifactResult result = new ArtifactResult(new ArtifactRequest(artifact, List.of(), null));
+        result.addException(new ArtifactNotFoundException(artifact, null));
+        return result;
     }
 
-    @Test
-    void ignoresTheFilesOfInactiveEnvironments(@TempDir Path resources) throws IOException {
-        Files.writeString(resources.resolve("application-test.yml"), "micronaut.control-panel.enabled: false\n");
-        Files.writeString(resources.resolve("application-dev.properties"), "micronaut.control-panel.path=/cp\n");
-        assertEquals(Set.of(ControlPanel.PATH), ControlPanel.configuredKeys(List.of(resources), ControlPanel.environments(null)));
-        assertEquals(Set.of(ControlPanel.ENABLED, ControlPanel.PATH), ControlPanel.configuredKeys(List.of(resources), ControlPanel.environments(" test , cloud")));
-        assertEquals(Set.of("dev", "test", "cloud"), ControlPanel.environments(" test , cloud"));
-    }
-
-    @Test
-    void ignoresOtherFilesAndMissingDirectories(@TempDir Path resources) throws IOException {
-        Files.writeString(resources.resolve("logback.xml"), "<configuration>micronaut.control-panel.path</configuration>");
-        Files.writeString(resources.resolve("bootstrap.yml"), "micronaut.control-panel.path: /x\n");
-        Files.writeString(resources.resolve("application.yml"), "micronaut:\n  application:\n    name: demo\n");
-        Files.writeString(resources.resolve("application-broken.yml"), "micronaut: [\n");
-        assertEquals(Set.of(), ControlPanel.configuredKeys(List.of(resources, resources.resolve("missing")), ControlPanel.environments(null)));
-    }
-
-    @Test
-    void readsOtherFormatsConservatively(@TempDir Path resources) throws IOException {
-        Files.writeString(resources.resolve("application.toml"), "[micronaut.control-panel]\npath = \"/cp\"\n");
-        assertEquals(Set.of(ControlPanel.PATH), ControlPanel.configuredKeys(List.of(resources), ControlPanel.environments(null)));
+    private static DependencyResolutionException failure(ArtifactResult... results) {
+        ArtifactResolutionException resolution = new ArtifactResolutionException(List.of(results));
+        return new DependencyResolutionException(new DependencyResult(new DependencyRequest()), resolution);
     }
 }
