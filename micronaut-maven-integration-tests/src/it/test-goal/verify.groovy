@@ -10,6 +10,8 @@ manifestFile.withInputStream { manifest.load(it) }
 
 String sep = File.separator
 assert manifest.'micronaut.dev.mode' == 'test'
+// the tests start their own servers: nothing to bind
+assert !manifest.containsKey('micronaut.dev.bind-loopback')
 assert manifest.'micronaut.dev.main-class' == 'testgoal.Application'
 assert manifest.'micronaut.dev.project-dir' == basedir.absolutePath
 // the run-mode entries stay

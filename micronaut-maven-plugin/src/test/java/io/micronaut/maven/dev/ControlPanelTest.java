@@ -74,20 +74,29 @@ class ControlPanelTest {
     @Test
     void writesTheSettingsAsTheResourceControlPanelReadsAtTheLowestPrecedence(@TempDir Path directory) throws IOException {
         Path resources = directory.resolve("control-panel");
-        ControlPanel.writeResources(resources);
-        Properties properties = new Properties();
-        try (Reader reader = Files.newBufferedReader(resources.resolve("micronaut-control-panel/micronaut-control-panel.properties"))) {
-            properties.load(reader);
-        }
+        ControlPanel.writeResources(resources, Set.of("io.micronaut:micronaut-http-server-netty"));
         assertEquals(Map.of(
             "micronaut.control-panel.enabled", "true",
             "micronaut.control-panel.path", "/control-panel",
-            "micronaut.control-panel.security.access", "ANONYMOUS"), Map.copyOf(properties));
+            "micronaut.control-panel.security.access", "ANONYMOUS"), read(resources));
 
         ControlPanel.deleteResources(resources);
         assertFalse(Files.exists(resources));
         // nothing to delete
         ControlPanel.deleteResources(resources);
+    }
+
+    @Test
+    void leavesTheAccessToTheApplicationsSecurityWhenMicronautSecurityIsOnTheClasspath(@TempDir Path directory) throws IOException {
+        Path resources = directory.resolve("control-panel");
+        ControlPanel.writeResources(resources, Set.of("io.micronaut:micronaut-http-server-netty", "io.micronaut.security:micronaut-security"));
+        Map<String, String> properties = read(resources);
+        assertEquals(Map.of(
+            "micronaut.control-panel.enabled", "true",
+            "micronaut.control-panel.path", "/control-panel"), properties);
+        assertFalse(properties.containsKey("micronaut.control-panel.security.access"));
+        // a module of the same group that is not Micronaut Security changes nothing
+        assertEquals(ControlPanel.DEFAULT_PROPERTIES, ControlPanel.properties(Set.of("io.micronaut.security:micronaut-security-annotations")));
     }
 
     @Test
@@ -109,6 +118,16 @@ class ControlPanelTest {
         DependencyCollectionException collection = new DependencyCollectionException(new CollectResult(new CollectRequest()), "Cannot collect", missingPom);
         DependencyResolutionException failure = new DependencyResolutionException(new DependencyResult(new DependencyRequest()), collection);
         assertTrue(ControlPanel.isMissingControlPanelArtifact(failure));
+    }
+
+    private static Map<String, String> read(Path resources) throws IOException {
+        Properties properties = new Properties();
+        try (Reader reader = Files.newBufferedReader(resources.resolve("micronaut-control-panel/micronaut-control-panel.properties"))) {
+            properties.load(reader);
+        }
+        Map<String, String> result = new java.util.HashMap<>();
+        properties.stringPropertyNames().forEach(name -> result.put(name, properties.getProperty(name)));
+        return result;
     }
 
     private static ArtifactResult notFound(String group, String artifactId) {

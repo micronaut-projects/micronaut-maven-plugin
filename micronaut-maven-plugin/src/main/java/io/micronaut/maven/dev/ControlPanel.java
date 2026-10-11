@@ -73,14 +73,29 @@ public final class ControlPanel {
     public static final String PROPERTIES_RESOURCE = "micronaut-control-panel/micronaut-control-panel.properties";
 
     /**
-     * The settings of the development runtime, defaults the application's own configuration overrides.
+     * The settings of the development runtime, defaults the application's own configuration overrides: those of an
+     * application without Micronaut Security, which is how Control Panel is open in the development environment
+     * anyway.
      */
     public static final Map<String, String> DEFAULT_PROPERTIES;
 
+    /**
+     * The settings of the development runtime of an application that depends on Micronaut Security: no access
+     * setting, so that the application's security decides who opens the panels.
+     */
+    public static final Map<String, String> SECURED_PROPERTIES;
+
+    /**
+     * The module whose presence on the runtime classpath leaves the access to Control Panel to the application.
+     */
+    public static final String SECURITY_MODULE = "io.micronaut.security:micronaut-security";
+
     static {
-        Map<String, String> properties = new LinkedHashMap<>();
-        properties.put("micronaut.control-panel.enabled", "true");
-        properties.put("micronaut.control-panel.path", "/control-panel");
+        Map<String, String> secured = new LinkedHashMap<>();
+        secured.put("micronaut.control-panel.enabled", "true");
+        secured.put("micronaut.control-panel.path", "/control-panel");
+        SECURED_PROPERTIES = Collections.unmodifiableMap(secured);
+        Map<String, String> properties = new LinkedHashMap<>(secured);
         properties.put("micronaut.control-panel.security.access", "ANONYMOUS");
         DEFAULT_PROPERTIES = Collections.unmodifiableMap(properties);
     }
@@ -145,23 +160,35 @@ public final class ControlPanel {
     }
 
     /**
-     * Writes {@link #PROPERTIES_RESOURCE} with the {@link #DEFAULT_PROPERTIES} under a directory.
+     * The settings for a runtime classpath: with Micronaut Security, none that opens the panels to anonymous users.
+     *
+     * @param moduleKeys the {@code group:artifact} keys of the runtime classpath
+     * @return {@link #SECURED_PROPERTIES} or {@link #DEFAULT_PROPERTIES}
+     */
+    public static Map<String, String> properties(Collection<String> moduleKeys) {
+        return moduleKeys.contains(SECURITY_MODULE) ? SECURED_PROPERTIES : DEFAULT_PROPERTIES;
+    }
+
+    /**
+     * Writes {@link #PROPERTIES_RESOURCE} with the {@link #properties(Collection) settings} of a runtime classpath
+     * under a directory.
      *
      * @param directory the directory, which the runtime classpath holds
+     * @param moduleKeys the {@code group:artifact} keys of the runtime classpath
      * @throws IOException if it cannot be written
      */
-    public static void writeResources(Path directory) throws IOException {
+    public static void writeResources(Path directory, Collection<String> moduleKeys) throws IOException {
         Path file = directory.resolve(PROPERTIES_RESOURCE);
         Files.createDirectories(file.getParent());
         Properties properties = new Properties();
-        properties.putAll(DEFAULT_PROPERTIES);
+        properties.putAll(properties(moduleKeys));
         try (OutputStream out = Files.newOutputStream(file)) {
             properties.store(out, "Written by the Micronaut Maven Plugin for mn:dev: defaults the application's configuration overrides");
         }
     }
 
     /**
-     * Deletes the directory {@link #writeResources(Path)} wrote, when the Control Panel is off.
+     * Deletes the directory {@link #writeResources(Path, Collection)} wrote, when the Control Panel is off.
      *
      * @param directory the directory
      * @throws IOException if it cannot be deleted

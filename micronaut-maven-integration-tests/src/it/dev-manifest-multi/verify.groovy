@@ -31,6 +31,9 @@ assert !new File(basedir, 'app/target/micronaut-dev/control-panel').exists()
 List<String> options = new File(basedir, 'app/target/micronaut-dev/java-options.argfile').readLines()
 assert options.contains('-Amicronaut.processing.group=devmulti')
 
+// the application listens on every interface, for a phone or a container
+assert manifest.'micronaut.dev.bind-loopback' == 'false'
+
 // invoked from the reactor root, the goal reads the selected application's own plugin configuration
 assert manifest.'micronaut.dev.main-class' == 'devmulti.app.Application'
 assert manifest.'micronaut.dev.strategy' == 'restart'

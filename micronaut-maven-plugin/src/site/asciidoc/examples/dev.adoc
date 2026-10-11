@@ -34,6 +34,7 @@ launcher compiles Java with `javac` and Groovy with the project's Groovy. Embedd
 |`mn.dev.livereload` |`true` |Adds `micronaut-dev-livereload` to the launcher's classpath, which starts the LiveReload server.
 |`mn.dev.livereload.port` |`35729` |The LiveReload port.
 |`mn.dev.livereload.injectScript` |`true` |Whether the client script is appended to HTML responses; `false` for users of a browser extension.
+|`mn.dev.bindLoopback` |`true` |Whether the application link:#bind-loopback[listens on `localhost`] by default; `false` to reach it from a phone or a container.
 |`mn.dev.controlPanel` |`true` |Adds link:#control-panel[Micronaut Control Panel] to the development runtime.
 |`mn.dev.manifestOnly` |`false` |Writes the manifest and stops, for a build that launches the JVM itself.
 |===
@@ -52,6 +53,36 @@ configured.
 
 A resource directory with `filtering` enabled is not read live, since the build expands it: the launcher reads its copy
 from the class output, and a change to it is applied by `mvn process-resources` in `build-tool` mode.
+
+[[bind-loopback]]
+== Listening on localhost
+
+`mn:dev` runs the application listening on `localhost` alone, so that a development server, with its development
+settings and tools, is not reachable from other machines on the network. The manifest says
+`micronaut.dev.bind-loopback=true`, and the launcher applies `micronaut.server.host=localhost` as the property source
+of lowest precedence: a `micronaut.server.host` the application sets in `application.yml`, as the
+`MICRONAUT_SERVER_HOST` environment variable or as a `-Dmicronaut.server.host` system property wins. `mn:test` is
+unchanged.
+
+To reach the application from a phone or a container, turn it off on the command line:
+
+[source,bash]
+----
+$ mvn mn:dev -Dmn.dev.bindLoopback=false
+----
+
+or in the build:
+
+[source,xml]
+----
+<plugin>
+  <groupId>io.micronaut.maven</groupId>
+  <artifactId>micronaut-maven-plugin</artifactId>
+  <configuration>
+    <bindLoopback>false</bindLoopback>
+  </configuration>
+</plugin>
+----
 
 [[control-panel]]
 == Micronaut Control Panel
@@ -86,6 +117,9 @@ micronaut.control-panel.enabled=true
 micronaut.control-panel.path=/control-panel
 micronaut.control-panel.security.access=ANONYMOUS
 ----
+
+When the runtime classpath holds `io.micronaut.security:micronaut-security`, the access setting is left out: the
+application's security decides who opens the panels.
 
 They are written to `target/micronaut-dev/control-panel/micronaut-control-panel/micronaut-control-panel.properties`, a
 directory of the runtime classpath, which Control Panel reads as its property source of lowest precedence: a setting

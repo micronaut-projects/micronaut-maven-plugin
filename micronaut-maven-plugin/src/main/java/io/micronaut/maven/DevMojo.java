@@ -189,6 +189,16 @@ public class DevMojo extends AbstractTestResourcesMojo {
     private boolean controlPanel;
 
     /**
+     * Whether the application listens on {@code localhost} by default, so that the development server is not
+     * reachable from other machines. Written to the manifest as {@code micronaut.dev.bind-loopback}, which the
+     * launcher applies at the lowest precedence: a {@code micronaut.server.host} the application sets in its
+     * configuration, as an environment variable or as a system property wins. Set it to false to reach the
+     * application from a phone or a container.
+     */
+    @Parameter(property = "mn.dev.bindLoopback", defaultValue = "true")
+    private boolean bindLoopback;
+
+    /**
      * Writes the manifest and stops, without launching anything.
      */
     @Parameter(property = "mn.dev.manifestOnly", defaultValue = "false")
@@ -523,7 +533,18 @@ public class DevMojo extends AbstractTestResourcesMojo {
         }
         List<String> retained = retain == null || retain.isBlank() ? List.of() : Arrays.stream(retain.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
         DevManifest.Settings settings = new DevManifest.Settings(main, strategy, compile, incremental, retained, liveReloadPort, liveReloadInjectScript);
-        return DevManifest.of(runnableProject, reactor, settings, runtimeClasspath, compileClasspath, processorPath, evaluator, manifestDirectory);
+        DevManifest manifest = DevManifest.of(runnableProject, reactor, settings, runtimeClasspath, compileClasspath, processorPath, evaluator, manifestDirectory);
+        Boolean loopback = bindLoopback();
+        return loopback == null ? manifest : manifest.withBindLoopback(loopback);
+    }
+
+    /**
+     * Whether the application listens on {@code localhost} by default.
+     *
+     * @return the {@code bindLoopback} parameter, or null to write no setting
+     */
+    protected Boolean bindLoopback() {
+        return bindLoopback;
     }
 
     /**
@@ -685,7 +706,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
         }
         try {
             if (active) {
-                ControlPanel.writeResources(resources);
+                ControlPanel.writeResources(resources, present);
                 files.add(resources.toFile());
             } else {
                 ControlPanel.deleteResources(resources);

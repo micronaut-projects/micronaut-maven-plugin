@@ -213,6 +213,16 @@ public class TestMojo extends DevMojo {
         return false;
     }
 
+    /**
+     * The tests start their own servers, as they do in the build: the launcher binds none.
+     *
+     * @return null, no setting
+     */
+    @Override
+    protected Boolean bindLoopback() {
+        return null;
+    }
+
     @Override
     protected List<String> watchedRoots(MavenProject project) {
         List<String> roots = new ArrayList<>(super.watchedRoots(project));

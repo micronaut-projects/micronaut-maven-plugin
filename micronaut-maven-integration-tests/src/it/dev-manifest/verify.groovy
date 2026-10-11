@@ -17,6 +17,8 @@ assert manifest.'micronaut.dev.build-tool.trigger'.endsWith('micronaut-dev' + Fi
 assert manifest.'micronaut.dev.retain' == 'javax.sql.DataSource'
 assert manifest.'micronaut.dev.livereload.port' == '35730'
 assert manifest.'micronaut.dev.livereload.inject-script' == 'true'
+// the launcher binds the application to localhost by default, below the application's own configuration
+assert manifest.'micronaut.dev.bind-loopback' == 'true'
 assert manifest.'micronaut.dev.project-dir' == basedir.absolutePath
 assert manifest.'micronaut.dev.sources.java'.endsWith('src' + File.separator + 'main' + File.separator + 'java')
 assert manifest.'micronaut.dev.resources.config'.endsWith('src' + File.separator + 'main' + File.separator + 'resources')
