@@ -333,28 +333,38 @@ public final class DevManifest {
     }
 
     private static ProcessorPaths processorPaths(Xpp3Dom configuration, Xpp3Dom paths, ExpressionEvaluator evaluator) throws ExpressionEvaluationException {
+        if (configuration == null) {
+            return new ProcessorPaths(List.of(), false);
+        }
+        boolean managed = Boolean.parseBoolean(childValue(configuration, "annotationProcessorPathsUseDepMgmt", evaluator));
         List<Dependency> dependencies = new ArrayList<>();
-        boolean managed = false;
-        if (configuration != null) {
-            managed = Boolean.parseBoolean(childValue(configuration, "annotationProcessorPathsUseDepMgmt", evaluator));
-            if (paths != null) {
-                for (Xpp3Dom path : paths.getChildren()) {
-                    String groupId = childValue(path, "groupId", evaluator);
-                    String artifactId = childValue(path, "artifactId", evaluator);
-                    String version = childValue(path, "version", evaluator);
-                    String classifier = childValue(path, "classifier", evaluator);
-                    if (groupId == null || artifactId == null) {
-                        continue;
-                    }
-                    if (version == null || version.isEmpty()) {
-                        managed = true;
-                    }
-                    Artifact artifact = new DefaultArtifact(groupId, artifactId, classifier == null ? "" : classifier, "jar", version == null ? "" : version);
-                    dependencies.add(new Dependency(artifact, JavaScopes.RUNTIME, false, exclusions(path, evaluator)));
+        if (paths != null) {
+            for (Xpp3Dom path : paths.getChildren()) {
+                Dependency dependency = processorPath(path, evaluator);
+                if (dependency != null) {
+                    dependencies.add(dependency);
+                    // a path without a version takes it from the dependency management
+                    managed |= dependency.getArtifact().getVersion().isEmpty();
                 }
             }
         }
         return new ProcessorPaths(dependencies, managed);
+    }
+
+    /**
+     * A {@code <path>} of {@code annotationProcessorPaths} as a dependency to resolve, or null when it names
+     * no group or artifact.
+     */
+    private static Dependency processorPath(Xpp3Dom path, ExpressionEvaluator evaluator) throws ExpressionEvaluationException {
+        String groupId = childValue(path, "groupId", evaluator);
+        String artifactId = childValue(path, "artifactId", evaluator);
+        if (groupId == null || artifactId == null) {
+            return null;
+        }
+        String version = childValue(path, "version", evaluator);
+        String classifier = childValue(path, "classifier", evaluator);
+        Artifact artifact = new DefaultArtifact(groupId, artifactId, classifier == null ? "" : classifier, "jar", version == null ? "" : version);
+        return new Dependency(artifact, JavaScopes.RUNTIME, false, exclusions(path, evaluator));
     }
 
     /**
@@ -390,63 +400,70 @@ public final class DevManifest {
                 options.add("-parameters");
             }
             String release = compilerSetting(configuration, "release", test, project, evaluator);
-            if (release != null && !release.isEmpty()) {
-                options.add("--release");
-                options.add(release);
+            if (isPresent(release)) {
+                addOption(options, "--release", release);
             } else {
-                String source = compilerSetting(configuration, "source", test, project, evaluator);
-                String target = compilerSetting(configuration, "target", test, project, evaluator);
-                if (source != null && !source.isEmpty()) {
-                    options.add("-source");
-                    options.add(source);
-                }
-                if (target != null && !target.isEmpty()) {
-                    options.add("-target");
-                    options.add(target);
-                }
+                addOption(options, "-source", compilerSetting(configuration, "source", test, project, evaluator));
+                addOption(options, "-target", compilerSetting(configuration, "target", test, project, evaluator));
             }
-            String encoding = setting(configuration, "encoding", "project.build.sourceEncoding", project, evaluator);
-            if (encoding != null && !encoding.isEmpty()) {
-                options.add("-encoding");
-                options.add(encoding);
-            }
+            addOption(options, "-encoding", setting(configuration, "encoding", "project.build.sourceEncoding", project, evaluator));
             if (configuration != null) {
-                Xpp3Dom compilerArgs = configuration.getChild("compilerArgs");
-                if (compilerArgs != null) {
-                    for (Xpp3Dom arg : compilerArgs.getChildren()) {
-                        String value = evaluate(arg.getValue(), evaluator);
-                        if (value != null && !value.isBlank()) {
-                            options.add(value.trim());
-                        }
-                    }
-                }
-                String compilerArgument = test ? childValue(configuration, "testCompilerArgument", evaluator) : null;
-                if (compilerArgument == null) {
-                    compilerArgument = childValue(configuration, "compilerArgument", evaluator);
-                }
-                if (compilerArgument != null && !compilerArgument.isBlank()) {
-                    options.add(compilerArgument.trim());
-                }
-                // the map form, each key an option and each value its argument, the tests' own when configured
-                Xpp3Dom compilerArguments = test ? configuration.getChild("testCompilerArguments") : null;
-                if (compilerArguments == null) {
-                    compilerArguments = configuration.getChild("compilerArguments");
-                }
-                if (compilerArguments != null) {
-                    for (Xpp3Dom argument : compilerArguments.getChildren()) {
-                        String name = argument.getName();
-                        options.add(name.startsWith("-") ? name : "-" + name);
-                        String value = evaluate(argument.getValue(), evaluator);
-                        if (value != null && !value.isBlank()) {
-                            options.add(value.trim());
-                        }
-                    }
-                }
+                options.addAll(compilerArguments(configuration, evaluator, test));
             }
         } catch (ExpressionEvaluationException e) {
             throw new IllegalStateException("Cannot read the compiler plugin's configuration: " + e.getMessage(), e);
         }
         return options;
+    }
+
+    /**
+     * The {@code compilerArgs} of the compiler plugin's configuration, then its {@code compilerArgument} and its
+     * {@code compilerArguments}, the tests' {@code testCompilerArgument} and {@code testCompilerArguments} winning
+     * for the tests when configured.
+     */
+    private static List<String> compilerArguments(Xpp3Dom configuration, ExpressionEvaluator evaluator, boolean test) throws ExpressionEvaluationException {
+        List<String> arguments = new ArrayList<>();
+        Xpp3Dom compilerArgs = configuration.getChild("compilerArgs");
+        if (compilerArgs != null) {
+            for (Xpp3Dom arg : compilerArgs.getChildren()) {
+                addArgument(arguments, evaluate(arg.getValue(), evaluator));
+            }
+        }
+        String compilerArgument = test ? childValue(configuration, "testCompilerArgument", evaluator) : null;
+        if (compilerArgument == null) {
+            compilerArgument = childValue(configuration, "compilerArgument", evaluator);
+        }
+        addArgument(arguments, compilerArgument);
+        // the map form, each key an option and each value its argument, the tests' own when configured
+        Xpp3Dom compilerArguments = test ? configuration.getChild("testCompilerArguments") : null;
+        if (compilerArguments == null) {
+            compilerArguments = configuration.getChild("compilerArguments");
+        }
+        if (compilerArguments != null) {
+            for (Xpp3Dom argument : compilerArguments.getChildren()) {
+                String name = argument.getName();
+                arguments.add(name.startsWith("-") ? name : "-" + name);
+                addArgument(arguments, evaluate(argument.getValue(), evaluator));
+            }
+        }
+        return arguments;
+    }
+
+    private static void addOption(List<String> options, String option, String value) {
+        if (isPresent(value)) {
+            options.add(option);
+            options.add(value);
+        }
+    }
+
+    private static void addArgument(List<String> arguments, String value) {
+        if (value != null && !value.isBlank()) {
+            arguments.add(value.trim());
+        }
+    }
+
+    private static boolean isPresent(String value) {
+        return value != null && !value.isEmpty();
     }
 
     /**
@@ -472,13 +489,9 @@ public final class DevManifest {
      */
     private static List<String> userSourceRoots(MavenProject project) {
         Path build = Path.of(project.getBuild().getDirectory()).toAbsolutePath().normalize();
-        List<String> roots = new ArrayList<>();
-        for (String root : project.getCompileSourceRoots()) {
-            if (!Path.of(root).toAbsolutePath().normalize().startsWith(build)) {
-                roots.add(root);
-            }
-        }
-        return roots;
+        return project.getCompileSourceRoots().stream()
+            .filter(root -> !Path.of(root).toAbsolutePath().normalize().startsWith(build))
+            .toList();
     }
 
     private static String groovyRoot(MavenProject project) {
@@ -536,13 +549,12 @@ public final class DevManifest {
      * The resource roots read live: a filtered one is not, since the build expands it and its copy is in the output.
      */
     private static List<String> liveResourceRoots(MavenProject project) {
-        List<String> roots = new ArrayList<>();
-        for (Resource resource : project.getResources()) {
-            if (!resource.isFiltering() && new File(resource.getDirectory()).isDirectory()) {
-                roots.add(new File(resource.getDirectory()).getAbsolutePath());
-            }
-        }
-        return roots;
+        return project.getResources().stream()
+            .filter(resource -> !resource.isFiltering())
+            .map(resource -> new File(resource.getDirectory()))
+            .filter(File::isDirectory)
+            .map(File::getAbsolutePath)
+            .toList();
     }
 
     /**
@@ -616,21 +628,15 @@ public final class DevManifest {
     }
 
     private static List<String> existing(List<String> directories) {
-        List<String> existing = new ArrayList<>();
-        for (String directory : directories) {
-            if (new File(directory).isDirectory()) {
-                existing.add(new File(directory).getAbsolutePath());
-            }
-        }
-        return existing;
+        return directories.stream()
+            .map(File::new)
+            .filter(File::isDirectory)
+            .map(File::getAbsolutePath)
+            .toList();
     }
 
     private static List<String> paths(List<File> files) {
-        List<String> paths = new ArrayList<>(files.size());
-        for (File file : files) {
-            paths.add(file.getAbsolutePath());
-        }
-        return paths;
+        return files.stream().map(File::getAbsolutePath).toList();
     }
 
     private String argumentFile(String name, List<String> lines) {

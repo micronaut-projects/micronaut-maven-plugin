@@ -72,6 +72,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static io.micronaut.maven.core.MojoUtils.findJavaExecutable;
@@ -82,7 +83,7 @@ import static io.micronaut.maven.core.MojoUtils.hasMicronautMavenPlugin;
  * launcher of Micronaut Core's {@code micronaut-dev} module: sources are compiled inside the running
  * JVM and the application is restarted on a fresh class loader, with the singletons a retention
  * policy names kept alive, or, for an edit that only changed method bodies, the classes are
- * redefined in place. {@code mn:run} is unchanged; this goal is the alternative to it.
+ * redefined in place. This goal replaces {@code mn:run}, which is deprecated for removal in Micronaut 6.
  *
  * <p>The goal writes the manifest the launcher reads into {@code target/micronaut-dev} from the
  * project model, the compiler plugin's configuration included, then launches the JVM with the
@@ -134,7 +135,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
     /**
      * The application's main class.
      */
-    @Parameter(defaultValue = RunMojo.EXEC_MAIN_CLASS)
+    @Parameter(defaultValue = MojoUtils.EXEC_MAIN_CLASS)
     private String mainClass;
 
     /**
@@ -237,7 +238,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
     /**
      * Arguments for the application's {@code main}.
      */
-    @Parameter(property = RunMojo.MN_APP_ARGS)
+    @Parameter(property = MojoUtils.MN_APP_ARGS)
     private String appArguments;
 
     @Parameter(defaultValue = "${mojoExecution}", readonly = true, required = true)
@@ -246,7 +247,10 @@ public class DevMojo extends AbstractTestResourcesMojo {
     private MavenProject runnableProject;
     private List<Dependency> runtimeDependencies;
     private List<File> controlPanelClasspath;
-    private volatile Process process;
+    /**
+     * The application's process, read by the shutdown hook and the goal's own thread.
+     */
+    private final AtomicReference<Process> process = new AtomicReference<>();
     /**
      * Set when the build is shutting down, Ctrl+C for one: the application is stopped, and the status it
      * exits with is not a failure.
@@ -310,7 +314,8 @@ public class DevMojo extends AbstractTestResourcesMojo {
             if (getLog().isDebugEnabled()) {
                 getLog().debug("Running " + String.join(" ", args));
             }
-            process = new ProcessBuilder(args).inheritIO().directory(runnableProject.getBasedir()).start();
+            Process started = new ProcessBuilder(args).inheritIO().directory(runnableProject.getBasedir()).start();
+            process.set(started);
             shutdownHook = new Thread(() -> {
                 stopping = true;
                 killProcess();
@@ -319,12 +324,12 @@ public class DevMojo extends AbstractTestResourcesMojo {
             if (isBuildToolMode()) {
                 watcher = watchAndCompile(manifestDirectory.resolve(DevManifest.TRIGGER_FILE_NAME));
             }
-            int exit = process.waitFor();
+            int exit = started.waitFor();
             if (exit != 0 && !stopping) {
                 // the application failed to start, or stopped on an error: the build says so
                 throw new MojoExecutionException(exitFailure(exit));
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
         } catch (IOException | DependencyResolutionException e) {
             throw new MojoExecutionException("Cannot launch the development runtime: " + e.getMessage(), e);
@@ -578,25 +583,12 @@ public class DevMojo extends AbstractTestResourcesMojo {
             throw new MojoExecutionException("Cannot resolve " + LAUNCHER_GROUP + ":" + LAUNCHER_ARTIFACT + ": development mode needs Micronaut Core 5.3 or later in the dependency management");
         }
         List<File> runtime = files(runtimeDependencies());
-        List<String> classpath = new ArrayList<>();
-        for (File file : runtime) {
-            classpath.add(file.getAbsolutePath());
-        }
-        for (File file : controlPanelClasspath()) {
-            if (!classpath.contains(file.getAbsolutePath())) {
-                classpath.add(file.getAbsolutePath());
-            }
-        }
-        for (File file : launcher) {
-            if (!classpath.contains(file.getAbsolutePath())) {
-                classpath.add(file.getAbsolutePath());
-            }
-        }
-        for (File file : testResourcesClient()) {
-            if (!classpath.contains(file.getAbsolutePath())) {
-                classpath.add(file.getAbsolutePath());
-            }
-        }
+        // the runtime classpath, then what of the Control Panel, the launcher and the test resources client it does not hold already
+        List<String> classpath = Stream.of(runtime, controlPanelClasspath(), launcher, testResourcesClient())
+            .flatMap(List::stream)
+            .map(File::getAbsolutePath)
+            .distinct()
+            .toList();
         List<String> translatedJvmArguments = translateArguments(jvmArguments);
         List<String> args = new ArrayList<>();
         args.add(javaExecutable);
@@ -891,19 +883,19 @@ public class DevMojo extends AbstractTestResourcesMojo {
         if (shutdownHook != null) {
             try {
                 Runtime.getRuntime().removeShutdownHook(shutdownHook);
-            } catch (IllegalStateException e) {
+            } catch (IllegalStateException _) {
                 // the JVM is shutting down: the hook runs
             }
         }
     }
 
     private void killProcess() {
-        Process running = process;
+        Process running = process.get();
         if (running != null && running.isAlive()) {
             running.destroy();
             try {
                 running.waitFor();
-            } catch (InterruptedException e) {
+            } catch (InterruptedException _) {
                 running.destroyForcibly();
                 Thread.currentThread().interrupt();
             }

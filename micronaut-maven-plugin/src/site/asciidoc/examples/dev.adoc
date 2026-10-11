@@ -3,7 +3,8 @@
 `mn:dev` runs the application through the development launcher of Micronaut Core 5.3 (`micronaut-dev`): sources are
 compiled inside the running JVM and the application is restarted on a fresh class loader, with the singletons a
 retention policy names kept alive, or, for an edit that only changed method bodies, the classes are redefined in place.
-`mn:run` is unchanged and remains the alternative that recompiles through Maven and relaunches the JVM.
+`mn:dev` replaces `mn:run`, which recompiles through Maven and relaunches the JVM, and which is deprecated for removal
+in Micronaut 6.
 
 :toc:
 
