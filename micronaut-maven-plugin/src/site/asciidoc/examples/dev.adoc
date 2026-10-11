@@ -75,7 +75,9 @@ management versions them. The other panels are added when the runtime classpath 
 |`micronaut-control-panel-cache` |`io.micronaut.cache:micronaut-cache-caffeine`, `micronaut-cache-ehcache`, `micronaut-cache-hazelcast` or `micronaut-cache-infinispan`
 |===
 
-The goal passes these settings to the development JVM as system properties:
+The goal passes these settings to the development JVM as system properties, through the JVM argument file
+`target/micronaut-dev/control-panel.argfile`, which a build that launches the JVM itself after
+`-Dmn.dev.manifestOnly=true` passes as `@target/micronaut-dev/control-panel.argfile`:
 
 [source,properties]
 ----
@@ -87,7 +89,8 @@ micronaut.control-panel.security.access=ANONYMOUS
 A setting the application configures itself is not passed, so that the application's value applies: one set with
 `-D` on the Maven command line, in `mn.jvmArgs`, as an environment variable such as
 `MICRONAUT_CONTROL_PANEL_SECURITY_ACCESS`, or in an `application` configuration file of the application's resources or
-of a reactor project it depends on.
+of a reactor project it depends on. The file of an environment counts only when the environment is active: `dev`, which
+the development runtime activates, and those `micronaut.environments` or `MICRONAUT_ENVIRONMENTS` names.
 
 To run without the Control Panel, turn it off on the command line:
 

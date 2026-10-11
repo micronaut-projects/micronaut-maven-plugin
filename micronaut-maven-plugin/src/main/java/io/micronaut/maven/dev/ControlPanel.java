@@ -29,12 +29,14 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -79,6 +81,17 @@ public final class ControlPanel {
     public static final String SECURITY_ACCESS = "micronaut.control-panel.security.access";
 
     /**
+     * The name of the JVM argument file beside the development manifest holding the settings passed, for a build that
+     * launches the JVM itself: {@code java @control-panel.argfile ...}.
+     */
+    public static final String ARGUMENT_FILE_NAME = "control-panel.argfile";
+
+    /**
+     * The environment of the development runtime.
+     */
+    public static final String DEVELOPMENT_ENVIRONMENT = "dev";
+
+    /**
      * The settings passed to the development runtime unless the application configures them.
      */
     public static final Map<String, String> DEFAULT_PROPERTIES;
@@ -94,7 +107,7 @@ public final class ControlPanel {
     /**
      * The configuration files Micronaut reads from the classpath: {@code application} and those of an environment.
      */
-    private static final Pattern CONFIGURATION_FILE = Pattern.compile("application(-[^.]+)?\\.(properties|ya?ml|json|toml|groovy|conf)");
+    private static final Pattern CONFIGURATION_FILE = Pattern.compile("application(?:-([^.]+))?\\.(properties|ya?ml|json|toml|groovy|conf)");
 
     private ControlPanel() {
     }
@@ -196,21 +209,23 @@ public final class ControlPanel {
 
     /**
      * The Control Panel keys the configuration files of resource directories set: every {@code application} file,
-     * that of an environment included, read as properties, YAML or JSON. A file of another format, TOML or Groovy,
+     * and that of each active environment, read as properties, YAML or JSON; the file of an environment that is not
+     * active is not loaded by the runtime, so it configures nothing. A file of another format, TOML or Groovy,
      * sets a key when it names its last segment within the {@code control-panel} section, a guess that only ever
      * leaves a default out.
      *
      * @param resourceDirectories the resource directories
+     * @param environments the active environments
      * @return the keys of {@link #DEFAULT_PROPERTIES} they set
      */
-    public static Set<String> configuredKeys(Collection<Path> resourceDirectories) {
+    public static Set<String> configuredKeys(Collection<Path> resourceDirectories, Collection<String> environments) {
         Set<String> keys = new HashSet<>();
         for (Path directory : resourceDirectories) {
             if (!Files.isDirectory(directory)) {
                 continue;
             }
             try (Stream<Path> files = Files.list(directory)) {
-                for (Path file : files.filter(ControlPanel::isConfigurationFile).sorted().toList()) {
+                for (Path file : files.filter(file -> isConfigurationFile(file, environments)).sorted().toList()) {
                     keys.addAll(configuredKeys(file));
                 }
             } catch (IOException e) {
@@ -220,8 +235,51 @@ public final class ControlPanel {
         return keys;
     }
 
-    private static boolean isConfigurationFile(Path file) {
-        return Files.isRegularFile(file) && CONFIGURATION_FILE.matcher(file.getFileName().toString()).matches();
+    private static boolean isConfigurationFile(Path file, Collection<String> environments) {
+        Matcher matcher = CONFIGURATION_FILE.matcher(file.getFileName().toString());
+        if (!Files.isRegularFile(file) || !matcher.matches()) {
+            return false;
+        }
+        String environment = matcher.group(1);
+        return environment == null || environments.contains(environment);
+    }
+
+    /**
+     * The environments of the development runtime: {@code dev}, which the launcher activates, and those a
+     * {@code micronaut.environments} setting names.
+     *
+     * @param environmentsSetting the value of {@code micronaut.environments} or {@code MICRONAUT_ENVIRONMENTS}, if any
+     * @return the environments
+     */
+    public static Set<String> environments(String environmentsSetting) {
+        Set<String> environments = new LinkedHashSet<>();
+        environments.add(DEVELOPMENT_ENVIRONMENT);
+        if (environmentsSetting != null) {
+            for (String environment : environmentsSetting.split(",")) {
+                if (!environment.isBlank()) {
+                    environments.add(environment.trim());
+                }
+            }
+        }
+        return environments;
+    }
+
+    /**
+     * The value of a system property among JVM arguments.
+     *
+     * @param key the property
+     * @param arguments the arguments
+     * @return the value of the last {@code -Dkey=value}, or null
+     */
+    public static String systemProperty(String key, List<String> arguments) {
+        String property = "-D" + key + "=";
+        String value = null;
+        for (String argument : arguments) {
+            if (argument.startsWith(property)) {
+                value = argument.substring(property.length());
+            }
+        }
+        return value;
     }
 
     private static String extension(String name) {

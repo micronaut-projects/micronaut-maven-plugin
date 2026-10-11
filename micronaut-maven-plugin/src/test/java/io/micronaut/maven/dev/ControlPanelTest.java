@@ -68,6 +68,8 @@ class ControlPanelTest {
         assertTrue(ControlPanel.isSystemProperty(ControlPanel.PATH, List.of("-Xmx1g", "-Dmicronaut.control-panel.path=/cp")));
         assertTrue(ControlPanel.isSystemProperty(ControlPanel.ENABLED, List.of("-Dmicronaut.control-panel.enabled")));
         assertFalse(ControlPanel.isSystemProperty(ControlPanel.PATH, List.of("-Dmicronaut.control-panel.path-other=x")));
+        assertEquals("cloud", ControlPanel.systemProperty("micronaut.environments", List.of("-Dmicronaut.environments=test", "-Dmicronaut.environments=cloud")));
+        assertEquals(null, ControlPanel.systemProperty("micronaut.environments", List.of("-Dother=x")));
         assertEquals("MICRONAUT_CONTROL_PANEL_SECURITY_ACCESS", ControlPanel.environmentVariable(ControlPanel.SECURITY_ACCESS));
     }
 
@@ -80,14 +82,23 @@ class ControlPanelTest {
                 security:
                   access: AUTHENTICATED
             """);
-        assertEquals(Set.of(ControlPanel.PATH, ControlPanel.SECURITY_ACCESS), ControlPanel.configuredKeys(List.of(resources)));
+        assertEquals(Set.of(ControlPanel.PATH, ControlPanel.SECURITY_ACCESS), ControlPanel.configuredKeys(List.of(resources), ControlPanel.environments(null)));
     }
 
     @Test
     void readsFlatYamlAndJson(@TempDir Path resources) throws IOException {
         Files.writeString(resources.resolve("application.yml"), "micronaut.control-panel.enabled: false\n");
-        Files.writeString(resources.resolve("application-test.json"), "{\"micronaut\": {\"control-panel\": {\"path\": \"/x\"}}}");
-        assertEquals(Set.of(ControlPanel.ENABLED, ControlPanel.PATH), ControlPanel.configuredKeys(List.of(resources)));
+        Files.writeString(resources.resolve("application-local.json"), "{\"micronaut\": {\"control-panel\": {\"path\": \"/x\"}}}");
+        assertEquals(Set.of(ControlPanel.ENABLED, ControlPanel.PATH), ControlPanel.configuredKeys(List.of(resources), ControlPanel.environments("local")));
+    }
+
+    @Test
+    void ignoresTheFilesOfInactiveEnvironments(@TempDir Path resources) throws IOException {
+        Files.writeString(resources.resolve("application-test.yml"), "micronaut.control-panel.enabled: false\n");
+        Files.writeString(resources.resolve("application-dev.properties"), "micronaut.control-panel.path=/cp\n");
+        assertEquals(Set.of(ControlPanel.PATH), ControlPanel.configuredKeys(List.of(resources), ControlPanel.environments(null)));
+        assertEquals(Set.of(ControlPanel.ENABLED, ControlPanel.PATH), ControlPanel.configuredKeys(List.of(resources), ControlPanel.environments(" test , cloud")));
+        assertEquals(Set.of("dev", "test", "cloud"), ControlPanel.environments(" test , cloud"));
     }
 
     @Test
@@ -96,12 +107,12 @@ class ControlPanelTest {
         Files.writeString(resources.resolve("bootstrap.yml"), "micronaut.control-panel.path: /x\n");
         Files.writeString(resources.resolve("application.yml"), "micronaut:\n  application:\n    name: demo\n");
         Files.writeString(resources.resolve("application-broken.yml"), "micronaut: [\n");
-        assertEquals(Set.of(), ControlPanel.configuredKeys(List.of(resources, resources.resolve("missing"))));
+        assertEquals(Set.of(), ControlPanel.configuredKeys(List.of(resources, resources.resolve("missing")), ControlPanel.environments(null)));
     }
 
     @Test
     void readsOtherFormatsConservatively(@TempDir Path resources) throws IOException {
         Files.writeString(resources.resolve("application.toml"), "[micronaut.control-panel]\npath = \"/cp\"\n");
-        assertEquals(Set.of(ControlPanel.PATH), ControlPanel.configuredKeys(List.of(resources)));
+        assertEquals(Set.of(ControlPanel.PATH), ControlPanel.configuredKeys(List.of(resources), ControlPanel.environments(null)));
     }
 }

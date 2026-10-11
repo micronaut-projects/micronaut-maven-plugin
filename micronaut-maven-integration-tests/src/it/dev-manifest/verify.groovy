@@ -35,6 +35,12 @@ assert runtime.any { it.contains('micronaut-control-panel-management-') }
 assert runtime.any { it.contains('micronaut-control-panel-datasource-') }
 assert runtime.every { !it.contains('micronaut-control-panel-kafka-') && !it.contains('micronaut-control-panel-hibernate-') }
 assert log.text.contains("Adding Micronaut Control Panel to the development runtime")
+// its settings, for a build that launches the JVM itself: the application configures none of them
+assert new File(basedir, 'target/micronaut-dev/control-panel.argfile').readLines() == [
+    '-Dmicronaut.control-panel.enabled=true',
+    '-Dmicronaut.control-panel.path=/control-panel',
+    '-Dmicronaut.control-panel.security.access=ANONYMOUS'
+]
 assert manifest.'micronaut.dev.compile-classpath' == '@compile.argfile'
 assert manifest.'micronaut.dev.processor-path' == '@processors.argfile'
 List<String> processors = new File(basedir, 'target/micronaut-dev/processors.argfile').readLines()

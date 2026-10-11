@@ -288,6 +288,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
             throw new MojoExecutionException("Cannot write the development mode manifest", e);
         }
         getLog().info("Development mode manifest written to " + manifestFile);
+        writeControlPanelArguments(manifestDirectory);
         if (manifestOnly) {
             return;
         }
@@ -586,7 +587,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
         args.addAll(translatedJvmArguments);
         mavenSession.getUserProperties().forEach((key, value) -> args.add("-D" + key + "=" + value));
         if (controlPanelLaunch().active()) {
-            controlPanelProperties(translatedJvmArguments).forEach((key, value) -> args.add("-D" + key + "=" + value));
+            args.add("@" + manifestFile.resolveSibling(ControlPanel.ARGUMENT_FILE_NAME));
         }
         // the launcher as the JVM's agent, for the method-body fast path
         args.add("-javaagent:" + launcherArtifact.getFile().getAbsolutePath());
@@ -698,9 +699,29 @@ public class DevMojo extends AbstractTestResourcesMojo {
     }
 
     /**
+     * Writes the Control Panel settings into {@link ControlPanel#ARGUMENT_FILE_NAME} beside the manifest, which the
+     * launch reads and a build that launches the JVM itself can pass, or removes a stale one when no Control Panel runs.
+     */
+    private void writeControlPanelArguments(Path manifestDirectory) throws MojoExecutionException {
+        Path file = manifestDirectory.resolve(ControlPanel.ARGUMENT_FILE_NAME);
+        try {
+            if (controlPanelLaunch().active()) {
+                List<String> lines = new ArrayList<>();
+                controlPanelProperties(translateArguments(jvmArguments)).forEach((key, value) -> lines.add("-D" + key + "=" + value));
+                Files.write(file, lines, StandardCharsets.UTF_8);
+            } else {
+                Files.deleteIfExists(file);
+            }
+        } catch (IOException e) {
+            throw new MojoExecutionException("Cannot write " + file, e);
+        }
+    }
+
+    /**
      * The Control Panel settings passed to the development runtime: the defaults of {@link ControlPanel} the
      * application does not configure itself, with a system property of the build or of {@code mn.jvmArgs}, an
-     * environment variable, or a configuration file of the runnable project or a reactor project it depends on.
+     * environment variable, or a configuration file of the runnable project or a reactor project it depends on,
+     * that of an environment only when the environment is active.
      *
      * @param jvmArguments the application's JVM arguments
      * @return the settings
@@ -712,7 +733,14 @@ public class DevMojo extends AbstractTestResourcesMojo {
                 resourceDirectories.add(Path.of(resource.getDirectory()));
             }
         }
-        Set<String> inFiles = ControlPanel.configuredKeys(resourceDirectories);
+        String environments = ControlPanel.systemProperty("micronaut.environments", jvmArguments);
+        if (mavenSession.getUserProperties().getProperty("micronaut.environments") != null) {
+            environments = mavenSession.getUserProperties().getProperty("micronaut.environments");
+        }
+        if (environments == null) {
+            environments = System.getenv("MICRONAUT_ENVIRONMENTS");
+        }
+        Set<String> inFiles = ControlPanel.configuredKeys(resourceDirectories, ControlPanel.environments(environments));
         return ControlPanel.properties(key -> mavenSession.getUserProperties().containsKey(key)
             || ControlPanel.isSystemProperty(key, jvmArguments)
             || System.getenv(ControlPanel.environmentVariable(key)) != null
