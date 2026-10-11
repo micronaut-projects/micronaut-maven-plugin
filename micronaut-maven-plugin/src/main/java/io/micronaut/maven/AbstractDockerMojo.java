@@ -120,7 +120,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     /**
      * List of additional arguments that will be passed to the application.
      */
-    @Parameter(property = RunMojo.MN_APP_ARGS)
+    @Parameter(property = MojoUtils.MN_APP_ARGS)
     protected List<String> appArguments;
 
     /**
@@ -135,7 +135,7 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * The main class of the application, as defined in the
      * <a href="https://www.mojohaus.org/exec-maven-plugin/java-mojo.html#mainClass">Exec Maven Plugin</a>.
      */
-    @Parameter(defaultValue = RunMojo.EXEC_MAIN_CLASS, required = true)
+    @Parameter(defaultValue = MojoUtils.EXEC_MAIN_CLASS, required = true)
     protected String mainClass;
 
     /**

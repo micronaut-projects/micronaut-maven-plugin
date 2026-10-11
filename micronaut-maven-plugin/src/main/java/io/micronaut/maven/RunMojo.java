@@ -80,15 +80,18 @@ import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 1.0.0
+ * @deprecated {@code mn:run} will be removed in Micronaut 6: use {@code mn:dev} instead.
  */
+@Deprecated(forRemoval = true, since = "5.1.0")
 @SuppressWarnings("unused")
 @Mojo(name = "run", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PREPARE_PACKAGE, aggregator = true)
 @Execute(phase = LifecyclePhase.PROCESS_CLASSES)
 public class RunMojo extends AbstractTestResourcesMojo {
 
-    public static final String MN_APP_ARGS = "mn.appArgs";
-    public static final String EXEC_MAIN_CLASS = "${exec.mainClass}";
+    public static final String MN_APP_ARGS = MojoUtils.MN_APP_ARGS;
+    public static final String EXEC_MAIN_CLASS = MojoUtils.EXEC_MAIN_CLASS;
     public static final String RESOURCES_DIR = "src/main/resources";
+    static final String DEPRECATION_WARNING = "mn:run is deprecated and will be removed in Micronaut 6: use mn:dev instead";
 
     private static final List<String> RELEVANT_SRC_DIRS = List.of("resources", "java", "groovy");
     private static final int LAST_COMPILATION_THRESHOLD = 500;
@@ -237,6 +240,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         try {
             maybeStartTestResourcesServer();
             runApplication();
+            warnDeprecated();
             Thread shutdownHook = new Thread(this::killProcess);
             Runtime.getRuntime().addShutdownHook(shutdownHook);
 
@@ -290,7 +294,16 @@ public class RunMojo extends AbstractTestResourcesMojo {
         } finally {
             killProcess();
             cleanup();
+            warnDeprecated();
         }
+    }
+
+    /**
+     * Warns that this goal is deprecated, both when the application starts and when the goal finishes, so that the
+     * warning shows near the end of the output.
+     */
+    void warnDeprecated() {
+        getLog().warn(DEPRECATION_WARNING);
     }
 
     protected final void initialize() {

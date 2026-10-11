@@ -79,7 +79,7 @@ import static io.micronaut.maven.core.MojoUtils.hasMicronautMavenPlugin;
  * launcher of Micronaut Core's {@code micronaut-dev} module: sources are compiled inside the running
  * JVM and the application is restarted on a fresh class loader, with the singletons a retention
  * policy names kept alive, or, for an edit that only changed method bodies, the classes are
- * redefined in place. {@code mn:run} is unchanged; this goal is the alternative to it.
+ * redefined in place. This goal replaces {@code mn:run}, which is deprecated for removal in Micronaut 6.
  *
  * <p>The goal writes the manifest the launcher reads into {@code target/micronaut-dev} from the
  * project model, the compiler plugin's configuration included, then launches the JVM with the
@@ -126,7 +126,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
     /**
      * The application's main class.
      */
-    @Parameter(defaultValue = RunMojo.EXEC_MAIN_CLASS)
+    @Parameter(defaultValue = MojoUtils.EXEC_MAIN_CLASS)
     private String mainClass;
 
     /**
@@ -211,7 +211,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
     /**
      * Arguments for the application's {@code main}.
      */
-    @Parameter(property = RunMojo.MN_APP_ARGS)
+    @Parameter(property = MojoUtils.MN_APP_ARGS)
     private String appArguments;
 
     @Parameter(defaultValue = "${mojoExecution}", readonly = true, required = true)
@@ -353,7 +353,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
                     return;
                 }
             }
-            Object evaluated = evaluator.evaluate(RunMojo.EXEC_MAIN_CLASS);
+            Object evaluated = evaluator.evaluate(MojoUtils.EXEC_MAIN_CLASS);
             mainClass = evaluated == null ? null : evaluated.toString();
         } catch (ComponentConfigurationException | ExpressionEvaluationException e) {
             throw new MojoExecutionException("Cannot apply the micronaut-maven-plugin configuration of " + runnableProject.getArtifactId() + ": " + e.getMessage(), e);
