@@ -95,10 +95,11 @@ public final class BuildToolWatcher implements AutoCloseable {
             pending.cancel(false);
         }
         changes.incrementAndGet();
+        notifyAll();
         try {
             // a burst of events from one save becomes one run
             pending = scheduler.schedule(this::run, quietPeriodMillis, TimeUnit.MILLISECONDS);
-        } catch (RejectedExecutionException e) {
+        } catch (RejectedExecutionException _) {
             // closed meanwhile
         }
     }
@@ -125,7 +126,7 @@ public final class BuildToolWatcher implements AutoCloseable {
         }
         try {
             watcher.close();
-        } catch (IOException e) {
+        } catch (IOException _) {
             // the watch stops with its thread
         }
         // a running compilation finishes, so that it leaves no partial build output: the pending one is cancelled
@@ -133,7 +134,7 @@ public final class BuildToolWatcher implements AutoCloseable {
         try {
             scheduler.awaitTermination(STOP_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             thread.join(TimeUnit.SECONDS.toMillis(STOP_TIMEOUT_SECONDS));
-        } catch (InterruptedException e) {
+        } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
         }
     }
@@ -143,6 +144,23 @@ public final class BuildToolWatcher implements AutoCloseable {
      */
     long changes() {
         return changes.get();
+    }
+
+    /**
+     * Waits for the watch to observe a change.
+     *
+     * @param timeoutMillis how long to wait
+     * @return whether a change was observed
+     * @throws InterruptedException if the wait is interrupted
+     */
+    synchronized boolean awaitChange(long timeoutMillis) throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis);
+        long remaining = deadline - System.nanoTime();
+        while (changes.get() == 0 && remaining > 0) {
+            TimeUnit.NANOSECONDS.timedWait(this, remaining);
+            remaining = deadline - System.nanoTime();
+        }
+        return changes.get() > 0;
     }
 
     /**

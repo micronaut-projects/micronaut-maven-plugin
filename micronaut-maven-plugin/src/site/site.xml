@@ -21,7 +21,7 @@
         </menu>
 
         <menu name="Examples">
-            <item name="Running in development mode" href="examples/run.html"/>
+            <item name="Running with mn:run (deprecated)" href="examples/run.html"/>
             <item name="Development mode with mn:dev" href="examples/dev.html"/>
             <item name="Continuous testing with mn:test" href="examples/test.html"/>
             <item name="Packaging" href="examples/package.html"/>
