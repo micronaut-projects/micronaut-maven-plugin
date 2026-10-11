@@ -24,6 +24,9 @@ assert manifest.'micronaut.dev.compile.java.output'.endsWith('app' + File.separa
 
 List<String> runtime = new File(basedir, 'app/target/micronaut-dev/runtime.argfile').readLines()
 assert runtime.every { !it.contains('target' + File.separator + 'classes') && !it.contains('devmulti') }
+// the application turns Micronaut Control Panel off
+assert runtime.every { !it.contains('micronaut-control-panel-') }
+assert !log.text.contains("Adding Micronaut Control Panel")
 List<String> options = new File(basedir, 'app/target/micronaut-dev/java-options.argfile').readLines()
 assert options.contains('-Amicronaut.processing.group=devmulti')
 

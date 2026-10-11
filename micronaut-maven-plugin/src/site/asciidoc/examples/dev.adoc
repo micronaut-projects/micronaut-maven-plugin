@@ -34,6 +34,7 @@ launcher compiles Java with `javac` and Groovy with the project's Groovy. Embedd
 |`mn.dev.livereload` |`true` |Adds `micronaut-dev-livereload` to the launcher's classpath, which starts the LiveReload server.
 |`mn.dev.livereload.port` |`35729` |The LiveReload port.
 |`mn.dev.livereload.injectScript` |`true` |Whether the client script is appended to HTML responses; `false` for users of a browser extension.
+|`mn.dev.controlPanel` |`true` |Adds link:#control-panel[Micronaut Control Panel] to the development runtime.
 |`mn.dev.manifestOnly` |`false` |Writes the manifest and stops, for a build that launches the JVM itself.
 |===
 
@@ -51,6 +52,64 @@ configured.
 
 A resource directory with `filtering` enabled is not read live, since the build expands it: the launcher reads its copy
 from the class output, and a change to it is applied by `mvn process-resources` in `build-tool` mode.
+
+[[control-panel]]
+== Micronaut Control Panel
+
+`mn:dev` adds https://micronaut-projects.github.io/micronaut-control-panel/latest/guide/[Micronaut Control Panel] to the
+development runtime, served at http://localhost:8080/control-panel. The modules are added to the runtime classpath
+of the development JVM only, versioned by the project's dependency management, the Micronaut platform BOM: the project's
+own dependencies and what it packages do not change, and a module the application already declares, at its own version,
+is not added again. Every launch gets the UI, the management panels (`micronaut-control-panel-ui` and
+`micronaut-control-panel-management`), and the testing panels (`micronaut-control-panel-testing`) when the dependency
+management versions them. The other panels are added when the runtime classpath holds a module they inspect:
+
+[cols="2,3"]
+|===
+|Panel |Added when the runtime classpath holds
+
+|`micronaut-control-panel-datasource` |`io.micronaut.sql:micronaut-jdbc`
+|`micronaut-control-panel-hibernate` |`org.hibernate.orm:hibernate-core`
+|`micronaut-control-panel-kafka` |`io.micronaut.kafka:micronaut-kafka`
+|`micronaut-control-panel-object-storage` |`io.micronaut.objectstorage:micronaut-object-storage-core`
+|`micronaut-control-panel-cache` |`io.micronaut.cache:micronaut-cache-caffeine`, `micronaut-cache-ehcache`, `micronaut-cache-hazelcast` or `micronaut-cache-infinispan`
+|===
+
+The goal passes these settings to the development JVM as system properties:
+
+[source,properties]
+----
+micronaut.control-panel.enabled=true
+micronaut.control-panel.path=/control-panel
+micronaut.control-panel.security.access=ANONYMOUS
+----
+
+A setting the application configures itself is not passed, so that the application's value applies: one set with
+`-D` on the Maven command line, in `mn.jvmArgs`, as an environment variable such as
+`MICRONAUT_CONTROL_PANEL_SECURITY_ACCESS`, or in an `application` configuration file of the application's resources or
+of a reactor project it depends on.
+
+To run without the Control Panel, turn it off on the command line:
+
+[source,bash]
+----
+$ mvn mn:dev -Dmn.dev.controlPanel=false
+----
+
+or in the build:
+
+[source,xml]
+----
+<plugin>
+  <groupId>io.micronaut.maven</groupId>
+  <artifactId>micronaut-maven-plugin</artifactId>
+  <configuration>
+    <controlPanel>false</controlPanel>
+  </configuration>
+</plugin>
+----
+
+`mn:test` adds no Control Panel: the tests start their own application contexts, as they do in the build.
 
 [[micronaut-test-resources]]
 == Micronaut Test Resources

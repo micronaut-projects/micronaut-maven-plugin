@@ -29,6 +29,12 @@ assert manifest.'micronaut.dev.runtime-classpath' == '@runtime.argfile'
 List<String> runtime = new File(basedir, 'target/micronaut-dev/runtime.argfile').readLines()
 assert runtime.any { it.contains('micronaut-runtime-') }
 assert runtime.every { !it.contains('target' + File.separator + 'classes') }
+// Micronaut Control Panel, versioned by the platform BOM, with the panel of the modules the application uses
+assert runtime.any { it.contains('micronaut-control-panel-ui-') }
+assert runtime.any { it.contains('micronaut-control-panel-management-') }
+assert runtime.any { it.contains('micronaut-control-panel-datasource-') }
+assert runtime.every { !it.contains('micronaut-control-panel-kafka-') && !it.contains('micronaut-control-panel-hibernate-') }
+assert log.text.contains("Adding Micronaut Control Panel to the development runtime")
 assert manifest.'micronaut.dev.compile-classpath' == '@compile.argfile'
 assert manifest.'micronaut.dev.processor-path' == '@processors.argfile'
 List<String> processors = new File(basedir, 'target/micronaut-dev/processors.argfile').readLines()

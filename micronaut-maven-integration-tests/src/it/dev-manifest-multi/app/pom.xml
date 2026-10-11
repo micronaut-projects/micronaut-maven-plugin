@@ -37,6 +37,7 @@
           <strategy>restart</strategy>
           <retain>devmulti.lib.Greeter</retain>
           <liveReloadPort>35730</liveReloadPort>
+          <controlPanel>false</controlPanel>
         </configuration>
         <executions>
           <!-- what a direct `mvn mn:dev` in this module applies, and what an aggregator invocation must apply too -->

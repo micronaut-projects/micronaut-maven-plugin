@@ -17,6 +17,7 @@ package io.micronaut.maven;
 
 import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.dev.BuildToolWatcher;
+import io.micronaut.maven.dev.ControlPanel;
 import io.micronaut.maven.dev.DevManifest;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
@@ -66,9 +67,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static io.micronaut.maven.core.MojoUtils.findJavaExecutable;
@@ -178,6 +181,14 @@ public class DevMojo extends AbstractTestResourcesMojo {
     private boolean liveReloadInjectScript;
 
     /**
+     * Whether Micronaut Control Panel is added to the development runtime: its UI and management panels, the testing
+     * panels, and the panels of the modules the application uses, such as Kafka's, resolved through the dependency
+     * management. The project's own classpath and packaging do not change.
+     */
+    @Parameter(property = "mn.dev.controlPanel", defaultValue = "true")
+    private boolean controlPanel;
+
+    /**
      * Writes the manifest and stops, without launching anything.
      */
     @Parameter(property = "mn.dev.manifestOnly", defaultValue = "false")
@@ -224,6 +235,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
 
     private MavenProject runnableProject;
     private List<Dependency> runtimeDependencies;
+    private ControlPanelLaunch controlPanelLaunch;
     private volatile Process process;
     /**
      * Set when the build is shutting down, Ctrl+C for one: the application is stopped, and the status it
@@ -494,7 +506,8 @@ public class DevMojo extends AbstractTestResourcesMojo {
      */
     protected DevManifest buildManifest(Path manifestDirectory) throws MojoExecutionException {
         PluginParameterExpressionEvaluator evaluator = runnableEvaluator();
-        List<File> runtimeClasspath = files(runtimeDependencies());
+        List<File> runtimeClasspath = new ArrayList<>(files(runtimeDependencies()));
+        runtimeClasspath.addAll(controlPanelLaunch().files());
         List<File> compileClasspath = files(compilerService.resolveDependencies(runnableProject, true, JavaScopes.PROVIDED, JavaScopes.COMPILE));
         List<File> processorPath;
         try {
@@ -548,6 +561,11 @@ public class DevMojo extends AbstractTestResourcesMojo {
         for (File file : runtime) {
             classpath.add(file.getAbsolutePath());
         }
+        for (File file : controlPanelLaunch().files()) {
+            if (!classpath.contains(file.getAbsolutePath())) {
+                classpath.add(file.getAbsolutePath());
+            }
+        }
         for (File file : launcher) {
             if (!classpath.contains(file.getAbsolutePath())) {
                 classpath.add(file.getAbsolutePath());
@@ -567,6 +585,9 @@ public class DevMojo extends AbstractTestResourcesMojo {
         addTestResourcesArguments(args);
         args.addAll(translatedJvmArguments);
         mavenSession.getUserProperties().forEach((key, value) -> args.add("-D" + key + "=" + value));
+        if (controlPanelLaunch().active()) {
+            controlPanelProperties(translatedJvmArguments).forEach((key, value) -> args.add("-D" + key + "=" + value));
+        }
         // the launcher as the JVM's agent, for the method-body fast path
         args.add("-javaagent:" + launcherArtifact.getFile().getAbsolutePath());
         args.add("-classpath");
@@ -592,6 +613,110 @@ public class DevMojo extends AbstractTestResourcesMojo {
             artifacts.add(new DefaultArtifact(LAUNCHER_GROUP, LIVERELOAD_ARTIFACT, "jar", ""));
         }
         return artifacts;
+    }
+
+    /**
+     * Whether Micronaut Control Panel is added to the development runtime.
+     *
+     * @return the {@code controlPanel} parameter
+     */
+    protected boolean controlPanelEnabled() {
+        return controlPanel;
+    }
+
+    /**
+     * The Control Panel modules the development runtime adds: those {@link ControlPanel#modules(java.util.Collection)}
+     * infers from the runtime classpath, the testing panels when the dependency management versions them, each with
+     * what it brings that the runtime classpath does not hold, so that the application's versions win. Resolved
+     * through the runnable project's dependency management, the Micronaut platform BOM, once.
+     *
+     * @return the files to add, and whether the Control Panel runs
+     */
+    private ControlPanelLaunch controlPanelLaunch() {
+        if (controlPanelLaunch != null) {
+            return controlPanelLaunch;
+        }
+        if (!controlPanelEnabled()) {
+            controlPanelLaunch = new ControlPanelLaunch(List.of(), false);
+            return controlPanelLaunch;
+        }
+        Set<String> present = new LinkedHashSet<>();
+        for (Dependency dependency : runtimeDependencies()) {
+            org.eclipse.aether.artifact.Artifact artifact = dependency.getArtifact();
+            present.add(artifact.getGroupId() + ":" + artifact.getArtifactId());
+        }
+        List<String> modules = ControlPanel.modules(present);
+        List<org.eclipse.aether.artifact.Artifact> missing = modules.stream()
+            .filter(module -> !present.contains(ControlPanel.GROUP + ":" + module))
+            .map(module -> (org.eclipse.aether.artifact.Artifact) new DefaultArtifact(ControlPanel.GROUP, module, "jar", ""))
+            .toList();
+        Set<String> added = new LinkedHashSet<>();
+        List<File> files = new ArrayList<>();
+        if (!missing.isEmpty()) {
+            try {
+                addResolved(dependencyResolutionService.artifactResultsFor(missing.stream(), true), present, added, files);
+            } catch (DependencyResolutionException | RuntimeException e) {
+                getLog().warn("Cannot resolve Micronaut Control Panel, development mode runs without it: " + e.getMessage());
+            }
+        }
+        boolean active = ControlPanel.BASE_MODULES.stream().allMatch(module -> present.contains(ControlPanel.GROUP + ":" + module) || added.contains(ControlPanel.GROUP + ":" + module));
+        if (!active) {
+            getLog().warn("Micronaut Control Panel is not versioned by the dependency management, development mode runs without it: import the Micronaut platform BOM, or set mn.dev.controlPanel=false");
+            controlPanelLaunch = new ControlPanelLaunch(List.of(), false);
+            return controlPanelLaunch;
+        }
+        if (!present.contains(ControlPanel.GROUP + ":" + ControlPanel.TESTING_MODULE)) {
+            try {
+                addResolved(dependencyResolutionService.artifactResultsFor(
+                    Stream.of(new DefaultArtifact(ControlPanel.GROUP, ControlPanel.TESTING_MODULE, "jar", "")), true), present, added, files);
+            } catch (DependencyResolutionException | RuntimeException e) {
+                // the testing panels are published with later Control Panel releases
+                getLog().debug("Cannot resolve " + ControlPanel.GROUP + ":" + ControlPanel.TESTING_MODULE + ": " + e.getMessage());
+            }
+        }
+        List<String> panels = modules.stream()
+            .filter(module -> added.contains(ControlPanel.GROUP + ":" + module))
+            .toList();
+        if (!panels.isEmpty()) {
+            getLog().info("Adding Micronaut Control Panel to the development runtime: " + panels + " (disable with mn.dev.controlPanel=false)");
+        }
+        controlPanelLaunch = new ControlPanelLaunch(files, true);
+        return controlPanelLaunch;
+    }
+
+    private static void addResolved(List<ArtifactResult> results, Set<String> present, Set<String> added, List<File> files) {
+        for (ArtifactResult result : results) {
+            org.eclipse.aether.artifact.Artifact artifact = result.getArtifact();
+            if (artifact == null || artifact.getFile() == null) {
+                continue;
+            }
+            String key = artifact.getGroupId() + ":" + artifact.getArtifactId();
+            if (!present.contains(key) && added.add(key)) {
+                files.add(artifact.getFile());
+            }
+        }
+    }
+
+    /**
+     * The Control Panel settings passed to the development runtime: the defaults of {@link ControlPanel} the
+     * application does not configure itself, with a system property of the build or of {@code mn.jvmArgs}, an
+     * environment variable, or a configuration file of the runnable project or a reactor project it depends on.
+     *
+     * @param jvmArguments the application's JVM arguments
+     * @return the settings
+     */
+    private Map<String, String> controlPanelProperties(List<String> jvmArguments) {
+        List<Path> resourceDirectories = new ArrayList<>();
+        for (MavenProject project : reactorDependencies()) {
+            for (org.apache.maven.model.Resource resource : project.getResources()) {
+                resourceDirectories.add(Path.of(resource.getDirectory()));
+            }
+        }
+        Set<String> inFiles = ControlPanel.configuredKeys(resourceDirectories);
+        return ControlPanel.properties(key -> mavenSession.getUserProperties().containsKey(key)
+            || ControlPanel.isSystemProperty(key, jvmArguments)
+            || System.getenv(ControlPanel.environmentVariable(key)) != null
+            || inFiles.contains(key));
     }
 
     /**
@@ -781,6 +906,15 @@ public class DevMojo extends AbstractTestResourcesMojo {
                 Thread.currentThread().interrupt();
             }
         }
+    }
+
+    /**
+     * The Control Panel of the launch.
+     *
+     * @param files the files added to the runtime classpath
+     * @param active whether the Control Panel runs, added or declared by the application
+     */
+    private record ControlPanelLaunch(List<File> files, boolean active) {
     }
 
     /**

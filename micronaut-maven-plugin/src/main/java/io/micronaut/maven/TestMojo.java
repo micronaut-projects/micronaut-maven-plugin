@@ -203,6 +203,16 @@ public class TestMojo extends DevMojo {
         return "test-compile";
     }
 
+    /**
+     * The tests start their own contexts, as they do in the build: none of them serves a Control Panel.
+     *
+     * @return false
+     */
+    @Override
+    protected boolean controlPanelEnabled() {
+        return false;
+    }
+
     @Override
     protected List<String> watchedRoots(MavenProject project) {
         List<String> roots = new ArrayList<>(super.watchedRoots(project));
