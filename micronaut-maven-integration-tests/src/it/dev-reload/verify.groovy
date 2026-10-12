@@ -13,12 +13,14 @@ assert log.text.contains("BUILD SUCCESS")
 
 File mvnw = new File(base, '../../../mvnw').canonicalFile
 assert mvnw.exists()
-String testsRepo = new File(base, '../../../target/local-repo').canonicalPath
+String testsRepo = new File(testsRepository as String).canonicalPath
 // the repository of the build running the tests, which holds the core with development mode, as the tests' settings name it
-File outerRepo = new File(System.getProperty('maven.repo.local') ?: new File(System.getProperty('user.home'), '.m2/repository').path)
-// mn:dev resolves into a repository of its own, from the build's repository first, which selector.groovy checks holds
-// micronaut-dev, then from the tests' one, which has the plugin, and Maven Central, which the super POM declares: the
-// tests' repository may hold a 5.3.0-SNAPSHOT of core from the snapshots repository, without micronaut-dev
+File outerRepo = new File(buildRepository as String)
+// mn:dev resolves into a repository of its own, from the tests' one first, which has the plugin under test and the core
+// the scenario resolved, then from the build's one, which selector.groovy checks holds micronaut-dev, and Maven Central,
+// which the super POM declares. Neither has snapshot metadata, so the first that holds a snapshot wins: the build's may
+// hold another build of the plugin. Any other repository, such as the snapshots repository the BOMs the platform imports
+// declare, whose core 5.3.0-SNAPSHOT may not have micronaut-dev, resolves from the build's: see local-core.groovy
 String localRepo = new File(base, 'target/dev-reload-repo').path
 File settings = new File(base, 'target/dev-reload-settings.xml')
 def repository = { String id, File directory ->
@@ -30,16 +32,23 @@ def repository = { String id, File directory ->
         </repository>"""
 }
 settings.text = """<settings>
+  <mirrors>
+    <mirror>
+      <id>outer-mirror</id>
+      <mirrorOf>*,!central,!outer,!tests</mirrorOf>
+      <url>${outerRepo.toURI()}</url>
+    </mirror>
+  </mirrors>
   <profiles>
     <profile>
       <id>dev-reload</id>
       <repositories>
-${repository('outer', outerRepo)}
 ${repository('tests', new File(testsRepo))}
+${repository('outer', outerRepo)}
       </repositories>
       <pluginRepositories>
-${repository('outer', outerRepo).replace('repository>', 'pluginRepository>')}
 ${repository('tests', new File(testsRepo)).replace('repository>', 'pluginRepository>')}
+${repository('outer', outerRepo).replace('repository>', 'pluginRepository>')}
       </pluginRepositories>
     </profile>
   </profiles>
