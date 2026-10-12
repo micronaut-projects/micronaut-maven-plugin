@@ -21,7 +21,15 @@
         <maven.javadoc.skip>true</maven.javadoc.skip>
 
         <it.micronaut.core.version>5.0.0</it.micronaut.core.version>
+        <!-- the local repository of the scenarios -->
+        <it.tests.repository>${project.basedir}/../target/local-repo</it.tests.repository>
         <it.micronaut.version>5.0.0-RC1</it.micronaut.version>
+        <!--
+          The Micronaut Core whose BOM manages micronaut-dev, for the scenarios of mn:dev and mn:test that launch it. A
+          snapshot resolves from the repository of the build only, where core's publishToMavenLocal puts it: see
+          src/it/local-core.groovy.
+        -->
+        <it.micronaut.core.dev.version>5.3.0-SNAPSHOT</it.micronaut.core.dev.version>
 
         <!-- Enable recording of coverage during execution of maven-invoker-plugin -->
         <jacoco.propertyName>invoker.mavenOpts</jacoco.propertyName>
@@ -103,11 +111,15 @@
                     <preBuildHookScript>setup</preBuildHookScript>
                     <postBuildHookScript>verify</postBuildHookScript>
                     <selectorScript>selector</selectorScript>
-                    <localRepositoryPath>../target/local-repo</localRepositoryPath>
+                    <localRepositoryPath>${it.tests.repository}</localRepositoryPath>
                     <settingsFile>src/it/settings.xml</settingsFile>
                     <scriptVariables>
                         <nativeMavenPluginVersion>${native-maven-plugin.version}</nativeMavenPluginVersion>
                         <pluginVersion>${project.version}</pluginVersion>
+                        <buildRepository>${session.localRepository.basedir}</buildRepository>
+                        <testsRepository>${it.tests.repository}</testsRepository>
+                        <itDirectory>${project.basedir}/src/it</itDirectory>
+                        <micronautCoreDevVersion>${it.micronaut.core.dev.version}</micronautCoreDevVersion>
                     </scriptVariables>
                     <goals>
                         <goal>clean</goal>

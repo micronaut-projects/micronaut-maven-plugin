@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <settings>
+  <mirrors>
+    <!--
+      Resolves the repositories a scenario names in its test.properties, as it.mirror-of-build-repository, from the
+      repository of the build running the tests: see local-core.groovy. A scenario that names none leaves the property
+      unresolved, which matches no repository.
+    -->
+    <mirror>
+      <id>it-build-repository</id>
+      <mirrorOf>${it.mirror-of-build-repository}</mirrorOf>
+      <url>@localRepositoryUrl@</url>
+    </mirror>
+  </mirrors>
   <profiles>
     <profile>
       <id>it-repo</id>
@@ -14,6 +26,8 @@
           </releases>
           <snapshots>
             <enabled>true</enabled>
+            <!-- the repository of the build running the tests: a snapshot published to it again is picked up -->
+            <updatePolicy>always</updatePolicy>
             <checksumPolicy>ignore</checksumPolicy>
           </snapshots>
         </repository>
