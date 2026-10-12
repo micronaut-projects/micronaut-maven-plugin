@@ -162,4 +162,5 @@ application the goal runs, so an application can enable Test Resources on its ow
 == Continuous testing
 
 `mn:test` runs the project's tests on the same runtime, in test mode: see
-link:test.html[Running tests continuously with `mn:test`].
+link:test.html[Running tests continuously with `mn:test`]. Both goals run at once on one project, compiling into
+the same output in turn: see link:test.html#running-beside-mn-dev[Running beside `mn:dev`].
