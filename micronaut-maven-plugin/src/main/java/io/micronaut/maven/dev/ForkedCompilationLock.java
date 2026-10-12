@@ -61,7 +61,8 @@ public class ForkedCompilationLock extends AbstractMavenLifecycleParticipant {
 
     /**
      * Whether a goal of the command line may be {@code mn:dev} or {@code mn:test}: a plugin goal, not the {@code test}
-     * phase, named {@code dev} or {@code test}. The fork itself is checked to be of this plugin.
+     * phase, named {@code dev} or {@code test}, with an execution id or without. The fork itself is checked to be
+     * of this plugin.
      *
      * @param goal the goal
      * @return whether it may be
@@ -72,6 +73,11 @@ public class ForkedCompilationLock extends AbstractMavenLifecycleParticipant {
             return false;
         }
         String name = goal.substring(colon + 1);
+        // an execution selected by its id, mn:dev@local
+        int at = name.indexOf('@');
+        if (at >= 0) {
+            name = name.substring(0, at);
+        }
         return DEV_GOAL.equals(name) || TEST_GOAL.equals(name);
     }
 

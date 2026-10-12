@@ -38,6 +38,9 @@ class ForkedCompilationLockTest {
         assertTrue(ForkedCompilationLock.isDevelopmentGoal("mn:dev"));
         assertTrue(ForkedCompilationLock.isDevelopmentGoal("mn:test"));
         assertTrue(ForkedCompilationLock.isDevelopmentGoal("io.micronaut.maven:micronaut-maven-plugin:5.1.0:test"));
+        assertTrue(ForkedCompilationLock.isDevelopmentGoal("mn:dev@local"));
+        assertTrue(ForkedCompilationLock.isDevelopmentGoal("io.micronaut.maven:micronaut-maven-plugin:test@continuous"));
+        assertFalse(ForkedCompilationLock.isDevelopmentGoal("mn:run@local"));
         // the phase, not the goal
         assertFalse(ForkedCompilationLock.isDevelopmentGoal("test"));
         assertFalse(ForkedCompilationLock.isDevelopmentGoal("compile"));
