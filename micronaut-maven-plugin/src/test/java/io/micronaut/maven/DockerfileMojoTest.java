@@ -1,6 +1,7 @@
 package io.micronaut.maven;
 
 import io.micronaut.maven.jdkaotcache.MicronautJars;
+import io.micronaut.maven.jdkaotcache.TrainingMode;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.services.ApplicationConfigurationService;
@@ -42,11 +43,11 @@ import static org.mockito.Mockito.when;
 
 class DockerfileMojoTest {
 
-    private static final String DEFAULT_START_MESSAGE = "JDK AOT cache: training mode start: the training run starts the "
+    private static final String DEFAULT_START_MESSAGE = "JDK AOT cache: training mode START: the training run starts the "
         + "application, because its Micronaut version has no training mode that loads it without starting it "
         + "(micronaut.application.training.mode). The services it needs at start-up must be reachable from the image "
-        + "build. With a Micronaut version that has that mode, load becomes the default: set "
-        + "micronaut.docker.jdkAotCache.trainingMode=start to keep starting the application";
+        + "build. With a Micronaut version that has that mode, LOAD becomes the default: set "
+        + "micronaut.docker.jdkAotCache.trainingMode=START to keep starting the application";
 
     @Test
     void processDockerfileEscapesJsonAndShellContexts(@TempDir Path tempDir) throws IOException, MojoExecutionException {
@@ -494,9 +495,9 @@ class DockerfileMojoTest {
 
         assertEquals("RUN bash /home/app/training.sh train /home/app/app.aot 8080 180 load -- java -XX:+UseG1GC "
             + "-cp @/home/app/classpath 'example.Application' && rm /home/app/training.sh", runInstruction(tempDir));
-        assertTrue(infoMessages(log).contains("JDK AOT cache: training mode load, the default: the application loads its "
+        assertTrue(infoMessages(log).contains("JDK AOT cache: training mode LOAD, the default: the application loads its "
             + "bean definitions and exits without starting, so the training needs none of the services that its beans "
-            + "use. If the application can start in the image build, micronaut.docker.jdkAotCache.trainingMode=start "
+            + "use. If the application can start in the image build, micronaut.docker.jdkAotCache.trainingMode=START "
             + "trains a more complete cache"), infoMessages(log).toString());
         assertEquals(List.of(), warnMessages(log));
     }
@@ -504,7 +505,7 @@ class DockerfileMojoTest {
     @Test
     void jdkAotCacheLoadModeCanBeConfiguredInAnyCase(@TempDir Path tempDir) throws Exception {
         var mojo = jdkAotCacheMojo(tempDir, MicronautJars.withLoadMode(tempDir), Optional.of("9090 9091"));
-        setParameter(mojo, "jdkAotCacheTrainingMode", "LOAD");
+        setParameter(mojo, "jdkAotCacheTrainingMode", TrainingMode.LOAD);
 
         mojo.execute();
 
@@ -515,7 +516,7 @@ class DockerfileMojoTest {
     @Test
     void jdkAotCacheStartsTheApplicationWhenStartIsConfigured(@TempDir Path tempDir) throws Exception {
         var mojo = jdkAotCacheMojo(tempDir, MicronautJars.withLoadMode(tempDir), Optional.of("8080"));
-        setParameter(mojo, "jdkAotCacheTrainingMode", "start");
+        setParameter(mojo, "jdkAotCacheTrainingMode", TrainingMode.START);
         setParameter(mojo, "jdkAotCacheTrainingPaths", List.of("/hello"));
         var log = mock(Log.class);
         mojo.setLog(log);
@@ -525,7 +526,7 @@ class DockerfileMojoTest {
         assertEquals("RUN bash /home/app/training.sh train /home/app/app.aot 8080 180 switch '/hello' -- java -XX:+UseG1GC "
             + "-cp @/home/app/classpath 'example.Application' && rm /home/app/training.sh", runInstruction(tempDir));
         // The mode is set, so the build does not explain a default
-        assertTrue(infoMessages(log).contains("JDK AOT cache: training mode start: the training run starts the application"),
+        assertTrue(infoMessages(log).contains("JDK AOT cache: training mode START: the training run starts the application"),
             infoMessages(log).toString());
         assertTrue(infoMessages(log).contains("JDK AOT cache: the application warms itself up and exits (Micronaut "
             + "training-run switch)"), infoMessages(log).toString());
@@ -572,8 +573,8 @@ class DockerfileMojoTest {
         // This is the build that fails once the application's Micronaut version has the load mode
         assertEquals(List.of("JDK AOT cache: micronaut.docker.jdkAotCache.trainingPaths is set and "
             + "micronaut.docker.jdkAotCache.trainingMode is not. This build will fail once the application uses a "
-            + "Micronaut version with the load training mode: load becomes the default, and a load training run does "
-            + "not start the application, so it sends no requests. Set micronaut.docker.jdkAotCache.trainingMode=start "
+            + "Micronaut version with the LOAD training mode: LOAD becomes the default, and a LOAD training run does "
+            + "not start the application, so it sends no requests. Set micronaut.docker.jdkAotCache.trainingMode=START "
             + "now to keep starting the application"), warnMessages(log));
     }
 
@@ -583,27 +584,27 @@ class DockerfileMojoTest {
         setParameter(byDefault, "jdkAotCacheTrainingPaths", List.of("/hello"));
         var configured = jdkAotCacheMojo(tempDir.resolve("configured"), MicronautJars.withLoadMode(tempDir), Optional.of("8080"));
         setParameter(configured, "jdkAotCacheTrainingPaths", List.of("/hello"));
-        setParameter(configured, "jdkAotCacheTrainingMode", "load");
+        setParameter(configured, "jdkAotCacheTrainingMode", TrainingMode.LOAD);
 
         var defaultFailure = assertThrows(MojoExecutionException.class, byDefault::execute);
         var configuredFailure = assertThrows(MojoExecutionException.class, configured::execute);
 
         assertTrue(defaultFailure.getMessage().startsWith("micronaut.docker.jdkAotCache.trainingPaths is set, but the "
-            + "training mode is load, the default with this Micronaut version"), defaultFailure.getMessage());
+            + "training mode is LOAD, the default with this Micronaut version"), defaultFailure.getMessage());
         assertTrue(configuredFailure.getMessage().startsWith("micronaut.docker.jdkAotCache.trainingPaths cannot be used "
-            + "with micronaut.docker.jdkAotCache.trainingMode=load"), configuredFailure.getMessage());
+            + "with micronaut.docker.jdkAotCache.trainingMode=LOAD"), configuredFailure.getMessage());
         assertFalse(Files.exists(tempDir.resolve("default/target/Dockerfile")));
     }
 
     @Test
     void jdkAotCacheRejectsTheLoadModeOnAMicronautVersionWithoutIt(@TempDir Path tempDir) throws Exception {
         var mojo = jdkAotCacheMojo(tempDir, MicronautJars.withoutSwitch(tempDir), Optional.of("8080"));
-        setParameter(mojo, "jdkAotCacheTrainingMode", "load");
+        setParameter(mojo, "jdkAotCacheTrainingMode", TrainingMode.LOAD);
 
         var ex = assertThrows(MojoExecutionException.class, mojo::execute);
 
-        assertTrue(ex.getMessage().startsWith("micronaut.docker.jdkAotCache.trainingMode=load needs a Micronaut version "
-            + "with the load training mode"), ex.getMessage());
+        assertTrue(ex.getMessage().startsWith("micronaut.docker.jdkAotCache.trainingMode=LOAD needs a Micronaut version "
+            + "with the LOAD training mode"), ex.getMessage());
     }
 
     private static DockerfileMojo jdkAotCacheMojo(Path baseDir, List<Artifact> artifacts, Optional<String> ports) throws IOException {

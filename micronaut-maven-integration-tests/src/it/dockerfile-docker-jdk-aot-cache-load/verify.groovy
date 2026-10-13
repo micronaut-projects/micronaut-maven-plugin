@@ -10,7 +10,7 @@ String text = log.text
 
 // By default, the training run loads the bean definitions and does not start the application, which cannot reach its
 // backend in the image build
-assert text.contains("JDK AOT cache: training mode load, the default: the application loads its bean definitions and exits without starting")
+assert text.contains("JDK AOT cache: training mode LOAD, the default: the application loads its bean definitions and exits without starting")
 assert text.contains("[jdk-aot-cache] Training with JDK_JAVA_OPTIONS=-XX:AOTCacheOutput=/home/app/app.aot -XX:-UsePerfData -Dmicronaut.application.training.enabled=true -Dmicronaut.application.training.mode=load")
 assert text =~ /Training run \(micronaut\.application\.training\.mode=load\): loaded \d+ of \d+ bean definitions/
 assert !text.contains("[jdk-aot-cache] Waiting up to")

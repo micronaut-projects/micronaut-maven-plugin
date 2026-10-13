@@ -9,9 +9,9 @@ assert builds.size() == 3
 String startBuild = builds[1]
 String text = builds[2]
 
-// 1. With trainingMode=start, the training run starts the application, which cannot reach its backend in the image
+// 1. With trainingMode=START, the training run starts the application, which cannot reach its backend in the image
 // build: the training fails, and no image is built
-assert startBuild.contains("JDK AOT cache: training mode start: the training run starts the application")
+assert startBuild.contains("JDK AOT cache: training mode START: the training run starts the application")
 assert startBuild.contains("JDK AOT cache: training with JDK_JAVA_OPTIONS=-XX:AOTCacheOutput=/tmp/app.aot -XX:-UsePerfData -Dmicronaut.application.training.enabled=true -Dmicronaut.application.training.mode=start")
 assert startBuild.contains("Bean definition [io.micronaut.build.examples.Backend] could not be loaded")
 assert startBuild.contains("Connection refused")
@@ -20,7 +20,7 @@ assert !startBuild.contains("JDK AOT cache: building the image with the cache")
 assert startBuild.contains("BUILD FAILURE")
 
 // 2. By default, the training run loads the bean definitions and does not start the application
-assert text.contains("JDK AOT cache: training mode load, the default: the application loads its bean definitions and exits without starting")
+assert text.contains("JDK AOT cache: training mode LOAD, the default: the application loads its bean definitions and exits without starting")
 assert text.contains("JDK AOT cache: training with JDK_JAVA_OPTIONS=-XX:AOTCacheOutput=/tmp/app.aot -XX:-UsePerfData -Dmicronaut.application.training.enabled=true -Dmicronaut.application.training.mode=load")
 assert text.contains("JDK AOT cache: the application loads its bean definitions and exits without starting (Micronaut training mode load)")
 assert text =~ /Training run \(micronaut\.application\.training\.mode=load\): loaded \d+ of \d+ bean definitions/

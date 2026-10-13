@@ -3,7 +3,7 @@ assert log.exists()
 String text = log.text
 
 // The training mode is set, so the build does not explain a default
-assert text.contains("JDK AOT cache: training mode start: the training run starts the application")
+assert text.contains("JDK AOT cache: training mode START: the training run starts the application")
 assert !text.contains("has no training mode that loads it without starting it")
 assert !text.contains("micronaut.docker.jdkAotCache.trainingMode is not")
 

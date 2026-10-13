@@ -15,29 +15,28 @@
  */
 package io.micronaut.maven.jdkaotcache;
 
-import org.apache.maven.plugin.MojoExecutionException;
+import io.micronaut.core.annotation.Internal;
 
 import java.util.Locale;
-import java.util.Optional;
 
 /**
- * How far the application goes in the JDK AOT cache training run. The names are the values of
- * {@code micronaut.docker.jdkAotCache.trainingMode}, and the values that Micronaut core reads from
- * {@value TrainingRunSwitch#MODE_PROPERTY}.
+ * The values of {@code micronaut.docker.jdkAotCache.trainingMode}: how far the application goes in the JDK AOT cache
+ * training run.
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 5.1.0
  */
-enum TrainingMode {
+@Internal
+public enum TrainingMode {
 
     /**
-     * The application reads its configuration, loads its bean definitions and the classes they name, creates no bean
-     * and exits. It does not start, so the training needs none of the services that its beans use.
+     * The application loads its bean definitions and the classes they name, creates no bean and exits. It does not
+     * start, so the training needs none of the services that its beans use.
      */
     LOAD,
 
     /**
-     * The application starts, answers the warm-up requests and is stopped.
+     * The application starts, answers the training requests and is stopped.
      */
     START;
 
@@ -47,28 +46,16 @@ enum TrainingMode {
     static final String OPTION = "micronaut.docker.jdkAotCache.trainingMode";
 
     /**
-     * @return the value of the mode, in the plugin parameter and in the Micronaut property
+     * @return the value of the mode in the Micronaut property {@value TrainingRunSwitch#MODE_PROPERTY}
      */
     String id() {
         return name().toLowerCase(Locale.ROOT);
     }
 
     /**
-     * @param configured the configured value of {@value #OPTION}, which may be {@code null} or blank
-     * @return the mode, in any case, or empty if none is configured
-     * @throws MojoExecutionException if the value is not a mode
+     * @return the plugin parameter set to this mode, for messages
      */
-    static Optional<TrainingMode> parse(String configured) throws MojoExecutionException {
-        if (configured == null || configured.isBlank()) {
-            return Optional.empty();
-        }
-        String value = configured.trim();
-        for (TrainingMode mode : values()) {
-            if (mode.id().equalsIgnoreCase(value)) {
-                return Optional.of(mode);
-            }
-        }
-        throw new MojoExecutionException("Invalid " + OPTION + " '" + value + "': it must be " + LOAD.id() + " or "
-            + START.id());
+    String option() {
+        return OPTION + "=" + name();
     }
 }
