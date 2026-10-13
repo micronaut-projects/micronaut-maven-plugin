@@ -22,7 +22,7 @@ assert startBuild.contains("BUILD FAILURE")
 // 2. By default, the training run loads the bean definitions and does not start the application
 assert text.contains("JDK AOT cache: training mode LOAD, the default: the application loads its bean definitions and exits without starting")
 assert text.contains("JDK AOT cache: training with JDK_JAVA_OPTIONS=-XX:AOTCacheOutput=/tmp/app.aot -XX:-UsePerfData -Dmicronaut.application.training.enabled=true -Dmicronaut.application.training.mode=load")
-assert text.contains("JDK AOT cache: the application loads its bean definitions and exits without starting (Micronaut training mode load)")
+assert text.contains("JDK AOT cache: the application loads its bean definitions and exits without starting")
 assert text =~ /Training run \(micronaut\.application\.training\.mode=load\): loaded \d+ of \d+ bean definitions/
 assert !text.contains("Connection refused")
 assert !text.contains("[jdk-aot-cache]")

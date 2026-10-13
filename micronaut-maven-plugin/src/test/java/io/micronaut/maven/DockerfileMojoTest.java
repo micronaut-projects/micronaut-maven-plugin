@@ -503,7 +503,7 @@ class DockerfileMojoTest {
     }
 
     @Test
-    void jdkAotCacheLoadModeCanBeConfiguredInAnyCase(@TempDir Path tempDir) throws Exception {
+    void jdkAotCacheLoadModeCanBeConfigured(@TempDir Path tempDir) throws Exception {
         var mojo = jdkAotCacheMojo(tempDir, MicronautJars.withLoadMode(tempDir), Optional.of("9090 9091"));
         setParameter(mojo, "jdkAotCacheTrainingMode", TrainingMode.LOAD);
 

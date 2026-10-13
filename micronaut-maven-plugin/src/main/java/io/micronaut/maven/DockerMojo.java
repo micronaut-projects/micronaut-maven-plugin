@@ -99,9 +99,9 @@ public class DockerMojo extends AbstractDockerMojo {
 
     /**
      * Whether to train a JDK AOT cache (Java 25 or later) while the image is built, and start the application with it
-     * so that it starts faster. Only for {@code docker} packaging with the default runtime. The training needs a
-     * Docker daemon, and with Jib the {@code container.jvmFlags} must select a garbage collector, for example
-     * {@code -XX:+UseSerialGC}.
+     * so that it starts faster. Only for {@code docker} packaging, and not for the {@code lambda} or
+     * {@code oracle_function} runtimes. The training needs a Docker daemon, and with Jib the {@code container.jvmFlags}
+     * must select a garbage collector, for example {@code -XX:+UseSerialGC}.
      *
      * @since 5.1.0
      */
@@ -131,8 +131,8 @@ public class DockerMojo extends AbstractDockerMojo {
     private List<String> jdkAotCacheTrainingPaths;
 
     /**
-     * The timeout, in seconds, of each step of the JDK AOT cache training run: waiting for the application to be
-     * ready, each training request, and waiting for the application to exit.
+     * The timeout, in seconds, of the JDK AOT cache training run. With Micronaut Core before 5.3.0, it applies to each
+     * step: waiting for the application to be ready, each training request, and waiting for the application to exit.
      *
      * @since 5.1.0
      */

@@ -228,8 +228,7 @@ class JdkAotCacheTrainingTest {
         verify(dockerService, never()).startContainer(any());
         verify(dockerService, never()).execInContainer(any(), anyInt(), any(), any(String[].class));
         verify(dockerService, never()).signalContainer(any(), any());
-        verify(log).info("JDK AOT cache: the application loads its bean definitions and exits without starting "
-            + "(Micronaut training mode load)");
+        verify(log).info("JDK AOT cache: the application loads its bean definitions and exits without starting");
     }
 
     @Test

@@ -326,18 +326,13 @@ For example, you can define the `jib-maven-plugin` in your POM as follows to pas
 $ mvn package -Dpackaging=docker -Dmicronaut.docker.jdkAotCache=true
 ----
 
-A https://openjdk.org/jeps/483[JDK AOT cache] (Java 25 or later) makes the application start faster, because the JVM
-finds its classes already loaded and linked. A cache only works with the JDK, operating system and CPU architecture
-that created it, so the plugin creates it while the image is built: it runs the application once with the image's own
-`java`, and the image then starts the application with the cache. This is independent of link:aot.html[Micronaut AOT],
-and the two can be combined.
+A https://openjdk.org/jeps/483[JDK AOT cache] makes the application start faster. The plugin creates the cache by
+running the application once while it builds the image, and the image starts the application with it. This is
+independent of link:aot.html[Micronaut AOT], and the two can be combined.
 
-Use it when the start-up time of your containers matters, for example when instances are added and removed often. It
-is off by default, and works with the default runtime, both with Jib and with the `Dockerfile` that `mn:dockerfile`
-generates.
-
-The cache depends on the garbage collector, so with Jib you must select one in `container.jvmFlags` (the generated
-`Dockerfile` uses `-XX:+UseG1GC`):
+It works both with Jib and with `mn:dockerfile`: with `micronaut.docker.jdkAotCache` set, the generated `Dockerfile`
+trains the cache during `docker build`. The cache depends on the garbage collector, so with Jib you must select one in
+`container.jvmFlags` (the generated `Dockerfile` uses `-XX:+UseG1GC`):
 
 [source,xml]
 ----
@@ -376,20 +371,19 @@ The cache depends on the garbage collector, so with Jib you must select one in `
 
 |`micronaut.docker.jdkAotCache.trainingTimeout`
 |`180`
-|Seconds that each step of the training run may take.
+|Timeout of the training run, in seconds.
 |===
 
 ==== Training modes
 
 * `LOAD`: the application loads its bean definitions and the classes they use, and exits without starting. The image
 build does not need the database, message broker or other services that the application uses.
-* `START`: the application starts, answers the training requests and stops. This gives a more complete cache, but
-every service that the application needs at start-up must be reachable from the image build, for example through
-`docker.networkMode`.
+* `START`: the application starts, answers the training requests and stops. This gives a more complete, and larger,
+cache, but every service that the application needs at start-up must be reachable from the image build, for example
+through `docker.networkMode`.
 
-`LOAD` is the default with Micronaut Core 5.3.0 or later. Earlier versions do not support it, so they always train with
-`START`. Set `START` explicitly to keep starting the application after you upgrade, and whenever you set training
-paths, which fail the build in a `LOAD` run:
+`LOAD` needs Micronaut Core 5.3.0 or later, where it is the default. Earlier versions train with `START`. Set `START`
+explicitly to send training requests, or to keep starting the application after you upgrade:
 
 ----
 $ mvn package -Dpackaging=docker -Dmicronaut.docker.jdkAotCache=true \
@@ -397,25 +391,18 @@ $ mvn package -Dpackaging=docker -Dmicronaut.docker.jdkAotCache=true \
     -Dmicronaut.docker.jdkAotCache.trainingPaths=/hello,/books
 ----
 
-A training request that gets no response or a server error fails the build. A `4xx` response is logged as a warning
-with Micronaut Core 5.3.0 or later, and fails the build with earlier versions. The build log says which mode the
-training uses.
-
-==== Image size
-
-The cache adds a layer of tens of megabytes to the image, which grows with the number of classes that the training
-run loads, so a `START` cache is larger than a `LOAD` cache.
+A training request that gets no response or a `5xx` response fails the build. So does a `4xx` response with Micronaut
+Core before 5.3.0; later versions log it as a warning.
 
 ==== Limitations
 
 * The base image needs Java 25 or later.
 * The training runs in a container, so it needs a Docker daemon, also with `jib.buildGoal=buildTar` or `build`. The
 image is built for the platform of that daemon only.
-* Only the default runtime is supported: not AWS Lambda or Oracle Cloud Functions.
+* The `lambda` and `oracle_function` runtimes are not supported.
 * With Jib, the option sets `jib.containerizingMode=packaged`, and a custom `container.entrypoint` is not supported.
-* The generated `Dockerfile` needs `bash` in the base image. So does Jib with Micronaut Core before 5.3.0, where the
-application must also expose its HTTP port.
-* The cache is not reproducible: with Jib, every build trains a new cache, so every push uploads a new cache layer.
+* The generated `Dockerfile` needs `bash` in the base image, and so does Jib with Micronaut Core before 5.3.0.
+* With Jib, every build trains a new cache, so every push uploads a new cache layer.
 * If you keep a generated `Dockerfile` in your project, generate it again with `mn:dockerfile` after you upgrade the
 plugin.
 

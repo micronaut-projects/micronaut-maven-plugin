@@ -127,8 +127,7 @@ public final class JdkAotCacheTraining {
         String containerId = dockerService.createContainer(imageId, networkMode, environment);
         try {
             if (run.mode() == TrainingMode.LOAD) {
-                log.info("JDK AOT cache: the application loads its bean definitions and exits without starting "
-                    + "(Micronaut training mode load)");
+                log.info("JDK AOT cache: the application loads its bean definitions and exits without starting");
                 dockerService.startAndWait(containerId, imageId, timeoutSeconds);
                 // The summary of the run and the bean definitions it skipped say what the cache was trained on
                 dockerService.logContainerOutput(containerId);
