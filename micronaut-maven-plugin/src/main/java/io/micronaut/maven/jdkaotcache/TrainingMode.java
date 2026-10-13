@@ -43,7 +43,7 @@ public enum TrainingMode {
     /**
      * The plugin parameter that selects the mode.
      */
-    static final String OPTION = "micronaut.docker.jdkAotCache.trainingMode";
+    static final String PARAMETER = "micronaut.docker.jdkAotCache.trainingMode";
 
     /**
      * @return the value of the mode in the Micronaut property {@value TrainingRunSwitch#MODE_PROPERTY}
@@ -56,6 +56,6 @@ public enum TrainingMode {
      * @return the plugin parameter set to this mode, for messages
      */
     String option() {
-        return OPTION + "=" + name();
+        return PARAMETER + "=" + name();
     }
 }

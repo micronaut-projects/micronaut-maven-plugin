@@ -113,7 +113,7 @@ public final class TrainingRun {
                 + "application");
         }
         // The build that sets training paths and no mode is the one that fails after a Micronaut upgrade
-        String warning = warmUp ? PATHS_OPTION + " is set and " + TrainingMode.OPTION + " is not. This build will fail "
+        String warning = warmUp ? PATHS_OPTION + " is set and " + TrainingMode.PARAMETER + " is not. This build will fail "
             + "once the application uses a Micronaut version with the LOAD training mode: LOAD becomes the default, "
             + "and " + LOAD_SENDS_NO_REQUESTS + " Set " + START_OPTION + " now to keep starting the application" : null;
         return new TrainingRun(TrainingMode.START, usesSwitch, "training mode START: the training run starts the "
