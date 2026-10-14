@@ -15,8 +15,12 @@
  */
 package io.micronaut.maven;
 
+import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.core.MojoUtils;
+import io.micronaut.maven.jdkaotcache.JdkAotCacheTraining;
+import io.micronaut.maven.jdkaotcache.TrainingMode;
+import io.micronaut.maven.jdkaotcache.TrainingRun;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.jib.JibMicronautExtension;
 import io.micronaut.maven.services.ApplicationConfigurationService;
@@ -28,6 +32,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.invoker.MavenInvocationException;
@@ -71,10 +76,59 @@ public class DockerfileMojo extends AbstractDockerMojo {
     public static final String DOCKERFILE_NATIVE_STATIC = "DockerfileNativeStatic";
     public static final String DOCKERFILE_NATIVE_ORACLE_CLOUD = "DockerfileNativeOracleCloud";
     public static final String NATIVE_BUILD_TOOLS_MAVEN_PLUGIN = "org.graalvm.buildtools:native-maven-plugin";
+    static final String DOCKERFILE_JDK_AOT_CACHE = "DockerfileJdkAotCache";
     private static final String CLASS_NAME_PLACEHOLDER = "CLASS_NAME";
+    private static final String JDK_AOT_CACHE_TRAINING_PLACEHOLDER = "JDK_AOT_CACHE_TRAINING";
     private static final String EXEC_MAIN_CLASS_SOURCE = "exec.mainClass";
+    /**
+     * Where the training script writes the JDK AOT cache. The {@code ENTRYPOINT} of the {@code DockerfileJdkAotCache}
+     * template loads it from there.
+     */
+    private static final String JDK_AOT_CACHE_IMAGE_FILE = "/home/app/app.aot";
 
     private final ExecutorService executorService;
+    private String jdkAotCacheTrainingArguments = "";
+
+    /**
+     * Whether the generated Dockerfile trains a JDK AOT cache (Java 25 or later) while the image is built, and starts
+     * the application with it so that it starts faster. Only for {@code docker} packaging, and not for the
+     * {@code lambda} or {@code oracle_function} runtimes. The base image needs {@code bash}.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = "micronaut.docker.jdkAotCache", defaultValue = "false")
+    private boolean jdkAotCache;
+
+    /**
+     * How the JDK AOT cache is trained. {@code LOAD} loads the application's bean definitions and exits without
+     * starting it, so the training needs no database or other service. {@code START} starts the application, sends
+     * the training requests and stops it, which trains a more complete cache. When not set, the mode is {@code LOAD} if
+     * the application's Micronaut version supports it (Micronaut Core 5.3.0 or later), and {@code START} otherwise.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = "micronaut.docker.jdkAotCache.trainingMode")
+    private TrainingMode jdkAotCacheTrainingMode;
+
+    /**
+     * The paths that a {@code START} training run sends a GET request to once the application is ready. A short,
+     * representative warm-up makes a better cache. A request that gets no response, or a status of 500 or more, fails
+     * the build. A status from 400 to 499 is logged as a warning with Micronaut Core 5.3.0 or later, and fails the build
+     * with earlier versions.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = "micronaut.docker.jdkAotCache.trainingPaths")
+    private List<String> jdkAotCacheTrainingPaths;
+
+    /**
+     * The timeout, in seconds, of the JDK AOT cache training run. With Micronaut Core before 5.3.0, it applies to each
+     * step: waiting for the application to be ready, each training request, and waiting for the application to exit.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = "micronaut.docker.jdkAotCache.trainingTimeout", defaultValue = "180")
+    private int jdkAotCacheTrainingTimeout;
 
     @Inject
     public DockerfileMojo(MavenProject mavenProject, DockerService dockerService, JibConfigurationService jibConfigurationService,
@@ -89,7 +143,10 @@ public class DockerfileMojo extends AbstractDockerMojo {
         var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
         var packaging = Packaging.of(mavenProject.getPackaging());
         try {
-            copyDependencies();
+            if (jdkAotCache && packaging != Packaging.DOCKER) {
+                getLog().warn("micronaut.docker.jdkAotCache only applies to " + Packaging.DOCKER.id() + " packaging, ignoring it");
+            }
+            copyDependencies(jdkAotCache);
             var dockerfile = switch (packaging) {
                 case DOCKER_NATIVE -> buildDockerfileNative(runtime);
                 case DOCKER -> buildDockerfile(runtime);
@@ -105,6 +162,9 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     private Optional<File> buildDockerfile(MicronautRuntime runtime) throws IOException, MojoExecutionException {
+        if (jdkAotCache) {
+            return buildJdkAotCacheDockerfile(runtime);
+        }
         File dockerfile;
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION -> {
@@ -123,6 +183,40 @@ public class DockerfileMojo extends AbstractDockerMojo {
             default -> throw new IllegalStateException("Unexpected value: " + runtime.getBuildStrategy());
         }
         return Optional.ofNullable(dockerfile);
+    }
+
+    private Optional<File> buildJdkAotCacheDockerfile(MicronautRuntime runtime) throws IOException, MojoExecutionException {
+        if (runtime.getBuildStrategy() != DockerBuildStrategy.DEFAULT) {
+            throw new MojoExecutionException("micronaut.docker.jdkAotCache only supports the default runtime, not "
+                + micronautRuntime);
+        }
+        List<String> trainingPaths = JdkAotCacheTraining.validateTrainingPaths(jdkAotCacheTrainingPaths);
+        TrainingRun trainingRun = TrainingRun.resolve(jdkAotCacheTrainingMode, trainingPaths, mavenProject.getArtifacts());
+        trainingRun.logGeneratedDockerfileRun(getLog());
+        jdkAotCacheTrainingArguments = jdkAotCacheTrainingArguments(trainingPaths, trainingRun);
+        File dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_JDK_AOT_CACHE);
+        processDockerfile(dockerfile);
+        return Optional.ofNullable(dockerfile);
+    }
+
+    private String jdkAotCacheTrainingArguments(List<String> trainingPaths, TrainingRun trainingRun) throws MojoExecutionException {
+        if (jdkAotCacheTrainingTimeout <= 0) {
+            throw new MojoExecutionException("micronaut.docker.jdkAotCache.trainingTimeout must be positive");
+        }
+        String port = validateExposedPorts("jib.container.ports", getPorts()).trim().split("[\\s/]+")[0];
+        if (!trainingRun.usesSwitch() && port.isEmpty()) {
+            throw new MojoExecutionException("micronaut.docker.jdkAotCache needs the HTTP port of the application to "
+                + "warm it up. Set it with the Jib container.ports configuration.");
+        }
+        var arguments = new ArrayList<String>();
+        arguments.add(JDK_AOT_CACHE_IMAGE_FILE);
+        arguments.add(port.isEmpty() ? "0" : port);
+        arguments.add(String.valueOf(jdkAotCacheTrainingTimeout));
+        arguments.add(trainingRun.scriptArgument());
+        for (String path : trainingPaths) {
+            arguments.add(shellLiteral("micronaut.docker.jdkAotCache.trainingPaths", path));
+        }
+        return String.join(" ", arguments);
     }
 
     private Optional<File> buildCracDockerfile(MicronautRuntime runtime) throws IOException, MojoExecutionException {
@@ -213,6 +307,9 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     private String processDockerfileLine(String line) throws MojoExecutionException {
+        if (containsPlaceholder(line, JDK_AOT_CACHE_TRAINING_PLACEHOLDER)) {
+            line = line.replace("${" + JDK_AOT_CACHE_TRAINING_PLACEHOLDER + "}", jdkAotCacheTrainingArguments);
+        }
         if (line.startsWith("ARG")) {
             return shouldInlineArgLine(line) ? null : line;
         }

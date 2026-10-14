@@ -22,6 +22,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.core.MojoUtils;
+import io.micronaut.maven.jdkaotcache.JdkAotCacheDockerContext;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.jib.JibMicronautExtension;
 import io.micronaut.maven.services.ApplicationConfigurationService;
@@ -42,6 +43,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -434,11 +436,23 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * Copy project dependencies to a <code>target/dependency</code> directory.
      */
     protected void copyDependencies() throws IOException {
+        copyDependencies(false);
+    }
+
+    /**
+     * Copy project dependencies to a <code>target/dependency</code> directory. For {@code docker} packaging with
+     * {@code micronaut.docker.jdkAotCache}, also writes the application JAR, the class path argument file and the
+     * training script to <code>target/jdk-aot-cache</code>.
+     *
+     * @param jdkAotCache whether {@code micronaut.docker.jdkAotCache} is set
+     */
+    void copyDependencies(boolean jdkAotCache) throws IOException {
         var imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
         var target = new File(mavenProject.getBuild().getDirectory(), DEPENDENCY_DIRECTORY).toPath();
         Files.createDirectories(target);
         Files.createDirectories(target.resolve(RELEASE_DEPENDENCY_DIRECTORY));
         Files.createDirectories(target.resolve(SNAPSHOT_DEPENDENCY_DIRECTORY));
+        var imageClasspath = new ArrayList<String>();
         for (Artifact dependency : mavenProject.getArtifacts()) {
             if (!imageClasspathScopes.contains(dependency.getScope())) {
                 continue;
@@ -448,6 +462,11 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
             var layeredPath = target.resolve(dependencyLayerDirectory(dependency)).resolve(dependencyName);
             Files.copy(dependencyFile, layeredPath, StandardCopyOption.REPLACE_EXISTING);
             Files.copy(dependencyFile, target.resolve(dependencyName), StandardCopyOption.REPLACE_EXISTING);
+            imageClasspath.add(dependencyLayerDirectory(dependency) + "/" + dependencyName);
+        }
+        if (jdkAotCache && Packaging.of(mavenProject.getPackaging()) == Packaging.DOCKER) {
+            JdkAotCacheDockerContext.write(Path.of(mavenProject.getBuild().getDirectory()),
+                Path.of(mavenProject.getBuild().getOutputDirectory()), imageClasspath);
         }
     }
 
