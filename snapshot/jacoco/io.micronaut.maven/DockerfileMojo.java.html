@@ -15,8 +15,12 @@
  */
 package io.micronaut.maven;
 
+import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.core.MojoUtils;
+import io.micronaut.maven.jdkaotcache.JdkAotCacheTraining;
+import io.micronaut.maven.jdkaotcache.TrainingMode;
+import io.micronaut.maven.jdkaotcache.TrainingRun;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.jib.JibMicronautExtension;
 import io.micronaut.maven.services.ApplicationConfigurationService;
@@ -28,6 +32,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.invoker.MavenInvocationException;
@@ -71,253 +76,345 @@ public class DockerfileMojo extends AbstractDockerMojo {
     public static final String DOCKERFILE_NATIVE_STATIC = &quot;DockerfileNativeStatic&quot;;
     public static final String DOCKERFILE_NATIVE_ORACLE_CLOUD = &quot;DockerfileNativeOracleCloud&quot;;
     public static final String NATIVE_BUILD_TOOLS_MAVEN_PLUGIN = &quot;org.graalvm.buildtools:native-maven-plugin&quot;;
+    static final String DOCKERFILE_JDK_AOT_CACHE = &quot;DockerfileJdkAotCache&quot;;
     private static final String CLASS_NAME_PLACEHOLDER = &quot;CLASS_NAME&quot;;
+    private static final String JDK_AOT_CACHE_TRAINING_PLACEHOLDER = &quot;JDK_AOT_CACHE_TRAINING&quot;;
     private static final String EXEC_MAIN_CLASS_SOURCE = &quot;exec.mainClass&quot;;
+    /**
+     * Where the training script writes the JDK AOT cache. The {@code ENTRYPOINT} of the {@code DockerfileJdkAotCache}
+     * template loads it from there.
+     */
+    private static final String JDK_AOT_CACHE_IMAGE_FILE = &quot;/home/app/app.aot&quot;;
 
     private final ExecutorService executorService;
+<span class="fc" id="L90">    private String jdkAotCacheTrainingArguments = &quot;&quot;;</span>
+
+    /**
+     * Whether the generated Dockerfile trains a JDK AOT cache (Java 25 or later) while the image is built, and starts
+     * the application with it so that it starts faster. Only for {@code docker} packaging, and not for the
+     * {@code lambda} or {@code oracle_function} runtimes. The base image needs {@code bash}.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = &quot;micronaut.docker.jdkAotCache&quot;, defaultValue = &quot;false&quot;)
+    private boolean jdkAotCache;
+
+    /**
+     * How the JDK AOT cache is trained. {@code LOAD} loads the application's bean definitions and exits without
+     * starting it, so the training needs no database or other service. {@code START} starts the application, sends
+     * the training requests and stops it, which trains a more complete cache. When not set, the mode is {@code LOAD} if
+     * the application's Micronaut version supports it (Micronaut Core 5.3.0 or later), and {@code START} otherwise.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = &quot;micronaut.docker.jdkAotCache.trainingMode&quot;)
+    private TrainingMode jdkAotCacheTrainingMode;
+
+    /**
+     * The paths that a {@code START} training run sends a GET request to once the application is ready. A short,
+     * representative warm-up makes a better cache. A request that gets no response, or a status of 500 or more, fails
+     * the build. A status from 400 to 499 is logged as a warning with Micronaut Core 5.3.0 or later, and fails the build
+     * with earlier versions.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = &quot;micronaut.docker.jdkAotCache.trainingPaths&quot;)
+    private List&lt;String&gt; jdkAotCacheTrainingPaths;
+
+    /**
+     * The timeout, in seconds, of the JDK AOT cache training run. With Micronaut Core before 5.3.0, it applies to each
+     * step: waiting for the application to be ready, each training request, and waiting for the application to exit.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = &quot;micronaut.docker.jdkAotCache.trainingTimeout&quot;, defaultValue = &quot;180&quot;)
+    private int jdkAotCacheTrainingTimeout;
 
     @Inject
     public DockerfileMojo(MavenProject mavenProject, DockerService dockerService, JibConfigurationService jibConfigurationService,
                           ApplicationConfigurationService applicationConfigurationService, ExecutorService executorService,
                           MavenSession mavenSession, MojoExecution mojoExecution) {
-<span class="fc" id="L83">        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession, mojoExecution);</span>
-<span class="fc" id="L84">        this.executorService = executorService;</span>
-<span class="fc" id="L85">    }</span>
+<span class="fc" id="L137">        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession, mojoExecution);</span>
+<span class="fc" id="L138">        this.executorService = executorService;</span>
+<span class="fc" id="L139">    }</span>
 
     @Override
     public void execute() throws MojoExecutionException {
-<span class="nc" id="L89">        var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());</span>
-<span class="nc" id="L90">        var packaging = Packaging.of(mavenProject.getPackaging());</span>
+<span class="fc" id="L143">        var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());</span>
+<span class="fc" id="L144">        var packaging = Packaging.of(mavenProject.getPackaging());</span>
         try {
-<span class="nc" id="L92">            copyDependencies();</span>
-<span class="nc bnc" id="L93" title="All 4 branches missed.">            var dockerfile = switch (packaging) {</span>
-<span class="nc" id="L94">                case DOCKER_NATIVE -&gt; buildDockerfileNative(runtime);</span>
-<span class="nc" id="L95">                case DOCKER -&gt; buildDockerfile(runtime);</span>
-<span class="nc" id="L96">                case DOCKER_CRAC -&gt; buildCracDockerfile(runtime);</span>
-<span class="nc" id="L97">                default -&gt; throw new MojoExecutionException(&quot;Packaging is set to [&quot; + packaging + &quot;]. To generate a Dockerfile, set the packaging to either [&quot; + Packaging.DOCKER.id() + &quot;] or [&quot; + Packaging.DOCKER_NATIVE.id() + &quot;]&quot;);</span>
+<span class="pc bpc" id="L146" title="2 of 4 branches missed.">            if (jdkAotCache &amp;&amp; packaging != Packaging.DOCKER) {</span>
+<span class="nc" id="L147">                getLog().warn(&quot;micronaut.docker.jdkAotCache only applies to &quot; + Packaging.DOCKER.id() + &quot; packaging, ignoring it&quot;);</span>
+            }
+<span class="fc" id="L149">            copyDependencies(jdkAotCache);</span>
+<span class="pc bpc" id="L150" title="3 of 4 branches missed.">            var dockerfile = switch (packaging) {</span>
+<span class="nc" id="L151">                case DOCKER_NATIVE -&gt; buildDockerfileNative(runtime);</span>
+<span class="fc" id="L152">                case DOCKER -&gt; buildDockerfile(runtime);</span>
+<span class="nc" id="L153">                case DOCKER_CRAC -&gt; buildCracDockerfile(runtime);</span>
+<span class="nc" id="L154">                default -&gt; throw new MojoExecutionException(&quot;Packaging is set to [&quot; + packaging + &quot;]. To generate a Dockerfile, set the packaging to either [&quot; + Packaging.DOCKER.id() + &quot;] or [&quot; + Packaging.DOCKER_NATIVE.id() + &quot;]&quot;);</span>
             };
 
-<span class="nc" id="L100">            dockerfile.ifPresent(file -&gt; getLog().info(&quot;Dockerfile written to: &quot; + file.getAbsolutePath()));</span>
+<span class="fc" id="L157">            dockerfile.ifPresent(file -&gt; getLog().info(&quot;Dockerfile written to: &quot; + file.getAbsolutePath()));</span>
 
-<span class="nc" id="L102">        } catch (IOException | MavenInvocationException e) {</span>
-<span class="nc" id="L103">            throw new MojoExecutionException(e.getMessage(), e);</span>
-<span class="nc" id="L104">        }</span>
-<span class="nc" id="L105">    }</span>
+<span class="nc" id="L159">        } catch (IOException | MavenInvocationException e) {</span>
+<span class="nc" id="L160">            throw new MojoExecutionException(e.getMessage(), e);</span>
+<span class="fc" id="L161">        }</span>
+<span class="fc" id="L162">    }</span>
 
     private Optional&lt;File&gt; buildDockerfile(MicronautRuntime runtime) throws IOException, MojoExecutionException {
-        File dockerfile;
-<span class="nc bnc" id="L109" title="All 4 branches missed.">        switch (runtime.getBuildStrategy()) {</span>
-            case ORACLE_FUNCTION -&gt; {
-<span class="nc" id="L111">                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_ORACLE_CLOUD);</span>
-<span class="nc" id="L112">                oracleCloudFunctionCmd(dockerfile);</span>
-<span class="nc" id="L113">                processOracleFunctionDockerfile(dockerfile);</span>
-<span class="nc" id="L114">            }</span>
-            case LAMBDA -&gt; {
-<span class="nc" id="L116">                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS);</span>
-<span class="nc" id="L117">                processDockerfile(dockerfile);</span>
-<span class="nc" id="L118">            }</span>
-            case DEFAULT -&gt; {
-<span class="nc" id="L120">                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE);</span>
-<span class="nc" id="L121">                processDockerfile(dockerfile);</span>
-<span class="nc" id="L122">            }</span>
-<span class="nc" id="L123">            default -&gt; throw new IllegalStateException(&quot;Unexpected value: &quot; + runtime.getBuildStrategy());</span>
+<span class="pc bpc" id="L165" title="1 of 2 branches missed.">        if (jdkAotCache) {</span>
+<span class="fc" id="L166">            return buildJdkAotCacheDockerfile(runtime);</span>
         }
-<span class="nc" id="L125">        return Optional.ofNullable(dockerfile);</span>
+        File dockerfile;
+<span class="nc bnc" id="L169" title="All 4 branches missed.">        switch (runtime.getBuildStrategy()) {</span>
+            case ORACLE_FUNCTION -&gt; {
+<span class="nc" id="L171">                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_ORACLE_CLOUD);</span>
+<span class="nc" id="L172">                oracleCloudFunctionCmd(dockerfile);</span>
+<span class="nc" id="L173">                processOracleFunctionDockerfile(dockerfile);</span>
+<span class="nc" id="L174">            }</span>
+            case LAMBDA -&gt; {
+<span class="nc" id="L176">                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS);</span>
+<span class="nc" id="L177">                processDockerfile(dockerfile);</span>
+<span class="nc" id="L178">            }</span>
+            case DEFAULT -&gt; {
+<span class="nc" id="L180">                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE);</span>
+<span class="nc" id="L181">                processDockerfile(dockerfile);</span>
+<span class="nc" id="L182">            }</span>
+<span class="nc" id="L183">            default -&gt; throw new IllegalStateException(&quot;Unexpected value: &quot; + runtime.getBuildStrategy());</span>
+        }
+<span class="nc" id="L185">        return Optional.ofNullable(dockerfile);</span>
+    }
+
+    private Optional&lt;File&gt; buildJdkAotCacheDockerfile(MicronautRuntime runtime) throws IOException, MojoExecutionException {
+<span class="fc bfc" id="L189" title="All 2 branches covered.">        if (runtime.getBuildStrategy() != DockerBuildStrategy.DEFAULT) {</span>
+<span class="fc" id="L190">            throw new MojoExecutionException(&quot;micronaut.docker.jdkAotCache only supports the default runtime, not &quot;</span>
+                + micronautRuntime);
+        }
+<span class="fc" id="L193">        List&lt;String&gt; trainingPaths = JdkAotCacheTraining.validateTrainingPaths(jdkAotCacheTrainingPaths);</span>
+<span class="fc" id="L194">        TrainingRun trainingRun = TrainingRun.resolve(jdkAotCacheTrainingMode, trainingPaths, mavenProject.getArtifacts());</span>
+<span class="fc" id="L195">        trainingRun.logGeneratedDockerfileRun(getLog());</span>
+<span class="fc" id="L196">        jdkAotCacheTrainingArguments = jdkAotCacheTrainingArguments(trainingPaths, trainingRun);</span>
+<span class="fc" id="L197">        File dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_JDK_AOT_CACHE);</span>
+<span class="fc" id="L198">        processDockerfile(dockerfile);</span>
+<span class="fc" id="L199">        return Optional.ofNullable(dockerfile);</span>
+    }
+
+    private String jdkAotCacheTrainingArguments(List&lt;String&gt; trainingPaths, TrainingRun trainingRun) throws MojoExecutionException {
+<span class="pc bpc" id="L203" title="1 of 2 branches missed.">        if (jdkAotCacheTrainingTimeout &lt;= 0) {</span>
+<span class="nc" id="L204">            throw new MojoExecutionException(&quot;micronaut.docker.jdkAotCache.trainingTimeout must be positive&quot;);</span>
+        }
+<span class="fc" id="L206">        String port = validateExposedPorts(&quot;jib.container.ports&quot;, getPorts()).trim().split(&quot;[\\s/]+&quot;)[0];</span>
+<span class="pc bpc" id="L207" title="1 of 4 branches missed.">        if (!trainingRun.usesSwitch() &amp;&amp; port.isEmpty()) {</span>
+<span class="nc" id="L208">            throw new MojoExecutionException(&quot;micronaut.docker.jdkAotCache needs the HTTP port of the application to &quot;</span>
+                + &quot;warm it up. Set it with the Jib container.ports configuration.&quot;);
+        }
+<span class="fc" id="L211">        var arguments = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L212">        arguments.add(JDK_AOT_CACHE_IMAGE_FILE);</span>
+<span class="pc bpc" id="L213" title="1 of 2 branches missed.">        arguments.add(port.isEmpty() ? &quot;0&quot; : port);</span>
+<span class="fc" id="L214">        arguments.add(String.valueOf(jdkAotCacheTrainingTimeout));</span>
+<span class="fc" id="L215">        arguments.add(trainingRun.scriptArgument());</span>
+<span class="fc bfc" id="L216" title="All 2 branches covered.">        for (String path : trainingPaths) {</span>
+<span class="fc" id="L217">            arguments.add(shellLiteral(&quot;micronaut.docker.jdkAotCache.trainingPaths&quot;, path));</span>
+<span class="fc" id="L218">        }</span>
+<span class="fc" id="L219">        return String.join(&quot; &quot;, arguments);</span>
     }
 
     private Optional&lt;File&gt; buildCracDockerfile(MicronautRuntime runtime) throws IOException, MojoExecutionException {
         File dockerfile;
-<span class="nc bnc" id="L130" title="All 4 branches missed.">        switch (runtime.getBuildStrategy()) {</span>
-<span class="nc" id="L131">            case ORACLE_FUNCTION -&gt; throw new MojoExecutionException(&quot;Oracle Functions are currently unsupported&quot;);</span>
-<span class="nc" id="L132">            case LAMBDA -&gt; throw new MojoExecutionException(&quot;Lambda Functions are currently unsupported&quot;);</span>
+<span class="nc bnc" id="L224" title="All 4 branches missed.">        switch (runtime.getBuildStrategy()) {</span>
+<span class="nc" id="L225">            case ORACLE_FUNCTION -&gt; throw new MojoExecutionException(&quot;Oracle Functions are currently unsupported&quot;);</span>
+<span class="nc" id="L226">            case LAMBDA -&gt; throw new MojoExecutionException(&quot;Lambda Functions are currently unsupported&quot;);</span>
             case DEFAULT -&gt; {
-<span class="nc" id="L134">                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_CRAC_CHECKPOINT, DOCKERFILE_CRAC_CHECKPOINT_FILE);</span>
-<span class="nc" id="L135">                processDockerfile(dockerfile);</span>
-<span class="nc" id="L136">                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_CRAC);</span>
-<span class="nc" id="L137">                processDockerfile(dockerfile);</span>
-<span class="nc" id="L138">            }</span>
-<span class="nc" id="L139">            default -&gt; throw new IllegalStateException(&quot;Unexpected value: &quot; + runtime.getBuildStrategy());</span>
+<span class="nc" id="L228">                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_CRAC_CHECKPOINT, DOCKERFILE_CRAC_CHECKPOINT_FILE);</span>
+<span class="nc" id="L229">                processDockerfile(dockerfile);</span>
+<span class="nc" id="L230">                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_CRAC);</span>
+<span class="nc" id="L231">                processDockerfile(dockerfile);</span>
+<span class="nc" id="L232">            }</span>
+<span class="nc" id="L233">            default -&gt; throw new IllegalStateException(&quot;Unexpected value: &quot; + runtime.getBuildStrategy());</span>
         }
-<span class="nc" id="L141">        return Optional.ofNullable(dockerfile);</span>
+<span class="nc" id="L235">        return Optional.ofNullable(dockerfile);</span>
     }
 
     static void processOracleFunctionDockerfile(File dockerfile) throws IOException {
-<span class="nc bnc" id="L145" title="All 2 branches missed.">        if (dockerfile != null) {</span>
-<span class="nc" id="L146">            var allLines = Files.readAllLines(dockerfile.toPath());</span>
-<span class="nc" id="L147">            String projectFnVersion = JibMicronautExtension.determineProjectFnVersion(System.getProperty(&quot;java.version&quot;));</span>
-<span class="nc" id="L148">            allLines.add(0, allLines.remove(0) + projectFnVersion);</span>
-<span class="nc" id="L149">            String entrypoint = JibMicronautExtension.buildProjectFnEntrypoint()</span>
-<span class="nc" id="L150">                .stream()</span>
-<span class="nc" id="L151">                .map(s -&gt; &quot;\&quot;&quot; + s + &quot;\&quot;&quot;)</span>
-<span class="nc" id="L152">                .collect(Collectors.joining(&quot;, &quot;));</span>
+<span class="nc bnc" id="L239" title="All 2 branches missed.">        if (dockerfile != null) {</span>
+<span class="nc" id="L240">            var allLines = Files.readAllLines(dockerfile.toPath());</span>
+<span class="nc" id="L241">            String projectFnVersion = JibMicronautExtension.determineProjectFnVersion(System.getProperty(&quot;java.version&quot;));</span>
+<span class="nc" id="L242">            allLines.add(0, allLines.remove(0) + projectFnVersion);</span>
+<span class="nc" id="L243">            String entrypoint = JibMicronautExtension.buildProjectFnEntrypoint()</span>
+<span class="nc" id="L244">                .stream()</span>
+<span class="nc" id="L245">                .map(s -&gt; &quot;\&quot;&quot; + s + &quot;\&quot;&quot;)</span>
+<span class="nc" id="L246">                .collect(Collectors.joining(&quot;, &quot;));</span>
 
-<span class="nc" id="L154">            allLines.add(&quot;ENTRYPOINT [&quot; + entrypoint + &quot;]&quot;);</span>
+<span class="nc" id="L248">            allLines.add(&quot;ENTRYPOINT [&quot; + entrypoint + &quot;]&quot;);</span>
 
-<span class="nc" id="L156">            Files.write(dockerfile.toPath(), allLines);</span>
+<span class="nc" id="L250">            Files.write(dockerfile.toPath(), allLines);</span>
         }
-<span class="nc" id="L158">    }</span>
+<span class="nc" id="L252">    }</span>
 
     private Optional&lt;File&gt; buildDockerfileNative(MicronautRuntime runtime) throws IOException, MavenInvocationException, MojoExecutionException {
-<span class="nc" id="L161">        getLog().info(&quot;Generating GraalVM args file&quot;);</span>
-<span class="nc" id="L162">        executorService.invokeGoal(NATIVE_BUILD_TOOLS_MAVEN_PLUGIN, &quot;write-args-file&quot;);</span>
+<span class="nc" id="L255">        getLog().info(&quot;Generating GraalVM args file&quot;);</span>
+<span class="nc" id="L256">        executorService.invokeGoal(NATIVE_BUILD_TOOLS_MAVEN_PLUGIN, &quot;write-args-file&quot;);</span>
         File dockerfile;
-<span class="nc bnc" id="L164" title="All 4 branches missed.">        switch (runtime.getBuildStrategy()) {</span>
+<span class="nc bnc" id="L258" title="All 4 branches missed.">        switch (runtime.getBuildStrategy()) {</span>
             case LAMBDA -&gt; {
-<span class="nc" id="L166">                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS_CUSTOM_RUNTIME);</span>
-<span class="nc" id="L167">                lambdaBootstrapCommand(dockerfile);</span>
-<span class="nc" id="L168">            }</span>
+<span class="nc" id="L260">                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_AWS_CUSTOM_RUNTIME);</span>
+<span class="nc" id="L261">                lambdaBootstrapCommand(dockerfile);</span>
+<span class="nc" id="L262">            }</span>
             case ORACLE_FUNCTION -&gt; {
-<span class="nc" id="L170">                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_NATIVE_ORACLE_CLOUD);</span>
-<span class="nc" id="L171">                oracleCloudFunctionCmd(dockerfile);</span>
-<span class="nc" id="L172">            }</span>
+<span class="nc" id="L264">                dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_NATIVE_ORACLE_CLOUD);</span>
+<span class="nc" id="L265">                oracleCloudFunctionCmd(dockerfile);</span>
+<span class="nc" id="L266">            }</span>
             case DEFAULT -&gt; {
-<span class="nc" id="L174">                String dockerfileName = DOCKERFILE_NATIVE;</span>
-<span class="nc bnc" id="L175" title="All 2 branches missed.">                if (Boolean.TRUE.equals(staticNativeImage)) {</span>
-<span class="nc" id="L176">                    getLog().info(&quot;Generating a static native image&quot;);</span>
-<span class="nc" id="L177">                    dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_STATIC;</span>
-<span class="nc bnc" id="L178" title="All 2 branches missed.">                } else if (baseImageRun.contains(&quot;distroless&quot;)) {</span>
-<span class="nc" id="L179">                    getLog().info(&quot;Generating a mostly static native image&quot;);</span>
-<span class="nc" id="L180">                    dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_DISTROLESS;</span>
+<span class="nc" id="L268">                String dockerfileName = DOCKERFILE_NATIVE;</span>
+<span class="nc bnc" id="L269" title="All 2 branches missed.">                if (Boolean.TRUE.equals(staticNativeImage)) {</span>
+<span class="nc" id="L270">                    getLog().info(&quot;Generating a static native image&quot;);</span>
+<span class="nc" id="L271">                    dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_STATIC;</span>
+<span class="nc bnc" id="L272" title="All 2 branches missed.">                } else if (baseImageRun.contains(&quot;distroless&quot;)) {</span>
+<span class="nc" id="L273">                    getLog().info(&quot;Generating a mostly static native image&quot;);</span>
+<span class="nc" id="L274">                    dockerfileName = DockerfileMojo.DOCKERFILE_NATIVE_DISTROLESS;</span>
                 }
-<span class="nc" id="L182">                dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);</span>
-<span class="nc" id="L183">            }</span>
-<span class="nc" id="L184">            default -&gt; throw new IllegalStateException(&quot;Unexpected value: &quot; + runtime.getBuildStrategy());</span>
+<span class="nc" id="L276">                dockerfile = dockerService.loadDockerfileAsResource(dockerfileName);</span>
+<span class="nc" id="L277">            }</span>
+<span class="nc" id="L278">            default -&gt; throw new IllegalStateException(&quot;Unexpected value: &quot; + runtime.getBuildStrategy());</span>
         }
-<span class="nc" id="L186">        processDockerfile(dockerfile);</span>
-<span class="nc" id="L187">        return Optional.ofNullable(dockerfile);</span>
+<span class="nc" id="L280">        processDockerfile(dockerfile);</span>
+<span class="nc" id="L281">        return Optional.ofNullable(dockerfile);</span>
     }
 
     private void processDockerfile(File dockerfile) throws IOException, MojoExecutionException {
-<span class="pc bpc" id="L191" title="1 of 2 branches missed.">        if (dockerfile == null) {</span>
-<span class="nc" id="L192">            return;</span>
+<span class="pc bpc" id="L285" title="1 of 2 branches missed.">        if (dockerfile == null) {</span>
+<span class="nc" id="L286">            return;</span>
         }
 
-<span class="fc" id="L195">        var allLines = Files.readAllLines(dockerfile.toPath());</span>
-<span class="fc" id="L196">        Files.write(dockerfile.toPath(), processDockerfileLines(allLines));</span>
+<span class="fc" id="L289">        var allLines = Files.readAllLines(dockerfile.toPath());</span>
+<span class="fc" id="L290">        Files.write(dockerfile.toPath(), processDockerfileLines(allLines));</span>
 
-<span class="fc" id="L198">        String argsFile = findArgsFile();</span>
-<span class="fc bfc" id="L199" title="All 2 branches covered.">        if (argsFile != null) {</span>
-<span class="fc" id="L200">            processNativeImageArgs(argsFile);</span>
+<span class="fc" id="L292">        String argsFile = findArgsFile();</span>
+<span class="fc bfc" id="L293" title="All 2 branches covered.">        if (argsFile != null) {</span>
+<span class="fc" id="L294">            processNativeImageArgs(argsFile);</span>
         }
-<span class="fc" id="L202">    }</span>
+<span class="fc" id="L296">    }</span>
 
     private List&lt;String&gt; processDockerfileLines(List&lt;String&gt; allLines) throws MojoExecutionException {
-<span class="fc" id="L205">        var result = new ArrayList&lt;String&gt;();</span>
-<span class="fc bfc" id="L206" title="All 2 branches covered.">        for (String line : allLines) {</span>
-<span class="fc" id="L207">            String processedLine = processDockerfileLine(line);</span>
-<span class="fc bfc" id="L208" title="All 2 branches covered.">            if (processedLine != null) {</span>
-<span class="fc" id="L209">                result.add(processedLine);</span>
+<span class="fc" id="L299">        var result = new ArrayList&lt;String&gt;();</span>
+<span class="fc bfc" id="L300" title="All 2 branches covered.">        for (String line : allLines) {</span>
+<span class="fc" id="L301">            String processedLine = processDockerfileLine(line);</span>
+<span class="fc bfc" id="L302" title="All 2 branches covered.">            if (processedLine != null) {</span>
+<span class="fc" id="L303">                result.add(processedLine);</span>
             }
-<span class="fc" id="L211">        }</span>
-<span class="fc" id="L212">        return result;</span>
+<span class="fc" id="L305">        }</span>
+<span class="fc" id="L306">        return result;</span>
     }
 
     private String processDockerfileLine(String line) throws MojoExecutionException {
-<span class="fc bfc" id="L216" title="All 2 branches covered.">        if (line.startsWith(&quot;ARG&quot;)) {</span>
-<span class="fc bfc" id="L217" title="All 2 branches covered.">            return shouldInlineArgLine(line) ? null : line;</span>
+<span class="fc bfc" id="L310" title="All 2 branches covered.">        if (containsPlaceholder(line, JDK_AOT_CACHE_TRAINING_PLACEHOLDER)) {</span>
+<span class="fc" id="L311">            line = line.replace(&quot;${&quot; + JDK_AOT_CACHE_TRAINING_PLACEHOLDER + &quot;}&quot;, jdkAotCacheTrainingArguments);</span>
         }
-<span class="fc bfc" id="L219" title="All 2 branches covered.">        if (containsPlaceholder(line, &quot;BASE_IMAGE_RUN&quot;)) {</span>
-<span class="nc" id="L220">            return line.replace(&quot;${BASE_IMAGE_RUN}&quot;, validateImageReference(&quot;micronaut.native-image.base-image-run&quot;, baseImageRun));</span>
+<span class="fc bfc" id="L313" title="All 2 branches covered.">        if (line.startsWith(&quot;ARG&quot;)) {</span>
+<span class="fc bfc" id="L314" title="All 2 branches covered.">            return shouldInlineArgLine(line) ? null : line;</span>
         }
-<span class="fc bfc" id="L222" title="All 2 branches covered.">        if (containsPlaceholder(line, &quot;BASE_IMAGE&quot;)) {</span>
-<span class="fc" id="L223">            return line.replace(&quot;${BASE_IMAGE}&quot;, validateImageReference(&quot;jib.from.image&quot;, getFrom()));</span>
+<span class="fc bfc" id="L316" title="All 2 branches covered.">        if (containsPlaceholder(line, &quot;BASE_IMAGE_RUN&quot;)) {</span>
+<span class="nc" id="L317">            return line.replace(&quot;${BASE_IMAGE_RUN}&quot;, validateImageReference(&quot;micronaut.native-image.base-image-run&quot;, baseImageRun));</span>
         }
-<span class="pc bpc" id="L225" title="1 of 2 branches missed.">        if (containsPlaceholder(line, &quot;BASE_JAVA_IMAGE&quot;)) {</span>
-<span class="nc" id="L226">            return line.replace(&quot;${BASE_JAVA_IMAGE}&quot;, validateImageReference(&quot;base Java image&quot;, getBaseImage()));</span>
+<span class="fc bfc" id="L319" title="All 2 branches covered.">        if (containsPlaceholder(line, &quot;BASE_IMAGE&quot;)) {</span>
+<span class="fc" id="L320">            return line.replace(&quot;${BASE_IMAGE}&quot;, validateImageReference(&quot;jib.from.image&quot;, getFrom()));</span>
         }
-<span class="fc bfc" id="L228" title="All 2 branches covered.">        if (containsPlaceholder(line, &quot;GRAALVM_DOWNLOAD_URL&quot;)) {</span>
-<span class="fc" id="L229">            return line.replace(&quot;${GRAALVM_DOWNLOAD_URL}&quot;, shellLiteral(&quot;GraalVM download URL&quot;, validateDownloadUrl(&quot;GraalVM download URL&quot;, graalVmDownloadUrl())));</span>
+<span class="fc bfc" id="L322" title="All 2 branches covered.">        if (containsPlaceholder(line, &quot;BASE_JAVA_IMAGE&quot;)) {</span>
+<span class="fc" id="L323">            return line.replace(&quot;${BASE_JAVA_IMAGE}&quot;, validateImageReference(&quot;base Java image&quot;, getBaseImage()));</span>
         }
-<span class="fc bfc" id="L231" title="All 2 branches covered.">        if (containsPlaceholder(line, CLASS_NAME_PLACEHOLDER)) {</span>
-<span class="fc" id="L232">            return replaceClassName(line);</span>
+<span class="fc bfc" id="L325" title="All 2 branches covered.">        if (containsPlaceholder(line, &quot;GRAALVM_DOWNLOAD_URL&quot;)) {</span>
+<span class="fc" id="L326">            return line.replace(&quot;${GRAALVM_DOWNLOAD_URL}&quot;, shellLiteral(&quot;GraalVM download URL&quot;, validateDownloadUrl(&quot;GraalVM download URL&quot;, graalVmDownloadUrl())));</span>
         }
-<span class="fc bfc" id="L234" title="All 2 branches covered.">        if (containsPlaceholder(line, &quot;PORTS&quot;)) {</span>
-<span class="fc" id="L235">            return line.replace(&quot;${PORTS}&quot;, validateExposedPorts(&quot;jib.container.ports&quot;, getPorts()));</span>
+<span class="fc bfc" id="L328" title="All 2 branches covered.">        if (containsPlaceholder(line, CLASS_NAME_PLACEHOLDER)) {</span>
+<span class="fc" id="L329">            return replaceClassName(line);</span>
         }
-<span class="fc" id="L237">        return line;</span>
+<span class="fc bfc" id="L331" title="All 2 branches covered.">        if (containsPlaceholder(line, &quot;PORTS&quot;)) {</span>
+<span class="fc" id="L332">            return line.replace(&quot;${PORTS}&quot;, validateExposedPorts(&quot;jib.container.ports&quot;, getPorts()));</span>
+        }
+<span class="fc" id="L334">        return line;</span>
     }
 
     private static boolean containsPlaceholder(String line, String placeholderName) {
-<span class="fc" id="L241">        return line.contains(&quot;${&quot; + placeholderName + &quot;}&quot;);</span>
+<span class="fc" id="L338">        return line.contains(&quot;${&quot; + placeholderName + &quot;}&quot;);</span>
     }
 
     private static boolean shouldInlineArgLine(String line) {
-<span class="fc" id="L245">        String trimmed = line.trim();</span>
-<span class="pc bpc" id="L246" title="1 of 2 branches missed.">        if (!trimmed.startsWith(&quot;ARG&quot;)) {</span>
-<span class="nc" id="L247">            return false;</span>
+<span class="fc" id="L342">        String trimmed = line.trim();</span>
+<span class="pc bpc" id="L343" title="1 of 2 branches missed.">        if (!trimmed.startsWith(&quot;ARG&quot;)) {</span>
+<span class="nc" id="L344">            return false;</span>
         }
-<span class="fc" id="L249">        String remainder = trimmed.substring(3).trim();</span>
-<span class="pc bpc" id="L250" title="1 of 2 branches missed.">        if (remainder.isEmpty()) {</span>
-<span class="nc" id="L251">            return false;</span>
+<span class="fc" id="L346">        String remainder = trimmed.substring(3).trim();</span>
+<span class="pc bpc" id="L347" title="1 of 2 branches missed.">        if (remainder.isEmpty()) {</span>
+<span class="nc" id="L348">            return false;</span>
         }
 
-<span class="fc" id="L254">        int endEquals = remainder.indexOf('=');</span>
-<span class="fc" id="L255">        int endWhitespace = -1;</span>
-<span class="fc bfc" id="L256" title="All 2 branches covered.">        for (int i = 0; i &lt; remainder.length(); i++) {</span>
-<span class="pc bpc" id="L257" title="1 of 2 branches missed.">            if (Character.isWhitespace(remainder.charAt(i))) {</span>
-<span class="nc" id="L258">                endWhitespace = i;</span>
-<span class="nc" id="L259">                break;</span>
+<span class="fc" id="L351">        int endEquals = remainder.indexOf('=');</span>
+<span class="fc" id="L352">        int endWhitespace = -1;</span>
+<span class="fc bfc" id="L353" title="All 2 branches covered.">        for (int i = 0; i &lt; remainder.length(); i++) {</span>
+<span class="pc bpc" id="L354" title="1 of 2 branches missed.">            if (Character.isWhitespace(remainder.charAt(i))) {</span>
+<span class="nc" id="L355">                endWhitespace = i;</span>
+<span class="nc" id="L356">                break;</span>
             }
         }
 
-<span class="fc" id="L263">        int end = remainder.length();</span>
-<span class="fc bfc" id="L264" title="All 2 branches covered.">        if (endEquals &gt;= 0) {</span>
-<span class="fc" id="L265">            end = Math.min(end, endEquals);</span>
+<span class="fc" id="L360">        int end = remainder.length();</span>
+<span class="fc bfc" id="L361" title="All 2 branches covered.">        if (endEquals &gt;= 0) {</span>
+<span class="fc" id="L362">            end = Math.min(end, endEquals);</span>
         }
-<span class="pc bpc" id="L267" title="1 of 2 branches missed.">        if (endWhitespace &gt;= 0) {</span>
-<span class="nc" id="L268">            end = Math.min(end, endWhitespace);</span>
+<span class="pc bpc" id="L364" title="1 of 2 branches missed.">        if (endWhitespace &gt;= 0) {</span>
+<span class="nc" id="L365">            end = Math.min(end, endWhitespace);</span>
         }
 
-<span class="fc" id="L271">        String argName = remainder.substring(0, end);</span>
-<span class="pc bpc" id="L272" title="1 of 2 branches missed.">        return &quot;BASE_IMAGE_RUN&quot;.equals(argName)</span>
-<span class="pc bpc" id="L273" title="1 of 2 branches missed.">            || &quot;BASE_JAVA_IMAGE&quot;.equals(argName)</span>
-<span class="fc bfc" id="L274" title="All 2 branches covered.">            || &quot;BASE_IMAGE&quot;.equals(argName)</span>
-<span class="pc bpc" id="L275" title="1 of 2 branches missed.">            || &quot;GRAALVM_DOWNLOAD_URL&quot;.equals(argName)</span>
-<span class="pc bpc" id="L276" title="1 of 2 branches missed.">            || CLASS_NAME_PLACEHOLDER.equals(argName)</span>
-<span class="pc bpc" id="L277" title="1 of 2 branches missed.">            || &quot;PORTS&quot;.equals(argName);</span>
+<span class="fc" id="L368">        String argName = remainder.substring(0, end);</span>
+<span class="pc bpc" id="L369" title="1 of 2 branches missed.">        return &quot;BASE_IMAGE_RUN&quot;.equals(argName)</span>
+<span class="fc bfc" id="L370" title="All 2 branches covered.">            || &quot;BASE_JAVA_IMAGE&quot;.equals(argName)</span>
+<span class="fc bfc" id="L371" title="All 2 branches covered.">            || &quot;BASE_IMAGE&quot;.equals(argName)</span>
+<span class="pc bpc" id="L372" title="1 of 2 branches missed.">            || &quot;GRAALVM_DOWNLOAD_URL&quot;.equals(argName)</span>
+<span class="pc bpc" id="L373" title="1 of 2 branches missed.">            || CLASS_NAME_PLACEHOLDER.equals(argName)</span>
+<span class="pc bpc" id="L374" title="1 of 2 branches missed.">            || &quot;PORTS&quot;.equals(argName);</span>
     }
 
     private String replaceClassName(String line) throws MojoExecutionException {
-<span class="fc bfc" id="L281" title="All 2 branches covered.">        String className = isJsonArrayClassNameContext(line)</span>
-<span class="fc" id="L282">            ? escapeJsonString(EXEC_MAIN_CLASS_SOURCE, mainClass)</span>
-<span class="fc bfc" id="L283" title="All 2 branches covered.">            : line.contains(&quot;\&quot;${CLASS_NAME}\&quot;&quot;)</span>
-<span class="fc" id="L284">                ? escapeShellDoubleQuoted(EXEC_MAIN_CLASS_SOURCE, mainClass)</span>
-<span class="fc" id="L285">            : shellLiteral(EXEC_MAIN_CLASS_SOURCE, mainClass);</span>
-<span class="fc" id="L286">        return line.replace(&quot;${CLASS_NAME}&quot;, className);</span>
+<span class="fc bfc" id="L378" title="All 2 branches covered.">        String className = isJsonArrayClassNameContext(line)</span>
+<span class="fc" id="L379">            ? escapeJsonString(EXEC_MAIN_CLASS_SOURCE, mainClass)</span>
+<span class="fc bfc" id="L380" title="All 2 branches covered.">            : line.contains(&quot;\&quot;${CLASS_NAME}\&quot;&quot;)</span>
+<span class="fc" id="L381">                ? escapeShellDoubleQuoted(EXEC_MAIN_CLASS_SOURCE, mainClass)</span>
+<span class="fc" id="L382">            : shellLiteral(EXEC_MAIN_CLASS_SOURCE, mainClass);</span>
+<span class="fc" id="L383">        return line.replace(&quot;${CLASS_NAME}&quot;, className);</span>
     }
 
     private static boolean isJsonArrayClassNameContext(String line) {
-<span class="pc bpc" id="L290" title="1 of 2 branches missed.">        return containsPlaceholder(line, CLASS_NAME_PLACEHOLDER)</span>
-<span class="fc bfc" id="L291" title="All 4 branches covered.">            &amp;&amp; (line.contains(&quot;ENTRYPOINT [&quot;) || line.contains(&quot;CMD [&quot;));</span>
+<span class="pc bpc" id="L387" title="1 of 2 branches missed.">        return containsPlaceholder(line, CLASS_NAME_PLACEHOLDER)</span>
+<span class="fc bfc" id="L388" title="All 4 branches covered.">            &amp;&amp; (line.contains(&quot;ENTRYPOINT [&quot;) || line.contains(&quot;CMD [&quot;));</span>
     }
 
     private String findArgsFile() throws IOException {
-<span class="fc" id="L295">        String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);</span>
-<span class="fc bfc" id="L296" title="All 2 branches covered.">        if (argsFile != null) {</span>
-<span class="fc" id="L297">            return argsFile;</span>
+<span class="fc" id="L392">        String argsFile = mavenProject.getProperties().getProperty(ARGS_FILE_PROPERTY_NAME);</span>
+<span class="fc bfc" id="L393" title="All 2 branches covered.">        if (argsFile != null) {</span>
+<span class="fc" id="L394">            return argsFile;</span>
         }
-<span class="fc" id="L299">        Path targetPath = Paths.get(mavenProject.getBuild().getDirectory());</span>
-<span class="fc" id="L300">        try (Stream&lt;Path&gt; listStream = Files.list(targetPath)) {</span>
-<span class="fc" id="L301">            return listStream</span>
-<span class="fc" id="L302">                .filter(path -&gt; {</span>
-<span class="nc" id="L303">                    String fileName = path.getFileName().toString();</span>
-<span class="nc bnc" id="L304" title="All 4 branches missed.">                    return fileName.startsWith(&quot;native-image&quot;) &amp;&amp; fileName.endsWith(&quot;args&quot;);</span>
+<span class="fc" id="L396">        Path targetPath = Paths.get(mavenProject.getBuild().getDirectory());</span>
+<span class="fc" id="L397">        try (Stream&lt;Path&gt; listStream = Files.list(targetPath)) {</span>
+<span class="fc" id="L398">            return listStream</span>
+<span class="fc" id="L399">                .filter(path -&gt; {</span>
+<span class="fc" id="L400">                    String fileName = path.getFileName().toString();</span>
+<span class="pc bpc" id="L401" title="3 of 4 branches missed.">                    return fileName.startsWith(&quot;native-image&quot;) &amp;&amp; fileName.endsWith(&quot;args&quot;);</span>
                 })
-<span class="fc" id="L306">                .findFirst()</span>
-<span class="pc" id="L307">                .map(path -&gt; path.toAbsolutePath().toString())</span>
-<span class="fc" id="L308">                .orElse(null);</span>
+<span class="fc" id="L403">                .findFirst()</span>
+<span class="pc" id="L404">                .map(path -&gt; path.toAbsolutePath().toString())</span>
+<span class="fc" id="L405">                .orElse(null);</span>
         }
     }
 
     private void processNativeImageArgs(String argsFile) throws IOException, MojoExecutionException {
-<span class="fc" id="L313">        List&lt;String&gt; allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile, supportsSharedArena());</span>
+<span class="fc" id="L410">        List&lt;String&gt; allNativeImageBuildArgs = MojoUtils.computeNativeImageArgs(nativeImageBuildArgs, baseImageRun, argsFile, supportsSharedArena());</span>
         //Remove extra main class argument
-<span class="fc" id="L315">        allNativeImageBuildArgs.remove(mainClass);</span>
-<span class="fc" id="L316">        getLog().info(&quot;GraalVM native image build args: &quot; + allNativeImageBuildArgs);</span>
-<span class="fc" id="L317">        List&lt;String&gt; conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));</span>
-<span class="pc bpc" id="L318" title="1 of 2 branches missed.">        if (conversionResult.size() == 1) {</span>
-<span class="fc" id="L319">            Files.delete(Paths.get(argsFile));</span>
+<span class="fc" id="L412">        allNativeImageBuildArgs.remove(mainClass);</span>
+<span class="fc" id="L413">        getLog().info(&quot;GraalVM native image build args: &quot; + allNativeImageBuildArgs);</span>
+<span class="fc" id="L414">        List&lt;String&gt; conversionResult = NativeImageUtils.convertToArgsFile(allNativeImageBuildArgs, Paths.get(mavenProject.getBuild().getDirectory()));</span>
+<span class="pc bpc" id="L415" title="1 of 2 branches missed.">        if (conversionResult.size() == 1) {</span>
+<span class="fc" id="L416">            Files.delete(Paths.get(argsFile));</span>
         }
-<span class="fc" id="L321">    }</span>
+<span class="fc" id="L418">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

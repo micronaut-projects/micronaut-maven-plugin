@@ -16,28 +16,40 @@
 package io.micronaut.maven.services;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.command.BuildImageResultCallback;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.ExecCreateCmd;
+import com.github.dockerjava.api.command.InspectImageCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.command.KillContainerCmd;
 import com.github.dockerjava.api.command.PushImageCmd;
+import com.github.dockerjava.api.command.RemoveContainerCmd;
+import com.github.dockerjava.api.command.RemoveImageCmd;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.command.WaitContainerCmd;
 import com.github.dockerjava.api.command.WaitContainerResultCallback;
 import com.github.dockerjava.api.exception.DockerClientException;
+import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.api.model.AuthConfigurations;
 import com.github.dockerjava.api.model.AuthResponse;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.BuildResponseItem;
+import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.Info;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
 import com.google.cloud.tools.jib.api.Credential;
 import io.micronaut.maven.DockerfileMojo;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.maven.jib.JibConfigurationService;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -58,9 +70,16 @@ import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * Provides methods to work with Docker images.
@@ -71,7 +90,7 @@ import java.util.concurrent.TimeUnit;
 @Singleton
 public class DockerService {
 
-<span class="fc" id="L74">    private static final Logger LOG = LoggerFactory.getLogger(DockerService.class);</span>
+<span class="fc" id="L93">    private static final Logger LOG = LoggerFactory.getLogger(DockerService.class);</span>
 
     private final DockerClientConfig config;
     private final MavenProject mavenProject;
@@ -80,21 +99,33 @@ public class DockerService {
 
     @SuppressWarnings(&quot;CdiInjectionPointsInspection&quot;)
     @Inject
-<span class="nc" id="L83">    public DockerService(MavenProject mavenProject, JibConfigurationService jibConfigurationService) {</span>
-<span class="nc" id="L84">        this.mavenProject = mavenProject;</span>
-<span class="nc" id="L85">        this.jibConfigurationService = jibConfigurationService;</span>
-<span class="nc" id="L86">        this.config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();</span>
-<span class="nc" id="L87">    }</span>
+<span class="fc" id="L102">    public DockerService(MavenProject mavenProject, JibConfigurationService jibConfigurationService) {</span>
+<span class="fc" id="L103">        this.mavenProject = mavenProject;</span>
+<span class="fc" id="L104">        this.jibConfigurationService = jibConfigurationService;</span>
+<span class="fc" id="L105">        this.config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();</span>
+<span class="fc" id="L106">    }</span>
+
+    /**
+     * Uses the given Docker client instead of connecting to the configured Docker host. For tests.
+     *
+     * @param mavenProject the Maven project
+     * @param jibConfigurationService the Jib configuration service
+     * @param dockerClient the Docker client
+     */
+    DockerService(MavenProject mavenProject, JibConfigurationService jibConfigurationService, DockerClient dockerClient) {
+<span class="fc" id="L116">        this(mavenProject, jibConfigurationService);</span>
+<span class="fc" id="L117">        this.dockerClient = dockerClient;</span>
+<span class="fc" id="L118">    }</span>
 
     private DockerClient getDockerClient() {
-<span class="nc bnc" id="L90" title="All 2 branches missed.">        if (dockerClient == null) {</span>
-<span class="nc" id="L91">            var httpClient = new ZerodepDockerHttpClient.Builder()</span>
-<span class="nc" id="L92">                    .dockerHost(config.getDockerHost())</span>
-<span class="nc" id="L93">                    .sslConfig(config.getSSLConfig())</span>
-<span class="nc" id="L94">                    .build();</span>
-<span class="nc" id="L95">            dockerClient = DockerClientImpl.getInstance(config, httpClient);</span>
+<span class="pc bpc" id="L121" title="1 of 2 branches missed.">        if (dockerClient == null) {</span>
+<span class="nc" id="L122">            var httpClient = new ZerodepDockerHttpClient.Builder()</span>
+<span class="nc" id="L123">                    .dockerHost(config.getDockerHost())</span>
+<span class="nc" id="L124">                    .sslConfig(config.getSSLConfig())</span>
+<span class="nc" id="L125">                    .build();</span>
+<span class="nc" id="L126">            dockerClient = DockerClientImpl.getInstance(config, httpClient);</span>
         }
-<span class="nc" id="L97">        return dockerClient;</span>
+<span class="fc" id="L128">        return dockerClient;</span>
     }
 
     /**
@@ -102,35 +133,35 @@ public class DockerService {
      * @return the {@link BuildImageCmd} by loading the given Dockerfile as classpath resource.
      */
     public BuildImageCmd buildImageCmd(String dockerfileName) throws IOException {
-<span class="nc" id="L105">        verifyDockerRunning();</span>
-<span class="nc" id="L106">        BuildImageCmd buildImageCmd = getDockerClient().buildImageCmd(loadDockerfileAsResource(dockerfileName));</span>
-<span class="nc" id="L107">        maybeConfigureBuildAuth(buildImageCmd);</span>
-<span class="nc" id="L108">        return buildImageCmd;</span>
+<span class="nc" id="L136">        verifyDockerRunning();</span>
+<span class="nc" id="L137">        BuildImageCmd buildImageCmd = getDockerClient().buildImageCmd(loadDockerfileAsResource(dockerfileName));</span>
+<span class="nc" id="L138">        maybeConfigureBuildAuth(buildImageCmd);</span>
+<span class="nc" id="L139">        return buildImageCmd;</span>
     }
 
     private void maybeConfigureBuildAuth(BuildImageCmd buildImageCmd) {
-<span class="nc" id="L112">        jibConfigurationService.getFromImage().ifPresent(image -&gt; {</span>
-<span class="nc" id="L113">            Optional&lt;Credential&gt; fromCredentials = jibConfigurationService.getFromCredentials();</span>
-<span class="nc" id="L114">            Optional&lt;Credential&gt; credential = fromCredentials.or(() -&gt; jibConfigurationService.resolveCredentialForImage(image, LOG));</span>
-<span class="nc" id="L115">            credential.ifPresent(cred -&gt; {</span>
-<span class="nc" id="L116">                var username = cred.getUsername();</span>
-<span class="nc" id="L117">                var password = cred.getPassword();</span>
-<span class="nc" id="L118">                AuthConfig authConfig = getAuthConfigFor(image, username, password);</span>
-<span class="nc" id="L119">                var authConfigurations = new AuthConfigurations();</span>
-<span class="nc" id="L120">                authConfigurations.addConfig(authConfig);</span>
-<span class="nc" id="L121">                buildImageCmd.withBuildAuthConfigs(authConfigurations);</span>
-<span class="nc" id="L122">            });</span>
-<span class="nc" id="L123">        });</span>
-<span class="nc" id="L124">    }</span>
+<span class="nc" id="L143">        jibConfigurationService.getFromImage().ifPresent(image -&gt; {</span>
+<span class="nc" id="L144">            Optional&lt;Credential&gt; fromCredentials = jibConfigurationService.getFromCredentials();</span>
+<span class="nc" id="L145">            Optional&lt;Credential&gt; credential = fromCredentials.or(() -&gt; jibConfigurationService.resolveCredentialForImage(image, LOG));</span>
+<span class="nc" id="L146">            credential.ifPresent(cred -&gt; {</span>
+<span class="nc" id="L147">                var username = cred.getUsername();</span>
+<span class="nc" id="L148">                var password = cred.getPassword();</span>
+<span class="nc" id="L149">                AuthConfig authConfig = getAuthConfigFor(image, username, password);</span>
+<span class="nc" id="L150">                var authConfigurations = new AuthConfigurations();</span>
+<span class="nc" id="L151">                authConfigurations.addConfig(authConfig);</span>
+<span class="nc" id="L152">                buildImageCmd.withBuildAuthConfigs(authConfigurations);</span>
+<span class="nc" id="L153">            });</span>
+<span class="nc" id="L154">        });</span>
+<span class="nc" id="L155">    }</span>
 
     /**
      * @return a default {@link BuildImageCmd}.
      */
     public BuildImageCmd buildImageCmd() {
-<span class="nc" id="L130">        verifyDockerRunning();</span>
-<span class="nc" id="L131">        BuildImageCmd buildImageCmd = getDockerClient().buildImageCmd();</span>
-<span class="nc" id="L132">        maybeConfigureBuildAuth(buildImageCmd);</span>
-<span class="nc" id="L133">        return buildImageCmd;</span>
+<span class="nc" id="L161">        verifyDockerRunning();</span>
+<span class="nc" id="L162">        BuildImageCmd buildImageCmd = getDockerClient().buildImageCmd();</span>
+<span class="nc" id="L163">        maybeConfigureBuildAuth(buildImageCmd);</span>
+<span class="nc" id="L164">        return buildImageCmd;</span>
     }
 
     /**
@@ -140,26 +171,26 @@ public class DockerService {
      * @return The resulting image ID.
      */
     public String buildImage(BuildImageCmd builder) {
-<span class="nc" id="L143">        verifyDockerRunning();</span>
-<span class="nc bnc" id="L144" title="All 2 branches missed.">        if (builder.getBuildArgs() != null) {</span>
-<span class="nc" id="L145">            builder.getBuildArgs().forEach((k, v) -&gt; LOG.info(&quot;Using {}: {}&quot;, k, v));</span>
+<span class="nc" id="L174">        verifyDockerRunning();</span>
+<span class="nc bnc" id="L175" title="All 2 branches missed.">        if (builder.getBuildArgs() != null) {</span>
+<span class="nc" id="L176">            builder.getBuildArgs().forEach((k, v) -&gt; LOG.info(&quot;Using {}: {}&quot;, k, v));</span>
         }
-<span class="nc" id="L147">        BuildImageResultCallback resultCallback = new BuildImageResultCallback() {</span>
+<span class="nc" id="L178">        BuildImageResultCallback resultCallback = new BuildImageResultCallback() {</span>
             @Override
             public void onNext(BuildResponseItem item) {
-<span class="nc" id="L150">                super.onNext(item);</span>
-<span class="nc bnc" id="L151" title="All 4 branches missed.">                if (item.isErrorIndicated() &amp;&amp; item.getErrorDetail() != null) {</span>
-<span class="nc" id="L152">                    LOG.error(item.getErrorDetail().getMessage());</span>
-<span class="nc bnc" id="L153" title="All 2 branches missed.">                } else if (item.getStream() != null) {</span>
-<span class="nc" id="L154">                    String msg = StringUtils.removeEnd(item.getStream(), System.lineSeparator());</span>
-<span class="nc" id="L155">                    LOG.info(msg);</span>
+<span class="nc" id="L181">                super.onNext(item);</span>
+<span class="nc bnc" id="L182" title="All 4 branches missed.">                if (item.isErrorIndicated() &amp;&amp; item.getErrorDetail() != null) {</span>
+<span class="nc" id="L183">                    LOG.error(item.getErrorDetail().getMessage());</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">                } else if (item.getStream() != null) {</span>
+<span class="nc" id="L185">                    String msg = StringUtils.removeEnd(item.getStream(), System.lineSeparator());</span>
+<span class="nc" id="L186">                    LOG.info(msg);</span>
                 }
-<span class="nc" id="L157">            }</span>
+<span class="nc" id="L188">            }</span>
         };
 
-<span class="nc" id="L160">        return builder</span>
-<span class="nc" id="L161">            .exec(resultCallback)</span>
-<span class="nc" id="L162">            .awaitImageId();</span>
+<span class="nc" id="L191">        return builder</span>
+<span class="nc" id="L192">            .exec(resultCallback)</span>
+<span class="nc" id="L193">            .awaitImageId();</span>
     }
 
     /**
@@ -171,49 +202,309 @@ public class DockerService {
      * @param binds the bind mounts to use
      */
     public void runPrivilegedImageAndWait(String imageId, Integer timeoutSeconds, String checkpointNetworkName, String... binds) throws IOException {
-<span class="nc" id="L174">        verifyDockerRunning();</span>
-<span class="nc" id="L175">        try (CreateContainerCmd create = getDockerClient().createContainerCmd(imageId)) {</span>
-<span class="nc" id="L176">            HostConfig hostConfig = create.getHostConfig();</span>
-<span class="nc bnc" id="L177" title="All 2 branches missed.">            if (hostConfig == null) {</span>
-<span class="nc" id="L178">                throw new DockerClientException(&quot;When setting binds and privileged, hostConfig was null.  Please check your docker installation and try again&quot;);</span>
-            }
-<span class="nc" id="L180">            hostConfig.withPrivileged(true);</span>
-<span class="nc bnc" id="L181" title="All 2 branches missed.">            if (checkpointNetworkName != null) {</span>
-<span class="nc" id="L182">                hostConfig.withNetworkMode(checkpointNetworkName);</span>
-            }
-<span class="nc bnc" id="L184" title="All 2 branches missed.">            for (String bind : binds) {</span>
-<span class="nc" id="L185">                hostConfig.withBinds(Bind.parse(bind));</span>
-            }
-<span class="nc" id="L187">            CreateContainerResponse createResponse = create.exec();</span>
-<span class="nc" id="L188">            try (StartContainerCmd start = getDockerClient().startContainerCmd(createResponse.getId())) {</span>
-<span class="nc" id="L189">                start.exec();</span>
-<span class="nc" id="L190">                LOG.info(&quot;Container started: {} {}&quot;, createResponse.getId(), start.getContainerId());</span>
-<span class="nc" id="L191">                try (WaitContainerCmd wait = getDockerClient().waitContainerCmd(createResponse.getId())) {</span>
-<span class="nc" id="L192">                    WaitContainerResultCallback waitResult = wait.start();</span>
-<span class="nc" id="L193">                    LOG.info(&quot;Waiting {} seconds for completion&quot;, timeoutSeconds);</span>
-<span class="nc" id="L194">                    Integer exitCode = waitResult.awaitStatusCode(timeoutSeconds, TimeUnit.SECONDS);</span>
-<span class="nc bnc" id="L195" title="All 2 branches missed.">                    if (exitCode != 0) {</span>
-<span class="nc" id="L196">                        final Slf4jLogConsumer stdoutConsumer = new Slf4jLogConsumer(LOG);</span>
-<span class="nc" id="L197">                        final Slf4jLogConsumer stderrConsumer = new Slf4jLogConsumer(LOG);</span>
+<span class="fc" id="L205">        String containerId = createContainer(imageId, checkpointNetworkName, true, Map.of(), binds);</span>
+<span class="fc" id="L206">        startAndWait(containerId, imageId, timeoutSeconds);</span>
+<span class="fc" id="L207">    }</span>
 
-<span class="nc" id="L199">                        try (var callback = new FrameConsumerResultCallback()) {</span>
-<span class="nc" id="L200">                            callback.addConsumer(OutputFrame.OutputType.STDOUT, stdoutConsumer);</span>
-<span class="nc" id="L201">                            callback.addConsumer(OutputFrame.OutputType.STDERR, stderrConsumer);</span>
+    /**
+     * Creates an unprivileged container from the given image, without starting it.
+     *
+     * @param imageId the image to use
+     * @param networkName the name of the network to use for the container, if any
+     * @param environment the environment variables to set, on top of the image ones
+     * @return the container ID
+     * @since 5.1.0
+     */
+    @Internal
+    public String createContainer(String imageId, String networkName, Map&lt;String, String&gt; environment) {
+<span class="fc" id="L220">        return createContainer(imageId, networkName, false, environment);</span>
+    }
 
-<span class="nc" id="L203">                            getDockerClient().logContainerCmd(start.getContainerId())</span>
-<span class="nc" id="L204">                                .withStdOut(true)</span>
-<span class="nc" id="L205">                                .withStdErr(true)</span>
-<span class="nc" id="L206">                                .exec(callback)</span>
-<span class="nc" id="L207">                                .awaitCompletion();</span>
-<span class="nc" id="L208">                        } catch (InterruptedException e) {</span>
-<span class="nc" id="L209">                            Thread.currentThread().interrupt();</span>
-<span class="nc" id="L210">                        }</span>
-<span class="nc" id="L211">                        throw new IOException(&quot;Image &quot; + imageId + &quot; exited with code &quot; + exitCode);</span>
-                    }
-                }
+    private String createContainer(String imageId, String networkName, boolean privileged, Map&lt;String, String&gt; environment,
+                                   String... binds) {
+<span class="fc" id="L225">        verifyDockerRunning();</span>
+<span class="fc" id="L226">        try (CreateContainerCmd create = getDockerClient().createContainerCmd(imageId)) {</span>
+<span class="fc" id="L227">            HostConfig hostConfig = create.getHostConfig();</span>
+<span class="fc bfc" id="L228" title="All 2 branches covered.">            if (hostConfig == null) {</span>
+<span class="fc" id="L229">                throw new DockerClientException(&quot;When setting binds and privileged, hostConfig was null.  Please check your docker installation and try again&quot;);</span>
+            }
+<span class="fc bfc" id="L231" title="All 2 branches covered.">            if (privileged) {</span>
+<span class="fc" id="L232">                hostConfig.withPrivileged(true);</span>
+            }
+<span class="fc bfc" id="L234" title="All 2 branches covered.">            if (networkName != null) {</span>
+<span class="fc" id="L235">                hostConfig.withNetworkMode(networkName);</span>
+            }
+<span class="fc bfc" id="L237" title="All 2 branches covered.">            for (String bind : binds) {</span>
+<span class="fc" id="L238">                hostConfig.withBinds(Bind.parse(bind));</span>
+            }
+<span class="fc bfc" id="L240" title="All 2 branches covered.">            if (!environment.isEmpty()) {</span>
+<span class="fc" id="L241">                create.withEnv(environment.entrySet().stream().map(e -&gt; e.getKey() + &quot;=&quot; + e.getValue()).toList());</span>
+            }
+<span class="fc" id="L243">            return create.exec().getId();</span>
+        }
+    }
+
+    /**
+     * Starts a container and waits for it to exit with status 0. Otherwise, logs its output and fails.
+     *
+     * @param containerId the container
+     * @param imageId the image of the container, for the error message
+     * @param timeoutSeconds the timeout in seconds for the container to finish execution
+     * @throws IOException if the container does not exit with status 0 within the timeout
+     * @since 5.1.0
+     */
+    @Internal
+    public void startAndWait(String containerId, String imageId, Integer timeoutSeconds) throws IOException {
+<span class="fc" id="L258">        startContainer(containerId);</span>
+<span class="fc" id="L259">        LOG.info(&quot;Waiting {} seconds for completion&quot;, timeoutSeconds);</span>
+        int exitCode;
+        try {
+<span class="fc" id="L262">            exitCode = awaitExit(containerId, timeoutSeconds);</span>
+<span class="fc" id="L263">        } catch (IOException e) {</span>
+<span class="fc" id="L264">            logContainerOutput(containerId);</span>
+<span class="fc" id="L265">            throw e;</span>
+<span class="fc" id="L266">        }</span>
+<span class="fc bfc" id="L267" title="All 2 branches covered.">        if (exitCode != 0) {</span>
+<span class="fc" id="L268">            logContainerOutput(containerId);</span>
+<span class="fc" id="L269">            throw new IOException(&quot;Image &quot; + imageId + &quot; exited with code &quot; + exitCode);</span>
+        }
+<span class="fc" id="L271">    }</span>
+
+    /**
+     * Starts a container.
+     *
+     * @param containerId the container
+     * @since 5.1.0
+     */
+    @Internal
+    public void startContainer(String containerId) {
+<span class="fc" id="L281">        try (StartContainerCmd start = getDockerClient().startContainerCmd(containerId)) {</span>
+<span class="fc" id="L282">            start.exec();</span>
+<span class="fc" id="L283">            LOG.info(&quot;Container started: {}&quot;, containerId);</span>
+        }
+<span class="fc" id="L285">    }</span>
+
+    /**
+     * Waits for a container to exit.
+     *
+     * @param containerId the container
+     * @param timeoutSeconds the timeout in seconds
+     * @return the exit code of the container
+     * @throws IOException if the container does not exit within the timeout
+     * @since 5.1.0
+     */
+    @Internal
+    public int awaitExit(String containerId, int timeoutSeconds) throws IOException {
+<span class="fc" id="L298">        try (WaitContainerCmd wait = getDockerClient().waitContainerCmd(containerId)) {</span>
+<span class="fc" id="L299">            WaitContainerResultCallback waitResult = wait.start();</span>
+            try {
+<span class="fc" id="L301">                return waitResult.awaitStatusCode(timeoutSeconds, TimeUnit.SECONDS);</span>
+<span class="fc" id="L302">            } catch (DockerClientException e) {</span>
+<span class="fc" id="L303">                throw new IOException(&quot;Container &quot; + containerId + &quot; did not exit within &quot; + timeoutSeconds + &quot; seconds&quot;, e);</span>
             }
         }
-<span class="nc" id="L216">    }</span>
+    }
+
+    /**
+     * Sends a signal to the main process of a running container.
+     *
+     * @param containerId the container
+     * @param signal the signal, for example {@code SIGTERM}
+     * @since 5.1.0
+     */
+    @Internal
+    public void signalContainer(String containerId, String signal) {
+<span class="fc" id="L317">        try (KillContainerCmd kill = getDockerClient().killContainerCmd(containerId)) {</span>
+<span class="fc" id="L318">            kill.withSignal(signal).exec();</span>
+<span class="fc" id="L319">        } catch (ConflictException | NotFoundException e) {</span>
+<span class="fc" id="L320">            LOG.debug(&quot;Container {} is not running: {}&quot;, containerId, e.getMessage());</span>
+<span class="fc" id="L321">        }</span>
+<span class="fc" id="L322">    }</span>
+
+    /**
+     * Runs a command in a running container and waits for it.
+     *
+     * @param containerId the container
+     * @param timeoutSeconds the timeout in seconds
+     * @param output receives the output of the command, line by line
+     * @param command the command and its arguments
+     * @return the exit code of the command
+     * @throws IOException if the command does not finish within the timeout
+     * @since 5.1.0
+     */
+    @Internal
+    public int execInContainer(String containerId, int timeoutSeconds, Consumer&lt;String&gt; output, String... command) throws IOException {
+        String execId;
+<span class="fc" id="L338">        try (ExecCreateCmd create = getDockerClient().execCreateCmd(containerId)) {</span>
+<span class="fc" id="L339">            execId = create.withCmd(command).withAttachStdout(true).withAttachStderr(true).exec().getId();</span>
+        }
+<span class="fc" id="L341">        try (var callback = new LineCallback(output)) {</span>
+<span class="fc" id="L342">            boolean completed = getDockerClient().execStartCmd(execId).exec(callback).awaitCompletion(timeoutSeconds, TimeUnit.SECONDS);</span>
+<span class="fc" id="L343">            callback.flush();</span>
+<span class="fc bfc" id="L344" title="All 2 branches covered.">            if (!completed) {</span>
+<span class="fc" id="L345">                throw new IOException(&quot;Command &quot; + command[0] + &quot; did not finish within &quot; + timeoutSeconds + &quot; seconds&quot;);</span>
+            }
+<span class="nc" id="L347">        } catch (InterruptedException e) {</span>
+<span class="nc" id="L348">            Thread.currentThread().interrupt();</span>
+<span class="nc" id="L349">            throw new IOException(&quot;Interrupted while running &quot; + command[0], e);</span>
+<span class="fc" id="L350">        }</span>
+<span class="fc" id="L351">        Long exitCode = getDockerClient().inspectExecCmd(execId).exec().getExitCodeLong();</span>
+<span class="fc bfc" id="L352" title="All 2 branches covered.">        return exitCode == null ? -1 : exitCode.intValue();</span>
+    }
+
+    /**
+     * Runs an image with the given entrypoint, waits for it and returns its output.
+     *
+     * @param imageId the image to use
+     * @param timeoutSeconds the timeout in seconds
+     * @param entrypoint the entrypoint, which replaces the image entrypoint and command
+     * @return the exit code and the output of the container
+     * @throws IOException if the container does not exit within the timeout
+     * @since 5.1.0
+     */
+    @Internal
+    public ContainerOutput runAndCaptureOutput(String imageId, int timeoutSeconds, List&lt;String&gt; entrypoint) throws IOException {
+<span class="fc" id="L367">        verifyDockerRunning();</span>
+        String containerId;
+<span class="fc" id="L369">        try (CreateContainerCmd create = getDockerClient().createContainerCmd(imageId)) {</span>
+<span class="fc" id="L370">            containerId = create.withEntrypoint(entrypoint).exec().getId();</span>
+        }
+        try {
+<span class="fc" id="L373">            startContainer(containerId);</span>
+<span class="fc" id="L374">            int exitCode = awaitExit(containerId, timeoutSeconds);</span>
+<span class="fc" id="L375">            var lines = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L376">            try (var callback = new LineCallback(lines::add)) {</span>
+<span class="fc" id="L377">                getDockerClient().logContainerCmd(containerId).withStdOut(true).withStdErr(true).exec(callback).awaitCompletion();</span>
+<span class="fc" id="L378">                callback.flush();</span>
+<span class="nc" id="L379">            } catch (InterruptedException _) {</span>
+<span class="nc" id="L380">                Thread.currentThread().interrupt();</span>
+<span class="fc" id="L381">            }</span>
+<span class="fc" id="L382">            return new ContainerOutput(exitCode, String.join(&quot;\n&quot;, lines));</span>
+        } finally {
+<span class="fc" id="L384">            removeContainer(containerId);</span>
+        }
+    }
+
+    /**
+     * Logs the output of a container.
+     *
+     * @param containerId the container
+     * @since 5.1.0
+     */
+    @Internal
+    public void logContainerOutput(String containerId) {
+<span class="fc" id="L396">        final Slf4jLogConsumer stdoutConsumer = new Slf4jLogConsumer(LOG);</span>
+<span class="fc" id="L397">        final Slf4jLogConsumer stderrConsumer = new Slf4jLogConsumer(LOG);</span>
+
+<span class="fc" id="L399">        try (var callback = new FrameConsumerResultCallback()) {</span>
+<span class="fc" id="L400">            callback.addConsumer(OutputFrame.OutputType.STDOUT, stdoutConsumer);</span>
+<span class="fc" id="L401">            callback.addConsumer(OutputFrame.OutputType.STDERR, stderrConsumer);</span>
+
+<span class="fc" id="L403">            getDockerClient().logContainerCmd(containerId)</span>
+<span class="fc" id="L404">                .withStdOut(true)</span>
+<span class="fc" id="L405">                .withStdErr(true)</span>
+<span class="fc" id="L406">                .exec(callback)</span>
+<span class="fc" id="L407">                .awaitCompletion();</span>
+<span class="nc" id="L408">        } catch (InterruptedException e) {</span>
+<span class="nc" id="L409">            Thread.currentThread().interrupt();</span>
+<span class="nc" id="L410">        } catch (IOException e) {</span>
+<span class="nc" id="L411">            LOG.warn(&quot;Could not read the output of container {}: {}&quot;, containerId, e.getMessage());</span>
+<span class="pc" id="L412">        }</span>
+<span class="fc" id="L413">    }</span>
+
+    /**
+     * Copies a regular file out of a container, which may have exited.
+     *
+     * @param containerId the container
+     * @param containerPath the absolute path of the file in the container
+     * @param target the file to write
+     * @throws IOException if the file cannot be copied
+     * @since 5.1.0
+     */
+    @Internal
+    public void copyFileFromContainer(String containerId, String containerPath, Path target) throws IOException {
+<span class="fc" id="L426">        try (InputStream archive = getDockerClient().copyArchiveFromContainerCmd(containerId, containerPath).exec();</span>
+<span class="fc" id="L427">             var tar = new TarArchiveInputStream(archive)) {</span>
+<span class="fc" id="L428">            TarArchiveEntry entry = tar.getNextEntry();</span>
+<span class="fc bfc" id="L429" title="All 4 branches covered.">            if (entry == null || !entry.isFile()) {</span>
+<span class="fc" id="L430">                throw new IOException(containerPath + &quot; is not a file in container &quot; + containerId);</span>
+            }
+<span class="fc" id="L432">            Files.createDirectories(target.toAbsolutePath().getParent());</span>
+<span class="fc" id="L433">            Files.copy(tar, target, StandardCopyOption.REPLACE_EXISTING);</span>
+<span class="fc" id="L434">        } catch (NotFoundException e) {</span>
+<span class="fc" id="L435">            throw new IOException(containerPath + &quot; does not exist in container &quot; + containerId, e);</span>
+<span class="fc" id="L436">        }</span>
+<span class="fc" id="L437">    }</span>
+
+    /**
+     * Removes a container, stopping it if it is running.
+     *
+     * @param containerId the container
+     * @since 5.1.0
+     */
+    @Internal
+    public void removeContainer(String containerId) {
+<span class="fc" id="L447">        try (RemoveContainerCmd remove = getDockerClient().removeContainerCmd(containerId)) {</span>
+<span class="fc" id="L448">            remove.withForce(true).withRemoveVolumes(true).exec();</span>
+<span class="fc" id="L449">        } catch (NotFoundException _) {</span>
+<span class="fc" id="L450">            LOG.debug(&quot;Container {} was already removed&quot;, containerId);</span>
+<span class="fc" id="L451">        }</span>
+<span class="fc" id="L452">    }</span>
+
+    /**
+     * Removes an image reference without force: a tag, or the ID of an image that at most one tag refers to. Docker
+     * deletes the image when no tag refers to it anymore, and fails instead of removing an image that other tags refer
+     * to or that a container uses.
+     *
+     * @param image the tag or the image ID
+     * @since 5.1.0
+     */
+    @Internal
+    public void removeImage(String image) {
+<span class="fc" id="L464">        try (RemoveImageCmd remove = getDockerClient().removeImageCmd(image)) {</span>
+<span class="fc" id="L465">            remove.exec();</span>
+<span class="fc" id="L466">        } catch (NotFoundException _) {</span>
+<span class="fc" id="L467">            LOG.debug(&quot;Image {} was already removed&quot;, image);</span>
+<span class="fc" id="L468">        }</span>
+<span class="fc" id="L469">    }</span>
+
+    /**
+     * @param image the image name or ID
+     * @return the image details
+     * @since 5.1.0
+     */
+    @Internal
+    public InspectImageResponse inspectImage(String image) {
+<span class="fc" id="L478">        verifyDockerRunning();</span>
+<span class="fc" id="L479">        try (InspectImageCmd inspect = getDockerClient().inspectImageCmd(image)) {</span>
+<span class="fc" id="L480">            return inspect.exec();</span>
+        }
+    }
+
+    /**
+     * @return the platform of the Docker daemon, as {@code os/architecture} with Go architecture names such as
+     * {@code linux/amd64} or {@code linux/arm64}
+     * @throws IllegalStateException if the Docker daemon is not reachable
+     * @since 5.1.0
+     */
+    @Internal
+    public String getDaemonPlatform() {
+<span class="fc" id="L492">        verifyDockerRunning();</span>
+<span class="fc" id="L493">        Info info = getDockerClient().infoCmd().exec();</span>
+<span class="fc" id="L494">        return info.getOsType() + &quot;/&quot; + goArchitecture(info.getArchitecture());</span>
+    }
+
+    /**
+     * @param architecture an architecture name, as the Docker daemon or Jib configuration gives it
+     * @return the Go architecture name used in image platforms, such as {@code amd64} or {@code arm64}
+     */
+    static String goArchitecture(String architecture) {
+<span class="fc bfc" id="L502" title="All 3 branches covered.">        return switch (architecture) {</span>
+<span class="fc" id="L503">            case &quot;x86_64&quot;, &quot;amd64&quot; -&gt; &quot;amd64&quot;;</span>
+<span class="fc" id="L504">            case &quot;aarch64&quot;, &quot;arm64&quot; -&gt; &quot;arm64&quot;;</span>
+<span class="fc" id="L505">            default -&gt; architecture;</span>
+        };
+    }
 
     /**
      * Copies a file from the specified container path in the given image ID, into a temporal location.
@@ -223,27 +514,27 @@ public class DockerService {
      * @return The temporal file.
      */
     public File copyFromContainer(String imageId, String containerPath) {
-<span class="nc" id="L226">        CreateContainerCmd containerCmd = getDockerClient().createContainerCmd(imageId);</span>
-<span class="nc" id="L227">        CreateContainerResponse container = containerCmd.exec();</span>
-<span class="nc" id="L228">        getDockerClient().startContainerCmd(container.getId());</span>
-<span class="nc" id="L229">        InputStream nativeImage = getDockerClient().copyArchiveFromContainerCmd(container.getId(), containerPath).exec();</span>
+<span class="nc" id="L517">        CreateContainerCmd containerCmd = getDockerClient().createContainerCmd(imageId);</span>
+<span class="nc" id="L518">        CreateContainerResponse container = containerCmd.exec();</span>
+<span class="nc" id="L519">        getDockerClient().startContainerCmd(container.getId());</span>
+<span class="nc" id="L520">        InputStream nativeImage = getDockerClient().copyArchiveFromContainerCmd(container.getId(), containerPath).exec();</span>
 
-<span class="nc" id="L231">        try (var fin = new TarArchiveInputStream(nativeImage)) {</span>
-<span class="nc" id="L232">            TarArchiveEntry tarEntry = fin.getNextEntry();</span>
-<span class="nc" id="L233">            File file = new File(mavenProject.getBuild().getDirectory(), tarEntry.getName());</span>
-<span class="nc bnc" id="L234" title="All 2 branches missed.">            if (!file.getCanonicalFile().toPath().startsWith(mavenProject.getBuild().getDirectory())) {</span>
-<span class="nc" id="L235">                throw new IOException(&quot;Entry is outside of the target directory&quot;);</span>
+<span class="nc" id="L522">        try (var fin = new TarArchiveInputStream(nativeImage)) {</span>
+<span class="nc" id="L523">            TarArchiveEntry tarEntry = fin.getNextEntry();</span>
+<span class="nc" id="L524">            File file = new File(mavenProject.getBuild().getDirectory(), tarEntry.getName());</span>
+<span class="nc bnc" id="L525" title="All 2 branches missed.">            if (!file.getCanonicalFile().toPath().startsWith(mavenProject.getBuild().getDirectory())) {</span>
+<span class="nc" id="L526">                throw new IOException(&quot;Entry is outside of the target directory&quot;);</span>
             }
 
-<span class="nc" id="L238">            IOUtils.copy(fin, Files.newOutputStream(file.toPath()));</span>
+<span class="nc" id="L529">            IOUtils.copy(fin, Files.newOutputStream(file.toPath()));</span>
 
-<span class="nc" id="L240">            return file;</span>
-<span class="nc" id="L241">        } catch (IOException e) {</span>
-<span class="nc" id="L242">            LOG.error(&quot;Failed to copy file from container&quot;, e);</span>
+<span class="nc" id="L531">            return file;</span>
+<span class="nc" id="L532">        } catch (IOException e) {</span>
+<span class="nc" id="L533">            LOG.error(&quot;Failed to copy file from container&quot;, e);</span>
         } finally {
-<span class="nc" id="L244">            containerCmd.close();</span>
+<span class="nc" id="L535">            containerCmd.close();</span>
         }
-<span class="nc" id="L246">        return null;</span>
+<span class="nc" id="L537">        return null;</span>
     }
 
     /**
@@ -253,7 +544,7 @@ public class DockerService {
      * @return the file where the Dockerfile was copied to.
      */
     public File loadDockerfileAsResource(String name) throws IOException {
-<span class="nc" id="L256">        return loadDockerfileAsResource(name, DockerfileMojo.DOCKERFILE);</span>
+<span class="nc" id="L547">        return loadDockerfileAsResource(name, DockerfileMojo.DOCKERFILE);</span>
     }
 
     /**
@@ -264,14 +555,14 @@ public class DockerService {
      * @return the file where the Dockerfile was copied to.
      */
     public File loadDockerfileAsResource(String name, String targetFileName) throws IOException {
-<span class="nc" id="L267">        String path = &quot;/dockerfiles/&quot; + name;</span>
-<span class="nc" id="L268">        InputStream stream = getClass().getResourceAsStream(path);</span>
-<span class="nc bnc" id="L269" title="All 2 branches missed.">        if (stream != null) {</span>
-<span class="nc" id="L270">            var dockerfile = new File(mavenProject.getBuild().getDirectory(), targetFileName);</span>
-<span class="nc" id="L271">            FileUtils.copyInputStreamToFile(stream, dockerfile);</span>
-<span class="nc" id="L272">            return dockerfile;</span>
+<span class="nc" id="L558">        String path = &quot;/dockerfiles/&quot; + name;</span>
+<span class="nc" id="L559">        InputStream stream = getClass().getResourceAsStream(path);</span>
+<span class="nc bnc" id="L560" title="All 2 branches missed.">        if (stream != null) {</span>
+<span class="nc" id="L561">            var dockerfile = new File(mavenProject.getBuild().getDirectory(), targetFileName);</span>
+<span class="nc" id="L562">            FileUtils.copyInputStreamToFile(stream, dockerfile);</span>
+<span class="nc" id="L563">            return dockerfile;</span>
         }
-<span class="nc" id="L274">        return null;</span>
+<span class="nc" id="L565">        return null;</span>
     }
 
     /**
@@ -279,8 +570,8 @@ public class DockerService {
      * @return a {@link PushImageCmd} from the given image name.
      */
     public PushImageCmd pushImageCmd(String imageName) {
-<span class="nc" id="L282">        verifyDockerRunning();</span>
-<span class="nc" id="L283">        return getDockerClient().pushImageCmd(imageName);</span>
+<span class="nc" id="L573">        verifyDockerRunning();</span>
+<span class="nc" id="L574">        return getDockerClient().pushImageCmd(imageName);</span>
     }
 
     /**
@@ -290,39 +581,80 @@ public class DockerService {
      * @return an {@link AuthConfig} object for the given image, username and password.
      */
     public AuthConfig getAuthConfigFor(String dockerImage, String username, String password) {
-<span class="nc" id="L293">        DockerImageName dockerImageName = DockerImageName.parse(dockerImage);</span>
-<span class="nc" id="L294">        var defaultAuthConfig = new AuthConfig()</span>
-<span class="nc" id="L295">            .withRegistryAddress(dockerImageName.getRegistry())</span>
-<span class="nc" id="L296">            .withUsername(username)</span>
-<span class="nc" id="L297">            .withPassword(password);</span>
-<span class="nc" id="L298">        RegistryAuthLocator registryAuthLocator = RegistryAuthLocator.instance();</span>
-<span class="nc" id="L299">        AuthConfig authConfig = registryAuthLocator.lookupAuthConfig(dockerImageName, defaultAuthConfig);</span>
-<span class="nc" id="L300">        boolean loginSucceeded = false;</span>
+<span class="nc" id="L584">        DockerImageName dockerImageName = DockerImageName.parse(dockerImage);</span>
+<span class="nc" id="L585">        var defaultAuthConfig = new AuthConfig()</span>
+<span class="nc" id="L586">            .withRegistryAddress(dockerImageName.getRegistry())</span>
+<span class="nc" id="L587">            .withUsername(username)</span>
+<span class="nc" id="L588">            .withPassword(password);</span>
+<span class="nc" id="L589">        RegistryAuthLocator registryAuthLocator = RegistryAuthLocator.instance();</span>
+<span class="nc" id="L590">        AuthConfig authConfig = registryAuthLocator.lookupAuthConfig(dockerImageName, defaultAuthConfig);</span>
+<span class="nc" id="L591">        boolean loginSucceeded = false;</span>
         try {
-<span class="nc" id="L302">            AuthResponse authResponse = getDockerClient().authCmd().withAuthConfig(authConfig).exec();</span>
-<span class="nc bnc" id="L303" title="All 4 branches missed.">            if (authResponse.getStatus() != null &amp;&amp; authResponse.getStatus().equals(&quot;Login Succeeded&quot;)) {</span>
-<span class="nc" id="L304">                loginSucceeded = true;</span>
+<span class="nc" id="L593">            AuthResponse authResponse = getDockerClient().authCmd().withAuthConfig(authConfig).exec();</span>
+<span class="nc bnc" id="L594" title="All 4 branches missed.">            if (authResponse.getStatus() != null &amp;&amp; authResponse.getStatus().equals(&quot;Login Succeeded&quot;)) {</span>
+<span class="nc" id="L595">                loginSucceeded = true;</span>
             }
-<span class="nc" id="L306">        } catch (Exception ignored) {</span>
+<span class="nc" id="L597">        } catch (Exception ignored) {</span>
             // typically this is com.github.dockerjava.api.exception.UnauthorizedException
-<span class="nc" id="L308">        }</span>
+<span class="nc" id="L599">        }</span>
 
-<span class="nc bnc" id="L310" title="All 2 branches missed.">        if (loginSucceeded) {</span>
-<span class="nc" id="L311">            LOG.info(&quot;Successfully logged in to registry {}&quot;, dockerImageName.getRegistry());</span>
+<span class="nc bnc" id="L601" title="All 2 branches missed.">        if (loginSucceeded) {</span>
+<span class="nc" id="L602">            LOG.info(&quot;Successfully logged in to registry {}&quot;, dockerImageName.getRegistry());</span>
         } else {
-<span class="nc" id="L313">            LOG.warn(&quot;Failed to login to registry {}&quot;, dockerImageName.getRegistry());</span>
+<span class="nc" id="L604">            LOG.warn(&quot;Failed to login to registry {}&quot;, dockerImageName.getRegistry());</span>
         }
-<span class="nc" id="L315">        return authConfig;</span>
+<span class="nc" id="L606">        return authConfig;</span>
     }
 
     private void verifyDockerRunning() {
         try {
-<span class="nc" id="L320">            getDockerClient().pingCmd().exec();</span>
-<span class="nc" id="L321">        } catch (DockerException e) {</span>
-<span class="nc" id="L322">            throw new IllegalStateException(e.getMessage());</span>
-<span class="nc" id="L323">        } catch (RuntimeException e) {</span>
-<span class="nc" id="L324">            throw new IllegalStateException(&quot;Cannot connect to the Docker daemon at &quot; + config.getDockerHost() + &quot;. Is the docker daemon running?&quot;, e);</span>
-<span class="nc" id="L325">        }</span>
-<span class="nc" id="L326">    }</span>
+<span class="fc" id="L611">            getDockerClient().pingCmd().exec();</span>
+<span class="nc" id="L612">        } catch (DockerException e) {</span>
+<span class="nc" id="L613">            throw new IllegalStateException(e.getMessage());</span>
+<span class="fc" id="L614">        } catch (RuntimeException e) {</span>
+<span class="fc" id="L615">            throw new IllegalStateException(&quot;Cannot connect to the Docker daemon at &quot; + config.getDockerHost() + &quot;. Is the docker daemon running?&quot;, e);</span>
+<span class="fc" id="L616">        }</span>
+<span class="fc" id="L617">    }</span>
+
+    /**
+     * The exit code and the output of a container.
+     *
+     * @param exitCode the exit code
+     * @param output the standard output and error, interleaved
+     * @since 5.1.0
+     */
+    @Internal
+<span class="fc" id="L627">    public record ContainerOutput(int exitCode, String output) {</span>
+    }
+
+    /**
+     * Splits the frames of a container stream into lines.
+     */
+    private static final class LineCallback extends ResultCallback.Adapter&lt;Frame&gt; {
+        private final Consumer&lt;String&gt; lines;
+<span class="fc" id="L635">        private final StringBuilder pending = new StringBuilder();</span>
+
+<span class="fc" id="L637">        private LineCallback(Consumer&lt;String&gt; lines) {</span>
+<span class="fc" id="L638">            this.lines = lines;</span>
+<span class="fc" id="L639">        }</span>
+
+        @Override
+        public void onNext(Frame frame) {
+<span class="fc" id="L643">            pending.append(new String(frame.getPayload(), StandardCharsets.UTF_8));</span>
+<span class="fc" id="L644">            int newLine = pending.indexOf(&quot;\n&quot;);</span>
+<span class="fc bfc" id="L645" title="All 2 branches covered.">            while (newLine &gt;= 0) {</span>
+<span class="fc" id="L646">                lines.accept(StringUtils.removeEnd(pending.substring(0, newLine), &quot;\r&quot;));</span>
+<span class="fc" id="L647">                pending.delete(0, newLine + 1);</span>
+<span class="fc" id="L648">                newLine = pending.indexOf(&quot;\n&quot;);</span>
+            }
+<span class="fc" id="L650">        }</span>
+
+        private void flush() {
+<span class="fc bfc" id="L653" title="All 2 branches covered.">            if (!pending.isEmpty()) {</span>
+<span class="fc" id="L654">                lines.accept(pending.toString());</span>
+<span class="fc" id="L655">                pending.setLength(0);</span>
+            }
+<span class="fc" id="L657">        }</span>
+    }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

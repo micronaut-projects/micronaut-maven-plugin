@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JdkAotCacheDockerContext.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.jdkaotcache</a> &gt; <span class="el_source">JdkAotCacheDockerContext.java</span></div><h1>JdkAotCacheDockerContext.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.jdkaotcache;
+
+import io.micronaut.core.annotation.Internal;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.StringJoiner;
+import java.util.TreeMap;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+
+/**
+ * Writes the files that a Dockerfile generated with {@code micronaut.docker.jdkAotCache} copies from the build
+ * context: an application JAR, the class path argument file and the training script. A JDK AOT cache cannot record
+ * classes from a non-empty directory on the class path, so the classes go into a JAR, listed after the dependencies,
+ * as the classes directory is in the default Dockerfile. The dependencies are listed one by one, in the order of the
+ * Maven class path, because the JDK leaves the expansion order of {@code *} entries unspecified.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 5.1.0
+ */
+@Internal
+public final class JdkAotCacheDockerContext {
+
+    /**
+     * The directory of the build context that holds the files.
+     */
+    private static final String CONTEXT_DIRECTORY = &quot;jdk-aot-cache&quot;;
+
+    /**
+     * The application JAR.
+     */
+    private static final String APPLICATION_JAR = &quot;application.jar&quot;;
+
+    /**
+     * The class path argument file, used as {@code -cp @classpath}.
+     */
+    private static final String CLASSPATH_FILE = &quot;classpath&quot;;
+
+    /**
+     * The training script.
+     */
+    private static final String TRAINING_SCRIPT = &quot;training.sh&quot;;
+
+    /**
+     * The working directory of the generated Dockerfile.
+     */
+    private static final String IMAGE_HOME = &quot;/home/app&quot;;
+
+    /**
+     * Where the generated Dockerfile copies the dependency JARs, in their layer directories.
+     */
+    private static final String IMAGE_LIBS = IMAGE_HOME + &quot;/libs/&quot;;
+
+    /**
+     * The application JAR in the image, last on the class path.
+     */
+    private static final String IMAGE_APPLICATION_JAR = IMAGE_HOME + &quot;/&quot; + APPLICATION_JAR;
+
+    /**
+     * A fixed timestamp for the JAR entries, independent of the time zone, so that unchanged classes give an identical
+     * JAR and Docker can reuse the cached training layer.
+     */
+<span class="fc" id="L90">    private static final LocalDateTime ENTRY_TIME = LocalDateTime.of(1980, 2, 1, 0, 0);</span>
+
+    private static final String META_INF = &quot;META-INF/&quot;;
+
+    private JdkAotCacheDockerContext() {
+    }
+
+    /**
+     * Writes the application JAR, the class path argument file and the training script to {@code jdk-aot-cache} in the
+     * build context.
+     *
+     * @param buildDirectory the build context, usually {@code target}
+     * @param classesDirectory the compiled classes and resources
+     * @param dependencies the dependency JARs in class path order, as paths relative to the directory that the generated
+     * Dockerfile copies them to, such as {@code release/foo.jar}
+     * @throws IOException if a file cannot be written
+     */
+    public static void write(Path buildDirectory, Path classesDirectory, List&lt;String&gt; dependencies) throws IOException {
+<span class="fc" id="L108">        Path context = buildDirectory.resolve(CONTEXT_DIRECTORY);</span>
+<span class="fc" id="L109">        Files.createDirectories(context);</span>
+<span class="fc" id="L110">        writeApplicationJar(classesDirectory, context.resolve(APPLICATION_JAR));</span>
+<span class="fc" id="L111">        List&lt;String&gt; classpath = Stream.concat(dependencies.stream().map(dependency -&gt; IMAGE_LIBS + dependency),</span>
+<span class="fc" id="L112">            Stream.of(IMAGE_APPLICATION_JAR)).toList();</span>
+<span class="fc" id="L113">        Files.writeString(context.resolve(CLASSPATH_FILE), &quot;\&quot;&quot; + String.join(&quot;:&quot;, classpath) + &quot;\&quot;\n&quot;, StandardCharsets.UTF_8);</span>
+<span class="fc" id="L114">        Files.writeString(context.resolve(TRAINING_SCRIPT), JdkAotCacheTraining.readScript(), StandardCharsets.UTF_8);</span>
+<span class="fc" id="L115">    }</span>
+
+    /**
+     * Writes the content of a directory into a JAR, in a stable order and with fixed timestamps. The entries are sorted
+     * by name, not by path, because the order of paths depends on the operating system: Windows compares them ignoring
+     * case and with {@code \} as the separator.
+     *
+     * @param classesDirectory the directory
+     * @param jar the JAR to write
+     * @throws IOException if the JAR cannot be written
+     */
+    static void writeApplicationJar(Path classesDirectory, Path jar) throws IOException {
+<span class="fc" id="L127">        var manifest = new Manifest();</span>
+<span class="fc" id="L128">        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, &quot;1.0&quot;);</span>
+<span class="fc" id="L129">        SortedMap&lt;String, Path&gt; entries = new TreeMap&lt;&gt;();</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">        if (Files.isDirectory(classesDirectory)) {</span>
+<span class="fc" id="L131">            try (Stream&lt;Path&gt; walk = Files.walk(classesDirectory)) {</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">                walk.filter(path -&gt; !path.equals(classesDirectory))</span>
+<span class="fc" id="L133">                    .forEach(path -&gt; entries.put(entryName(classesDirectory.relativize(path), Files.isDirectory(path)), path));</span>
+            }
+        }
+<span class="fc" id="L136">        entries.remove(META_INF);</span>
+<span class="fc" id="L137">        entries.remove(JarFile.MANIFEST_NAME);</span>
+<span class="fc" id="L138">        try (OutputStream out = Files.newOutputStream(jar);</span>
+<span class="fc" id="L139">             var jarOut = new JarOutputStream(out)) {</span>
+<span class="fc" id="L140">            writeEntry(jarOut, META_INF, null);</span>
+<span class="fc" id="L141">            jarOut.putNextEntry(entry(JarFile.MANIFEST_NAME));</span>
+<span class="fc" id="L142">            manifest.write(jarOut);</span>
+<span class="fc" id="L143">            jarOut.closeEntry();</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">            for (Map.Entry&lt;String, Path&gt; named : entries.entrySet()) {</span>
+<span class="fc" id="L145">                writeEntry(jarOut, named.getKey(), named.getValue());</span>
+<span class="fc" id="L146">            }</span>
+        }
+<span class="fc" id="L148">    }</span>
+
+    /**
+     * Writes a JAR entry: a directory, if the name ends with {@code /}, or the content of a file.
+     */
+    private static void writeEntry(JarOutputStream jarOut, String name, Path file) throws IOException {
+<span class="fc" id="L154">        jarOut.putNextEntry(entry(name));</span>
+<span class="fc bfc" id="L155" title="All 2 branches covered.">        if (!name.endsWith(&quot;/&quot;)) {</span>
+<span class="fc" id="L156">            Files.copy(file, jarOut);</span>
+        }
+<span class="fc" id="L158">        jarOut.closeEntry();</span>
+<span class="fc" id="L159">    }</span>
+
+    /**
+     * @param relativePath a path relative to the classes directory
+     * @param directory whether the path is a directory
+     * @return the JAR entry name of the path, which always uses {@code /} as the separator, whatever the operating
+     * system, and ends with {@code /} for a directory
+     */
+    static String entryName(Path relativePath, boolean directory) {
+<span class="fc bfc" id="L168" title="All 2 branches covered.">        var name = new StringJoiner(&quot;/&quot;, &quot;&quot;, directory ? &quot;/&quot; : &quot;&quot;);</span>
+<span class="fc bfc" id="L169" title="All 2 branches covered.">        for (Path element : relativePath) {</span>
+<span class="fc" id="L170">            name.add(element.toString());</span>
+<span class="fc" id="L171">        }</span>
+<span class="fc" id="L172">        return name.toString();</span>
+    }
+
+    private static ZipEntry entry(String name) {
+<span class="fc" id="L176">        var entry = new ZipEntry(name);</span>
+<span class="fc" id="L177">        entry.setTimeLocal(ENTRY_TIME);</span>
+<span class="fc" id="L178">        return entry;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
