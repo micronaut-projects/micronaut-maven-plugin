@@ -8,6 +8,7 @@ import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
 import org.apache.maven.plugin.BuildPluginManager;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
@@ -34,11 +35,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@SuppressWarnings("removal")
 class RunMojoTest {
 
     private static final String JMXREMOTE = "-Dcom.sun.management.jmxremote";
@@ -51,6 +54,28 @@ class RunMojoTest {
     Path tempDir;
 
     private RunMojo recordingMojo;
+
+    @Test
+    void warnsThatTheGoalIsDeprecatedInFavourOfDev() {
+        MavenSession mavenSession = mock(MavenSession.class);
+        ToolchainManager toolchainManager = mock(ToolchainManager.class);
+        RunMojo mojo = new RunMojo(
+            mavenSession,
+            mock(BuildPluginManager.class),
+            mock(ProjectBuilder.class),
+            toolchainManager,
+            mock(CompilerService.class),
+            mock(ExecutorService.class),
+            mock(DependencyResolutionService.class)
+        );
+        Log log = mock(Log.class);
+        mojo.setLog(log);
+
+        mojo.warnDeprecated();
+
+        // the mojo wraps the log to colour its output, so the message arrives inside ANSI escapes
+        verify(log).warn(contains("mn:run is deprecated and will be removed in Micronaut 6: use mn:dev instead"));
+    }
 
     @Test
     void runAotPassesExplicitEnabledConfiguration() throws Exception {

@@ -39,6 +39,14 @@ public final class MojoUtils {
 
     public static final String THIS_PLUGIN = "io.micronaut.maven:micronaut-maven-plugin";
     public static final String SHARED_ARENA_SUPPORT = "-H:+SharedArenaSupport";
+    /**
+     * The user property that holds the arguments passed to the application.
+     */
+    public static final String MN_APP_ARGS = "mn.appArgs";
+    /**
+     * The expression of the application's main class, as the Exec Maven Plugin defines it.
+     */
+    public static final String EXEC_MAIN_CLASS = "${exec.mainClass}";
     private static final String JAVA = "java";
     private static final String MOSTLY_STATIC_NATIVE_IMAGE_GRAALVM_FLAG = "-H:+StaticExecutableWithDynamicLibC";
 
