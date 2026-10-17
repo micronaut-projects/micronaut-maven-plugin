@@ -10,6 +10,8 @@ manifestFile.withInputStream { manifest.load(it) }
 
 String sep = File.separator
 assert manifest.'micronaut.dev.mode' == 'test'
+// the tests start their own servers: nothing to bind
+assert !manifest.containsKey('micronaut.dev.bind-loopback')
 assert manifest.'micronaut.dev.main-class' == 'testgoal.Application'
 assert manifest.'micronaut.dev.project-dir' == basedir.absolutePath
 // the run-mode entries stay
@@ -39,6 +41,8 @@ File directory = new File(basedir, 'target/micronaut-dev/test')
 List<String> runtime = new File(directory, 'runtime.argfile').readLines()
 assert runtime.any { it.contains('junit-jupiter-engine-') }
 assert runtime.every { !it.endsWith('target' + sep + 'classes') && !it.endsWith('test-classes') }
+// the tests start their own contexts: mn:test adds no Control Panel
+assert runtime.every { !it.contains('micronaut-control-panel-') }
 assert manifest.'micronaut.dev.test.compile-classpath' == '@test-compile.argfile'
 List<String> testCompile = new File(directory, 'test-compile.argfile').readLines()
 assert testCompile[0].endsWith('target' + sep + 'classes')

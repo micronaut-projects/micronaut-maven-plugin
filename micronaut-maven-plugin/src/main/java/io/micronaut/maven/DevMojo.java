@@ -17,6 +17,7 @@ package io.micronaut.maven;
 
 import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.dev.BuildToolWatcher;
+import io.micronaut.maven.dev.ControlPanel;
 import io.micronaut.maven.dev.DevManifest;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
@@ -66,9 +67,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -179,6 +182,24 @@ public class DevMojo extends AbstractTestResourcesMojo {
     private boolean liveReloadInjectScript;
 
     /**
+     * Whether Micronaut Control Panel is added to the development runtime: its UI and management panels, the testing
+     * panels, and the panels of the modules the application uses, such as Kafka's, resolved through the dependency
+     * management. The project's own classpath and packaging do not change.
+     */
+    @Parameter(property = "mn.dev.controlPanel", defaultValue = "true")
+    private boolean controlPanel;
+
+    /**
+     * Whether the application listens on {@code localhost} by default, so that the development server is not
+     * reachable from other machines. Written to the manifest as {@code micronaut.dev.bind-loopback}, which the
+     * launcher applies at the lowest precedence: a {@code micronaut.server.host} the application sets in its
+     * configuration, as an environment variable or as a system property wins. Set it to false to reach the
+     * application from a phone or a container.
+     */
+    @Parameter(property = "mn.dev.bindLoopback", defaultValue = "true")
+    private boolean bindLoopback;
+
+    /**
      * Writes the manifest and stops, without launching anything.
      */
     @Parameter(property = "mn.dev.manifestOnly", defaultValue = "false")
@@ -225,6 +246,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
 
     private MavenProject runnableProject;
     private List<Dependency> runtimeDependencies;
+    private List<File> controlPanelClasspath;
     /**
      * The application's process, read by the shutdown hook and the goal's own thread.
      */
@@ -499,7 +521,8 @@ public class DevMojo extends AbstractTestResourcesMojo {
      */
     protected DevManifest buildManifest(Path manifestDirectory) throws MojoExecutionException {
         PluginParameterExpressionEvaluator evaluator = runnableEvaluator();
-        List<File> runtimeClasspath = files(runtimeDependencies());
+        List<File> runtimeClasspath = new ArrayList<>(files(runtimeDependencies()));
+        runtimeClasspath.addAll(controlPanelClasspath());
         List<File> compileClasspath = files(compilerService.resolveDependencies(runnableProject, true, JavaScopes.PROVIDED, JavaScopes.COMPILE));
         List<File> processorPath;
         try {
@@ -515,7 +538,18 @@ public class DevMojo extends AbstractTestResourcesMojo {
         }
         List<String> retained = retain == null || retain.isBlank() ? List.of() : Arrays.stream(retain.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
         DevManifest.Settings settings = new DevManifest.Settings(main, strategy, compile, incremental, retained, liveReloadPort, liveReloadInjectScript);
-        return DevManifest.of(runnableProject, reactor, settings, runtimeClasspath, compileClasspath, processorPath, evaluator, manifestDirectory);
+        DevManifest manifest = DevManifest.of(runnableProject, reactor, settings, runtimeClasspath, compileClasspath, processorPath, evaluator, manifestDirectory);
+        Boolean loopback = bindLoopback();
+        return loopback == null ? manifest : manifest.withBindLoopback(loopback);
+    }
+
+    /**
+     * Whether the application listens on {@code localhost} by default.
+     *
+     * @return the {@code bindLoopback} parameter, or null to write no setting
+     */
+    protected Boolean bindLoopback() {
+        return bindLoopback;
     }
 
     /**
@@ -549,8 +583,8 @@ public class DevMojo extends AbstractTestResourcesMojo {
             throw new MojoExecutionException("Cannot resolve " + LAUNCHER_GROUP + ":" + LAUNCHER_ARTIFACT + ": development mode needs Micronaut Core 5.3 or later in the dependency management");
         }
         List<File> runtime = files(runtimeDependencies());
-        // the runtime classpath, then what of the launcher and of the test resources client it does not hold already
-        List<String> classpath = Stream.of(runtime, launcher, testResourcesClient())
+        // the runtime classpath, then what of the Control Panel, the launcher and the test resources client it does not hold already
+        List<String> classpath = Stream.of(runtime, controlPanelClasspath(), launcher, testResourcesClient())
             .flatMap(List::stream)
             .map(File::getAbsolutePath)
             .distinct()
@@ -589,6 +623,94 @@ public class DevMojo extends AbstractTestResourcesMojo {
             artifacts.add(new DefaultArtifact(LAUNCHER_GROUP, LIVERELOAD_ARTIFACT, "jar", ""));
         }
         return artifacts;
+    }
+
+    /**
+     * Whether Micronaut Control Panel is added to the development runtime.
+     *
+     * @return the {@code controlPanel} parameter
+     */
+    protected boolean controlPanelEnabled() {
+        return controlPanel;
+    }
+
+    /**
+     * The Control Panel the development runtime adds, resolved once: the modules {@link ControlPanel#modules(java.util.Collection)}
+     * infers from the runtime classpath, each with what it brings that the runtime classpath does not hold, so that the
+     * application's versions win, versioned by the runnable project's dependency management, the Micronaut platform BOM;
+     * then the directory holding {@link ControlPanel#PROPERTIES_RESOURCE}, the settings at the lowest precedence. A
+     * Control Panel module that is not versioned or not published, such as the testing panels before their release,
+     * is left out; any other resolution failure fails the goal. When the Control Panel is off, the directory is removed.
+     *
+     * @return the files to add to the runtime classpath
+     * @throws MojoExecutionException if the modules cannot be resolved or the settings cannot be written
+     */
+    private List<File> controlPanelClasspath() throws MojoExecutionException {
+        if (controlPanelClasspath != null) {
+            return controlPanelClasspath;
+        }
+        Path resources = manifestDirectory().resolve(ControlPanel.RESOURCES_DIRECTORY_NAME);
+        Set<String> present = new LinkedHashSet<>();
+        for (Dependency dependency : runtimeDependencies()) {
+            org.eclipse.aether.artifact.Artifact artifact = dependency.getArtifact();
+            present.add(artifact.getGroupId() + ":" + artifact.getArtifactId());
+        }
+        List<File> files = new ArrayList<>();
+        List<String> added = new ArrayList<>();
+        boolean active = false;
+        if (controlPanelEnabled()) {
+            Set<String> resolved = new LinkedHashSet<>();
+            for (String module : ControlPanel.modules(present)) {
+                String key = ControlPanel.GROUP + ":" + module;
+                if (present.contains(key)) {
+                    active = true;
+                    continue;
+                }
+                List<ArtifactResult> results;
+                try {
+                    results = dependencyResolutionService.artifactResultsFor(Stream.of(new DefaultArtifact(ControlPanel.GROUP, module, "jar", "")), true);
+                } catch (DependencyResolutionException e) {
+                    if (ControlPanel.isMissingControlPanelArtifact(e)) {
+                        getLog().info("Micronaut Control Panel module " + key + " is not published: development mode runs without it");
+                        continue;
+                    }
+                    throw new MojoExecutionException("Cannot resolve the Micronaut Control Panel module " + key + " (disable it with mn.dev.controlPanel=false): " + e.getMessage(), e);
+                }
+                boolean found = false;
+                for (ArtifactResult result : results) {
+                    org.eclipse.aether.artifact.Artifact artifact = result.getArtifact();
+                    if (artifact == null || artifact.getFile() == null) {
+                        continue;
+                    }
+                    String resolvedKey = artifact.getGroupId() + ":" + artifact.getArtifactId();
+                    found |= resolvedKey.equals(key);
+                    if (!present.contains(resolvedKey) && resolved.add(resolvedKey)) {
+                        files.add(artifact.getFile());
+                    }
+                }
+                if (found) {
+                    added.add(module);
+                    active = true;
+                } else {
+                    getLog().info("Micronaut Control Panel module " + key + " is not versioned by the dependency management: development mode runs without it");
+                }
+            }
+        }
+        try {
+            if (active) {
+                ControlPanel.writeResources(resources, present);
+                files.add(resources.toFile());
+            } else {
+                ControlPanel.deleteResources(resources);
+            }
+        } catch (IOException e) {
+            throw new MojoExecutionException("Cannot write the Micronaut Control Panel settings to " + resources + ": " + e.getMessage(), e);
+        }
+        if (!added.isEmpty()) {
+            getLog().info("Adding Micronaut Control Panel to the development runtime: " + added + " (disable it with mn.dev.controlPanel=false)");
+        }
+        controlPanelClasspath = files;
+        return controlPanelClasspath;
     }
 
     /**

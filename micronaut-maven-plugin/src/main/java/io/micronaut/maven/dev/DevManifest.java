@@ -72,6 +72,12 @@ public final class DevManifest {
      */
     public static final String GENERATIONS_DIRECTORY_NAME = "generations";
 
+    /**
+     * The entry of whether the launcher binds the application's HTTP server to {@code localhost} by default, at the
+     * lowest precedence.
+     */
+    public static final String BIND_LOOPBACK = "micronaut.dev.bind-loopback";
+
     private static final String PREFIX = "micronaut.dev.";
     private static final String COMPILER_PLUGIN = "org.apache.maven.plugins:maven-compiler-plugin";
     private static final String DEFAULT_COMPILE_EXECUTION = "default-compile";
@@ -251,6 +257,19 @@ public final class DevManifest {
             entries.put(PREFIX + "test.filter", String.join(",", settings.filter()));
         }
         settings.parameters().forEach((key, value) -> entries.put(PREFIX + "test.parameters." + key, value));
+        return this;
+    }
+
+    /**
+     * Sets whether the launcher binds the application's HTTP server to {@code localhost} by default: it applies
+     * {@code micronaut.server.host=localhost} as the property source of the lowest precedence, so that a host the
+     * application configures wins.
+     *
+     * @param bindLoopback whether to bind to {@code localhost}
+     * @return this manifest
+     */
+    public DevManifest withBindLoopback(boolean bindLoopback) {
+        entries.put(BIND_LOOPBACK, String.valueOf(bindLoopback));
         return this;
     }
 
