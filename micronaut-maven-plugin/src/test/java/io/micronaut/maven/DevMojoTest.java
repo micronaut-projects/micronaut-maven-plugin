@@ -250,7 +250,11 @@ class DevMojoTest {
         File launcherJar = directory.resolve("micronaut-dev-5.3.0.jar").toFile();
         File liveReloadJar = directory.resolve("micronaut-dev-livereload-5.3.0.jar").toFile();
         DependencyResolutionService resolution = mock(DependencyResolutionService.class);
-        when(resolution.artifactResultsFor(any(), eq(true))).thenReturn(List.of(result(liveReloadJar), result(launcherJar), result(runtimeJar)));
+        when(resolution.artifactResultsFor(any(), eq(true))).thenReturn(List.of(
+            result(new DefaultArtifact("io.micronaut", "micronaut-dev-livereload", "jar", "5.3.0"), liveReloadJar),
+            result(new DefaultArtifact("io.micronaut", "micronaut-dev", "jar", "5.3.0"), launcherJar),
+            result(runtimeJar)
+        ));
         setField("dependencyResolutionService", resolution);
         when(compilerService.resolveDependencies(app, true, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME)).thenReturn(List.of(dependency(runtimeJar)));
         Properties userProperties = new Properties();
@@ -417,7 +421,7 @@ class DevMojoTest {
         List<ArtifactResult> results = new ArrayList<>();
         for (Dependency dependency : request.getCollectRequest().getDependencies()) {
             Artifact artifact = dependency.getArtifact();
-            results.add(result(directory.resolve(artifact.getArtifactId() + "-" + artifact.getVersion() + ".jar").toFile()));
+            results.add(result(artifact, directory.resolve(artifact.getArtifactId() + "-" + artifact.getVersion() + ".jar").toFile()));
         }
         DependencyResult result = new DependencyResult(request);
         result.setArtifactResults(results);
@@ -425,8 +429,15 @@ class DevMojoTest {
     }
 
     private static ArtifactResult result(File file) {
+        return result(new DefaultArtifact("example", file.getName(), "jar", "1.0"), file);
+    }
+
+    /**
+     * The result of resolving an artifact, with its coordinates: the launcher is found among the results by them.
+     */
+    private static ArtifactResult result(Artifact artifact, File file) {
         ArtifactResult result = new ArtifactResult(new ArtifactRequest());
-        result.setArtifact(new DefaultArtifact("example", file.getName(), "jar", "1.0").setFile(file));
+        result.setArtifact(artifact.setFile(file));
         return result;
     }
 

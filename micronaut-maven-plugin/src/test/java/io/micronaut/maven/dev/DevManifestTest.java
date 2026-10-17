@@ -63,7 +63,8 @@ class DevManifestTest {
         File runtimeJar = directory.resolve("runtime.jar").toFile();
         File compileJar = directory.resolve("compile.jar").toFile();
         File processorJar = directory.resolve("processor.jar").toFile();
-        DevManifest manifest = DevManifest.of(app, List.of(app, lib), SETTINGS, List.of(runtimeJar), List.of(compileJar), List.of(processorJar), evaluator(Map.of()));
+        Path manifestDirectory = directory.resolve("app/target/micronaut-dev");
+        DevManifest manifest = DevManifest.of(app, List.of(app, lib), SETTINGS, List.of(runtimeJar), List.of(compileJar), List.of(processorJar), evaluator(Map.of()), manifestDirectory);
 
         Map<String, String> entries = manifest.entries();
         assertEquals("example.Application", entries.get(PREFIX + "main-class"));
@@ -87,11 +88,11 @@ class DevManifestTest {
         assertEquals(app.getBuild().getOutputDirectory(), entries.get(PREFIX + "compile.groovy.output"));
         assertEquals("maven", entries.get(PREFIX + "build-tool"));
         assertEquals(directory.resolve("app/target/micronaut-dev/reload").toString(), entries.get(PREFIX + "build-tool.trigger"));
+        assertEquals(manifestDirectory.resolve(DevManifest.GENERATIONS_DIRECTORY_NAME).toString(), entries.get(PREFIX + "generations"));
         assertEquals("example.Pool,example.Client", entries.get(PREFIX + "retain"));
         assertEquals("35729", entries.get(PREFIX + "livereload.port"));
         assertEquals("true", entries.get(PREFIX + "livereload.inject-script"));
 
-        Path manifestDirectory = directory.resolve("app/target/micronaut-dev");
         Path file = manifest.writeTo(manifestDirectory);
         assertEquals(manifestDirectory.resolve(DevManifest.FILE_NAME), file);
         Properties written = new Properties();
@@ -111,7 +112,7 @@ class DevManifestTest {
         MavenProject app = project(directory, "app");
         DevManifest.Settings settings = new DevManifest.Settings("example.Application", "restart", "build-tool", false, List.of(), 1234, false);
 
-        Map<String, String> entries = DevManifest.of(app, List.of(app), settings, List.of(), List.of(), List.of(), evaluator(Map.of())).entries();
+        Map<String, String> entries = DevManifest.of(app, List.of(app), settings, List.of(), List.of(), List.of(), evaluator(Map.of()), directory.resolve("target/micronaut-dev")).entries();
 
         assertFalse(entries.containsKey(PREFIX + "sources.java"));
         assertFalse(entries.containsKey(PREFIX + "sources.groovy"));
@@ -133,7 +134,7 @@ class DevManifestTest {
         project.getProperties().setProperty("maven.compiler.parameters", "true");
         project.getProperties().setProperty("project.build.sourceEncoding", "ISO-8859-1");
 
-        assertEquals(List.of("-parameters", "-source", "21", "-target", "21", "-encoding", "ISO-8859-1"), DevManifest.javacOptions(project, evaluator(Map.of())));
+        assertEquals(List.of("-parameters", "-source", "21", "-target", "21", "-encoding", "ISO-8859-1"), DevManifest.javacOptions(project, evaluator(Map.of()), false));
     }
 
     @Test
@@ -150,7 +151,7 @@ class DevManifestTest {
         plugin.addExecution(execution("default-compile", configuration(Map.of("release", "${java.release}"))));
         project.getBuild().addPlugin(plugin);
 
-        List<String> options = DevManifest.javacOptions(project, evaluator(Map.of("${processing.group}", "-Amicronaut.processing.group=example", "${java.release}", "25")));
+        List<String> options = DevManifest.javacOptions(project, evaluator(Map.of("${processing.group}", "-Amicronaut.processing.group=example", "${java.release}", "25")), false);
 
         assertEquals(List.of("--release", "25", "-Amicronaut.processing.group=example", "-Xlint:all"), options);
     }
@@ -162,7 +163,7 @@ class DevManifestTest {
         ExpressionEvaluator evaluator = mock(ExpressionEvaluator.class);
         when(evaluator.evaluate(anyString())).thenThrow(new ExpressionEvaluationException("broken"));
 
-        IllegalStateException failure = assertThrows(IllegalStateException.class, () -> DevManifest.javacOptions(project, evaluator));
+        IllegalStateException failure = assertThrows(IllegalStateException.class, () -> DevManifest.javacOptions(project, evaluator, false));
         assertTrue(failure.getMessage().contains("broken"));
     }
 

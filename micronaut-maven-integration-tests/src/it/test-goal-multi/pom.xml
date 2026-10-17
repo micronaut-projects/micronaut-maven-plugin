@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>io.micronaut.platform</groupId>
+    <artifactId>micronaut-parent</artifactId>
+    <version>@it.micronaut.version@</version>
+  </parent>
+  <groupId>testmulti</groupId>
+  <artifactId>test-goal-multi</artifactId>
+  <version>0.1</version>
+  <packaging>pom</packaging>
+  <properties>
+    <micronaut.version>@it.micronaut.version@</micronaut.version>
+    <!-- test mode needs Micronaut Core 5.3, whose BOM manages micronaut-dev and micronaut-dev-test-report -->
+    <micronaut.core.version>5.3.0-SNAPSHOT</micronaut.core.version>
+    <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
+    <micronaut.runtime>netty</micronaut.runtime>
+  </properties>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>io.micronaut</groupId>
+        <artifactId>micronaut-core-bom</artifactId>
+        <version>${micronaut.core.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-inject</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <modules>
+    <module>lib</module>
+    <module>app</module>
+  </modules>
+</project>
