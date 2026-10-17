@@ -2,6 +2,7 @@ package io.micronaut.maven;
 
 import io.micronaut.maven.dev.BuildToolWatcher;
 import io.micronaut.maven.dev.DevManifest;
+import io.micronaut.maven.dev.OutputLock;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.maven.services.ExecutorService;
@@ -44,6 +45,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static io.micronaut.maven.core.MojoUtils.THIS_PLUGIN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -308,6 +311,7 @@ class DevMojoTest {
 
     @Test
     void aSuccessfulCompilationTouchesTheTrigger() throws Exception {
+        setField("runnableProject", app);
         when(mavenSession.getTopLevelProject()).thenReturn(app);
         InvocationResult result = mock(InvocationResult.class);
         when(result.getExitCode()).thenReturn(0);
@@ -321,6 +325,7 @@ class DevMojoTest {
 
     @Test
     void aFailedCompilationDoesNotTouchTheTrigger() throws Exception {
+        setField("runnableProject", app);
         when(mavenSession.getTopLevelProject()).thenReturn(app);
         InvocationResult result = mock(InvocationResult.class);
         when(result.getExitCode()).thenReturn(1);
@@ -333,6 +338,34 @@ class DevMojoTest {
         invoke("compileAndTouch", new Class<?>[] {Path.class}, trigger);
 
         assertFalse(Files.exists(trigger));
+    }
+
+    @Test
+    void theCompilationHoldsTheOutputLockTheLauncherTakes() throws Exception {
+        setField("runnableProject", app);
+        when(mavenSession.getTopLevelProject()).thenReturn(app);
+        InvocationResult result = mock(InvocationResult.class);
+        when(result.getExitCode()).thenReturn(0);
+        Path lockFile = directory.resolve("app/target/classes.micronaut-dev.lock");
+        AtomicBoolean waited = new AtomicBoolean();
+        AtomicReference<Thread> other = new AtomicReference<>();
+        when(executorService.invokeGoals(app, "compile")).thenAnswer(invocation -> {
+            assertTrue(Files.isRegularFile(lockFile));
+            // another process's compilation, as the launcher of mn:test takes it, waits for this one
+            Thread thread = new Thread(() -> OutputLock.lock(List.of(lockFile), message -> waited.set(true)).close());
+            other.set(thread);
+            thread.start();
+            thread.join(200);
+            assertTrue(thread.isAlive());
+            return result;
+        });
+
+        invoke("compileAndTouch", new Class<?>[] {Path.class}, directory.resolve("micronaut-dev/reload"));
+
+        other.get().join(5000);
+        assertFalse(other.get().isAlive());
+        assertTrue(waited.get());
+        assertTrue(Files.isRegularFile(directory.resolve("micronaut-dev/reload")));
     }
 
     @Test
