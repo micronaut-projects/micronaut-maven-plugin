@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>io.micronaut.platform</groupId>
+    <artifactId>micronaut-parent</artifactId>
+    <version>@it.micronaut.version@</version>
+  </parent>
+  <groupId>testrun</groupId>
+  <artifactId>test-resources-run-reactor-disabled</artifactId>
+  <version>0.1</version>
+  <packaging>pom</packaging>
+  <properties>
+    <micronaut.version>@it.micronaut.version@</micronaut.version>
+    <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
+    <micronaut.runtime>netty</micronaut.runtime>
+    <micronaut.test.resources.version>@micronaut.test.resources.version@</micronaut.test.resources.version>
+    <micronaut.testresources.version>${micronaut.test.resources.version}</micronaut.testresources.version>
+    <!-- the reactor root enables Test Resources, and the application, which mn:run selects, disables it -->
+    <micronaut.test.resources.enabled>true</micronaut.test.resources.enabled>
+  </properties>
+  <modules>
+    <module>app</module>
+  </modules>
+</project>

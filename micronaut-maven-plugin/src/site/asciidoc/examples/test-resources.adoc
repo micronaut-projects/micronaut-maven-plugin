@@ -215,6 +215,11 @@ Then the consuming module can expose that sibling artifact to the Test Resources
 When you run `mvn test` or `mvn verify` from the parent project, Maven builds the sibling resolver module in the same
 reactor and the plugin adds that artifact to the Test Resources service classpath for the consuming module.
 
+`mn:run` from the parent project selects the application module, and reads `micronaut.test.resources.enabled`, the
+other Test Resources properties and the plugin's configuration, such as `<testResourcesDependencies>`, from that module,
+as if it had been run with `-pl`. An application can therefore enable or disable Test Resources on its own, whatever the
+parent project sets.
+
 The list of supported modules is described in the
 https://micronaut-projects.github.io/micronaut-test-resources/latest/guide/#modules[Micronaut Test Resources documentation].
 
