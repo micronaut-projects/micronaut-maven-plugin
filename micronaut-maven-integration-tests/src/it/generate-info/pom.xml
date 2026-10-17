@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.micronaut.build.examples</groupId>
+  <artifactId>generate-info</artifactId>
+  <version>0.1</version>
+  <name>Generate Info Example</name>
+
+  <properties>
+    <maven.compiler.source>25</maven.compiler.source>
+    <maven.compiler.target>25</maven.compiler.target>
+    <micronaut.version>@it.micronaut.version@</micronaut.version>
+    <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
+    <project.build.outputTimestamp>2026-01-02T03:04:05Z</project.build.outputTimestamp>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.micronaut.maven</groupId>
+        <artifactId>micronaut-maven-plugin</artifactId>
+        <version>${micronaut-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate-info</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <additionalBuildProperties>
+            <build.environment>test</build.environment>
+          </additionalBuildProperties>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
