@@ -18,6 +18,7 @@ import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.component.configurator.ComponentConfigurator;
 import org.codehaus.plexus.configuration.PlexusConfiguration;
+import org.codehaus.plexus.configuration.xml.XmlPlexusConfiguration;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
@@ -207,19 +208,22 @@ class DevMojoTest {
         assertEquals("reload", applied.getChild("strategy").getValue());
         assertEquals("4000", applied.getChild("livereloadPort").getValue(), "a parameter is matched by its alias too");
         assertNull(applied.getChild("watches", false));
-        // the configuration names no main class: the application's exec.mainClass is
-        assertEquals("example.FromProperty", getField("mainClass"));
+        // the configuration names no main class: the goal's default, the application's exec.mainClass, applies
+        assertEquals("${exec.mainClass}", applied.getChild("mainClass").getAttribute("default-value"));
     }
 
     @Test
-    void anApplicationWithoutPluginConfigurationKeepsItsMainClassProperty() throws Exception {
-        app.getProperties().setProperty("exec.mainClass", "example.FromProperty");
+    void anApplicationWithoutPluginConfigurationIsConfiguredWithTheGoalDefaults() throws Exception {
+        when(mojoExecution.getMojoDescriptor()).thenReturn(descriptor());
         setField("runnableProject", app);
 
         invoke("applyRunnableProjectConfiguration");
 
-        verifyNoInteractions(configurator);
-        assertEquals("example.FromProperty", getField("mainClass"));
+        ArgumentCaptor<PlexusConfiguration> configuration = ArgumentCaptor.forClass(PlexusConfiguration.class);
+        verify(configurator).configureComponent(eq(mojo), configuration.capture(), any(), any());
+        // the defaults are evaluated against the selected application, so its exec.mainClass is the main class
+        assertEquals("${exec.mainClass}", configuration.getValue().getChild("mainClass").getAttribute("default-value"));
+        assertNull(configuration.getValue().getChild("strategy", false));
     }
 
     @Test
@@ -404,6 +408,12 @@ class DevMojoTest {
         descriptor.addParameter(parameter("strategy", null));
         descriptor.addParameter(parameter("liveReloadPort", "livereloadPort"));
         descriptor.addParameter(parameter("mainClass", null));
+        // the goal's defaults, as plugin.xml declares them
+        XmlPlexusConfiguration defaults = new XmlPlexusConfiguration("configuration");
+        XmlPlexusConfiguration mainClass = new XmlPlexusConfiguration("mainClass");
+        mainClass.setAttribute("default-value", "${exec.mainClass}");
+        defaults.addChild(mainClass);
+        descriptor.setMojoConfiguration(defaults);
         return descriptor;
     }
 

@@ -56,6 +56,12 @@ Surefire's `-Dtest` works, mapped to the launcher's patterns: `-Dtest=Calculator
 supported. `mn.test.filter` takes the launcher's own patterns, comma separated: a glob, a class, by its binary or simple
 name, or `Class.method`, where `*` matches any characters, dots included.
 
+== Micronaut Test Resources
+
+With Test Resources enabled, the service is started once for the session, or a shared one is used, and every run's
+tests resolve their properties through it, with the client on the launch classpath: see
+link:dev.html#micronaut-test-resources[Micronaut Test Resources] for `mn:dev`, which `mn:test` shares.
+
 == Reports
 
 [cols="2,3"]
