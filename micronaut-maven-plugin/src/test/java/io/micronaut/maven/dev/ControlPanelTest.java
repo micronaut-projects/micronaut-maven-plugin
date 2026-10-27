@@ -31,6 +31,48 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ControlPanelTest {
 
     @Test
+    void requiresMicronautPlatform524OrLater() {
+        for (String version : List.of("5.2.4", "5.2.10", "5.3.0", "5.3.0-M1", "6.0.0", "5.2.4.1")) {
+            assertTrue(ControlPanel.isSupportedPlatform(version), version);
+        }
+        for (String version : List.of("5.2.3", "5.2.4-SNAPSHOT", "5.2.4-RC1", "5.1.9", "4.10.0", "", " ")) {
+            assertFalse(ControlPanel.isSupportedPlatform(version), version);
+        }
+        assertFalse(ControlPanel.isSupportedPlatform(null));
+    }
+
+    @Test
+    void findsThePlatformVersionAmongTheParentsOrTheImportedBoms() {
+        org.apache.maven.project.MavenProject parent = new org.apache.maven.project.MavenProject();
+        parent.setGroupId("io.micronaut.platform");
+        parent.setArtifactId("micronaut-parent");
+        parent.setVersion("5.2.4");
+        org.apache.maven.project.MavenProject child = new org.apache.maven.project.MavenProject();
+        child.setGroupId("example");
+        child.setArtifactId("app");
+        child.setVersion("0.1");
+        child.setParent(parent);
+        assertEquals(java.util.Optional.of("5.2.4"), ControlPanel.platformVersion(child));
+
+        org.apache.maven.model.Model model = new org.apache.maven.model.Model();
+        org.apache.maven.model.Dependency bom = new org.apache.maven.model.Dependency();
+        bom.setGroupId("io.micronaut.platform");
+        bom.setArtifactId("micronaut-platform");
+        bom.setVersion("${micronaut.version}");
+        bom.setType("pom");
+        bom.setScope("import");
+        org.apache.maven.model.DependencyManagement management = new org.apache.maven.model.DependencyManagement();
+        management.addDependency(bom);
+        model.setDependencyManagement(management);
+        model.addProperty("micronaut.version", "5.2.3");
+        org.apache.maven.project.MavenProject imported = new org.apache.maven.project.MavenProject(model);
+        imported.setOriginalModel(model);
+        assertEquals(java.util.Optional.of("5.2.3"), ControlPanel.platformVersion(imported));
+
+        assertEquals(java.util.Optional.empty(), ControlPanel.platformVersion(new org.apache.maven.project.MavenProject()));
+    }
+
+    @Test
     void addsTheBaseModulesToEveryRuntime() {
         assertEquals(List.of("micronaut-control-panel-ui", "micronaut-control-panel-management", "micronaut-control-panel-testing"),
             ControlPanel.modules(Set.of("io.micronaut:micronaut-http-server-netty")));

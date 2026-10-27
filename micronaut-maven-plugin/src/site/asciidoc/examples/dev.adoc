@@ -110,6 +110,10 @@ The other panels are added when the runtime classpath holds a module they inspec
 A Control Panel module that is not published yet, or that the dependency management does not version, is left out
 with a message; any other resolution failure fails the goal.
 
+Control Panel requires Micronaut Platform 5.2.4 or later: the version of `micronaut-parent`, or of the
+`micronaut-platform` BOM the project imports. On an older platform, or without one, `mn:dev` does not add it and logs
+a line saying so.
+
 The development runtime runs with these settings:
 
 [source,properties]

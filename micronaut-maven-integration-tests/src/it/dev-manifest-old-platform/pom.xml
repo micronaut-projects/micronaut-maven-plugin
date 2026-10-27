@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>devmanifest</groupId>
+  <artifactId>dev-manifest-old-platform</artifactId>
+  <version>0.1</version>
+  <packaging>jar</packaging>
+
+  <!-- older than 5.2.4: Control Panel requires Micronaut Platform 5.2.4 or later, so mn:dev does not add it -->
+  <parent>
+    <groupId>io.micronaut.platform</groupId>
+    <artifactId>micronaut-parent</artifactId>
+    <version>5.2.3</version>
+  </parent>
+
+  <properties>
+    <micronaut.version>5.2.3</micronaut.version>
+    <exec.mainClass>devmanifest.Application</exec.mainClass>
+    <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
+    <micronaut.runtime>netty</micronaut.runtime>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-inject</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-http-server-netty</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-runtime</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut.sql</groupId>
+      <artifactId>micronaut-jdbc</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>io.micronaut.maven</groupId>
+        <artifactId>micronaut-maven-plugin</artifactId>
+        <version>${micronaut-maven-plugin.version}</version>
+      </plugin>
+    </plugins>
+  </build>
+</project>

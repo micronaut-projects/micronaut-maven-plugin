@@ -658,7 +658,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
         List<File> files = new ArrayList<>();
         List<String> added = new ArrayList<>();
         boolean active = false;
-        if (controlPanelEnabled()) {
+        if (controlPanelEnabled() && platformSupportsControlPanel()) {
             Set<String> resolved = new LinkedHashSet<>();
             for (String module : ControlPanel.modules(present)) {
                 String key = ControlPanel.GROUP + ":" + module;
@@ -711,6 +711,23 @@ public class DevMojo extends AbstractTestResourcesMojo {
         }
         controlPanelClasspath = files;
         return controlPanelClasspath;
+    }
+
+    /**
+     * Whether the runnable project builds with a Micronaut platform Control Panel is added for: Control Panel requires
+     * Micronaut Platform {@value ControlPanel#MINIMUM_PLATFORM_VERSION} or later. Otherwise one line says why it is
+     * left out.
+     *
+     * @return whether the platform is {@value ControlPanel#MINIMUM_PLATFORM_VERSION} or later
+     */
+    private boolean platformSupportsControlPanel() {
+        Optional<String> version = ControlPanel.platformVersion(runnableProject());
+        if (version.isPresent() && ControlPanel.isSupportedPlatform(version.get())) {
+            return true;
+        }
+        getLog().warn("Micronaut Control Panel requires Micronaut Platform " + ControlPanel.MINIMUM_PLATFORM_VERSION
+            + " or later; not adding it (the build uses " + version.orElse("no Micronaut Platform") + ")");
+        return false;
     }
 
     /**

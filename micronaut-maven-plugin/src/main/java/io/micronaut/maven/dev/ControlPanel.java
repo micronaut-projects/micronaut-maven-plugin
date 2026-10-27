@@ -15,6 +15,11 @@
  */
 package io.micronaut.maven.dev;
 
+import org.apache.maven.artifact.versioning.ComparableVersion;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.DependencyManagement;
+import org.apache.maven.model.Model;
+import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.transfer.ArtifactNotFoundException;
@@ -30,6 +35,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Stream;
 
@@ -90,6 +96,19 @@ public final class ControlPanel {
      */
     public static final String SECURITY_MODULE = "io.micronaut.security:micronaut-security";
 
+    /**
+     * The group of the Micronaut platform BOM and of the {@code micronaut-parent} POM.
+     */
+    public static final String PLATFORM_GROUP = "io.micronaut.platform";
+
+    /**
+     * The oldest Micronaut platform {@code mn:dev} adds Control Panel for: Control Panel requires Micronaut Platform
+     * 5.2.4 or later.
+     */
+    public static final String MINIMUM_PLATFORM_VERSION = "5.2.4";
+
+    private static final List<String> PLATFORM_ARTIFACTS = List.of("micronaut-parent", "micronaut-platform");
+
     static {
         Map<String, String> secured = new LinkedHashMap<>();
         secured.put("micronaut.control-panel.enabled", "true");
@@ -140,6 +159,59 @@ public final class ControlPanel {
         public List<String> triggers() {
             return triggers;
         }
+    }
+
+    /**
+     * The version of the Micronaut platform a project builds with: that of {@code micronaut-parent} or of the
+     * {@code micronaut-platform} BOM among its parents, else that of the {@code micronaut-platform} BOM a project of
+     * the chain imports in its dependency management.
+     *
+     * @param project the project
+     * @return the version, if the project builds with the Micronaut platform
+     */
+    public static Optional<String> platformVersion(MavenProject project) {
+        for (MavenProject current = project; current != null; current = current.getParent()) {
+            if (PLATFORM_GROUP.equals(current.getGroupId()) && PLATFORM_ARTIFACTS.contains(current.getArtifactId())) {
+                return Optional.ofNullable(current.getVersion());
+            }
+        }
+        for (MavenProject current = project; current != null; current = current.getParent()) {
+            Optional<String> imported = importedPlatformVersion(current.getOriginalModel(), project.getProperties());
+            if (imported.isPresent()) {
+                return imported;
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<String> importedPlatformVersion(Model model, Properties properties) {
+        DependencyManagement management = model == null ? null : model.getDependencyManagement();
+        if (management == null) {
+            return Optional.empty();
+        }
+        for (Dependency dependency : management.getDependencies()) {
+            if (PLATFORM_GROUP.equals(dependency.getGroupId()) && "micronaut-platform".equals(dependency.getArtifactId())
+                && "import".equals(dependency.getScope()) && dependency.getVersion() != null) {
+                String version = dependency.getVersion().trim();
+                if (version.startsWith("${") && version.endsWith("}")) {
+                    version = properties.getProperty(version.substring(2, version.length() - 1));
+                }
+                return Optional.ofNullable(version);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Whether a Micronaut platform version is {@value #MINIMUM_PLATFORM_VERSION} or later, compared as Maven compares
+     * versions, so that {@code 5.2.10} is later and {@code 5.2.4-SNAPSHOT} earlier.
+     *
+     * @param version the version of the platform
+     * @return whether Control Panel is added for it
+     */
+    public static boolean isSupportedPlatform(String version) {
+        return version != null && !version.isBlank()
+            && new ComparableVersion(version.trim()).compareTo(new ComparableVersion(MINIMUM_PLATFORM_VERSION)) >= 0;
     }
 
     /**
