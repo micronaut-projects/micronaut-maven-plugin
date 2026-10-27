@@ -7,14 +7,15 @@
   <version>0.1</version>
   <packaging>jar</packaging>
 
+  <!-- Control Panel requires Micronaut Platform 5.2.4 or later -->
   <parent>
     <groupId>io.micronaut.platform</groupId>
     <artifactId>micronaut-parent</artifactId>
-    <version>@it.micronaut.version@</version>
+    <version>5.2.4</version>
   </parent>
 
   <properties>
-    <micronaut.version>@it.micronaut.version@</micronaut.version>
+    <micronaut.version>5.2.4</micronaut.version>
     <exec.mainClass>devmanifest.Application</exec.mainClass>
     <micronaut-maven-plugin.version>@project.version@</micronaut-maven-plugin.version>
     <micronaut.runtime>netty</micronaut.runtime>
@@ -35,6 +36,12 @@
       <groupId>io.micronaut</groupId>
       <artifactId>micronaut-runtime</artifactId>
       <scope>compile</scope>
+    </dependency>
+    <!-- adds the datasource panel of Micronaut Control Panel to the development runtime -->
+    <dependency>
+      <groupId>io.micronaut.sql</groupId>
+      <artifactId>micronaut-jdbc</artifactId>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
