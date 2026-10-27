@@ -72,7 +72,7 @@ link:dev.html#micronaut-test-resources[Micronaut Test Resources] for `mn:dev`, w
 |HTML, the latest result of every test, failures first |`target/micronaut-dev/test-report/index.html`
 |===
 
-The HTML report is also served by the LiveReload server at `http://localhost:35729/tests/`, or at the path
+The HTML report is also served by the LiveReload server of the test runs at `http://localhost:35730/tests/`, or at the path
 `mn.test.reportPath` names, where it follows each run test by test without reloading. Opened from the file system it
 shows the state it was written with.
 
@@ -91,6 +91,7 @@ shows the state it was written with.
 |`mn.test.reportsDirectory` |`target/surefire-reports` |The directory of the JUnit XML reports, a relative one resolved against the project whose tests run.
 |`mn.test.htmlReportDirectory` |`target/micronaut-dev/test-report` |The directory of the HTML report.
 |`mn.test.reportPath` |`/tests/` |The path the LiveReload server serves the HTML report at.
+|`mn.test.livereload.port` |`35730` |The port of the test runs' LiveReload server, apart from `mn:dev`'s `35729` so that both goals run at once.
 |`mn.test.htmlReport` |`true` |Adds `micronaut-dev-test-report`, which writes the HTML report, to the launcher's classpath.
 |===
 
@@ -111,5 +112,24 @@ JUnit Platform configuration parameters are set with the `configurationParameter
 
 The settings of `mn:dev` apply as well: `mn.dev.compile`, where `build-tool` compiles through `mvn test-compile` and
 tells the launcher through `target/micronaut-dev/test/reload`, `mn.dev.incremental`, `mn.dev.livereload`,
-`mn.dev.livereload.port`, `mn.dev.manifestOnly`, and `mn.debug`, `mn.jvmArgs` and the test resources settings. A test
-run beside an `mn:dev` session needs a LiveReload port of its own, such as `-Dmn.dev.livereload.port=35730`.
+`mn.dev.manifestOnly`, and `mn.debug`, `mn.jvmArgs` and the test resources settings. The LiveReload port is
+`mn.test.livereload.port`, not `mn.dev.livereload.port`.
+
+[[running-beside-mn-dev]]
+== Running beside `mn:dev`
+
+`mn:dev` and `mn:test` run at once on one project, each in its own terminal:
+
+[source,bash]
+----
+$ mvn mn:dev
+$ mvn mn:test
+----
+
+Both compile the application's sources into `target/classes`, so a compilation, by the launcher or by Maven, holds a
+lock on `target/classes.micronaut-dev.lock`, which the other goal waits for: neither reads the other's compilation half
+done, and an edit is compiled by one and picked up by both. The lifecycle each goal forks before the launch takes the
+lock too, while the plugin is declared with `<extensions>true</extensions>`, as the Micronaut parent POM declares it,
+and so does each compilation through Maven in `build-tool` mode. The goals keep their generations apart,
+`target/micronaut-dev/generations` and `target/micronaut-dev/test/generations`, and listen on LiveReload ports of their
+own, `35729` and `35730`, so the test report stays at `http://localhost:35730/tests/` while the application runs.

@@ -147,6 +147,13 @@ public class TestMojo extends DevMojo {
     private String reportPath;
 
     /**
+     * The port the LiveReload server of the test runs listens on, which serves the HTML report: one of its own, apart
+     * from {@code mn.dev.livereload.port}, so that {@code mn:test} runs beside {@code mn:dev}.
+     */
+    @Parameter(property = "mn.test.livereload.port", defaultValue = "35730")
+    private int testLiveReloadPort;
+
+    /**
      * Whether {@code micronaut-dev-test-report}, which writes the HTML report, is added to the launcher's classpath.
      */
     @Parameter(property = "mn.test.htmlReport", defaultValue = "true")
@@ -201,6 +208,21 @@ public class TestMojo extends DevMojo {
     @Override
     protected String buildToolGoal() {
         return "test-compile";
+    }
+
+    /**
+     * {@code test-compile} writes the test output as well as the application's.
+     *
+     * @return true
+     */
+    @Override
+    protected boolean compilesTests() {
+        return true;
+    }
+
+    @Override
+    protected int liveReloadPort() {
+        return testLiveReloadPort;
     }
 
     /**

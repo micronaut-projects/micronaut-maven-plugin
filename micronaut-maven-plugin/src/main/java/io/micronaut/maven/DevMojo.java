@@ -19,6 +19,7 @@ import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.dev.BuildToolWatcher;
 import io.micronaut.maven.dev.ControlPanel;
 import io.micronaut.maven.dev.DevManifest;
+import io.micronaut.maven.dev.OutputLock;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
 import io.micronaut.maven.services.ExecutorService;
@@ -537,7 +538,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
             throw new MojoExecutionException("No main class: set exec.mainClass or the mainClass parameter");
         }
         List<String> retained = retain == null || retain.isBlank() ? List.of() : Arrays.stream(retain.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
-        DevManifest.Settings settings = new DevManifest.Settings(main, strategy, compile, incremental, retained, liveReloadPort, liveReloadInjectScript);
+        DevManifest.Settings settings = new DevManifest.Settings(main, strategy, compile, incremental, retained, liveReloadPort(), liveReloadInjectScript);
         DevManifest manifest = DevManifest.of(runnableProject, reactor, settings, runtimeClasspath, compileClasspath, processorPath, evaluator, manifestDirectory);
         Boolean loopback = bindLoopback();
         return loopback == null ? manifest : manifest.withBindLoopback(loopback);
@@ -550,6 +551,15 @@ public class DevMojo extends AbstractTestResourcesMojo {
      */
     protected Boolean bindLoopback() {
         return bindLoopback;
+    }
+
+    /**
+     * The port the LiveReload server listens on.
+     *
+     * @return the {@code liveReloadPort} parameter
+     */
+    protected int liveReloadPort() {
+        return liveReloadPort;
     }
 
     /**
@@ -829,6 +839,15 @@ public class DevMojo extends AbstractTestResourcesMojo {
         return "compile";
     }
 
+    /**
+     * Whether a build-tool mode compilation writes the test output too, whose lock it then takes as well.
+     *
+     * @return false, {@code compile} writes the application's output only
+     */
+    protected boolean compilesTests() {
+        return false;
+    }
+
     private void compileAndTouch(Path trigger) {
         if (finished) {
             return;
@@ -837,7 +856,11 @@ public class DevMojo extends AbstractTestResourcesMojo {
         boolean compiled;
         try {
             MavenProject projectToCompile = mavenSession.getTopLevelProject();
-            InvocationResult result = executorService.invokeGoals(projectToCompile, buildToolGoal());
+            InvocationResult result;
+            // the launcher of mn:test or mn:dev running beside this goal compiles into the same output: never at once
+            try (OutputLock.Hold hold = OutputLock.lock(OutputLock.files(runnableProject, compilesTests()), getLog()::info)) {
+                result = executorService.invokeGoals(projectToCompile, buildToolGoal());
+            }
             compiled = result.getExitCode() == 0 && result.getExecutionException() == null;
             if (!compiled) {
                 getLog().warn("The compilation failed: the running application keeps the previous classes");
