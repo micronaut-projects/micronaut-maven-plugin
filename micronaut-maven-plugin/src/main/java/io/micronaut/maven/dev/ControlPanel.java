@@ -18,7 +18,6 @@ package io.micronaut.maven.dev;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.DependencyManagement;
-import org.apache.maven.model.Model;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
@@ -162,41 +161,27 @@ public final class ControlPanel {
     }
 
     /**
-     * The version of the Micronaut platform a project builds with: that of {@code micronaut-parent} or of the
-     * {@code micronaut-platform} BOM among its parents, else that of the {@code micronaut-platform} BOM a project of
-     * the chain imports in its dependency management.
+     * The version of the Micronaut platform a project builds with: that of {@code micronaut-parent} in the project's
+     * effective dependency management, which every {@code micronaut-platform} BOM manages at its own version, whether
+     * the project inherits it from {@code micronaut-parent} or imports it, from a profile or with an interpolated
+     * version; else that of {@code micronaut-parent} or of the {@code micronaut-platform} BOM among its parents.
      *
      * @param project the project
      * @return the version, if the project builds with the Micronaut platform
      */
     public static Optional<String> platformVersion(MavenProject project) {
+        DependencyManagement management = project.getDependencyManagement();
+        if (management != null) {
+            for (Dependency dependency : management.getDependencies()) {
+                if (PLATFORM_GROUP.equals(dependency.getGroupId()) && "micronaut-parent".equals(dependency.getArtifactId())
+                    && dependency.getVersion() != null) {
+                    return Optional.of(dependency.getVersion());
+                }
+            }
+        }
         for (MavenProject current = project; current != null; current = current.getParent()) {
             if (PLATFORM_GROUP.equals(current.getGroupId()) && PLATFORM_ARTIFACTS.contains(current.getArtifactId())) {
                 return Optional.ofNullable(current.getVersion());
-            }
-        }
-        for (MavenProject current = project; current != null; current = current.getParent()) {
-            Optional<String> imported = importedPlatformVersion(current.getOriginalModel(), project.getProperties());
-            if (imported.isPresent()) {
-                return imported;
-            }
-        }
-        return Optional.empty();
-    }
-
-    private static Optional<String> importedPlatformVersion(Model model, Properties properties) {
-        DependencyManagement management = model == null ? null : model.getDependencyManagement();
-        if (management == null) {
-            return Optional.empty();
-        }
-        for (Dependency dependency : management.getDependencies()) {
-            if (PLATFORM_GROUP.equals(dependency.getGroupId()) && "micronaut-platform".equals(dependency.getArtifactId())
-                && "import".equals(dependency.getScope()) && dependency.getVersion() != null) {
-                String version = dependency.getVersion().trim();
-                if (version.startsWith("${") && version.endsWith("}")) {
-                    version = properties.getProperty(version.substring(2, version.length() - 1));
-                }
-                return Optional.ofNullable(version);
             }
         }
         return Optional.empty();

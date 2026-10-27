@@ -42,7 +42,7 @@ class ControlPanelTest {
     }
 
     @Test
-    void findsThePlatformVersionAmongTheParentsOrTheImportedBoms() {
+    void findsThePlatformVersionInTheDependencyManagementOrAmongTheParents() {
         org.apache.maven.project.MavenProject parent = new org.apache.maven.project.MavenProject();
         parent.setGroupId("io.micronaut.platform");
         parent.setArtifactId("micronaut-parent");
@@ -54,20 +54,17 @@ class ControlPanelTest {
         child.setParent(parent);
         assertEquals(java.util.Optional.of("5.2.4"), ControlPanel.platformVersion(child));
 
-        org.apache.maven.model.Model model = new org.apache.maven.model.Model();
-        org.apache.maven.model.Dependency bom = new org.apache.maven.model.Dependency();
-        bom.setGroupId("io.micronaut.platform");
-        bom.setArtifactId("micronaut-platform");
-        bom.setVersion("${micronaut.version}");
-        bom.setType("pom");
-        bom.setScope("import");
+        // a project that imports the BOM: the effective dependency management holds micronaut-parent at its version
+        org.apache.maven.model.Dependency managed = new org.apache.maven.model.Dependency();
+        managed.setGroupId("io.micronaut.platform");
+        managed.setArtifactId("micronaut-parent");
+        managed.setVersion("5.2.3");
+        managed.setType("pom");
         org.apache.maven.model.DependencyManagement management = new org.apache.maven.model.DependencyManagement();
-        management.addDependency(bom);
+        management.addDependency(managed);
+        org.apache.maven.model.Model model = new org.apache.maven.model.Model();
         model.setDependencyManagement(management);
-        model.addProperty("micronaut.version", "5.2.3");
-        org.apache.maven.project.MavenProject imported = new org.apache.maven.project.MavenProject(model);
-        imported.setOriginalModel(model);
-        assertEquals(java.util.Optional.of("5.2.3"), ControlPanel.platformVersion(imported));
+        assertEquals(java.util.Optional.of("5.2.3"), ControlPanel.platformVersion(new org.apache.maven.project.MavenProject(model)));
 
         assertEquals(java.util.Optional.empty(), ControlPanel.platformVersion(new org.apache.maven.project.MavenProject()));
     }
