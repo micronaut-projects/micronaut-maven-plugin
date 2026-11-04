@@ -504,10 +504,14 @@ public class DevMojo extends AbstractTestResourcesMojo {
         addTestResourcesArguments(args);
         args.addAll(translatedJvmArguments);
         mavenSession.getUserProperties().forEach((key, value) -> args.add("-D" + key + "=" + value));
+        // JNA loads its library for the native macOS watch service, which the JVM warns about otherwise
+        if (isMac()) {
+            args.add("--enable-native-access=ALL-UNNAMED");
+        }
+        // the launcher as the JVM's agent, for the method-body fast path
         launcher.stream()
             .filter(file -> file.getName().startsWith(LAUNCHER_ARTIFACT + "-") && !file.getName().startsWith(LIVERELOAD_ARTIFACT + "-"))
             .findFirst()
-            // the launcher as the JVM's agent, for the method-body fast path
             .ifPresent(file -> args.add("-javaagent:" + file.getAbsolutePath()));
         args.add("-classpath");
         args.add(String.join(File.pathSeparator, classpath));
@@ -526,10 +530,14 @@ public class DevMojo extends AbstractTestResourcesMojo {
             artifacts.add(new DefaultArtifact(LAUNCHER_GROUP, LIVERELOAD_ARTIFACT, "jar", ""));
         }
         // FSEvents through JNA, which the launcher uses when it finds it: without it, macOS has only polling
-        if (System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("mac")) {
+        if (isMac()) {
             artifacts.add(new DefaultArtifact(LAUNCHER_GROUP, MAC_WATCH_ARTIFACT, "jar", ""));
         }
         return artifacts.stream();
+    }
+
+    private static boolean isMac() {
+        return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("mac");
     }
 
     private void addTestResourcesArguments(List<String> args) {
