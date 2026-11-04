@@ -559,7 +559,7 @@ class DevMojoTest {
                 Field field = type.getDeclaredField(name);
                 field.setAccessible(true);
                 return field;
-            } catch (NoSuchFieldException e) {
+            } catch (NoSuchFieldException _) {
                 // declared higher up
             }
         }
