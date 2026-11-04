@@ -1,0 +1,9 @@
+ARG BASE_JAVA_IMAGE
+FROM ${BASE_JAVA_IMAGE}
+WORKDIR /home/app
+COPY dependency/release/ /home/app/libs/release/
+COPY dependency/snapshot/ /home/app/libs/snapshot/
+COPY jdk-aot-cache/application.jar jdk-aot-cache/classpath jdk-aot-cache/training.sh /home/app/
+RUN bash /home/app/training.sh train ${JDK_AOT_CACHE_TRAINING} -- java -XX:+UseG1GC -cp @/home/app/classpath ${CLASS_NAME} && rm /home/app/training.sh
+EXPOSE ${PORTS}
+ENTRYPOINT ["java", "-XX:+UseG1GC", "-XX:AOTCache=/home/app/app.aot", "-cp", "@/home/app/classpath", "${CLASS_NAME}"]
