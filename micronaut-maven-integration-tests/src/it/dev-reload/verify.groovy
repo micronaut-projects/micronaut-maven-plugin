@@ -13,14 +13,10 @@ assert log.text.contains("BUILD SUCCESS")
 
 File mvnw = new File(base, '../../../mvnw').canonicalFile
 assert mvnw.exists()
-String testsRepo = new File(testsRepository as String).canonicalPath
-// the repository of the build running the tests, which holds the core with development mode, as the tests' settings name it
-File outerRepo = new File(buildRepository as String)
-// mn:dev resolves into a repository of its own, from the tests' one first, which has the plugin under test and the core
-// the scenario resolved, then from the build's one, which selector.groovy checks holds micronaut-dev, and Maven Central,
-// which the super POM declares. Neither has snapshot metadata, so the first that holds a snapshot wins: the build's may
-// hold another build of the plugin. Any other repository, such as the snapshots repository the BOMs the platform imports
-// declare, whose core 5.3.0-SNAPSHOT may not have micronaut-dev, resolves from the build's: see local-core.groovy
+String testsRepo = new File(base, '../../../target/local-repo').canonicalPath
+// mn:dev resolves into a repository of its own: the plugin under test from the tests' repository, Micronaut Core
+// 5.3.0-SNAPSHOT from the Central Portal snapshots repository, as the scenario's own build did, and everything else
+// from Maven Central, which the super POM declares
 String localRepo = new File(base, 'target/dev-reload-repo').path
 File settings = new File(base, 'target/dev-reload-settings.xml')
 def repository = { String id, File directory ->
@@ -32,23 +28,20 @@ def repository = { String id, File directory ->
         </repository>"""
 }
 settings.text = """<settings>
-  <mirrors>
-    <mirror>
-      <id>outer-mirror</id>
-      <mirrorOf>*,!central,!outer,!tests</mirrorOf>
-      <url>${outerRepo.toURI()}</url>
-    </mirror>
-  </mirrors>
   <profiles>
     <profile>
       <id>dev-reload</id>
       <repositories>
 ${repository('tests', new File(testsRepo))}
-${repository('outer', outerRepo)}
+        <repository>
+          <id>central-portal-snapshots</id>
+          <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+          <releases><enabled>false</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </repository>
       </repositories>
       <pluginRepositories>
 ${repository('tests', new File(testsRepo)).replace('repository>', 'pluginRepository>')}
-${repository('outer', outerRepo).replace('repository>', 'pluginRepository>')}
       </pluginRepositories>
     </profile>
   </profiles>
