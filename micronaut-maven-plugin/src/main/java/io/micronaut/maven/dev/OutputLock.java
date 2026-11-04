@@ -157,6 +157,10 @@ public final class OutputLock {
      * path must still name the locked file, or the file it names now is locked instead.
      */
     private static FileChannel lockCurrentFile(Path file, Consumer<Path> waiting) throws IOException {
+        return lockCurrentFile(file, waiting, path -> FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE));
+    }
+
+    static FileChannel lockCurrentFile(Path file, Consumer<Path> waiting, Opener opener) throws IOException {
         Path parent = file.getParent();
         while (true) {
             if (parent != null) {
@@ -165,14 +169,16 @@ public final class OutputLock {
             BasicFileAttributes before = attributes(file);
             FileChannel channel;
             try {
-                channel = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+                channel = opener.open(file);
             } catch (NoSuchFileException e) {
                 // its directory was deleted while it was opened
                 continue;
             }
             try {
                 BasicFileAttributes opened = attributes(file);
-                if (opened != null && (before == null || sameFile(before, opened))) {
+                // a file this call created has no earlier identity to compare, so another pass opens it knowing one: it
+                // may already have been replaced, and then the channel holds a deleted file
+                if (opened != null && before != null && sameFile(before, opened)) {
                     if (channel.tryLock() == null) {
                         waiting.accept(file);
                         channel.lock();
@@ -212,6 +218,14 @@ public final class OutputLock {
         for (int i = held.size() - 1; i >= 0; i--) {
             held.get(i).release();
         }
+    }
+
+    /**
+     * What opens a lock file, creating it when missing.
+     */
+    @FunctionalInterface
+    interface Opener {
+        FileChannel open(Path file) throws IOException;
     }
 
     /**

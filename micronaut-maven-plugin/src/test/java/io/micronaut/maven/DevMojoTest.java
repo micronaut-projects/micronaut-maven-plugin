@@ -22,6 +22,7 @@ import org.codehaus.plexus.configuration.PlexusConfiguration;
 import org.codehaus.plexus.configuration.xml.XmlPlexusConfiguration;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.graph.Dependency;
@@ -86,6 +87,7 @@ class DevMojoTest {
         runnableSession = mock(MavenSession.class);
         when(mavenSession.clone()).thenReturn(runnableSession);
         when(mavenSession.getUserProperties()).thenReturn(new Properties());
+        when(mavenSession.getRepositorySession()).thenReturn(mock(RepositorySystemSession.class));
         when(runnableSession.getSystemProperties()).thenReturn(new Properties());
         when(runnableSession.getUserProperties()).thenReturn(new Properties());
         ToolchainManager toolchainManager = mock(ToolchainManager.class);
@@ -105,6 +107,20 @@ class DevMojoTest {
         setField("liveReload", true);
         setField("liveReloadPort", 35729);
         setField("liveReloadInjectScript", true);
+    }
+
+    @Test
+    void aGoalBoundToALifecyclePhaseFailsTheBuild() throws Exception {
+        when(mojoExecution.getLifecyclePhase()).thenReturn("prepare-package");
+        when(mojoExecution.getGoal()).thenReturn("dev");
+        when(mavenSession.getCurrentProject()).thenReturn(app);
+        when(mavenSession.getAllProjects()).thenReturn(List.of(app));
+
+        MojoExecutionException failure = assertThrows(MojoExecutionException.class, () -> mojo.execute());
+
+        assertTrue(failure.getMessage().contains("mn:dev"));
+        assertTrue(failure.getMessage().contains("prepare-package"));
+        verifyNoInteractions(compilerService);
     }
 
     @Test
@@ -318,11 +334,30 @@ class DevMojoTest {
         when(mavenSession.getTopLevelProject()).thenReturn(app);
         InvocationResult result = mock(InvocationResult.class);
         when(result.getExitCode()).thenReturn(0);
-        when(executorService.invokeGoals(app, "compile")).thenReturn(result);
+        when(executorService.invokeGoals(app, app, "compile")).thenReturn(result);
         Path trigger = directory.resolve("micronaut-dev/reload");
 
         invoke("compileAndTouch", new Class<?>[] {Path.class}, trigger);
 
+        assertTrue(Files.isRegularFile(trigger));
+    }
+
+    @Test
+    void aCompilationSelectsTheRunnableProjectFromTheExecutionRoot() throws Exception {
+        MavenProject root = project(directory.resolve("root"), "root", false);
+        root.setExecutionRoot(true);
+        setField("runnableProject", app);
+        // the first of what -pl selected, when the execution root is not among them
+        when(mavenSession.getTopLevelProject()).thenReturn(app);
+        when(mavenSession.getAllProjects()).thenReturn(List.of(root, app));
+        InvocationResult result = mock(InvocationResult.class);
+        when(result.getExitCode()).thenReturn(0);
+        when(executorService.invokeGoals(root, app, "compile")).thenReturn(result);
+        Path trigger = directory.resolve("micronaut-dev/reload");
+
+        invoke("compileAndTouch", new Class<?>[] {Path.class}, trigger);
+
+        verify(executorService).invokeGoals(root, app, "compile");
         assertTrue(Files.isRegularFile(trigger));
     }
 
@@ -332,12 +367,12 @@ class DevMojoTest {
         when(mavenSession.getTopLevelProject()).thenReturn(app);
         InvocationResult result = mock(InvocationResult.class);
         when(result.getExitCode()).thenReturn(1);
-        when(executorService.invokeGoals(app, "compile")).thenReturn(result);
+        when(executorService.invokeGoals(app, app, "compile")).thenReturn(result);
         Path trigger = directory.resolve("micronaut-dev/reload");
 
         invoke("compileAndTouch", new Class<?>[] {Path.class}, trigger);
 
-        when(executorService.invokeGoals(app, "compile")).thenThrow(new IllegalStateException("no Maven"));
+        when(executorService.invokeGoals(app, app, "compile")).thenThrow(new IllegalStateException("no Maven"));
         invoke("compileAndTouch", new Class<?>[] {Path.class}, trigger);
 
         assertFalse(Files.exists(trigger));
@@ -352,7 +387,7 @@ class DevMojoTest {
         Path lockFile = directory.resolve("app/target/classes.micronaut-dev.lock");
         AtomicBoolean waited = new AtomicBoolean();
         AtomicReference<Thread> other = new AtomicReference<>();
-        when(executorService.invokeGoals(app, "compile")).thenAnswer(invocation -> {
+        when(executorService.invokeGoals(app, app, "compile")).thenAnswer(invocation -> {
             assertTrue(Files.isRegularFile(lockFile));
             // another process's compilation, as the launcher of mn:test takes it, waits for this one
             Thread thread = new Thread(() -> OutputLock.lock(List.of(lockFile), message -> waited.set(true)).close());
@@ -377,7 +412,7 @@ class DevMojoTest {
 
         invoke("compileAndTouch", new Class<?>[] {Path.class}, directory.resolve("reload"));
 
-        verify(executorService, never()).invokeGoals(any(MavenProject.class), any(String[].class));
+        verify(executorService, never()).invokeGoals(any(MavenProject.class), any(MavenProject.class), any(String[].class));
         assertFalse(Files.exists(directory.resolve("reload")));
     }
 
@@ -589,7 +624,7 @@ class DevMojoTest {
                 Field field = type.getDeclaredField(name);
                 field.setAccessible(true);
                 return field;
-            } catch (NoSuchFieldException e) {
+            } catch (NoSuchFieldException _) {
                 // declared higher up
             }
         }

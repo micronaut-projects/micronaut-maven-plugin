@@ -8,16 +8,21 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.channels.FileChannel;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class OutputLockTest {
@@ -41,6 +46,26 @@ class OutputLockTest {
         assertEquals(List.of(directory.resolve("target/classes.micronaut-dev.lock")), OutputLock.files(project, false));
         assertEquals(List.of(directory.resolve("target/classes.micronaut-dev.lock"), directory.resolve("target/test-classes.micronaut-dev.lock")),
             OutputLock.files(project, true));
+    }
+
+    @Test
+    void aFileReplacedRightAfterItWasCreatedIsLockedByItsNewIdentity() throws Exception {
+        Path file = directory.resolve("target/classes.micronaut-dev.lock");
+        AtomicInteger opens = new AtomicInteger();
+
+        // the file is absent, and another process's clean and compilation replace it as soon as this call created it
+        try (FileChannel channel = OutputLock.lockCurrentFile(file, path -> { }, path -> {
+            FileChannel opened = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            if (opens.getAndIncrement() == 0) {
+                Files.delete(path);
+                Files.createFile(path);
+            }
+            return opened;
+        }); FileChannel current = FileChannel.open(file, StandardOpenOption.WRITE)) {
+            // this JVM holds the lock of the file the path names now, not of the deleted one
+            assertTrue(channel.isOpen());
+            assertThrows(OverlappingFileLockException.class, current::tryLock);
+        }
     }
 
     @Test
