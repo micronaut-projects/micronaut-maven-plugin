@@ -352,6 +352,68 @@ class DevMojoTest {
     }
 
     @Test
+    void aLauncherThatSpentItsGenerationBudgetIsStartedAgain() throws Exception {
+        Process spent = mock(Process.class);
+        when(spent.waitFor()).thenReturn(3);
+        Path marker = directory.resolve("relaunched");
+        ProcessBuilder launch = new ProcessBuilder(javaExecutable(), "--version").redirectOutput(marker.toFile());
+
+        int exit = (int) invoke("awaitExit", new Class<?>[] {Process.class, ProcessBuilder.class}, spent, launch);
+
+        assertEquals(0, exit);
+        assertTrue(Files.size(marker) > 0);
+    }
+
+    @Test
+    void aLauncherThatExitsWhileTheGoalStopsIsNotStartedAgain() throws Exception {
+        Process spent = mock(Process.class);
+        when(spent.waitFor()).thenReturn(3);
+        setField("stopping", true);
+        Path marker = directory.resolve("relaunched");
+        ProcessBuilder launch = new ProcessBuilder(javaExecutable(), "--version").redirectOutput(marker.toFile());
+
+        int exit = (int) invoke("awaitExit", new Class<?>[] {Process.class, ProcessBuilder.class}, spent, launch);
+
+        assertEquals(3, exit);
+        assertFalse(Files.exists(marker));
+    }
+
+    @Test
+    void anyOtherStatusOfTheLauncherIsReturned() throws Exception {
+        Process failed = mock(Process.class);
+        when(failed.waitFor()).thenReturn(1);
+        Path marker = directory.resolve("relaunched");
+        ProcessBuilder launch = new ProcessBuilder(javaExecutable(), "--version").redirectOutput(marker.toFile());
+
+        int exit = (int) invoke("awaitExit", new Class<?>[] {Process.class, ProcessBuilder.class}, failed, launch);
+
+        assertEquals(1, exit);
+        assertFalse(Files.exists(marker));
+    }
+
+    @Test
+    void theNativeWatchServiceIsAddedToTheLauncherOnMacOsOnly() throws Exception {
+        String osName = System.getProperty("os.name");
+        try {
+            System.setProperty("os.name", "Mac OS X");
+            assertTrue(launcherArtifactIds().contains("micronaut-runtime-osx"));
+            System.setProperty("os.name", "Linux");
+            assertFalse(launcherArtifactIds().contains("micronaut-runtime-osx"));
+        } finally {
+            System.setProperty("os.name", osName);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> launcherArtifactIds() throws Exception {
+        return ((java.util.stream.Stream<Artifact>) invoke("launcherArtifacts")).map(Artifact::getArtifactId).toList();
+    }
+
+    private static String javaExecutable() {
+        return Path.of(System.getProperty("java.home"), "bin", "java").toString();
+    }
+
+    @Test
     void theApplicationIsStoppedWithTheGoal() throws Exception {
         Process process = mock(Process.class);
         when(process.isAlive()).thenReturn(true);

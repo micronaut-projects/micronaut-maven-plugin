@@ -41,6 +41,15 @@ launcher compiles Java with `javac` and Groovy with the project's Groovy. Embedd
 `mn.debug`, `mn.debug.suspend`, `mn.debug.port`, `mn.debug.host`, `mn.jvmArgs`, `mn.appArgs` and the test resources
 settings work as they do for `mn:run`.
 
+A user property of the Maven command line reaches the launcher as a system property, which overrides the manifest, so
+every setting of the launcher can be given for one run, such as `-Dmicronaut.dev.requests.hold-timeout=60s`, how long a
+request waits for a reload, `-Dmicronaut.dev.requests.drain-timeout=30s`, how long a restart waits for requests in
+flight, or `-Dmicronaut.dev.max-generations=50`, how many generations one process creates: when it has created that
+many the launcher exits and this goal starts it again.
+
+On macOS the goal adds `micronaut-runtime-osx` to the launcher's classpath, through which the launcher watches with
+FSEvents rather than by polling.
+
 == Reactor dependencies
 
 The outputs of the reactor projects the runnable one depends on are reloadable too, and their sources are compiled by

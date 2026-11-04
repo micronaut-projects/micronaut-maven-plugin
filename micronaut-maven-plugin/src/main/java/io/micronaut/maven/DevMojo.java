@@ -66,6 +66,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
@@ -107,6 +108,12 @@ public class DevMojo extends AbstractTestResourcesMojo {
     private static final String LAUNCHER_GROUP = "io.micronaut";
     private static final String LAUNCHER_ARTIFACT = "micronaut-dev";
     private static final String LIVERELOAD_ARTIFACT = "micronaut-dev-livereload";
+    private static final String MAC_WATCH_ARTIFACT = "micronaut-runtime-osx";
+    /**
+     * The status the launcher exits with when its generation budget, {@code micronaut.dev.max-generations}, is spent:
+     * {@code MicronautDevMain.RELAUNCH}, for whoever started it to start it again.
+     */
+    private static final int RELAUNCH_STATUS = 3;
     private static final long QUIET_PERIOD_MILLIS = 300;
     private static final String DEFAULT_CLI_EXECUTION = "default-cli";
 
@@ -285,7 +292,8 @@ public class DevMojo extends AbstractTestResourcesMojo {
             if (getLog().isDebugEnabled()) {
                 getLog().debug("Running " + String.join(" ", args));
             }
-            Process started = new ProcessBuilder(args).inheritIO().directory(runnableProject.getBasedir()).start();
+            ProcessBuilder launch = new ProcessBuilder(args).inheritIO().directory(runnableProject.getBasedir());
+            Process started = launch.start();
             process.set(started);
             shutdownHook = new Thread(() -> {
                 stopping = true;
@@ -295,7 +303,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
             if (isBuildToolMode()) {
                 watcher = watchAndCompile(manifestDirectory.resolve(DevManifest.TRIGGER_FILE_NAME));
             }
-            int exit = started.waitFor();
+            int exit = awaitExit(started, launch);
             if (exit != 0 && !stopping) {
                 // the application failed to start, or stopped on an error: the build says so
                 throw new MojoExecutionException("The application exited with status " + exit);
@@ -453,6 +461,29 @@ public class DevMojo extends AbstractTestResourcesMojo {
         return DevManifest.of(runnableProject, reactor, settings, runtimeClasspath, compileClasspath, processorPath, evaluator);
     }
 
+    /**
+     * Waits for the launcher to exit, and starts it again whenever it exits because its generation budget is spent,
+     * as it asks whoever started it to: the new process starts from the classes the last change compiled.
+     *
+     * @param started the launcher's process
+     * @param launch what starts it again
+     * @return the status of the last process
+     */
+    private int awaitExit(Process started, ProcessBuilder launch) throws IOException, InterruptedException {
+        int exit = started.waitFor();
+        while (exit == RELAUNCH_STATUS && !stopping) {
+            getLog().info("The development runtime spent its generation budget, micronaut.dev.max-generations: launching it again");
+            Process relaunched = launch.start();
+            process.set(relaunched);
+            // the shutdown hook may have run while the old process was still the one it could stop
+            if (stopping) {
+                killProcess();
+            }
+            exit = relaunched.waitFor();
+        }
+        return exit;
+    }
+
     private List<String> launchArguments(Path manifestFile) throws MojoExecutionException, DependencyResolutionException {
         List<File> launcher = DependencyResolutionService.toClasspathFiles(dependencyResolutionService.artifactResultsFor(launcherArtifacts(), true));
         if (launcher.isEmpty()) {
@@ -493,6 +524,10 @@ public class DevMojo extends AbstractTestResourcesMojo {
         artifacts.add(new DefaultArtifact(LAUNCHER_GROUP, LAUNCHER_ARTIFACT, "jar", ""));
         if (liveReload) {
             artifacts.add(new DefaultArtifact(LAUNCHER_GROUP, LIVERELOAD_ARTIFACT, "jar", ""));
+        }
+        // FSEvents through JNA, which the launcher uses when it finds it: without it, macOS has only polling
+        if (System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("mac")) {
+            artifacts.add(new DefaultArtifact(LAUNCHER_GROUP, MAC_WATCH_ARTIFACT, "jar", ""));
         }
         return artifacts.stream();
     }
