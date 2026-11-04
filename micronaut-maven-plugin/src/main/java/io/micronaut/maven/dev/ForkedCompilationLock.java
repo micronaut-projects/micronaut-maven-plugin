@@ -39,6 +39,8 @@ import java.util.Set;
  * around the lifecycle Maven forks before running it, so this participant, active when the plugin is declared with
  * {@code extensions} set to true, as the Micronaut parent POM declares it, wraps the build's execution listener
  * and takes the lock when such a fork starts, releasing it when the fork ends.
+ * The goals fail when bound to a lifecycle phase, so that a command line goal is the only case to recognise:
+ * {@link MavenSession#getGoals()} holds just the phase of a bound one.
  *
  * @author graemerocher
  * @since 5.1.0

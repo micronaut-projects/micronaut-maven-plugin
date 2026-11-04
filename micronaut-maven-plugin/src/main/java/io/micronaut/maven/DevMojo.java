@@ -298,6 +298,12 @@ public class DevMojo extends AbstractTestResourcesMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
+        // a command line goal, mn:dev@id included, has no phase; only an execution the lifecycle runs does
+        String phase = mojoExecution.getLifecyclePhase();
+        if (phase != null) {
+            throw new MojoExecutionException("mn:%s cannot be bound to a lifecycle phase, as it is here to %s: remove the execution and run it from the command line, mvn mn:%s"
+                .formatted(mojoExecution.getGoal(), phase, mojoExecution.getGoal()));
+        }
         runnableProject = findRunnableProject();
         dependencyResolutionService = new DependencyResolutionService(mavenSession, runnableProject, repositorySystem);
         if (!runnableProject.equals(mavenSession.getCurrentProject())) {

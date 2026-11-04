@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.micronaut.build.examples</groupId>
+  <artifactId>dev-goal-bound-to-phase</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+
+  <properties>
+    <exec.mainClass>bound.Application</exec.mainClass>
+    <micronaut.test.resources.version>3.0.0</micronaut.test.resources.version>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+  <profiles>
+    <profile>
+      <id>bound-dev</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.micronaut.maven</groupId>
+            <artifactId>micronaut-maven-plugin</artifactId>
+            <version>@project.version@</version>
+            <executions>
+              <execution>
+                <id>selected</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>dev</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>bound-test</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.micronaut.maven</groupId>
+            <artifactId>micronaut-maven-plugin</artifactId>
+            <version>@project.version@</version>
+            <executions>
+              <execution>
+                <!-- the phase is the goal's default: test -->
+                <id>default-phase</id>
+                <goals>
+                  <goal>test</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

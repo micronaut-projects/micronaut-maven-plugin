@@ -110,6 +110,20 @@ class DevMojoTest {
     }
 
     @Test
+    void aGoalBoundToALifecyclePhaseFailsTheBuild() throws Exception {
+        when(mojoExecution.getLifecyclePhase()).thenReturn("prepare-package");
+        when(mojoExecution.getGoal()).thenReturn("dev");
+        when(mavenSession.getCurrentProject()).thenReturn(app);
+        when(mavenSession.getAllProjects()).thenReturn(List.of(app));
+
+        MojoExecutionException failure = assertThrows(MojoExecutionException.class, () -> mojo.execute());
+
+        assertTrue(failure.getMessage().contains("mn:dev"));
+        assertTrue(failure.getMessage().contains("prepare-package"));
+        verifyNoInteractions(compilerService);
+    }
+
+    @Test
     void theManifestIsWrittenForTheRunnableProject() throws Exception {
         File runtimeJar = Files.createFile(directory.resolve("runtime.jar")).toFile();
         File compileJar = Files.createFile(directory.resolve("compile.jar")).toFile();

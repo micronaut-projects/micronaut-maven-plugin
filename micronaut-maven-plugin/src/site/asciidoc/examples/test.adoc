@@ -40,6 +40,9 @@ On a terminal single keys ask for runs:
 |`q` |Quits. The build fails when the last run did not pass.
 |===
 
+`mn:test` is a command line goal, as `mn:dev` is: bound to a lifecycle phase with an `<execution>`, it fails the build. Surefire
+remains the goal for the `test` phase.
+
 == Running once, for CI
 
 [source,bash]
