@@ -23,7 +23,10 @@ import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluatio
 import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluator;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.artifact.ArtifactType;
+import org.eclipse.aether.artifact.ArtifactTypeRegistry;
 import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.artifact.DefaultArtifactType;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.Exclusion;
 import org.eclipse.aether.util.artifact.JavaScopes;
@@ -309,12 +312,13 @@ public final class DevManifest {
      *
      * @param project the project
      * @param evaluator what evaluates expressions
+     * @param types the session's artifact types, which map a path's {@code type} to its artifact
      * @return the artifacts, and whether the dependency management applies
      * @throws ExpressionEvaluationException if an expression cannot be evaluated
      */
-    public static ProcessorPaths processorPaths(MavenProject project, ExpressionEvaluator evaluator) throws ExpressionEvaluationException {
+    public static ProcessorPaths processorPaths(MavenProject project, ExpressionEvaluator evaluator, ArtifactTypeRegistry types) throws ExpressionEvaluationException {
         Xpp3Dom configuration = compilerConfiguration(project, DEFAULT_COMPILE_EXECUTION);
-        return processorPaths(configuration, configuration == null ? null : configuration.getChild("annotationProcessorPaths"), evaluator);
+        return processorPaths(configuration, configuration == null ? null : configuration.getChild("annotationProcessorPaths"), evaluator, types);
     }
 
     /**
@@ -324,15 +328,16 @@ public final class DevManifest {
      *
      * @param project the project
      * @param evaluator what evaluates expressions
+     * @param types the session's artifact types, which map a path's {@code type} to its artifact
      * @return the artifacts, and whether the dependency management applies
      * @throws ExpressionEvaluationException if an expression cannot be evaluated
      */
-    public static ProcessorPaths testProcessorPaths(MavenProject project, ExpressionEvaluator evaluator) throws ExpressionEvaluationException {
+    public static ProcessorPaths testProcessorPaths(MavenProject project, ExpressionEvaluator evaluator, ArtifactTypeRegistry types) throws ExpressionEvaluationException {
         Xpp3Dom configuration = compilerConfiguration(project, DEFAULT_TEST_COMPILE_EXECUTION);
-        return processorPaths(configuration, configuration == null ? null : configuration.getChild("annotationProcessorPaths"), evaluator);
+        return processorPaths(configuration, configuration == null ? null : configuration.getChild("annotationProcessorPaths"), evaluator, types);
     }
 
-    private static ProcessorPaths processorPaths(Xpp3Dom configuration, Xpp3Dom paths, ExpressionEvaluator evaluator) throws ExpressionEvaluationException {
+    private static ProcessorPaths processorPaths(Xpp3Dom configuration, Xpp3Dom paths, ExpressionEvaluator evaluator, ArtifactTypeRegistry types) throws ExpressionEvaluationException {
         if (configuration == null) {
             return new ProcessorPaths(List.of(), false);
         }
@@ -340,7 +345,7 @@ public final class DevManifest {
         List<Dependency> dependencies = new ArrayList<>();
         if (paths != null) {
             for (Xpp3Dom path : paths.getChildren()) {
-                Dependency dependency = processorPath(path, evaluator);
+                Dependency dependency = processorPath(path, evaluator, types);
                 if (dependency != null) {
                     dependencies.add(dependency);
                     // a path without a version takes it from the dependency management
@@ -355,7 +360,7 @@ public final class DevManifest {
      * A {@code <path>} of {@code annotationProcessorPaths} as a dependency to resolve, or null when it names
      * no group or artifact.
      */
-    private static Dependency processorPath(Xpp3Dom path, ExpressionEvaluator evaluator) throws ExpressionEvaluationException {
+    private static Dependency processorPath(Xpp3Dom path, ExpressionEvaluator evaluator, ArtifactTypeRegistry types) throws ExpressionEvaluationException {
         String groupId = childValue(path, "groupId", evaluator);
         String artifactId = childValue(path, "artifactId", evaluator);
         if (groupId == null || artifactId == null) {
@@ -363,7 +368,12 @@ public final class DevManifest {
         }
         String version = childValue(path, "version", evaluator);
         String classifier = childValue(path, "classifier", evaluator);
-        Artifact artifact = new DefaultArtifact(groupId, artifactId, classifier == null ? "" : classifier, "jar", version == null ? "" : version);
+        String type = childValue(path, "type", evaluator);
+        String typeId = type == null ? "jar" : type;
+        ArtifactType artifactType = types.get(typeId);
+        // the type gives the extension and, unless the path names one, the classifier: test-jar is a jar classified tests
+        Artifact artifact = new DefaultArtifact(groupId, artifactId, classifier, null, version == null ? "" : version,
+            artifactType == null ? new DefaultArtifactType(typeId) : artifactType);
         return new Dependency(artifact, JavaScopes.RUNTIME, false, exclusions(path, evaluator));
     }
 

@@ -3,9 +3,11 @@ package io.micronaut.maven;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.project.MavenProject;
 import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.component.configurator.ComponentConfigurator;
 import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.artifact.Artifact;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -68,6 +70,23 @@ class TestMojoTest {
         assertEquals("35730", port.getAttribute("default-value"));
         // mn:dev has no such parameter
         assertFalse(hasConfiguration(mojoDescriptor(DevMojo.MOJO_NAME), "testLiveReloadPort"));
+    }
+
+    @Test
+    void aCustomRunnerLeavesTheJUnitPlatformLauncherOut() throws Exception {
+        assertFalse(launcherArtifactIds("custom").contains("junit-platform-launcher"));
+    }
+
+    @Test
+    void theJUnitPlatformRunnerAddsItsLauncher() throws Exception {
+        assertTrue(launcherArtifactIds("junit-platform").contains("junit-platform-launcher"));
+    }
+
+    private static List<String> launcherArtifactIds(String runner) throws Exception {
+        TestMojo mojo = testMojo();
+        setField(mojo, "runner", runner);
+        setField(mojo, "runnableProject", new MavenProject());
+        return mojo.launcherArtifacts().stream().map(Artifact::getArtifactId).toList();
     }
 
     private static TestMojo testMojo() {

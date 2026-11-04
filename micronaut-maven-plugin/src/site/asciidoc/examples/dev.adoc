@@ -59,6 +59,9 @@ the launcher into the runnable project's output, with the runnable project's com
 need different compiler settings runs with `-Dmn.dev.compile=build-tool`, where Maven compiles each module as it is
 configured.
 
+In `build-tool` mode each compilation builds the runnable project and the reactor projects it depends on, so that an error
+in an unrelated module does not hold a reload back, with the user properties and the profiles of the `mvn` command line.
+
 == A filtered resource directory
 
 A resource directory with `filtering` enabled is not read live, since the build expands it: the launcher reads its copy

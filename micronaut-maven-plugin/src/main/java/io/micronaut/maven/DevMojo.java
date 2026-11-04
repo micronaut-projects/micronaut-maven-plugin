@@ -47,6 +47,7 @@ import org.codehaus.plexus.component.configurator.ComponentConfigurator;
 import org.codehaus.plexus.configuration.xml.XmlPlexusConfiguration;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.eclipse.aether.artifact.ArtifactTypeRegistry;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.graph.Dependency;
@@ -535,7 +536,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
         List<File> compileClasspath = files(compilerService.resolveDependencies(runnableProject, true, JavaScopes.PROVIDED, JavaScopes.COMPILE));
         List<File> processorPath;
         try {
-            DevManifest.ProcessorPaths paths = DevManifest.processorPaths(runnableProject, evaluator);
+            DevManifest.ProcessorPaths paths = DevManifest.processorPaths(runnableProject, evaluator, artifactTypes());
             processorPath = paths.dependencies().isEmpty() ? List.of() : resolveProcessorPath(paths);
         } catch (Exception e) {
             throw new MojoExecutionException("Cannot resolve the annotation processor path: " + e.getMessage(), e);
@@ -652,6 +653,13 @@ public class DevMojo extends AbstractTestResourcesMojo {
         args.add(manifestFile.toString());
         args.addAll(translateArguments(appArguments));
         return args;
+    }
+
+    /**
+     * @return the session's artifact types, which map the {@code type} of a processor path to its artifact
+     */
+    protected ArtifactTypeRegistry artifactTypes() {
+        return mavenSession.getRepositorySession().getArtifactTypeRegistry();
     }
 
     /**
@@ -898,11 +906,11 @@ public class DevMojo extends AbstractTestResourcesMojo {
         // the invocation's exit code, not merely its return: a compiler error is a normal result of the invoker
         boolean compiled;
         try {
-            MavenProject projectToCompile = mavenSession.getTopLevelProject();
+            MavenProject root = executionRoot();
             InvocationResult result;
             // the launcher of mn:test or mn:dev running beside this goal compiles into the same output: never at once
             try (OutputLock.Hold hold = OutputLock.lock(OutputLock.files(runnableProject, compilesTests()), getLog()::info)) {
-                result = executorService.invokeGoals(projectToCompile, buildToolGoal());
+                result = executorService.invokeGoals(root, runnableProject, buildToolGoal());
             }
             compiled = result.getExitCode() == 0 && result.getExecutionException() == null;
             if (!compiled) {
@@ -922,6 +930,18 @@ public class DevMojo extends AbstractTestResourcesMojo {
                 getLog().warn("Cannot touch " + trigger + ": " + e.getMessage());
             }
         }
+    }
+
+    /**
+     * The project whose POM the build was started from: its reactor holds the runnable project and what it depends
+     * on, whereas the top level project of the session is the first selected project when {@code -pl} leaves the
+     * execution root out.
+     */
+    private MavenProject executionRoot() {
+        return mavenSession.getAllProjects().stream()
+            .filter(MavenProject::isExecutionRoot)
+            .findFirst()
+            .orElseGet(mavenSession::getTopLevelProject);
     }
 
     /**
