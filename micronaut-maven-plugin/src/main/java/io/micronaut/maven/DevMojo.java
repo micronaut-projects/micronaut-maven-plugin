@@ -629,6 +629,10 @@ public class DevMojo extends AbstractTestResourcesMojo {
         addTestResourcesArguments(args);
         args.addAll(translatedJvmArguments);
         mavenSession.getUserProperties().forEach((key, value) -> args.add("-D" + key + "=" + value));
+        // JNA loads its library for the native macOS watch service, which the JVM warns about otherwise
+        if (isMac()) {
+            args.add("--enable-native-access=ALL-UNNAMED");
+        }
         // the launcher as the JVM's agent, for the method-body fast path
         args.add("-javaagent:" + launcherArtifact.getFile().getAbsolutePath());
         args.add("-classpath");
@@ -654,7 +658,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
             artifacts.add(new DefaultArtifact(LAUNCHER_GROUP, LIVERELOAD_ARTIFACT, "jar", ""));
         }
         // FSEvents through JNA, which the launcher uses when it finds it: without it, macOS has only polling
-        if (System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("mac")) {
+        if (isMac()) {
             artifacts.add(new DefaultArtifact(LAUNCHER_GROUP, MAC_WATCH_ARTIFACT, "jar", ""));
         }
         return artifacts;
@@ -799,6 +803,10 @@ public class DevMojo extends AbstractTestResourcesMojo {
         }
         getLog().info("Adding " + client + (version.isEmpty() ? "" : ":" + version) + " to the launch classpath: Test Resources is enabled and the application does not declare the client");
         return files;
+    }
+
+    private static boolean isMac() {
+        return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("mac");
     }
 
     private void addTestResourcesArguments(List<String> args) {

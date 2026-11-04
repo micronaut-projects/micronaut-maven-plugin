@@ -274,6 +274,9 @@ class DevMojoTest {
 
         @SuppressWarnings("unchecked")
         List<String> args = (List<String>) invoke("launchArguments", new Class<?>[] {Path.class}, manifest);
+        // added on macOS only, for the native watch service
+        args = new ArrayList<>(args);
+        args.remove("--enable-native-access=ALL-UNNAMED");
 
         assertTrue(args.get(0).endsWith("java") || args.get(0).endsWith("java.exe"));
         assertEquals(List.of(
