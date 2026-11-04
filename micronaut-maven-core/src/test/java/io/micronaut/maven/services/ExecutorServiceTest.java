@@ -18,17 +18,78 @@ import org.mockito.ArgumentCaptor;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ExecutorServiceTest {
+
+    @Test
+    void invokeGoalsAsTheSessionBuildsCopiesItsPropertiesAndProfiles(@TempDir Path tempDir) throws Exception {
+        MavenProject root = new MavenProject();
+        root.setFile(tempDir.resolve("pom.xml").toFile());
+        MavenProject app = new MavenProject();
+        app.setGroupId("example");
+        app.setArtifactId("app");
+
+        Invoker invoker = mock(Invoker.class);
+        MavenSession session = newSession(tempDir, false, null);
+        Properties userProperties = new Properties();
+        userProperties.setProperty("revision", "1.2.3");
+        // the session's test resources setting does not reach the compilation, the override does
+        userProperties.setProperty("micronaut.test.resources.enabled", "true");
+        when(session.getRequest().getUserProperties()).thenReturn(userProperties);
+        when(session.getRequest().getActiveProfiles()).thenReturn(List.of("foo", "bar"));
+        when(session.getRequest().getInactiveProfiles()).thenReturn(List.of("baz"));
+        when(invoker.execute(any(InvocationRequest.class))).thenReturn(mock(InvocationResult.class));
+
+        new ExecutorService(root, session, mock(BuildPluginManager.class), invoker).invokeGoals(root, app, "compile");
+
+        ArgumentCaptor<InvocationRequest> requestCaptor = ArgumentCaptor.forClass(InvocationRequest.class);
+        verify(invoker).execute(requestCaptor.capture());
+        InvocationRequest request = requestCaptor.getValue();
+        assertEquals(tempDir.resolve("pom.xml").toFile(), request.getPomFile());
+        assertEquals("1.2.3", request.getProperties().getProperty("revision"));
+        assertEquals("false", request.getProperties().getProperty("micronaut.test.resources.enabled"));
+        assertEquals(List.of("foo", "bar", "!baz"), request.getProfiles());
+        assertEquals(List.of("example:app"), request.getProjects());
+        assertTrue(request.isAlsoMake());
+        assertEquals(List.of("compile"), request.getArgs());
+        assertEquals("true", userProperties.getProperty("micronaut.test.resources.enabled"), "the session's own properties are left alone");
+    }
+
+    @Test
+    void invokeGoalsWithoutASelectedProjectLeavesTheModelAsItWas(@TempDir Path tempDir) throws Exception {
+        MavenProject project = new MavenProject();
+        project.setFile(tempDir.resolve("pom.xml").toFile());
+
+        Invoker invoker = mock(Invoker.class);
+        MavenSession session = newSession(tempDir, false, null);
+        Properties userProperties = new Properties();
+        userProperties.setProperty("revision", "1.2.3");
+        when(session.getRequest().getUserProperties()).thenReturn(userProperties);
+        when(session.getRequest().getActiveProfiles()).thenReturn(List.of("foo"));
+        when(invoker.execute(any(InvocationRequest.class))).thenReturn(mock(InvocationResult.class));
+
+        new ExecutorService(project, session, mock(BuildPluginManager.class), invoker).invokeGoals(project, "compile");
+
+        ArgumentCaptor<InvocationRequest> requestCaptor = ArgumentCaptor.forClass(InvocationRequest.class);
+        verify(invoker).execute(requestCaptor.capture());
+        InvocationRequest request = requestCaptor.getValue();
+        assertEquals("false", request.getProperties().getProperty("micronaut.test.resources.enabled"));
+        assertNull(request.getProperties().getProperty("revision"));
+        assertTrue(request.getProfiles() == null || request.getProfiles().isEmpty());
+        assertTrue(request.getProjects() == null || request.getProjects().isEmpty());
+    }
 
     @Test
     void invokeGoalsKeepsInvokerHandlersUnsetWhenSessionIsQuiet(@TempDir Path tempDir) throws Exception {
