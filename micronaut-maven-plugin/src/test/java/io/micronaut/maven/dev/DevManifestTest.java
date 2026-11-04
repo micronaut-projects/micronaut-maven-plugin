@@ -7,8 +7,11 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluationException;
 import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluator;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.eclipse.aether.artifact.ArtifactTypeRegistry;
+import org.eclipse.aether.artifact.DefaultArtifactType;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.Exclusion;
+import org.eclipse.aether.util.artifact.DefaultArtifactTypeRegistry;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -184,7 +187,7 @@ class DevManifestTest {
         configuration.addChild(paths);
         project.getBuild().addPlugin(compilerPlugin(configuration));
 
-        DevManifest.ProcessorPaths processorPaths = DevManifest.processorPaths(project, evaluator(Map.of("${micronaut.version}", "5.0.0")));
+        DevManifest.ProcessorPaths processorPaths = DevManifest.processorPaths(project, evaluator(Map.of("${micronaut.version}", "5.0.0")), types());
 
         assertFalse(processorPaths.managed(), "every path names a version");
         assertEquals(2, processorPaths.dependencies().size());
@@ -198,6 +201,32 @@ class DevManifestTest {
     }
 
     @Test
+    void theTypeOfAProcessorPathIsMappedThroughTheTypeRegistry() throws Exception {
+        MavenProject project = project(directory, "app");
+        Xpp3Dom paths = new Xpp3Dom("annotationProcessorPaths");
+        Xpp3Dom testJar = path("example", "processor-tests", "1.0.0", null);
+        testJar.addChild(value("type", "test-jar"));
+        paths.addChild(testJar);
+        Xpp3Dom classified = path("example", "processor-classified", "1.0.0", "other");
+        classified.addChild(value("type", "test-jar"));
+        paths.addChild(classified);
+        Xpp3Dom unknown = path("example", "processor-unknown", "1.0.0", null);
+        unknown.addChild(value("type", "zip"));
+        paths.addChild(unknown);
+        Xpp3Dom configuration = new Xpp3Dom("configuration");
+        configuration.addChild(paths);
+        project.getBuild().addPlugin(compilerPlugin(configuration));
+
+        DevManifest.ProcessorPaths processorPaths = DevManifest.processorPaths(project, evaluator(Map.of()), types());
+
+        assertEquals(List.of(
+            "example:processor-tests:jar:tests:1.0.0",
+            "example:processor-classified:jar:other:1.0.0",
+            "example:processor-unknown:zip:1.0.0"
+        ), processorPaths.dependencies().stream().map(dependency -> dependency.getArtifact().toString()).toList());
+    }
+
+    @Test
     void aProcessorPathWithoutAVersionIsManaged() throws Exception {
         MavenProject project = project(directory, "app");
         Xpp3Dom paths = new Xpp3Dom("annotationProcessorPaths");
@@ -206,7 +235,7 @@ class DevManifestTest {
         configuration.addChild(paths);
         project.getBuild().addPlugin(compilerPlugin(configuration));
 
-        DevManifest.ProcessorPaths processorPaths = DevManifest.processorPaths(project, evaluator(Map.of()));
+        DevManifest.ProcessorPaths processorPaths = DevManifest.processorPaths(project, evaluator(Map.of()), types());
 
         assertTrue(processorPaths.managed());
         assertEquals("", processorPaths.dependencies().get(0).getArtifact().getVersion());
@@ -217,7 +246,7 @@ class DevManifestTest {
         MavenProject project = project(directory, "app");
         project.getBuild().addPlugin(compilerPlugin(configuration(Map.of("annotationProcessorPathsUseDepMgmt", "true"))));
 
-        DevManifest.ProcessorPaths processorPaths = DevManifest.processorPaths(project, evaluator(Map.of()));
+        DevManifest.ProcessorPaths processorPaths = DevManifest.processorPaths(project, evaluator(Map.of()), types());
 
         assertTrue(processorPaths.managed());
         assertTrue(processorPaths.dependencies().isEmpty());
@@ -225,7 +254,7 @@ class DevManifestTest {
 
     @Test
     void aProjectWithoutTheCompilerPluginHasNoProcessorPath() throws Exception {
-        DevManifest.ProcessorPaths processorPaths = DevManifest.processorPaths(project(directory, "app"), evaluator(Map.of()));
+        DevManifest.ProcessorPaths processorPaths = DevManifest.processorPaths(project(directory, "app"), evaluator(Map.of()), types());
 
         assertFalse(processorPaths.managed());
         assertTrue(processorPaths.dependencies().isEmpty());
@@ -276,6 +305,12 @@ class DevManifestTest {
         execution.setId(id);
         execution.setConfiguration(configuration);
         return execution;
+    }
+
+    private static ArtifactTypeRegistry types() {
+        return new DefaultArtifactTypeRegistry()
+            .add(new DefaultArtifactType("jar"))
+            .add(new DefaultArtifactType("test-jar", "jar", "tests", "java"));
     }
 
     private static Xpp3Dom path(String groupId, String artifactId, String version, String classifier) {

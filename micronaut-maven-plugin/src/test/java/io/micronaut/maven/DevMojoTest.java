@@ -21,6 +21,7 @@ import org.codehaus.plexus.configuration.PlexusConfiguration;
 import org.codehaus.plexus.configuration.xml.XmlPlexusConfiguration;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.graph.Dependency;
@@ -83,6 +84,7 @@ class DevMojoTest {
         runnableSession = mock(MavenSession.class);
         when(mavenSession.clone()).thenReturn(runnableSession);
         when(mavenSession.getUserProperties()).thenReturn(new Properties());
+        when(mavenSession.getRepositorySession()).thenReturn(mock(RepositorySystemSession.class));
         when(runnableSession.getSystemProperties()).thenReturn(new Properties());
         when(runnableSession.getUserProperties()).thenReturn(new Properties());
         ToolchainManager toolchainManager = mock(ToolchainManager.class);
@@ -311,10 +313,11 @@ class DevMojoTest {
 
     @Test
     void aSuccessfulCompilationTouchesTheTrigger() throws Exception {
+        setField("runnableProject", app);
         when(mavenSession.getTopLevelProject()).thenReturn(app);
         InvocationResult result = mock(InvocationResult.class);
         when(result.getExitCode()).thenReturn(0);
-        when(executorService.invokeGoals(app, "compile")).thenReturn(result);
+        when(executorService.invokeGoals(app, app, "compile")).thenReturn(result);
         Path trigger = directory.resolve("micronaut-dev/reload");
 
         invoke("compileAndTouch", new Class<?>[] {Path.class}, trigger);
@@ -323,16 +326,36 @@ class DevMojoTest {
     }
 
     @Test
-    void aFailedCompilationDoesNotTouchTheTrigger() throws Exception {
+    void aCompilationSelectsTheRunnableProjectFromTheExecutionRoot() throws Exception {
+        MavenProject root = project(directory.resolve("root"), "root", false);
+        root.setExecutionRoot(true);
+        setField("runnableProject", app);
+        // the first of what -pl selected, when the execution root is not among them
         when(mavenSession.getTopLevelProject()).thenReturn(app);
+        when(mavenSession.getAllProjects()).thenReturn(List.of(root, app));
         InvocationResult result = mock(InvocationResult.class);
-        when(result.getExitCode()).thenReturn(1);
-        when(executorService.invokeGoals(app, "compile")).thenReturn(result);
+        when(result.getExitCode()).thenReturn(0);
+        when(executorService.invokeGoals(root, app, "compile")).thenReturn(result);
         Path trigger = directory.resolve("micronaut-dev/reload");
 
         invoke("compileAndTouch", new Class<?>[] {Path.class}, trigger);
 
-        when(executorService.invokeGoals(app, "compile")).thenThrow(new IllegalStateException("no Maven"));
+        verify(executorService).invokeGoals(root, app, "compile");
+        assertTrue(Files.isRegularFile(trigger));
+    }
+
+    @Test
+    void aFailedCompilationDoesNotTouchTheTrigger() throws Exception {
+        setField("runnableProject", app);
+        when(mavenSession.getTopLevelProject()).thenReturn(app);
+        InvocationResult result = mock(InvocationResult.class);
+        when(result.getExitCode()).thenReturn(1);
+        when(executorService.invokeGoals(app, app, "compile")).thenReturn(result);
+        Path trigger = directory.resolve("micronaut-dev/reload");
+
+        invoke("compileAndTouch", new Class<?>[] {Path.class}, trigger);
+
+        when(executorService.invokeGoals(app, app, "compile")).thenThrow(new IllegalStateException("no Maven"));
         invoke("compileAndTouch", new Class<?>[] {Path.class}, trigger);
 
         assertFalse(Files.exists(trigger));
@@ -344,7 +367,7 @@ class DevMojoTest {
 
         invoke("compileAndTouch", new Class<?>[] {Path.class}, directory.resolve("reload"));
 
-        verify(executorService, never()).invokeGoals(any(MavenProject.class), any(String[].class));
+        verify(executorService, never()).invokeGoals(any(MavenProject.class), any(MavenProject.class), any(String[].class));
         assertFalse(Files.exists(directory.resolve("reload")));
     }
 
@@ -556,7 +579,7 @@ class DevMojoTest {
                 Field field = type.getDeclaredField(name);
                 field.setAccessible(true);
                 return field;
-            } catch (NoSuchFieldException e) {
+            } catch (NoSuchFieldException _) {
                 // declared higher up
             }
         }

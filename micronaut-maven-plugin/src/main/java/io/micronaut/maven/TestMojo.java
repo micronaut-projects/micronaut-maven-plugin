@@ -76,6 +76,7 @@ public class TestMojo extends DevMojo {
     public static final String DIRECTORY_NAME = "test";
 
     private static final String TEST_REPORT_ARTIFACT = "micronaut-dev-test-report";
+    private static final String JUNIT_PLATFORM_RUNNER = "junit-platform";
     private static final String JUNIT_PLATFORM_GROUP = "org.junit.platform";
     private static final String JUNIT_PLATFORM_LAUNCHER = "junit-platform-launcher";
     private static final String JUNIT_PLATFORM_ENGINE = "junit-platform-engine";
@@ -238,7 +239,7 @@ public class TestMojo extends DevMojo {
         PluginParameterExpressionEvaluator evaluator = runnableEvaluator();
         List<File> testProcessorPath;
         try {
-            DevManifest.ProcessorPaths paths = DevManifest.testProcessorPaths(runnableProject(), evaluator);
+            DevManifest.ProcessorPaths paths = DevManifest.testProcessorPaths(runnableProject(), evaluator, artifactTypes());
             testProcessorPath = paths.dependencies().isEmpty() ? List.of() : resolveProcessorPath(paths);
         } catch (Exception e) {
             throw new MojoExecutionException("Cannot resolve the test annotation processor path: " + e.getMessage(), e);
@@ -397,9 +398,12 @@ public class TestMojo extends DevMojo {
         if (htmlReport) {
             artifacts.add(new DefaultArtifact(LAUNCHER_GROUP, TEST_REPORT_ARTIFACT, "jar", ""));
         }
-        Artifact launcher = junitPlatformLauncher();
-        if (launcher != null) {
-            artifacts.add(launcher);
+        // another runner brings what it needs, and must not fail to start for lack of an artifact it never uses
+        if (JUNIT_PLATFORM_RUNNER.equals(runner)) {
+            Artifact launcher = junitPlatformLauncher();
+            if (launcher != null) {
+                artifacts.add(launcher);
+            }
         }
         return artifacts;
     }
