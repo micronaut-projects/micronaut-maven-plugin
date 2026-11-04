@@ -115,4 +115,60 @@ class OutputLockTest {
             process.waitFor(30, TimeUnit.SECONDS);
         }
     }
+
+    @Test
+    void aLockFileAnotherProcessDeletedWhileItWasWaitedForIsLockedAgain() throws Exception {
+        Path file = directory.resolve("target/classes.micronaut-dev.lock");
+        Files.createDirectories(file.getParent());
+        // a build's clean: the process that holds the lock deletes the file, then releases it
+        Path holder = directory.resolve("Holder.java");
+        Files.writeString(holder, """
+            import java.nio.channels.FileChannel;
+            import java.nio.file.Files;
+            import java.nio.file.Path;
+            import java.nio.file.StandardOpenOption;
+
+            public class Holder {
+                public static void main(String[] args) throws Exception {
+                    Path file = Path.of(args[0]);
+                    try (FileChannel channel = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
+                        channel.lock();
+                        System.out.println("locked");
+                        System.out.flush();
+                        System.in.read();
+                        Files.delete(file);
+                    }
+                }
+            }
+            """);
+        String java = Path.of(System.getProperty("java.home"), "bin", "java").toString();
+        Process process = new ProcessBuilder(java, holder.toString(), file.toString()).redirectErrorStream(true).start();
+        try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+            assertEquals("locked", reader.readLine());
+            AtomicBoolean waited = new AtomicBoolean();
+            AtomicBoolean present = new AtomicBoolean();
+            CountDownLatch locked = new CountDownLatch(1);
+            Thread compilation = new Thread(() -> {
+                try (OutputLock.Hold hold = OutputLock.lock(List.of(file), message -> waited.set(true))) {
+                    // the path names the file locked, which is what another process would lock
+                    present.set(Files.isRegularFile(file));
+                    locked.countDown();
+                }
+            });
+            compilation.start();
+
+            assertFalse(locked.await(300, TimeUnit.MILLISECONDS));
+            assertTrue(waited.get());
+            try (OutputStream in = process.getOutputStream()) {
+                in.write('\n');
+            }
+            assertTrue(locked.await(30, TimeUnit.SECONDS));
+            compilation.join(5000);
+            assertTrue(present.get());
+        } finally {
+            process.destroyForcibly();
+            process.waitFor(30, TimeUnit.SECONDS);
+        }
+    }
 }
