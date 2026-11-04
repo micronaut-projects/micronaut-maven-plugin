@@ -446,7 +446,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
         List<File> compileClasspath = files(compilerService.resolveDependencies(runnableProject, true, JavaScopes.PROVIDED, JavaScopes.COMPILE));
         List<File> processorPath;
         try {
-            DevManifest.ProcessorPaths paths = DevManifest.processorPaths(runnableProject, evaluator);
+            DevManifest.ProcessorPaths paths = DevManifest.processorPaths(runnableProject, evaluator, mavenSession.getRepositorySession().getArtifactTypeRegistry());
             processorPath = paths.dependencies().isEmpty() ? List.of() : resolveProcessorPath(paths);
         } catch (Exception e) {
             throw new MojoExecutionException("Cannot resolve the annotation processor path: " + e.getMessage(), e);

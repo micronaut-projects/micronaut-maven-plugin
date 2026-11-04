@@ -20,6 +20,7 @@ import org.codehaus.plexus.component.configurator.ComponentConfigurator;
 import org.codehaus.plexus.configuration.PlexusConfiguration;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.graph.Dependency;
@@ -82,6 +83,7 @@ class DevMojoTest {
         runnableSession = mock(MavenSession.class);
         when(mavenSession.clone()).thenReturn(runnableSession);
         when(mavenSession.getUserProperties()).thenReturn(new Properties());
+        when(mavenSession.getRepositorySession()).thenReturn(mock(RepositorySystemSession.class));
         when(runnableSession.getSystemProperties()).thenReturn(new Properties());
         when(runnableSession.getUserProperties()).thenReturn(new Properties());
         ToolchainManager toolchainManager = mock(ToolchainManager.class);
