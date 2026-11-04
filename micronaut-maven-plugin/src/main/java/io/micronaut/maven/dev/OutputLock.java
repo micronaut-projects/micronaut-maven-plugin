@@ -20,10 +20,11 @@ import org.apache.maven.project.MavenProject;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -143,26 +144,67 @@ public final class OutputLock {
             }
         }
         try {
-            Path parent = file.getParent();
+            return new Held(lockCurrentFile(file, waiting), permit);
+        } catch (IOException | RuntimeException e) {
+            permit.release();
+            throw e;
+        }
+    }
+
+    /**
+     * Locks the file the path names, as the launcher does: a build's clean deletes the lock file beside the output and
+     * another process creates it again, and the lock of the deleted file excludes nobody, so once the lock is taken the
+     * path must still name the locked file, or the file it names now is locked instead.
+     */
+    private static FileChannel lockCurrentFile(Path file, Consumer<Path> waiting) throws IOException {
+        Path parent = file.getParent();
+        while (true) {
             if (parent != null) {
                 Files.createDirectories(parent);
             }
-            FileChannel channel = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            BasicFileAttributes before = attributes(file);
+            FileChannel channel;
             try {
-                FileLock taken = channel.tryLock();
-                if (taken == null) {
-                    waiting.accept(file);
-                    channel.lock();
+                channel = FileChannel.open(file, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+            } catch (NoSuchFileException e) {
+                // its directory was deleted while it was opened
+                continue;
+            }
+            try {
+                BasicFileAttributes opened = attributes(file);
+                if (opened != null && (before == null || sameFile(before, opened))) {
+                    if (channel.tryLock() == null) {
+                        waiting.accept(file);
+                        channel.lock();
+                    }
+                    BasicFileAttributes current = attributes(file);
+                    if (current != null && sameFile(opened, current)) {
+                        return channel;
+                    }
                 }
             } catch (IOException | RuntimeException e) {
                 channel.close();
                 throw e;
             }
-            return new Held(channel, permit);
-        } catch (IOException | RuntimeException e) {
-            permit.release();
-            throw e;
+            channel.close();
         }
+    }
+
+    private static BasicFileAttributes attributes(Path file) throws IOException {
+        try {
+            return Files.readAttributes(file, BasicFileAttributes.class);
+        } catch (NoSuchFileException e) {
+            return null;
+        }
+    }
+
+    private static boolean sameFile(BasicFileAttributes first, BasicFileAttributes second) {
+        Object key = first.fileKey();
+        if (key != null) {
+            return key.equals(second.fileKey());
+        }
+        // no file key, as on Windows: a file created again at the path has a later creation time
+        return first.creationTime().equals(second.creationTime());
     }
 
     private static void release(List<Held> held) {
