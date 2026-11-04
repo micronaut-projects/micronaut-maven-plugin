@@ -21,8 +21,8 @@ test source and resource directories, their output (`target/test-classes`), the 
 annotation processor path (the `maven-compiler-plugin`'s `annotationProcessorPaths` as `testCompile` sees them, with
 the `default-testCompile` execution's configuration merged over the plugin's), the test compiler options as `testCompile` is configured, and the settings below. The
 launch classpath is the test runtime classpath without the project's outputs, which are the reloadable tier, plus
-`micronaut-dev`, `micronaut-dev-livereload`, `micronaut-dev-test-report` and `junit-platform-launcher`, at the version of
-the project's JUnit Platform. Tests in `src/test/java` compile with `javac` and tests in `src/test/groovy`, Spock
+`micronaut-dev`, `micronaut-dev-livereload`, `micronaut-dev-test-report` and, for the `junit-platform` runner,
+`junit-platform-launcher`, at the version of the project's JUnit Platform. Tests in `src/test/java` compile with `javac` and tests in `src/test/groovy`, Spock
 specifications among them, with the project's Groovy.
 
 Every test runs at start. After a change, the tests that reference a changed class, directly or through other classes,
@@ -81,7 +81,7 @@ shows the state it was written with.
 |`mn.test.initialRun` |`true` |Whether every test runs at start.
 |`mn.test.filter` | |The tests to run, comma separated: globs, classes or `Class.method`.
 |`test` | |Surefire's `-Dtest`, mapped to the filter.
-|`mn.test.runner` |`junit-platform` |The test runner. The JUnit Platform runner runs every engine on the classpath, Jupiter and Spock among them.
+|`mn.test.runner` |`junit-platform` |The test runner. The JUnit Platform runner runs every engine on the classpath, Jupiter and Spock among them. `junit-platform-launcher` is added for this runner only.
 |`mn.test.reportsDirectory` |`target/surefire-reports` |The directory of the JUnit XML reports, a relative one resolved against the project whose tests run.
 |`mn.test.htmlReportDirectory` |`target/micronaut-dev/test-report` |The directory of the HTML report.
 |`mn.test.reportPath` |`/tests/` |The path the LiveReload server serves the HTML report at.
