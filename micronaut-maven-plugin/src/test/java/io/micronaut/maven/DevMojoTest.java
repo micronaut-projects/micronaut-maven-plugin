@@ -305,10 +305,11 @@ class DevMojoTest {
 
     @Test
     void aSuccessfulCompilationTouchesTheTrigger() throws Exception {
+        setField("runnableProject", app);
         when(mavenSession.getTopLevelProject()).thenReturn(app);
         InvocationResult result = mock(InvocationResult.class);
         when(result.getExitCode()).thenReturn(0);
-        when(executorService.invokeGoals(app, "compile")).thenReturn(result);
+        when(executorService.invokeGoals(app, app, "compile")).thenReturn(result);
         Path trigger = directory.resolve("micronaut-dev/reload");
 
         invoke("compileAndTouch", new Class<?>[] {Path.class}, trigger);
@@ -317,16 +318,36 @@ class DevMojoTest {
     }
 
     @Test
-    void aFailedCompilationDoesNotTouchTheTrigger() throws Exception {
+    void aCompilationSelectsTheRunnableProjectFromTheExecutionRoot() throws Exception {
+        MavenProject root = project(directory.resolve("root"), "root", false);
+        root.setExecutionRoot(true);
+        setField("runnableProject", app);
+        // the first of what -pl selected, when the execution root is not among them
         when(mavenSession.getTopLevelProject()).thenReturn(app);
+        when(mavenSession.getAllProjects()).thenReturn(List.of(root, app));
         InvocationResult result = mock(InvocationResult.class);
-        when(result.getExitCode()).thenReturn(1);
-        when(executorService.invokeGoals(app, "compile")).thenReturn(result);
+        when(result.getExitCode()).thenReturn(0);
+        when(executorService.invokeGoals(root, app, "compile")).thenReturn(result);
         Path trigger = directory.resolve("micronaut-dev/reload");
 
         invoke("compileAndTouch", new Class<?>[] {Path.class}, trigger);
 
-        when(executorService.invokeGoals(app, "compile")).thenThrow(new IllegalStateException("no Maven"));
+        verify(executorService).invokeGoals(root, app, "compile");
+        assertTrue(Files.isRegularFile(trigger));
+    }
+
+    @Test
+    void aFailedCompilationDoesNotTouchTheTrigger() throws Exception {
+        setField("runnableProject", app);
+        when(mavenSession.getTopLevelProject()).thenReturn(app);
+        InvocationResult result = mock(InvocationResult.class);
+        when(result.getExitCode()).thenReturn(1);
+        when(executorService.invokeGoals(app, app, "compile")).thenReturn(result);
+        Path trigger = directory.resolve("micronaut-dev/reload");
+
+        invoke("compileAndTouch", new Class<?>[] {Path.class}, trigger);
+
+        when(executorService.invokeGoals(app, app, "compile")).thenThrow(new IllegalStateException("no Maven"));
         invoke("compileAndTouch", new Class<?>[] {Path.class}, trigger);
 
         assertFalse(Files.exists(trigger));
@@ -338,7 +359,7 @@ class DevMojoTest {
 
         invoke("compileAndTouch", new Class<?>[] {Path.class}, directory.resolve("reload"));
 
-        verify(executorService, never()).invokeGoals(any(MavenProject.class), any(String[].class));
+        verify(executorService, never()).invokeGoals(any(MavenProject.class), any(MavenProject.class), any(String[].class));
         assertFalse(Files.exists(directory.resolve("reload")));
     }
 

@@ -591,8 +591,8 @@ public class DevMojo extends AbstractTestResourcesMojo {
         // the invocation's exit code, not merely its return: a compiler error is a normal result of the invoker
         boolean compiled;
         try {
-            MavenProject projectToCompile = mavenSession.getTopLevelProject();
-            InvocationResult result = executorService.invokeGoals(projectToCompile, "compile");
+            MavenProject root = executionRoot();
+            InvocationResult result = executorService.invokeGoals(root, runnableProject, "compile");
             compiled = result.getExitCode() == 0 && result.getExecutionException() == null;
             if (!compiled) {
                 getLog().warn("The compilation failed: the running application keeps the previous classes");
@@ -611,6 +611,18 @@ public class DevMojo extends AbstractTestResourcesMojo {
                 getLog().warn("Cannot touch " + trigger + ": " + e.getMessage());
             }
         }
+    }
+
+    /**
+     * The project whose POM the build was started from: its reactor holds the runnable project and what it depends
+     * on, whereas the top level project of the session is the first selected project when {@code -pl} leaves the
+     * execution root out.
+     */
+    private MavenProject executionRoot() {
+        return mavenSession.getAllProjects().stream()
+            .filter(MavenProject::isExecutionRoot)
+            .findFirst()
+            .orElseGet(mavenSession::getTopLevelProject);
     }
 
     /**
