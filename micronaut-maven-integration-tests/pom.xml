@@ -22,6 +22,28 @@
 
         <it.micronaut.core.version>5.0.0</it.micronaut.core.version>
         <it.micronaut.version>5.0.0-RC1</it.micronaut.version>
+        <!--
+          A Micronaut core version that has micronaut.application.training.mode (micronaut-projects/micronaut-core#13402,
+          merged into micronaut-core 5.3.x, ships with Micronaut Core 5.3.0), for the *-jdk-aot-cache-load projects, which
+          train a JDK AOT cache without starting the application. They are skipped while this is empty, because no such
+          version is released yet. To run them before the release, pass the published snapshot of the 5.3.x branch, which
+          has the mode: -Dit.micronaut.core.trainingMode.version=5.3.0-SNAPSHOT
+
+          TODO when a Micronaut core release has the mode (#1729): set this property to it, so that CI runs
+          these projects, which are the only end-to-end check of the default training mode. When it.micronaut.version
+          itself has the mode, remove the property, the selector.groovy files and the micronaut.core.version of these
+          projects instead.
+        -->
+        <it.micronaut.core.trainingMode.version/>
+        <!--
+          A Micronaut version without the training-run switch (micronaut.application.training.enabled), for the projects
+          that cover the JDK AOT cache training of such a version, where the plugin's script warms the application up,
+          fails on a status of 400 or more and stops the application with SIGTERM: package-docker-jdk-aot-cache,
+          package-docker-jdk-aot-cache-failure and dockerfile-docker-jdk-aot-cache. It is not it.micronaut.version on
+          purpose: do not raise it to a version with the switch. With such a version the same builds behave differently
+          (trainingPaths without a trainingMode fails the build, and a 404 of a training path is only a warning).
+        -->
+        <it.micronaut.noTrainingSwitch.version>5.0.0-RC1</it.micronaut.noTrainingSwitch.version>
 
         <!-- Enable recording of coverage during execution of maven-invoker-plugin -->
         <jacoco.propertyName>invoker.mavenOpts</jacoco.propertyName>
@@ -105,9 +127,13 @@
                     <selectorScript>selector</selectorScript>
                     <localRepositoryPath>../target/local-repo</localRepositoryPath>
                     <settingsFile>src/it/settings.xml</settingsFile>
+                    <filterProperties>
+                        <trainingModeCoreVersion>${it.micronaut.core.trainingMode.version}</trainingModeCoreVersion>
+                    </filterProperties>
                     <scriptVariables>
                         <nativeMavenPluginVersion>${native-maven-plugin.version}</nativeMavenPluginVersion>
                         <pluginVersion>${project.version}</pluginVersion>
+                        <trainingModeCoreVersion>${it.micronaut.core.trainingMode.version}</trainingModeCoreVersion>
                     </scriptVariables>
                     <goals>
                         <goal>clean</goal>
