@@ -31,10 +31,11 @@ assert manifest.'micronaut.dev.runtime-classpath' == '@runtime.argfile'
 List<String> runtime = new File(basedir, 'target/micronaut-dev/runtime.argfile').readLines()
 assert runtime.any { it.contains('micronaut-runtime-') }
 assert runtime.every { !it.contains('target' + File.separator + 'classes') }
-// Micronaut Control Panel, versioned by the platform BOM, with the panel of the modules the application uses
-assert runtime.any { it.contains('micronaut-control-panel-ui-') }
-assert runtime.any { it.contains('micronaut-control-panel-management-') }
-assert runtime.any { it.contains('micronaut-control-panel-datasource-') }
+// Micronaut Control Panel, versioned by the platform BOM, 5.2.4 here, with the panel of the modules the application uses
+assert runtime.any { it.endsWith('micronaut-control-panel-ui-2.2.1.jar') }
+assert runtime.any { it.endsWith('micronaut-control-panel-management-2.2.1.jar') }
+assert runtime.any { it.endsWith('micronaut-control-panel-datasource-2.2.1.jar') }
+assert !log.text.contains('Micronaut Control Panel requires Micronaut Platform')
 assert runtime.every { !it.contains('micronaut-control-panel-kafka-') && !it.contains('micronaut-control-panel-hibernate-') }
 assert log.text.contains("Adding Micronaut Control Panel to the development runtime")
 // its settings, a resource on the runtime classpath that Control Panel reads at the lowest precedence
