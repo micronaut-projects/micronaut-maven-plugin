@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.buildplan.UnixPathParser;
 import com.google.cloud.tools.jib.maven.extension.JibMavenPluginExtension;
 import com.google.cloud.tools.jib.maven.extension.MavenData;
 import com.google.cloud.tools.jib.plugins.extension.ExtensionLogger;
+import com.google.cloud.tools.jib.plugins.extension.JibPluginExtensionException;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
@@ -70,7 +71,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
     @Override
     public ContainerBuildPlan extendContainerBuildPlan(ContainerBuildPlan buildPlan, Map<String, String> properties,
                                                        Optional<Void> extraConfig, MavenData mavenData,
-                                                       ExtensionLogger logger) {
+                                                       ExtensionLogger logger) throws JibPluginExtensionException {
 
         ContainerBuildPlan.Builder builder = buildPlan.toBuilder();
         MicronautRuntime runtime = MicronautRuntime.valueOf(mavenData.getMavenProject().getProperties().getProperty(MicronautRuntime.PROPERTY, "none").toUpperCase());
@@ -98,11 +99,7 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
             }
         }
 
-        var detectedPlatform = detectPlatform();
-        if (buildPlan.getPlatforms() == null || buildPlan.getPlatforms().isEmpty() || !buildPlan.getPlatforms().contains(detectedPlatform)) {
-            LOG.info("Adding Detected platform: {}/{}", LINUX, detectedPlatform.getArchitecture());
-            builder.addPlatform(detectedPlatform.getArchitecture(), LINUX);
-        }
+        configurePlatforms(buildPlan, baseImage, builder, runtime, mavenData, logger);
 
         switch (runtime.getBuildStrategy()) {
             case ORACLE_FUNCTION -> {
@@ -130,6 +127,29 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
             }
         }
         return builder.build();
+    }
+
+    /**
+     * Builds for the Docker daemon's platform only when the {@code docker} goal trains a JDK AOT cache, and adds the
+     * detected platform otherwise.
+     */
+    private void configurePlatforms(ContainerBuildPlan buildPlan, String baseImage, ContainerBuildPlan.Builder builder,
+                                    MicronautRuntime runtime, MavenData mavenData, ExtensionLogger logger)
+        throws JibPluginExtensionException {
+        Optional<Platform> jdkAotCachePlatform = JdkAotCachePlan.platform(mavenData);
+        if (jdkAotCachePlatform.isPresent()) {
+            if (runtime.getBuildStrategy() != DockerBuildStrategy.DEFAULT) {
+                throw new JibPluginExtensionException(JibMicronautExtension.class,
+                    "micronaut.docker.jdkAotCache only supports the default runtime, not " + runtime.getBuildStrategy());
+            }
+            JdkAotCachePlan.apply(buildPlan, baseImage, builder, jdkAotCachePlatform.get(), mavenData, logger);
+            return;
+        }
+        var detectedPlatform = detectPlatform();
+        if (buildPlan.getPlatforms() == null || buildPlan.getPlatforms().isEmpty() || !buildPlan.getPlatforms().contains(detectedPlatform)) {
+            LOG.info("Adding Detected platform: {}/{}", LINUX, detectedPlatform.getArchitecture());
+            builder.addPlatform(detectedPlatform.getArchitecture(), LINUX);
+        }
     }
 
     public static List<String> buildProjectFnEntrypoint() {

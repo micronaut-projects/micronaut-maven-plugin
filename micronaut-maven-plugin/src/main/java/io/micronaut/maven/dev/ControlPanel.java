@@ -15,6 +15,10 @@
  */
 package io.micronaut.maven.dev;
 
+import org.apache.maven.artifact.versioning.ComparableVersion;
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.DependencyManagement;
+import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.transfer.ArtifactNotFoundException;
@@ -30,6 +34,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Stream;
 
@@ -90,6 +95,19 @@ public final class ControlPanel {
      */
     public static final String SECURITY_MODULE = "io.micronaut.security:micronaut-security";
 
+    /**
+     * The group of the Micronaut platform BOM and of the {@code micronaut-parent} POM.
+     */
+    public static final String PLATFORM_GROUP = "io.micronaut.platform";
+
+    /**
+     * The oldest Micronaut platform {@code mn:dev} adds Control Panel for: Control Panel requires Micronaut Platform
+     * 5.2.4 or later.
+     */
+    public static final String MINIMUM_PLATFORM_VERSION = "5.2.4";
+
+    private static final List<String> PLATFORM_ARTIFACTS = List.of("micronaut-parent", "micronaut-platform");
+
     static {
         Map<String, String> secured = new LinkedHashMap<>();
         secured.put("micronaut.control-panel.enabled", "true");
@@ -140,6 +158,45 @@ public final class ControlPanel {
         public List<String> triggers() {
             return triggers;
         }
+    }
+
+    /**
+     * The version of the Micronaut platform a project builds with: that of {@code micronaut-parent} in the project's
+     * effective dependency management, which every {@code micronaut-platform} BOM manages at its own version, whether
+     * the project inherits it from {@code micronaut-parent} or imports it, from a profile or with an interpolated
+     * version; else that of {@code micronaut-parent} or of the {@code micronaut-platform} BOM among its parents.
+     *
+     * @param project the project
+     * @return the version, if the project builds with the Micronaut platform
+     */
+    public static Optional<String> platformVersion(MavenProject project) {
+        DependencyManagement management = project.getDependencyManagement();
+        if (management != null) {
+            for (Dependency dependency : management.getDependencies()) {
+                if (PLATFORM_GROUP.equals(dependency.getGroupId()) && "micronaut-parent".equals(dependency.getArtifactId())
+                    && dependency.getVersion() != null) {
+                    return Optional.of(dependency.getVersion());
+                }
+            }
+        }
+        for (MavenProject current = project; current != null; current = current.getParent()) {
+            if (PLATFORM_GROUP.equals(current.getGroupId()) && PLATFORM_ARTIFACTS.contains(current.getArtifactId())) {
+                return Optional.ofNullable(current.getVersion());
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Whether a Micronaut platform version is {@value #MINIMUM_PLATFORM_VERSION} or later, compared as Maven compares
+     * versions, so that {@code 5.2.10} is later and {@code 5.2.4-SNAPSHOT} earlier.
+     *
+     * @param version the version of the platform
+     * @return whether Control Panel is added for it
+     */
+    public static boolean isSupportedPlatform(String version) {
+        return version != null && !version.isBlank()
+            && new ComparableVersion(version.trim()).compareTo(new ComparableVersion(MINIMUM_PLATFORM_VERSION)) >= 0;
     }
 
     /**
