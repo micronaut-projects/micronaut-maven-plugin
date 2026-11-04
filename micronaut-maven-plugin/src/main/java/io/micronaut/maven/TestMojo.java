@@ -218,7 +218,7 @@ public class TestMojo extends DevMojo {
         PluginParameterExpressionEvaluator evaluator = runnableEvaluator();
         List<File> testProcessorPath;
         try {
-            DevManifest.ProcessorPaths paths = DevManifest.testProcessorPaths(runnableProject(), evaluator);
+            DevManifest.ProcessorPaths paths = DevManifest.testProcessorPaths(runnableProject(), evaluator, artifactTypes());
             testProcessorPath = paths.dependencies().isEmpty() ? List.of() : resolveProcessorPath(paths);
         } catch (Exception e) {
             throw new MojoExecutionException("Cannot resolve the test annotation processor path: " + e.getMessage(), e);

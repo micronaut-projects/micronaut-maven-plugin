@@ -45,6 +45,7 @@ import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluatio
 import org.codehaus.plexus.configuration.xml.XmlPlexusConfiguration;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.eclipse.aether.artifact.ArtifactTypeRegistry;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.graph.Dependency;
@@ -512,7 +513,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
         List<File> compileClasspath = files(compilerService.resolveDependencies(runnableProject, true, JavaScopes.PROVIDED, JavaScopes.COMPILE));
         List<File> processorPath;
         try {
-            DevManifest.ProcessorPaths paths = DevManifest.processorPaths(runnableProject, evaluator);
+            DevManifest.ProcessorPaths paths = DevManifest.processorPaths(runnableProject, evaluator, artifactTypes());
             processorPath = paths.dependencies().isEmpty() ? List.of() : resolveProcessorPath(paths);
         } catch (Exception e) {
             throw new MojoExecutionException("Cannot resolve the annotation processor path: " + e.getMessage(), e);
@@ -611,6 +612,13 @@ public class DevMojo extends AbstractTestResourcesMojo {
     }
 
     /**
+     * @return the session's artifact types, which map the {@code type} of a processor path to its artifact
+     */
+    protected ArtifactTypeRegistry artifactTypes() {
+        return mavenSession.getRepositorySession().getArtifactTypeRegistry();
+    }
+
+    /**
      * The artifacts the launcher's JVM runs with beside the runtime classpath, versioned by the dependency
      * management when they name no version.
      *
@@ -704,8 +712,8 @@ public class DevMojo extends AbstractTestResourcesMojo {
         // the invocation's exit code, not merely its return: a compiler error is a normal result of the invoker
         boolean compiled;
         try {
-            MavenProject projectToCompile = mavenSession.getTopLevelProject();
-            InvocationResult result = executorService.invokeGoals(projectToCompile, buildToolGoal());
+            MavenProject root = executionRoot();
+            InvocationResult result = executorService.invokeGoals(root, runnableProject, buildToolGoal());
             compiled = result.getExitCode() == 0 && result.getExecutionException() == null;
             if (!compiled) {
                 getLog().warn("The compilation failed: the running application keeps the previous classes");
@@ -724,6 +732,18 @@ public class DevMojo extends AbstractTestResourcesMojo {
                 getLog().warn("Cannot touch " + trigger + ": " + e.getMessage());
             }
         }
+    }
+
+    /**
+     * The project whose POM the build was started from: its reactor holds the runnable project and what it depends
+     * on, whereas the top level project of the session is the first selected project when {@code -pl} leaves the
+     * execution root out.
+     */
+    private MavenProject executionRoot() {
+        return mavenSession.getAllProjects().stream()
+            .filter(MavenProject::isExecutionRoot)
+            .findFirst()
+            .orElseGet(mavenSession::getTopLevelProject);
     }
 
     /**
