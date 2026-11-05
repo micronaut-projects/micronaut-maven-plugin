@@ -23,6 +23,7 @@ import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.transfer.ArtifactNotFoundException;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -32,10 +33,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -284,5 +287,87 @@ public final class ControlPanel {
         return artifact != null && GROUP.equals(artifact.getGroupId())
             && !result.getExceptions().isEmpty()
             && result.getExceptions().stream().allMatch(ArtifactNotFoundException.class::isInstance);
+    }
+
+    /**
+     * What Control Panel adds to a runtime classpath as its modules are resolved: the files the classpath does not
+     * hold, so that the application's versions win, and of those the first of each module, as several panels bring
+     * the same ones.
+     */
+    public static final class Additions {
+        private final Collection<String> present;
+        private final Set<String> resolved = new LinkedHashSet<>();
+        private final List<File> files = new ArrayList<>();
+        private final List<String> added = new ArrayList<>();
+        private boolean active;
+
+        /**
+         * @param present the {@code group:artifact} keys of the runtime classpath
+         */
+        public Additions(Collection<String> present) {
+            this.present = present;
+        }
+
+        /**
+         * Whether the runtime classpath holds a module already, as the application declares it: it is not resolved
+         * again, and the runtime has a Control Panel.
+         *
+         * @param module the artifact id, in group {@link #GROUP}
+         * @return whether the runtime classpath holds it
+         */
+        public boolean holds(String module) {
+            boolean holds = present.contains(GROUP + ":" + module);
+            active |= holds;
+            return holds;
+        }
+
+        /**
+         * Adds the files of what a module resolved to. The results lack the module itself when the dependency
+         * management does not version it.
+         *
+         * @param module the artifact id, in group {@link #GROUP}
+         * @param results what it resolved to
+         * @return whether the results hold the module
+         */
+        public boolean add(String module, List<ArtifactResult> results) {
+            String key = GROUP + ":" + module;
+            boolean found = false;
+            for (ArtifactResult result : results) {
+                org.eclipse.aether.artifact.Artifact artifact = result.getArtifact();
+                if (artifact != null && artifact.getFile() != null) {
+                    String resolvedKey = artifact.getGroupId() + ":" + artifact.getArtifactId();
+                    found |= resolvedKey.equals(key);
+                    if (!present.contains(resolvedKey) && resolved.add(resolvedKey)) {
+                        files.add(artifact.getFile());
+                    }
+                }
+            }
+            if (found) {
+                added.add(module);
+                active = true;
+            }
+            return found;
+        }
+
+        /**
+         * @return the files to add to the runtime classpath, in the order the modules were resolved
+         */
+        public List<File> files() {
+            return List.copyOf(files);
+        }
+
+        /**
+         * @return the artifact ids of the modules added, without those the runtime classpath holds
+         */
+        public List<String> added() {
+            return List.copyOf(added);
+        }
+
+        /**
+         * @return whether the runtime has a Control Panel, added or held already
+         */
+        public boolean active() {
+            return active;
+        }
     }
 }

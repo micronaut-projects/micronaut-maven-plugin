@@ -15,6 +15,7 @@ import org.eclipse.aether.transfer.ArtifactTransferException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
@@ -67,6 +68,20 @@ class ControlPanelTest {
         assertEquals(java.util.Optional.of("5.2.3"), ControlPanel.platformVersion(new org.apache.maven.project.MavenProject(model)));
 
         assertEquals(java.util.Optional.empty(), ControlPanel.platformVersion(new org.apache.maven.project.MavenProject()));
+
+        // a dependency management that does not version the platform leaves it to the parents
+        org.apache.maven.model.Dependency other = new org.apache.maven.model.Dependency();
+        other.setGroupId("io.micronaut.platform");
+        other.setArtifactId("micronaut-other");
+        other.setVersion("9.9.9");
+        org.apache.maven.model.Dependency unversioned = new org.apache.maven.model.Dependency();
+        unversioned.setGroupId("io.micronaut.platform");
+        unversioned.setArtifactId("micronaut-parent");
+        org.apache.maven.model.DependencyManagement others = new org.apache.maven.model.DependencyManagement();
+        others.addDependency(other);
+        others.addDependency(unversioned);
+        child.getModel().setDependencyManagement(others);
+        assertEquals(java.util.Optional.of("5.2.4"), ControlPanel.platformVersion(child));
     }
 
     @Test
@@ -149,6 +164,9 @@ class ControlPanelTest {
         unreachable.addException(new ArtifactTransferException(artifact, null, "Connection refused"));
         assertFalse(ControlPanel.isMissingControlPanelArtifact(failure(unreachable)));
         assertFalse(ControlPanel.isMissingControlPanelArtifact(new IllegalStateException("other")));
+        // a failure that names no missing artifact says nothing about what is published
+        assertFalse(ControlPanel.isMissingControlPanelArtifact(failure()));
+        assertFalse(ControlPanel.isMissingControlPanelArtifact(failure(new ArtifactResult(new ArtifactRequest(artifact, List.of(), null)))));
     }
 
     @Test
@@ -159,6 +177,55 @@ class ControlPanelTest {
         assertTrue(ControlPanel.isMissingControlPanelArtifact(failure));
     }
 
+    @Test
+    void addsWhatARuntimeClasspathDoesNotHoldOnceInTheOrderItResolved() {
+        File ui = new File("ui.jar");
+        File shared = new File("shared.jar");
+        File management = new File("management.jar");
+        ControlPanel.Additions additions = new ControlPanel.Additions(Set.of("example:runtime"));
+
+        assertTrue(additions.add("micronaut-control-panel-ui", List.of(
+            resolved(ControlPanel.GROUP, "micronaut-control-panel-ui", ui),
+            resolved("example", "shared", shared),
+            resolved("example", "runtime", new File("other-runtime.jar")))));
+        assertTrue(additions.add("micronaut-control-panel-management", List.of(
+            resolved("example", "shared", new File("other-shared.jar")),
+            resolved(ControlPanel.GROUP, "micronaut-control-panel-management", management))));
+
+        assertEquals(List.of(ui, shared, management), additions.files());
+        assertEquals(List.of("micronaut-control-panel-ui", "micronaut-control-panel-management"), additions.added());
+        assertTrue(additions.active());
+    }
+
+    @Test
+    void aModuleThatIsNotAmongItsResultsIsNotAdded() {
+        File transitive = new File("transitive.jar");
+        ControlPanel.Additions additions = new ControlPanel.Additions(Set.of());
+        ArtifactResult withoutFile = new ArtifactResult(new ArtifactRequest());
+        withoutFile.setArtifact(new DefaultArtifact(ControlPanel.GROUP, "micronaut-control-panel-ui", "jar", "2.2.0"));
+
+        assertFalse(additions.add("micronaut-control-panel-ui", List.of()));
+        assertFalse(additions.add("micronaut-control-panel-ui", List.of(new ArtifactResult(new ArtifactRequest()), withoutFile)));
+        assertFalse(additions.active());
+
+        assertFalse(additions.add("micronaut-control-panel-ui", List.of(resolved("example", "transitive", transitive))));
+        assertEquals(List.of(transitive), additions.files());
+        assertEquals(List.of(), additions.added());
+        assertFalse(additions.active());
+    }
+
+    @Test
+    void aModuleTheRuntimeClasspathHoldsMakesItActiveWithoutAddingAnything() {
+        ControlPanel.Additions additions = new ControlPanel.Additions(Set.of("io.micronaut.controlpanel:micronaut-control-panel-ui"));
+
+        assertFalse(additions.holds("micronaut-control-panel-management"));
+        assertFalse(additions.active());
+        assertTrue(additions.holds("micronaut-control-panel-ui"));
+        assertTrue(additions.active());
+        assertEquals(List.of(), additions.files());
+        assertEquals(List.of(), additions.added());
+    }
+
     private static Map<String, String> read(Path resources) throws IOException {
         Properties properties = new Properties();
         try (Reader reader = Files.newBufferedReader(resources.resolve("micronaut-control-panel/micronaut-control-panel.properties"))) {
@@ -166,6 +233,12 @@ class ControlPanelTest {
         }
         Map<String, String> result = new java.util.HashMap<>();
         properties.stringPropertyNames().forEach(name -> result.put(name, properties.getProperty(name)));
+        return result;
+    }
+
+    private static ArtifactResult resolved(String group, String artifactId, File file) {
+        ArtifactResult result = new ArtifactResult(new ArtifactRequest());
+        result.setArtifact(new DefaultArtifact(group, artifactId, "jar", "2.2.0").setFile(file));
         return result;
     }
 
