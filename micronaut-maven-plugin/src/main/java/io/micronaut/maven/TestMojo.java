@@ -217,11 +217,11 @@ public class TestMojo extends DevMojo {
     /**
      * The tests start their own servers, as they do in the build: the launcher binds none.
      *
-     * @return null, no setting
+     * @return false
      */
     @Override
-    protected Boolean bindLoopback() {
-        return null;
+    protected boolean launcherBindsServer() {
+        return false;
     }
 
     @Override

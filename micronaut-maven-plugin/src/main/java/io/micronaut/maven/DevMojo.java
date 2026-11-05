@@ -548,17 +548,16 @@ public class DevMojo extends AbstractTestResourcesMojo {
         List<String> retained = retain == null || retain.isBlank() ? List.of() : Arrays.stream(retain.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
         DevManifest.Settings settings = new DevManifest.Settings(main, strategy, compile, incremental, retained, liveReloadPort, liveReloadInjectScript);
         DevManifest manifest = DevManifest.of(runnableProject, reactor, settings, runtimeClasspath, compileClasspath, processorPath, evaluator, manifestDirectory);
-        Boolean loopback = bindLoopback();
-        return loopback == null ? manifest : manifest.withBindLoopback(loopback);
+        return launcherBindsServer() ? manifest.withBindLoopback(bindLoopback) : manifest;
     }
 
     /**
-     * Whether the application listens on {@code localhost} by default.
+     * Whether the launcher binds the application's HTTP server, which the {@code bindLoopback} parameter applies to.
      *
-     * @return the {@code bindLoopback} parameter, or null to write no setting
+     * @return true, since the application runs
      */
-    protected Boolean bindLoopback() {
-        return bindLoopback;
+    protected boolean launcherBindsServer() {
+        return true;
     }
 
     /**
@@ -696,68 +695,82 @@ public class DevMojo extends AbstractTestResourcesMojo {
         if (controlPanelClasspath != null) {
             return controlPanelClasspath;
         }
-        Path resources = manifestDirectory().resolve(ControlPanel.RESOURCES_DIRECTORY_NAME);
-        Set<String> present = new LinkedHashSet<>();
-        for (Dependency dependency : runtimeDependencies()) {
-            org.eclipse.aether.artifact.Artifact artifact = dependency.getArtifact();
-            present.add(artifact.getGroupId() + ":" + artifact.getArtifactId());
-        }
-        List<File> files = new ArrayList<>();
-        List<String> added = new ArrayList<>();
-        boolean active = false;
+        Set<String> present = runtimeModuleKeys();
+        ControlPanel.Additions additions = new ControlPanel.Additions(present);
         if (controlPanelEnabled() && platformSupportsControlPanel()) {
-            Set<String> resolved = new LinkedHashSet<>();
             for (String module : ControlPanel.modules(present)) {
-                String key = ControlPanel.GROUP + ":" + module;
-                if (present.contains(key)) {
-                    active = true;
-                    continue;
-                }
-                List<ArtifactResult> results;
-                try {
-                    results = dependencyResolutionService.artifactResultsFor(Stream.of(new DefaultArtifact(ControlPanel.GROUP, module, "jar", "")), true);
-                } catch (DependencyResolutionException e) {
-                    if (ControlPanel.isMissingControlPanelArtifact(e)) {
-                        getLog().info("Micronaut Control Panel module " + key + " is not published: development mode runs without it");
-                        continue;
-                    }
-                    throw new MojoExecutionException("Cannot resolve the Micronaut Control Panel module " + key + " (disable it with mn.dev.controlPanel=false): " + e.getMessage(), e);
-                }
-                boolean found = false;
-                for (ArtifactResult result : results) {
-                    org.eclipse.aether.artifact.Artifact artifact = result.getArtifact();
-                    if (artifact == null || artifact.getFile() == null) {
-                        continue;
-                    }
-                    String resolvedKey = artifact.getGroupId() + ":" + artifact.getArtifactId();
-                    found |= resolvedKey.equals(key);
-                    if (!present.contains(resolvedKey) && resolved.add(resolvedKey)) {
-                        files.add(artifact.getFile());
-                    }
-                }
-                if (found) {
-                    added.add(module);
-                    active = true;
-                } else {
-                    getLog().info("Micronaut Control Panel module " + key + " is not versioned by the dependency management: development mode runs without it");
-                }
+                addControlPanelModule(module, additions);
             }
         }
+        List<File> files = new ArrayList<>(additions.files());
+        Path resources = manifestDirectory().resolve(ControlPanel.RESOURCES_DIRECTORY_NAME);
+        updateControlPanelSettings(resources, additions.active(), present);
+        if (additions.active()) {
+            files.add(resources.toFile());
+        }
+        if (!additions.added().isEmpty()) {
+            getLog().info("Adding Micronaut Control Panel to the development runtime: " + additions.added() + " (disable it with mn.dev.controlPanel=false)");
+        }
+        controlPanelClasspath = files;
+        return controlPanelClasspath;
+    }
+
+    /**
+     * @return the {@code group:artifact} keys of the runtime classpath
+     */
+    private Set<String> runtimeModuleKeys() {
+        Set<String> keys = new LinkedHashSet<>();
+        for (Dependency dependency : runtimeDependencies()) {
+            org.eclipse.aether.artifact.Artifact artifact = dependency.getArtifact();
+            keys.add(artifact.getGroupId() + ":" + artifact.getArtifactId());
+        }
+        return keys;
+    }
+
+    /**
+     * Adds a Control Panel module, unless the runtime classpath holds it already. One that is not published or not
+     * versioned by the dependency management is left out, and one line says so.
+     *
+     * @param module the artifact id of the module
+     * @param additions what the runtime adds so far
+     * @throws MojoExecutionException if the module cannot be resolved for any other reason
+     */
+    private void addControlPanelModule(String module, ControlPanel.Additions additions) throws MojoExecutionException {
+        if (additions.holds(module)) {
+            return;
+        }
+        String key = ControlPanel.GROUP + ":" + module;
+        try {
+            List<ArtifactResult> results = dependencyResolutionService.artifactResultsFor(Stream.of(new DefaultArtifact(ControlPanel.GROUP, module, "jar", "")), true);
+            if (!additions.add(module, results)) {
+                getLog().info("Micronaut Control Panel module " + key + " is not versioned by the dependency management: development mode runs without it");
+            }
+        } catch (DependencyResolutionException e) {
+            if (!ControlPanel.isMissingControlPanelArtifact(e)) {
+                throw new MojoExecutionException("Cannot resolve the Micronaut Control Panel module " + key + " (disable it with mn.dev.controlPanel=false): " + e.getMessage(), e);
+            }
+            getLog().info("Micronaut Control Panel module " + key + " is not published: development mode runs without it");
+        }
+    }
+
+    /**
+     * Writes the Control Panel's settings when it is active, and removes those of an earlier run when it is not.
+     *
+     * @param resources the directory of the settings
+     * @param active whether the development runtime has a Control Panel
+     * @param present the {@code group:artifact} keys of the runtime classpath
+     * @throws MojoExecutionException if the settings cannot be written or removed
+     */
+    private static void updateControlPanelSettings(Path resources, boolean active, Set<String> present) throws MojoExecutionException {
         try {
             if (active) {
                 ControlPanel.writeResources(resources, present);
-                files.add(resources.toFile());
             } else {
                 ControlPanel.deleteResources(resources);
             }
         } catch (IOException e) {
             throw new MojoExecutionException("Cannot write the Micronaut Control Panel settings to " + resources + ": " + e.getMessage(), e);
         }
-        if (!added.isEmpty()) {
-            getLog().info("Adding Micronaut Control Panel to the development runtime: " + added + " (disable it with mn.dev.controlPanel=false)");
-        }
-        controlPanelClasspath = files;
-        return controlPanelClasspath;
     }
 
     /**
