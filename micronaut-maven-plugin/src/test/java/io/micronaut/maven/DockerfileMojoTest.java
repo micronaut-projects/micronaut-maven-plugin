@@ -1,5 +1,6 @@
 package io.micronaut.maven;
 
+import io.micronaut.maven.classpath.ClassPathTransformService;
 import io.micronaut.maven.jdkaotcache.MicronautJars;
 import io.micronaut.maven.jdkaotcache.TrainingMode;
 import io.micronaut.maven.jib.JibConfigurationService;
@@ -63,8 +64,7 @@ class DockerfileMojoTest {
             mock(ApplicationConfigurationService.class),
             mock(ExecutorService.class),
             mockSession(project),
-            mock(MojoExecution.class)
-        );
+            mock(MojoExecution.class), new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "netty";
         mojo.mainClass = "example.App$USER `touch /tmp/pwned` \"Quoted\" \\\\";
         mojo.baseImageRun = "cgr.dev/chainguard/wolfi-base:latest";
@@ -128,8 +128,7 @@ class DockerfileMojoTest {
             mock(ApplicationConfigurationService.class),
             mock(ExecutorService.class),
             mockSession(project),
-            mock(MojoExecution.class)
-        );
+            mock(MojoExecution.class), new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "netty";
         mojo.mainClass = "example.App\"\nRUN echo injected";
 
@@ -154,8 +153,7 @@ class DockerfileMojoTest {
             mock(ApplicationConfigurationService.class),
             mock(ExecutorService.class),
             mockSession(project),
-            mock(MojoExecution.class)
-        );
+            mock(MojoExecution.class), new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "netty";
         mojo.mainClass = "example.App\nRUN echo injected";
 
@@ -180,8 +178,7 @@ class DockerfileMojoTest {
             mock(ApplicationConfigurationService.class),
             mock(ExecutorService.class),
             mockSession(project),
-            mock(MojoExecution.class)
-        );
+            mock(MojoExecution.class), new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "netty";
         mojo.mainClass = "example.App$USER `quoted` \"Slash\\\\\"";
 
@@ -209,8 +206,7 @@ class DockerfileMojoTest {
             mock(ApplicationConfigurationService.class),
             mock(ExecutorService.class),
             mockSession(project),
-            mock(MojoExecution.class)
-        );
+            mock(MojoExecution.class), new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "netty";
         mojo.baseImageRun = "invalid image";
 
@@ -235,8 +231,7 @@ class DockerfileMojoTest {
             mock(ApplicationConfigurationService.class),
             mock(ExecutorService.class),
             mockSession(project),
-            mock(MojoExecution.class)
-        );
+            mock(MojoExecution.class), new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "netty";
 
         var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), "EXPOSE ${PORTS}");
@@ -261,8 +256,7 @@ class DockerfileMojoTest {
             mock(ApplicationConfigurationService.class),
             mock(ExecutorService.class),
             mockSession(project),
-            mock(MojoExecution.class)
-        );
+            mock(MojoExecution.class), new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "netty";
 
         var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), "RUN curl -4 -L ${GRAALVM_DOWNLOAD_URL} -o /tmp/graalvm.tar.gz");
@@ -286,8 +280,7 @@ class DockerfileMojoTest {
             mock(ApplicationConfigurationService.class),
             mock(ExecutorService.class),
             mockSession(project),
-            mock(MojoExecution.class)
-        );
+            mock(MojoExecution.class), new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "netty";
 
         var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), String.join(System.lineSeparator(),
@@ -327,8 +320,7 @@ class DockerfileMojoTest {
             mock(ApplicationConfigurationService.class),
             mock(ExecutorService.class),
             mockSession(project),
-            mock(MojoExecution.class)
-        );
+            mock(MojoExecution.class), new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "netty";
 
         var dockerfile = Files.writeString(tempDir.resolve("Dockerfile"), String.join(System.lineSeparator(),
@@ -366,8 +358,7 @@ class DockerfileMojoTest {
             mock(ApplicationConfigurationService.class),
             mock(ExecutorService.class),
             mockSession(project),
-            mock(MojoExecution.class)
-        );
+            mock(MojoExecution.class), new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "netty";
         mojo.mainClass = "example.App\nRUN echo injected";
 
@@ -442,7 +433,7 @@ class DockerfileMojoTest {
             return dockerfile.toFile();
         });
         var mojo = new DockerfileMojo(project, dockerService, jibConfigurationService,
-            mock(ApplicationConfigurationService.class), mock(ExecutorService.class), mockSession(project), mock(MojoExecution.class));
+            mock(ApplicationConfigurationService.class), mock(ExecutorService.class), mockSession(project), mock(MojoExecution.class), new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "netty";
         mojo.mainClass = "example.Application";
         setParameter(mojo, "jdkAotCache", true);
@@ -476,7 +467,7 @@ class DockerfileMojoTest {
         when(project.getPackaging()).thenReturn("docker");
         when(project.getBuild().getOutputDirectory()).thenReturn(tempDir.resolve("target/classes").toString());
         var mojo = new DockerfileMojo(project, mock(DockerService.class), mock(JibConfigurationService.class),
-            mock(ApplicationConfigurationService.class), mock(ExecutorService.class), mockSession(project), mock(MojoExecution.class));
+            mock(ApplicationConfigurationService.class), mock(ExecutorService.class), mockSession(project), mock(MojoExecution.class), new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "lambda";
         setParameter(mojo, "jdkAotCache", true);
 
@@ -624,7 +615,7 @@ class DockerfileMojoTest {
             return dockerfile.toFile();
         });
         var mojo = new DockerfileMojo(project, dockerService, jibConfigurationService,
-            mock(ApplicationConfigurationService.class), mock(ExecutorService.class), mockSession(project), mock(MojoExecution.class));
+            mock(ApplicationConfigurationService.class), mock(ExecutorService.class), mockSession(project), mock(MojoExecution.class), new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "netty";
         mojo.mainClass = "example.Application";
         setParameter(mojo, "jdkAotCache", true);
@@ -678,8 +669,7 @@ class DockerfileMojoTest {
             mock(ApplicationConfigurationService.class),
             mock(ExecutorService.class),
             mockSession(project),
-            mock(MojoExecution.class)
-        );
+            mock(MojoExecution.class), new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "netty";
         mojo.mainClass = "example.Application";
         mojo.staticNativeImage = false;

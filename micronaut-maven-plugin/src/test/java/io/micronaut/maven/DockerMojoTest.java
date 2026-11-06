@@ -6,6 +6,7 @@ import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.ContainerConfig;
 import com.github.dockerjava.api.model.ExposedPort;
+import io.micronaut.maven.classpath.ClassPathTransformService;
 import io.micronaut.maven.jdkaotcache.MicronautJars;
 import io.micronaut.maven.jdkaotcache.TrainingMode;
 import io.micronaut.maven.jib.JibConfiguration;
@@ -69,7 +70,7 @@ class DockerMojoTest {
         var session = mockSession(project);
 
         var mojo = new DockerMojo(project, jibConfigurationService, null, null, session,
-            mock(MojoExecution.class), executorService);
+            mock(MojoExecution.class), executorService, new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "NONE";
         mojo.jibBuildGoal = "buildTar";
 
@@ -88,7 +89,7 @@ class DockerMojoTest {
         var session = mockSession(project);
 
         var mojo = new DockerMojo(project, jibConfigurationService, null, null, session,
-            mock(MojoExecution.class), executorService);
+            mock(MojoExecution.class), executorService, new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "NONE";
         mojo.jibBuildGoal = "build";
 
@@ -109,7 +110,7 @@ class DockerMojoTest {
         var session = mockSession(project);
 
         var mojo = new DockerMojo(project, jibConfigurationService, null, null, session,
-            mock(MojoExecution.class), executorService);
+            mock(MojoExecution.class), executorService, new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "NONE";
         mojo.jibBuildGoal = "build";
 
@@ -127,7 +128,7 @@ class DockerMojoTest {
         var session = mockSession(project);
 
         var mojo = new DockerMojo(project, jibConfigurationService, null, null, session,
-            mock(MojoExecution.class), executorService);
+            mock(MojoExecution.class), executorService, new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "NONE";
         mojo.jibBuildGoal = "buildDirectory";
 
@@ -321,7 +322,7 @@ class DockerMojoTest {
             return null;
         }).when(executorService).executeGoal(eq(project), eq("com.google.cloud.tools:jib-maven-plugin"), any());
         var mojo = new DockerMojo(project, jdkAotCacheJibConfiguration(), null, dockerService,
-            mockSession(project, userProperties), mock(MojoExecution.class), executorService);
+            mockSession(project, userProperties), mock(MojoExecution.class), executorService, new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "NONE";
         mojo.jibBuildGoal = "dockerBuild";
         setParameter(mojo, "jdkAotCache", true);
@@ -527,7 +528,7 @@ class DockerMojoTest {
     private static DockerMojo jdkAotCacheMojo(MavenProject project, JibConfigurationService jibConfigurationService,
                                               DockerService dockerService, ExecutorService executorService) {
         var mojo = new DockerMojo(project, jibConfigurationService, null, dockerService, mockSession(project),
-            mock(MojoExecution.class), executorService);
+            mock(MojoExecution.class), executorService, new ClassPathTransformService(null, null, null));
         mojo.micronautRuntime = "NONE";
         mojo.jibBuildGoal = "dockerBuild";
         setParameter(mojo, "jdkAotCache", true);
