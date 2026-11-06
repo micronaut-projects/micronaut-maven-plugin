@@ -1,0 +1,18 @@
+import java.util.zip.ZipEntry
+import java.util.zip.ZipFile
+
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains("Writing the dependency JARs with STORED entries")
+assert new File(basedir, 'target/jib-image.tar').exists()
+assert log.text.contains("Startup completed")
+
+def jars = []
+new File(basedir, 'target/stored-dependencies').eachFileRecurse { if (it.name.endsWith('.jar')) jars << it }
+assert jars.any { it.name.startsWith('micronaut-core-') }
+jars.each { jar ->
+    new ZipFile(jar).withCloseable { zip ->
+        boolean signed = zip.stream().anyMatch { it.name ==~ /(?i)META-INF\/[^\/]+\.(SF|RSA|DSA|EC)/ }
+        assert signed || zip.stream().allMatch { it.method == ZipEntry.STORED }: "${jar.name} has compressed entries"
+    }
+}

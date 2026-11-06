@@ -22,6 +22,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.core.MojoUtils;
+import io.micronaut.maven.core.StoredJars;
 import io.micronaut.maven.jdkaotcache.JdkAotCacheDockerContext;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.jib.JibMicronautExtension;
@@ -447,6 +448,16 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @param jdkAotCache whether {@code micronaut.docker.jdkAotCache} is set
      */
     void copyDependencies(boolean jdkAotCache) throws IOException {
+        copyDependencies(jdkAotCache, false);
+    }
+
+    /**
+     * Copy project dependencies to a <code>target/dependency</code> directory, see {@link #copyDependencies(boolean)}.
+     *
+     * @param jdkAotCache whether {@code micronaut.docker.jdkAotCache} is set
+     * @param storedDependencies whether the JARs are written with every entry STORED
+     */
+    void copyDependencies(boolean jdkAotCache, boolean storedDependencies) throws IOException {
         var imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
         var target = new File(mavenProject.getBuild().getDirectory(), DEPENDENCY_DIRECTORY).toPath();
         Files.createDirectories(target);
@@ -460,8 +471,13 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
             var dependencyFile = dependency.getFile().toPath();
             var dependencyName = dependency.getFile().getName();
             var layeredPath = target.resolve(dependencyLayerDirectory(dependency)).resolve(dependencyName);
-            Files.copy(dependencyFile, layeredPath, StandardCopyOption.REPLACE_EXISTING);
-            Files.copy(dependencyFile, target.resolve(dependencyName), StandardCopyOption.REPLACE_EXISTING);
+            if (storedDependencies && dependencyName.endsWith(".jar") && Files.isRegularFile(dependencyFile)) {
+                StoredJars.store(dependencyFile, layeredPath);
+                StoredJars.store(dependencyFile, target.resolve(dependencyName));
+            } else {
+                Files.copy(dependencyFile, layeredPath, StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(dependencyFile, target.resolve(dependencyName), StandardCopyOption.REPLACE_EXISTING);
+            }
             imageClasspath.add(dependencyLayerDirectory(dependency) + "/" + dependencyName);
         }
         if (jdkAotCache && Packaging.of(mavenProject.getPackaging()) == Packaging.DOCKER) {

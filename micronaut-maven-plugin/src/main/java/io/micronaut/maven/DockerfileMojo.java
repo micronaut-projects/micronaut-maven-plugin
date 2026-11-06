@@ -130,6 +130,17 @@ public class DockerfileMojo extends AbstractDockerMojo {
     @Parameter(property = "micronaut.docker.jdkAotCache.trainingTimeout", defaultValue = "180")
     private int jdkAotCacheTrainingTimeout;
 
+    /**
+     * Whether the dependency JARs of the JVM image are written with every entry STORED, so that the JVM does not
+     * inflate the classes it reads from them. It makes starts without a JDK AOT cache faster, and the unpacked image
+     * bigger. A repacked JAR no longer has the checksum of the published artifact, which some vulnerability scanners
+     * rely on. Signed JARs are copied unchanged. Only for {@code docker} packaging and the default runtime.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = "micronaut.docker.storedDependencies", defaultValue = "false")
+    private boolean storedDependencies;
+
     @Inject
     public DockerfileMojo(MavenProject mavenProject, DockerService dockerService, JibConfigurationService jibConfigurationService,
                           ApplicationConfigurationService applicationConfigurationService, ExecutorService executorService,
@@ -146,7 +157,8 @@ public class DockerfileMojo extends AbstractDockerMojo {
             if (jdkAotCache && packaging != Packaging.DOCKER) {
                 getLog().warn("micronaut.docker.jdkAotCache only applies to " + Packaging.DOCKER.id() + " packaging, ignoring it");
             }
-            copyDependencies(jdkAotCache);
+            copyDependencies(jdkAotCache, storedDependencies && packaging == Packaging.DOCKER
+                && runtime.getBuildStrategy() == DockerBuildStrategy.DEFAULT);
             var dockerfile = switch (packaging) {
                 case DOCKER_NATIVE -> buildDockerfileNative(runtime);
                 case DOCKER -> buildDockerfile(runtime);
