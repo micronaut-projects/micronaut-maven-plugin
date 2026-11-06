@@ -25,6 +25,7 @@ import org.apache.maven.plugin.logging.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serial;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -84,6 +85,9 @@ public final class JdkAotCacheTraining {
     private static final int COMMAND_NOT_EXECUTABLE = 126;
     private static final int COMMAND_NOT_FOUND = 127;
     private static final Pattern JAVA_VERSION = Pattern.compile(" version \"(\\d+)(?:\\.(\\d+))?");
+    private static final Pattern GARBAGE_COLLECTOR = Pattern.compile("-XX:\\+Use(Serial|Parallel|G1|Z|Shenandoah|Epsilon)GC");
+    private static final List<String> JVM_OPTIONS_VARIABLES = List.of("JAVA_TOOL_OPTIONS", JDK_JAVA_OPTIONS);
+    private static final String DEFAULT_TRAINING_COLLECTOR = "-XX:+UseG1GC";
     private static final Pattern COMPATIBLE_OOP_COMPRESSION = Pattern.compile("(?m)^\\s*bool\\s+" + COMPATIBLE_OOP_COMPRESSION_FLAG + "\\s");
 
     private final DockerService dockerService;
@@ -91,6 +95,7 @@ public final class JdkAotCacheTraining {
     private final List<String> trainingPaths;
     private final int timeoutSeconds;
     private final String networkMode;
+    private final boolean byDefault;
 
     /**
      * @param dockerService the Docker service
@@ -101,11 +106,26 @@ public final class JdkAotCacheTraining {
      */
     public JdkAotCacheTraining(DockerService dockerService, Log log, List<String> trainingPaths, int timeoutSeconds,
                                String networkMode) {
+        this(dockerService, log, trainingPaths, timeoutSeconds, networkMode, false);
+    }
+
+    /**
+     * @param dockerService the Docker service
+     * @param log the Maven log
+     * @param trainingPaths the paths of the warm-up GET requests
+     * @param timeoutSeconds the timeout of each step of the training run
+     * @param networkMode the network of the training container, if any
+     * @param byDefault whether the cache is trained by default, without {@code micronaut.docker.jdkAotCache}. Then an
+     * image that selects no garbage collector is trained with G1 on Java 25, and keeps the collector that the JVM picks
+     */
+    public JdkAotCacheTraining(DockerService dockerService, Log log, List<String> trainingPaths, int timeoutSeconds,
+                               String networkMode, boolean byDefault) {
         this.dockerService = dockerService;
         this.log = log;
         this.trainingPaths = trainingPaths;
         this.timeoutSeconds = timeoutSeconds;
         this.networkMode = networkMode;
+        this.byDefault = byDefault;
     }
 
     /**
@@ -121,7 +141,8 @@ public final class JdkAotCacheTraining {
         String[] imageEnvironment = image.getConfig() == null ? null : image.getConfig().getEnv();
         JavaRuntime java = probeJava(imageId);
         Integer port = run.usesSwitch() ? null : httpPort(image);
-        Map<String, String> environment = trainingEnvironment(imageEnvironment, java, run, trainingPaths);
+        List<String> collector = byDefault ? defaultCollector(image, java) : List.of();
+        Map<String, String> environment = trainingEnvironment(imageEnvironment, java, run, trainingPaths, collector);
         environment.forEach((name, value) -> log.info("JDK AOT cache: training with " + name + "=" + value));
 
         String containerId = dockerService.createContainer(imageId, networkMode, environment);
@@ -200,9 +221,15 @@ public final class JdkAotCacheTraining {
 
     static Map<String, String> trainingEnvironment(String[] imageEnvironment, JavaRuntime java, TrainingRun run,
                                                   List<String> trainingPaths) {
+        return trainingEnvironment(imageEnvironment, java, run, trainingPaths, List.of());
+    }
+
+    static Map<String, String> trainingEnvironment(String[] imageEnvironment, JavaRuntime java, TrainingRun run,
+                                                  List<String> trainingPaths, List<String> extraOptions) {
         var environment = new LinkedHashMap<String, String>();
         var options = new ArrayList<String>();
         imageVariable(imageEnvironment, JDK_JAVA_OPTIONS).ifPresent(options::add);
+        options.addAll(extraOptions);
         options.add("-XX:AOTCacheOutput=" + CONTAINER_CACHE_FILE);
         options.add(NO_PERF_DATA);
         options.addAll(run.systemProperties(trainingPaths));
@@ -216,6 +243,33 @@ public final class JdkAotCacheTraining {
             environment.put(JDK_AOT_VM_OPTIONS, String.join(" ", aotOptions));
         }
         return environment;
+    }
+
+    /**
+     * Without a collector flag, the JVM picks the collector from the CPUs and memory it finds. On Java 25, a cache
+     * trained with G1 also serves the classes of a JVM that picked SerialGC, so the default trains with G1 and leaves
+     * the collector of the image to the deployment. Later versions keep the rule of the option until that is measured.
+     */
+    private List<String> defaultCollector(InspectImageResponse image, JavaRuntime java) throws MojoExecutionException {
+        var config = image.getConfig();
+        List<String> entrypoint = config == null || config.getEntrypoint() == null ? List.of() : Arrays.asList(config.getEntrypoint());
+        String[] imageEnvironment = config == null ? null : config.getEnv();
+        boolean selected = entrypoint.stream().anyMatch(argument -> argument != null && GARBAGE_COLLECTOR.matcher(argument).find())
+            || JVM_OPTIONS_VARIABLES.stream()
+                .map(name -> imageVariable(imageEnvironment, name))
+                .flatMap(Optional::stream)
+                .anyMatch(value -> GARBAGE_COLLECTOR.matcher(value).find());
+        if (selected) {
+            return List.of();
+        }
+        if (java.majorVersion() != MINIMUM_JAVA_VERSION) {
+            throw new MojoExecutionException("the image selects no garbage collector and runs Java " + java.majorVersion()
+                + ", where a cache trained with one collector is not known to work with another. Set one in the Jib "
+                + "container.jvmFlags, for example -XX:+UseSerialGC or -XX:+UseG1GC");
+        }
+        log.info("JDK AOT cache: training with " + DEFAULT_TRAINING_COLLECTOR + ", and the image keeps the garbage "
+            + "collector that the JVM picks");
+        return List.of(DEFAULT_TRAINING_COLLECTOR);
     }
 
     static Optional<Integer> firstTcpPort(ExposedPort[] exposedPorts) {
@@ -256,7 +310,7 @@ public final class JdkAotCacheTraining {
                 + output.exitCode() + " in the training image: " + lastLines(output.output()));
         }
         if (java.get().majorVersion() < MINIMUM_JAVA_VERSION) {
-            throw new MojoExecutionException("micronaut.docker.jdkAotCache needs Java " + MINIMUM_JAVA_VERSION
+            throw new UnsupportedJavaException("micronaut.docker.jdkAotCache needs Java " + MINIMUM_JAVA_VERSION
                 + " or later in the image, but the base image runs Java " + java.get().majorVersion()
                 + ". Use a base image with Java " + MINIMUM_JAVA_VERSION + " or later.");
         }
@@ -313,6 +367,20 @@ public final class JdkAotCacheTraining {
     private static String lastLines(String output) {
         List<String> lines = output.lines().filter(line -> !line.isBlank()).toList();
         return String.join(System.lineSeparator(), lines.subList(Math.max(0, lines.size() - 3), lines.size()));
+    }
+
+    /**
+     * The base image runs a Java version that cannot train a JDK AOT cache. When the cache is trained by default, this
+     * is a choice of base image rather than a failure.
+     */
+    public static final class UnsupportedJavaException extends MojoExecutionException {
+
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        UnsupportedJavaException(String message) {
+            super(message);
+        }
     }
 
     /**

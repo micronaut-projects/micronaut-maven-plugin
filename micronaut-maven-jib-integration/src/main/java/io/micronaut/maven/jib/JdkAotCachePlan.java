@@ -48,7 +48,8 @@ import java.util.stream.Stream;
 /**
  * Changes the Jib build plan of the {@code docker} packaging when it trains a JDK AOT cache
  * ({@code micronaut.docker.jdkAotCache}). The {@code docker} goal drives these changes through project properties: the
- * extension builds for the Docker daemon's platform only, requires an explicit garbage collector and, in the final build,
+ * extension builds for the Docker daemon's platform only, requires an explicit garbage collector unless the cache is
+ * trained by default and, in the final build,
  * adds the trained cache and the {@code -XX:AOTCache} flag, with the base image pinned to the digest the training build
  * pulled.
  *
@@ -72,6 +73,13 @@ final class JdkAotCachePlan {
      * Whether the final build pins a registry base image to the digest that the training build pulled.
      */
     static final String PIN_BASE_IMAGE_PROPERTY = "micronaut.docker.jdkAotCache.internal.pinBaseImage";
+
+    /**
+     * Whether the cache is trained by default, without {@code micronaut.docker.jdkAotCache}. Then the {@code docker}
+     * goal checks the garbage collector once it knows the Java version of the image, and the image keeps the collector
+     * that the JVM picks.
+     */
+    static final String BY_DEFAULT_PROPERTY = "micronaut.docker.jdkAotCache.internal.byDefault";
 
     /**
      * The name of the layer that holds the cache.
@@ -131,7 +139,9 @@ final class JdkAotCachePlan {
             throw new JibPluginExtensionException(JibMicronautExtension.class, "micronaut.docker.jdkAotCache needs "
                 + "Jib's default java entrypoint, but the entrypoint is " + entrypoint);
         }
-        if (!selectsGarbageCollector(entrypoint, buildPlan.getEnvironment())) {
+        var properties = mavenData.getMavenProject().getProperties();
+        boolean byDefault = Boolean.parseBoolean(properties.getProperty(BY_DEFAULT_PROPERTY));
+        if (!byDefault && !selectsGarbageCollector(entrypoint, buildPlan.getEnvironment())) {
             throw new JibPluginExtensionException(JibMicronautExtension.class, "micronaut.docker.jdkAotCache needs an "
                 + "explicit garbage collector in the Jib container.jvmFlags, for example -XX:+UseSerialGC or "
                 + "-XX:+UseG1GC. Parts of a JDK AOT cache depend on the collector that trained it, and without the "
@@ -139,7 +149,6 @@ final class JdkAotCachePlan {
                 + "the build and the deployment.");
         }
 
-        var properties = mavenData.getMavenProject().getProperties();
         String cacheFile = properties.getProperty(CACHE_FILE_PROPERTY);
         if (StringUtils.isEmpty(cacheFile)) {
             return;

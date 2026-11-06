@@ -471,6 +471,61 @@ class DockerfileMojoTest {
     }
 
     @Test
+    void jdkAotCacheIsTrainedByDefaultWithAFallbackThatKeepsTheImageWithoutIt(@TempDir Path tempDir) throws Exception {
+        var mojo = jdkAotCacheMojo(tempDir, MicronautJars.withLoadMode(tempDir), Optional.of("8080"));
+        setParameter(mojo, "jdkAotCache", null);
+        var log = mock(Log.class);
+        mojo.setLog(log);
+
+        mojo.execute();
+
+        List<String> dockerfile = Files.readAllLines(tempDir.resolve("target/Dockerfile"));
+        assertTrue(dockerfile.contains("RUN bash /home/app/training.sh train --fallback /home/app/aot.args /home/app/app.aot "
+            + "8080 180 load -- java -XX:+UseG1GC -cp @/home/app/classpath 'example.Application' && rm /home/app/training.sh"),
+            dockerfile.toString());
+        // No collector in the image: the deployment's JVM picks it
+        assertTrue(dockerfile.contains("ENTRYPOINT [\"java\", \"@/home/app/aot.args\", \"-cp\", \"@/home/app/classpath\", "
+            + "\"example.Application\"]"), dockerfile.toString());
+        assertTrue(Files.exists(tempDir.resolve("target/jdk-aot-cache/training.sh")));
+        assertTrue(infoMessages(log).contains("JDK AOT cache: the image trains one by default, which makes the "
+            + "application start faster. Set -Dmicronaut.docker.jdkAotCache=false to build the image without it, or "
+            + "-Dmicronaut.docker.jdkAotCache=true to make a training failure fail the build"));
+    }
+
+    @Test
+    void jdkAotCacheIsNotTrainedByDefaultWithoutTheLoadMode(@TempDir Path tempDir) throws Exception {
+        var mojo = jdkAotCacheMojo(tempDir, MicronautJars.withSwitch(tempDir), Optional.of("8080"));
+        setParameter(mojo, "jdkAotCache", null);
+        var log = mock(Log.class);
+        mojo.setLog(log);
+
+        mojo.execute();
+
+        assertFalse(Files.exists(tempDir.resolve("target/Dockerfile")));
+        assertFalse(Files.exists(tempDir.resolve("target/jdk-aot-cache")));
+        assertTrue(infoMessages(log).contains("JDK AOT cache: not trained by default, because the application's "
+            + "Micronaut version has no LOAD training mode, which needs Micronaut Core 5.3.0 or later. Set "
+            + "-Dmicronaut.docker.jdkAotCache=true to train one"));
+    }
+
+    @Test
+    void jdkAotCacheIsNotTrainedByDefaultWithTheStartMode(@TempDir Path tempDir) throws Exception {
+        var mojo = jdkAotCacheMojo(tempDir, MicronautJars.withLoadMode(tempDir), Optional.of("8080"));
+        setParameter(mojo, "jdkAotCache", null);
+        setParameter(mojo, "jdkAotCacheTrainingMode", TrainingMode.START);
+        var log = mock(Log.class);
+        mojo.setLog(log);
+
+        mojo.execute();
+
+        assertFalse(Files.exists(tempDir.resolve("target/jdk-aot-cache")));
+        assertTrue(infoMessages(log).contains("JDK AOT cache: not trained by default, because "
+            + "micronaut.docker.jdkAotCache.trainingMode=START or micronaut.docker.jdkAotCache.trainingPaths is set, "
+            + "which only applies when micronaut.docker.jdkAotCache is true. Set -Dmicronaut.docker.jdkAotCache=true to "
+            + "train one"), infoMessages(log).toString());
+    }
+
+    @Test
     void jdkAotCacheOnlySupportsTheDefaultRuntime(@TempDir Path tempDir) {
         var project = mockProject(tempDir);
         when(project.getPackaging()).thenReturn("docker");
@@ -618,11 +673,13 @@ class DockerfileMojoTest {
         var jibConfigurationService = mock(JibConfigurationService.class);
         when(jibConfigurationService.getPorts()).thenReturn(ports);
         var dockerService = mock(DockerService.class);
-        when(dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE_JDK_AOT_CACHE)).thenAnswer(invocation -> {
-            Path dockerfile = baseDir.resolve("target/Dockerfile");
-            Files.copy(Path.of("src/main/resources/dockerfiles", DockerfileMojo.DOCKERFILE_JDK_AOT_CACHE), dockerfile);
-            return dockerfile.toFile();
-        });
+        for (String template : List.of(DockerfileMojo.DOCKERFILE_JDK_AOT_CACHE, DockerfileMojo.DOCKERFILE_JDK_AOT_CACHE_DEFAULT)) {
+            when(dockerService.loadDockerfileAsResource(template)).thenAnswer(invocation -> {
+                Path dockerfile = baseDir.resolve("target/Dockerfile");
+                Files.copy(Path.of("src/main/resources/dockerfiles", template), dockerfile);
+                return dockerfile.toFile();
+            });
+        }
         var mojo = new DockerfileMojo(project, dockerService, jibConfigurationService,
             mock(ApplicationConfigurationService.class), mock(ExecutorService.class), mockSession(project), mock(MojoExecution.class));
         mojo.micronautRuntime = "netty";

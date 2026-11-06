@@ -331,8 +331,9 @@ running the application once while it builds the image, and the image starts the
 independent of link:aot.html[Micronaut AOT], and the two can be combined.
 
 It works both with Jib and with `mn:dockerfile`: with `micronaut.docker.jdkAotCache` set, the generated `Dockerfile`
-trains the cache during `docker build`. The cache depends on the garbage collector, so with Jib you must select one in
-`container.jvmFlags` (the generated `Dockerfile` uses `-XX:+UseG1GC`):
+trains the cache during `docker build`. The cache depends on the garbage collector, so with Jib and `true` you must
+select one in `container.jvmFlags` (the generated `Dockerfile` uses `-XX:+UseG1GC`). Without the option, the cache is
+<<jdkAotCacheDefault,trained by default>> where the build allows it.
 
 [source,xml]
 ----
@@ -358,8 +359,9 @@ trains the cache during `docker build`. The cache depends on the garbage collect
 |Property |Default |Description
 
 |`micronaut.docker.jdkAotCache`
-|`false`
-|Trains a JDK AOT cache and starts the application with it.
+|Not set
+|`true` trains a JDK AOT cache and starts the application with it, and every problem fails the build. `false` builds
+the image without a cache. When not set, the cache is trained by default where the build allows it (see below).
 
 |`micronaut.docker.jdkAotCache.trainingMode`
 |See below
@@ -373,6 +375,38 @@ trains the cache during `docker build`. The cache depends on the garbage collect
 |`180`
 |Timeout of the training run, in seconds.
 |===
+
+[[jdkAotCacheDefault]]
+==== The cache trained by default
+
+When `micronaut.docker.jdkAotCache` is not set, `docker` packaging trains a cache in `LOAD` mode, which removes about
+30% of the start-up time of an application in our measurements. The build log says whether it did, or why not, and the
+image is built as before when one of these applies:
+
+* the application's Micronaut Core is older than 5.3.0, so it has no `LOAD` mode;
+* `micronaut.docker.jdkAotCache.trainingMode=START` or `trainingPaths` is set;
+* the runtime is `lambda` or `oracle_function`, or the project has its own `Dockerfile`;
+* with Jib: `container.entrypoint` is set, the containerizing mode is set to anything but `packaged`, the extra
+directories put files in `<appRoot>/classes` or `<appRoot>/resources`, the project does not declare the
+`maven-jar-plugin`, no Docker daemon answers, or the image would lose a platform (`jib.buildGoal=build` or `buildTar`
+with platforms other than the daemon's).
+
+If the training fails, the build logs a warning and builds the image without the cache. Set
+`-Dmicronaut.docker.jdkAotCache=false` to skip the training, or `true` to make every problem fail the build.
+
+On Java 25, when the image selects no garbage collector, the cache is trained with `-XX:+UseG1GC` and the image keeps
+the collector that the JVM picks: such a cache also works with the Serial collector. On later Java versions, select a
+collector in `container.jvmFlags`, or the image is built without the cache.
+
+The cache changes the image: it adds a layer with the cache, Jib's `packaged` mode puts the classes and resources in
+one JAR, so `/app/classes` and `/app/resources` are no longer on the class path, and a registry base image is pinned
+to the digest that the training pulled. The generated `Dockerfile` reads the cache option from `/home/app/aot.args`,
+which is empty if the training failed.
+
+The JVM ignores the cache, and logs `[error][aot]` lines at each start, when a deployment adds options that the
+training did not have, such as `-XX:StartFlightRecording`, a `-javaagent`, `--add-modules`, `--add-opens`, a JDWP agent,
+`-XX:+UseZGC`, or a heap too large for compressed oops. Those lines are the sign that the cache is not used: set
+`micronaut.docker.jdkAotCache` to `false` for such deployments.
 
 ==== Training modes
 
@@ -402,7 +436,8 @@ image is built for the platform of that daemon only.
 * The `lambda` and `oracle_function` runtimes are not supported.
 * With Jib, the option sets `jib.containerizingMode=packaged`, and a custom `container.entrypoint` is not supported.
 * The generated `Dockerfile` needs `bash` in the base image, and so does Jib with Micronaut Core before 5.3.0.
-* With Jib, every build trains a new cache, so every push uploads a new cache layer.
+* With Jib, every build trains a new cache, so every push uploads a new cache layer. The cache adds about 10% to the
+size of the image.
 * If you keep a generated `Dockerfile` in your project, generate it again with `mn:dockerfile` after you upgrade the
 plugin.
 
