@@ -41,7 +41,8 @@
                             </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:validate-configuration,
-                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
+                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
+                                ${project.groupId}:${project.artifactId}:${project.version}:precompile-logback
                             </prepare-package>
                             <package>
                                 org.apache.maven.plugins:maven-jar-plugin:jar,
@@ -104,6 +105,7 @@
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:validate-configuration,
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
+                                ${project.groupId}:${project.artifactId}:${project.version}:precompile-logback,
                                 org.apache.maven.plugins:maven-jar-plugin:jar
                             </prepare-package>
                             <package>
@@ -154,7 +156,8 @@
                             </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:validate-configuration,
-                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
+                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
+                                ${project.groupId}:${project.artifactId}:${project.version}:precompile-logback
                             </prepare-package>
                             <package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:docker
@@ -206,7 +209,8 @@
                             </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:validate-configuration,
-                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
+                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
+                                ${project.groupId}:${project.artifactId}:${project.version}:precompile-logback
                             </prepare-package>
                             <package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:docker-crac
@@ -265,6 +269,7 @@
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:validate-configuration,
                                 ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
+                                ${project.groupId}:${project.artifactId}:${project.version}:precompile-logback,
                                 org.graalvm.buildtools:native-maven-plugin:write-args-file
                             </prepare-package>
                             <package>
@@ -317,7 +322,8 @@
                             </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:validate-configuration,
-                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
+                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
+                                ${project.groupId}:${project.artifactId}:${project.version}:precompile-logback
                             </prepare-package>
                             <package>
                                 org.eclipse.jkube:kubernetes-maven-plugin:build
@@ -369,7 +375,8 @@
                             </test>
                             <prepare-package>
                                 ${project.groupId}:${project.artifactId}:${project.version}:validate-configuration,
-                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis
+                                ${project.groupId}:${project.artifactId}:${project.version}:aot-analysis,
+                                ${project.groupId}:${project.artifactId}:${project.version}:precompile-logback
                             </prepare-package>
                             <package>
                                 org.eclipse.jkube:openshift-maven-plugin:build

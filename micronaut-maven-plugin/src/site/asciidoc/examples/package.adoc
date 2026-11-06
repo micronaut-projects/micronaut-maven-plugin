@@ -406,6 +406,25 @@ image is built for the platform of that daemon only.
 * If you keep a generated `Dockerfile` in your project, generate it again with `mn:dockerfile` after you upgrade the
 plugin.
 
+== Precompiling `logback.xml`
+
+The `micronaut.logback.precompile` property compiles `logback.xml` into a Logback `Configurator` at build time, with https://micronaut-projects.github.io/micronaut-aot/latest/guide/[Micronaut AOT]'s Logback precompiler, so that the application does not parse XML at startup. It does not need Micronaut AOT to be enabled.
+
+[source,xml]
+----
+<properties>
+  <micronaut.logback.precompile>true</micronaut.logback.precompile>
+</properties>
+----
+
+Every packaging runs the `precompile-logback` goal in `prepare-package`, after `aot-analysis`. It writes the generated classes into `target/classes`, so the JAR, the shaded JAR, the Docker images and the native image all ship them. The tests, which run before it, keep configuring Logback from `logback.xml`.
+
+The precompiler only generates a configurator when it can prove that it configures Logback as Joran would: a `logback.xml` with Logback appenders, pattern encoders and loggers, Logback 1.5.37 or later in 1.5, and a target release (`maven.compiler.release`) of 25 or later. Otherwise, for example when the file uses variables, includes or a custom appender, or when the application or Micronaut AOT's `logback.xml.to.java` already registers a `Configurator`, it generates nothing and logs why, and Logback reads `logback.xml` at startup as before.
+
+`logback.xml` stays in the artifacts: at startup, the generated configurator hands over to Joran when `logback.configurationFile` or `logback.debug` is set, when a `logback-test.xml` is visible, when the first `logback.xml` on the class path is not the file that was compiled, or when `-Dmicronaut.logback.precompiled=false` is set. That also covers a later `mvn test` or `mn:run` without `clean`, which see the generated classes in `target/classes`.
+
+The goal records what it writes in `target/micronaut-logback/precompiled.txt`, and removes those files on the next build, so turning the property off takes effect without `clean`.
+
 == Delegating packaging to Eclipse JKube
 
 ----

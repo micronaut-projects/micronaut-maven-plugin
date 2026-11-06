@@ -32,6 +32,11 @@
             <artifactId>micronaut-maven-jib-integration</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.micronaut.aot</groupId>
+            <artifactId>micronaut-aot-logback</artifactId>
+            <version>${micronaut.aot.logback.version}</version>
+        </dependency>
 
         <!-- Maven -->
         <dependency>
