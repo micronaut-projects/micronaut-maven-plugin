@@ -1,6 +1,7 @@
 package io.micronaut.maven;
 
 import io.micronaut.maven.dev.BuildToolWatcher;
+import io.micronaut.maven.dev.ControlPanel;
 import io.micronaut.maven.dev.DevManifest;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.DependencyResolutionService;
@@ -13,6 +14,7 @@ import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.toolchain.ToolchainManager;
@@ -28,9 +30,13 @@ import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.resolution.DependencyRequest;
+import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.resolution.DependencyResult;
+import org.eclipse.aether.transfer.ArtifactNotFoundException;
+import org.eclipse.aether.transfer.ArtifactTransferException;
 import org.eclipse.aether.util.artifact.JavaScopes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,8 +51,11 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 import static io.micronaut.maven.core.MojoUtils.THIS_PLUGIN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -58,6 +67,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -566,6 +576,315 @@ class DevMojoTest {
 
         verify(process).destroy();
         verify(process).waitFor();
+    }
+
+    @Test
+    void theGoalAddsTheModulesTheDependencyManagementVersionsToTheManifest() throws Exception {
+        File runtimeJar = Files.createFile(directory.resolve("runtime.jar")).toFile();
+        when(mavenSession.getCurrentProject()).thenReturn(app);
+        when(mavenSession.getAllProjects()).thenReturn(List.of(app));
+        when(compilerService.resolveDependencies(app, true, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME)).thenReturn(List.of(dependency(runtimeJar)));
+        when(repositorySystem.resolveDependencies(any(), any())).thenAnswer(invocation -> resolve(invocation.getArgument(1)));
+        managed(app, ControlPanel.PLATFORM_GROUP, "micronaut-parent", "5.2.4");
+        managed(app, ControlPanel.GROUP, "micronaut-control-panel-ui", "2.2.0");
+        managed(app, ControlPanel.GROUP, "micronaut-control-panel-management", "2.2.0");
+        setField("controlPanel", true);
+        setField("manifestOnly", true);
+        Log log = logged();
+
+        mojo.execute();
+
+        Path manifestDirectory = directory.resolve("app/target/micronaut-dev");
+        assertEquals(List.of(
+            runtimeJar.getAbsolutePath(),
+            directory.resolve("micronaut-control-panel-ui-2.2.0.jar").toFile().getAbsolutePath(),
+            directory.resolve("micronaut-control-panel-management-2.2.0.jar").toFile().getAbsolutePath(),
+            manifestDirectory.resolve(ControlPanel.RESOURCES_DIRECTORY_NAME).toFile().getAbsolutePath()
+        ), Files.readAllLines(manifestDirectory.resolve("runtime.argfile")));
+        verify(log).info(argThat((CharSequence line) -> line.toString().contains("io.micronaut.controlpanel:micronaut-control-panel-testing is not versioned by the dependency management")));
+        verify(log).info(argThat((CharSequence line) -> line.toString().contains("[micronaut-control-panel-ui, micronaut-control-panel-management]")));
+    }
+
+    @Test
+    void theControlPanelAddsWhatTheRuntimeClasspathDoesNotHoldOnce() throws Exception {
+        File runtimeJar = directory.resolve("runtime.jar").toFile();
+        when(compilerService.resolveDependencies(app, true, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME)).thenReturn(List.of(dependency(runtimeJar)));
+        File shared = directory.resolve("shared.jar").toFile();
+        List<String> requested = controlPanelOn("5.2.4", module -> switch (module) {
+            // the application's own version of a module wins over the one a panel brings
+            case "micronaut-control-panel-ui" -> List.of(panel(module), result(shared), result(directory.resolve("other/runtime.jar").toFile()));
+            // what another panel brought is not added a second time, even from another file
+            case "micronaut-control-panel-management" -> List.of(panel(module), result(directory.resolve("other/shared.jar").toFile()));
+            default -> List.of(panel(module));
+        });
+
+        assertEquals(List.of(
+            jar("micronaut-control-panel-ui"),
+            shared,
+            jar("micronaut-control-panel-management"),
+            jar("micronaut-control-panel-testing"),
+            controlPanelResources().toFile()
+        ), controlPanelClasspath());
+        assertEquals(ControlPanel.BASE_MODULES, requested);
+        assertEquals(ControlPanel.DEFAULT_PROPERTIES, controlPanelSettings());
+    }
+
+    @Test
+    void thePanelsOfTheModulesTheApplicationUsesAreAdded() throws Exception {
+        when(compilerService.resolveDependencies(app, true, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME)).thenReturn(List.of(module("io.micronaut.kafka", "micronaut-kafka")));
+        List<String> requested = controlPanelOn("5.2.4", module -> List.of(panel(module)));
+
+        assertTrue(controlPanelClasspath().contains(jar("micronaut-control-panel-kafka")));
+        assertEquals("micronaut-control-panel-kafka", requested.getLast());
+    }
+
+    @Test
+    void theRuntimeAndTheLauncherShareOneResolutionOfTheControlPanel() throws Exception {
+        File runtimeJar = Files.createFile(directory.resolve("runtime.jar")).toFile();
+        File launcherJar = directory.resolve("micronaut-dev-5.3.0.jar").toFile();
+        when(compilerService.resolveDependencies(app, true, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME)).thenReturn(List.of(dependency(runtimeJar)));
+        when(mavenSession.getAllProjects()).thenReturn(List.of(app));
+        List<String> requested = controlPanelOn("5.2.4", module -> "micronaut-dev".equals(module)
+            ? List.of(result(new DefaultArtifact("io.micronaut", "micronaut-dev", "jar", "5.3.0"), launcherJar))
+            : List.of(panel(module)));
+        Path manifestDirectory = directory.resolve("app/target/micronaut-dev");
+
+        Path manifest = mojo.buildManifest(manifestDirectory).writeTo(manifestDirectory);
+        @SuppressWarnings("unchecked")
+        List<String> args = (List<String>) invoke("launchArguments", new Class<?>[] {Path.class}, manifest);
+
+        List<String> runtime = new ArrayList<>(List.of(runtimeJar.getAbsolutePath()));
+        controlPanelClasspath().forEach(file -> runtime.add(file.getAbsolutePath()));
+        assertEquals(runtime, Files.readAllLines(manifestDirectory.resolve("runtime.argfile")));
+        assertEquals(5, runtime.size());
+        runtime.add(launcherJar.getAbsolutePath());
+        assertEquals(String.join(File.pathSeparator, runtime), args.get(args.indexOf("-classpath") + 1),
+            "the runtime classpath, then the Control Panel, then the launcher");
+        assertEquals(ControlPanel.BASE_MODULES, requested.subList(0, 3));
+        assertEquals(1, requested.stream().filter("micronaut-control-panel-ui"::equals).count());
+    }
+
+    @Test
+    void aModuleTheApplicationDeclaresIsNotResolvedAgainAndGetsTheSettings() throws Exception {
+        when(compilerService.resolveDependencies(app, true, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME)).thenReturn(ControlPanel.BASE_MODULES.stream()
+            .map(module -> module(ControlPanel.GROUP, module))
+            .toList());
+        List<String> requested = controlPanelOn("5.2.4", module -> {
+            throw new AssertionError("Resolved " + module);
+        });
+        Log log = logged();
+
+        assertEquals(List.of(controlPanelResources().toFile()), controlPanelClasspath());
+        assertEquals(List.of(), requested);
+        assertEquals(ControlPanel.DEFAULT_PROPERTIES, controlPanelSettings());
+        verify(log, never()).info(any(CharSequence.class));
+    }
+
+    @Test
+    void theApplicationsSecurityKeepsDecidingWhoOpensThePanels() throws Exception {
+        when(compilerService.resolveDependencies(app, true, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME)).thenReturn(List.of(module("io.micronaut.security", "micronaut-security")));
+        controlPanelOn("5.2.4", module -> List.of(panel(module)));
+
+        controlPanelClasspath();
+
+        assertEquals(ControlPanel.SECURED_PROPERTIES, controlPanelSettings());
+    }
+
+    @Test
+    void aModuleThatIsNotPublishedIsLeftOut() throws Exception {
+        List<String> requested = controlPanelOn("5.2.4", module -> {
+            if ("micronaut-control-panel-testing".equals(module)) {
+                throw resolutionFailure(new ArtifactNotFoundException(new DefaultArtifact(ControlPanel.GROUP, module, "jar", "2.2.0"), null));
+            }
+            return List.of(panel(module));
+        });
+        Log log = logged();
+
+        assertEquals(List.of(jar("micronaut-control-panel-ui"), jar("micronaut-control-panel-management"), controlPanelResources().toFile()), controlPanelClasspath());
+        assertEquals(ControlPanel.BASE_MODULES, requested);
+        verify(log).info(argThat((CharSequence line) -> line.toString().contains("io.micronaut.controlpanel:micronaut-control-panel-testing is not published")));
+        verify(log).info(argThat((CharSequence line) -> line.toString().contains("[micronaut-control-panel-ui, micronaut-control-panel-management]")));
+    }
+
+    @Test
+    void withoutAnyModuleThereIsNoControlPanelAndNoSettings() throws Exception {
+        Path stale = staleControlPanelSettings();
+        controlPanelOn("5.2.4", module -> {
+            throw resolutionFailure(new ArtifactNotFoundException(new DefaultArtifact(ControlPanel.GROUP, module, "jar", "2.2.0"), null));
+        });
+        Log log = logged();
+
+        assertEquals(List.of(), controlPanelClasspath());
+        assertFalse(Files.exists(stale));
+        verify(log, never()).info(argThat((CharSequence line) -> line.toString().startsWith("Adding Micronaut Control Panel")));
+    }
+
+    @Test
+    void aModuleTheDependencyManagementDoesNotVersionIsLeftOutButNotWhatItBrought() throws Exception {
+        File transitive = directory.resolve("transitive.jar").toFile();
+        controlPanelOn("5.2.4", module -> "micronaut-control-panel-ui".equals(module)
+            ? List.of(result(transitive), new ArtifactResult(new ArtifactRequest()))
+            : List.of());
+        Log log = logged();
+
+        // none of the modules themselves resolved: there is no Control Panel to configure
+        assertEquals(List.of(transitive), controlPanelClasspath());
+        assertFalse(Files.exists(controlPanelResources()));
+        verify(log).info(argThat((CharSequence line) -> line.toString().contains("io.micronaut.controlpanel:micronaut-control-panel-ui is not versioned by the dependency management")));
+    }
+
+    @Test
+    void anyOtherResolutionFailureFailsTheGoalAndSaysHowToDisableIt() throws Exception {
+        controlPanelOn("5.2.4", module -> {
+            throw resolutionFailure(new ArtifactTransferException(new DefaultArtifact(ControlPanel.GROUP, module, "jar", "2.2.0"), null, "Connection refused"));
+        });
+
+        Throwable failure = assertThrows(InvocationTargetException.class, this::controlPanelClasspath).getCause();
+
+        assertInstanceOf(MojoExecutionException.class, failure);
+        assertTrue(failure.getMessage().contains("io.micronaut.controlpanel:micronaut-control-panel-ui"), failure.getMessage());
+        assertTrue(failure.getMessage().contains("mn.dev.controlPanel=false"), failure.getMessage());
+        assertInstanceOf(DependencyResolutionException.class, failure.getCause());
+    }
+
+    @Test
+    void settingsThatCannotBeWrittenFailTheGoal() throws Exception {
+        controlPanelOn("5.2.4", module -> List.of(panel(module)));
+        // a file where the directory of the settings goes
+        Files.createDirectories(controlPanelResources().getParent());
+        Files.createFile(controlPanelResources());
+
+        Throwable failure = assertThrows(InvocationTargetException.class, this::controlPanelClasspath).getCause();
+
+        assertInstanceOf(MojoExecutionException.class, failure);
+        assertTrue(failure.getMessage().startsWith("Cannot write the Micronaut Control Panel settings to " + controlPanelResources()), failure.getMessage());
+    }
+
+    @Test
+    void anOlderPlatformLeavesTheControlPanelOutAndSaysWhy() throws Exception {
+        Path stale = staleControlPanelSettings();
+        List<String> requested = controlPanelOn("5.2.3", module -> List.of(panel(module)));
+        Log log = logged();
+
+        assertEquals(List.of(), controlPanelClasspath());
+        assertEquals(List.of(), requested);
+        assertFalse(Files.exists(stale));
+        verify(log).warn(argThat((CharSequence line) -> line.toString().contains("requires Micronaut Platform 5.2.4 or later") && line.toString().contains("the build uses 5.2.3")));
+    }
+
+    @Test
+    void aBuildWithoutThePlatformLeavesTheControlPanelOutAndSaysWhy() throws Exception {
+        setField("runnableProject", app);
+        setField("controlPanel", true);
+        Log log = logged();
+
+        assertEquals(List.of(), controlPanelClasspath());
+        verify(log).warn(argThat((CharSequence line) -> line.toString().contains("the build uses no Micronaut Platform")));
+    }
+
+    @Test
+    void aDisabledControlPanelResolvesNothingAndRemovesTheSettingsOfAnEarlierRun() throws Exception {
+        Path stale = staleControlPanelSettings();
+        List<String> requested = controlPanelOn("5.2.4", module -> List.of(panel(module)));
+        setField("controlPanel", false);
+        Log log = logged();
+
+        assertEquals(List.of(), controlPanelClasspath());
+        assertEquals(List.of(), requested);
+        assertFalse(Files.exists(stale));
+        verify(log, never()).warn(any(CharSequence.class));
+    }
+
+    @Test
+    void theManifestSaysWhetherTheApplicationListensOnLocalhost() throws Exception {
+        when(mavenSession.getAllProjects()).thenReturn(List.of(app));
+        setField("runnableProject", app);
+        Path manifestDirectory = directory.resolve("app/target/micronaut-dev");
+
+        setField("bindLoopback", true);
+        assertEquals("true", mojo.buildManifest(manifestDirectory).entries().get(DevManifest.BIND_LOOPBACK));
+        setField("bindLoopback", false);
+        assertEquals("false", mojo.buildManifest(manifestDirectory).entries().get(DevManifest.BIND_LOOPBACK));
+    }
+
+    /**
+     * What a Control Panel module resolves to.
+     */
+    @FunctionalInterface
+    private interface ModuleResolution {
+        List<ArtifactResult> resolve(String artifactId) throws DependencyResolutionException;
+    }
+
+    /**
+     * Turns the Control Panel on for a project of a platform.
+     *
+     * @return the artifact ids requested so far, each versioned by the dependency management
+     */
+    private List<String> controlPanelOn(String platform, ModuleResolution resolution) throws Exception {
+        managed(app, ControlPanel.PLATFORM_GROUP, "micronaut-parent", platform);
+        setField("runnableProject", app);
+        setField("controlPanel", true);
+        List<String> requested = new ArrayList<>();
+        DependencyResolutionService service = mock(DependencyResolutionService.class);
+        when(service.artifactResultsFor(any(), eq(true))).thenAnswer(invocation -> {
+            Stream<Artifact> artifacts = invocation.getArgument(0);
+            Artifact artifact = artifacts.findFirst().orElseThrow();
+            assertEquals("", artifact.getVersion());
+            requested.add(artifact.getArtifactId());
+            return resolution.resolve(artifact.getArtifactId());
+        });
+        setField("dependencyResolutionService", service);
+        return requested;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<File> controlPanelClasspath() throws Exception {
+        return (List<File>) invoke("controlPanelClasspath");
+    }
+
+    private Path controlPanelResources() {
+        return directory.resolve("app/target/micronaut-dev").resolve(ControlPanel.RESOURCES_DIRECTORY_NAME);
+    }
+
+    private Map<String, String> controlPanelSettings() throws Exception {
+        Properties settings = new Properties();
+        try (Reader reader = Files.newBufferedReader(controlPanelResources().resolve(ControlPanel.PROPERTIES_RESOURCE))) {
+            settings.load(reader);
+        }
+        Map<String, String> result = new HashMap<>();
+        settings.stringPropertyNames().forEach(name -> result.put(name, settings.getProperty(name)));
+        return result;
+    }
+
+    private Path staleControlPanelSettings() throws Exception {
+        ControlPanel.writeResources(controlPanelResources(), List.of());
+        Path settings = controlPanelResources().resolve(ControlPanel.PROPERTIES_RESOURCE);
+        assertTrue(Files.isRegularFile(settings));
+        return settings;
+    }
+
+    private Log logged() {
+        Log log = mock(Log.class);
+        mojo.setLog(log);
+        return log;
+    }
+
+    private File jar(String module) {
+        return directory.resolve(module + ".jar").toFile();
+    }
+
+    private ArtifactResult panel(String module) {
+        return result(new DefaultArtifact(ControlPanel.GROUP, module, "jar", "2.2.0"), jar(module));
+    }
+
+    private Dependency module(String groupId, String artifactId) {
+        return new Dependency(new DefaultArtifact(groupId, artifactId, "jar", "1.0").setFile(directory.resolve(artifactId + ".jar").toFile()), JavaScopes.RUNTIME);
+    }
+
+    private static DependencyResolutionException resolutionFailure(Exception cause) {
+        ArtifactResult failed = new ArtifactResult(new ArtifactRequest(new DefaultArtifact(ControlPanel.GROUP, "failed", "jar", "2.2.0"), List.of(), null));
+        failed.addException(cause);
+        return new DependencyResolutionException(new DependencyResult(new DependencyRequest()), new ArtifactResolutionException(List.of(failed)));
     }
 
     private static MavenProject project(Path basedir, String artifactId, boolean withPlugin) throws Exception {
