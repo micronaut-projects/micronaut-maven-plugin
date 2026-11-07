@@ -82,7 +82,7 @@ public final class StoredJars {
                 return false;
             }
             return names(copy).equals(names(original));
-        } catch (IOException e) {
+        } catch (IOException _) {
             return false;
         }
     }
