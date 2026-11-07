@@ -61,7 +61,10 @@ FSEvents rather than by polling.
 == Reactor dependencies
 
 The outputs of the reactor projects the runnable one depends on are reloadable too, and their sources are compiled by
-the launcher into the runnable project's output, with the runnable project's compiler settings. A reactor whose modules
+the launcher with the runnable project's compiler settings, into `target/micronaut-dev/siblings` of the runnable
+project: the manifest names it as `micronaut.dev.compile.sibling-output`, each generation reads it first, and `package`
+does not, so a later `mvn package` without `clean` leaves those classes out. The launcher empties it when it starts,
+unless `mn:test` or another `mn:dev` is using it. A reactor whose modules
 need different compiler settings runs with `-Dmn.dev.compile=build-tool`, where Maven compiles each module as it is
 configured.
 

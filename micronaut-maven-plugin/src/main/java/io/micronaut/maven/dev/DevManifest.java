@@ -76,12 +76,20 @@ public final class DevManifest {
     public static final String GENERATIONS_DIRECTORY_NAME = "generations";
 
     /**
+     * The name of the directory, under {@value #DIRECTORY_NAME} in the runnable project's build directory, that the launcher
+     * compiles the sources of the other reactor projects into. Package does not read it and clean removes it. The same for
+     * {@code mn:dev} and {@code mn:test}, which share it as they share the class output.
+     */
+    public static final String SIBLINGS_DIRECTORY_NAME = "siblings";
+
+    /**
      * The entry of whether the launcher binds the application's HTTP server to {@code localhost} by default, at the
      * lowest precedence.
      */
     public static final String BIND_LOOPBACK = "micronaut.dev.bind-loopback";
 
     private static final String PREFIX = "micronaut.dev.";
+    private static final String EMBEDDED = "embedded";
     private static final String COMPILER_PLUGIN = "org.apache.maven.plugins:maven-compiler-plugin";
     private static final String DEFAULT_COMPILE_EXECUTION = "default-compile";
     private static final String DEFAULT_TEST_COMPILE_EXECUTION = "default-testCompile";
@@ -124,8 +132,7 @@ public final class DevManifest {
         manifest.entries.put(PREFIX + "project-dir", project.getBasedir().getAbsolutePath());
         manifest.entries.put(PREFIX + "strategy", settings.strategy());
         manifest.entries.put(PREFIX + "runtime-classpath", manifest.argumentFile("runtime.argfile", paths(runtimeClasspath)));
-        // the runnable project's output first: a dependency's source compiles into it, and the generation reads the
-        // roots in order, so the new class is found before the dependency's own copy
+        // the launcher reads what it compiled of a dependency's sources ahead of these
         List<String> reloadable = new ArrayList<>();
         reloadable.add(project.getBuild().getOutputDirectory());
         for (MavenProject reactorProject : reactor) {
@@ -136,15 +143,21 @@ public final class DevManifest {
         manifest.entries.put(PREFIX + "reloadable", String.join(File.pathSeparator, reloadable));
         manifest.entries.put(PREFIX + "compile-classpath", manifest.argumentFile("compile.argfile", paths(compileClasspath)));
         manifest.entries.put(PREFIX + "processor-path", manifest.argumentFile("processors.argfile", paths(processorPath)));
-        // the sources of every reloadable project, the runnable one and the reactor projects it depends on: a
-        // change in a dependency compiles into the runnable project's output, which the generation reads first
+        // the sources of every reloadable project, the runnable one and the reactor projects it depends on
         List<String> javaSources = new ArrayList<>();
         List<String> groovySources = new ArrayList<>();
         List<String> resources = new ArrayList<>();
+        List<String> siblingSources = new ArrayList<>();
         for (MavenProject reactorProject : reactor) {
-            javaSources.addAll(existing(userSourceRoots(reactorProject)));
-            groovySources.addAll(existing(List.of(groovyRoot(reactorProject))));
+            List<String> java = existing(userSourceRoots(reactorProject));
+            List<String> groovy = existing(List.of(groovyRoot(reactorProject)));
+            javaSources.addAll(java);
+            groovySources.addAll(groovy);
             resources.addAll(liveResourceRoots(reactorProject));
+            if (!reactorProject.equals(project)) {
+                siblingSources.addAll(java);
+                siblingSources.addAll(groovy);
+            }
         }
         if (!javaSources.isEmpty()) {
             manifest.entries.put(PREFIX + "sources.java", String.join(File.pathSeparator, javaSources));
@@ -171,6 +184,12 @@ public final class DevManifest {
         }
         if (!groovySources.isEmpty()) {
             manifest.entries.put(PREFIX + "compile.groovy.output", output);
+        }
+        // package jars the runnable project's output as it finds it: what the launcher compiles of another reactor project
+        // goes apart. In build-tool mode each project compiles into its own output
+        if (!siblingSources.isEmpty() && EMBEDDED.equals(settings.compile())) {
+            manifest.entries.put(PREFIX + "compile.sibling-sources", String.join(File.pathSeparator, siblingSources));
+            manifest.entries.put(PREFIX + "compile.sibling-output", build.resolve(DIRECTORY_NAME).resolve(SIBLINGS_DIRECTORY_NAME).toString());
         }
         manifest.entries.put(PREFIX + "build-tool", "maven");
         manifest.entries.put(PREFIX + "build-tool.trigger", directory.resolve(TRIGGER_FILE_NAME).toString());
