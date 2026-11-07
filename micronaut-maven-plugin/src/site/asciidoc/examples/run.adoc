@@ -1,5 +1,8 @@
 = Running an application in development mode
 
+WARNING: `mn:run` is deprecated and will be removed in Micronaut 6. Use link:dev.html[`mn:dev`] instead. The goal logs
+a warning saying so when the application starts and when the goal finishes.
+
 It watches for changes in the project tree, and if they match certain conditions, it will recompile and restart the
 application.
 
