@@ -6,7 +6,9 @@ import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.ContainerConfig;
 import com.github.dockerjava.api.model.ExposedPort;
+import io.micronaut.maven.classpath.ClassPathTransformOptions;
 import io.micronaut.maven.classpath.ClassPathTransformService;
+import io.micronaut.maven.classpath.RewrittenClassPaths;
 import io.micronaut.maven.jdkaotcache.MicronautJars;
 import io.micronaut.maven.jdkaotcache.TrainingMode;
 import io.micronaut.maven.jib.JibConfiguration;
@@ -79,6 +81,82 @@ class DockerMojoTest {
         verify(executorService).executeGoal(project, "com.google.cloud.tools:jib-maven-plugin", "buildTar");
         // Only Jib's packaged mode, which the JDK AOT cache uses, needs the application JAR
         verify(executorService, never()).executeGoal(project, "org.apache.maven.plugins:maven-jar-plugin", "jar");
+    }
+
+    @Test
+    void buildsTheImageFromTheRewrittenClassPath(@TempDir Path tempDir) throws Exception {
+        var project = mockProject(tempDir);
+        var build = new Build();
+        build.setDirectory(tempDir.resolve("target").toString());
+        Path classes = tempDir.resolve("target/classes");
+        build.setOutputDirectory(classes.toString());
+        when(project.getBuild()).thenReturn(build);
+        when(project.getArtifacts()).thenReturn(Set.of());
+        Path copy = tempDir.resolve("target/class-path-transform/docker/copies/classes");
+        var classPathTransformService = mock(ClassPathTransformService.class);
+        when(classPathTransformService.rewrite(eq(project), eq(new ClassPathTransformOptions(true, false, "1.0")),
+            eq(classes), eq("docker"), any(Log.class))).thenReturn(RewrittenClassPaths.of(Map.of(classes.toAbsolutePath(), copy)));
+        var executorService = mock(ExecutorService.class);
+        var packagedClasses = new ArrayList<String>();
+        doAnswer(invocation -> packagedClasses.add(build.getOutputDirectory()))
+            .when(executorService).executeGoal(eq(project), eq("com.google.cloud.tools:jib-maven-plugin"), any());
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getFromImage()).thenReturn(Optional.empty());
+        var mojo = new DockerMojo(project, jibConfigurationService, null, null, mockSession(project),
+            mock(MojoExecution.class), executorService, classPathTransformService);
+        mojo.micronautRuntime = "NONE";
+        mojo.jibBuildGoal = "buildTar";
+        mojo.classPathTransformDesugarLambdas = true;
+        mojo.classPathTransformVersion = "1.0";
+
+        mojo.execute();
+
+        assertEquals(List.of(copy.toString()), packagedClasses);
+        assertEquals(classes.toString(), build.getOutputDirectory());
+    }
+
+    @Test
+    void jdkAotCachePackagesTheRewrittenApplicationJar(@TempDir Path tempDir) throws Exception {
+        var project = mockProject(tempDir);
+        when(project.getBuild().getFinalName()).thenReturn("demo-1.0");
+        when(project.getArtifacts()).thenReturn(Set.of());
+        Path jar = Files.writeString(Files.createDirectories(tempDir.resolve("target")).resolve("demo-1.0.jar"), "original");
+        Path copy = Files.writeString(tempDir.resolve("copy.jar"), "rewritten");
+        var classPathTransformService = mock(ClassPathTransformService.class);
+        when(classPathTransformService.rewrite(eq(project), any(), eq(jar), eq("docker"), any(Log.class)))
+            .thenReturn(RewrittenClassPaths.of(Map.of(jar.toAbsolutePath(), copy)));
+        var executorService = mock(ExecutorService.class);
+        var mojo = new DockerMojo(project, jdkAotCacheJibConfiguration(), null, trainingDockerService(), mockSession(project),
+            mock(MojoExecution.class), executorService, classPathTransformService);
+        mojo.micronautRuntime = "NONE";
+        mojo.jibBuildGoal = "dockerBuild";
+        setParameter(mojo, "jdkAotCache", true);
+        setParameter(mojo, "jdkAotCacheTrainingPaths", List.of("/hello"));
+        setParameter(mojo, "jdkAotCacheTrainingTimeout", 180);
+
+        mojo.execute();
+
+        assertEquals("rewritten", Files.readString(jar));
+    }
+
+    @Test
+    void jdkAotCacheFailsWhenTheApplicationJarCannotBeReplaced(@TempDir Path tempDir) throws Exception {
+        var project = mockProject(tempDir);
+        when(project.getBuild().getFinalName()).thenReturn("demo-1.0");
+        Path jar = Files.writeString(Files.createDirectories(tempDir.resolve("target")).resolve("demo-1.0.jar"), "original");
+        var classPathTransformService = mock(ClassPathTransformService.class);
+        when(classPathTransformService.rewrite(eq(project), any(), eq(jar), eq("docker"), any(Log.class)))
+            .thenReturn(RewrittenClassPaths.of(Map.of(jar.toAbsolutePath(), tempDir.resolve("missing.jar"))));
+        var mojo = new DockerMojo(project, jdkAotCacheJibConfiguration(), null, trainingDockerService(), mockSession(project),
+            mock(MojoExecution.class), mock(ExecutorService.class), classPathTransformService);
+        mojo.micronautRuntime = "NONE";
+        mojo.jibBuildGoal = "dockerBuild";
+        setParameter(mojo, "jdkAotCache", true);
+        setParameter(mojo, "jdkAotCacheTrainingTimeout", 180);
+
+        var e = assertThrows(MojoExecutionException.class, mojo::execute);
+
+        assertEquals("Unable to replace " + jar + " with its rewritten copy", e.getMessage());
     }
 
     @Test

@@ -1,6 +1,7 @@
 package io.micronaut.maven;
 
 import io.micronaut.maven.classpath.ClassPathTransformService;
+import io.micronaut.maven.classpath.RewrittenClassPaths;
 import io.micronaut.maven.jdkaotcache.MicronautJars;
 import io.micronaut.maven.jdkaotcache.TrainingMode;
 import io.micronaut.maven.jib.JibConfigurationService;
@@ -29,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
@@ -37,6 +39,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -459,6 +463,36 @@ class DockerfileMojoTest {
         assertTrue(Files.size(tempDir.resolve("target/jdk-aot-cache/application.jar")) > 0);
         assertTrue(Files.exists(tempDir.resolve("target/jdk-aot-cache/training.sh")));
         assertTrue(Files.exists(tempDir.resolve("target/dependency/release/a-1.0.jar")));
+    }
+
+    @Test
+    void copiesTheRewrittenClassesDirectory(@TempDir Path tempDir) throws Exception {
+        var project = mockProject(tempDir);
+        when(project.getPackaging()).thenReturn("docker");
+        Path classes = tempDir.resolve("target/classes");
+        when(project.getBuild().getOutputDirectory()).thenReturn(classes.toString());
+        Path copy = tempDir.resolve("target/class-path-transform/dockerfile/copies/classes");
+        var classPathTransformService = mock(ClassPathTransformService.class);
+        when(classPathTransformService.rewrite(eq(project), any(), eq(classes), eq("dockerfile"), any(Log.class)))
+            .thenReturn(RewrittenClassPaths.of(Map.of(classes.toAbsolutePath(), copy)));
+        var jibConfigurationService = mock(JibConfigurationService.class);
+        when(jibConfigurationService.getPorts()).thenReturn(Optional.of("8080"));
+        var dockerService = mock(DockerService.class);
+        when(dockerService.loadDockerfileAsResource(DockerfileMojo.DOCKERFILE)).thenAnswer(invocation -> {
+            Path dockerfile = tempDir.resolve("target/Dockerfile");
+            Files.copy(Path.of("src/main/resources/dockerfiles", DockerfileMojo.DOCKERFILE), dockerfile);
+            return dockerfile.toFile();
+        });
+        var mojo = new DockerfileMojo(project, dockerService, jibConfigurationService,
+            mock(ApplicationConfigurationService.class), mock(ExecutorService.class), mockSession(project),
+            mock(MojoExecution.class), classPathTransformService);
+        mojo.micronautRuntime = "netty";
+        mojo.mainClass = "example.Application";
+
+        mojo.execute();
+
+        List<String> dockerfile = Files.readAllLines(tempDir.resolve("target/Dockerfile"));
+        assertTrue(dockerfile.contains("COPY class-path-transform/dockerfile/copies/classes /home/app/classes"), dockerfile.toString());
     }
 
     @Test
