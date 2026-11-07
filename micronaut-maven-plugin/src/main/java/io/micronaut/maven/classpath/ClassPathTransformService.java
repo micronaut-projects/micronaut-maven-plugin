@@ -102,16 +102,13 @@ public class ClassPathTransformService {
         }
         for (Artifact artifact : project.getArtifacts()) {
             File file = artifact.getFile();
-            if (!IMAGE_SCOPES.contains(artifact.getScope()) || file == null || !file.exists()) {
-                continue;
-            }
-            Path entry = file.toPath().toAbsolutePath();
-            if (classPath.contains(entry)) {
-                continue;
-            }
-            classPath.add(entry);
-            if (file.isFile() && !reactor.contains(artifact.getGroupId() + ":" + artifact.getArtifactId())) {
-                thirdParty.add(entry);
+            if (IMAGE_SCOPES.contains(artifact.getScope()) && file != null && file.exists()
+                && !classPath.contains(file.toPath().toAbsolutePath())) {
+                Path entry = file.toPath().toAbsolutePath();
+                classPath.add(entry);
+                if (file.isFile() && !reactor.contains(artifact.getGroupId() + ":" + artifact.getArtifactId())) {
+                    thirdParty.add(entry);
+                }
             }
         }
         Path output = Path.of(project.getBuild().getDirectory(), "class-path-transform", name).toAbsolutePath();

@@ -17,7 +17,10 @@ package io.micronaut.maven.classpath;
 
 import io.micronaut.aot.bytecode.ClassPathTransform;
 
+import java.io.FileDescriptor;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,6 +44,10 @@ public final class ClassPathTransformLauncher {
     static final String ENTRY = "entry";
     static final String STRIPPED = "stripped";
     static final String WARNING_PREFIX = "WARNING ";
+
+    /** The standard output, which the plugin reads and logs. */
+    private static final PrintStream OUT = new PrintStream(new FileOutputStream(FileDescriptor.out), true,
+        StandardCharsets.UTF_8);
 
     private ClassPathTransformLauncher() {
     }
@@ -88,12 +95,12 @@ public final class ClassPathTransformLauncher {
         List<String> report = new ArrayList<>();
         for (String line : result.summary().split("\n")) {
             if (!line.isBlank()) {
-                System.out.println(line);
+                OUT.println(line);
                 report.add(line);
             }
         }
         for (String warning : result.warnings()) {
-            System.out.println(WARNING_PREFIX + warning);
+            OUT.println(WARNING_PREFIX + warning);
             report.add(WARNING_PREFIX + warning);
         }
         for (ClassPathTransform.Result.Entry entry : result.entries()) {
