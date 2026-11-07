@@ -53,8 +53,8 @@ final class RunnableProjectConfiguration {
 
     /**
      * Applies the application's configuration to the goal as Maven would have done had the goal run on it: its
-     * plugin-level {@code micronaut-maven-plugin} configuration, with its {@code default-cli} execution's merged over
-     * it, restricted to the goal's parameters and merged over the goal's defaults and property expressions, is
+     * plugin-level {@code micronaut-maven-plugin} configuration, with the configuration of the execution selected on the
+     * command line, {@code default-cli} unless one is named, merged over it, restricted to the goal's parameters and merged over the goal's defaults and property expressions, is
      * evaluated against the application and applied with Maven's configurator, after the goal's parameters are reset.
      *
      * @param goal the goal, as Maven configured it
@@ -72,7 +72,7 @@ final class RunnableProjectConfiguration {
                       MavenProject project,
                       ComponentConfigurator configurator) throws ComponentConfigurationException {
         MojoDescriptor descriptor = execution.getMojoDescriptor();
-        Xpp3Dom configuration = Xpp3Dom.mergeXpp3Dom(declaredConfiguration(project, descriptor), MojoDescriptorCreator.convert(descriptor));
+        Xpp3Dom configuration = Xpp3Dom.mergeXpp3Dom(declaredConfiguration(project, descriptor, execution.getExecutionId()), MojoDescriptorCreator.convert(descriptor));
         resetParameters(goal, pristine, descriptor);
         ClassRealm realm = descriptor.getPluginDescriptor().getClassRealm();
         configurator.configureComponent(goal, new XmlPlexusConfiguration(configuration), evaluator, realm);
@@ -95,13 +95,15 @@ final class RunnableProjectConfiguration {
 
     /**
      * The configuration of the goal the project declares: its plugin-level {@code micronaut-maven-plugin} configuration,
-     * with the {@code default-cli} execution's merged over it, restricted to the goal's parameters.
+     * with the selected execution's merged over it, restricted to the goal's parameters.
      *
      * @param project the project
      * @param descriptor the goal's descriptor
+     * @param executionId the id of the execution selected on the command line, such as {@code local} for {@code mn:dev@local}; {@code default-cli} when null
      * @return the configuration, empty when the project declares none
      */
-    static Xpp3Dom declaredConfiguration(MavenProject project, MojoDescriptor descriptor) {
+    static Xpp3Dom declaredConfiguration(MavenProject project, MojoDescriptor descriptor, String executionId) {
+        String selected = executionId == null ? DEFAULT_CLI_EXECUTION : executionId;
         Xpp3Dom own = new Xpp3Dom("configuration");
         Plugin plugin = project.getPlugin(THIS_PLUGIN);
         if (plugin == null) {
@@ -109,7 +111,7 @@ final class RunnableProjectConfiguration {
         }
         Xpp3Dom effective = plugin.getConfiguration() instanceof Xpp3Dom dom ? new Xpp3Dom(dom) : null;
         for (PluginExecution execution : plugin.getExecutions()) {
-            if (DEFAULT_CLI_EXECUTION.equals(execution.getId()) && execution.getConfiguration() instanceof Xpp3Dom executionDom) {
+            if (selected.equals(execution.getId()) && execution.getConfiguration() instanceof Xpp3Dom executionDom) {
                 effective = effective == null ? new Xpp3Dom(executionDom) : Xpp3Dom.mergeXpp3Dom(new Xpp3Dom(executionDom), effective);
             }
         }
