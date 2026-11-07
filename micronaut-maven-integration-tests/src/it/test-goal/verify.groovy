@@ -22,6 +22,9 @@ assert reloadable == [new File(basedir, 'target/test-classes').absolutePath, new
 assert manifest.'micronaut.dev.compile.java.output'.endsWith('target' + sep + 'classes')
 assert manifest.'micronaut.dev.build-tool.trigger'.endsWith('micronaut-dev' + sep + 'test' + sep + 'reload')
 assert manifest.'micronaut.dev.livereload.port' == '35741'
+// the lifecycle forked before the launch compiled holding the output lock the launcher of mn:dev takes as well
+assert new File(basedir, 'target/classes.micronaut-dev.lock').isFile()
+assert new File(basedir, 'target/test-classes.micronaut-dev.lock').isFile()
 
 assert manifest.'micronaut.dev.test.sources.java'.endsWith('src' + sep + 'test' + sep + 'java')
 assert manifest.'micronaut.dev.test.resources.config'.endsWith('src' + sep + 'test' + sep + 'resources')

@@ -22,6 +22,11 @@ configured (`-parameters`, the release, the encoding and `compilerArgs`), and th
 project and of the reactor projects it depends on are the reloadable tier; the modules are the parent tier. The
 launcher compiles Java with `javac` and Groovy with the project's Groovy. Embedded Kotlin is not offered on Maven.
 
+`mn:dev` is a command line goal. It cannot be bound to a lifecycle phase with an `<execution>`: it runs until stopped, which
+would block the rest of the build, and the lock that keeps its forked compilation apart from a running `mn:test` or
+`mn:dev` of the project is only taken for a goal named on the command line. A bound goal fails the build, with a message
+saying so. An execution selected by its id, `mvn mn:dev@local`, is named on the command line and works.
+
 == Settings
 
 [cols="2,1,4"]
@@ -201,4 +206,5 @@ application the goal runs, so an application can enable Test Resources on its ow
 == Continuous testing
 
 `mn:test` runs the project's tests on the same runtime, in test mode: see
-link:test.html[Running tests continuously with `mn:test`].
+link:test.html[Running tests continuously with `mn:test`]. Both goals run at once on one project, compiling into
+the same output in turn: see link:test.html#running-beside-mn-dev[Running beside `mn:dev`].
