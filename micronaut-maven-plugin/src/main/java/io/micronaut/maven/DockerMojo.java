@@ -19,6 +19,8 @@ import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import io.micronaut.maven.classpath.ClassPathTransformService;
+import io.micronaut.maven.classpath.RewrittenClassPath;
 import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.jdkaotcache.JdkAotCacheTraining;
@@ -96,6 +98,7 @@ public class DockerMojo extends AbstractDockerMojo {
     private static final String ARM64 = "arm64";
 
     private final ExecutorService executorService;
+    private final ClassPathTransformService classPathTransformService;
 
     /**
      * Whether to train a JDK AOT cache (Java 25 or later) while the image is built, and start the application with it
@@ -143,10 +146,12 @@ public class DockerMojo extends AbstractDockerMojo {
     @Inject
     public DockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
                       ApplicationConfigurationService applicationConfigurationService, DockerService dockerService,
-                      MavenSession mavenSession, MojoExecution mojoExecution, ExecutorService executorService) {
+                      MavenSession mavenSession, MojoExecution mojoExecution, ExecutorService executorService,
+                      ClassPathTransformService classPathTransformService) {
         super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession,
             mojoExecution);
         this.executorService = executorService;
+        this.classPathTransformService = classPathTransformService;
     }
 
     @Override
@@ -170,9 +175,50 @@ public class DockerMojo extends AbstractDockerMojo {
             if (jdkAotCache) {
                 buildWithJdkAotCache();
             } else {
-                executorService.executeGoal(mavenProject, JIB_PLUGIN, jibBuildGoal);
+                buildWithJib();
             }
         }
+    }
+
+    /**
+     * Builds the image with Jib's exploded mode, from the rewritten copies of the classes directory and of the
+     * dependencies when {@code micronaut.classPathTransform} enables a step.
+     */
+    private void buildWithJib() throws MojoExecutionException {
+        var options = classPathTransformOptions();
+        if (!options.enabled()) {
+            executorService.executeGoal(mavenProject, JIB_PLUGIN, jibBuildGoal);
+            return;
+        }
+        var build = mavenProject.getBuild();
+        String outputDirectory = build.getOutputDirectory();
+        try (var rewritten = classPathTransformService.rewrite(mavenProject, options, Path.of(outputDirectory),
+            DOCKER_PACKAGING, getLog())) {
+            rewritten.swapDependencies(mavenProject);
+            build.setOutputDirectory(rewritten.packaged(Path.of(outputDirectory)).toString());
+            executorService.executeGoal(mavenProject, JIB_PLUGIN, jibBuildGoal);
+        } finally {
+            build.setOutputDirectory(outputDirectory);
+        }
+    }
+
+    /**
+     * Replaces the application JAR of Jib's packaged mode with its rewritten copy, and points the dependencies to
+     * theirs, when {@code micronaut.classPathTransform} enables a step.
+     */
+    private RewrittenClassPath rewritePackagedClassPath() throws MojoExecutionException {
+        Path jar = Path.of(mavenProject.getBuild().getDirectory(), mavenProject.getBuild().getFinalName() + ".jar");
+        RewrittenClassPath rewritten = classPathTransformService.rewrite(mavenProject, classPathTransformOptions(), jar,
+            DOCKER_PACKAGING, getLog());
+        Path copy = rewritten.packaged(jar);
+        if (Files.isRegularFile(jar) && !copy.equals(jar.toAbsolutePath())) {
+            try {
+                Files.copy(copy, jar, StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                throw new MojoExecutionException("Unable to replace " + jar + " with its rewritten copy", e);
+            }
+        }
+        return rewritten.swapDependencies(mavenProject);
     }
 
     /**
@@ -189,6 +235,12 @@ public class DockerMojo extends AbstractDockerMojo {
         // Jib's packaged mode puts the JAR of the maven-jar-plugin in the image, so only a build with the cache needs it
         getLog().info("JDK AOT cache: building the application JAR for Jib's packaged mode");
         executorService.executeGoal(mavenProject, JAR_PLUGIN, "jar");
+        try (var _ = rewritePackagedClassPath()) {
+            buildAndTrain(trainingPaths, trainingRun, platform);
+        }
+    }
+
+    private void buildAndTrain(List<String> trainingPaths, TrainingRun trainingRun, String platform) throws MojoExecutionException {
 
         Path workDirectory = Path.of(mavenProject.getBuild().getDirectory(), JDK_AOT_CACHE_DIRECTORY);
         Path cacheFile = workDirectory.resolve(JDK_AOT_CACHE_FILE);
