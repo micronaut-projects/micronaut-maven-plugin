@@ -235,7 +235,7 @@ public class DockerMojo extends AbstractDockerMojo {
         // Jib's packaged mode puts the JAR of the maven-jar-plugin in the image, so only a build with the cache needs it
         getLog().info("JDK AOT cache: building the application JAR for Jib's packaged mode");
         executorService.executeGoal(mavenProject, JAR_PLUGIN, "jar");
-        try (RewrittenClassPath _ = rewritePackagedClassPath()) {
+        try (var _ = rewritePackagedClassPath()) {
             buildAndTrain(trainingPaths, trainingRun, platform);
         }
     }
