@@ -109,6 +109,8 @@ public class DevMojo extends AbstractTestResourcesMojo {
      */
     private static final int RELAUNCH_STATUS = 3;
     private static final long QUIET_PERIOD_MILLIS = 300;
+    private static final List<String> STRATEGIES = List.of("restart", "reload", "auto");
+    private static final List<String> COMPILE_MODES = List.of("embedded", "build-tool");
 
     private final MavenSession mavenSession;
     private final ToolchainManager toolchainManager;
@@ -265,6 +267,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
         if (!runnableProject.equals(mavenSession.getCurrentProject())) {
             applyRunnableProjectConfiguration();
         }
+        validateSettings();
         Path manifestDirectory = Path.of(runnableProject.getBuild().getDirectory()).resolve(DevManifest.DIRECTORY_NAME);
         Path manifestFile;
         try {
@@ -335,6 +338,35 @@ public class DevMojo extends AbstractTestResourcesMojo {
         } catch (ComponentConfigurationException e) {
             throw new MojoExecutionException("Cannot apply the micronaut-maven-plugin configuration of " + runnableProject.getArtifactId() + ": " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Checks the settings the launcher reads as enumerations before anything starts, the launcher's stack trace
+     * being all a typo would otherwise get, and holds them as the launcher names them: it reads them ignoring case, so
+     * that {@code BUILD_TOOL} would have it wait for a trigger this goal does not touch.
+     *
+     * @throws MojoExecutionException if a setting has an unknown value
+     */
+    protected void validateSettings() throws MojoExecutionException {
+        strategy = oneOf("mn.dev.strategy", strategy, STRATEGIES);
+        compile = oneOf("mn.dev.compile", compile, COMPILE_MODES);
+    }
+
+    /**
+     * The valid value a setting names, as the launcher reads it: ignoring surrounding space and case, with {@code _} for {@code -}.
+     *
+     * @param property the setting's property
+     * @param value the setting's value
+     * @param valid the valid values
+     * @return the valid value it names
+     * @throws MojoExecutionException if it names none
+     */
+    protected static String oneOf(String property, String value, List<String> valid) throws MojoExecutionException {
+        String normalized = value == null ? null : value.trim().replace('_', '-').toLowerCase(Locale.ROOT);
+        if (!valid.contains(normalized)) {
+            throw new MojoExecutionException("Unknown value '%s' for %s: the valid values are %s".formatted(value, property, String.join(", ", valid)));
+        }
+        return normalized;
     }
 
     /**

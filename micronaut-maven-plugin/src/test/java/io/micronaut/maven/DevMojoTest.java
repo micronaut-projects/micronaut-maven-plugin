@@ -145,6 +145,44 @@ class DevMojoTest {
     }
 
     @Test
+    void anUnknownCompileModeFailsTheGoalBeforeAnythingStarts() throws Exception {
+        when(mavenSession.getCurrentProject()).thenReturn(app);
+        when(mavenSession.getAllProjects()).thenReturn(List.of(app));
+        setField("compile", "buildtool");
+
+        MojoExecutionException failure = assertThrows(MojoExecutionException.class, mojo::execute);
+
+        assertEquals("Unknown value 'buildtool' for mn.dev.compile: the valid values are embedded, build-tool", failure.getMessage());
+        verifyNoInteractions(compilerService);
+        assertFalse(Files.exists(directory.resolve("app/target/micronaut-dev")));
+    }
+
+    @Test
+    void anUnknownStrategyFailsTheGoalBeforeAnythingStarts() throws Exception {
+        when(mavenSession.getCurrentProject()).thenReturn(app);
+        when(mavenSession.getAllProjects()).thenReturn(List.of(app));
+        setField("strategy", "resart");
+
+        MojoExecutionException failure = assertThrows(MojoExecutionException.class, mojo::execute);
+
+        assertEquals("Unknown value 'resart' for mn.dev.strategy: the valid values are restart, reload, auto", failure.getMessage());
+        verifyNoInteractions(compilerService);
+    }
+
+    @Test
+    void aSettingIsReadAsTheLauncherReadsIt() throws Exception {
+        setField("compile", " BUILD_TOOL ");
+        setField("strategy", "Reload");
+
+        invoke("validateSettings");
+
+        // the launcher reads the same mode from both spellings: without this, it waits for a trigger nothing touches
+        assertTrue((boolean) invoke("isBuildToolMode"));
+        assertEquals("build-tool", getField("compile"));
+        assertEquals("reload", getField("strategy"));
+    }
+
+    @Test
     void theApplicationIsLaunchedAndItsFailureFailsTheGoal() throws Exception {
         MavenProject root = project(directory, "root", false);
         when(mavenSession.getCurrentProject()).thenReturn(root);
