@@ -320,6 +320,21 @@ For example, you can define the `jib-maven-plugin` in your POM as follows to pas
 </plugin>
 ----
 
+=== Writing dependency JARs uncompressed
+
+----
+$ mvn package -Dpackaging=docker -Dmicronaut.docker.storedDependencies=true
+----
+
+With `micronaut.docker.storedDependencies`, the image holds copies of the dependency JARs whose entries are all STORED,
+so the JVM reads classes from them without inflating them. Applications that start without a JDK AOT cache start
+faster, and the unpacked image is bigger. It works with Jib and with link:../dockerfile-mojo.html[`mn:dockerfile`], for
+`docker` packaging and the default runtime.
+
+The copies keep the order, names and times of the entries, so the same JAR always gives the same layer. Signed JARs are
+copied unchanged. A copy no longer has the checksum of the published artifact, which some vulnerability scanners use to
+identify dependencies.
+
 === Training a JDK AOT cache
 
 ----

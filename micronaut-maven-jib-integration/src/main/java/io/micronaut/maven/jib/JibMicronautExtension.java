@@ -99,6 +99,9 @@ public class JibMicronautExtension implements JibMavenPluginExtension<Void> {
             }
         }
 
+        if (runtime.getBuildStrategy() == DockerBuildStrategy.DEFAULT) {
+            StoredDependenciesPlan.apply(buildPlan, builder, mavenData, logger);
+        }
         configurePlatforms(buildPlan, baseImage, builder, runtime, mavenData, logger);
 
         switch (runtime.getBuildStrategy()) {
