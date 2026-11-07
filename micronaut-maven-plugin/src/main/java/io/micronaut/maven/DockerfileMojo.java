@@ -77,6 +77,11 @@ public class DockerfileMojo extends AbstractDockerMojo {
     public static final String DOCKERFILE_NATIVE_ORACLE_CLOUD = "DockerfileNativeOracleCloud";
     public static final String NATIVE_BUILD_TOOLS_MAVEN_PLUGIN = "org.graalvm.buildtools:native-maven-plugin";
     static final String DOCKERFILE_JDK_AOT_CACHE = "DockerfileJdkAotCache";
+    /**
+     * The template of a cache trained by default: a failed training leaves an image without the cache, which the
+     * {@code ENTRYPOINT} reads from an argument file that the training script writes.
+     */
+    static final String DOCKERFILE_JDK_AOT_CACHE_DEFAULT = "DockerfileJdkAotCacheDefault";
     private static final String CLASS_NAME_PLACEHOLDER = "CLASS_NAME";
     private static final String JDK_AOT_CACHE_TRAINING_PLACEHOLDER = "JDK_AOT_CACHE_TRAINING";
     private static final String EXEC_MAIN_CLASS_SOURCE = "exec.mainClass";
@@ -92,12 +97,14 @@ public class DockerfileMojo extends AbstractDockerMojo {
     /**
      * Whether the generated Dockerfile trains a JDK AOT cache (Java 25 or later) while the image is built, and starts
      * the application with it so that it starts faster. Only for {@code docker} packaging, and not for the
-     * {@code lambda} or {@code oracle_function} runtimes. The base image needs {@code bash}.
+     * {@code lambda} or {@code oracle_function} runtimes. The base image needs {@code bash}. When not set, the
+     * Dockerfile trains a cache in {@code LOAD} mode if the build allows it, and the image starts without one if the
+     * training fails; {@code false} turns it off, and {@code true} makes a training failure fail the image build.
      *
      * @since 5.1.0
      */
-    @Parameter(property = "micronaut.docker.jdkAotCache", defaultValue = "false")
-    private boolean jdkAotCache;
+    @Parameter(property = "micronaut.docker.jdkAotCache")
+    private Boolean jdkAotCache;
 
     /**
      * How the JDK AOT cache is trained. {@code LOAD} loads the application's bean definitions and exits without
@@ -143,13 +150,15 @@ public class DockerfileMojo extends AbstractDockerMojo {
         var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());
         var packaging = Packaging.of(mavenProject.getPackaging());
         try {
-            if (jdkAotCache && packaging != Packaging.DOCKER) {
+            boolean explicit = Boolean.TRUE.equals(jdkAotCache);
+            if (explicit && packaging != Packaging.DOCKER) {
                 getLog().warn("micronaut.docker.jdkAotCache only applies to " + Packaging.DOCKER.id() + " packaging, ignoring it");
             }
-            copyDependencies(jdkAotCache);
+            boolean byDefault = jdkAotCache == null && packaging == Packaging.DOCKER && trainsByDefault(runtime);
+            copyDependencies(explicit || byDefault);
             var dockerfile = switch (packaging) {
                 case DOCKER_NATIVE -> buildDockerfileNative(runtime);
-                case DOCKER -> buildDockerfile(runtime);
+                case DOCKER -> buildDockerfile(runtime, explicit, byDefault);
                 case DOCKER_CRAC -> buildCracDockerfile(runtime);
                 default -> throw new MojoExecutionException("Packaging is set to [" + packaging + "]. To generate a Dockerfile, set the packaging to either [" + Packaging.DOCKER.id() + "] or [" + Packaging.DOCKER_NATIVE.id() + "]");
             };
@@ -161,9 +170,33 @@ public class DockerfileMojo extends AbstractDockerMojo {
         }
     }
 
-    private Optional<File> buildDockerfile(MicronautRuntime runtime) throws IOException, MojoExecutionException {
+    /**
+     * @return whether the generated Dockerfile trains a cache when {@code micronaut.docker.jdkAotCache} is not set
+     */
+    private boolean trainsByDefault(MicronautRuntime runtime) {
+        String reason = runtime.getBuildStrategy() == DockerBuildStrategy.DEFAULT
+            ? TrainingRun.defaultGuard(jdkAotCacheTrainingMode, jdkAotCacheTrainingPaths, mavenProject.getArtifacts())
+            : "the runtime is " + micronautRuntime + ", and the cache only supports the default one";
+        if (reason != null) {
+            JdkAotCacheDefault.logSkipped(getLog(), reason);
+            return false;
+        }
+        JdkAotCacheDefault.logTrained(getLog());
+        return true;
+    }
+
+    private Optional<File> buildDockerfile(MicronautRuntime runtime, boolean jdkAotCache, boolean jdkAotCacheByDefault)
+        throws IOException, MojoExecutionException {
         if (jdkAotCache) {
-            return buildJdkAotCacheDockerfile(runtime);
+            return buildJdkAotCacheDockerfile(runtime, DOCKERFILE_JDK_AOT_CACHE);
+        }
+        if (jdkAotCacheByDefault) {
+            try {
+                return buildJdkAotCacheDockerfile(runtime, DOCKERFILE_JDK_AOT_CACHE_DEFAULT);
+            } catch (MojoExecutionException e) {
+                JdkAotCacheDefault.logFallback(getLog(), e.getMessage(), true);
+                jdkAotCacheTrainingArguments = "";
+            }
         }
         File dockerfile;
         switch (runtime.getBuildStrategy()) {
@@ -185,7 +218,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
         return Optional.ofNullable(dockerfile);
     }
 
-    private Optional<File> buildJdkAotCacheDockerfile(MicronautRuntime runtime) throws IOException, MojoExecutionException {
+    private Optional<File> buildJdkAotCacheDockerfile(MicronautRuntime runtime, String template) throws IOException, MojoExecutionException {
         if (runtime.getBuildStrategy() != DockerBuildStrategy.DEFAULT) {
             throw new MojoExecutionException("micronaut.docker.jdkAotCache only supports the default runtime, not "
                 + micronautRuntime);
@@ -194,7 +227,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
         TrainingRun trainingRun = TrainingRun.resolve(jdkAotCacheTrainingMode, trainingPaths, mavenProject.getArtifacts());
         trainingRun.logGeneratedDockerfileRun(getLog());
         jdkAotCacheTrainingArguments = jdkAotCacheTrainingArguments(trainingPaths, trainingRun);
-        File dockerfile = dockerService.loadDockerfileAsResource(DOCKERFILE_JDK_AOT_CACHE);
+        File dockerfile = dockerService.loadDockerfileAsResource(template);
         processDockerfile(dockerfile);
         return Optional.ofNullable(dockerfile);
     }

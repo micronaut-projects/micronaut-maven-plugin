@@ -124,6 +124,30 @@ public final class TrainingRun {
     }
 
     /**
+     * Tells why the cache is not trained by default, when {@code micronaut.docker.jdkAotCache} is not set. The default
+     * only trains in {@code LOAD} mode, because an image build usually has none of the services that a started
+     * application needs.
+     *
+     * @param configured the configured {@code micronaut.docker.jdkAotCache.trainingMode}, or {@code null} if it is not
+     * set
+     * @param trainingPaths the configured training paths
+     * @param artifacts the resolved dependencies of the application
+     * @return why the default does not train a cache, or {@code null} if it does
+     */
+    public static @Nullable String defaultGuard(@Nullable TrainingMode configured, @Nullable List<String> trainingPaths,
+                                                Collection<Artifact> artifacts) {
+        if (configured == TrainingMode.START || (trainingPaths != null && trainingPaths.stream().anyMatch(path -> path != null && !path.isBlank()))) {
+            return START_OPTION + " or " + PATHS_OPTION + " is set, which only applies when micronaut.docker.jdkAotCache "
+                + "is true";
+        }
+        if (!TrainingRunSwitch.hasLoadMode(artifacts)) {
+            return "the application's Micronaut version has no LOAD training mode, which needs Micronaut Core 5.3.0 or "
+                + "later";
+        }
+        return null;
+    }
+
+    /**
      * An explicit {@code LOAD} fails on a Micronaut version without the mode, instead of starting an application that
      * was declared unable to start. That is checked before the training paths, and its message covers them, so that
      * a build with both problems is told about both at once.

@@ -8,12 +8,14 @@
 #     GET request to every <path> in order. Fails on an I/O error or a status of 400 or more. The docker goal runs it
 #     with docker exec in the training container, whose entrypoint is the application.
 #
-#   training.sh train <cache> <port> <timeout> <load|switch|sigterm> [<path>...] -- <java> <argument>...
+#   training.sh train [--fallback <argument file>] <cache> <port> <timeout> <load|switch|sigterm> [<path>...] -- <java> <argument>...
 #     Runs the application with -XX:AOTCacheOutput=<cache> and -XX:-UsePerfData, and checks that the cache was
 #     written. With "load", the Micronaut training-run switch loads the bean definitions and exits without starting
 #     the application, so no request is sent. With "switch", it starts the application, warms it up and exits. With
 #     "sigterm", the application runs in the background, this script warms it up as above and stops it with SIGTERM.
-#     Generated Dockerfiles run it.
+#     Generated Dockerfiles run it. With --fallback, the cache is trained by default: a failure prints a warning,
+#     removes the cache and leaves <argument file> empty instead of failing the build. Once the cache is written, the
+#     script writes -XX:AOTCache=<cache> into <argument file>, which the ENTRYPOINT reads with java @<argument file>.
 
 set -u
 
@@ -21,7 +23,16 @@ log() {
     printf '[jdk-aot-cache] %s\n' "$*"
 }
 
+args_file=""
+
 fail() {
+    if [ -n "$args_file" ]; then
+        printf '[jdk-aot-cache] WARNING: %s. The image is built without a JDK AOT cache, which is trained by default: set micronaut.docker.jdkAotCache to true to make this an error, or to false to skip the training\n' "$*" >&2
+        kill -KILL "${application_pid:-}" 2>/dev/null
+        rm -f "${cache:-}"
+        : >"$args_file"
+        exit 0
+    fi
     printf '[jdk-aot-cache] %s\n' "$*" >&2
     exit 1
 }
@@ -83,8 +94,15 @@ await_exit() {
 }
 
 train() {
+    if [ "${1:-}" = --fallback ]; then
+        [ $# -ge 2 ] || fail "Missing the argument file after --fallback"
+        args_file=$2
+        shift 2
+        : >"$args_file" || { printf '[jdk-aot-cache] Cannot write %s\n' "$args_file" >&2; exit 1; }
+    fi
     [ $# -ge 4 ] || fail "Usage: training.sh train <cache> <port> <timeout> <load|switch|sigterm> [<path>...] -- <java> <argument>..."
-    local cache=$1 port=$2 timeout=$3 mode=$4 paths=() output major status
+    cache=$1
+    local port=$2 timeout=$3 mode=$4 paths=() output major status
     shift 4
     while [ $# -gt 0 ] && [ "$1" != "--" ]; do
         paths+=("$1")
@@ -146,6 +164,9 @@ train() {
     esac
     [ -s "$cache" ] || fail "The training run did not write the JDK AOT cache $cache"
     log "Wrote the JDK AOT cache $cache"
+    if [ -n "$args_file" ]; then
+        printf -- '-XX:AOTCache=%s\n' "$cache" >"$args_file"
+    fi
 }
 
 command=${1:-}

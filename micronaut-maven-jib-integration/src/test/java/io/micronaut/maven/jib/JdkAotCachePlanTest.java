@@ -85,6 +85,18 @@ class JdkAotCachePlanTest {
     }
 
     @Test
+    void aCacheTrainedByDefaultLeavesTheCollectorToTheJvm() throws JibPluginExtensionException {
+        var properties = new Properties();
+        properties.setProperty(JdkAotCachePlan.PLATFORM_PROPERTY, "linux/arm64");
+        properties.setProperty(JdkAotCachePlan.BY_DEFAULT_PROPERTY, "true");
+        var entrypoint = List.of("java", "-cp", "@/app/jib-classpath-file", "example.Application");
+
+        var plan = extend(javaPlan(entrypoint).build(), properties);
+
+        assertEquals(entrypoint, plan.getEntrypoint());
+    }
+
+    @Test
     void acceptsAGarbageCollectorFromTheImageEnvironment() throws JibPluginExtensionException {
         var properties = new Properties();
         properties.setProperty(JdkAotCachePlan.PLATFORM_PROPERTY, "linux/arm64");
