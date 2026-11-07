@@ -11,7 +11,7 @@ RUN native-image @/home/app/graalvm-native-image.args --report-unsupported-eleme
 
 FROM fnproject/fn-java-fdk:jre17-1.1.7@sha256:50a0b8138fec3dde64aaedbe66406da6c2c17fc88446726c75446cb4c4fc681f AS fnfdk
 
-FROM cgr.dev/chainguard/wolfi-base@sha256:52e71f61c6afd1f8d2625cff4465d8ecee156668ca665f7e9c582d1cc914eb6a
+FROM cgr.dev/chainguard/wolfi-base@sha256:24f549a7fcace88e69b9557941168c74645688ecc4acf7fb6d734a6b74e9019d
 WORKDIR /function
 COPY --from=builder /home/app/application /function/func
 COPY --from=fnfdk /function/runtime/lib/* .
