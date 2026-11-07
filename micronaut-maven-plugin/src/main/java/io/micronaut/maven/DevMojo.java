@@ -39,12 +39,14 @@ import org.apache.maven.toolchain.ToolchainManager;
 import org.codehaus.plexus.component.configurator.ComponentConfigurationException;
 import org.codehaus.plexus.component.configurator.ComponentConfigurator;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
+import org.eclipse.aether.artifact.ArtifactTypeRegistry;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.resolution.DependencyResult;
 import org.eclipse.aether.util.filter.DependencyFilterUtils;
 import org.eclipse.aether.util.artifact.JavaScopes;
@@ -99,7 +101,11 @@ public class DevMojo extends AbstractTestResourcesMojo {
      */
     public static final String LAUNCHER_MAIN_CLASS = "io.micronaut.dev.MicronautDevMain";
 
-    private static final String LAUNCHER_GROUP = "io.micronaut";
+    /**
+     * The group of the launcher and its modules.
+     */
+    protected static final String LAUNCHER_GROUP = "io.micronaut";
+
     private static final String LAUNCHER_ARTIFACT = "micronaut-dev";
     private static final String LIVERELOAD_ARTIFACT = "micronaut-dev-livereload";
     private static final String MAC_WATCH_ARTIFACT = "micronaut-runtime-osx";
@@ -220,6 +226,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
     private MojoExecution mojoExecution;
 
     private MavenProject runnableProject;
+    private List<Dependency> runtimeDependencies;
     /**
      * The application's process, read by the shutdown hook and the goal's own thread.
      */
@@ -268,10 +275,10 @@ public class DevMojo extends AbstractTestResourcesMojo {
             applyRunnableProjectConfiguration();
         }
         validateSettings();
-        Path manifestDirectory = Path.of(runnableProject.getBuild().getDirectory()).resolve(DevManifest.DIRECTORY_NAME);
+        Path manifestDirectory = manifestDirectory();
         Path manifestFile;
         try {
-            manifestFile = buildManifest().writeTo(manifestDirectory);
+            manifestFile = buildManifest(manifestDirectory).writeTo(manifestDirectory);
         } catch (IOException e) {
             throw new MojoExecutionException("Cannot write the development mode manifest", e);
         }
@@ -302,12 +309,12 @@ public class DevMojo extends AbstractTestResourcesMojo {
             int exit = awaitExit(started, launch);
             if (exit != 0 && !stopping) {
                 // the application failed to start, or stopped on an error: the build says so
-                throw new MojoExecutionException("The application exited with status " + exit);
+                throw new MojoExecutionException(exitFailure(exit));
             }
         } catch (InterruptedException _) {
             Thread.currentThread().interrupt();
         } catch (IOException | DependencyResolutionException e) {
-            throw new MojoExecutionException("Cannot run the application in development mode: " + e.getMessage(), e);
+            throw new MojoExecutionException("Cannot launch the development runtime: " + e.getMessage(), e);
         } finally {
             // in a Maven host that outlives the goal, such as mvnd, nothing of it keeps watching or compiling
             finished = true;
@@ -321,10 +328,59 @@ public class DevMojo extends AbstractTestResourcesMojo {
     }
 
     /**
+     * @return the project that runs, selected among the reactor
+     */
+    protected MavenProject runnableProject() {
+        return runnableProject;
+    }
+
+    /**
+     * The directory the manifest and its argument files are written to.
+     *
+     * @return {@code target/micronaut-dev}
+     */
+    protected Path manifestDirectory() {
+        return Path.of(runnableProject.getBuild().getDirectory()).resolve(DevManifest.DIRECTORY_NAME);
+    }
+
+    /**
+     * The message the build fails with when the launcher exits with a nonzero status.
+     *
+     * @param exit the status
+     * @return the message
+     */
+    protected String exitFailure(int exit) {
+        return "The application exited with status " + exit;
+    }
+
+    /**
+     * The dependency scopes of the runtime classpath, which the launcher's JVM runs with.
+     *
+     * @return the scopes
+     */
+    protected String[] runtimeScopes() {
+        return new String[] {JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME};
+    }
+
+    /**
+     * The runtime classpath, the modules only: the reactor projects' outputs are reloadable.
+     *
+     * @return the dependencies, resolved once
+     */
+    protected List<Dependency> runtimeDependencies() {
+        if (runtimeDependencies == null) {
+            runtimeDependencies = compilerService.resolveDependencies(runnableProject, true, runtimeScopes());
+        }
+        return runtimeDependencies;
+    }
+
+    /**
      * An evaluator of the runnable project's configuration: its expressions resolve against it, not against
      * the reactor root an aggregator invocation started from.
+     *
+     * @return the evaluator
      */
-    private PluginParameterExpressionEvaluator runnableEvaluator() {
+    protected PluginParameterExpressionEvaluator runnableEvaluator() {
         return RunnableProjectConfiguration.evaluator(mavenSession, runnableProject, mojoExecution);
     }
 
@@ -379,8 +435,12 @@ public class DevMojo extends AbstractTestResourcesMojo {
     /**
      * Resolves the processor path as Maven does: each path with the exclusions it declares, a path without a
      * version versioned by the runnable project's dependency management.
+     *
+     * @param paths the paths
+     * @return the resolved processor path
+     * @throws DependencyResolutionException if a path cannot be resolved
      */
-    private List<File> resolveProcessorPath(DevManifest.ProcessorPaths paths) throws DependencyResolutionException {
+    protected List<File> resolveProcessorPath(DevManifest.ProcessorPaths paths) throws DependencyResolutionException {
         CollectRequest request = new CollectRequest();
         request.setRepositories(runnableProject.getRemoteProjectRepositories());
         Map<String, String> managedVersions = new HashMap<>();
@@ -427,25 +487,50 @@ public class DevMojo extends AbstractTestResourcesMojo {
             .formatted(projectsWithPlugin.stream().map(MavenProject::getArtifactId).toList()));
     }
 
-    private DevManifest buildManifest() throws MojoExecutionException {
+    /**
+     * Builds the manifest from the project model and the goal's settings.
+     *
+     * @param manifestDirectory the directory the manifest is written to
+     * @return the manifest
+     * @throws MojoExecutionException if it cannot be built
+     */
+    protected DevManifest buildManifest(Path manifestDirectory) throws MojoExecutionException {
         PluginParameterExpressionEvaluator evaluator = runnableEvaluator();
-        List<File> runtimeClasspath = files(compilerService.resolveDependencies(runnableProject, true, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME));
+        List<File> runtimeClasspath = files(runtimeDependencies());
         List<File> compileClasspath = files(compilerService.resolveDependencies(runnableProject, true, JavaScopes.PROVIDED, JavaScopes.COMPILE));
         List<File> processorPath;
         try {
-            DevManifest.ProcessorPaths paths = DevManifest.processorPaths(runnableProject, evaluator, mavenSession.getRepositorySession().getArtifactTypeRegistry());
+            DevManifest.ProcessorPaths paths = DevManifest.processorPaths(runnableProject, evaluator, artifactTypes());
             processorPath = paths.dependencies().isEmpty() ? List.of() : resolveProcessorPath(paths);
         } catch (Exception e) {
             throw new MojoExecutionException("Cannot resolve the annotation processor path: " + e.getMessage(), e);
         }
-        List<MavenProject> reactor = mavenSession.getAllProjects().stream().filter(this::isDependencyOfRunnableProject).toList();
+        List<MavenProject> reactor = reactorDependencies();
         String main = mainClass != null ? mainClass : runnableProject.getProperties().getProperty("exec.mainClass");
-        if (main == null) {
+        if (main == null && requiresMainClass()) {
             throw new MojoExecutionException("No main class: set exec.mainClass or the mainClass parameter");
         }
         List<String> retained = retain == null || retain.isBlank() ? List.of() : Arrays.stream(retain.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
         DevManifest.Settings settings = new DevManifest.Settings(main, strategy, compile, incremental, retained, liveReloadPort, liveReloadInjectScript);
-        return DevManifest.of(runnableProject, reactor, settings, runtimeClasspath, compileClasspath, processorPath, evaluator);
+        return DevManifest.of(runnableProject, reactor, settings, runtimeClasspath, compileClasspath, processorPath, evaluator, manifestDirectory);
+    }
+
+    /**
+     * Whether the launch needs the application's main class.
+     *
+     * @return true, since the application runs
+     */
+    protected boolean requiresMainClass() {
+        return true;
+    }
+
+    /**
+     * The reactor projects the runnable one depends on, itself included, whose outputs are reloadable.
+     *
+     * @return the projects
+     */
+    protected List<MavenProject> reactorDependencies() {
+        return mavenSession.getAllProjects().stream().filter(this::isDependencyOfRunnableProject).toList();
     }
 
     /**
@@ -472,11 +557,18 @@ public class DevMojo extends AbstractTestResourcesMojo {
     }
 
     private List<String> launchArguments(Path manifestFile) throws MojoExecutionException, DependencyResolutionException {
-        List<File> launcher = DependencyResolutionService.toClasspathFiles(dependencyResolutionService.artifactResultsFor(launcherArtifacts(), true));
-        if (launcher.isEmpty()) {
+        List<ArtifactResult> launcherResults = dependencyResolutionService.artifactResultsFor(launcherArtifacts().stream(), true);
+        List<File> launcher = DependencyResolutionService.toClasspathFiles(launcherResults);
+        // the launcher itself, not merely any of the artifacts: one with a version of its own resolves without it
+        org.eclipse.aether.artifact.Artifact launcherArtifact = launcherResults.stream()
+            .map(ArtifactResult::getArtifact)
+            .filter(artifact -> LAUNCHER_GROUP.equals(artifact.getGroupId()) && LAUNCHER_ARTIFACT.equals(artifact.getArtifactId()))
+            .findFirst()
+            .orElse(null);
+        if (launcherArtifact == null) {
             throw new MojoExecutionException("Cannot resolve " + LAUNCHER_GROUP + ":" + LAUNCHER_ARTIFACT + ": development mode needs Micronaut Core 5.3 or later in the dependency management");
         }
-        List<File> runtime = files(compilerService.resolveDependencies(runnableProject, true, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME));
+        List<File> runtime = files(runtimeDependencies());
         // the runtime classpath, then what of the launcher it does not hold already
         List<String> classpath = Stream.concat(runtime.stream(), launcher.stream())
             .map(File::getAbsolutePath)
@@ -496,10 +588,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
             args.add("--enable-native-access=ALL-UNNAMED");
         }
         // the launcher as the JVM's agent, for the method-body fast path
-        launcher.stream()
-            .filter(file -> file.getName().startsWith(LAUNCHER_ARTIFACT + "-") && !file.getName().startsWith(LIVERELOAD_ARTIFACT + "-"))
-            .findFirst()
-            .ifPresent(file -> args.add("-javaagent:" + file.getAbsolutePath()));
+        args.add("-javaagent:" + launcherArtifact.getFile().getAbsolutePath());
         args.add("-classpath");
         args.add(String.join(File.pathSeparator, classpath));
         args.add(LAUNCHER_MAIN_CLASS);
@@ -509,7 +598,20 @@ public class DevMojo extends AbstractTestResourcesMojo {
         return args;
     }
 
-    private Stream<org.eclipse.aether.artifact.Artifact> launcherArtifacts() {
+    /**
+     * @return the session's artifact types, which map the {@code type} of a processor path to its artifact
+     */
+    protected ArtifactTypeRegistry artifactTypes() {
+        return mavenSession.getRepositorySession().getArtifactTypeRegistry();
+    }
+
+    /**
+     * The artifacts the launcher's JVM runs with beside the runtime classpath, versioned by the dependency
+     * management when they name no version.
+     *
+     * @return the launcher, and the LiveReload module when enabled
+     */
+    protected List<org.eclipse.aether.artifact.Artifact> launcherArtifacts() {
         List<org.eclipse.aether.artifact.Artifact> artifacts = new ArrayList<>();
         // versioned by the dependency management, the platform BOM the parent imports
         artifacts.add(new DefaultArtifact(LAUNCHER_GROUP, LAUNCHER_ARTIFACT, "jar", ""));
@@ -520,7 +622,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
         if (isMac()) {
             artifacts.add(new DefaultArtifact(LAUNCHER_GROUP, MAC_WATCH_ARTIFACT, "jar", ""));
         }
-        return artifacts.stream();
+        return artifacts;
     }
 
     private static boolean isMac() {
@@ -556,7 +658,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
                 continue;
             }
             // the roots as configured, a build-helper or a custom resource directory included
-            for (String root : DevManifest.sourceRoots(project)) {
+            for (String root : watchedRoots(project)) {
                 Path directory = Path.of(root);
                 if (Files.isDirectory(directory)) {
                     paths.add(directory);
@@ -571,6 +673,25 @@ public class DevMojo extends AbstractTestResourcesMojo {
         return watcher;
     }
 
+    /**
+     * The roots watched in build-tool mode for a reactor project.
+     *
+     * @param project the project
+     * @return its source and resource roots, which may not exist
+     */
+    protected List<String> watchedRoots(MavenProject project) {
+        return DevManifest.sourceRoots(project);
+    }
+
+    /**
+     * The goal that compiles the project in build-tool mode.
+     *
+     * @return {@code compile}
+     */
+    protected String buildToolGoal() {
+        return "compile";
+    }
+
     private void compileAndTouch(Path trigger) {
         if (finished) {
             return;
@@ -579,7 +700,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
         boolean compiled;
         try {
             MavenProject root = executionRoot();
-            InvocationResult result = executorService.invokeGoals(root, runnableProject, "compile");
+            InvocationResult result = executorService.invokeGoals(root, runnableProject, buildToolGoal());
             compiled = result.getExitCode() == 0 && result.getExecutionException() == null;
             if (!compiled) {
                 getLog().warn("The compilation failed: the running application keeps the previous classes");
@@ -622,7 +743,13 @@ public class DevMojo extends AbstractTestResourcesMojo {
             .anyMatch(artifact -> artifact.getGroupId().equals(mavenProject.getGroupId()) && artifact.getArtifactId().equals(mavenProject.getArtifactId()));
     }
 
-    private static List<File> files(List<Dependency> dependencies) {
+    /**
+     * The files of resolved dependencies.
+     *
+     * @param dependencies the dependencies
+     * @return their files
+     */
+    protected static List<File> files(List<Dependency> dependencies) {
         List<File> files = new ArrayList<>(dependencies.size());
         for (Dependency dependency : dependencies) {
             File file = dependency.getArtifact().getFile();

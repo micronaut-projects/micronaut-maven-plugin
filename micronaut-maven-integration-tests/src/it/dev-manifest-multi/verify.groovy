@@ -32,3 +32,4 @@ assert manifest.'micronaut.dev.main-class' == 'devmulti.app.Application'
 assert manifest.'micronaut.dev.strategy' == 'restart'
 assert manifest.'micronaut.dev.retain' == 'devmulti.lib.Greeter'
 assert manifest.'micronaut.dev.livereload.port' == '35731'
+assert manifest.'micronaut.dev.generations' == new File(basedir, 'app/target/micronaut-dev/generations').absolutePath
