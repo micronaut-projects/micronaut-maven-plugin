@@ -49,9 +49,9 @@ class PrecompileLogbackMojoTest {
         byte[] generated = {1, 2, 3};
         Files.write(configurator, generated);
         Files.writeString(service, "io.micronaut.aot.logback.generated.LogbackConfigurator\n");
-        Path record = target.resolve(PrecompileLogbackMojo.RECORD_FILE);
-        Files.createDirectories(record.getParent());
-        Files.write(record, List.of(
+        Path recordFile = target.resolve(PrecompileLogbackMojo.RECORD_FILE);
+        Files.createDirectories(recordFile.getParent());
+        Files.write(recordFile, List.of(
             "io/micronaut/aot/logback/generated/LogbackConfigurator.class\t3\t" + crc(generated),
             "META-INF/services/ch.qos.logback.classic.spi.Configurator\t4\t0"
         ), StandardCharsets.UTF_8);
@@ -67,7 +67,7 @@ class PrecompileLogbackMojoTest {
         assertFalse(Files.exists(configurator));
         // Rewritten since it was recorded, as aot-analysis does: it stays
         assertTrue(Files.exists(service));
-        assertFalse(Files.exists(record));
+        assertFalse(Files.exists(recordFile));
     }
 
     @Test
@@ -79,8 +79,8 @@ class PrecompileLogbackMojoTest {
 
         mojo.execute();
 
-        Path record = target.resolve(PrecompileLogbackMojo.RECORD_FILE);
-        List<String> written = Files.readAllLines(record).stream().map(line -> line.split("\t")[0]).toList();
+        Path recordFile = target.resolve(PrecompileLogbackMojo.RECORD_FILE);
+        List<String> written = Files.readAllLines(recordFile).stream().map(line -> line.split("\t")[0]).toList();
         assertFalse(written.isEmpty());
         for (String entry : written) {
             assertTrue(Files.isRegularFile(classes.resolve(entry)), entry);
@@ -93,7 +93,7 @@ class PrecompileLogbackMojoTest {
         for (String entry : written) {
             assertFalse(Files.exists(classes.resolve(entry)), entry);
         }
-        assertFalse(Files.exists(record));
+        assertFalse(Files.exists(recordFile));
     }
 
     @Test

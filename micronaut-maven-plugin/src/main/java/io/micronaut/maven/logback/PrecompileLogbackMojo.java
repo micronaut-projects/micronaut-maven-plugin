@@ -71,9 +71,9 @@ public class PrecompileLogbackMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException {
         Path classes = Path.of(mavenProject.getBuild().getOutputDirectory());
-        Path record = Path.of(mavenProject.getBuild().getDirectory()).resolve(RECORD_FILE);
+        Path recordFile = Path.of(mavenProject.getBuild().getDirectory()).resolve(RECORD_FILE);
         try {
-            removeEarlierOutput(classes, record);
+            removeEarlierOutput(classes, recordFile);
             if (!precompile || !Files.isDirectory(classes)) {
                 return;
             }
@@ -94,7 +94,7 @@ public class PrecompileLogbackMojo extends AbstractMojo {
                 getLog().info(result.message());
             }
             result.warnings().forEach(getLog()::warn);
-            write(classes, record, result.entries());
+            write(classes, recordFile, result.entries());
         } catch (IOException e) {
             throw new MojoExecutionException("Unable to precompile logback.xml", e);
         }
@@ -108,7 +108,7 @@ public class PrecompileLogbackMojo extends AbstractMojo {
                 String version = value.trim();
                 try {
                     return Integer.parseInt(version.startsWith("1.") ? version.substring(2) : version);
-                } catch (NumberFormatException e) {
+                } catch (NumberFormatException _) {
                     getLog().debug("Ignoring " + key + "=" + value);
                 }
             }
@@ -128,7 +128,7 @@ public class PrecompileLogbackMojo extends AbstractMojo {
         return entries;
     }
 
-    private static void write(Path classes, Path record, Map<String, byte[]> entries) throws IOException {
+    private static void write(Path classes, Path recordFile, Map<String, byte[]> entries) throws IOException {
         if (entries.isEmpty()) {
             return;
         }
@@ -142,19 +142,19 @@ public class PrecompileLogbackMojo extends AbstractMojo {
             Files.write(file, entry.getValue());
             lines.add(entry.getKey() + '\t' + entry.getValue().length + '\t' + crc(entry.getValue()));
         }
-        Files.createDirectories(record.getParent());
-        Files.write(record, lines, StandardCharsets.UTF_8);
+        Files.createDirectories(recordFile.getParent());
+        Files.write(recordFile, lines, StandardCharsets.UTF_8);
     }
 
     /**
      * Deletes the files of an earlier run that are still as it wrote them. A file that changed since, such as the
      * service file that {@code aot-analysis} writes at the same path, is left alone.
      */
-    private void removeEarlierOutput(Path classes, Path record) throws IOException {
-        if (!Files.isRegularFile(record)) {
+    private void removeEarlierOutput(Path classes, Path recordFile) throws IOException {
+        if (!Files.isRegularFile(recordFile)) {
             return;
         }
-        for (String line : Files.readAllLines(record, StandardCharsets.UTF_8)) {
+        for (String line : Files.readAllLines(recordFile, StandardCharsets.UTF_8)) {
             String[] parts = line.split("\t");
             if (parts.length != 3) {
                 continue;
@@ -169,7 +169,7 @@ public class PrecompileLogbackMojo extends AbstractMojo {
                 }
             }
         }
-        Files.delete(record);
+        Files.delete(recordFile);
     }
 
     private static long crc(byte[] content) {
