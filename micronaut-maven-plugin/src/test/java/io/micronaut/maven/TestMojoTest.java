@@ -3,20 +3,33 @@ package io.micronaut.maven;
 import io.micronaut.maven.services.CompilerService;
 import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.descriptor.MojoDescriptor;
+import org.apache.maven.plugin.descriptor.Parameter;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.toolchain.ToolchainManager;
+import org.codehaus.plexus.classworlds.ClassWorld;
+import org.codehaus.plexus.component.configurator.BasicComponentConfigurator;
 import org.codehaus.plexus.component.configurator.ComponentConfigurator;
+import org.codehaus.plexus.configuration.xml.XmlPlexusConfiguration;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.artifact.Artifact;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class TestMojoTest {
 
@@ -44,6 +57,86 @@ class TestMojoTest {
     @Test
     void theJUnitPlatformRunnerAddsItsLauncher() throws Exception {
         assertTrue(launcherArtifactIds("junit-platform").contains("junit-platform-launcher"));
+    }
+
+    @Test
+    void aSettingOfThisGoalResolvedOnlyInTheReactorRootDoesNotRemain() throws Exception {
+        MavenProject app = new MavenProject();
+        app.setFile(new File("app/pom.xml").getAbsoluteFile());
+        app.getProperties().setProperty("mn.test.selection", "all");
+        MavenSession session = mock(MavenSession.class);
+        MavenSession applicationSession = mock(MavenSession.class);
+        when(session.clone()).thenReturn(applicationSession);
+        when(applicationSession.getCurrentProject()).thenReturn(app);
+        when(applicationSession.getUserProperties()).thenReturn(new Properties());
+        when(applicationSession.getSystemProperties()).thenReturn(new Properties());
+        MojoExecution execution = mock(MojoExecution.class);
+        when(execution.getMojoDescriptor()).thenReturn(descriptor());
+        TestMojo mojo = new TestMojo(session, mock(ToolchainManager.class), mock(CompilerService.class),
+            mock(ExecutorService.class), mock(RepositorySystem.class), new BasicComponentConfigurator());
+        set(DevMojo.class, mojo, "mojoExecution", execution);
+        set(DevMojo.class, mojo, "runnableProject", app);
+        // as Maven configured the goal from the root, an aggregator the application does not inherit from
+        set(TestMojo.class, mojo, "filter", "OnlyInTheRoot");
+        set(TestMojo.class, mojo, "selection", "affected");
+        set(DevMojo.class, mojo, "retain", "example.OnlyInTheRoot");
+
+        var apply = DevMojo.class.getDeclaredMethod("applyRunnableProjectConfiguration");
+        apply.setAccessible(true);
+        apply.invoke(mojo);
+
+        assertNull(get(TestMojo.class, mojo, "filter"));
+        assertNull(get(DevMojo.class, mojo, "retain"));
+        assertEquals("all", get(TestMojo.class, mojo, "selection"), "the application's own value");
+    }
+
+    @Test
+    void anUnknownSelectionFailsTheGoal() throws Exception {
+        TestMojo mojo = new TestMojo(mock(MavenSession.class), mock(ToolchainManager.class), mock(CompilerService.class),
+            mock(ExecutorService.class), mock(RepositorySystem.class), mock(ComponentConfigurator.class));
+        set(DevMojo.class, mojo, "strategy", "auto");
+        set(DevMojo.class, mojo, "compile", "embedded");
+        set(TestMojo.class, mojo, "selection", "affectd");
+
+        MojoExecutionException failure = assertThrows(MojoExecutionException.class, mojo::validateSettings);
+
+        assertEquals("Unknown value 'affectd' for mn.test.selection: the valid values are affected, all", failure.getMessage());
+
+        set(TestMojo.class, mojo, "selection", "ALL");
+        mojo.validateSettings();
+        assertEquals("all", get(TestMojo.class, mojo, "selection"));
+    }
+
+    private static MojoDescriptor descriptor() throws Exception {
+        MojoDescriptor descriptor = new MojoDescriptor();
+        PluginDescriptor plugin = new PluginDescriptor();
+        plugin.setClassRealm(new ClassWorld("test", TestMojoTest.class.getClassLoader()).getClassRealm("test"));
+        descriptor.setPluginDescriptor(plugin);
+        XmlPlexusConfiguration configuration = new XmlPlexusConfiguration("configuration");
+        for (String name : List.of("filter", "selection", "retain")) {
+            Parameter parameter = new Parameter();
+            parameter.setName(name);
+            parameter.setType(String.class.getName());
+            parameter.setEditable(true);
+            descriptor.addParameter(parameter);
+        }
+        configuration.addChild(expression("filter", "${mn.test.filter}"));
+        configuration.addChild(expression("selection", "${mn.test.selection}"));
+        configuration.addChild(expression("retain", "${mn.dev.retain}"));
+        descriptor.setMojoConfiguration(configuration);
+        return descriptor;
+    }
+
+    private static XmlPlexusConfiguration expression(String name, String expression) {
+        XmlPlexusConfiguration child = new XmlPlexusConfiguration(name);
+        child.setValue(expression);
+        return child;
+    }
+
+    private static Object get(Class<?> type, Object target, String name) throws Exception {
+        Field field = type.getDeclaredField(name);
+        field.setAccessible(true);
+        return field.get(target);
     }
 
     private static List<String> launcherArtifactIds(String runner) throws Exception {
