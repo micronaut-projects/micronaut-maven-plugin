@@ -104,7 +104,7 @@
         <junit-jupiter.version>6.0.3</junit-jupiter.version>
         <directory-watcher.version>0.19.1</directory-watcher.version>
         <testcontainers.version>2.0.4</testcontainers.version>
-        <jib-maven-plugin.version>3.5.1</jib-maven-plugin.version>
+        <jib-maven-plugin.version>3.5.2</jib-maven-plugin.version>
         <snakeyaml.version>2.5</snakeyaml.version>
         <sisu.version>1.0.0</sisu.version>
         <docker-java.version>3.7.1</docker-java.version>
