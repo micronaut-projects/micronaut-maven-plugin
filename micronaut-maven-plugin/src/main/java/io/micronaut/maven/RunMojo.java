@@ -29,16 +29,11 @@ import io.micronaut.maven.testresources.TestResourcesHelper;
 import io.micronaut.testresources.buildtools.ServerSettings;
 import io.micronaut.testresources.buildtools.ServerUtils;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.lifecycle.internal.MojoDescriptorCreator;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.FileSet;
-import org.apache.maven.model.Plugin;
-import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.BuildPluginManager;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
-import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -50,10 +45,8 @@ import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
 import org.apache.maven.toolchain.ToolchainManager;
-import org.codehaus.plexus.classworlds.realm.ClassRealm;
 import org.codehaus.plexus.component.configurator.ComponentConfigurationException;
 import org.codehaus.plexus.component.configurator.ComponentConfigurator;
-import org.codehaus.plexus.configuration.xml.XmlPlexusConfiguration;
 import org.codehaus.plexus.util.AbstractScanner;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -63,8 +56,6 @@ import org.eclipse.aether.util.artifact.JavaScopes;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -108,7 +99,6 @@ public class RunMojo extends AbstractTestResourcesMojo {
 
     private static final List<String> RELEVANT_SRC_DIRS = List.of("resources", "java", "groovy");
     private static final int LAST_COMPILATION_THRESHOLD = 500;
-    private static final String DEFAULT_CLI_EXECUTION = "default-cli";
     private static final List<String> DEFAULT_EXCLUDES;
 
     static {
@@ -406,114 +396,20 @@ public class RunMojo extends AbstractTestResourcesMojo {
     }
 
     /**
-     * Configures this goal as the selected application declares it. Maven configured the mojo from the project the
-     * goal was invoked on, the reactor root when {@code mn:run} runs from an aggregator that does not declare the
-     * plugin, so a property-backed parameter, such as {@code micronaut.test.resources.enabled}, and the plugin's
-     * configuration, such as {@code testResourcesDependencies}, came from the root. Here the application's
-     * plugin-level {@code micronaut-maven-plugin} configuration, with its {@code default-cli} execution's merged over
-     * it, restricted to this goal's parameters and merged over the goal's defaults and property expressions, is applied
-     * with Maven's configurator and evaluated against the application, as Maven would have done had the goal run on it.
+     * Configures this goal as the selected application declares it, not as the reactor root Maven configured it from.
      */
     private void applyRunnableProjectConfiguration() {
         if (mojoExecution == null || configurator == null) {
             return;
         }
-        MojoDescriptor descriptor = mojoExecution.getMojoDescriptor();
-        Xpp3Dom configuration = Xpp3Dom.mergeXpp3Dom(runnableProjectConfiguration(runnableProject, descriptor),
-            MojoDescriptorCreator.convert(descriptor));
-        resetParameters(descriptor);
-        MavenSession runnableSession = mavenSession.clone();
-        runnableSession.setCurrentProject(runnableProject);
-        var evaluator = new PluginParameterExpressionEvaluator(runnableSession, mojoExecution);
+        var pristine = new RunMojo(mavenSession, null, projectBuilder, toolchainManager, compilerService,
+            executorService, dependencyResolutionService, configurator);
         try {
-            ClassRealm realm = descriptor.getPluginDescriptor().getClassRealm();
-            configurator.configureComponent(this, new XmlPlexusConfiguration(configuration), evaluator, realm);
+            RunnableProjectConfiguration.apply(this, pristine, mojoExecution,
+                RunnableProjectConfiguration.evaluator(mavenSession, runnableProject, mojoExecution), runnableProject, configurator);
         } catch (ComponentConfigurationException e) {
             throw new IllegalStateException("Cannot apply the micronaut-maven-plugin configuration of " + runnableProject.getArtifactId() + ": " + e.getMessage(), e);
         }
-    }
-
-    /**
-     * Resets the goal's parameters to the values a new mojo starts with, so that a value Maven resolved against the
-     * reactor root, which the application's configuration leaves unresolved, does not remain: Maven's configurator
-     * does not assign an expression that resolves to nothing.
-     *
-     * @param descriptor the goal's descriptor
-     */
-    private void resetParameters(MojoDescriptor descriptor) {
-        if (descriptor.getParameters() == null) {
-            return;
-        }
-        var pristine = new RunMojo(mavenSession, null, projectBuilder, toolchainManager, compilerService,
-            executorService, dependencyResolutionService, configurator);
-        for (org.apache.maven.plugin.descriptor.Parameter parameter : descriptor.getParameters()) {
-            if (!parameter.isEditable()) {
-                // read-only parameters, such as the mojo execution, are the same for every project
-                continue;
-            }
-            Field field = parameterField(parameter.getName());
-            if (field != null) {
-                try {
-                    field.set(this, field.get(pristine));
-                } catch (IllegalAccessException e) {
-                    throw new IllegalStateException("Cannot reset the parameter " + parameter.getName(), e);
-                }
-            }
-        }
-    }
-
-    private static Field parameterField(String name) {
-        for (Class<?> type = RunMojo.class; type != null && type != Object.class; type = type.getSuperclass()) {
-            try {
-                Field field = type.getDeclaredField(name);
-                if (Modifier.isStatic(field.getModifiers()) || Modifier.isFinal(field.getModifiers())) {
-                    return null;
-                }
-                field.setAccessible(true);
-                return field;
-            } catch (NoSuchFieldException e) {
-                // declared by a superclass
-            }
-        }
-        return null;
-    }
-
-    /**
-     * The configuration of this goal the project declares: its plugin-level {@code micronaut-maven-plugin}
-     * configuration, with the {@code default-cli} execution's merged over it, restricted to the goal's parameters.
-     *
-     * @param project the project
-     * @param descriptor the goal's descriptor
-     * @return the configuration, empty when the project declares none
-     */
-    static Xpp3Dom runnableProjectConfiguration(MavenProject project, MojoDescriptor descriptor) {
-        Xpp3Dom own = new Xpp3Dom("configuration");
-        Plugin plugin = project.getPlugin(THIS_PLUGIN);
-        if (plugin == null) {
-            return own;
-        }
-        Xpp3Dom effective = plugin.getConfiguration() instanceof Xpp3Dom dom ? new Xpp3Dom(dom) : null;
-        for (PluginExecution execution : plugin.getExecutions()) {
-            if (DEFAULT_CLI_EXECUTION.equals(execution.getId()) && execution.getConfiguration() instanceof Xpp3Dom executionDom) {
-                effective = effective == null ? new Xpp3Dom(executionDom) : Xpp3Dom.mergeXpp3Dom(new Xpp3Dom(executionDom), effective);
-            }
-        }
-        if (effective != null) {
-            for (Xpp3Dom child : effective.getChildren()) {
-                // another goal's settings, such as the AOT goals', are not this goal's to apply
-                if (isParameter(descriptor, child.getName())) {
-                    own.addChild(new Xpp3Dom(child));
-                }
-            }
-        }
-        return own;
-    }
-
-    private static boolean isParameter(MojoDescriptor descriptor, String name) {
-        if (descriptor.getParameterMap().containsKey(name)) {
-            return true;
-        }
-        return descriptor.getParameters() != null && descriptor.getParameters().stream().anyMatch(parameter -> name.equals(parameter.getAlias()));
     }
 
     private boolean isDependencyOfRunnableProject(MavenProject mavenProject) {

@@ -16,8 +16,11 @@ import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.toolchain.ToolchainManager;
+import org.codehaus.plexus.classworlds.ClassWorld;
+import org.codehaus.plexus.component.configurator.BasicComponentConfigurator;
 import org.codehaus.plexus.component.configurator.ComponentConfigurator;
 import org.codehaus.plexus.configuration.PlexusConfiguration;
+import org.codehaus.plexus.configuration.xml.XmlPlexusConfiguration;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
@@ -147,7 +150,7 @@ class DevMojoTest {
         when(mavenSession.getCurrentProject()).thenReturn(root);
         when(mavenSession.getProjects()).thenReturn(List.of(root, app));
         when(mavenSession.getAllProjects()).thenReturn(List.of(root, app));
-        when(mojoExecution.getMojoDescriptor()).thenReturn(descriptor());
+        reconfigurable();
         Files.createDirectories(directory.resolve("app/src/main/java"));
         app.addCompileSourceRoot(directory.resolve("app/src/main/java").toString());
         managed(app, "io.micronaut", "micronaut-dev", "5.3.0");
@@ -157,7 +160,9 @@ class DevMojoTest {
         configuration.addChild(value("strategy", "restart"));
         app.getPlugin(THIS_PLUGIN).setConfiguration(configuration);
         app.getProperties().setProperty("exec.mainClass", "example.Application");
-        setField("compile", "build-tool");
+        Properties userProperties = new Properties();
+        userProperties.setProperty("mn.dev.compile", "build-tool");
+        when(runnableSession.getUserProperties()).thenReturn(userProperties);
 
         // the launcher jars are empty files: the JVM cannot start the launcher, and exits with an error
         MojoExecutionException failure = assertThrows(MojoExecutionException.class, mojo::execute);
@@ -165,7 +170,8 @@ class DevMojoTest {
         assertTrue(failure.getMessage().contains("exited with status"), failure.getMessage());
         assertTrue(Files.isRegularFile(directory.resolve("app/target/micronaut-dev").resolve(DevManifest.FILE_NAME)));
         // the configuration of the selected application was applied
-        verify(configurator).configureComponent(eq(mojo), any(PlexusConfiguration.class), any(), any());
+        assertEquals("restart", getField("strategy"));
+        assertEquals("build-tool", getField("compile"));
     }
 
     @Test
@@ -209,19 +215,61 @@ class DevMojoTest {
         assertEquals("reload", applied.getChild("strategy").getValue());
         assertEquals("4000", applied.getChild("livereloadPort").getValue(), "a parameter is matched by its alias too");
         assertNull(applied.getChild("watches", false));
-        // the configuration names no main class: the application's exec.mainClass is
-        assertEquals("example.FromProperty", getField("mainClass"));
+        // the configuration names no main class: the goal's default, the application's exec.mainClass, applies
+        assertEquals("${exec.mainClass}", applied.getChild("mainClass").getAttribute("default-value"));
     }
 
     @Test
-    void anApplicationWithoutPluginConfigurationKeepsItsMainClassProperty() throws Exception {
-        app.getProperties().setProperty("exec.mainClass", "example.FromProperty");
+    void anApplicationWithoutPluginConfigurationIsConfiguredWithTheGoalDefaults() throws Exception {
+        when(mojoExecution.getMojoDescriptor()).thenReturn(descriptor());
         setField("runnableProject", app);
 
         invoke("applyRunnableProjectConfiguration");
 
-        verifyNoInteractions(configurator);
-        assertEquals("example.FromProperty", getField("mainClass"));
+        ArgumentCaptor<PlexusConfiguration> configuration = ArgumentCaptor.forClass(PlexusConfiguration.class);
+        verify(configurator).configureComponent(eq(mojo), configuration.capture(), any(), any());
+        // the defaults are evaluated against the selected application, so its exec.mainClass is the main class
+        assertEquals("${exec.mainClass}", configuration.getValue().getChild("mainClass").getAttribute("default-value"));
+        assertNull(configuration.getValue().getChild("strategy", false));
+    }
+
+    @Test
+    void aSettingResolvedOnlyInTheReactorRootDoesNotRemain() throws Exception {
+        reconfigurable();
+        // as Maven configured the goal from the root, an aggregator the application does not inherit from
+        setField("retain", "example.OnlyInTheRoot");
+        setField("strategy", "restart");
+        setField("mainClass", "example.FromTheRoot");
+        app.getProperties().setProperty("exec.mainClass", "example.Application");
+        setField("runnableProject", app);
+
+        invoke("applyRunnableProjectConfiguration");
+
+        assertNull(getField("retain"));
+        assertEquals("auto", getField("strategy"), "the goal's default, which the root's value hid");
+        assertEquals("example.Application", getField("mainClass"));
+    }
+
+    @Test
+    void theApplicationsOwnValuesAndTheCommandLineApplyOverTheReset() throws Exception {
+        reconfigurable();
+        setField("retain", "example.OnlyInTheRoot");
+        setField("incremental", false);
+        app.getProperties().setProperty("mn.dev.retain", "example.FromTheApplication");
+        Xpp3Dom configuration = new Xpp3Dom("configuration");
+        configuration.addChild(value("strategy", "restart"));
+        app.getPlugin(THIS_PLUGIN).setConfiguration(configuration);
+        Properties userProperties = new Properties();
+        userProperties.setProperty("mn.dev.compile", "build-tool");
+        when(runnableSession.getUserProperties()).thenReturn(userProperties);
+        setField("runnableProject", app);
+
+        invoke("applyRunnableProjectConfiguration");
+
+        assertEquals("example.FromTheApplication", getField("retain"));
+        assertEquals("restart", getField("strategy"));
+        assertEquals("build-tool", getField("compile"));
+        assertEquals(true, getField("incremental"), "the goal's default");
     }
 
     @Test
@@ -488,6 +536,48 @@ class DevMojoTest {
         descriptor.addParameter(parameter("strategy", null));
         descriptor.addParameter(parameter("liveReloadPort", "livereloadPort"));
         descriptor.addParameter(parameter("mainClass", null));
+        // the goal's defaults, as plugin.xml declares them
+        XmlPlexusConfiguration defaults = new XmlPlexusConfiguration("configuration");
+        XmlPlexusConfiguration mainClass = new XmlPlexusConfiguration("mainClass");
+        mainClass.setAttribute("default-value", "${exec.mainClass}");
+        defaults.addChild(mainClass);
+        descriptor.setMojoConfiguration(defaults);
+        return descriptor;
+    }
+
+    /**
+     * The goal with Maven's configurator and the expressions and defaults its plugin.xml declares.
+     */
+    private void reconfigurable() throws Exception {
+        mojo = new DevMojo(mavenSession, mock(ToolchainManager.class), compilerService, executorService, repositorySystem, new BasicComponentConfigurator());
+        setField("mojoExecution", mojoExecution);
+        when(mojoExecution.getMojoDescriptor()).thenReturn(pluginDescriptorOfTheGoal());
+    }
+
+    private static MojoDescriptor pluginDescriptorOfTheGoal() throws Exception {
+        MojoDescriptor descriptor = new MojoDescriptor();
+        PluginDescriptor plugin = new PluginDescriptor();
+        plugin.setClassRealm(new ClassWorld("test", DevMojoTest.class.getClassLoader()).getClassRealm("test"));
+        descriptor.setPluginDescriptor(plugin);
+        XmlPlexusConfiguration configuration = new XmlPlexusConfiguration("configuration");
+        for (String[] parameter : List.of(
+            new String[] {"mainClass", String.class.getName(), null, "${exec.mainClass}"},
+            new String[] {"strategy", String.class.getName(), "${mn.dev.strategy}", "auto"},
+            new String[] {"compile", String.class.getName(), "${mn.dev.compile}", "embedded"},
+            new String[] {"incremental", "boolean", "${mn.dev.incremental}", "true"},
+            new String[] {"retain", String.class.getName(), "${mn.dev.retain}", null})) {
+            org.apache.maven.plugin.descriptor.Parameter declared = parameter(parameter[0], null);
+            declared.setType(parameter[1]);
+            declared.setEditable(true);
+            descriptor.addParameter(declared);
+            XmlPlexusConfiguration child = new XmlPlexusConfiguration(parameter[0]);
+            child.setValue(parameter[2]);
+            if (parameter[3] != null) {
+                child.setAttribute("default-value", parameter[3]);
+            }
+            configuration.addChild(child);
+        }
+        descriptor.setMojoConfiguration(configuration);
         return descriptor;
     }
 

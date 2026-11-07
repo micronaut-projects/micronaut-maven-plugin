@@ -28,8 +28,6 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
-import org.apache.maven.plugin.descriptor.MojoDescriptor;
-import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -38,13 +36,9 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.toolchain.ToolchainManager;
-import org.codehaus.plexus.classworlds.realm.ClassRealm;
 import org.codehaus.plexus.component.configurator.ComponentConfigurationException;
 import org.codehaus.plexus.component.configurator.ComponentConfigurator;
-import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluationException;
-import org.codehaus.plexus.configuration.xml.XmlPlexusConfiguration;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.graph.Dependency;
@@ -115,7 +109,6 @@ public class DevMojo extends AbstractTestResourcesMojo {
      */
     private static final int RELAUNCH_STATUS = 3;
     private static final long QUIET_PERIOD_MILLIS = 300;
-    private static final String DEFAULT_CLI_EXECUTION = "default-cli";
 
     private final MavenSession mavenSession;
     private final ToolchainManager toolchainManager;
@@ -329,64 +322,26 @@ public class DevMojo extends AbstractTestResourcesMojo {
      * the reactor root an aggregator invocation started from.
      */
     private PluginParameterExpressionEvaluator runnableEvaluator() {
-        MavenSession runnableSession = mavenSession.clone();
-        runnableSession.setCurrentProject(runnableProject);
-        return new PluginParameterExpressionEvaluator(runnableSession, mojoExecution);
+        return RunnableProjectConfiguration.evaluator(mavenSession, runnableProject, mojoExecution);
     }
 
     /**
-     * The goal's parameters as the selected application declares them. Maven configured this mojo from the
-     * project the goal was invoked on, the reactor root when {@code mn:dev} runs from an aggregator, so the
-     * application's effective configuration is applied here with Maven's own configurator: its plugin-level
-     * {@code micronaut-maven-plugin} configuration with the {@code default-cli} execution's merged over it,
-     * as Maven would have applied them had the goal run on the application, restricted to this goal's
-     * parameters. The main class is evaluated against the application when its configuration names none.
+     * The goal's parameters as the selected application declares them, not as the reactor root Maven configured this
+     * mojo from when {@code mn:dev} runs from an aggregator.
      */
     private void applyRunnableProjectConfiguration() throws MojoExecutionException {
-        PluginParameterExpressionEvaluator evaluator = runnableEvaluator();
-        Xpp3Dom effective = effectiveConfiguration();
         try {
-            if (effective != null) {
-                MojoDescriptor descriptor = mojoExecution.getMojoDescriptor();
-                Xpp3Dom own = new Xpp3Dom("configuration");
-                for (Xpp3Dom child : effective.getChildren()) {
-                    // another goal's settings, such as mn:run's watches, are not this goal's to apply
-                    if (isParameter(descriptor, child.getName())) {
-                        own.addChild(new Xpp3Dom(child));
-                    }
-                }
-                ClassRealm realm = descriptor.getPluginDescriptor().getClassRealm();
-                configurator.configureComponent(this, new XmlPlexusConfiguration(own), evaluator, realm);
-                if (own.getChild("mainClass") != null) {
-                    return;
-                }
-            }
-            Object evaluated = evaluator.evaluate(MojoUtils.EXEC_MAIN_CLASS);
-            mainClass = evaluated == null ? null : evaluated.toString();
-        } catch (ComponentConfigurationException | ExpressionEvaluationException e) {
+            RunnableProjectConfiguration.apply(this, newInstance(), mojoExecution, runnableEvaluator(), runnableProject, configurator);
+        } catch (ComponentConfigurationException e) {
             throw new MojoExecutionException("Cannot apply the micronaut-maven-plugin configuration of " + runnableProject.getArtifactId() + ": " + e.getMessage(), e);
         }
     }
 
-    private Xpp3Dom effectiveConfiguration() {
-        org.apache.maven.model.Plugin plugin = runnableProject.getPlugin(MojoUtils.THIS_PLUGIN);
-        if (plugin == null) {
-            return null;
-        }
-        Xpp3Dom configuration = plugin.getConfiguration() instanceof Xpp3Dom dom ? new Xpp3Dom(dom) : null;
-        for (PluginExecution execution : plugin.getExecutions()) {
-            if (DEFAULT_CLI_EXECUTION.equals(execution.getId()) && execution.getConfiguration() instanceof Xpp3Dom executionDom) {
-                configuration = configuration == null ? new Xpp3Dom(executionDom) : Xpp3Dom.mergeXpp3Dom(new Xpp3Dom(executionDom), configuration);
-            }
-        }
-        return configuration;
-    }
-
-    private static boolean isParameter(MojoDescriptor descriptor, String name) {
-        if (descriptor.getParameterMap().containsKey(name)) {
-            return true;
-        }
-        return descriptor.getParameters() != null && descriptor.getParameters().stream().anyMatch(parameter -> name.equals(parameter.getAlias()));
+    /**
+     * @return a new instance of this goal, holding the values its parameters start with
+     */
+    protected DevMojo newInstance() {
+        return new DevMojo(mavenSession, toolchainManager, compilerService, executorService, repositorySystem, configurator);
     }
 
     /**
