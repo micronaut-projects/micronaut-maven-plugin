@@ -14,11 +14,9 @@ assert log.text.contains("BUILD SUCCESS")
 File mvnw = new File(base, '../../../mvnw').canonicalFile
 assert mvnw.exists()
 String testsRepo = new File(base, '../../../target/local-repo').canonicalPath
-// the repository of the build running the tests, which holds the core with development mode, as the tests' settings name it
-File outerRepo = new File(System.getProperty('maven.repo.local') ?: new File(System.getProperty('user.home'), '.m2/repository').path)
-// mn:dev resolves into a repository of its own, from the build's repository first, which selector.groovy checks holds
-// micronaut-dev, then from the tests' one, which has the plugin, and Maven Central, which the super POM declares: the
-// tests' repository may hold a 5.3.0-SNAPSHOT of core from the snapshots repository, without micronaut-dev
+// mn:dev resolves into a repository of its own: the plugin under test from the tests' repository, Micronaut Core
+// 5.3.0-SNAPSHOT from the Central Portal snapshots repository, as the scenario's own build did, and everything else
+// from Maven Central, which the super POM declares
 String localRepo = new File(base, 'target/dev-reload-repo').path
 File settings = new File(base, 'target/dev-reload-settings.xml')
 def repository = { String id, File directory ->
@@ -34,11 +32,15 @@ settings.text = """<settings>
     <profile>
       <id>dev-reload</id>
       <repositories>
-${repository('outer', outerRepo)}
 ${repository('tests', new File(testsRepo))}
+        <repository>
+          <id>central-portal-snapshots</id>
+          <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+          <releases><enabled>false</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </repository>
       </repositories>
       <pluginRepositories>
-${repository('outer', outerRepo).replace('repository>', 'pluginRepository>')}
 ${repository('tests', new File(testsRepo)).replace('repository>', 'pluginRepository>')}
       </pluginRepositories>
     </profile>
