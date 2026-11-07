@@ -32,6 +32,7 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.plugin.BuildPluginManager;
+import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -44,6 +45,8 @@ import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
 import org.apache.maven.toolchain.ToolchainManager;
+import org.codehaus.plexus.component.configurator.ComponentConfigurationException;
+import org.codehaus.plexus.component.configurator.ComponentConfigurator;
 import org.codehaus.plexus.util.AbstractScanner;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -51,6 +54,7 @@ import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.util.artifact.JavaScopes;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -80,15 +84,18 @@ import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
  *
  * @author Álvaro Sánchez-Mariscal
  * @since 1.0.0
+ * @deprecated {@code mn:run} will be removed in Micronaut 6: use {@code mn:dev} instead.
  */
+@Deprecated(forRemoval = true, since = "5.1.0")
 @SuppressWarnings("unused")
 @Mojo(name = "run", requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME, defaultPhase = LifecyclePhase.PREPARE_PACKAGE, aggregator = true)
 @Execute(phase = LifecyclePhase.PROCESS_CLASSES)
 public class RunMojo extends AbstractTestResourcesMojo {
 
-    public static final String MN_APP_ARGS = "mn.appArgs";
-    public static final String EXEC_MAIN_CLASS = "${exec.mainClass}";
+    public static final String MN_APP_ARGS = MojoUtils.MN_APP_ARGS;
+    public static final String EXEC_MAIN_CLASS = MojoUtils.EXEC_MAIN_CLASS;
     public static final String RESOURCES_DIR = "src/main/resources";
+    static final String DEPRECATION_WARNING = "mn:run is deprecated and will be removed in Micronaut 6: use mn:dev instead";
 
     private static final List<String> RELEVANT_SRC_DIRS = List.of("resources", "java", "groovy");
     private static final int LAST_COMPILATION_THRESHOLD = 500;
@@ -107,6 +114,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
     private final DependencyResolutionService dependencyResolutionService;
     private final CompilerService compilerService;
     private final ExecutorService executorService;
+    private final ComponentConfigurator configurator;
 
     /**
      * The project's target directory.
@@ -210,6 +218,9 @@ public class RunMojo extends AbstractTestResourcesMojo {
     @Parameter(property = "mn.classDataSharing", defaultValue = "false")
     private boolean classDataSharing;
 
+    @Parameter(defaultValue = "${mojoExecution}", readonly = true, required = true)
+    private MojoExecution mojoExecution;
+
     // These 2 flags are used in the context of watching for changes
     // the first one makes sure that only one recompilation is processed at a time
     private final AtomicBoolean recompileRequested = new AtomicBoolean();
@@ -234,7 +245,8 @@ public class RunMojo extends AbstractTestResourcesMojo {
                    ToolchainManager toolchainManager,
                    CompilerService compilerService,
                    ExecutorService executorService,
-                   DependencyResolutionService dependencyResolutionService) {
+                   DependencyResolutionService dependencyResolutionService,
+                   @Named("basic") ComponentConfigurator configurator) {
         this.mavenSession = mavenSession;
         this.projectBuilder = projectBuilder;
         this.toolchainManager = toolchainManager;
@@ -242,6 +254,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         this.executorService = executorService;
         this.javaExecutable = findJavaExecutable(toolchainManager, mavenSession);
         this.dependencyResolutionService = dependencyResolutionService;
+        this.configurator = configurator;
     }
 
     @Override
@@ -255,6 +268,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
         try {
             maybeStartTestResourcesServer();
             runApplication();
+            warnDeprecated();
             Thread shutdownHook = new Thread(this::stopOnShutdown);
             Runtime.getRuntime().addShutdownHook(shutdownHook);
 
@@ -311,7 +325,16 @@ public class RunMojo extends AbstractTestResourcesMojo {
                 classDataSharingSupport.awaitBackgroundWork();
             }
             cleanup();
+            warnDeprecated();
         }
+    }
+
+    /**
+     * Warns that this goal is deprecated, both when the application starts and when the goal finishes, so that the
+     * warning shows near the end of the output.
+     */
+    void warnDeprecated() {
+        getLog().warn(DEPRECATION_WARNING);
     }
 
     protected final void initialize() {
@@ -329,6 +352,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
                 throw new IllegalStateException("The Micronaut Maven Plugin is declared in the following projects: %s. Please specify the project to run with the -pl option."
                     .formatted(projectsWithPlugin.stream().map(MavenProject::getArtifactId).toList()));
             }
+            applyRunnableProjectConfiguration();
         }
         this.targetDirectory = new File(runnableProject.getBuild().getDirectory());
         if (classDataSharing) {
@@ -369,6 +393,23 @@ public class RunMojo extends AbstractTestResourcesMojo {
             });
 
         compileProject();
+    }
+
+    /**
+     * Configures this goal as the selected application declares it, not as the reactor root Maven configured it from.
+     */
+    private void applyRunnableProjectConfiguration() {
+        if (mojoExecution == null || configurator == null) {
+            return;
+        }
+        var pristine = new RunMojo(mavenSession, null, projectBuilder, toolchainManager, compilerService,
+            executorService, dependencyResolutionService, configurator);
+        try {
+            RunnableProjectConfiguration.apply(this, pristine, mojoExecution,
+                RunnableProjectConfiguration.evaluator(mavenSession, runnableProject, mojoExecution), runnableProject, configurator);
+        } catch (ComponentConfigurationException e) {
+            throw new IllegalStateException("Cannot apply the micronaut-maven-plugin configuration of " + runnableProject.getArtifactId() + ": " + e.getMessage(), e);
+        }
     }
 
     private boolean isDependencyOfRunnableProject(MavenProject mavenProject) {
