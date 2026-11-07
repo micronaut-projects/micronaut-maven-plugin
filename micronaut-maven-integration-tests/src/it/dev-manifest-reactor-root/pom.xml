@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <!-- an aggregator the application does not inherit from: its properties are not the application's -->
+  <groupId>devroot</groupId>
+  <artifactId>dev-manifest-reactor-root</artifactId>
+  <version>0.1</version>
+  <packaging>pom</packaging>
+  <properties>
+    <!-- what Maven checks a required parameter of the goal against, on the project it was invoked on -->
+    <micronaut.test.resources.version>@micronaut.test.resources.version@</micronaut.test.resources.version>
+    <mn.dev.retain>devroot.OnlyInTheRoot</mn.dev.retain>
+    <mn.dev.strategy>restart</mn.dev.strategy>
+  </properties>
+  <modules>
+    <module>app</module>
+  </modules>
+  <build>
+    <pluginManagement>
+      <plugins>
+        <!-- the version the mn prefix resolves to here; the goal runs on the application, the only project declaring the plugin -->
+        <plugin>
+          <groupId>io.micronaut.maven</groupId>
+          <artifactId>micronaut-maven-plugin</artifactId>
+          <version>@project.version@</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

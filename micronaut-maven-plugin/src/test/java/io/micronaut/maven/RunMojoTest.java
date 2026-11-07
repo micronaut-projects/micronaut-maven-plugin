@@ -8,10 +8,12 @@ import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
 import org.apache.maven.plugin.BuildPluginManager;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.toolchain.ToolchainManager;
+import org.codehaus.plexus.component.configurator.ComponentConfigurator;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -66,7 +68,8 @@ class RunMojoTest {
             toolchainManager,
             mock(CompilerService.class),
             executorService,
-            mock(DependencyResolutionService.class)
+            mock(DependencyResolutionService.class),
+            mock(ComponentConfigurator.class)
         );
         setField(mojo, "aotEnabled", true);
         setField(mojo, "runnableProject", runnableProject);
@@ -270,7 +273,8 @@ class RunMojoTest {
             toolchainManager,
             mock(CompilerService.class),
             mock(ExecutorService.class),
-            mock(DependencyResolutionService.class)
+            mock(DependencyResolutionService.class),
+            mock(ComponentConfigurator.class)
         );
         setField(mojo, "runnableProject", runnableProject);
         setField(mojo, "targetDirectory", new File("/project/target"));
@@ -305,7 +309,8 @@ class RunMojoTest {
             toolchainManager,
             mock(CompilerService.class),
             mock(ExecutorService.class),
-            mock(DependencyResolutionService.class)
+            mock(DependencyResolutionService.class),
+            mock(ComponentConfigurator.class)
         );
         setField(mojo, "runnableProject", runnableProject);
         setField(mojo, "targetDirectory", output.getParent().toFile());
