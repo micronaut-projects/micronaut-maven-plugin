@@ -45,6 +45,8 @@ saying so. An execution selected by its id, `mvn mn:dev@local`, is named on the 
 |`mn.dev.manifestOnly` |`false` |Writes the manifest and stops, for a build that launches the JVM itself.
 |===
 
+An unknown value of `mn.dev.strategy` or `mn.dev.compile` fails the goal before anything starts.
+
 `mn.debug`, `mn.debug.suspend`, `mn.debug.port`, `mn.debug.host`, `mn.jvmArgs`, `mn.appArgs` and the test resources
 settings work as they do for `mn:run`.
 
