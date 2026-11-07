@@ -253,13 +253,13 @@ final class JdkAotCacheDefault {
      * @return the extra directory of a {@code <path>}, either a plain path or one with {@code <from>} and {@code <into>}
      */
     private static @Nullable ExtraDirectory extraDirectory(Xpp3Dom path) {
-        String from = childValue(path, "from");
+        String from = value(path.getChild("from"));
         if (from != null) {
-            String into = childValue(path, "into");
+            String into = value(path.getChild("into"));
             return new ExtraDirectory(from.trim(), into == null ? "/" : into.trim());
         }
-        String value = path.getValue();
-        return value == null || value.isBlank() ? null : new ExtraDirectory(value.trim(), "/");
+        String value = nonBlank(path.getValue());
+        return value == null ? null : new ExtraDirectory(value.trim(), "/");
     }
 
     private static @Nullable Xpp3Dom jibConfiguration(MavenProject project) {
@@ -268,8 +268,15 @@ final class JdkAotCacheDefault {
     }
 
     private static @Nullable String childValue(@Nullable Xpp3Dom parent, String name) {
-        Xpp3Dom child = parent == null ? null : parent.getChild(name);
-        return child == null || child.getValue() == null || child.getValue().isBlank() ? null : child.getValue();
+        return parent == null ? null : value(parent.getChild(name));
+    }
+
+    private static @Nullable String value(@Nullable Xpp3Dom element) {
+        return element == null ? null : nonBlank(element.getValue());
+    }
+
+    private static @Nullable String nonBlank(@Nullable String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 
     /**
