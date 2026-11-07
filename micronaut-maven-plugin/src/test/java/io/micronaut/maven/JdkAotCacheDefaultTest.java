@@ -43,7 +43,7 @@ class JdkAotCacheDefaultTest {
     }
 
     @Test
-    void anExplodedContainerizingModeKeepsTheImageWhereverItIsSet() throws Exception {
+    void anExplodedContainerizingModeKeepsTheImageWhereverItIsSet() {
         var userProperties = new Properties();
         userProperties.setProperty("jib.containerizingMode", "exploded");
         assertTrue(jibGuard(project(null), userProperties).startsWith("the Jib containerizing mode is exploded"));

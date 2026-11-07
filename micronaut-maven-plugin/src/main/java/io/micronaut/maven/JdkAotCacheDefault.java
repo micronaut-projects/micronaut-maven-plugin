@@ -241,15 +241,25 @@ final class JdkAotCacheDefault {
             return result;
         }
         for (Xpp3Dom path : paths.getChildren("path")) {
-            String from = childValue(path, "from");
-            if (from != null) {
-                String into = childValue(path, "into");
-                result.add(new ExtraDirectory(from.trim(), into == null || into.isBlank() ? "/" : into.trim()));
-            } else if (path.getValue() != null && !path.getValue().isBlank()) {
-                result.add(new ExtraDirectory(path.getValue().trim(), "/"));
+            ExtraDirectory directory = extraDirectory(path);
+            if (directory != null) {
+                result.add(directory);
             }
         }
         return result;
+    }
+
+    /**
+     * @return the extra directory of a {@code <path>}, either a plain path or one with {@code <from>} and {@code <into>}
+     */
+    private static @Nullable ExtraDirectory extraDirectory(Xpp3Dom path) {
+        String from = childValue(path, "from");
+        if (from != null) {
+            String into = childValue(path, "into");
+            return new ExtraDirectory(from.trim(), into == null ? "/" : into.trim());
+        }
+        String value = path.getValue();
+        return value == null || value.isBlank() ? null : new ExtraDirectory(value.trim(), "/");
     }
 
     private static @Nullable Xpp3Dom jibConfiguration(MavenProject project) {

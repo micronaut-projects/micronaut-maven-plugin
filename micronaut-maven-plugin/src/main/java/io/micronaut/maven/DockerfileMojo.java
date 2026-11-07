@@ -174,9 +174,9 @@ public class DockerfileMojo extends AbstractDockerMojo {
      * @return whether the generated Dockerfile trains a cache when {@code micronaut.docker.jdkAotCache} is not set
      */
     private boolean trainsByDefault(MicronautRuntime runtime) {
-        String reason = runtime.getBuildStrategy() != DockerBuildStrategy.DEFAULT
-            ? "the runtime is " + micronautRuntime + ", and the cache only supports the default one"
-            : TrainingRun.defaultGuard(jdkAotCacheTrainingMode, jdkAotCacheTrainingPaths, mavenProject.getArtifacts());
+        String reason = runtime.getBuildStrategy() == DockerBuildStrategy.DEFAULT
+            ? TrainingRun.defaultGuard(jdkAotCacheTrainingMode, jdkAotCacheTrainingPaths, mavenProject.getArtifacts())
+            : "the runtime is " + micronautRuntime + ", and the cache only supports the default one";
         if (reason != null) {
             JdkAotCacheDefault.logSkipped(getLog(), reason);
             return false;
