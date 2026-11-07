@@ -99,7 +99,7 @@ def session = { File output ->
 }
 
 File siblings = new File(base, 'app/target/micronaut-dev/siblings')
-List<String> applicationOutput = {
+def applicationOutput = {
     File classes = new File(base, 'app/target/classes')
     List<String> files = []
     classes.eachFileRecurse { if (it.file) { files << classes.toPath().relativize(it.toPath()).toString() } }
