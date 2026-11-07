@@ -80,7 +80,7 @@ import static io.micronaut.maven.core.MojoUtils.hasMicronautMavenPlugin;
  * launcher of Micronaut Core's {@code micronaut-dev} module: sources are compiled inside the running
  * JVM and the application is restarted on a fresh class loader, with the singletons a retention
  * policy names kept alive, or, for an edit that only changed method bodies, the classes are
- * redefined in place. This goal replaces {@code mn:run}, which is deprecated for removal in Micronaut 6.
+ * redefined in place. {@code mn:run} remains the alternative that recompiles through Maven and relaunches the JVM.
  *
  * <p>The goal writes the manifest the launcher reads into {@code target/micronaut-dev} from the
  * project model, the compiler plugin's configuration included, then launches the JVM with the
