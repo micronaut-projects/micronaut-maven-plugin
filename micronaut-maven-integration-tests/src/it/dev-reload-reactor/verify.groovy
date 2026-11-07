@@ -19,6 +19,7 @@ String testsRepo = new File(base, '../../../target/local-repo').canonicalPath
 // from Maven Central, which the super POM declares
 String localRepo = new File(base, 'target/dev-reload-reactor-repo').path
 File settings = new File(base, 'target/dev-reload-reactor-settings.xml')
+settings.parentFile.mkdirs()
 def repository = { String id, File directory ->
     """        <repository>
           <id>$id</id>
