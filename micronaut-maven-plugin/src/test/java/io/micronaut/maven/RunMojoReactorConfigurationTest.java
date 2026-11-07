@@ -123,7 +123,7 @@ class RunMojoReactorConfigurationTest {
         MavenProject app = project("app", Map.of());
         app.getBuild().addPlugin(thisPlugin(pluginConfiguration, executionConfiguration));
 
-        Xpp3Dom configuration = RunnableProjectConfiguration.declaredConfiguration(app, descriptor());
+        Xpp3Dom configuration = RunnableProjectConfiguration.declaredConfiguration(app, descriptor(), null);
 
         assertEquals("true", configuration.getChild("testResourcesEnabled").getValue());
         assertEquals("true", configuration.getChild("shared").getValue());
