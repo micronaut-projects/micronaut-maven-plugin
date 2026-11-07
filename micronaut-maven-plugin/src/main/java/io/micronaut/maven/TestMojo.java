@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Runs the project's tests continuously through {@code io.micronaut.dev.MicronautDevMain} in test mode: the
@@ -76,6 +77,7 @@ public class TestMojo extends DevMojo {
     public static final String DIRECTORY_NAME = "test";
 
     private static final String TEST_REPORT_ARTIFACT = "micronaut-dev-test-report";
+    private static final List<String> SELECTIONS = List.of("affected", "all");
     private static final String JUNIT_PLATFORM_RUNNER = "junit-platform";
     private static final String JUNIT_PLATFORM_GROUP = "org.junit.platform";
     private static final String JUNIT_PLATFORM_LAUNCHER = "junit-platform-launcher";
@@ -159,6 +161,8 @@ public class TestMojo extends DevMojo {
     @Parameter
     private Map<String, String> configurationParameters;
 
+    private final Supplier<TestMojo> newInstance;
+
     /**
      * Constructor.
      *
@@ -177,6 +181,18 @@ public class TestMojo extends DevMojo {
                     RepositorySystem repositorySystem,
                     @Named("basic") ComponentConfigurator configurator) {
         super(mavenSession, toolchainManager, compilerService, executorService, repositorySystem, configurator);
+        this.newInstance = () -> new TestMojo(mavenSession, toolchainManager, compilerService, executorService, repositorySystem, configurator);
+    }
+
+    @Override
+    protected DevMojo newInstance() {
+        return newInstance.get();
+    }
+
+    @Override
+    protected void validateSettings() throws MojoExecutionException {
+        super.validateSettings();
+        selection = oneOf("mn.test.selection", selection, SELECTIONS);
     }
 
     @Override

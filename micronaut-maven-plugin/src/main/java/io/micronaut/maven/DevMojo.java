@@ -26,12 +26,9 @@ import io.micronaut.maven.testresources.AbstractTestResourcesMojo;
 import io.micronaut.testresources.buildtools.ServerSettings;
 import io.micronaut.testresources.buildtools.ServerUtils;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.lifecycle.internal.MojoDescriptorCreator;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
-import org.apache.maven.plugin.descriptor.MojoDescriptor;
-import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -40,12 +37,9 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.toolchain.ToolchainManager;
-import org.codehaus.plexus.classworlds.realm.ClassRealm;
 import org.codehaus.plexus.component.configurator.ComponentConfigurationException;
 import org.codehaus.plexus.component.configurator.ComponentConfigurator;
-import org.codehaus.plexus.configuration.xml.XmlPlexusConfiguration;
 import org.codehaus.plexus.util.cli.CommandLineUtils;
-import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.artifact.ArtifactTypeRegistry;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.RepositorySystem;
@@ -125,7 +119,8 @@ public class DevMojo extends AbstractTestResourcesMojo {
      */
     private static final int RELAUNCH_STATUS = 3;
     private static final long QUIET_PERIOD_MILLIS = 300;
-    private static final String DEFAULT_CLI_EXECUTION = "default-cli";
+    private static final List<String> STRATEGIES = List.of("restart", "reload", "auto");
+    private static final List<String> COMPILE_MODES = List.of("embedded", "build-tool");
 
     private final MavenSession mavenSession;
     private final ToolchainManager toolchainManager;
@@ -302,6 +297,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
         if (!runnableProject.equals(mavenSession.getCurrentProject())) {
             applyRunnableProjectConfiguration();
         }
+        validateSettings();
         Path manifestDirectory = manifestDirectory();
         Path manifestFile;
         try {
@@ -408,62 +404,55 @@ public class DevMojo extends AbstractTestResourcesMojo {
      * @return the evaluator
      */
     protected PluginParameterExpressionEvaluator runnableEvaluator() {
-        MavenSession runnableSession = mavenSession.clone();
-        runnableSession.setCurrentProject(runnableProject);
-        return new PluginParameterExpressionEvaluator(runnableSession, mojoExecution);
+        return RunnableProjectConfiguration.evaluator(mavenSession, runnableProject, mojoExecution);
     }
 
     /**
-     * The goal's parameters as the selected application declares them. Maven configured this mojo from the
-     * project the goal was invoked on, the reactor root when {@code mn:dev} runs from an aggregator, so the
-     * application's effective configuration is applied here with Maven's own configurator: its plugin-level
-     * {@code micronaut-maven-plugin} configuration with the {@code default-cli} execution's merged over it,
-     * as Maven would have applied them had the goal run on the application, restricted to this goal's
-     * parameters, and merged over the goal's own defaults and property expressions, as Maven merges them: those
-     * are evaluated against the application too, so that a property the application sets and the reactor root
-     * does not, such as {@code micronaut.test.resources.enabled} or {@code exec.mainClass}, applies.
+     * The goal's parameters as the selected application declares them, not as the reactor root Maven configured this
+     * mojo from when {@code mn:dev} runs from an aggregator.
      */
     private void applyRunnableProjectConfiguration() throws MojoExecutionException {
-        PluginParameterExpressionEvaluator evaluator = runnableEvaluator();
-        Xpp3Dom effective = effectiveConfiguration();
-        MojoDescriptor descriptor = mojoExecution.getMojoDescriptor();
-        Xpp3Dom own = new Xpp3Dom("configuration");
-        if (effective != null) {
-            for (Xpp3Dom child : effective.getChildren()) {
-                // another goal's settings, such as mn:run's watches, are not this goal's to apply
-                if (isParameter(descriptor, child.getName())) {
-                    own.addChild(new Xpp3Dom(child));
-                }
-            }
-        }
-        Xpp3Dom configuration = Xpp3Dom.mergeXpp3Dom(own, MojoDescriptorCreator.convert(descriptor));
         try {
-            ClassRealm realm = descriptor.getPluginDescriptor().getClassRealm();
-            configurator.configureComponent(this, new XmlPlexusConfiguration(configuration), evaluator, realm);
+            RunnableProjectConfiguration.apply(this, newInstance(), mojoExecution, runnableEvaluator(), runnableProject, configurator);
         } catch (ComponentConfigurationException e) {
             throw new MojoExecutionException("Cannot apply the micronaut-maven-plugin configuration of " + runnableProject.getArtifactId() + ": " + e.getMessage(), e);
         }
     }
 
-    private Xpp3Dom effectiveConfiguration() {
-        org.apache.maven.model.Plugin plugin = runnableProject.getPlugin(MojoUtils.THIS_PLUGIN);
-        if (plugin == null) {
-            return null;
-        }
-        Xpp3Dom configuration = plugin.getConfiguration() instanceof Xpp3Dom dom ? new Xpp3Dom(dom) : null;
-        for (PluginExecution execution : plugin.getExecutions()) {
-            if (DEFAULT_CLI_EXECUTION.equals(execution.getId()) && execution.getConfiguration() instanceof Xpp3Dom executionDom) {
-                configuration = configuration == null ? new Xpp3Dom(executionDom) : Xpp3Dom.mergeXpp3Dom(new Xpp3Dom(executionDom), configuration);
-            }
-        }
-        return configuration;
+    /**
+     * Checks the settings the launcher reads as enumerations before anything starts, the launcher's stack trace
+     * being all a typo would otherwise get, and holds them as the launcher names them: it reads them ignoring case, so
+     * that {@code BUILD_TOOL} would have it wait for a trigger this goal does not touch.
+     *
+     * @throws MojoExecutionException if a setting has an unknown value
+     */
+    protected void validateSettings() throws MojoExecutionException {
+        strategy = oneOf("mn.dev.strategy", strategy, STRATEGIES);
+        compile = oneOf("mn.dev.compile", compile, COMPILE_MODES);
     }
 
-    private static boolean isParameter(MojoDescriptor descriptor, String name) {
-        if (descriptor.getParameterMap().containsKey(name)) {
-            return true;
+    /**
+     * The valid value a setting names, as the launcher reads it: ignoring surrounding space and case, with {@code _} for {@code -}.
+     *
+     * @param property the setting's property
+     * @param value the setting's value
+     * @param valid the valid values
+     * @return the valid value it names
+     * @throws MojoExecutionException if it names none
+     */
+    protected static String oneOf(String property, String value, List<String> valid) throws MojoExecutionException {
+        String normalized = value == null ? null : value.trim().replace('_', '-').toLowerCase(Locale.ROOT);
+        if (!valid.contains(normalized)) {
+            throw new MojoExecutionException("Unknown value '%s' for %s: the valid values are %s".formatted(value, property, String.join(", ", valid)));
         }
-        return descriptor.getParameters() != null && descriptor.getParameters().stream().anyMatch(parameter -> name.equals(parameter.getAlias()));
+        return normalized;
+    }
+
+    /**
+     * @return a new instance of this goal, holding the values its parameters start with
+     */
+    protected DevMojo newInstance() {
+        return new DevMojo(mavenSession, toolchainManager, compilerService, executorService, repositorySystem, configurator);
     }
 
     /**
