@@ -89,6 +89,8 @@ class DevManifestTest {
         assertEquals(directory.resolve("app/target/generated-sources/annotations").toString(), entries.get(PREFIX + "compile.java.generated-sources"));
         assertEquals("@java-options.argfile", entries.get(PREFIX + "compile.java.options"));
         assertEquals(app.getBuild().getOutputDirectory(), entries.get(PREFIX + "compile.groovy.output"));
+        assertEquals(libSources.toString(), entries.get(PREFIX + "compile.sibling-sources"));
+        assertEquals(directory.resolve("app/target/micronaut-dev/siblings").toString(), entries.get(PREFIX + "compile.sibling-output"));
         assertEquals("maven", entries.get(PREFIX + "build-tool"));
         assertEquals(directory.resolve("app/target/micronaut-dev/reload").toString(), entries.get(PREFIX + "build-tool.trigger"));
         assertEquals(manifestDirectory.resolve(DevManifest.GENERATIONS_DIRECTORY_NAME).toString(), entries.get(PREFIX + "generations"));
@@ -108,6 +110,24 @@ class DevManifestTest {
         assertEquals(List.of(compileJar.getAbsolutePath()), Files.readAllLines(manifestDirectory.resolve("compile.argfile")));
         assertEquals(List.of(processorJar.getAbsolutePath()), Files.readAllLines(manifestDirectory.resolve("processors.argfile")));
         assertEquals(List.of("-parameters", "--release", "25", "-encoding", "UTF-8"), Files.readAllLines(manifestDirectory.resolve("java-options.argfile")));
+    }
+
+    @Test
+    void aSiblingOutputIsNamedOnlyForAnApplicationWithSiblingsThatTheLauncherCompiles() throws Exception {
+        MavenProject app = project(directory.resolve("app"), "app");
+        app.addCompileSourceRoot(Files.createDirectories(directory.resolve("app/src/main/java")).toString());
+        MavenProject lib = project(directory.resolve("lib"), "lib");
+        lib.addCompileSourceRoot(Files.createDirectories(directory.resolve("lib/src/main/java")).toString());
+        Path manifestDirectory = directory.resolve("app/target/micronaut-dev");
+        DevManifest.Settings buildTool = new DevManifest.Settings("example.Application", "auto", "build-tool", true, List.of(), 35729, true);
+
+        Map<String, String> alone = DevManifest.of(app, List.of(app), SETTINGS, List.of(), List.of(), List.of(), evaluator(Map.of()), manifestDirectory).entries();
+        Map<String, String> compiledByMaven = DevManifest.of(app, List.of(app, lib), buildTool, List.of(), List.of(), List.of(), evaluator(Map.of()), manifestDirectory).entries();
+
+        assertFalse(alone.containsKey(PREFIX + "compile.sibling-sources"));
+        assertFalse(alone.containsKey(PREFIX + "compile.sibling-output"));
+        assertFalse(compiledByMaven.containsKey(PREFIX + "compile.sibling-sources"));
+        assertFalse(compiledByMaven.containsKey(PREFIX + "compile.sibling-output"));
     }
 
     @Test

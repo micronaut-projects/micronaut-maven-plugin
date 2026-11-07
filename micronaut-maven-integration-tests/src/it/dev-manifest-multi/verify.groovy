@@ -22,6 +22,13 @@ assert sources.size() == 3
 assert sources.every { !it.contains('generated-sources') }
 assert manifest.'micronaut.dev.compile.java.output'.endsWith('app' + File.separator + 'target' + File.separator + 'classes')
 
+// what the launcher compiles of lib and common goes where package does not read
+List<String> siblingSources = manifest.'micronaut.dev.compile.sibling-sources'.split(sep).toList()
+assert siblingSources.size() == 2
+assert siblingSources.any { it.endsWith('lib' + File.separator + 'src' + File.separator + 'main' + File.separator + 'java') }
+assert siblingSources.any { it.endsWith('common' + File.separator + 'src' + File.separator + 'main' + File.separator + 'java') }
+assert manifest.'micronaut.dev.compile.sibling-output' == new File(basedir, 'app/target/micronaut-dev/siblings').absolutePath
+
 List<String> runtime = new File(basedir, 'app/target/micronaut-dev/runtime.argfile').readLines()
 assert runtime.every { !it.contains('target' + File.separator + 'classes') && !it.contains('devmulti') }
 // the application turns Micronaut Control Panel off
