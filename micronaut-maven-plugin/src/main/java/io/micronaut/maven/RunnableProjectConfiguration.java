@@ -103,18 +103,12 @@ final class RunnableProjectConfiguration {
      * @return the configuration, empty when the project declares none
      */
     static Xpp3Dom declaredConfiguration(MavenProject project, MojoDescriptor descriptor, String executionId) {
-        String selected = executionId == null ? DEFAULT_CLI_EXECUTION : executionId;
         Xpp3Dom own = new Xpp3Dom("configuration");
         Plugin plugin = project.getPlugin(THIS_PLUGIN);
         if (plugin == null) {
             return own;
         }
-        Xpp3Dom effective = plugin.getConfiguration() instanceof Xpp3Dom dom ? new Xpp3Dom(dom) : null;
-        for (PluginExecution execution : plugin.getExecutions()) {
-            if (selected.equals(execution.getId()) && execution.getConfiguration() instanceof Xpp3Dom executionDom) {
-                effective = effective == null ? new Xpp3Dom(executionDom) : Xpp3Dom.mergeXpp3Dom(new Xpp3Dom(executionDom), effective);
-            }
-        }
+        Xpp3Dom effective = effectiveConfiguration(plugin, executionId == null ? DEFAULT_CLI_EXECUTION : executionId);
         if (effective != null) {
             for (Xpp3Dom child : effective.getChildren()) {
                 // another goal's settings, such as the AOT goals' or mn:run's watches, are not this goal's to apply
@@ -124,6 +118,16 @@ final class RunnableProjectConfiguration {
             }
         }
         return own;
+    }
+
+    private static Xpp3Dom effectiveConfiguration(Plugin plugin, String selected) {
+        Xpp3Dom effective = plugin.getConfiguration() instanceof Xpp3Dom dom ? new Xpp3Dom(dom) : null;
+        for (PluginExecution execution : plugin.getExecutions()) {
+            if (selected.equals(execution.getId()) && execution.getConfiguration() instanceof Xpp3Dom executionDom) {
+                effective = effective == null ? new Xpp3Dom(executionDom) : Xpp3Dom.mergeXpp3Dom(new Xpp3Dom(executionDom), effective);
+            }
+        }
+        return effective;
     }
 
     private static boolean isParameter(MojoDescriptor descriptor, String name) {
