@@ -106,9 +106,9 @@ List<String> applicationOutput = {
 }
 
 def packaged = { String expected ->
-    File log = new File(base, "package-${expected.replace(' ', '-')}.log")
-    Process mvn = maven(log, 'package', '-DskipTests')
-    assert mvn.waitFor(5, TimeUnit.MINUTES) && mvn.exitValue() == 0 : log.text
+    File output = new File(base, "package-${expected.replace(' ', '-')}.log")
+    Process mvn = maven(output, 'package', '-DskipTests')
+    assert mvn.waitFor(5, TimeUnit.MINUTES) && mvn.exitValue() == 0 : output.text
     new java.util.zip.ZipFile(new File(base, 'app/target/original-app-0.1.jar')).withCloseable { jar ->
         List<String> names = jar.entries().toList()*.name
         assert names.contains('devreactor/app/HelloController.class')
