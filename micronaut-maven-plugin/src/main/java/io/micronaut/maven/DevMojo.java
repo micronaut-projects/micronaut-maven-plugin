@@ -108,6 +108,7 @@ public class DevMojo extends AbstractTestResourcesMojo {
 
     private static final String LAUNCHER_ARTIFACT = "micronaut-dev";
     private static final String LIVERELOAD_ARTIFACT = "micronaut-dev-livereload";
+    private static final String TEST_RESOURCES_CLIENT = "micronaut-test-resources-client";
     private static final String MAC_WATCH_ARTIFACT = "micronaut-runtime-osx";
     /**
      * The status the launcher exits with when its generation budget, {@code micronaut.dev.max-generations}, is spent:
@@ -569,8 +570,9 @@ public class DevMojo extends AbstractTestResourcesMojo {
             throw new MojoExecutionException("Cannot resolve " + LAUNCHER_GROUP + ":" + LAUNCHER_ARTIFACT + ": development mode needs Micronaut Core 5.3 or later in the dependency management");
         }
         List<File> runtime = files(runtimeDependencies());
-        // the runtime classpath, then what of the launcher it does not hold already
-        List<String> classpath = Stream.concat(runtime.stream(), launcher.stream())
+        // the runtime classpath, then what of the launcher and of the test resources client it does not hold already
+        List<String> classpath = Stream.of(runtime, launcher, testResourcesClient())
+            .flatMap(List::stream)
             .map(File::getAbsolutePath)
             .distinct()
             .toList();
@@ -623,6 +625,42 @@ public class DevMojo extends AbstractTestResourcesMojo {
             artifacts.add(new DefaultArtifact(LAUNCHER_GROUP, MAC_WATCH_ARTIFACT, "jar", ""));
         }
         return artifacts;
+    }
+
+    /**
+     * The Test Resources client, which resolves the application's properties through the server, when Test Resources
+     * is enabled and the runtime classpath lacks it: an application that declares it, usually in the
+     * {@code provided} scope, launches with its own. It is resolved at the version of the server, and only the
+     * modules the runtime classpath does not hold are added, so that the application's versions win.
+     *
+     * @return the client and the modules it brings, none when it is not needed
+     * @throws DependencyResolutionException if the client cannot be resolved
+     */
+    private List<File> testResourcesClient() throws DependencyResolutionException {
+        if (!testResourcesEnabled) {
+            return List.of();
+        }
+        List<String> present = new ArrayList<>();
+        for (Dependency dependency : runtimeDependencies()) {
+            org.eclipse.aether.artifact.Artifact artifact = dependency.getArtifact();
+            present.add(artifact.getGroupId() + ":" + artifact.getArtifactId());
+        }
+        String client = DependencyResolutionService.TEST_RESOURCES_GROUP + ":" + TEST_RESOURCES_CLIENT;
+        if (present.contains(client)) {
+            return List.of();
+        }
+        String version = testResourcesVersion == null ? "" : testResourcesVersion;
+        List<ArtifactResult> results = dependencyResolutionService.artifactResultsFor(
+            Stream.of(new DefaultArtifact(DependencyResolutionService.TEST_RESOURCES_GROUP, TEST_RESOURCES_CLIENT, "jar", version)), true);
+        List<File> files = new ArrayList<>();
+        for (ArtifactResult result : results) {
+            org.eclipse.aether.artifact.Artifact artifact = result.getArtifact();
+            if (artifact != null && artifact.getFile() != null && !present.contains(artifact.getGroupId() + ":" + artifact.getArtifactId())) {
+                files.add(artifact.getFile());
+            }
+        }
+        getLog().info("Adding " + client + (version.isEmpty() ? "" : ":" + version) + " to the launch classpath: Test Resources is enabled and the application does not declare the client");
+        return files;
     }
 
     private static boolean isMac() {
