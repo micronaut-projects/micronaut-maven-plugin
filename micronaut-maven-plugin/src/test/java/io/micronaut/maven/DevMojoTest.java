@@ -338,6 +338,32 @@ class DevMojoTest {
     }
 
     @Test
+    void theExecutionSelectedOnTheCommandLineIsAppliedInsteadOfDefaultCli() throws Exception {
+        reconfigurable();
+        when(mojoExecution.getExecutionId()).thenReturn("local");
+        Plugin plugin = app.getPlugin(THIS_PLUGIN);
+        Xpp3Dom localConfiguration = new Xpp3Dom("configuration");
+        localConfiguration.addChild(value("strategy", "restart"));
+        PluginExecution local = new PluginExecution();
+        local.setId("local");
+        local.setConfiguration(localConfiguration);
+        plugin.addExecution(local);
+        Xpp3Dom cliConfiguration = new Xpp3Dom("configuration");
+        cliConfiguration.addChild(value("strategy", "reload"));
+        cliConfiguration.addChild(value("retain", "example.OnlyInDefaultCli"));
+        PluginExecution cli = new PluginExecution();
+        cli.setId("default-cli");
+        cli.setConfiguration(cliConfiguration);
+        plugin.addExecution(cli);
+        setField("runnableProject", app);
+
+        invoke("applyRunnableProjectConfiguration");
+
+        assertEquals("restart", getField("strategy"));
+        assertNull(getField("retain"));
+    }
+
+    @Test
     void theProcessorPathIsResolvedWithTheDependencyManagement() throws Exception {
         managed(app, "io.micronaut", "micronaut-inject-java", "5.0.0");
         setField("runnableProject", app);
