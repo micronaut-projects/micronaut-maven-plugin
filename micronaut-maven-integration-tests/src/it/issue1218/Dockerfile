@@ -9,7 +9,7 @@ COPY native/generated /home/app/
 COPY *.args /home/app/graalvm-native-image.args
 RUN native-image @/home/app/graalvm-native-image.args -H:Class="io.micronaut.build.examples.Application" -H:Name=application -cp "/home/app/libs/release/*:/home/app/libs/snapshot/*:/home/app/classes/"
 
-FROM cgr.dev/chainguard/wolfi-base@sha256:52e71f61c6afd1f8d2625cff4465d8ecee156668ca665f7e9c582d1cc914eb6a
+FROM cgr.dev/chainguard/wolfi-base@sha256:1f6b749929164c3d9e7cad0289254f39b2ba51e1dddaeb0fa57532ea03f2db31
 COPY --from=builder /home/app/application /app/application
 
 EXPOSE 8080 8081
