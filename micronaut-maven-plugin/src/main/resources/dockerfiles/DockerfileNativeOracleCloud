@@ -1,5 +1,5 @@
 ARG BASE_IMAGE
-ARG BASE_IMAGE_RUN=cgr.dev/chainguard/wolfi-base@sha256:52e71f61c6afd1f8d2625cff4465d8ecee156668ca665f7e9c582d1cc914eb6a
+ARG BASE_IMAGE_RUN=cgr.dev/chainguard/wolfi-base@sha256:be019c1c74fe69204a42c4e10bc4d886a49bf5403ffa74374ef7baa408fc9a26
 FROM ${BASE_IMAGE} AS builder
 WORKDIR /home/app
 
