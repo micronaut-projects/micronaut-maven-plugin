@@ -11,8 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DEVELOCITY_ACCESS_KEY: ${{ secrets.GRADLE_ENTERPRISE_ACCESS_KEY }}
-      DEVELOCITY_CACHE_USERNAME: ${{ secrets.GRADLE_ENTERPRISE_CACHE_USERNAME }}
-      DEVELOCITY_CACHE_PASSWORD: ${{ secrets.GRADLE_ENTERPRISE_CACHE_PASSWORD }}
     steps:
       - name: "🗑 Remove system JDKs"
         run: |
@@ -46,8 +44,6 @@ jobs:
       - name: "🔎 Vulnerability Audit"
         env:
           DEVELOCITY_ACCESS_KEY: ""
-          DEVELOCITY_CACHE_USERNAME: ""
-          DEVELOCITY_CACHE_PASSWORD: ""
           RELEASE_VERSION: ${{ steps.release_version.outputs.release_version }}
         run: |
           release_version="${RELEASE_VERSION}"
