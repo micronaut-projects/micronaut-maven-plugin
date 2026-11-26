@@ -20,7 +20,7 @@
         <maven.deploy.skip>true</maven.deploy.skip>
         <maven.javadoc.skip>true</maven.javadoc.skip>
 
-        <it.micronaut.core.version>5.0.0</it.micronaut.core.version>
+        <it.micronaut.core.version>5.2.25</it.micronaut.core.version>
         <it.micronaut.version>5.0.0-RC1</it.micronaut.version>
         <!--
           A Micronaut core version that has micronaut.application.training.mode (micronaut-projects/micronaut-core#13402,
