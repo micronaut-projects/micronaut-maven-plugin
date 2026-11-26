@@ -10,7 +10,7 @@ Micronaut Maven Plugin - Plugin,io.micronaut.maven.openapi,AbstractOpenApiMojo,2
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.testresources,StartTestResourcesServerMojo,20,101,2,4,6,19,2,5,0,4
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.testresources,TestResourcesConfiguration,21,7,0,0,9,3,6,2,6,2
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.testresources,TestResourcesHelper.SharedServerLock,0,18,0,0,0,7,0,2,0,2
-Micronaut Maven Plugin - Plugin,io.micronaut.maven.testresources,TestResourcesHelper,469,1023,84,98,128,234,76,76,14,47
+Micronaut Maven Plugin - Plugin,io.micronaut.maven.testresources,TestResourcesHelper,453,1117,83,111,125,251,74,88,13,52
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.testresources,AbstractTestResourcesMojo,18,26,0,2,6,10,4,3,4,2
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.testresources,TestResourcesLifecycleExtension,425,0,44,0,109,0,43,0,21,0
 Micronaut Maven Plugin - Plugin,io.micronaut.maven.testresources,StopTestResourcesServerMojo,58,0,0,0,10,0,2,0,2,0
