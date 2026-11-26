@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>io.micronaut.build.examples</groupId>
+    <artifactId>test-resources-control-panel</artifactId>
+    <version>0.1</version>
+
+    <properties>
+        <maven.compiler.release>25</maven.compiler.release>
+        <micronaut.core.version>5.2.25</micronaut.core.version>
+        <micronaut.aot.version>@micronaut.aot.version@</micronaut.aot.version>
+        <micronaut.test.resources.version>@micronaut.test.resources.version@</micronaut.test.resources.version>
+        <micronaut.test.resources.enabled>true</micronaut.test.resources.enabled>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.micronaut</groupId>
+                <artifactId>micronaut-core-bom</artifactId>
+                <version>${micronaut.core.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>@junit-jupiter.version@</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>io.micronaut.maven</groupId>
+                <artifactId>micronaut-maven-plugin</artifactId>
+                <version>@project.version@</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <testResourcesVersion>${micronaut.test.resources.version}</testResourcesVersion>
+                    <classpathInference>false</classpathInference>
+                    <testResourcesDependencies>
+                        <dependency>
+                            <groupId>io.micronaut.testresources</groupId>
+                            <artifactId>micronaut-test-resources-control-panel</artifactId>
+                            <version>${micronaut.test.resources.version}</version>
+                        </dependency>
+                    </testResourcesDependencies>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

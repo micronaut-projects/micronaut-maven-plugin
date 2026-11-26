@@ -9,8 +9,15 @@ import io.micronaut.testresources.buildtools.ServerUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.ResourceLock;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.apache.maven.model.Build;
+import org.apache.maven.model.Dependency;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.artifact.DefaultArtifact;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResult;
 import com.sun.net.httpserver.HttpServer;
 
 import java.io.File;
@@ -32,16 +39,19 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ResourceLock("java.io.tmpdir")
@@ -480,6 +490,66 @@ class TestResourcesHelperTest {
         assertTrue(invokeFindSessionSharedServer(helper, serverSettingsDirectory).isEmpty());
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void resolvesThinServerAsThePrimaryRuntime(boolean explicitlyConfigured) throws Exception {
+        var fatServer = resolvedArtifact("io.micronaut.testresources", "micronaut-test-resources-server", "4.3.1");
+        var thinServer = resolvedArtifact("io.micronaut.testresources", "micronaut-test-resources-server-thin", "4.3.1");
+        var router = resolvedArtifact("io.micronaut", "micronaut-router", "5.2.25");
+        var controlPanel = testResourcesDependency("micronaut-test-resources-control-panel");
+        var thinServerDependency = testResourcesDependency("micronaut-test-resources-server-thin");
+        var extraDependencies = explicitlyConfigured ? List.of(controlPanel, thinServerDependency) : List.of(controlPanel);
+
+        var resolver = mock(DependencyResolutionService.class);
+        when(resolver.artifactResultsFor(any(), eq(true)))
+            .thenReturn(List.of(fatServer, thinServer, router))
+            .thenAnswer(invocation -> {
+                Stream<Artifact> roots = invocation.getArgument(0);
+                var artifacts = roots.toList();
+                assertEquals(List.of(
+                    "micronaut-test-resources-server-thin",
+                    "micronaut-test-resources-testcontainers",
+                    "micronaut-test-resources-control-panel"
+                ), artifacts.stream().map(Artifact::getArtifactId).toList());
+                assertNull(artifacts.getFirst().getFile());
+                return List.of(thinServer, router, fatServer);
+            });
+
+        var helper = helperWithDependencyResolution(tempDir, null, resolver, extraDependencies);
+
+        assertEquals(List.of(thinServer.getArtifact().getFile(), router.getArtifact().getFile()),
+            invokeResolveServerClasspath(helper));
+    }
+
+    @Test
+    void retainsFatServerAndFiltersItsEmbeddedDependencies() throws Exception {
+        var fatServer = resolvedArtifact("io.micronaut.testresources", "micronaut-test-resources-server", "4.3.1");
+        var router = resolvedArtifact("io.micronaut", "micronaut-router", "5.2.25");
+        var driver = resolvedArtifact("org.postgresql", "postgresql", "42.7.7");
+        var resolver = mock(DependencyResolutionService.class);
+        when(resolver.artifactResultsFor(any(), eq(true))).thenReturn(List.of(fatServer, router, driver));
+
+        var helper = helperWithDependencyResolution(tempDir, null, resolver, List.of());
+
+        assertEquals(List.of(fatServer.getArtifact().getFile(), driver.getArtifact().getFile()),
+            invokeResolveServerClasspath(helper));
+        verify(resolver).artifactResultsFor(any(), eq(true));
+    }
+
+    private ArtifactResult resolvedArtifact(String groupId, String artifactId, String version) {
+        var artifact = new DefaultArtifact(groupId, artifactId, "jar", version)
+            .setFile(tempDir.resolve(artifactId + ".jar").toFile());
+        return new ArtifactResult(new ArtifactRequest()).setArtifact(artifact);
+    }
+
+    private static Dependency testResourcesDependency(String artifactId) {
+        var dependency = new Dependency();
+        dependency.setGroupId("io.micronaut.testresources");
+        dependency.setArtifactId(artifactId);
+        dependency.setVersion("4.3.1");
+        return dependency;
+    }
+
     private static TestResourcesHelper sharedHelper(Path buildDirectory, MavenProject project, MavenSession mavenSession) {
         return new TestResourcesHelper(
             true,
@@ -513,13 +583,22 @@ class TestResourcesHelperTest {
     }
 
     private static TestResourcesHelper helperWithDependencyResolution(Path buildDirectory, Integer explicitPort) throws Exception {
+        DependencyResolutionService resolver = mock(DependencyResolutionService.class);
+        when(resolver.artifactResultsFor(any(), eq(true))).thenReturn(List.of());
+        return helperWithDependencyResolution(buildDirectory, explicitPort, resolver, List.of());
+    }
+
+    private static TestResourcesHelper helperWithDependencyResolution(
+        Path buildDirectory,
+        Integer explicitPort,
+        DependencyResolutionService resolver,
+        List<Dependency> extraDependencies
+    ) {
         MavenExecutionRequest request = mock(MavenExecutionRequest.class);
         when(request.getBuilderId()).thenReturn("builder-123");
         MavenSession mavenSession = mock(MavenSession.class);
         when(mavenSession.getRequest()).thenReturn(request);
         when(mavenSession.getGoals()).thenReturn(List.of("test"));
-        DependencyResolutionService dependencyResolutionService = mock(DependencyResolutionService.class);
-        when(dependencyResolutionService.artifactResultsFor(any(), eq(true))).thenReturn(List.of());
         return new TestResourcesHelper(
             true,
             false,
@@ -529,11 +608,11 @@ class TestResourcesHelperTest {
             null,
             new MavenProject(),
             mavenSession,
-            dependencyResolutionService,
+            resolver,
             null,
-            "4.0.0",
+            "4.3.1",
             false,
-            null,
+            extraDependencies,
             null,
             false,
             false,
@@ -564,6 +643,12 @@ class TestResourcesHelperTest {
         });
         server.start();
         return server;
+    }
+
+    private static List<?> invokeResolveServerClasspath(TestResourcesHelper helper) throws Exception {
+        Method method = TestResourcesHelper.class.getDeclaredMethod("resolveServerClasspath");
+        method.setAccessible(true);
+        return (List<?>) method.invoke(helper);
     }
 
     private static Path invokeGetKeepAliveFile(TestResourcesHelper helper) throws Exception {

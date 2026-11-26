@@ -31,6 +31,7 @@ import org.apache.maven.plugin.logging.SystemStreamLog;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.toolchain.ToolchainManager;
 import org.eclipse.aether.artifact.Artifact;
+import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 
 import java.io.File;
@@ -377,9 +378,23 @@ public class TestResourcesHelper {
         Stream<Artifact> extraDependenciesStream = extraDependencies.stream()
             .map(DependencyResolutionService::mavenDependencyToAetherArtifact);
 
-        Stream<Artifact> artifacts = concat(serverDependencies, extraDependenciesStream);
+        List<Artifact> artifacts = concat(serverDependencies, extraDependenciesStream).toList();
 
-        var resolutionResult = dependencyResolutionService.artifactResultsFor(artifacts, true);
+        var resolutionResult = dependencyResolutionService.artifactResultsFor(artifacts.stream(), true);
+        var thinServer = resolutionResult.stream()
+            .map(ArtifactResult::getArtifact)
+            .filter(artifact -> isTestResourcesArtifact(artifact, "server-thin"))
+            .findFirst();
+        if (thinServer.isPresent()) {
+            // Resolve the thin server as the primary distribution, with its own runtime dependencies.
+            var thinServerArtifacts = concat(Stream.of(thinServer.get().setFile(null)), artifacts.stream()
+                .filter(artifact -> !isTestResourcesArtifact(artifact, "server")
+                    && !isTestResourcesArtifact(artifact, "server-thin")));
+            var thinRuntime = dependencyResolutionService.artifactResultsFor(thinServerArtifacts, true);
+            return toClasspathFiles(thinRuntime.stream()
+                .filter(result -> !isTestResourcesArtifact(result.getArtifact(), "server"))
+                .toList());
+        }
         var filteredArtifacts = resolutionResult.stream()
             .filter(result -> {
                 var artifact = result.getArtifact();
@@ -388,6 +403,11 @@ public class TestResourcesHelper {
             })
             .toList();
         return toClasspathFiles(filteredArtifacts);
+    }
+
+    private static boolean isTestResourcesArtifact(Artifact artifact, String module) {
+        return DependencyResolutionService.TEST_RESOURCES_GROUP.equals(artifact.getGroupId())
+            && (DependencyResolutionService.TEST_RESOURCES_ARTIFACT_ID_PREFIX + module).equals(artifact.getArtifactId());
     }
 
     private List<MavenDependency> getApplicationDependencies() {
