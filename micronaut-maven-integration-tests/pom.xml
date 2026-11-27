@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.micronaut.maven</groupId>
         <artifactId>micronaut-maven-plugin-parent</artifactId>
-        <version>5.1.0-SNAPSHOT</version>
+        <version>5.1.0</version>
     </parent>
 
     <artifactId>micronaut-maven-integration-tests</artifactId>
@@ -34,7 +34,7 @@
           itself has the mode, remove the property, the selector.groovy files and the micronaut.core.version of these
           projects instead.
         -->
-        <it.micronaut.core.trainingMode.version/>
+        <it.micronaut.core.trainingMode.version />
         <!--
           A Micronaut version without the training-run switch (micronaut.application.training.enabled), for the projects
           that cover the JDK AOT cache training of such a version, where the plugin's script warms the application up,
