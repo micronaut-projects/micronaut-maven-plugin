@@ -24,8 +24,12 @@ import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,6 +38,7 @@ import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -57,6 +62,35 @@ class TestMojoTest {
         assertEquals(List.of("com.example.FooTest"), TestMojo.surefireFilter("**\\com\\example\\FooTest.java"));
         assertEquals(List.of("*.adds"), TestMojo.surefireFilter("#adds"));
         assertEquals(List.of("!SlowTest", "%regex[.*Test]"), TestMojo.surefireFilter("!SlowTest,%regex[.*Test]"));
+    }
+
+    @Test
+    void theTestRunsListenOnALiveReloadPortOfTheirOwn() throws Exception {
+        TestMojo mojo = testMojo();
+        setField(mojo, "liveReloadPort", 35729);
+        setField(mojo, "testLiveReloadPort", 35730);
+
+        // mn:dev's port does not apply: both goals run at once
+        assertEquals(35730, mojo.liveReloadPort());
+    }
+
+    @Test
+    void theBuildToolCompilationWritesTheTestOutputToo() throws Exception {
+        TestMojo mojo = testMojo();
+
+        assertEquals("test-compile", mojo.buildToolGoal());
+        assertTrue(mojo.compilesTests());
+    }
+
+    @Test
+    void theLiveReloadPortOfTheTestsIsSetWithItsOwnProperty() throws Exception {
+        Element test = mojoDescriptor(TestMojo.MOJO_NAME);
+        Element port = configuration(test, "testLiveReloadPort");
+
+        assertEquals("${mn.test.livereload.port}", port.getTextContent().trim());
+        assertEquals("35730", port.getAttribute("default-value"));
+        // mn:dev has no such parameter
+        assertFalse(hasConfiguration(mojoDescriptor(DevMojo.MOJO_NAME), "testLiveReloadPort"));
     }
 
     @Test
@@ -98,17 +132,17 @@ class TestMojoTest {
         TestMojo mojo = new TestMojo(session, mock(ToolchainManager.class), mock(CompilerService.class),
             mock(ExecutorService.class), mock(RepositorySystem.class), mock(ComponentConfigurator.class));
         DependencyResolutionService resolution = mock(DependencyResolutionService.class);
-        set(DevMojo.class, mojo, "runnableProject", project);
-        set(DevMojo.class, mojo, "mojoExecution", mock(MojoExecution.class));
-        set(DevMojo.class, mojo, "dependencyResolutionService", resolution);
+        setField(mojo, "runnableProject", project);
+        setField(mojo, "mojoExecution", mock(MojoExecution.class));
+        setField(mojo, "dependencyResolutionService", resolution);
         // what the goal shares with mn:dev, where these turn both on
-        set(DevMojo.class, mojo, "controlPanel", true);
-        set(DevMojo.class, mojo, "bindLoopback", true);
-        set(DevMojo.class, mojo, "strategy", "auto");
-        set(DevMojo.class, mojo, "compile", "embedded");
-        set(TestMojo.class, mojo, "runner", "junit-platform");
-        set(TestMojo.class, mojo, "selection", "affected");
-        set(TestMojo.class, mojo, "reportPath", "/report");
+        setField(mojo, "controlPanel", true);
+        setField(mojo, "bindLoopback", true);
+        setField(mojo, "strategy", "auto");
+        setField(mojo, "compile", "embedded");
+        setField(mojo, "runner", "junit-platform");
+        setField(mojo, "selection", "affected");
+        setField(mojo, "reportPath", "/report");
         Path manifestDirectory = mojo.manifestDirectory();
         // the settings of an mn:dev running beside these tests
         Path devResources = directory.resolve("target/micronaut-dev").resolve(ControlPanel.RESOURCES_DIRECTORY_NAME);
@@ -138,12 +172,12 @@ class TestMojoTest {
         when(execution.getMojoDescriptor()).thenReturn(descriptor());
         TestMojo mojo = new TestMojo(session, mock(ToolchainManager.class), mock(CompilerService.class),
             mock(ExecutorService.class), mock(RepositorySystem.class), new BasicComponentConfigurator());
-        set(DevMojo.class, mojo, "mojoExecution", execution);
-        set(DevMojo.class, mojo, "runnableProject", app);
+        setField(mojo, "mojoExecution", execution);
+        setField(mojo, "runnableProject", app);
         // as Maven configured the goal from the root, an aggregator the application does not inherit from
-        set(TestMojo.class, mojo, "filter", "OnlyInTheRoot");
-        set(TestMojo.class, mojo, "selection", "affected");
-        set(DevMojo.class, mojo, "retain", "example.OnlyInTheRoot");
+        setField(mojo, "filter", "OnlyInTheRoot");
+        setField(mojo, "selection", "affected");
+        setField(mojo, "retain", "example.OnlyInTheRoot");
 
         var apply = DevMojo.class.getDeclaredMethod("applyRunnableProjectConfiguration");
         apply.setAccessible(true);
@@ -158,15 +192,15 @@ class TestMojoTest {
     void anUnknownSelectionFailsTheGoal() throws Exception {
         TestMojo mojo = new TestMojo(mock(MavenSession.class), mock(ToolchainManager.class), mock(CompilerService.class),
             mock(ExecutorService.class), mock(RepositorySystem.class), mock(ComponentConfigurator.class));
-        set(DevMojo.class, mojo, "strategy", "auto");
-        set(DevMojo.class, mojo, "compile", "embedded");
-        set(TestMojo.class, mojo, "selection", "affectd");
+        setField(mojo, "strategy", "auto");
+        setField(mojo, "compile", "embedded");
+        setField(mojo, "selection", "affectd");
 
         MojoExecutionException failure = assertThrows(MojoExecutionException.class, mojo::validateSettings);
 
         assertEquals("Unknown value 'affectd' for mn.test.selection: the valid values are affected, all", failure.getMessage());
 
-        set(TestMojo.class, mojo, "selection", "ALL");
+        setField(mojo, "selection", "ALL");
         mojo.validateSettings();
         assertEquals("all", get(TestMojo.class, mojo, "selection"));
     }
@@ -204,16 +238,56 @@ class TestMojoTest {
     }
 
     private static List<String> launcherArtifactIds(String runner) throws Exception {
-        TestMojo mojo = new TestMojo(mock(MavenSession.class), mock(ToolchainManager.class), mock(CompilerService.class),
-            mock(ExecutorService.class), mock(RepositorySystem.class), mock(ComponentConfigurator.class));
-        set(TestMojo.class, mojo, "runner", runner);
-        set(DevMojo.class, mojo, "runnableProject", new MavenProject());
+        TestMojo mojo = testMojo();
+        setField(mojo, "runner", runner);
+        setField(mojo, "runnableProject", new MavenProject());
         return mojo.launcherArtifacts().stream().map(Artifact::getArtifactId).toList();
     }
 
-    private static void set(Class<?> type, Object target, String name, Object value) throws Exception {
-        Field field = type.getDeclaredField(name);
-        field.setAccessible(true);
-        field.set(target, value);
+    private static TestMojo testMojo() {
+        MavenSession session = mock(MavenSession.class);
+        when(session.getUserProperties()).thenReturn(new Properties());
+        return new TestMojo(session, mock(ToolchainManager.class), mock(CompilerService.class), mock(ExecutorService.class),
+            mock(RepositorySystem.class), mock(ComponentConfigurator.class));
+    }
+
+    private static Element mojoDescriptor(String goal) throws Exception {
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        try (InputStream inputStream = TestMojoTest.class.getClassLoader().getResourceAsStream("META-INF/maven/plugin.xml")) {
+            assertNotNull(inputStream);
+            NodeList mojos = factory.newDocumentBuilder().parse(inputStream).getElementsByTagName("mojo");
+            for (int i = 0; i < mojos.getLength(); i++) {
+                Element mojo = (Element) mojos.item(i);
+                if (goal.equals(mojo.getElementsByTagName("goal").item(0).getTextContent().trim())) {
+                    return mojo;
+                }
+            }
+        }
+        throw new IllegalArgumentException("No goal " + goal);
+    }
+
+    private static boolean hasConfiguration(Element mojo, String parameter) {
+        Element configuration = (Element) mojo.getElementsByTagName("configuration").item(0);
+        return configuration.getElementsByTagName(parameter).getLength() > 0;
+    }
+
+    private static Element configuration(Element mojo, String parameter) {
+        Element configuration = (Element) mojo.getElementsByTagName("configuration").item(0);
+        return (Element) configuration.getElementsByTagName(parameter).item(0);
+    }
+
+    private static void setField(Object target, String name, Object value) throws Exception {
+        for (Class<?> type = target.getClass(); type != null; type = type.getSuperclass()) {
+            try {
+                Field field = type.getDeclaredField(name);
+                field.setAccessible(true);
+                field.set(target, value);
+                return;
+            } catch (NoSuchFieldException e) {
+                // declared higher up
+            }
+        }
+        throw new NoSuchFieldException(name);
     }
 }
