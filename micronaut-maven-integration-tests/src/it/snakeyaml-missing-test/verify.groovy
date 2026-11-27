@@ -1,0 +1,6 @@
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains("BUILD FAILURE")
+assert log.text.contains("io.micronaut.maven.enforcer.CheckSnakeYaml failed with message")
+assert log.text.contains("YAML configuration file detected in the test resources, but SnakeYAML is not on the test classpath. Make sure to add the following dependency:")
+assert log.text.contains("<scope>test</scope>")

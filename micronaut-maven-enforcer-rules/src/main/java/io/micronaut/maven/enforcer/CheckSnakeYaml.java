@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Enforcer rule to check that, when the application has YAML configuration, the SnakeYAML library is present.
@@ -42,6 +43,7 @@ public class CheckSnakeYaml extends AbstractEnforcerRule {
 
     private final MavenProject project;
     private final Dependency snakeYaml;
+    private final Dependency testSnakeYaml;
 
     @Inject
     public CheckSnakeYaml(MavenProject project) {
@@ -50,21 +52,33 @@ public class CheckSnakeYaml extends AbstractEnforcerRule {
         snakeYaml.setGroupId("org.yaml");
         snakeYaml.setArtifactId("snakeyaml");
         snakeYaml.setScope(JavaScopes.RUNTIME);
+        this.testSnakeYaml = snakeYaml.clone();
+        testSnakeYaml.setScope(JavaScopes.TEST);
     }
 
     @Override
     public void execute() throws EnforcerRuleException {
-        if (hasYamlConfiguration() && !hasSnakeYaml()) {
+        if (hasSnakeYaml()) {
+            return;
+        }
+        if (hasYamlConfiguration(project.getResources())) {
             String message = "YAML configuration file detected, but SnakeYAML is not on the runtime classpath. Make sure to add the following dependency:" +
                 System.lineSeparator();
 
             message += toXml(snakeYaml);
             throw new EnforcerRuleException(message);
         }
+        if (hasYamlConfiguration(project.getTestResources())) {
+            String message = "YAML configuration file detected in the test resources, but SnakeYAML is not on the test classpath. Make sure to add the following dependency:" +
+                System.lineSeparator();
+
+            message += toXml(testSnakeYaml);
+            throw new EnforcerRuleException(message);
+        }
     }
 
-    private boolean hasYamlConfiguration() {
-        return this.project.getResources().stream().anyMatch(this::hasYamlConfiguration);
+    private boolean hasYamlConfiguration(List<Resource> resources) {
+        return resources != null && resources.stream().anyMatch(this::hasYamlConfiguration);
     }
 
     private boolean hasSnakeYaml() {
