@@ -1,6 +1,8 @@
 package io.micronaut.maven;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -54,6 +56,13 @@ class LifecycleMappingTest {
         assertTrue(packagePhase.matches("(?s).*" + MICRONAUT_MAVEN_PLUGIN_COORDINATES + "[^,\\s]+:native-image-jib.*"));
         assertTrue(packagePhase.indexOf("compile-no-fork") < packagePhase.indexOf("native-image-jib"));
         assertFalse(hasPhase(component, "deploy"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"jar", "native-image", "docker", "docker-crac", "docker-native", "k8s", "openshift"})
+    void packagingsPrecompileLogbackAfterAotAnalysis(String packaging) throws Exception {
+        String preparePackage = phase(findLifecycleComponent(packaging), "prepare-package");
+        assertTrue(preparePackage.matches("(?s).*:aot-analysis,\\s*" + MICRONAUT_MAVEN_PLUGIN_COORDINATES + "[^,\\s]+:precompile-logback.*"));
     }
 
     private static Element findLifecycleComponent(String roleHint) throws Exception {
