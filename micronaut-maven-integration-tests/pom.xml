@@ -23,6 +23,11 @@
         <it.micronaut.core.version>5.0.0</it.micronaut.core.version>
         <it.micronaut.version>5.0.0-RC1</it.micronaut.version>
         <!--
+          The Micronaut Core whose BOM manages micronaut-dev, for the scenarios of mn:dev and mn:test that launch it. A
+          snapshot resolves from the Central Portal snapshots repository, which src/it/settings.xml declares.
+        -->
+        <it.micronaut.core.dev.version>5.3.0-SNAPSHOT</it.micronaut.core.dev.version>
+        <!--
           A Micronaut core version that has micronaut.application.training.mode (micronaut-projects/micronaut-core#13402,
           merged into micronaut-core 5.3.x, ships with Micronaut Core 5.3.0), for the *-jdk-aot-cache-load projects, which
           train a JDK AOT cache without starting the application. They are skipped while this is empty, because no such
