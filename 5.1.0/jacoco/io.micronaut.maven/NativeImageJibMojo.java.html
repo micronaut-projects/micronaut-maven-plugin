@@ -1,0 +1,473 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NativeImageJibMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven</a> &gt; <span class="el_source">NativeImageJibMojo.java</span></div><h1>NativeImageJibMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven;
+
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.Jib;
+import com.google.cloud.tools.jib.api.JibContainer;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.RegistryException;
+import com.google.cloud.tools.jib.api.RegistryImage;
+import com.google.cloud.tools.jib.api.TarImage;
+import com.google.cloud.tools.jib.api.buildplan.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.buildplan.FileEntriesLayer;
+import com.google.cloud.tools.jib.api.buildplan.FilePermissions;
+import com.google.cloud.tools.jib.api.buildplan.ImageFormat;
+import com.google.cloud.tools.jib.api.buildplan.Platform;
+import com.google.cloud.tools.jib.api.buildplan.Port;
+import io.micronaut.core.util.StringUtils;
+import io.micronaut.maven.core.DockerBuildStrategy;
+import io.micronaut.maven.core.MicronautRuntime;
+import io.micronaut.maven.jib.JibConfiguration;
+import io.micronaut.maven.jib.JibConfigurationService;
+import io.micronaut.maven.services.ApplicationConfigurationService;
+import io.micronaut.maven.services.DockerService;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+
+/**
+ * Builds a container image from a locally compiled native executable with Jib Core.
+ */
+@Mojo(name = NativeImageJibMojo.NATIVE_IMAGE_JIB_GOAL, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+public class NativeImageJibMojo extends AbstractDockerMojo {
+
+    public static final String NATIVE_IMAGE_JIB_GOAL = &quot;native-image-jib&quot;;
+    static final String ENABLED_PROPERTY = &quot;micronaut.native-image.jib.enabled&quot;;
+    static final String EXECUTABLE_PROPERTY = &quot;micronaut.native-image.jib.executable&quot;;
+    static final String BASE_IMAGE_PROPERTY = &quot;micronaut.native-image.jib.base-image&quot;;
+    static final String ALLOW_PLATFORM_MISMATCH_PROPERTY = &quot;micronaut.native-image.jib.allow-platform-mismatch&quot;;
+    static final String DEFAULT_APP_ROOT = &quot;/app&quot;;
+    static final String DEFAULT_TAR_NAME = &quot;jib-image.tar&quot;;
+    private static final String JIB_BUILD_GOAL_PROPERTY = &quot;jib.buildGoal&quot;;
+    private static final String JIB_BUILD_GOAL_PARAMETER = &quot;jibBuildGoal&quot;;
+    private static final String JIB_BUILD_GOAL_EXPRESSION = &quot;${&quot; + JIB_BUILD_GOAL_PROPERTY + &quot;}&quot;;
+    private static final String DEFAULT_JIB_BUILD_GOAL = &quot;buildTar&quot;;
+    private static final String INHERITED_DOCKER_BUILD_GOAL = &quot;dockerBuild&quot;;
+<span class="fc" id="L86">    private static final Logger LOG = LoggerFactory.getLogger(NativeImageJibMojo.class);</span>
+<span class="fc" id="L87">    private static final List&lt;String&gt; SUPPORTED_JIB_BUILD_GOALS = List.of(DEFAULT_JIB_BUILD_GOAL, &quot;build&quot;);</span>
+    private static final String GRAALVM_NATIVE_PLUGIN_KEY = &quot;org.graalvm.buildtools:native-maven-plugin&quot;;
+    private static final String DEFAULT_USER = &quot;65532&quot;;
+    private static final String LINUX = &quot;linux&quot;;
+    private static final String AMD64 = &quot;amd64&quot;;
+    private static final String ARM64 = &quot;arm64&quot;;
+
+    /**
+     * Packages the generated native executable into a container image with Jib after native-image packaging.
+     */
+    @Parameter(property = ENABLED_PROPERTY, defaultValue = &quot;false&quot;)
+    protected boolean enabled;
+
+    /**
+     * Native executable to copy into the image. Defaults to {@code target/&lt;native imageName or artifactId&gt;}.
+     */
+    @Parameter(property = EXECUTABLE_PROPERTY)
+    protected File executable;
+
+    /**
+     * Runtime base image for the native executable image. Jib {@code from.image} has higher precedence.
+     */
+    @Parameter(property = BASE_IMAGE_PROPERTY)
+    protected String nativeImageJibBaseImage;
+
+    /**
+     * Allows packaging when the host OS/architecture differs from the selected Linux container platform.
+     */
+    @Parameter(property = ALLOW_PLATFORM_MISMATCH_PROPERTY, defaultValue = &quot;false&quot;)
+    protected boolean allowPlatformMismatch;
+
+    private final String pluginVersion;
+    private final MojoExecution mojoExecution;
+
+    @SuppressWarnings(&quot;CdiInjectionPointsInspection&quot;)
+    @Inject
+    public NativeImageJibMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
+                              ApplicationConfigurationService applicationConfigurationService, DockerService dockerService,
+                              MavenSession mavenSession, MojoExecution mojoExecution) {
+<span class="fc" id="L126">        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession,</span>
+            mojoExecution);
+<span class="fc" id="L128">        this.mojoExecution = mojoExecution;</span>
+<span class="fc" id="L129">        pluginVersion = Optional.ofNullable(mojoExecution)</span>
+<span class="fc" id="L130">            .map(MojoExecution::getPlugin)</span>
+<span class="fc" id="L131">            .map(Plugin::getVersion)</span>
+<span class="fc" id="L132">            .filter(StringUtils::hasText)</span>
+<span class="fc" id="L133">            .orElse(&quot;unknown&quot;);</span>
+<span class="fc" id="L134">    }</span>
+
+    @Override
+    public void execute() throws MojoExecutionException {
+<span class="fc bfc" id="L138" title="All 2 branches covered.">        if (!enabled) {</span>
+<span class="fc" id="L139">            getLog().debug(&quot;Skipping native image Jib packaging because &quot; + ENABLED_PROPERTY + &quot; is not enabled.&quot;);</span>
+<span class="fc" id="L140">            return;</span>
+        }
+<span class="fc" id="L142">        applyDefaultJibBuildGoal();</span>
+<span class="fc" id="L143">        validateNativeImageJibBuildGoal();</span>
+<span class="fc" id="L144">        validateRuntime();</span>
+<span class="fc" id="L145">        Platform platform = resolvePlatform();</span>
+<span class="fc" id="L146">        validatePlatform(platform);</span>
+<span class="fc" id="L147">        Path nativeExecutable = resolveExecutable();</span>
+<span class="fc bfc" id="L148" title="All 2 branches covered.">        if (!Files.isRegularFile(nativeExecutable)) {</span>
+<span class="fc" id="L149">            throw new MojoExecutionException(&quot;Native executable not found: &quot; + nativeExecutable</span>
+                + &quot;. Build with native-image packaging and -D&quot; + ENABLED_PROPERTY + &quot;=true, or set -D&quot;
+                + EXECUTABLE_PROPERTY + &quot;=&lt;path&gt;.&quot;);
+        }
+<span class="fc" id="L153">        ImageReference imageReference = parseImageReference(primaryImage());</span>
+<span class="fc" id="L154">        JibContainerBuilder builder = createContainerBuilder(nativeExecutable, platform);</span>
+<span class="fc" id="L155">        Containerizer containerizer = createContainerizer(imageReference);</span>
+        try {
+<span class="fc" id="L157">            JibContainer jibContainer = containerize(builder, containerizer);</span>
+<span class="fc" id="L158">            getLog().info(&quot;Built native image container &quot; + jibContainer.getTargetImage());</span>
+<span class="nc" id="L159">        } catch (InterruptedException e) {</span>
+<span class="nc" id="L160">            Thread.currentThread().interrupt();</span>
+<span class="nc" id="L161">            throw new MojoExecutionException(&quot;Interrupted while building native image container&quot;, e);</span>
+<span class="nc" id="L162">        } catch (CacheDirectoryCreationException | ExecutionException | IOException | RegistryException e) {</span>
+<span class="nc" id="L163">            throw new MojoExecutionException(&quot;Failed to build native image container with Jib: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L164">        }</span>
+<span class="fc" id="L165">    }</span>
+
+    final JibContainerBuilder createContainerBuilder(Path nativeExecutable, Platform platform) throws MojoExecutionException {
+<span class="fc" id="L168">        String baseImage = baseImage();</span>
+<span class="fc" id="L169">        String executableName = nativeExecutable.getFileName().toString();</span>
+<span class="fc" id="L170">        AbsoluteUnixPath containerExecutable = AbsoluteUnixPath.get(DEFAULT_APP_ROOT + &quot;/&quot; + executableName);</span>
+<span class="fc" id="L171">        var executableLayer = FileEntriesLayer.builder()</span>
+<span class="fc" id="L172">            .setName(&quot;native executable&quot;)</span>
+<span class="fc" id="L173">            .addEntry(nativeExecutable, containerExecutable, FilePermissions.fromOctalString(&quot;755&quot;))</span>
+<span class="fc" id="L174">            .build();</span>
+<span class="fc" id="L175">        return fromBaseImage(baseImage)</span>
+<span class="fc" id="L176">            .addFileEntriesLayer(executableLayer)</span>
+<span class="fc" id="L177">            .setEntrypoint(entrypoint(containerExecutable))</span>
+<span class="fc" id="L178">            .setProgramArguments(programArguments())</span>
+<span class="fc" id="L179">            .setExposedPorts(exposedPorts())</span>
+<span class="fc" id="L180">            .setFormat(ImageFormat.Docker)</span>
+<span class="fc" id="L181">            .setPlatforms(Set.of(platform))</span>
+<span class="fc" id="L182">            .setWorkingDirectory(AbsoluteUnixPath.get(DEFAULT_APP_ROOT))</span>
+<span class="fc" id="L183">            .setUser(jibConfigurationService.getUser().orElse(DEFAULT_USER));</span>
+    }
+
+    private JibContainerBuilder fromBaseImage(String baseImage) throws MojoExecutionException {
+<span class="fc bfc" id="L187" title="All 2 branches covered.">        if (&quot;scratch&quot;.equals(baseImage)) {</span>
+<span class="fc" id="L188">            return Jib.fromScratch();</span>
+        }
+<span class="fc" id="L190">        RegistryImage fromImage = registryImage(baseImage, jibConfigurationService.getFromCredentials());</span>
+<span class="pc bpc" id="L191" title="1 of 2 branches missed.">        if (jibConfigurationService.getFromCredentials().isEmpty()) {</span>
+<span class="fc" id="L192">            jibConfigurationService.resolveCredentialForImage(baseImage, LOG)</span>
+<span class="pc" id="L193">                .ifPresent(credential -&gt; addCredential(fromImage, credential));</span>
+        }
+<span class="fc" id="L195">        return Jib.from(fromImage);</span>
+    }
+
+    final JibContainer containerize(JibContainerBuilder builder, Containerizer containerizer)
+        throws InterruptedException, RegistryException, IOException, CacheDirectoryCreationException, ExecutionException {
+<span class="fc" id="L200">        return builder.containerize(containerizer);</span>
+    }
+
+    private Containerizer createContainerizer(ImageReference imageReference) throws MojoExecutionException {
+        Containerizer containerizer;
+<span class="pc bpc" id="L205" title="1 of 2 branches missed.">        if (DEFAULT_JIB_BUILD_GOAL.equals(jibBuildGoal)) {</span>
+<span class="fc" id="L206">            Path output = jibConfigurationService.getOutputPathsTar()</span>
+<span class="fc" id="L207">                .filter(StringUtils::hasText)</span>
+<span class="fc" id="L208">                .map(Path::of)</span>
+<span class="fc" id="L209">                .map(this::resolveTarOutputPath)</span>
+<span class="fc" id="L210">                .orElseGet(() -&gt; Path.of(mavenProject.getBuild().getDirectory(), DEFAULT_TAR_NAME));</span>
+<span class="fc" id="L211">            containerizer = Containerizer.to(TarImage.at(output).named(imageReference));</span>
+<span class="fc" id="L212">        } else {</span>
+<span class="nc" id="L213">            RegistryImage targetImage = registryImage(imageReference.toString(), jibConfigurationService.getToCredentials());</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">            if (jibConfigurationService.getToCredentials().isEmpty()) {</span>
+<span class="nc" id="L215">                jibConfigurationService.resolveCredentialForImage(imageReference.toString(), LOG)</span>
+<span class="nc" id="L216">                    .ifPresent(credential -&gt; addCredential(targetImage, credential));</span>
+            }
+<span class="nc" id="L218">            containerizer = Containerizer.to(targetImage);</span>
+        }
+<span class="fc bfc" id="L220" title="All 2 branches covered.">        for (String tag : additionalTags(imageReference)) {</span>
+<span class="fc" id="L221">            containerizer.withAdditionalTag(tag);</span>
+<span class="fc" id="L222">        }</span>
+<span class="fc" id="L223">        return containerizer</span>
+<span class="fc" id="L224">            .addEventHandler(LogEvent.class, this::logJibEvent)</span>
+<span class="fc" id="L225">            .setToolName(&quot;micronaut-maven-plugin&quot;)</span>
+<span class="fc" id="L226">            .setToolVersion(pluginVersion);</span>
+    }
+
+    private Path resolveTarOutputPath(Path output) {
+<span class="fc bfc" id="L230" title="All 2 branches covered.">        if (output.isAbsolute()) {</span>
+<span class="fc" id="L231">            return output;</span>
+        }
+<span class="fc" id="L233">        return mavenProject.getBasedir().toPath().resolve(output);</span>
+    }
+
+    private void validateNativeImageJibBuildGoal() throws MojoExecutionException {
+<span class="fc bfc" id="L237" title="All 2 branches covered.">        if (!SUPPORTED_JIB_BUILD_GOALS.contains(jibBuildGoal)) {</span>
+<span class="fc" id="L238">            throw new MojoExecutionException(&quot;Unsupported jib.buildGoal '&quot; + jibBuildGoal</span>
+<span class="fc" id="L239">                + &quot;' for native image Jib packaging. Supported values are: &quot; + String.join(&quot;, &quot;, SUPPORTED_JIB_BUILD_GOALS)</span>
+                + &quot;. Use docker-native packaging for Docker-backed native image builds.&quot;);
+        }
+<span class="fc" id="L242">    }</span>
+
+    private void applyDefaultJibBuildGoal() {
+<span class="pc bpc" id="L245" title="1 of 4 branches missed.">        if (INHERITED_DOCKER_BUILD_GOAL.equals(jibBuildGoal) &amp;&amp; !hasConfiguredJibBuildGoal()) {</span>
+<span class="fc" id="L246">            jibBuildGoal = DEFAULT_JIB_BUILD_GOAL;</span>
+        }
+<span class="fc" id="L248">    }</span>
+
+    private boolean hasConfiguredJibBuildGoal() {
+<span class="fc bfc" id="L251" title="All 2 branches covered.">        return hasProperty(mavenSession.getUserProperties(), JIB_BUILD_GOAL_PROPERTY)</span>
+<span class="pc bpc" id="L252" title="1 of 2 branches missed.">            || hasProperty(mavenSession.getSystemProperties(), JIB_BUILD_GOAL_PROPERTY)</span>
+<span class="pc bpc" id="L253" title="1 of 2 branches missed.">            || hasProperty(mavenProject.getProperties(), JIB_BUILD_GOAL_PROPERTY)</span>
+<span class="fc bfc" id="L254" title="All 2 branches covered.">            || hasConfiguredMojoParameter(JIB_BUILD_GOAL_PARAMETER);</span>
+    }
+
+    private static boolean hasProperty(Properties properties, String key) {
+<span class="pc bpc" id="L258" title="1 of 4 branches missed.">        return properties != null &amp;&amp; properties.containsKey(key);</span>
+    }
+
+    private boolean hasConfiguredMojoParameter(String parameterName) {
+<span class="pc bpc" id="L262" title="1 of 4 branches missed.">        if (mojoExecution == null || !(mojoExecution.getConfiguration() instanceof Xpp3Dom configuration)) {</span>
+<span class="fc" id="L263">            return false;</span>
+        }
+<span class="fc" id="L265">        Xpp3Dom parameter = configuration.getChild(parameterName);</span>
+<span class="pc bpc" id="L266" title="1 of 4 branches missed.">        return parameter != null &amp;&amp; !isDescriptorDefaultJibBuildGoal(parameter);</span>
+    }
+
+    private static boolean isDescriptorDefaultJibBuildGoal(Xpp3Dom parameter) {
+<span class="fc bfc" id="L270" title="All 2 branches covered.">        return JIB_BUILD_GOAL_EXPRESSION.equals(parameter.getValue())</span>
+<span class="pc bpc" id="L271" title="1 of 2 branches missed.">            &amp;&amp; INHERITED_DOCKER_BUILD_GOAL.equals(parameter.getAttribute(&quot;default-value&quot;));</span>
+    }
+
+    private void validateRuntime() throws MojoExecutionException {
+        MicronautRuntime runtime;
+        try {
+<span class="fc" id="L277">            runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase(Locale.ENGLISH));</span>
+<span class="fc" id="L278">        } catch (IllegalArgumentException e) {</span>
+<span class="fc" id="L279">            throw new MojoExecutionException(&quot;Unsupported micronaut.runtime '&quot; + micronautRuntime</span>
+                + &quot;' for native image Jib packaging.&quot;, e);
+<span class="fc" id="L281">        }</span>
+<span class="fc" id="L282">        DockerBuildStrategy buildStrategy = runtime.getBuildStrategy();</span>
+<span class="pc bpc" id="L283" title="1 of 4 branches missed.">        if (buildStrategy == DockerBuildStrategy.LAMBDA || buildStrategy == DockerBuildStrategy.ORACLE_FUNCTION) {</span>
+<span class="fc" id="L284">            throw new MojoExecutionException(&quot;native image Jib packaging does not support micronaut.runtime=&quot;</span>
+                + micronautRuntime + &quot;. Use docker-native packaging for Lambda and Oracle Function native images.&quot;);
+        }
+<span class="fc" id="L287">    }</span>
+
+    private Path resolveExecutable() {
+<span class="pc bpc" id="L290" title="1 of 2 branches missed.">        if (executable != null) {</span>
+<span class="nc" id="L291">            return executable.toPath();</span>
+        }
+<span class="fc" id="L293">        return Path.of(mavenProject.getBuild().getDirectory(), nativeImageName());</span>
+    }
+
+    private String nativeImageName() {
+<span class="fc" id="L297">        return configuredNativeImageName().orElse(mavenProject.getArtifactId());</span>
+    }
+
+    private Optional&lt;String&gt; configuredNativeImageName() {
+<span class="fc" id="L301">        Plugin plugin = mavenProject.getPlugin(GRAALVM_NATIVE_PLUGIN_KEY);</span>
+<span class="pc bpc" id="L302" title="1 of 4 branches missed.">        if (plugin != null &amp;&amp; plugin.getConfiguration() instanceof Xpp3Dom configuration) {</span>
+<span class="fc" id="L303">            Xpp3Dom imageName = configuration.getChild(&quot;imageName&quot;);</span>
+<span class="pc bpc" id="L304" title="2 of 4 branches missed.">            if (imageName != null &amp;&amp; StringUtils.hasText(imageName.getValue())) {</span>
+<span class="fc" id="L305">                return Optional.of(evaluateMavenExpression(imageName.getValue()));</span>
+            }
+        }
+<span class="fc" id="L308">        return Optional.empty();</span>
+    }
+
+    private String baseImage() throws MojoExecutionException {
+<span class="fc" id="L312">        String image = getJibFromImageSystemProperty()</span>
+<span class="fc" id="L313">            .or(() -&gt; getFromImage().filter(StringUtils::hasText))</span>
+<span class="fc" id="L314">            .or(() -&gt; Optional.ofNullable(nativeImageJibBaseImage).filter(StringUtils::hasText))</span>
+<span class="fc" id="L315">            .or(() -&gt; Optional.ofNullable(baseImageRun).filter(StringUtils::hasText))</span>
+<span class="fc" id="L316">            .orElse(DEFAULT_BASE_IMAGE_GRAALVM_RUN);</span>
+<span class="fc" id="L317">        return validateImageReference(&quot;native image Jib base image&quot;, evaluateMavenExpression(image));</span>
+    }
+
+    private ImageReference parseImageReference(String image) throws MojoExecutionException {
+        try {
+<span class="fc" id="L322">            return ImageReference.parse(image);</span>
+<span class="nc" id="L323">        } catch (InvalidImageReferenceException e) {</span>
+<span class="nc" id="L324">            throw new MojoExecutionException(&quot;native image Jib target image is not a valid image reference: &quot; + image, e);</span>
+        }
+    }
+
+    private RegistryImage registryImage(String image, Optional&lt;Credential&gt; credential) throws MojoExecutionException {
+        try {
+<span class="fc" id="L330">            RegistryImage registryImage = RegistryImage.named(image);</span>
+<span class="pc" id="L331">            credential.ifPresent(value -&gt; addCredential(registryImage, value));</span>
+<span class="fc" id="L332">            return registryImage;</span>
+<span class="nc" id="L333">        } catch (InvalidImageReferenceException e) {</span>
+<span class="nc" id="L334">            throw new MojoExecutionException(&quot;Invalid image reference for native image Jib: &quot; + image, e);</span>
+        }
+    }
+
+    private static void addCredential(RegistryImage image, Credential credential) {
+<span class="nc" id="L339">        image.addCredential(credential.getUsername(), credential.getPassword());</span>
+<span class="nc" id="L340">    }</span>
+
+    private String primaryImage() {
+<span class="fc" id="L343">        String image = jibConfigurationService.getToImage()</span>
+<span class="fc" id="L344">            .map(this::evaluateMavenExpression)</span>
+<span class="fc" id="L345">            .filter(StringUtils::hasText)</span>
+<span class="fc" id="L346">            .orElse(mavenProject.getArtifactId());</span>
+<span class="fc" id="L347">        return ensureTag(image);</span>
+    }
+
+    private Set&lt;String&gt; additionalTags(ImageReference primaryImage) throws MojoExecutionException {
+<span class="fc" id="L351">        Set&lt;String&gt; tags = new LinkedHashSet&lt;&gt;();</span>
+<span class="fc" id="L352">        String primaryTag = primaryImage.getTag().orElse(LATEST_TAG);</span>
+<span class="fc bfc" id="L353" title="All 2 branches covered.">        for (String tag : jibConfigurationService.getTags()) {</span>
+<span class="fc" id="L354">            String evaluated = evaluateMavenExpression(tag);</span>
+<span class="pc bpc" id="L355" title="2 of 4 branches missed.">            if (!StringUtils.hasText(evaluated) || evaluated.equals(primaryTag)) {</span>
+<span class="nc" id="L356">                continue;</span>
+            }
+<span class="fc bfc" id="L358" title="All 2 branches covered.">            if (!ImageReference.isValidTag(evaluated)) {</span>
+<span class="fc" id="L359">                throw new MojoExecutionException(&quot;jib.to.tags contains an invalid image tag for native image Jib: &quot; + evaluated);</span>
+            }
+<span class="fc" id="L361">            tags.add(evaluated);</span>
+<span class="fc" id="L362">        }</span>
+<span class="fc" id="L363">        return tags;</span>
+    }
+
+    private static String ensureTag(String image) {
+<span class="fc" id="L367">        int lastSlash = image.lastIndexOf('/');</span>
+<span class="fc" id="L368">        int tagSeparator = image.indexOf(':', lastSlash + 1);</span>
+<span class="pc bpc" id="L369" title="3 of 4 branches missed.">        if (tagSeparator &lt; 0 &amp;&amp; !image.contains(&quot;@&quot;)) {</span>
+<span class="nc" id="L370">            return image + &quot;:&quot; + LATEST_TAG;</span>
+        }
+<span class="fc" id="L372">        return image;</span>
+    }
+
+    private List&lt;String&gt; entrypoint(AbsoluteUnixPath containerExecutable) {
+<span class="fc" id="L376">        List&lt;String&gt; configuredEntrypoint = jibConfigurationService.getEntrypoint();</span>
+<span class="fc bfc" id="L377" title="All 2 branches covered.">        if (!configuredEntrypoint.isEmpty()) {</span>
+<span class="fc" id="L378">            return configuredEntrypoint;</span>
+        }
+<span class="fc" id="L380">        return List.of(containerExecutable.toString());</span>
+    }
+
+    private List&lt;String&gt; programArguments() {
+<span class="fc" id="L384">        List&lt;String&gt; args = jibConfigurationService.getArgs();</span>
+<span class="fc bfc" id="L385" title="All 2 branches covered.">        if (!args.isEmpty()) {</span>
+<span class="fc" id="L386">            return args;</span>
+        }
+<span class="pc bpc" id="L388" title="1 of 2 branches missed.">        if (appArguments != null) {</span>
+<span class="nc" id="L389">            return appArguments;</span>
+        }
+<span class="fc" id="L391">        return List.of();</span>
+    }
+
+    private Set&lt;Port&gt; exposedPorts() throws MojoExecutionException {
+<span class="fc" id="L395">        String ports = validateExposedPorts(&quot;jib.container.ports&quot;, getPorts());</span>
+<span class="fc bfc" id="L396" title="All 2 branches covered.">        if (!StringUtils.hasText(ports)) {</span>
+<span class="fc" id="L397">            return Set.of();</span>
+        }
+        try {
+<span class="fc" id="L400">            return com.google.cloud.tools.jib.api.Ports.parse(List.of(ports.trim().split(&quot;\\s+&quot;)));</span>
+<span class="nc" id="L401">        } catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L402">            throw new MojoExecutionException(&quot;native image Jib supports individual exposed ports such as 8080 or 8080/tcp: &quot; + ports, e);</span>
+        }
+    }
+
+    private Platform resolvePlatform() throws MojoExecutionException {
+<span class="fc" id="L407">        Set&lt;JibConfiguration.PlatformConfiguration&gt; configuredPlatforms = jibConfigurationService.getFromPlatforms();</span>
+<span class="fc bfc" id="L408" title="All 2 branches covered.">        if (configuredPlatforms.isEmpty()) {</span>
+<span class="fc" id="L409">            return detectedPlatform();</span>
+        }
+<span class="fc bfc" id="L411" title="All 2 branches covered.">        if (configuredPlatforms.size() &gt; 1) {</span>
+<span class="fc" id="L412">            throw new MojoExecutionException(&quot;native image Jib supports exactly one target platform because it packages one local native executable.&quot;);</span>
+        }
+<span class="fc" id="L414">        JibConfiguration.PlatformConfiguration configuredPlatform = configuredPlatforms.iterator().next();</span>
+<span class="fc" id="L415">        String os = configuredPlatform.os().orElse(LINUX);</span>
+<span class="fc" id="L416">        String architecture = configuredPlatform.architecture()</span>
+<span class="fc" id="L417">            .map(NativeImageJibMojo::normalizeArchitecture)</span>
+<span class="fc" id="L418">            .orElseThrow(() -&gt; new MojoExecutionException(&quot;jib.from.platforms must define an architecture for native image Jib packaging.&quot;));</span>
+<span class="fc" id="L419">        return new Platform(architecture, os);</span>
+    }
+
+    private Platform detectedPlatform() {
+<span class="fc" id="L423">        return new Platform(normalizeArchitecture(System.getProperty(&quot;os.arch&quot;)), LINUX);</span>
+    }
+
+    private void validatePlatform(Platform platform) throws MojoExecutionException {
+<span class="fc bfc" id="L427" title="All 2 branches covered.">        if (!LINUX.equals(platform.getOs())) {</span>
+<span class="fc" id="L428">            throw new MojoExecutionException(&quot;native image Jib packages Linux container images only. Configured platform is &quot;</span>
+<span class="fc" id="L429">                + platform.getOs() + &quot;/&quot; + platform.getArchitecture() + &quot;.&quot;);</span>
+        }
+<span class="fc bfc" id="L431" title="All 2 branches covered.">        if (allowPlatformMismatch) {</span>
+<span class="fc" id="L432">            return;</span>
+        }
+<span class="fc" id="L434">        String hostOs = System.getProperty(&quot;os.name&quot;).toLowerCase(Locale.ENGLISH);</span>
+<span class="fc bfc" id="L435" title="All 2 branches covered.">        if (!hostOs.contains(LINUX)) {</span>
+<span class="fc" id="L436">            throw new MojoExecutionException(&quot;native image Jib packaging requires a Linux host by default because the local native executable is copied into a Linux container image. &quot;</span>
+                + &quot;Use docker-native packaging for Docker-backed cross-platform builds, or set -D&quot; + ALLOW_PLATFORM_MISMATCH_PROPERTY + &quot;=true for a known Linux cross-compiled executable.&quot;);
+        }
+<span class="fc" id="L439">        String hostArchitecture = normalizeArchitecture(System.getProperty(&quot;os.arch&quot;));</span>
+<span class="pc bpc" id="L440" title="1 of 2 branches missed.">        if (!hostArchitecture.equals(platform.getArchitecture())) {</span>
+<span class="fc" id="L441">            throw new MojoExecutionException(&quot;native image Jib host architecture &quot; + hostArchitecture</span>
+<span class="fc" id="L442">                + &quot; does not match configured target architecture &quot; + platform.getArchitecture()</span>
+                + &quot;. Set -D&quot; + ALLOW_PLATFORM_MISMATCH_PROPERTY + &quot;=true only for a known compatible cross-compiled executable.&quot;);
+        }
+<span class="nc" id="L445">    }</span>
+
+    private static String normalizeArchitecture(String architecture) {
+<span class="pc bpc" id="L448" title="1 of 3 branches missed.">        return switch (architecture) {</span>
+<span class="fc" id="L449">            case &quot;x86_64&quot;, &quot;x64&quot;, AMD64 -&gt; AMD64;</span>
+<span class="fc" id="L450">            case &quot;aarch64&quot;, ARM64 -&gt; ARM64;</span>
+<span class="nc" id="L451">            default -&gt; architecture;</span>
+        };
+    }
+
+    private String evaluateMavenExpression(String expression) {
+        try {
+<span class="fc" id="L457">            return expressionEvaluator.evaluate(expression, String.class).toString();</span>
+<span class="nc" id="L458">        } catch (Exception e) {</span>
+<span class="nc" id="L459">            LOG.debug(&quot;Could not evaluate Maven expression '{}'&quot;, expression, e);</span>
+<span class="nc" id="L460">            return expression;</span>
+        }
+    }
+
+    private void logJibEvent(LogEvent event) {
+<span class="pc bpc" id="L465" title="2 of 4 branches missed.">        switch (event.getLevel()) {</span>
+<span class="nc" id="L466">            case ERROR -&gt; getLog().error(event.getMessage());</span>
+<span class="nc" id="L467">            case WARN -&gt; getLog().warn(event.getMessage());</span>
+<span class="fc" id="L468">            case DEBUG -&gt; getLog().debug(event.getMessage());</span>
+<span class="fc" id="L469">            default -&gt; getLog().info(event.getMessage());</span>
+        }
+<span class="fc" id="L471">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

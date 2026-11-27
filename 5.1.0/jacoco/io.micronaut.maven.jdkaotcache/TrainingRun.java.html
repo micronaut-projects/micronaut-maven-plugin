@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrainingRun.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.jdkaotcache</a> &gt; <span class="el_source">TrainingRun.java</span></div><h1>TrainingRun.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.jdkaotcache;
+
+import io.micronaut.core.annotation.Internal;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Collection;
+import java.util.List;
+
+/**
+ * The JDK AOT cache training run of an application: the mode, and what ends the run. It is resolved from
+ * {@code micronaut.docker.jdkAotCache.trainingMode}, the training paths and what the application's Micronaut version can
+ * do.
+ *
+ * &lt;p&gt;Without a configured mode, the run is a {@code LOAD} run if the Micronaut version has that mode, because it creates
+ * no bean and so needs none of the services the beans use, which an image build does not have. Otherwise, it starts the
+ * application, as every Micronaut version can.&lt;/p&gt;
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 5.1.0
+ */
+@Internal
+public final class TrainingRun {
+
+    private static final String SCRIPT_LOAD = &quot;load&quot;;
+    private static final String SCRIPT_SWITCH = &quot;switch&quot;;
+    private static final String SCRIPT_SIGTERM = &quot;sigterm&quot;;
+    private static final String LOG_PREFIX = &quot;JDK AOT cache: &quot;;
+    private static final String PATHS_OPTION = &quot;micronaut.docker.jdkAotCache.trainingPaths&quot;;
+<span class="fc" id="L47">    private static final String LOAD_OPTION = TrainingMode.LOAD.option();</span>
+<span class="fc" id="L48">    private static final String START_OPTION = TrainingMode.START.option();</span>
+    private static final String LOAD_SENDS_NO_REQUESTS = &quot;a LOAD training run does not start the application, so it &quot;
+        + &quot;sends no requests.&quot;;
+
+    private final TrainingMode mode;
+    private final boolean usesSwitch;
+    private final String description;
+    private final @Nullable String warning;
+
+    /**
+     * @param mode how far the application goes
+     * @param usesSwitch whether the Micronaut training-run switch ends the run. Otherwise, the training script warms the
+     * application up and stops it with SIGTERM
+     * @param description what the run does and why, for the build log
+     * @param warning what the build has to change before the application moves to a Micronaut version with the load
+     * mode, or {@code null} if nothing
+     */
+<span class="fc" id="L65">    TrainingRun(TrainingMode mode, boolean usesSwitch, String description, @Nullable String warning) {</span>
+<span class="fc" id="L66">        this.mode = mode;</span>
+<span class="fc" id="L67">        this.usesSwitch = usesSwitch;</span>
+<span class="fc" id="L68">        this.description = description;</span>
+<span class="fc" id="L69">        this.warning = warning;</span>
+<span class="fc" id="L70">    }</span>
+
+    /**
+     * A training run with nothing to warn about.
+     *
+     * @param mode how far the application goes
+     * @param usesSwitch whether the Micronaut training-run switch ends the run
+     * @param description what the run does and why, for the build log
+     */
+    TrainingRun(TrainingMode mode, boolean usesSwitch, String description) {
+<span class="fc" id="L80">        this(mode, usesSwitch, description, null);</span>
+<span class="fc" id="L81">    }</span>
+
+    /**
+     * @param configured the configured {@code micronaut.docker.jdkAotCache.trainingMode}, or {@code null} if it is not
+     * set
+     * @param trainingPaths the validated training paths
+     * @param artifacts the resolved dependencies of the application
+     * @return the training run
+     * @throws MojoExecutionException if the application's Micronaut version cannot run the mode, or if training paths
+     * are set for a run that does not start the application
+     */
+    public static TrainingRun resolve(@Nullable TrainingMode configured, List&lt;String&gt; trainingPaths,
+                                      Collection&lt;Artifact&gt; artifacts) throws MojoExecutionException {
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        boolean warmUp = !trainingPaths.isEmpty();</span>
+<span class="fc" id="L95">        boolean loadAvailable = TrainingRunSwitch.hasLoadMode(artifacts);</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (configured == TrainingMode.LOAD) {</span>
+<span class="fc" id="L97">            return configuredLoad(warmUp, loadAvailable);</span>
+        }
+<span class="fc bfc" id="L99" title="All 4 branches covered.">        if (configured == null &amp;&amp; loadAvailable) {</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">            if (warmUp) {</span>
+<span class="fc" id="L101">                throw new MojoExecutionException(PATHS_OPTION + &quot; is set, but the training mode is LOAD, the default &quot;</span>
+                    + &quot;with this Micronaut version: &quot; + LOAD_SENDS_NO_REQUESTS + &quot; Set &quot; + START_OPTION + &quot; if the &quot;
+                    + &quot;application can start in the image build, or remove the training paths.&quot;);
+            }
+<span class="fc" id="L105">            return new TrainingRun(TrainingMode.LOAD, true, &quot;training mode LOAD, the default: the application loads &quot;</span>
+                + &quot;its bean definitions and exits without starting, so the training needs none of the services that &quot;
+                + &quot;its beans use. If the application can start in the image build, &quot; + START_OPTION + &quot; trains a more &quot;
+                + &quot;complete cache&quot;);
+        }
+<span class="fc" id="L110">        boolean usesSwitch = TrainingRunSwitch.isAvailable(artifacts, warmUp);</span>
+<span class="fc bfc" id="L111" title="All 2 branches covered.">        if (configured != null) {</span>
+<span class="fc" id="L112">            return new TrainingRun(TrainingMode.START, usesSwitch, &quot;training mode START: the training run starts the &quot;</span>
+                + &quot;application&quot;);
+        }
+        // The build that sets training paths and no mode is the one that fails after a Micronaut upgrade
+<span class="fc bfc" id="L116" title="All 2 branches covered.">        String warning = warmUp ? PATHS_OPTION + &quot; is set and &quot; + TrainingMode.PARAMETER + &quot; is not. This build will fail &quot;</span>
+            + &quot;once the application uses a Micronaut version with the LOAD training mode: LOAD becomes the default, &quot;
+<span class="fc" id="L118">            + &quot;and &quot; + LOAD_SENDS_NO_REQUESTS + &quot; Set &quot; + START_OPTION + &quot; now to keep starting the application&quot; : null;</span>
+<span class="fc" id="L119">        return new TrainingRun(TrainingMode.START, usesSwitch, &quot;training mode START: the training run starts the &quot;</span>
+            + &quot;application, because its Micronaut version has no training mode that loads it without starting it (&quot;
+            + TrainingRunSwitch.MODE_PROPERTY + &quot;). The services it needs at start-up must be reachable from the image &quot;
+            + &quot;build. With a Micronaut version that has that mode, LOAD becomes the default: set &quot; + START_OPTION
+            + &quot; to keep starting the application&quot;, warning);
+    }
+
+    /**
+     * An explicit {@code LOAD} fails on a Micronaut version without the mode, instead of starting an application that
+     * was declared unable to start. That is checked before the training paths, and its message covers them, so that
+     * a build with both problems is told about both at once.
+     */
+    private static TrainingRun configuredLoad(boolean warmUp, boolean loadAvailable) throws MojoExecutionException {
+<span class="fc bfc" id="L132" title="All 2 branches covered.">        if (!loadAvailable) {</span>
+<span class="fc" id="L133">            throw new MojoExecutionException(LOAD_OPTION + &quot; needs a Micronaut version with the LOAD training mode (&quot;</span>
+                + TrainingRunSwitch.MODE_PROPERTY + &quot;), which the application's Micronaut version does not have. &quot;
+                + &quot;Upgrade Micronaut, or remove the option: the training run then starts the application.&quot;
+<span class="fc bfc" id="L136" title="All 2 branches covered.">                + (warmUp ? &quot; If you upgrade, remove &quot; + PATHS_OPTION + &quot; as well: &quot; + LOAD_SENDS_NO_REQUESTS : &quot;&quot;));</span>
+        }
+<span class="fc bfc" id="L138" title="All 2 branches covered.">        if (warmUp) {</span>
+<span class="fc" id="L139">            throw new MojoExecutionException(PATHS_OPTION + &quot; cannot be used with &quot; + LOAD_OPTION + &quot;: &quot;</span>
+                + LOAD_SENDS_NO_REQUESTS + &quot; Remove the training paths, or set &quot; + START_OPTION + &quot; if the application &quot;
+                + &quot;can start in the image build.&quot;);
+        }
+<span class="fc" id="L143">        return new TrainingRun(TrainingMode.LOAD, true, &quot;training mode LOAD: the application loads its bean &quot;</span>
+            + &quot;definitions and exits without starting&quot;);
+    }
+
+    /**
+     * @return how far the application goes
+     */
+    TrainingMode mode() {
+<span class="fc" id="L151">        return mode;</span>
+    }
+
+    /**
+     * @return whether the Micronaut training-run switch ends the run. Otherwise, the training script warms the
+     * application up and stops it with SIGTERM
+     */
+    public boolean usesSwitch() {
+<span class="fc" id="L159">        return usesSwitch;</span>
+    }
+
+    /**
+     * @return what the run does and why, for the build log
+     */
+    String description() {
+<span class="fc" id="L166">        return description;</span>
+    }
+
+    /**
+     * @return what the build has to change before the application moves to a Micronaut version with the load mode, or
+     * {@code null} if nothing
+     */
+    @Nullable String warning() {
+<span class="fc" id="L174">        return warning;</span>
+    }
+
+    /**
+     * Writes what the run does and why to the build log, and the warning, if there is one.
+     *
+     * @param log the Maven log
+     */
+    public void log(Log log) {
+<span class="fc" id="L183">        log.info(LOG_PREFIX + description);</span>
+<span class="fc bfc" id="L184" title="All 2 branches covered.">        if (warning != null) {</span>
+<span class="fc" id="L185">            log.warn(LOG_PREFIX + warning);</span>
+        }
+<span class="fc" id="L187">    }</span>
+
+    /**
+     * Writes what {@link #log(Log)} writes and, for a run that starts the application, how the training script of the
+     * generated Dockerfile ends it.
+     *
+     * @param log the Maven log
+     */
+    public void logGeneratedDockerfileRun(Log log) {
+<span class="fc" id="L196">        log(log);</span>
+<span class="fc bfc" id="L197" title="All 2 branches covered.">        if (mode == TrainingMode.START) {</span>
+<span class="fc bfc" id="L198" title="All 2 branches covered.">            log.info(LOG_PREFIX + (usesSwitch</span>
+<span class="fc" id="L199">                ? &quot;the application warms itself up and exits (Micronaut training-run switch)&quot;</span>
+<span class="fc" id="L200">                : &quot;the training script warms the application up and stops it with SIGTERM&quot;));</span>
+        }
+<span class="fc" id="L202">    }</span>
+
+    /**
+     * @param trainingPaths the validated training paths
+     * @return the Java system properties of the training JVM: those of the Micronaut training-run switch when it ends
+     * the run, none when the training script does
+     */
+    List&lt;String&gt; systemProperties(List&lt;String&gt; trainingPaths) {
+<span class="fc bfc" id="L210" title="All 2 branches covered.">        return usesSwitch ? TrainingRunSwitch.systemProperties(mode, trainingPaths) : List.of();</span>
+    }
+
+    /**
+     * @return the argument that tells the training script how to run the application: {@code load}, {@code switch} or
+     * {@code sigterm}
+     */
+    public String scriptArgument() {
+<span class="fc bfc" id="L218" title="All 2 branches covered.">        if (mode == TrainingMode.LOAD) {</span>
+<span class="fc" id="L219">            return SCRIPT_LOAD;</span>
+        }
+<span class="fc bfc" id="L221" title="All 2 branches covered.">        return usesSwitch ? SCRIPT_SWITCH : SCRIPT_SIGTERM;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

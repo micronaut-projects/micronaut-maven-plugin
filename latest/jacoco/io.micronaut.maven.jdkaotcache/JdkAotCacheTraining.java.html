@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JdkAotCacheTraining.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.jdkaotcache</a> &gt; <span class="el_source">JdkAotCacheTraining.java</span></div><h1>JdkAotCacheTraining.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.jdkaotcache;
+
+import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.InternetProtocol;
+import io.micronaut.core.annotation.Internal;
+import io.micronaut.maven.services.DockerService;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * Trains a JDK AOT cache in a container of the training image that the {@code docker} goal built with Jib. The
+ * container runs the image's own entrypoint, with {@code -XX:AOTCacheOutput} and {@code -XX:-UsePerfData} in
+ * {@code JDK_JAVA_OPTIONS}. What the application does in it is the {@link TrainingRun}:
+ * &lt;ul&gt;
+ *     &lt;li&gt;In a {@code load} run, it loads its bean definitions and exits without starting.&lt;/li&gt;
+ *     &lt;li&gt;In a {@code start} run, if its Micronaut version has the training-run switch, it starts, warms
+ *     itself up and exits. It fails on a request without a response or with a status of 500 or more, and only warns
+ *     about a status from 400 to 499, so its output is copied to the build log when there are training paths.&lt;/li&gt;
+ *     &lt;li&gt;Otherwise, it starts, the warm-up script runs in the container with {@code docker exec} and the application
+ *     is stopped with SIGTERM.&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 5.1.0
+ */
+@Internal
+public final class JdkAotCacheTraining {
+
+    private static final String JDK_JAVA_OPTIONS = &quot;JDK_JAVA_OPTIONS&quot;;
+    private static final String JDK_AOT_VM_OPTIONS = &quot;JDK_AOT_VM_OPTIONS&quot;;
+
+    /**
+     * The minimum Java version that can train a JDK AOT cache in one step ({@code -XX:AOTCacheOutput}).
+     */
+    private static final int MINIMUM_JAVA_VERSION = 25;
+
+    /**
+     * The warm-up and training script, shipped with the plugin.
+     */
+    private static final String SCRIPT_RESOURCE = &quot;/jdkAotCacheScripts/training.sh&quot;;
+
+    private static final String CONTAINER_CACHE_FILE = &quot;/tmp/app.aot&quot;;
+    /**
+     * Keeps the training JVMs from writing performance data files ({@code /tmp/hsperfdata_&lt;user&gt;/&lt;pid&gt;}). The JVM that
+     * {@code -XX:AOTCacheOutput} starts to write the cache reads {@code JDK_JAVA_OPTIONS} too, and leaves its file
+     * behind. The training script passes the same option, because the layer of the {@code RUN} instruction that trains
+     * the cache in the generated Dockerfile would keep that file.
+     */
+    private static final String NO_PERF_DATA = &quot;-XX:-UsePerfData&quot;;
+    private static final String COMPATIBLE_OOP_COMPRESSION_FLAG = &quot;AOTCompatibleOopCompression&quot;;
+    private static final int SIGTERM_EXIT_CODE = 143;
+    private static final int COMMAND_NOT_EXECUTABLE = 126;
+    private static final int COMMAND_NOT_FOUND = 127;
+<span class="fc" id="L86">    private static final Pattern JAVA_VERSION = Pattern.compile(&quot; version \&quot;(\\d+)(?:\\.(\\d+))?&quot;);</span>
+<span class="fc" id="L87">    private static final Pattern COMPATIBLE_OOP_COMPRESSION = Pattern.compile(&quot;(?m)^\\s*bool\\s+&quot; + COMPATIBLE_OOP_COMPRESSION_FLAG + &quot;\\s&quot;);</span>
+
+    private final DockerService dockerService;
+    private final Log log;
+    private final List&lt;String&gt; trainingPaths;
+    private final int timeoutSeconds;
+    private final String networkMode;
+
+    /**
+     * @param dockerService the Docker service
+     * @param log the Maven log
+     * @param trainingPaths the paths of the warm-up GET requests
+     * @param timeoutSeconds the timeout of each step of the training run
+     * @param networkMode the network of the training container, if any
+     */
+    public JdkAotCacheTraining(DockerService dockerService, Log log, List&lt;String&gt; trainingPaths, int timeoutSeconds,
+<span class="fc" id="L103">                               String networkMode) {</span>
+<span class="fc" id="L104">        this.dockerService = dockerService;</span>
+<span class="fc" id="L105">        this.log = log;</span>
+<span class="fc" id="L106">        this.trainingPaths = trainingPaths;</span>
+<span class="fc" id="L107">        this.timeoutSeconds = timeoutSeconds;</span>
+<span class="fc" id="L108">        this.networkMode = networkMode;</span>
+<span class="fc" id="L109">    }</span>
+
+    /**
+     * Runs the training image once and copies the cache it writes out of the container.
+     *
+     * @param imageId the training image
+     * @param run the training run
+     * @param cacheFile where to write the cache
+     * @throws MojoExecutionException if the training fails
+     */
+    public void train(String imageId, TrainingRun run, Path cacheFile) throws MojoExecutionException {
+<span class="fc" id="L120">        InspectImageResponse image = dockerService.inspectImage(imageId);</span>
+<span class="pc bpc" id="L121" title="1 of 2 branches missed.">        String[] imageEnvironment = image.getConfig() == null ? null : image.getConfig().getEnv();</span>
+<span class="fc" id="L122">        JavaRuntime java = probeJava(imageId);</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        Integer port = run.usesSwitch() ? null : httpPort(image);</span>
+<span class="fc" id="L124">        Map&lt;String, String&gt; environment = trainingEnvironment(imageEnvironment, java, run, trainingPaths);</span>
+<span class="fc" id="L125">        environment.forEach((name, value) -&gt; log.info(&quot;JDK AOT cache: training with &quot; + name + &quot;=&quot; + value));</span>
+
+<span class="fc" id="L127">        String containerId = dockerService.createContainer(imageId, networkMode, environment);</span>
+        try {
+<span class="fc bfc" id="L129" title="All 2 branches covered.">            if (run.mode() == TrainingMode.LOAD) {</span>
+<span class="fc" id="L130">                log.info(&quot;JDK AOT cache: the application loads its bean definitions and exits without starting&quot;);</span>
+<span class="fc" id="L131">                dockerService.startAndWait(containerId, imageId, timeoutSeconds);</span>
+                // The summary of the run and the bean definitions it skipped say what the cache was trained on
+<span class="fc" id="L133">                dockerService.logContainerOutput(containerId);</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">            } else if (run.usesSwitch()) {</span>
+<span class="fc" id="L135">                log.info(&quot;JDK AOT cache: the application warms itself up and exits (Micronaut training-run switch)&quot;);</span>
+<span class="fc" id="L136">                dockerService.startAndWait(containerId, imageId, timeoutSeconds);</span>
+<span class="fc bfc" id="L137" title="All 2 branches covered.">                if (!trainingPaths.isEmpty()) {</span>
+                    // Micronaut only warns about a request answered with 400 to 499, in the output of the application
+<span class="fc" id="L139">                    dockerService.logContainerOutput(containerId);</span>
+                }
+            } else {
+<span class="fc" id="L142">                log.info(&quot;JDK AOT cache: warming the application up with docker exec, then stopping it with SIGTERM &quot;</span>
+                    + &quot;(the application's Micronaut version has no training-run switch)&quot;);
+<span class="fc" id="L144">                dockerService.startContainer(containerId);</span>
+                // httpPort(image) set the port, because this run does not use the switch
+<span class="fc" id="L146">                warmUp(containerId, Objects.requireNonNull(port, &quot;port&quot;));</span>
+<span class="fc" id="L147">                log.info(&quot;JDK AOT cache: stopping the application with SIGTERM&quot;);</span>
+<span class="fc" id="L148">                dockerService.signalContainer(containerId, &quot;SIGTERM&quot;);</span>
+<span class="fc" id="L149">                int exitCode = dockerService.awaitExit(containerId, timeoutSeconds);</span>
+<span class="pc bpc" id="L150" title="1 of 4 branches missed.">                if (exitCode != SIGTERM_EXIT_CODE &amp;&amp; exitCode != 0) {</span>
+<span class="fc" id="L151">                    dockerService.logContainerOutput(containerId);</span>
+<span class="fc" id="L152">                    throw new MojoExecutionException(&quot;JDK AOT cache training failed: the application exited with status &quot;</span>
+                        + exitCode + &quot; after SIGTERM&quot;);
+                }
+            }
+<span class="fc" id="L156">            copyCache(containerId, cacheFile);</span>
+<span class="fc" id="L157">        } catch (IOException e) {</span>
+<span class="fc" id="L158">            throw new MojoExecutionException(&quot;JDK AOT cache training failed: &quot; + e.getMessage(), e);</span>
+        } finally {
+<span class="fc" id="L160">            dockerService.removeContainer(containerId);</span>
+        }
+<span class="fc" id="L162">    }</span>
+
+    /**
+     * @param paths the configured training paths
+     * @return the paths, trimmed
+     * @throws MojoExecutionException if a path is not an absolute request path
+     */
+    public static List&lt;String&gt; validateTrainingPaths(List&lt;String&gt; paths) throws MojoExecutionException {
+<span class="fc bfc" id="L170" title="All 2 branches covered.">        if (paths == null) {</span>
+<span class="fc" id="L171">            return List.of();</span>
+        }
+<span class="fc" id="L173">        var result = new ArrayList&lt;String&gt;(paths.size());</span>
+<span class="fc bfc" id="L174" title="All 2 branches covered.">        for (String path : paths) {</span>
+<span class="fc bfc" id="L175" title="All 2 branches covered.">            String trimmed = path == null ? &quot;&quot; : path.trim();</span>
+<span class="fc bfc" id="L176" title="All 2 branches covered.">            if (trimmed.isEmpty()) {</span>
+<span class="fc" id="L177">                continue;</span>
+            }
+<span class="pc bpc" id="L179" title="1 of 8 branches missed.">            if (!trimmed.startsWith(&quot;/&quot;) || trimmed.chars().anyMatch(c -&gt; Character.isWhitespace(c) || Character.isISOControl(c))) {</span>
+<span class="fc" id="L180">                throw new MojoExecutionException(&quot;Invalid micronaut.docker.jdkAotCache.trainingPaths entry '&quot; + trimmed</span>
+                    + &quot;': it must start with / and contain no spaces or control characters&quot;);
+            }
+<span class="fc" id="L183">            result.add(trimmed);</span>
+<span class="fc" id="L184">        }</span>
+<span class="fc" id="L185">        return List.copyOf(result);</span>
+    }
+
+    /**
+     * @return the warm-up and training script
+     * @throws IOException if the script cannot be read
+     */
+    static String readScript() throws IOException {
+<span class="fc" id="L193">        try (InputStream in = JdkAotCacheTraining.class.getResourceAsStream(SCRIPT_RESOURCE)) {</span>
+<span class="pc bpc" id="L194" title="1 of 2 branches missed.">            if (in == null) {</span>
+<span class="nc" id="L195">                throw new IOException(&quot;Could not find &quot; + SCRIPT_RESOURCE);</span>
+            }
+<span class="fc" id="L197">            return new String(in.readAllBytes(), StandardCharsets.UTF_8);</span>
+        }
+    }
+
+    static Map&lt;String, String&gt; trainingEnvironment(String[] imageEnvironment, JavaRuntime java, TrainingRun run,
+                                                  List&lt;String&gt; trainingPaths) {
+<span class="fc" id="L203">        var environment = new LinkedHashMap&lt;String, String&gt;();</span>
+<span class="fc" id="L204">        var options = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L205">        imageVariable(imageEnvironment, JDK_JAVA_OPTIONS).ifPresent(options::add);</span>
+<span class="fc" id="L206">        options.add(&quot;-XX:AOTCacheOutput=&quot; + CONTAINER_CACHE_FILE);</span>
+<span class="fc" id="L207">        options.add(NO_PERF_DATA);</span>
+<span class="fc" id="L208">        options.addAll(run.systemProperties(trainingPaths));</span>
+<span class="fc" id="L209">        environment.put(JDK_JAVA_OPTIONS, String.join(&quot; &quot;, options));</span>
+<span class="fc bfc" id="L210" title="All 2 branches covered.">        if (java.compatibleOopCompression()) {</span>
+            // JDK 27 and later: lets the cache work with another compressed oops encoding than the training one
+<span class="fc" id="L212">            var aotOptions = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L213">            imageVariable(imageEnvironment, JDK_AOT_VM_OPTIONS).ifPresent(aotOptions::add);</span>
+<span class="fc" id="L214">            aotOptions.add(&quot;-XX:+UnlockDiagnosticVMOptions&quot;);</span>
+<span class="fc" id="L215">            aotOptions.add(&quot;-XX:+&quot; + COMPATIBLE_OOP_COMPRESSION_FLAG);</span>
+<span class="fc" id="L216">            environment.put(JDK_AOT_VM_OPTIONS, String.join(&quot; &quot;, aotOptions));</span>
+        }
+<span class="fc" id="L218">        return environment;</span>
+    }
+
+    static Optional&lt;Integer&gt; firstTcpPort(ExposedPort[] exposedPorts) {
+<span class="fc bfc" id="L222" title="All 2 branches covered.">        if (exposedPorts == null) {</span>
+<span class="fc" id="L223">            return Optional.empty();</span>
+        }
+<span class="fc" id="L225">        return Arrays.stream(exposedPorts)</span>
+<span class="fc" id="L226">            .filter(Objects::nonNull)</span>
+<span class="pc bpc" id="L227" title="1 of 4 branches missed.">            .filter(port -&gt; port.getProtocol() == null || port.getProtocol() == InternetProtocol.TCP)</span>
+<span class="fc" id="L228">            .map(ExposedPort::getPort)</span>
+<span class="fc" id="L229">            .findFirst();</span>
+    }
+
+    private static Optional&lt;String&gt; imageVariable(String[] imageEnvironment, String name) {
+<span class="fc bfc" id="L233" title="All 2 branches covered.">        if (imageEnvironment == null) {</span>
+<span class="fc" id="L234">            return Optional.empty();</span>
+        }
+<span class="fc" id="L236">        String prefix = name + &quot;=&quot;;</span>
+<span class="fc" id="L237">        return Arrays.stream(imageEnvironment)</span>
+<span class="pc bpc" id="L238" title="1 of 4 branches missed.">            .filter(variable -&gt; variable != null &amp;&amp; variable.startsWith(prefix))</span>
+<span class="fc" id="L239">            .map(variable -&gt; variable.substring(prefix.length()))</span>
+<span class="pc bpc" id="L240" title="1 of 2 branches missed.">            .filter(value -&gt; !value.isBlank())</span>
+<span class="pc" id="L241">            .reduce((first, second) -&gt; second);</span>
+    }
+
+    private JavaRuntime probeJava(String imageId) throws MojoExecutionException {
+        DockerService.ContainerOutput output;
+        try {
+<span class="fc" id="L247">            output = dockerService.runAndCaptureOutput(imageId, timeoutSeconds,</span>
+<span class="fc" id="L248">                List.of(&quot;java&quot;, &quot;-XX:+UnlockDiagnosticVMOptions&quot;, &quot;-XX:+PrintFlagsFinal&quot;, &quot;-version&quot;));</span>
+<span class="nc" id="L249">        } catch (IOException e) {</span>
+<span class="nc" id="L250">            throw new MojoExecutionException(&quot;JDK AOT cache training failed: could not run java -version in the training image: &quot;</span>
+<span class="nc" id="L251">                + e.getMessage(), e);</span>
+<span class="fc" id="L252">        }</span>
+<span class="fc" id="L253">        Optional&lt;JavaRuntime&gt; java = JavaRuntime.parse(output.output());</span>
+<span class="pc bpc" id="L254" title="2 of 4 branches missed.">        if (output.exitCode() != 0 || java.isEmpty()) {</span>
+<span class="nc" id="L255">            throw new MojoExecutionException(&quot;JDK AOT cache training failed: java -version exited with status &quot;</span>
+<span class="nc" id="L256">                + output.exitCode() + &quot; in the training image: &quot; + lastLines(output.output()));</span>
+        }
+<span class="fc bfc" id="L258" title="All 2 branches covered.">        if (java.get().majorVersion() &lt; MINIMUM_JAVA_VERSION) {</span>
+<span class="fc" id="L259">            throw new MojoExecutionException(&quot;micronaut.docker.jdkAotCache needs Java &quot; + MINIMUM_JAVA_VERSION</span>
+<span class="fc" id="L260">                + &quot; or later in the image, but the base image runs Java &quot; + java.get().majorVersion()</span>
+                + &quot;. Use a base image with Java &quot; + MINIMUM_JAVA_VERSION + &quot; or later.&quot;);
+        }
+<span class="fc" id="L263">        log.info(&quot;JDK AOT cache: the training image runs Java &quot; + java.get().majorVersion());</span>
+<span class="fc" id="L264">        return java.get();</span>
+    }
+
+    private int httpPort(InspectImageResponse image) throws MojoExecutionException {
+<span class="pc bpc" id="L268" title="1 of 2 branches missed.">        return firstTcpPort(image.getConfig() == null ? null : image.getConfig().getExposedPorts())</span>
+<span class="fc" id="L269">            .orElseThrow(() -&gt; new MojoExecutionException(&quot;micronaut.docker.jdkAotCache needs the HTTP port of the &quot;</span>
+                + &quot;application to warm it up, but the image exposes no port because the server port is resolved &quot;
+                + &quot;dynamically. Expose the port with the Jib container.ports configuration.&quot;));
+    }
+
+    private void warmUp(String containerId, int port) throws IOException, MojoExecutionException {
+<span class="fc" id="L275">        var command = new ArrayList&lt;&gt;(List.of(&quot;bash&quot;, &quot;-c&quot;, readScript(), &quot;training.sh&quot;, &quot;warm-up&quot;,</span>
+<span class="fc" id="L276">            String.valueOf(port), String.valueOf(timeoutSeconds)));</span>
+<span class="fc" id="L277">        command.addAll(trainingPaths);</span>
+<span class="fc" id="L278">        var output = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L279">        int exitCode = dockerService.execInContainer(containerId, (trainingPaths.size() + 1) * timeoutSeconds, line -&gt; {</span>
+<span class="fc" id="L280">            output.add(line);</span>
+<span class="fc" id="L281">            log.info(line);</span>
+<span class="fc" id="L282">        }, command.toArray(String[]::new));</span>
+<span class="fc bfc" id="L283" title="All 2 branches covered.">        if (exitCode != 0) {</span>
+<span class="fc" id="L284">            dockerService.logContainerOutput(containerId);</span>
+<span class="pc bpc" id="L285" title="1 of 4 branches missed.">            if (exitCode == COMMAND_NOT_EXECUTABLE || exitCode == COMMAND_NOT_FOUND) {</span>
+<span class="fc" id="L286">                throw new MojoExecutionException(&quot;JDK AOT cache training failed: the warm-up needs bash in the image, &quot;</span>
+                    + &quot;which it could not run (status &quot; + exitCode + &quot;). Use a base image with bash, or a Micronaut &quot;
+                    + &quot;version with the training-run switch.&quot;);
+            }
+<span class="fc" id="L290">            throw new MojoExecutionException(&quot;JDK AOT cache training failed: &quot;</span>
+<span class="fc bfc" id="L291" title="All 2 branches covered.">                + (output.isEmpty() ? &quot;the warm-up exited with status &quot; + exitCode : output.get(output.size() - 1)));</span>
+        }
+<span class="fc" id="L293">    }</span>
+
+    private void copyCache(String containerId, Path cacheFile) throws IOException, MojoExecutionException {
+        try {
+<span class="fc" id="L297">            dockerService.copyFileFromContainer(containerId, CONTAINER_CACHE_FILE, cacheFile);</span>
+<span class="fc" id="L298">        } catch (IOException e) {</span>
+<span class="fc" id="L299">            dockerService.logContainerOutput(containerId);</span>
+<span class="fc" id="L300">            throw new MojoExecutionException(&quot;JDK AOT cache training failed: the training run did not write the cache (&quot;</span>
+<span class="fc" id="L301">                + e.getMessage() + &quot;)&quot;, e);</span>
+<span class="fc" id="L302">        }</span>
+<span class="fc" id="L303">        long size = Files.size(cacheFile);</span>
+<span class="pc bpc" id="L304" title="1 of 2 branches missed.">        if (size == 0) {</span>
+<span class="nc" id="L305">            dockerService.logContainerOutput(containerId);</span>
+<span class="nc" id="L306">            throw new MojoExecutionException(&quot;JDK AOT cache training failed: the training run wrote an empty cache&quot;);</span>
+        }
+        // Decimal megabytes, as Docker gives the size of the image layer that holds the cache
+<span class="fc" id="L309">        log.info(&quot;JDK AOT cache: trained &quot; + cacheFile + &quot; (&quot; + String.format(Locale.ROOT, &quot;%.1f MB&quot;, size / 1e6)</span>
+            + &quot;)&quot;);
+<span class="fc" id="L311">    }</span>
+
+    private static String lastLines(String output) {
+<span class="nc bnc" id="L314" title="All 2 branches missed.">        List&lt;String&gt; lines = output.lines().filter(line -&gt; !line.isBlank()).toList();</span>
+<span class="nc" id="L315">        return String.join(System.lineSeparator(), lines.subList(Math.max(0, lines.size() - 3), lines.size()));</span>
+    }
+
+    /**
+     * The Java runtime of the training image.
+     *
+     * @param majorVersion the Java feature version
+     * @param compatibleOopCompression whether the JVM has the {@code AOTCompatibleOopCompression} diagnostic flag
+     */
+<span class="fc" id="L324">    record JavaRuntime(int majorVersion, boolean compatibleOopCompression) {</span>
+
+        /**
+         * @param output the output of {@code java -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal -version}
+         * @return the Java runtime, if the output has a version line with a valid version number
+         */
+        static Optional&lt;JavaRuntime&gt; parse(String output) {
+<span class="fc" id="L331">            Matcher matcher = JAVA_VERSION.matcher(output);</span>
+<span class="fc bfc" id="L332" title="All 2 branches covered.">            if (!matcher.find()) {</span>
+<span class="fc" id="L333">                return Optional.empty();</span>
+            }
+            try {
+<span class="fc" id="L336">                int major = Integer.parseInt(matcher.group(1));</span>
+<span class="pc bpc" id="L337" title="1 of 4 branches missed.">                if (major == 1 &amp;&amp; matcher.group(2) != null) {</span>
+<span class="fc" id="L338">                    major = Integer.parseInt(matcher.group(2));</span>
+                }
+<span class="fc" id="L340">                return Optional.of(new JavaRuntime(major, COMPATIBLE_OOP_COMPRESSION.matcher(output).find()));</span>
+<span class="fc" id="L341">            } catch (NumberFormatException _) {</span>
+                // a version number too large for an int
+<span class="fc" id="L343">                return Optional.empty();</span>
+            }
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -16,9 +16,15 @@
 package io.micronaut.maven;
 
 import com.github.dockerjava.api.command.BuildImageCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
+import io.micronaut.maven.jdkaotcache.JdkAotCacheTraining;
+import io.micronaut.maven.jdkaotcache.TrainingMode;
+import io.micronaut.maven.jdkaotcache.TrainingRun;
+import io.micronaut.maven.jib.JibConfiguration;
 import io.micronaut.maven.jib.JibConfigurationService;
 import io.micronaut.maven.services.ApplicationConfigurationService;
 import io.micronaut.maven.services.DockerService;
@@ -27,6 +33,7 @@ import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 
@@ -35,7 +42,15 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
 
 import static io.micronaut.maven.DockerfileMojo.DOCKERFILE_ORACLE_CLOUD;
 
@@ -54,74 +69,369 @@ public class DockerMojo extends AbstractDockerMojo {
 
     public static final String DOCKER_PACKAGING = &quot;docker&quot;;
 
+    /**
+     * The {@code os/architecture} of the Docker daemon that trains the JDK AOT cache, for the Jib extension, which reads
+     * it from the project properties in the training build and the final build.
+     */
+    static final String JDK_AOT_CACHE_PLATFORM_PROPERTY = &quot;micronaut.docker.jdkAotCache.internal.platform&quot;;
+
+    /**
+     * The trained JDK AOT cache on the build host, for the final Jib build.
+     */
+    static final String JDK_AOT_CACHE_FILE_PROPERTY = &quot;micronaut.docker.jdkAotCache.internal.file&quot;;
+
+    /**
+     * Whether the final Jib build pins a registry base image to the digest that the training build pulled.
+     */
+    static final String JDK_AOT_CACHE_PIN_BASE_IMAGE_PROPERTY = &quot;micronaut.docker.jdkAotCache.internal.pinBaseImage&quot;;
+
+    private static final String JIB_PLUGIN = &quot;com.google.cloud.tools:jib-maven-plugin&quot;;
+    private static final String JAR_PLUGIN = &quot;org.apache.maven.plugins:maven-jar-plugin&quot;;
+    private static final String JDK_AOT_CACHE_DIRECTORY = &quot;jdk-aot-cache&quot;;
+    private static final String JDK_AOT_CACHE_FILE = &quot;app.aot&quot;;
+    private static final String DOCKER_URI_PREFIX = &quot;docker://&quot;;
+    private static final String TAR_URI_PREFIX = &quot;tar://&quot;;
+    private static final String PACKAGED = &quot;packaged&quot;;
+    private static final String AMD64 = &quot;amd64&quot;;
+    private static final String ARM64 = &quot;arm64&quot;;
+
     private final ExecutorService executorService;
+
+    /**
+     * Whether to train a JDK AOT cache (Java 25 or later) while the image is built, and start the application with it
+     * so that it starts faster. Only for {@code docker} packaging, and not for the {@code lambda} or
+     * {@code oracle_function} runtimes. The training needs a Docker daemon, and with Jib the {@code container.jvmFlags}
+     * must select a garbage collector, for example {@code -XX:+UseSerialGC}.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = &quot;micronaut.docker.jdkAotCache&quot;, defaultValue = &quot;false&quot;)
+    private boolean jdkAotCache;
+
+    /**
+     * How the JDK AOT cache is trained. {@code LOAD} loads the application's bean definitions and exits without
+     * starting it, so the training needs no database or other service. {@code START} starts the application, sends
+     * the training requests and stops it, which trains a more complete cache. When not set, the mode is {@code LOAD} if
+     * the application's Micronaut version supports it (Micronaut Core 5.3.0 or later), and {@code START} otherwise.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = &quot;micronaut.docker.jdkAotCache.trainingMode&quot;)
+    private TrainingMode jdkAotCacheTrainingMode;
+
+    /**
+     * The paths that a {@code START} training run sends a GET request to once the application is ready. A short,
+     * representative warm-up makes a better cache. A request that gets no response, or a status of 500 or more, fails
+     * the build. A status from 400 to 499 is logged as a warning with Micronaut Core 5.3.0 or later, and fails the build
+     * with earlier versions.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = &quot;micronaut.docker.jdkAotCache.trainingPaths&quot;)
+    private List&lt;String&gt; jdkAotCacheTrainingPaths;
+
+    /**
+     * The timeout, in seconds, of the JDK AOT cache training run. With Micronaut Core before 5.3.0, it applies to each
+     * step: waiting for the application to be ready, each training request, and waiting for the application to exit.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = &quot;micronaut.docker.jdkAotCache.trainingTimeout&quot;, defaultValue = &quot;180&quot;)
+    private int jdkAotCacheTrainingTimeout;
 
     @SuppressWarnings(&quot;CdiInjectionPointsInspection&quot;)
     @Inject
     public DockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
                       ApplicationConfigurationService applicationConfigurationService, DockerService dockerService,
                       MavenSession mavenSession, MojoExecution mojoExecution, ExecutorService executorService) {
-<span class="fc" id="L64">        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession,</span>
+<span class="fc" id="L147">        super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession,</span>
             mojoExecution);
-<span class="fc" id="L66">        this.executorService = executorService;</span>
-<span class="fc" id="L67">    }</span>
+<span class="fc" id="L149">        this.executorService = executorService;</span>
+<span class="fc" id="L150">    }</span>
 
     @Override
     public void execute() throws MojoExecutionException {
-<span class="fc" id="L71">        var providedDockerfile = new File(mavenProject.getBasedir(), DockerfileMojo.DOCKERFILE);</span>
-<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if (shouldBuildWithDockerfile(providedDockerfile)) {</span>
-<span class="nc" id="L73">            var dockerfile = determineDockerfile(providedDockerfile);</span>
-<span class="nc" id="L74">            buildDockerfile(dockerfile, providedDockerfile.exists());</span>
-<span class="nc" id="L75">        } else {</span>
-<span class="fc" id="L76">            validateJibBuildGoal();</span>
-<span class="fc bfc" id="L77" title="All 2 branches covered.">            if (JIB_BUILD_GOAL_BUILD.equals(jibBuildGoal)) {</span>
-<span class="fc" id="L78">                requireConfiguredToImageForJibRegistryBuild();</span>
-            }
-<span class="pc bpc" id="L80" title="1 of 2 branches missed.">            if (jibConfigurationService.getFromImage().isEmpty()) {</span>
-<span class="fc" id="L81">                mavenProject.getProperties().setProperty(PropertyNames.FROM_IMAGE, getBaseImage());</span>
-            }
-<span class="fc" id="L83">            executorService.executeGoal(mavenProject, &quot;com.google.cloud.tools:jib-maven-plugin&quot;, jibBuildGoal);</span>
+<span class="fc" id="L154">        var providedDockerfile = new File(mavenProject.getBasedir(), DockerfileMojo.DOCKERFILE);</span>
+<span class="fc bfc" id="L155" title="All 4 branches covered.">        if (jdkAotCache &amp;&amp; MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy() != DockerBuildStrategy.DEFAULT) {</span>
+<span class="fc" id="L156">            throw new MojoExecutionException(&quot;micronaut.docker.jdkAotCache only supports the default runtime, not &quot;</span>
+                + micronautRuntime);
         }
-<span class="fc" id="L85">    }</span>
+<span class="pc bpc" id="L159" title="1 of 2 branches missed.">        if (shouldBuildWithDockerfile(providedDockerfile)) {</span>
+<span class="nc" id="L160">            var dockerfile = determineDockerfile(providedDockerfile);</span>
+<span class="nc" id="L161">            buildDockerfile(dockerfile, providedDockerfile.exists());</span>
+<span class="nc" id="L162">        } else {</span>
+<span class="fc" id="L163">            validateJibBuildGoal();</span>
+<span class="fc bfc" id="L164" title="All 2 branches covered.">            if (JIB_BUILD_GOAL_BUILD.equals(jibBuildGoal)) {</span>
+<span class="fc" id="L165">                requireConfiguredToImageForJibRegistryBuild();</span>
+            }
+<span class="fc bfc" id="L167" title="All 2 branches covered.">            if (jibConfigurationService.getFromImage().isEmpty()) {</span>
+<span class="fc" id="L168">                mavenProject.getProperties().setProperty(PropertyNames.FROM_IMAGE, getBaseImage());</span>
+            }
+<span class="fc bfc" id="L170" title="All 2 branches covered.">            if (jdkAotCache) {</span>
+<span class="fc" id="L171">                buildWithJdkAotCache();</span>
+            } else {
+<span class="fc" id="L173">                executorService.executeGoal(mavenProject, JIB_PLUGIN, jibBuildGoal);</span>
+            }
+        }
+<span class="fc" id="L176">    }</span>
+
+    /**
+     * Builds a training image with Jib in packaged mode, trains a JDK AOT cache with it and builds the image again with
+     * the configured goal. Jib layers are reproducible, so the JARs of the final image match the trained ones in size
+     * and modification time, which the cache checks, and the extension adds the cache as the last layer.
+     */
+    private void buildWithJdkAotCache() throws MojoExecutionException {
+<span class="fc" id="L184">        List&lt;String&gt; trainingPaths = validateJdkAotCacheConfiguration();</span>
+<span class="fc" id="L185">        TrainingRun trainingRun = TrainingRun.resolve(jdkAotCacheTrainingMode, trainingPaths, mavenProject.getArtifacts());</span>
+<span class="fc" id="L186">        String platform = daemonPlatform();</span>
+<span class="fc" id="L187">        requireDaemonPlatform(platform);</span>
+<span class="fc" id="L188">        trainingRun.log(getLog());</span>
+        // Jib's packaged mode puts the JAR of the maven-jar-plugin in the image, so only a build with the cache needs it
+<span class="fc" id="L190">        getLog().info(&quot;JDK AOT cache: building the application JAR for Jib's packaged mode&quot;);</span>
+<span class="fc" id="L191">        executorService.executeGoal(mavenProject, JAR_PLUGIN, &quot;jar&quot;);</span>
+
+<span class="fc" id="L193">        Path workDirectory = Path.of(mavenProject.getBuild().getDirectory(), JDK_AOT_CACHE_DIRECTORY);</span>
+<span class="fc" id="L194">        Path cacheFile = workDirectory.resolve(JDK_AOT_CACHE_FILE);</span>
+<span class="fc" id="L195">        Properties properties = mavenProject.getProperties();</span>
+<span class="fc" id="L196">        Map&lt;String, String&gt; savedProperties = saveProperties(properties, PropertyNames.CONTAINERIZING_MODE,</span>
+            PropertyNames.TO_IMAGE, JDK_AOT_CACHE_PLATFORM_PROPERTY, JDK_AOT_CACHE_FILE_PROPERTY,
+            JDK_AOT_CACHE_PIN_BASE_IMAGE_PROPERTY);
+<span class="fc" id="L199">        String trainingImage = null;</span>
+<span class="fc" id="L200">        String trainingImageId = null;</span>
+        try {
+<span class="fc" id="L202">            Files.createDirectories(workDirectory);</span>
+<span class="fc" id="L203">            Files.deleteIfExists(cacheFile);</span>
+<span class="fc" id="L204">            properties.setProperty(PropertyNames.CONTAINERIZING_MODE, PACKAGED);</span>
+<span class="fc" id="L205">            properties.setProperty(JDK_AOT_CACHE_PLATFORM_PROPERTY, platform);</span>
+
+<span class="fc" id="L207">            properties.setProperty(PropertyNames.TO_IMAGE, mavenProject.getArtifactId().toLowerCase(Locale.ROOT) + &quot;-jdk-aot-training&quot;);</span>
+<span class="fc" id="L208">            trainingImage = targetImage();</span>
+<span class="fc" id="L209">            trainingImageId = buildTrainingImage(trainingImage, platform);</span>
+<span class="fc" id="L210">            restoreProperty(properties, PropertyNames.TO_IMAGE, savedProperties.get(PropertyNames.TO_IMAGE));</span>
+
+<span class="fc" id="L212">            new JdkAotCacheTraining(dockerService, getLog(), trainingPaths, jdkAotCacheTrainingTimeout, networkMode)</span>
+<span class="fc" id="L213">                .train(trainingImageId, trainingRun, cacheFile);</span>
+
+<span class="fc" id="L215">            properties.setProperty(JDK_AOT_CACHE_FILE_PROPERTY, cacheFile.toAbsolutePath().toString());</span>
+<span class="fc" id="L216">            properties.setProperty(JDK_AOT_CACHE_PIN_BASE_IMAGE_PROPERTY, String.valueOf(isRegistryBaseImage()));</span>
+<span class="fc" id="L217">            getLog().info(&quot;JDK AOT cache: building the image with the cache (jib:&quot; + jibBuildGoal + &quot;)&quot;);</span>
+<span class="fc" id="L218">            executorService.executeGoal(mavenProject, JIB_PLUGIN, jibBuildGoal);</span>
+<span class="fc bfc" id="L219" title="All 2 branches covered.">            if (JIB_BUILD_GOAL_DOCKER_BUILD.equals(jibBuildGoal)) {</span>
+<span class="fc" id="L220">                verifyFinalImageLayers(trainingImageId, targetImage());</span>
+            }
+<span class="nc" id="L222">        } catch (IOException e) {</span>
+<span class="nc" id="L223">            throw new MojoExecutionException(&quot;JDK AOT cache: &quot; + e.getMessage(), e);</span>
+        } finally {
+<span class="fc" id="L225">            restoreProperties(properties, savedProperties);</span>
+<span class="pc bpc" id="L226" title="1 of 2 branches missed.">            if (trainingImageId != null) {</span>
+<span class="fc" id="L227">                removeTrainingImage(trainingImage, trainingImageId);</span>
+            }
+        }
+<span class="fc" id="L230">    }</span>
+
+    /**
+     * @return the ID of the training image
+     */
+    private String buildTrainingImage(String trainingImage, String platform) throws MojoExecutionException {
+<span class="fc" id="L236">        getLog().info(&quot;JDK AOT cache: building the training image &quot; + trainingImage + &quot; for &quot; + platform);</span>
+<span class="fc" id="L237">        executorService.executeGoal(mavenProject, JIB_PLUGIN, JIB_BUILD_GOAL_DOCKER_BUILD);</span>
+<span class="fc" id="L238">        return inspectImage(trainingImage)</span>
+<span class="pc" id="L239">            .orElseThrow(() -&gt; new MojoExecutionException(&quot;JDK AOT cache: Jib did not build the training image &quot;</span>
+                + trainingImage + &quot;. Is jib.skip set?&quot;))
+<span class="fc" id="L241">            .getId();</span>
+    }
+
+    private List&lt;String&gt; validateJdkAotCacheConfiguration() throws MojoExecutionException {
+<span class="fc bfc" id="L245" title="All 2 branches covered.">        if (!jibConfigurationService.getEntrypoint().isEmpty()) {</span>
+<span class="fc" id="L246">            throw new MojoExecutionException(&quot;micronaut.docker.jdkAotCache needs Jib's default entrypoint, which starts &quot;</span>
+                + &quot;java with the application class path. Remove the Jib container.entrypoint configuration.&quot;);
+        }
+<span class="fc" id="L249">        String containerizingMode = mavenSession.getUserProperties().getProperty(PropertyNames.CONTAINERIZING_MODE);</span>
+<span class="pc bpc" id="L250" title="3 of 4 branches missed.">        if (containerizingMode != null &amp;&amp; !PACKAGED.equals(containerizingMode)) {</span>
+<span class="nc" id="L251">            throw new MojoExecutionException(&quot;micronaut.docker.jdkAotCache needs jib.containerizingMode=&quot; + PACKAGED</span>
+                + &quot;, because a JDK AOT cache cannot use classes from a directory, but it is set to &quot; + containerizingMode);
+        }
+<span class="pc bpc" id="L254" title="1 of 2 branches missed.">        if (jdkAotCacheTrainingTimeout &lt;= 0) {</span>
+<span class="nc" id="L255">            throw new MojoExecutionException(&quot;micronaut.docker.jdkAotCache.trainingTimeout must be positive&quot;);</span>
+        }
+<span class="fc" id="L257">        return JdkAotCacheTraining.validateTrainingPaths(jdkAotCacheTrainingPaths);</span>
+    }
+
+    private String daemonPlatform() throws MojoExecutionException {
+        try {
+<span class="fc" id="L262">            return dockerService.getDaemonPlatform();</span>
+<span class="fc" id="L263">        } catch (IllegalStateException e) {</span>
+<span class="fc" id="L264">            throw new MojoExecutionException(&quot;micronaut.docker.jdkAotCache runs the application in a Docker container to &quot;</span>
+                + &quot;train the cache, so it needs a Docker daemon, also with jib.buildGoal=buildTar or build. &quot;
+<span class="fc" id="L266">                + e.getMessage(), e);</span>
+        }
+    }
+
+    private void requireDaemonPlatform(String platform) throws MojoExecutionException {
+<span class="fc" id="L271">        Set&lt;JibConfiguration.PlatformConfiguration&gt; platforms = jibConfigurationService.getFromPlatforms();</span>
+<span class="fc bfc" id="L272" title="All 2 branches covered.">        if (platforms.isEmpty()) {</span>
+<span class="fc" id="L273">            return;</span>
+        }
+<span class="fc" id="L275">        List&lt;String&gt; configured = platforms.stream()</span>
+<span class="fc" id="L276">            .map(p -&gt; p.os().orElse(&quot;linux&quot;) + &quot;/&quot; + goArchitecture(p.architecture().orElse(AMD64)))</span>
+<span class="fc" id="L277">            .distinct()</span>
+<span class="fc" id="L278">            .toList();</span>
+<span class="fc bfc" id="L279" title="All 2 branches covered.">        if (!configured.equals(List.of(platform))) {</span>
+<span class="fc" id="L280">            throw new MojoExecutionException(&quot;micronaut.docker.jdkAotCache trains the cache on the Docker daemon, whose &quot;</span>
+                + &quot;platform is &quot; + platform + &quot;, and a cache only works on the platform that trained it. The Jib &quot;
+                + &quot;from.platforms configuration lists &quot; + configured + &quot;: remove it, or set it to &quot; + platform + &quot; only.&quot;);
+        }
+<span class="fc" id="L284">    }</span>
+
+    /**
+     * The Go architecture name of an architecture of the Jib {@code from.platforms} configuration, as the platform of
+     * the Docker daemon gives it.
+     */
+    private static String goArchitecture(String architecture) {
+<span class="pc bpc" id="L291" title="1 of 3 branches missed.">        return switch (architecture) {</span>
+<span class="fc" id="L292">            case &quot;x86_64&quot;, AMD64 -&gt; AMD64;</span>
+<span class="fc" id="L293">            case &quot;aarch64&quot;, ARM64 -&gt; ARM64;</span>
+<span class="nc" id="L294">            default -&gt; architecture;</span>
+        };
+    }
+
+    private boolean isRegistryBaseImage() {
+<span class="fc" id="L299">        String baseImage = Optional.ofNullable(jibProperty(PropertyNames.FROM_IMAGE))</span>
+<span class="fc" id="L300">            .or(jibConfigurationService::getFromImage)</span>
+<span class="fc" id="L301">            .orElse(&quot;&quot;);</span>
+<span class="pc bpc" id="L302" title="1 of 4 branches missed.">        return !baseImage.startsWith(DOCKER_URI_PREFIX) &amp;&amp; !baseImage.startsWith(TAR_URI_PREFIX);</span>
+    }
+
+    /**
+     * @return the image that Jib builds, with the precedence of the Jib Maven plugin
+     */
+    private String targetImage() {
+<span class="fc" id="L309">        return Optional.ofNullable(jibProperty(PropertyNames.TO_IMAGE_ALTERNATE))</span>
+<span class="fc" id="L310">            .or(() -&gt; Optional.ofNullable(jibProperty(PropertyNames.TO_IMAGE)))</span>
+<span class="fc" id="L311">            .orElseGet(() -&gt; getTags().iterator().next());</span>
+    }
+
+    /**
+     * Resolves a Jib property as the Jib Maven plugin does: user properties, project properties, then system
+     * properties.
+     */
+    private String jibProperty(String name) {
+<span class="fc bfc" id="L319" title="All 2 branches covered.">        for (Properties properties : List.of(mavenSession.getUserProperties(), mavenProject.getProperties(), mavenSession.getSystemProperties())) {</span>
+<span class="fc bfc" id="L320" title="All 2 branches covered.">            if (properties.containsKey(name)) {</span>
+<span class="fc" id="L321">                return properties.getProperty(name);</span>
+            }
+<span class="fc" id="L323">        }</span>
+<span class="fc" id="L324">        return null;</span>
+    }
+
+    private void verifyFinalImageLayers(String trainingImageId, String finalImage) throws MojoExecutionException {
+<span class="fc" id="L328">        List&lt;String&gt; trainingLayers = inspectImage(trainingImageId).map(DockerMojo::layers).orElse(List.of());</span>
+<span class="fc" id="L329">        List&lt;String&gt; finalLayers = inspectImage(finalImage).map(DockerMojo::layers).orElse(List.of());</span>
+<span class="pc bpc" id="L330" title="2 of 4 branches missed.">        if (trainingLayers.isEmpty() || finalLayers.isEmpty()) {</span>
+<span class="nc" id="L331">            getLog().warn(&quot;JDK AOT cache: could not compare the layers of &quot; + finalImage + &quot; with the training image&quot;);</span>
+<span class="nc" id="L332">            return;</span>
+        }
+<span class="pc bpc" id="L334" title="1 of 4 branches missed.">        if (finalLayers.size() != trainingLayers.size() + 1 || !finalLayers.subList(0, trainingLayers.size()).equals(trainingLayers)) {</span>
+<span class="fc" id="L335">            throw new MojoExecutionException(&quot;JDK AOT cache: the layers of &quot; + finalImage + &quot; differ from the layers &quot;</span>
+                + &quot;of the training image, so the cache may not match the image. Did the base image change during the &quot;
+                + &quot;build? Build the image again.&quot;);
+        }
+<span class="fc" id="L339">        getLog().info(&quot;JDK AOT cache: &quot; + finalImage + &quot; has the &quot; + trainingLayers.size()</span>
+            + &quot; layers of the training image and the cache layer&quot;);
+<span class="fc" id="L341">    }</span>
+
+    private Optional&lt;InspectImageResponse&gt; inspectImage(String image) {
+        try {
+<span class="fc" id="L345">            return Optional.of(dockerService.inspectImage(image));</span>
+<span class="fc" id="L346">        } catch (NotFoundException _) {</span>
+<span class="fc" id="L347">            return Optional.empty();</span>
+        }
+    }
+
+    private static List&lt;String&gt; layers(InspectImageResponse image) {
+<span class="pc bpc" id="L352" title="2 of 4 branches missed.">        return image.getRootFS() == null || image.getRootFS().getLayers() == null ? List.of() : image.getRootFS().getLayers();</span>
+    }
+
+    /**
+     * Removes the tag of the training image, then the training image if no tag refers to it anymore. Jib images are
+     * reproducible, so an image that the project built before in packaged mode can have the ID of the training image,
+     * and its tags stay. When {@code jib.to.image} is a user property, the training image has the tag of the final
+     * image, which the final build moved: the tag is only removed while it refers to the training image.
+     */
+    private void removeTrainingImage(String trainingImage, String trainingImageId) {
+        try {
+<span class="fc bfc" id="L363" title="All 2 branches covered.">            if (inspectImage(trainingImage).filter(image -&gt; trainingImageId.equals(image.getId())).isPresent()) {</span>
+<span class="fc" id="L364">                dockerService.removeImage(trainingImage);</span>
+            }
+<span class="fc" id="L366">            boolean untagged = inspectImage(trainingImageId)</span>
+<span class="pc bpc" id="L367" title="1 of 4 branches missed.">                .filter(image -&gt; image.getRepoTags() == null || image.getRepoTags().isEmpty())</span>
+<span class="fc" id="L368">                .isPresent();</span>
+<span class="fc bfc" id="L369" title="All 2 branches covered.">            if (untagged) {</span>
+<span class="fc" id="L370">                dockerService.removeImage(trainingImageId);</span>
+            }
+<span class="nc" id="L372">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L373">            getLog().warn(&quot;JDK AOT cache: could not remove the training image &quot; + trainingImageId + &quot;: &quot; + e.getMessage());</span>
+<span class="fc" id="L374">        }</span>
+<span class="fc" id="L375">    }</span>
+
+    private static Map&lt;String, String&gt; saveProperties(Properties properties, String... names) {
+<span class="fc" id="L378">        var saved = new HashMap&lt;String, String&gt;();</span>
+<span class="fc bfc" id="L379" title="All 2 branches covered.">        for (String name : names) {</span>
+<span class="fc" id="L380">            saved.put(name, properties.getProperty(name));</span>
+        }
+<span class="fc" id="L382">        return saved;</span>
+    }
+
+    private static void restoreProperties(Properties properties, Map&lt;String, String&gt; saved) {
+<span class="fc" id="L386">        saved.forEach((name, value) -&gt; restoreProperty(properties, name, value));</span>
+<span class="fc" id="L387">    }</span>
+
+    private static void restoreProperty(Properties properties, String name, String value) {
+<span class="pc bpc" id="L390" title="1 of 2 branches missed.">        if (value == null) {</span>
+<span class="fc" id="L391">            properties.remove(name);</span>
+        } else {
+<span class="nc" id="L393">            properties.setProperty(name, value);</span>
+        }
+<span class="fc" id="L395">    }</span>
 
     private File determineDockerfile(File providedDockerfile) throws MojoExecutionException {
-<span class="nc bnc" id="L88" title="All 2 branches missed.">        if (providedDockerfile.exists()) {</span>
-<span class="nc" id="L89">            return providedDockerfile;</span>
+<span class="nc bnc" id="L398" title="All 2 branches missed.">        if (providedDockerfile.exists()) {</span>
+<span class="nc" id="L399">            return providedDockerfile;</span>
         }
         try {
-<span class="nc" id="L92">            return dockerService.loadDockerfileAsResource(DOCKERFILE_ORACLE_CLOUD);</span>
-<span class="nc" id="L93">        } catch (IOException e) {</span>
-<span class="nc" id="L94">            throw new MojoExecutionException(&quot;Error loading Dockerfile&quot;, e);</span>
+<span class="nc" id="L402">            return dockerService.loadDockerfileAsResource(DOCKERFILE_ORACLE_CLOUD);</span>
+<span class="nc" id="L403">        } catch (IOException e) {</span>
+<span class="nc" id="L404">            throw new MojoExecutionException(&quot;Error loading Dockerfile&quot;, e);</span>
         }
     }
 
     private void buildDockerfile(File dockerfile, boolean providedDockerfileExists) throws MojoExecutionException {
         try {
-<span class="nc" id="L100">            var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());</span>
-<span class="nc bnc" id="L101" title="All 4 branches missed.">            if (runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION &amp;&amp; !providedDockerfileExists) {</span>
-<span class="nc" id="L102">                oracleCloudFunctionCmd(dockerfile);</span>
-<span class="nc" id="L103">                DockerfileMojo.processOracleFunctionDockerfile(dockerfile);</span>
+<span class="nc" id="L410">            var runtime = MicronautRuntime.valueOf(micronautRuntime.toUpperCase());</span>
+<span class="nc bnc" id="L411" title="All 4 branches missed.">            if (runtime.getBuildStrategy() == DockerBuildStrategy.ORACLE_FUNCTION &amp;&amp; !providedDockerfileExists) {</span>
+<span class="nc" id="L412">                oracleCloudFunctionCmd(dockerfile);</span>
+<span class="nc" id="L413">                DockerfileMojo.processOracleFunctionDockerfile(dockerfile);</span>
             }
-<span class="nc" id="L105">            getLog().info(&quot;Using Dockerfile: &quot; + dockerfile.getAbsolutePath());</span>
-<span class="nc" id="L106">            mavenProject.getProperties().put(PropertyNames.SKIP, &quot;true&quot;);</span>
+<span class="nc" id="L415">            getLog().info(&quot;Using Dockerfile: &quot; + dockerfile.getAbsolutePath());</span>
+<span class="nc" id="L416">            mavenProject.getProperties().put(PropertyNames.SKIP, &quot;true&quot;);</span>
 
-<span class="nc" id="L108">            copyDependencies();</span>
+<span class="nc" id="L418">            copyDependencies(jdkAotCache);</span>
 
-<span class="nc" id="L110">            String targetDir = mavenProject.getBuild().getDirectory();</span>
-<span class="nc" id="L111">            var targetDockerfile = new File(targetDir, dockerfile.getName());</span>
-<span class="nc" id="L112">            Files.copy(dockerfile.toPath(), targetDockerfile.toPath(), LinkOption.NOFOLLOW_LINKS,</span>
+<span class="nc" id="L420">            String targetDir = mavenProject.getBuild().getDirectory();</span>
+<span class="nc" id="L421">            var targetDockerfile = new File(targetDir, dockerfile.getName());</span>
+<span class="nc" id="L422">            Files.copy(dockerfile.toPath(), targetDockerfile.toPath(), LinkOption.NOFOLLOW_LINKS,</span>
                 StandardCopyOption.REPLACE_EXISTING);
 
-<span class="nc" id="L115">            BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
-<span class="nc" id="L116">                .withDockerfile(targetDockerfile)</span>
-<span class="nc" id="L117">                .withTags(getTags())</span>
-<span class="nc" id="L118">                .withBaseDirectory(new File(targetDir));</span>
-<span class="nc" id="L119">            getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
-<span class="nc" id="L120">            dockerService.buildImage(buildImageCmd);</span>
-<span class="nc" id="L121">        } catch (IOException e) {</span>
-<span class="nc" id="L122">            throw new MojoExecutionException(e.getMessage(), e);</span>
-<span class="nc" id="L123">        }</span>
-<span class="nc" id="L124">    }</span>
+<span class="nc" id="L425">            BuildImageCmd buildImageCmd = dockerService.buildImageCmd()</span>
+<span class="nc" id="L426">                .withDockerfile(targetDockerfile)</span>
+<span class="nc" id="L427">                .withTags(getTags())</span>
+<span class="nc" id="L428">                .withBaseDirectory(new File(targetDir));</span>
+<span class="nc" id="L429">            getNetworkMode().ifPresent(buildImageCmd::withNetworkMode);</span>
+<span class="nc" id="L430">            dockerService.buildImage(buildImageCmd);</span>
+<span class="nc" id="L431">        } catch (IOException e) {</span>
+<span class="nc" id="L432">            throw new MojoExecutionException(e.getMessage(), e);</span>
+<span class="nc" id="L433">        }</span>
+<span class="nc" id="L434">    }</span>
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

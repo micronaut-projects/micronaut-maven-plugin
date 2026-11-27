@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TestResourcesConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.testresources</a> &gt; <span class="el_source">TestResourcesConfiguration.java</span></div><h1>TestResourcesConfiguration.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2022 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.testresources;
+
+import org.apache.maven.plugins.annotations.Parameter;
+
+/**
+ * Base configuration class for Test Resources.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 3.5.1
+ */
+<span class="fc" id="L26">public class TestResourcesConfiguration {</span>
+
+    public static final String DISABLED = &quot;false&quot;;
+    public static final String CONFIG_PROPERTY_PREFIX = &quot;micronaut.test.resources.&quot;;
+
+    private static final String PROPERTY_ENABLED = &quot;enabled&quot;;
+    public static final String TEST_RESOURCES_ENABLED_PROPERTY = CONFIG_PROPERTY_PREFIX + PROPERTY_ENABLED;
+
+    /**
+     * Whether to enable or disable Micronaut test resources support.
+     */
+    @Parameter(property = TEST_RESOURCES_ENABLED_PROPERTY, defaultValue = DISABLED)
+    protected boolean testResourcesEnabled;
+
+    /**
+     * Whether the test resources service should be shared between independent builds
+     * (e.g. different projects, even built with different build tools).
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + &quot;shared&quot;, defaultValue = DISABLED)
+    protected boolean shared;
+
+    /**
+     * Allows configuring a namespace for the shared test-resources server. This can be used in case it makes sense to
+     * have different instances of shared services, for example when independent builds sets share different services.
+     *
+     * @since 3.5.1
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + &quot;namespace&quot;)
+    protected String sharedServerNamespace;
+
+    /**
+     * Allows starting the test resources server in debug mode. The server will be started with the ability
+     * to attach a remote debugger on port 8000.
+     *
+     * @since 4.2.0
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + &quot;debug-server&quot;, defaultValue = DISABLED)
+    protected boolean debugServer;
+
+    /**
+     * Whether the test resources server should be started in the foreground.
+     *
+     * @since 4.7.0
+     */
+    @Parameter(property = CONFIG_PROPERTY_PREFIX + &quot;foreground&quot;, defaultValue = DISABLED)
+    protected boolean foreground;
+
+    /**
+     * @return Whether to enable or disable Micronaut test resources support.
+     */
+    public boolean isTestResourcesEnabled() {
+<span class="nc" id="L77">        return testResourcesEnabled;</span>
+    }
+
+    /**
+     * @return Whether the test resources service should be shared between independent builds.
+     */
+    public boolean isShared() {
+<span class="nc" id="L84">        return shared;</span>
+    }
+
+    /**
+     * @return The shared server namespace (if any).
+     */
+    public String getSharedServerNamespace() {
+<span class="nc" id="L91">        return sharedServerNamespace;</span>
+    }
+
+    /**
+     * Whether to enable or disable Micronaut test resources support.
+     *
+     * @param testResourcesEnabled enabled flag
+     */
+    public void setTestResourcesEnabled(boolean testResourcesEnabled) {
+<span class="fc" id="L100">        this.testResourcesEnabled = testResourcesEnabled;</span>
+<span class="fc" id="L101">    }</span>
+
+    /**
+     * Whether the test resources service should be shared between independent builds.
+     *
+     * @param shared shared flag
+     */
+    public void setShared(boolean shared) {
+<span class="nc" id="L109">        this.shared = shared;</span>
+<span class="nc" id="L110">    }</span>
+
+    /**
+     * The shared server namespace (if any).
+     *
+     * @param sharedServerNamespace the shared server namespace to be set
+     */
+    public void setSharedServerNamespace(String sharedServerNamespace) {
+<span class="nc" id="L118">        this.sharedServerNamespace = sharedServerNamespace;</span>
+<span class="nc" id="L119">    }</span>
+
+    /**
+     * Whether to start the test resources server in debug mode.
+     *
+     * @param debugServer debug flag
+     */
+    public void setDebugServer(boolean debugServer) {
+<span class="nc" id="L127">        this.debugServer = debugServer;</span>
+<span class="nc" id="L128">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,437 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConfigurationValidationConfiguration.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.jsonschema</a> &gt; <span class="el_source">ConfigurationValidationConfiguration.java</span></div><h1>ConfigurationValidationConfiguration.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.jsonschema;
+
+import java.io.File;
+import java.util.List;
+
+/**
+ * Shared configuration for Micronaut configuration validation.
+ * &lt;p&gt;
+ * This type is used as a nested configuration object in multiple mojos.
+ */
+<span class="fc" id="L26">public final class ConfigurationValidationConfiguration {</span>
+
+    /**
+     * Global enable/disable flag.
+     */
+    private Boolean enabled;
+
+    /**
+     * Suppression patterns (same as the CLI --suppress/--suppressions flags).
+     */
+    private List&lt;String&gt; suppressions;
+
+    /**
+     * Whether to fail on unknown / not-present properties.
+     */
+    private Boolean failOnNotPresent;
+
+    /**
+     * Whether to allow Micronaut to deduce environments.
+     */
+    private Boolean deduceEnvironments;
+
+    /**
+     * Whether to run dependency-injection validation in addition to configuration validation.
+     */
+    private Boolean validateDependencyInjection;
+
+    /**
+     * Suppression patterns for dependency-injection errors (same as CLI {@code --suppress-inject-errors}).
+     */
+    private List&lt;String&gt; suppressInjectErrors;
+
+    /**
+     * Report format: json|html|both.
+     */
+    private String format;
+
+    /**
+     * Base output directory for reports.
+     */
+    private File outputDirectory;
+
+    /**
+     * Enable the on-disk cache to avoid re-running validation when inputs have not changed.
+     */
+    private Boolean cacheEnabled;
+
+    /**
+     * List of resource patterns to ignore when computing cache fingerprints.
+     */
+    private List&lt;String&gt; cacheIgnore;
+
+    private ValidationSet dev;
+    private ValidationSet packageValidation;
+    private ValidationSet test;
+
+    /**
+     * @return Whether configuration validation is enabled. If {@code null}, validation is disabled.
+     */
+    public Boolean getEnabled() {
+<span class="fc" id="L86">        return enabled;</span>
+    }
+
+    /**
+     * @param enabled Whether configuration validation is enabled.
+     */
+    public void setEnabled(Boolean enabled) {
+<span class="fc" id="L93">        this.enabled = enabled;</span>
+<span class="fc" id="L94">    }</span>
+
+    /**
+     * Suppression patterns applied to validation results.
+     *
+     * @return The suppression patterns, or {@code null} to use no suppressions.
+     */
+    public List&lt;String&gt; getSuppressions() {
+<span class="nc" id="L102">        return suppressions;</span>
+    }
+
+    /**
+     * @param suppressions Suppression patterns.
+     */
+    public void setSuppressions(List&lt;String&gt; suppressions) {
+<span class="nc" id="L109">        this.suppressions = suppressions;</span>
+<span class="nc" id="L110">    }</span>
+
+    /**
+     * Controls whether validation should fail when a configuration property is not present in the schema.
+     *
+     * @return Whether to fail on not-present properties. If {@code null}, defaults to {@code true}.
+     */
+    public Boolean getFailOnNotPresent() {
+<span class="nc" id="L118">        return failOnNotPresent;</span>
+    }
+
+    /**
+     * @param failOnNotPresent Whether to fail on not-present properties.
+     */
+    public void setFailOnNotPresent(Boolean failOnNotPresent) {
+<span class="nc" id="L125">        this.failOnNotPresent = failOnNotPresent;</span>
+<span class="nc" id="L126">    }</span>
+
+    /**
+     * Controls whether Micronaut may deduce environments.
+     *
+     * @return Whether to deduce environments. If {@code null}, defaults to {@code false}.
+     */
+    public Boolean getDeduceEnvironments() {
+<span class="nc" id="L134">        return deduceEnvironments;</span>
+    }
+
+    /**
+     * @param deduceEnvironments Whether to allow Micronaut to deduce environments.
+     */
+    public void setDeduceEnvironments(Boolean deduceEnvironments) {
+<span class="nc" id="L141">        this.deduceEnvironments = deduceEnvironments;</span>
+<span class="nc" id="L142">    }</span>
+
+    /**
+     * Controls whether dependency-injection validation should be executed.
+     *
+     * @return Whether to validate dependency injection. If {@code null}, defaults to {@code false}.
+     */
+    public Boolean getValidateDependencyInjection() {
+<span class="nc" id="L150">        return validateDependencyInjection;</span>
+    }
+
+    /**
+     * @param validateDependencyInjection Whether to run dependency-injection validation.
+     */
+    public void setValidateDependencyInjection(Boolean validateDependencyInjection) {
+<span class="nc" id="L157">        this.validateDependencyInjection = validateDependencyInjection;</span>
+<span class="nc" id="L158">    }</span>
+
+    /**
+     * Suppression patterns applied only to dependency-injection validation errors.
+     *
+     * @return Suppression patterns, or {@code null} to apply none.
+     */
+    public List&lt;String&gt; getSuppressInjectErrors() {
+<span class="nc" id="L166">        return suppressInjectErrors;</span>
+    }
+
+    /**
+     * @param suppressInjectErrors Suppression patterns for dependency-injection errors.
+     */
+    public void setSuppressInjectErrors(List&lt;String&gt; suppressInjectErrors) {
+<span class="nc" id="L173">        this.suppressInjectErrors = suppressInjectErrors;</span>
+<span class="nc" id="L174">    }</span>
+
+    /**
+     * Report format.
+     *
+     * @return The report format ({@code json}, {@code html}, or {@code both}). If {@code null}, defaults to {@code both}.
+     */
+    public String getFormat() {
+<span class="nc" id="L182">        return format;</span>
+    }
+
+    /**
+     * @param format The report format ({@code json}, {@code html}, or {@code both}).
+     */
+    public void setFormat(String format) {
+<span class="nc" id="L189">        this.format = format;</span>
+<span class="nc" id="L190">    }</span>
+
+    /**
+     * Base output directory for reports.
+     *
+     * @return The base output directory. If {@code null}, defaults to
+     * {@code ${project.build.directory}/micronaut/config-validation}.
+     */
+    public File getOutputDirectory() {
+<span class="nc" id="L199">        return outputDirectory;</span>
+    }
+
+    /**
+     * @param outputDirectory The base output directory.
+     */
+    public void setOutputDirectory(File outputDirectory) {
+<span class="nc" id="L206">        this.outputDirectory = outputDirectory;</span>
+<span class="nc" id="L207">    }</span>
+
+    /**
+     * @return Whether caching is enabled. If {@code null}, defaults to {@code true}.
+     */
+    public Boolean getCacheEnabled() {
+<span class="nc" id="L213">        return cacheEnabled;</span>
+    }
+
+    /**
+     * @param cacheEnabled Whether caching is enabled.
+     */
+    public void setCacheEnabled(Boolean cacheEnabled) {
+<span class="nc" id="L220">        this.cacheEnabled = cacheEnabled;</span>
+<span class="nc" id="L221">    }</span>
+
+    /**
+     * Resource patterns to ignore when computing cache fingerprints.
+     * &lt;p&gt;
+     * Patterns are evaluated using {@code glob} syntax against paths relative to each configured resource directory
+     * for the active scenario.
+     *
+     * @return Ignore patterns, or {@code null} to use defaults
+     */
+    public List&lt;String&gt; getCacheIgnore() {
+<span class="nc" id="L232">        return cacheIgnore;</span>
+    }
+
+    /**
+     * @param cacheIgnore Ignore patterns
+     */
+    public void setCacheIgnore(List&lt;String&gt; cacheIgnore) {
+<span class="nc" id="L239">        this.cacheIgnore = cacheIgnore;</span>
+<span class="nc" id="L240">    }</span>
+
+    /**
+     * @return Scenario-specific configuration for {@code mn:run} validation (default environment: {@code dev}).
+     */
+    public ValidationSet getDev() {
+<span class="nc" id="L246">        return dev;</span>
+    }
+
+    /**
+     * @param dev Scenario-specific configuration for {@code mn:run} validation.
+     */
+    public void setDev(ValidationSet dev) {
+<span class="nc" id="L253">        this.dev = dev;</span>
+<span class="nc" id="L254">    }</span>
+
+    /**
+     * @return Scenario-specific configuration for {@code package} validation.
+     */
+    public ValidationSet getPackageValidation() {
+<span class="nc" id="L260">        return packageValidation;</span>
+    }
+
+    /**
+     * @param packageValidation Scenario-specific configuration for {@code package} validation.
+     */
+    public void setPackageValidation(ValidationSet packageValidation) {
+<span class="nc" id="L267">        this.packageValidation = packageValidation;</span>
+<span class="nc" id="L268">    }</span>
+
+    /**
+     * @return Scenario-specific configuration for {@code test} validation (default environment: {@code test}).
+     */
+    public ValidationSet getTest() {
+<span class="nc" id="L274">        return test;</span>
+    }
+
+    /**
+     * @param test Scenario-specific configuration for {@code test} validation.
+     */
+    public void setTest(ValidationSet test) {
+<span class="nc" id="L281">        this.test = test;</span>
+<span class="nc" id="L282">    }</span>
+
+    /**
+     * Scenario-specific configuration.
+     */
+<span class="nc" id="L287">    public static final class ValidationSet {</span>
+        /**
+         * Enables/disables validation for this scenario.
+         */
+        private Boolean enabled;
+
+        /**
+         * Environments to validate.
+         */
+        private List&lt;String&gt; environments;
+
+        /**
+         * Whether to include the scenario's default environment(s).
+         */
+        private Boolean includeDefaultEnvironment;
+
+        /**
+         * Explicit classpath elements to validate (replaces defaults).
+         */
+        private List&lt;String&gt; classpathElements;
+
+        /**
+         * Additional classpath entries appended to the computed defaults.
+         */
+        private List&lt;String&gt; additionalClasspathElements;
+
+        /**
+         * Override output directory for this scenario.
+         */
+        private File outputDirectory;
+
+        /**
+         * Resource directories used to resolve and render relative origins.
+         */
+        private List&lt;File&gt; resourceDirectories;
+
+        /**
+         * @return Whether this validation scenario is enabled. If {@code null}, the scenario follows the global
+         * {@link ConfigurationValidationConfiguration#getEnabled()} setting. This flag cannot force execution if
+         * global validation is disabled.
+         */
+        public Boolean getEnabled() {
+<span class="nc" id="L329">            return enabled;</span>
+        }
+
+        /**
+         * @param enabled Whether this validation scenario is enabled.
+         */
+        public void setEnabled(Boolean enabled) {
+<span class="nc" id="L336">            this.enabled = enabled;</span>
+<span class="nc" id="L337">        }</span>
+
+        /**
+         * @return The environments to validate for this scenario. These environments are appended to the scenario defaults
+         * (unless {@link #getIncludeDefaultEnvironment()} is {@code false}).
+         */
+        public List&lt;String&gt; getEnvironments() {
+<span class="nc" id="L344">            return environments;</span>
+        }
+
+        /**
+         * @param environments The environments to validate.
+         */
+        public void setEnvironments(List&lt;String&gt; environments) {
+<span class="nc" id="L351">            this.environments = environments;</span>
+<span class="nc" id="L352">        }</span>
+
+        /**
+         * @return Whether to include the scenario's default environments. If {@code null}, defaults to {@code true}.
+         */
+        public Boolean getIncludeDefaultEnvironment() {
+<span class="nc" id="L358">            return includeDefaultEnvironment;</span>
+        }
+
+        /**
+         * @param includeDefaultEnvironment Whether to include the scenario's default environments.
+         */
+        public void setIncludeDefaultEnvironment(Boolean includeDefaultEnvironment) {
+<span class="nc" id="L365">            this.includeDefaultEnvironment = includeDefaultEnvironment;</span>
+<span class="nc" id="L366">        }</span>
+
+        /**
+         * Full classpath to validate for this scenario.
+         *
+         * @return Classpath elements that replace the plugin-computed defaults. If {@code null} or empty, the plugin
+         * computes defaults for the scenario.
+         */
+        public List&lt;String&gt; getClasspathElements() {
+<span class="nc" id="L375">            return classpathElements;</span>
+        }
+
+        /**
+         * @param classpathElements Classpath elements that replace the plugin-computed defaults.
+         */
+        public void setClasspathElements(List&lt;String&gt; classpathElements) {
+<span class="nc" id="L382">            this.classpathElements = classpathElements;</span>
+<span class="nc" id="L383">        }</span>
+
+        /**
+         * @return Additional classpath elements appended to the plugin-computed defaults.
+         */
+        public List&lt;String&gt; getAdditionalClasspathElements() {
+<span class="nc" id="L389">            return additionalClasspathElements;</span>
+        }
+
+        /**
+         * @param additionalClasspathElements Additional classpath elements appended to the plugin-computed defaults.
+         */
+        public void setAdditionalClasspathElements(List&lt;String&gt; additionalClasspathElements) {
+<span class="nc" id="L396">            this.additionalClasspathElements = additionalClasspathElements;</span>
+<span class="nc" id="L397">        }</span>
+
+        /**
+         * @return Scenario output directory override. If {@code null}, the plugin uses
+         * {@code &lt;baseOutputDirectory&gt;/&lt;scenario&gt;}.
+         */
+        public File getOutputDirectory() {
+<span class="nc" id="L404">            return outputDirectory;</span>
+        }
+
+        /**
+         * @param outputDirectory Scenario output directory override.
+         */
+        public void setOutputDirectory(File outputDirectory) {
+<span class="nc" id="L411">            this.outputDirectory = outputDirectory;</span>
+<span class="nc" id="L412">        }</span>
+
+        /**
+         * Resource directories used to resolve and render relative origin paths in error output.
+         * &lt;p&gt;
+         * If not specified, defaults are:
+         * &lt;ul&gt;
+         *     &lt;li&gt;dev/package: {@code src/main/resources}&lt;/li&gt;
+         *     &lt;li&gt;test: {@code src/main/resources} + {@code src/test/resources}&lt;/li&gt;
+         * &lt;/ul&gt;
+         *
+         * @return Resource directories, or {@code null} to use scenario defaults
+         */
+        public List&lt;File&gt; getResourceDirectories() {
+<span class="nc" id="L426">            return resourceDirectories;</span>
+        }
+
+        /**
+         * @param resourceDirectories Resource directories used to resolve and render relative origin paths
+         */
+        public void setResourceDirectories(List&lt;File&gt; resourceDirectories) {
+<span class="nc" id="L433">            this.resourceDirectories = resourceDirectories;</span>
+<span class="nc" id="L434">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DefaultServerFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.testresources</a> &gt; <span class="el_source">DefaultServerFactory.java</span></div><h1>DefaultServerFactory.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2023 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.testresources;
+
+import io.micronaut.testresources.buildtools.ServerFactory;
+import io.micronaut.testresources.buildtools.ServerUtils;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.toolchain.ToolchainManager;
+
+import java.io.File;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+
+import static io.micronaut.maven.core.MojoUtils.findJavaExecutable;
+
+/**
+ * Default implementation for {@link ServerFactory}.
+ *
+ * @author Álvaro Sánchez-Mariscal
+ * @since 4.0.0
+ */
+public class DefaultServerFactory implements ServerFactory {
+
+<span class="fc" id="L45">    private static final Set&lt;Process&gt; PROCESSES = ConcurrentHashMap.newKeySet();</span>
+
+    private final Log log;
+    private final ToolchainManager toolchainManager;
+    private final MavenSession mavenSession;
+    private final AtomicBoolean serverStarted;
+    private final String testResourcesVersion;
+    private final boolean debugServer;
+    private final boolean foreground;
+    private final boolean stopOnShutdown;
+    private final Map&lt;String, String&gt; testResourcesSystemProperties;
+
+    private Process process;
+
+    public DefaultServerFactory(Log log,
+                                ToolchainManager toolchainManager,
+                                MavenSession mavenSession,
+                                AtomicBoolean serverStarted,
+                                String testResourcesVersion,
+                                boolean debugServer,
+                                boolean foreground,
+                                boolean stopOnShutdown,
+<span class="fc" id="L67">                                final Map&lt;String, String&gt; testResourcesSystemProperties) {</span>
+<span class="fc" id="L68">        this.log = log;</span>
+<span class="fc" id="L69">        this.toolchainManager = toolchainManager;</span>
+<span class="fc" id="L70">        this.mavenSession = mavenSession;</span>
+<span class="fc" id="L71">        this.serverStarted = serverStarted;</span>
+<span class="fc" id="L72">        this.testResourcesVersion = testResourcesVersion;</span>
+<span class="fc" id="L73">        this.debugServer = debugServer;</span>
+<span class="fc" id="L74">        this.foreground = foreground;</span>
+<span class="fc" id="L75">        this.stopOnShutdown = stopOnShutdown;</span>
+<span class="fc" id="L76">        this.testResourcesSystemProperties = testResourcesSystemProperties;</span>
+<span class="fc" id="L77">    }</span>
+
+    @Override
+    public void startServer(ServerUtils.ProcessParameters processParameters) {
+<span class="fc" id="L81">        log.info(&quot;Starting Micronaut Test Resources service, version &quot; + testResourcesVersion);</span>
+<span class="fc" id="L82">        var cli = computeCliArguments(processParameters);</span>
+
+<span class="fc bfc" id="L84" title="All 2 branches covered.">        if (log.isDebugEnabled()) {</span>
+<span class="fc" id="L85">            log.debug(String.format(&quot;Command parameters: %s&quot;, String.join(&quot; &quot;, cli)));</span>
+        }
+
+<span class="fc" id="L88">        var builder = new ProcessBuilder(cli);</span>
+        try {
+<span class="fc" id="L90">            process = builder.inheritIO().start();</span>
+<span class="fc" id="L91">            PROCESSES.add(process);</span>
+<span class="fc" id="L92">            process.onExit().thenRun(() -&gt; PROCESSES.remove(process));</span>
+<span class="fc bfc" id="L93" title="All 2 branches covered.">            if (stopOnShutdown) {</span>
+<span class="fc" id="L94">                Runtime.getRuntime().addShutdownHook(new Thread(() -&gt; stopServer(process)));</span>
+            }
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">            if (foreground) {</span>
+<span class="nc" id="L97">                log.info(&quot;Test Resources Service started in foreground. Press Ctrl+C to stop.&quot;);</span>
+<span class="nc" id="L98">                process.waitFor();</span>
+            }
+<span class="nc" id="L100">        } catch (InterruptedException e) {</span>
+<span class="nc" id="L101">            log.error(&quot;Failed to start server&quot;, e);</span>
+<span class="nc" id="L102">            Thread.currentThread().interrupt();</span>
+<span class="nc" id="L103">        } catch (Exception e) {</span>
+<span class="nc" id="L104">            log.error(&quot;Failed to start server&quot;, e);</span>
+<span class="nc" id="L105">            serverStarted.set(false);</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">            if (process != null) {</span>
+<span class="nc" id="L107">                process.destroyForcibly();</span>
+            }
+        } finally {
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">            if (process != null) {</span>
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">                if (process.isAlive()) {</span>
+<span class="fc" id="L112">                    serverStarted.set(true);</span>
+                } else {
+<span class="nc" id="L114">                    process.destroyForcibly();</span>
+                }
+            }
+        }
+<span class="fc" id="L118">    }</span>
+
+    /**
+     * Computes the command-line arguments required to run the server based on the provided process parameters.
+     *
+     * @param processParameters the process parameters containing information about JVM arguments, system properties,
+     *                          classpath, main class, and program arguments
+     * @return a list of command-line arguments as strings
+     * @throws IllegalStateException if the Java executable cannot be found, or if the main class is not set
+     */
+    List&lt;String&gt; computeCliArguments(ServerUtils.ProcessParameters processParameters) {
+<span class="fc" id="L129">        var cli = new ArrayList&lt;String&gt;();</span>
+
+<span class="fc" id="L131">        String javaBin = findJavaExecutable(toolchainManager, mavenSession);</span>
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">        if (javaBin == null) {</span>
+<span class="nc" id="L133">            throw new IllegalStateException(&quot;Java executable not found&quot;);</span>
+        }
+<span class="fc" id="L135">        cli.add(javaBin);</span>
+<span class="fc" id="L136">        cli.addAll(processParameters.getJvmArguments());</span>
+<span class="pc bpc" id="L137" title="1 of 2 branches missed.">        if (debugServer) {</span>
+<span class="nc" id="L138">            cli.add(&quot;-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000&quot;);</span>
+        }
+<span class="pc" id="L140">        processParameters.getSystemProperties().forEach((key, value) -&gt; cli.add(&quot;-D&quot; + key + &quot;=&quot; + value));</span>
+<span class="pc bpc" id="L141" title="1 of 4 branches missed.">        if (testResourcesSystemProperties != null &amp;&amp; !testResourcesSystemProperties.isEmpty()) {</span>
+<span class="fc" id="L142">            testResourcesSystemProperties.forEach((key, value) -&gt; cli.add(&quot;-D&quot; + key + &quot;=&quot; + value));</span>
+        }
+<span class="fc" id="L144">        cli.add(&quot;-cp&quot;);</span>
+<span class="fc" id="L145">        cli.add(processParameters.getClasspath().stream()</span>
+<span class="fc" id="L146">                .map(File::getAbsolutePath)</span>
+<span class="fc" id="L147">                .collect(Collectors.joining(File.pathSeparator)));</span>
+<span class="fc" id="L148">        String mainClass = processParameters.getMainClass();</span>
+<span class="pc bpc" id="L149" title="1 of 2 branches missed.">        if (mainClass == null) {</span>
+<span class="nc" id="L150">            throw new IllegalStateException(&quot;Main class is not set&quot;);</span>
+        }
+<span class="fc" id="L152">        cli.add(mainClass);</span>
+<span class="fc" id="L153">        cli.addAll(processParameters.getArguments());</span>
+
+<span class="fc" id="L155">        return cli;</span>
+    }
+
+    @Override
+    public void waitFor(Duration duration) throws InterruptedException {
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">        if (process != null) {</span>
+<span class="fc" id="L161">            process.waitFor(duration.toMillis(), TimeUnit.MILLISECONDS);</span>
+        }
+<span class="fc" id="L163">    }</span>
+
+    static void stopAllServers() {
+<span class="fc" id="L166">        PROCESSES.forEach(DefaultServerFactory::stopServer);</span>
+<span class="fc" id="L167">    }</span>
+
+    private static void stopServer(Process process) {
+<span class="fc" id="L170">        PROCESSES.remove(process);</span>
+<span class="fc bfc" id="L171" title="All 2 branches covered.">        if (process.isAlive()) {</span>
+<span class="fc" id="L172">            process.destroy();</span>
+            try {
+<span class="fc bfc" id="L174" title="All 2 branches covered.">                if (!process.waitFor(10, TimeUnit.SECONDS)) {</span>
+<span class="fc" id="L175">                    process.destroyForcibly();</span>
+                }
+<span class="fc" id="L177">            } catch (InterruptedException e) {</span>
+<span class="fc" id="L178">                process.destroyForcibly();</span>
+<span class="fc" id="L179">                Thread.currentThread().interrupt();</span>
+<span class="fc" id="L180">            }</span>
+        }
+<span class="fc" id="L182">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

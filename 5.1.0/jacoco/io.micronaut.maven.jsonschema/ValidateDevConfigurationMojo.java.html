@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ValidateDevConfigurationMojo.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Micronaut Maven Plugin - Plugin</a> &gt; <a href="index.source.html" class="el_package">io.micronaut.maven.jsonschema</a> &gt; <span class="el_source">ValidateDevConfigurationMojo.java</span></div><h1>ValidateDevConfigurationMojo.java</h1><pre class="source lang-java linenums">/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.maven.jsonschema;
+
+import io.micronaut.maven.services.CompilerService;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+import org.eclipse.aether.util.artifact.JavaScopes;
+
+import javax.inject.Inject;
+import java.nio.file.Path;
+import java.util.List;
+
+/**
+ * Validates Micronaut configuration for the &quot;dev&quot; environment.
+ * &lt;p&gt;
+ * This mojo is automatically executed by {@code mn:run}.
+ */
+@Mojo(
+    name = ValidateDevConfigurationMojo.MOJO_NAME,
+    requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME
+)
+public class ValidateDevConfigurationMojo extends AbstractConfigurationValidationMojo {
+    public static final String MOJO_NAME = &quot;validate-dev-configuration&quot;;
+
+    @Inject
+    public ValidateDevConfigurationMojo(MavenProject project, CompilerService compilerService) {
+<span class="nc" id="L42">        super(project, compilerService);</span>
+<span class="nc" id="L43">    }</span>
+
+    @Override
+    protected String scenarioName() {
+<span class="nc" id="L47">        return &quot;dev&quot;;</span>
+    }
+
+    @Override
+    protected ConfigurationValidationConfiguration.ValidationSet validationSet(ConfigurationValidationConfiguration cfg) {
+<span class="nc" id="L52">        return cfg.getDev();</span>
+    }
+
+    @Override
+    protected List&lt;String&gt; defaultEnvironments() {
+<span class="nc" id="L57">        return List.of(&quot;dev&quot;);</span>
+    }
+
+    @Override
+    protected List&lt;String&gt; defaultClasspath(MavenProject project) {
+<span class="nc" id="L62">        return ConfigurationValidationClasspath.defaultDevClasspath(project);</span>
+    }
+
+    @Override
+    protected String[] dependencyScopes() {
+<span class="nc" id="L67">        return new String[] { JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME };</span>
+    }
+
+    @Override
+    protected List&lt;Path&gt; defaultResourceDirectories() {
+<span class="nc" id="L72">        return List.of(Path.of(&quot;src/main/resources&quot;));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

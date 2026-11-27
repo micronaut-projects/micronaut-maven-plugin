@@ -17,6 +17,7 @@ package io.micronaut.maven;
 
 import io.methvin.watcher.DirectoryChangeEvent;
 import io.methvin.watcher.DirectoryWatcher;
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.maven.aot.AbstractAotAnalysisMojo;
 import io.micronaut.maven.core.MojoUtils;
 import io.micronaut.maven.services.CompilerService;
@@ -61,7 +62,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 import static io.micronaut.maven.core.MojoUtils.findJavaExecutable;
 import static io.micronaut.maven.core.MojoUtils.hasMicronautMavenPlugin;
@@ -193,12 +193,29 @@ public class RunMojo extends AbstractTestResourcesMojo {
     @Parameter(property = &quot;micronaut.aot.enabled&quot;, defaultValue = &quot;false&quot;)
     private boolean aotEnabled;
 
+    /**
+     * &lt;p&gt;&lt;b&gt;Experimental.&lt;/b&gt; Whether to keep the classes of the dependency JARs in a static CDS (class data sharing)
+     * archive, so that the launches and restarts after the first one load them from the archive instead of parsing
+     * and verifying them again. It needs JDK 25 or later.&lt;/p&gt;
+     *
+     * &lt;p&gt;The first launch records the classes it loads. When it ends, the archive is created in the background under
+     * {@code target/mn-cds}, and later launches and restarts use it until the dependencies, the JDK or the JVM options
+     * change. While this option is on, the class path starts with the dependency JARs, followed by the
+     * {@code target/classes} directories of this project and of the reactor projects it depends on, which stay outside
+     * the archive.&lt;/p&gt;
+     *
+     * @since 5.1.0
+     */
+    @Experimental
+    @Parameter(property = &quot;mn.classDataSharing&quot;, defaultValue = &quot;false&quot;)
+    private boolean classDataSharing;
+
     // These 2 flags are used in the context of watching for changes
     // the first one makes sure that only one recompilation is processed at a time
-<span class="fc" id="L198">    private final AtomicBoolean recompileRequested = new AtomicBoolean();</span>
+<span class="fc" id="L215">    private final AtomicBoolean recompileRequested = new AtomicBoolean();</span>
     // the second one makes sure that we wait for the server to be started before we restart it
     // otherwise a process may be kept alive
-<span class="fc" id="L201">    private final ReentrantLock restartLock = new ReentrantLock();</span>
+<span class="fc" id="L218">    private final ReentrantLock restartLock = new ReentrantLock();</span>
 
     private MavenProject runnableProject;
     private DirectoryWatcher directoryWatcher;
@@ -207,6 +224,7 @@ public class RunMojo extends AbstractTestResourcesMojo {
     private int classpathHash;
     private long lastCompilation;
     private TestResourcesHelper testResourcesHelper;
+    private ClassDataSharingSupport classDataSharingSupport;
 
     @SuppressWarnings(&quot;CdiInjectionPointsInspection&quot;)
     @Inject
@@ -216,49 +234,49 @@ public class RunMojo extends AbstractTestResourcesMojo {
                    ToolchainManager toolchainManager,
                    CompilerService compilerService,
                    ExecutorService executorService,
-<span class="fc" id="L219">                   DependencyResolutionService dependencyResolutionService) {</span>
-<span class="fc" id="L220">        this.mavenSession = mavenSession;</span>
-<span class="fc" id="L221">        this.projectBuilder = projectBuilder;</span>
-<span class="fc" id="L222">        this.toolchainManager = toolchainManager;</span>
-<span class="fc" id="L223">        this.compilerService = compilerService;</span>
-<span class="fc" id="L224">        this.executorService = executorService;</span>
-<span class="fc" id="L225">        this.javaExecutable = findJavaExecutable(toolchainManager, mavenSession);</span>
-<span class="fc" id="L226">        this.dependencyResolutionService = dependencyResolutionService;</span>
-<span class="fc" id="L227">    }</span>
+<span class="fc" id="L237">                   DependencyResolutionService dependencyResolutionService) {</span>
+<span class="fc" id="L238">        this.mavenSession = mavenSession;</span>
+<span class="fc" id="L239">        this.projectBuilder = projectBuilder;</span>
+<span class="fc" id="L240">        this.toolchainManager = toolchainManager;</span>
+<span class="fc" id="L241">        this.compilerService = compilerService;</span>
+<span class="fc" id="L242">        this.executorService = executorService;</span>
+<span class="fc" id="L243">        this.javaExecutable = findJavaExecutable(toolchainManager, mavenSession);</span>
+<span class="fc" id="L244">        this.dependencyResolutionService = dependencyResolutionService;</span>
+<span class="fc" id="L245">    }</span>
 
     @Override
     public void execute() throws MojoExecutionException {
         try {
-<span class="nc" id="L232">            initialize();</span>
-<span class="nc" id="L233">        } catch (Exception e) {</span>
-<span class="nc" id="L234">            throw new MojoExecutionException(e.getMessage());</span>
-<span class="nc" id="L235">        }</span>
+<span class="nc" id="L250">            initialize();</span>
+<span class="nc" id="L251">        } catch (Exception e) {</span>
+<span class="nc" id="L252">            throw new MojoExecutionException(e.getMessage());</span>
+<span class="nc" id="L253">        }</span>
 
         try {
-<span class="nc" id="L238">            maybeStartTestResourcesServer();</span>
-<span class="nc" id="L239">            runApplication();</span>
-<span class="nc" id="L240">            Thread shutdownHook = new Thread(this::killProcess);</span>
-<span class="nc" id="L241">            Runtime.getRuntime().addShutdownHook(shutdownHook);</span>
+<span class="nc" id="L256">            maybeStartTestResourcesServer();</span>
+<span class="nc" id="L257">            runApplication();</span>
+<span class="nc" id="L258">            Thread shutdownHook = new Thread(this::stopOnShutdown);</span>
+<span class="nc" id="L259">            Runtime.getRuntime().addShutdownHook(shutdownHook);</span>
 
-<span class="nc bnc" id="L243" title="All 4 branches missed.">            if (process != null &amp;&amp; process.isAlive()) {</span>
-<span class="nc bnc" id="L244" title="All 2 branches missed.">                if (watchForChanges) {</span>
-<span class="nc" id="L245">                    var pathsToWatch = new ArrayList&lt;Path&gt;();</span>
-<span class="nc bnc" id="L246" title="All 2 branches missed.">                    for (FileSet fs : watches) {</span>
-<span class="nc" id="L247">                        var directory = runnableProject.getBasedir().toPath().resolve(fs.getDirectory()).toAbsolutePath();</span>
-<span class="nc bnc" id="L248" title="All 2 branches missed.">                        if (Files.exists(directory)) {</span>
-<span class="nc" id="L249">                            pathsToWatch.add(directory);</span>
+<span class="nc bnc" id="L261" title="All 4 branches missed.">            if (process != null &amp;&amp; process.isAlive()) {</span>
+<span class="nc bnc" id="L262" title="All 2 branches missed.">                if (watchForChanges) {</span>
+<span class="nc" id="L263">                    var pathsToWatch = new ArrayList&lt;Path&gt;();</span>
+<span class="nc bnc" id="L264" title="All 2 branches missed.">                    for (FileSet fs : watches) {</span>
+<span class="nc" id="L265">                        var directory = runnableProject.getBasedir().toPath().resolve(fs.getDirectory()).toAbsolutePath();</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">                        if (Files.exists(directory)) {</span>
+<span class="nc" id="L267">                            pathsToWatch.add(directory);</span>
                             //If neither includes nor excludes, add a default include
-<span class="nc bnc" id="L251" title="All 8 branches missed.">                            if ((fs.getIncludes() == null || fs.getIncludes().isEmpty()) &amp;&amp; (fs.getExcludes() == null || fs.getExcludes().isEmpty())) {</span>
-<span class="nc" id="L252">                                fs.addInclude(&quot;**/*&quot;);</span>
+<span class="nc bnc" id="L269" title="All 8 branches missed.">                            if ((fs.getIncludes() == null || fs.getIncludes().isEmpty()) &amp;&amp; (fs.getExcludes() == null || fs.getExcludes().isEmpty())) {</span>
+<span class="nc" id="L270">                                fs.addInclude(&quot;**/*&quot;);</span>
                             }
                         }
-<span class="nc" id="L255">                    }</span>
+<span class="nc" id="L273">                    }</span>
 
-<span class="nc" id="L257">                    this.directoryWatcher = DirectoryWatcher</span>
-<span class="nc" id="L258">                        .builder()</span>
-<span class="nc" id="L259">                        .paths(pathsToWatch)</span>
-<span class="nc" id="L260">                        .listener(this::handleEvent)</span>
-<span class="nc" id="L261">                        .build();</span>
+<span class="nc" id="L275">                    this.directoryWatcher = DirectoryWatcher</span>
+<span class="nc" id="L276">                        .builder()</span>
+<span class="nc" id="L277">                        .paths(pathsToWatch)</span>
+<span class="nc" id="L278">                        .listener(this::handleEvent)</span>
+<span class="nc" id="L279">                        .build();</span>
 
                     // We use the working directory as the root path, because
                     // the top-level project information may not be what we
@@ -267,239 +285,246 @@ public class RunMojo extends AbstractTestResourcesMojo {
                     // We can safely do this because it's only used to display
                     // information about paths being watched to the user, the
                     // actual paths are unchanged.
-<span class="nc" id="L270">                    Path root = Path.of(&quot;.&quot;).toAbsolutePath();</span>
-<span class="nc" id="L271">                    List&lt;Path&gt; pathList = pathsToWatch.stream()</span>
-<span class="nc" id="L272">                        .map(root::relativize)</span>
-<span class="nc bnc" id="L273" title="All 2 branches missed.">                        .filter(s -&gt; !s.toString().isEmpty())</span>
-<span class="nc" id="L274">                        .filter(Files::exists)</span>
-<span class="nc" id="L275">                        .sorted()</span>
-<span class="nc" id="L276">                        .toList();</span>
-<span class="nc" id="L277">                    getLog().info(&quot;👀 Watching for changes in &quot; + pathList);</span>
-<span class="nc" id="L278">                    this.directoryWatcher.watch();</span>
-<span class="nc bnc" id="L279" title="All 4 branches missed.">                } else if (process != null &amp;&amp; process.isAlive()) {</span>
-<span class="nc" id="L280">                    process.waitFor();</span>
+<span class="nc" id="L288">                    Path root = Path.of(&quot;.&quot;).toAbsolutePath();</span>
+<span class="nc" id="L289">                    List&lt;Path&gt; pathList = pathsToWatch.stream()</span>
+<span class="nc" id="L290">                        .map(root::relativize)</span>
+<span class="nc bnc" id="L291" title="All 2 branches missed.">                        .filter(s -&gt; !s.toString().isEmpty())</span>
+<span class="nc" id="L292">                        .filter(Files::exists)</span>
+<span class="nc" id="L293">                        .sorted()</span>
+<span class="nc" id="L294">                        .toList();</span>
+<span class="nc" id="L295">                    getLog().info(&quot;👀 Watching for changes in &quot; + pathList);</span>
+<span class="nc" id="L296">                    this.directoryWatcher.watch();</span>
+<span class="nc bnc" id="L297" title="All 4 branches missed.">                } else if (process != null &amp;&amp; process.isAlive()) {</span>
+<span class="nc" id="L298">                    process.waitFor();</span>
                 }
             }
-<span class="nc" id="L283">        } catch (InterruptedException e) {</span>
-<span class="nc" id="L284">            Thread.currentThread().interrupt();</span>
-<span class="nc" id="L285">        } catch (Exception e) {</span>
-<span class="nc bnc" id="L286" title="All 2 branches missed.">            if (getLog().isDebugEnabled()) {</span>
-<span class="nc" id="L287">                getLog().debug(&quot;Exception while watching for changes&quot;, e);</span>
+<span class="nc" id="L301">        } catch (InterruptedException e) {</span>
+<span class="nc" id="L302">            Thread.currentThread().interrupt();</span>
+<span class="nc" id="L303">        } catch (Exception e) {</span>
+<span class="nc bnc" id="L304" title="All 2 branches missed.">            if (getLog().isDebugEnabled()) {</span>
+<span class="nc" id="L305">                getLog().debug(&quot;Exception while watching for changes&quot;, e);</span>
             }
-<span class="nc" id="L289">            throw new MojoExecutionException(&quot;Exception while watching for changes&quot;, e);</span>
+<span class="nc" id="L307">            throw new MojoExecutionException(&quot;Exception while watching for changes&quot;, e);</span>
         } finally {
-<span class="nc" id="L291">            killProcess();</span>
-<span class="nc" id="L292">            cleanup();</span>
+<span class="nc" id="L309">            killProcess();</span>
+<span class="nc bnc" id="L310" title="All 2 branches missed.">            if (classDataSharingSupport != null) {</span>
+<span class="nc" id="L311">                classDataSharingSupport.awaitBackgroundWork();</span>
+            }
+<span class="nc" id="L313">            cleanup();</span>
         }
-<span class="nc" id="L294">    }</span>
+<span class="nc" id="L315">    }</span>
 
     protected final void initialize() {
-<span class="fc" id="L297">        final MavenProject currentProject = mavenSession.getCurrentProject();</span>
-<span class="pc bpc" id="L298" title="1 of 2 branches missed.">        if (hasMicronautMavenPlugin(currentProject)) {</span>
-<span class="fc" id="L299">            runnableProject = currentProject;</span>
+<span class="fc" id="L318">        final MavenProject currentProject = mavenSession.getCurrentProject();</span>
+<span class="pc bpc" id="L319" title="1 of 2 branches missed.">        if (hasMicronautMavenPlugin(currentProject)) {</span>
+<span class="fc" id="L320">            runnableProject = currentProject;</span>
         } else {
-<span class="nc" id="L301">            final List&lt;MavenProject&gt; projectsWithPlugin = mavenSession.getProjects().stream()</span>
-<span class="nc" id="L302">                .filter(MojoUtils::hasMicronautMavenPlugin)</span>
-<span class="nc" id="L303">                .toList();</span>
-<span class="nc bnc" id="L304" title="All 2 branches missed.">            if (projectsWithPlugin.size() == 1) {</span>
-<span class="nc" id="L305">                runnableProject = projectsWithPlugin.get(0);</span>
-<span class="nc" id="L306">                log.info(&quot;Running project %s&quot;.formatted(runnableProject.getArtifactId()));</span>
+<span class="nc" id="L322">            final List&lt;MavenProject&gt; projectsWithPlugin = mavenSession.getProjects().stream()</span>
+<span class="nc" id="L323">                .filter(MojoUtils::hasMicronautMavenPlugin)</span>
+<span class="nc" id="L324">                .toList();</span>
+<span class="nc bnc" id="L325" title="All 2 branches missed.">            if (projectsWithPlugin.size() == 1) {</span>
+<span class="nc" id="L326">                runnableProject = projectsWithPlugin.get(0);</span>
+<span class="nc" id="L327">                log.info(&quot;Running project %s&quot;.formatted(runnableProject.getArtifactId()));</span>
             } else {
-<span class="nc" id="L308">                throw new IllegalStateException(&quot;The Micronaut Maven Plugin is declared in the following projects: %s. Please specify the project to run with the -pl option.&quot;</span>
-<span class="nc" id="L309">                    .formatted(projectsWithPlugin.stream().map(MavenProject::getArtifactId).toList()));</span>
+<span class="nc" id="L329">                throw new IllegalStateException(&quot;The Micronaut Maven Plugin is declared in the following projects: %s. Please specify the project to run with the -pl option.&quot;</span>
+<span class="nc" id="L330">                    .formatted(projectsWithPlugin.stream().map(MavenProject::getArtifactId).toList()));</span>
             }
         }
-<span class="fc" id="L312">        this.targetDirectory = new File(runnableProject.getBuild().getDirectory());</span>
-<span class="fc" id="L313">        this.testResourcesHelper = new TestResourcesHelper(testResourcesEnabled, shared, buildDirectory, explicitPort,</span>
+<span class="fc" id="L333">        this.targetDirectory = new File(runnableProject.getBuild().getDirectory());</span>
+<span class="pc bpc" id="L334" title="1 of 2 branches missed.">        if (classDataSharing) {</span>
+<span class="nc" id="L335">            this.classDataSharingSupport = new ClassDataSharingSupport(getLog(),</span>
+<span class="nc" id="L336">                targetDirectory.toPath().resolve(ClassDataSharingSupport.DIRECTORY_NAME), javaExecutable, System.getenv());</span>
+        }
+<span class="fc" id="L338">        this.testResourcesHelper = new TestResourcesHelper(testResourcesEnabled, shared, buildDirectory, explicitPort,</span>
                 clientTimeout, serverIdleTimeoutMinutes, runnableProject, mavenSession, dependencyResolutionService,
-<span class="fc" id="L315">                toolchainManager, testResourcesVersion, classpathInference, testResourcesDependencies,</span>
+<span class="fc" id="L340">                toolchainManager, testResourcesVersion, classpathInference, testResourcesDependencies,</span>
                 sharedServerNamespace, debugServer, false, testResourcesSystemProperties);
-<span class="fc" id="L317">        resolveDependencies();</span>
-<span class="pc bpc" id="L318" title="1 of 2 branches missed.">        if (watches == null) {</span>
-<span class="nc" id="L319">            watches = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L342">        resolveDependencies();</span>
+<span class="pc bpc" id="L343" title="1 of 2 branches missed.">        if (watches == null) {</span>
+<span class="nc" id="L344">            watches = new ArrayList&lt;&gt;();</span>
         }
         // watch pom.xml file changes
-<span class="fc" id="L322">        mavenSession.getAllProjects().stream()</span>
-<span class="fc" id="L323">            .filter(this::isDependencyOfRunnableProject)</span>
-<span class="fc" id="L324">            .map(MavenProject::getBasedir)</span>
-<span class="fc" id="L325">            .map(File::toPath)</span>
-<span class="fc" id="L326">            .forEach(path -&gt; {</span>
-<span class="fc" id="L327">                var fileSet = new FileSet();</span>
-<span class="fc" id="L328">                fileSet.setDirectory(path.toString());</span>
-<span class="fc" id="L329">                fileSet.addInclude(&quot;pom.xml&quot;);</span>
-<span class="fc" id="L330">                watches.add(fileSet);</span>
-<span class="fc" id="L331">            });</span>
+<span class="fc" id="L347">        mavenSession.getAllProjects().stream()</span>
+<span class="fc" id="L348">            .filter(this::isDependencyOfRunnableProject)</span>
+<span class="fc" id="L349">            .map(MavenProject::getBasedir)</span>
+<span class="fc" id="L350">            .map(File::toPath)</span>
+<span class="fc" id="L351">            .forEach(path -&gt; {</span>
+<span class="fc" id="L352">                var fileSet = new FileSet();</span>
+<span class="fc" id="L353">                fileSet.setDirectory(path.toString());</span>
+<span class="fc" id="L354">                fileSet.addInclude(&quot;pom.xml&quot;);</span>
+<span class="fc" id="L355">                watches.add(fileSet);</span>
+<span class="fc" id="L356">            });</span>
         // Add the default watch paths
-<span class="fc" id="L333">        mavenSession.getAllProjects().stream()</span>
-<span class="fc" id="L334">            .filter(this::isDependencyOfRunnableProject)</span>
-<span class="fc" id="L335">            .flatMap(p -&gt; {</span>
-<span class="fc" id="L336">                var basedir = p.getBasedir().toPath();</span>
-<span class="fc" id="L337">                return RELEVANT_SRC_DIRS.stream().map(dir -&gt; basedir.resolve(&quot;src/main/&quot; + dir));</span>
+<span class="fc" id="L358">        mavenSession.getAllProjects().stream()</span>
+<span class="fc" id="L359">            .filter(this::isDependencyOfRunnableProject)</span>
+<span class="fc" id="L360">            .flatMap(p -&gt; {</span>
+<span class="fc" id="L361">                var basedir = p.getBasedir().toPath();</span>
+<span class="fc" id="L362">                return RELEVANT_SRC_DIRS.stream().map(dir -&gt; basedir.resolve(&quot;src/main/&quot; + dir));</span>
             })
-<span class="fc" id="L339">            .forEach(path -&gt; {</span>
-<span class="fc" id="L340">                var fileSet = new FileSet();</span>
-<span class="fc" id="L341">                fileSet.setDirectory(path.toString());</span>
-<span class="fc" id="L342">                fileSet.addInclude(&quot;**/*&quot;);</span>
-<span class="fc" id="L343">                watches.add(fileSet);</span>
-<span class="fc" id="L344">            });</span>
+<span class="fc" id="L364">            .forEach(path -&gt; {</span>
+<span class="fc" id="L365">                var fileSet = new FileSet();</span>
+<span class="fc" id="L366">                fileSet.setDirectory(path.toString());</span>
+<span class="fc" id="L367">                fileSet.addInclude(&quot;**/*&quot;);</span>
+<span class="fc" id="L368">                watches.add(fileSet);</span>
+<span class="fc" id="L369">            });</span>
 
-<span class="fc" id="L346">        compileProject();</span>
-<span class="fc" id="L347">    }</span>
+<span class="fc" id="L371">        compileProject();</span>
+<span class="fc" id="L372">    }</span>
 
     private boolean isDependencyOfRunnableProject(MavenProject mavenProject) {
-<span class="fc bfc" id="L350" title="All 2 branches covered.">        return mavenProject.equals(runnableProject) || runnableProject.getDependencies().stream()</span>
-<span class="pc bpc" id="L351" title="1 of 6 branches missed.">            .anyMatch(d -&gt; d.getGroupId().equals(mavenProject.getGroupId()) &amp;&amp; d.getArtifactId().equals(mavenProject.getArtifactId()));</span>
+<span class="fc bfc" id="L375" title="All 2 branches covered.">        return mavenProject.equals(runnableProject) || runnableProject.getDependencies().stream()</span>
+<span class="pc bpc" id="L376" title="1 of 6 branches missed.">            .anyMatch(d -&gt; d.getGroupId().equals(mavenProject.getGroupId()) &amp;&amp; d.getArtifactId().equals(mavenProject.getArtifactId()));</span>
     }
 
     protected final void setWatches(List&lt;FileSet&gt; watches) {
-<span class="fc" id="L355">        this.watches = watches;</span>
-<span class="fc" id="L356">    }</span>
+<span class="fc" id="L380">        this.watches = watches;</span>
+<span class="fc" id="L381">    }</span>
 
     final void handleEvent(DirectoryChangeEvent event) {
-<span class="fc" id="L359">        Path path = event.path();</span>
-<span class="fc" id="L360">        Path parent = path.getParent();</span>
-<span class="fc" id="L361">        Path projectRootDirectory = mavenSession.getTopLevelProject().getBasedir().toPath();</span>
+<span class="fc" id="L384">        Path path = event.path();</span>
+<span class="fc" id="L385">        Path parent = path.getParent();</span>
+<span class="fc" id="L386">        Path projectRootDirectory = mavenSession.getTopLevelProject().getBasedir().toPath();</span>
 
-<span class="fc bfc" id="L363" title="All 2 branches covered.">        if (matches(path)) {</span>
-<span class="pc bpc" id="L364" title="1 of 2 branches missed.">            if (getLog().isInfoEnabled()) {</span>
-<span class="fc" id="L365">                getLog().info(String.format(&quot;📝 Detected change in %s. Recompiling/restarting...&quot;, projectRootDirectory.relativize(path)));</span>
+<span class="fc bfc" id="L388" title="All 2 branches covered.">        if (matches(path)) {</span>
+<span class="pc bpc" id="L389" title="1 of 2 branches missed.">            if (getLog().isInfoEnabled()) {</span>
+<span class="fc" id="L390">                getLog().info(String.format(&quot;📝 Detected change in %s. Recompiling/restarting...&quot;, projectRootDirectory.relativize(path)));</span>
             }
-<span class="fc" id="L367">            boolean compiledOk = compileProject();</span>
-<span class="pc bpc" id="L368" title="1 of 2 branches missed.">            if (compiledOk) {</span>
+<span class="fc" id="L392">            boolean compiledOk = compileProject();</span>
+<span class="pc bpc" id="L393" title="1 of 2 branches missed.">            if (compiledOk) {</span>
                 try {
-<span class="fc" id="L370">                    runApplication();</span>
-<span class="nc" id="L371">                } catch (Exception e) {</span>
-<span class="nc" id="L372">                    getLog().error(&quot;Unable to run application: &quot; + e.getMessage(), e);</span>
-<span class="fc" id="L373">                }</span>
+<span class="fc" id="L395">                    runApplication();</span>
+<span class="nc" id="L396">                } catch (Exception e) {</span>
+<span class="nc" id="L397">                    getLog().error(&quot;Unable to run application: &quot; + e.getMessage(), e);</span>
+<span class="fc" id="L398">                }</span>
             }
         }
-<span class="fc" id="L376">    }</span>
+<span class="fc" id="L401">    }</span>
 
     private boolean matches(Path path) {
         // Apply default exclusions
-<span class="pc bpc" id="L380" title="3 of 8 branches missed.">        if (isDefaultExcluded(path) || isDirectory(path, NOFOLLOW_LINKS) || !isReadable(path) || hasBeenCompiledRecently()) {</span>
-<span class="fc" id="L381">            return false;</span>
+<span class="pc bpc" id="L405" title="3 of 8 branches missed.">        if (isDefaultExcluded(path) || isDirectory(path, NOFOLLOW_LINKS) || !isReadable(path) || hasBeenCompiledRecently()) {</span>
+<span class="fc" id="L406">            return false;</span>
         }
 
-<span class="fc" id="L384">        Path projectRootDirectory = mavenSession.getTopLevelProject().getBasedir().toPath();</span>
+<span class="fc" id="L409">        Path projectRootDirectory = mavenSession.getTopLevelProject().getBasedir().toPath();</span>
 
-<span class="fc" id="L386">        String relativePath = projectRootDirectory.relativize(path).toString();</span>
+<span class="fc" id="L411">        String relativePath = projectRootDirectory.relativize(path).toString();</span>
 
-<span class="fc" id="L388">        boolean matches = false;</span>
-<span class="fc bfc" id="L389" title="All 2 branches covered.">        for (FileSet fileSet : watches) {</span>
-<span class="pc bpc" id="L390" title="1 of 4 branches missed.">            if (fileSet.getIncludes() != null &amp;&amp; !fileSet.getIncludes().isEmpty()) {</span>
-<span class="fc" id="L391">                var directory = new File(fileSet.getDirectory());</span>
-<span class="fc bfc" id="L392" title="All 4 branches covered.">                if (directory.exists() &amp;&amp; path.getParent().startsWith(directory.getAbsolutePath())) {</span>
-<span class="fc bfc" id="L393" title="All 2 branches covered.">                    for (String includePattern : fileSet.getIncludes()) {</span>
-<span class="fc bfc" id="L394" title="All 4 branches covered.">                        if (pathMatches(includePattern, path) || patternEquals(path, includePattern, directory)) {</span>
-<span class="fc" id="L395">                            matches = true;</span>
-<span class="pc bpc" id="L396" title="1 of 2 branches missed.">                            if (getLog().isDebugEnabled()) {</span>
-<span class="nc" id="L397">                                getLog().debug(&quot;Path [&quot; + relativePath + &quot;] matched the include pattern [&quot; + includePattern + &quot;] of the directory [&quot; + fileSet.getDirectory() + &quot;]&quot;);</span>
+<span class="fc" id="L413">        boolean matches = false;</span>
+<span class="fc bfc" id="L414" title="All 2 branches covered.">        for (FileSet fileSet : watches) {</span>
+<span class="pc bpc" id="L415" title="1 of 4 branches missed.">            if (fileSet.getIncludes() != null &amp;&amp; !fileSet.getIncludes().isEmpty()) {</span>
+<span class="fc" id="L416">                var directory = new File(fileSet.getDirectory());</span>
+<span class="fc bfc" id="L417" title="All 4 branches covered.">                if (directory.exists() &amp;&amp; path.getParent().startsWith(directory.getAbsolutePath())) {</span>
+<span class="fc bfc" id="L418" title="All 2 branches covered.">                    for (String includePattern : fileSet.getIncludes()) {</span>
+<span class="fc bfc" id="L419" title="All 4 branches covered.">                        if (pathMatches(includePattern, path) || patternEquals(path, includePattern, directory)) {</span>
+<span class="fc" id="L420">                            matches = true;</span>
+<span class="pc bpc" id="L421" title="1 of 2 branches missed.">                            if (getLog().isDebugEnabled()) {</span>
+<span class="nc" id="L422">                                getLog().debug(&quot;Path [&quot; + relativePath + &quot;] matched the include pattern [&quot; + includePattern + &quot;] of the directory [&quot; + fileSet.getDirectory() + &quot;]&quot;);</span>
                             }
                             break;
                         }
-<span class="fc" id="L401">                    }</span>
+<span class="fc" id="L426">                    }</span>
                 }
             }
-<span class="fc bfc" id="L404" title="All 2 branches covered.">            if (matches) {</span>
-<span class="fc" id="L405">                break;</span>
+<span class="fc bfc" id="L429" title="All 2 branches covered.">            if (matches) {</span>
+<span class="fc" id="L430">                break;</span>
             }
-<span class="fc" id="L407">        }</span>
+<span class="fc" id="L432">        }</span>
 
         // Finally, process excludes only if the path is matching
-<span class="fc bfc" id="L410" title="All 2 branches covered.">        if (matches) {</span>
-<span class="fc bfc" id="L411" title="All 2 branches covered.">            for (FileSet fileSet : watches) {</span>
-<span class="pc bpc" id="L412" title="1 of 4 branches missed.">                if (fileSet.getExcludes() != null &amp;&amp; !fileSet.getExcludes().isEmpty()) {</span>
-<span class="fc" id="L413">                    File directory = new File(fileSet.getDirectory());</span>
-<span class="pc bpc" id="L414" title="1 of 4 branches missed.">                    if (directory.exists() &amp;&amp; path.getParent().startsWith(directory.getAbsolutePath())) {</span>
-<span class="pc bpc" id="L415" title="1 of 2 branches missed.">                        for (String excludePattern : fileSet.getExcludes()) {</span>
-<span class="pc bpc" id="L416" title="3 of 4 branches missed.">                            if (pathMatches(excludePattern, path) || patternEquals(path, excludePattern, directory)) {</span>
-<span class="fc" id="L417">                                matches = false;</span>
-<span class="pc bpc" id="L418" title="1 of 2 branches missed.">                                if (getLog().isDebugEnabled()) {</span>
-<span class="nc" id="L419">                                    getLog().debug(&quot;Path [&quot; + relativePath + &quot;] matched the exclude pattern [&quot; + excludePattern + &quot;] of the directory [&quot; + fileSet.getDirectory() + &quot;]&quot;);</span>
+<span class="fc bfc" id="L435" title="All 2 branches covered.">        if (matches) {</span>
+<span class="fc bfc" id="L436" title="All 2 branches covered.">            for (FileSet fileSet : watches) {</span>
+<span class="pc bpc" id="L437" title="1 of 4 branches missed.">                if (fileSet.getExcludes() != null &amp;&amp; !fileSet.getExcludes().isEmpty()) {</span>
+<span class="fc" id="L438">                    File directory = new File(fileSet.getDirectory());</span>
+<span class="pc bpc" id="L439" title="1 of 4 branches missed.">                    if (directory.exists() &amp;&amp; path.getParent().startsWith(directory.getAbsolutePath())) {</span>
+<span class="pc bpc" id="L440" title="1 of 2 branches missed.">                        for (String excludePattern : fileSet.getExcludes()) {</span>
+<span class="pc bpc" id="L441" title="3 of 4 branches missed.">                            if (pathMatches(excludePattern, path) || patternEquals(path, excludePattern, directory)) {</span>
+<span class="fc" id="L442">                                matches = false;</span>
+<span class="pc bpc" id="L443" title="1 of 2 branches missed.">                                if (getLog().isDebugEnabled()) {</span>
+<span class="nc" id="L444">                                    getLog().debug(&quot;Path [&quot; + relativePath + &quot;] matched the exclude pattern [&quot; + excludePattern + &quot;] of the directory [&quot; + fileSet.getDirectory() + &quot;]&quot;);</span>
                                 }
                                 break;
                             }
-<span class="nc" id="L423">                        }</span>
+<span class="nc" id="L448">                        }</span>
                     }
                 }
-<span class="fc bfc" id="L426" title="All 2 branches covered.">                if (!matches) {</span>
-<span class="fc" id="L427">                    break;</span>
+<span class="fc bfc" id="L451" title="All 2 branches covered.">                if (!matches) {</span>
+<span class="fc" id="L452">                    break;</span>
                 }
-<span class="fc" id="L429">            }</span>
+<span class="fc" id="L454">            }</span>
         }
 
-<span class="fc" id="L432">        return matches;</span>
+<span class="fc" id="L457">        return matches;</span>
     }
 
     private boolean isDefaultExcluded(Path path) {
-<span class="fc" id="L436">        boolean excludeTargetDirectory = true;</span>
-<span class="pc bpc" id="L437" title="2 of 4 branches missed.">        if (this.watches != null &amp;&amp; !this.watches.isEmpty()) {</span>
-<span class="fc bfc" id="L438" title="All 2 branches covered.">            for (FileSet fileSet : this.watches) {</span>
-<span class="pc bpc" id="L439" title="1 of 2 branches missed.">                if (fileSet.getDirectory().equals(this.targetDirectory.getName())) {</span>
-<span class="nc" id="L440">                    excludeTargetDirectory = false;</span>
+<span class="fc" id="L461">        boolean excludeTargetDirectory = true;</span>
+<span class="pc bpc" id="L462" title="2 of 4 branches missed.">        if (this.watches != null &amp;&amp; !this.watches.isEmpty()) {</span>
+<span class="fc bfc" id="L463" title="All 2 branches covered.">            for (FileSet fileSet : this.watches) {</span>
+<span class="pc bpc" id="L464" title="1 of 2 branches missed.">                if (fileSet.getDirectory().equals(this.targetDirectory.getName())) {</span>
+<span class="nc" id="L465">                    excludeTargetDirectory = false;</span>
                 }
-<span class="fc" id="L442">            }</span>
+<span class="fc" id="L467">            }</span>
         }
-<span class="pc bpc" id="L444" title="2 of 4 branches missed.">        return (excludeTargetDirectory &amp;&amp; path.startsWith(targetDirectory.getAbsolutePath())) ||</span>
-<span class="fc" id="L445">            DEFAULT_EXCLUDES.stream()</span>
-<span class="fc bfc" id="L446" title="All 2 branches covered.">                .anyMatch(excludePattern -&gt; pathMatches(excludePattern, path));</span>
+<span class="pc bpc" id="L469" title="2 of 4 branches missed.">        return (excludeTargetDirectory &amp;&amp; path.startsWith(targetDirectory.getAbsolutePath())) ||</span>
+<span class="fc" id="L470">            DEFAULT_EXCLUDES.stream()</span>
+<span class="fc bfc" id="L471" title="All 2 branches covered.">                .anyMatch(excludePattern -&gt; pathMatches(excludePattern, path));</span>
     }
 
     private boolean hasBeenCompiledRecently() {
-<span class="pc bpc" id="L450" title="1 of 2 branches missed.">        return (System.currentTimeMillis() - lastCompilation) &lt; LAST_COMPILATION_THRESHOLD;</span>
+<span class="pc bpc" id="L475" title="1 of 2 branches missed.">        return (System.currentTimeMillis() - lastCompilation) &lt; LAST_COMPILATION_THRESHOLD;</span>
     }
 
     private void cleanup() {
-<span class="nc bnc" id="L454" title="All 2 branches missed.">        if (getLog().isDebugEnabled()) {</span>
-<span class="nc" id="L455">            getLog().debug(&quot;Cleaning up&quot;);</span>
+<span class="nc bnc" id="L479" title="All 2 branches missed.">        if (getLog().isDebugEnabled()) {</span>
+<span class="nc" id="L480">            getLog().debug(&quot;Cleaning up&quot;);</span>
         }
         try {
-<span class="nc" id="L458">            directoryWatcher.close();</span>
-<span class="nc" id="L459">            maybeStopTestResourcesServer();</span>
-<span class="nc" id="L460">        } catch (Exception e) {</span>
+<span class="nc" id="L483">            directoryWatcher.close();</span>
+<span class="nc" id="L484">            maybeStopTestResourcesServer();</span>
+<span class="nc" id="L485">        } catch (Exception e) {</span>
             // Do nothing
-<span class="nc" id="L462">        }</span>
-<span class="nc" id="L463">    }</span>
+<span class="nc" id="L487">        }</span>
+<span class="nc" id="L488">    }</span>
 
     private boolean rebuildMavenProject() {
-<span class="nc" id="L466">        boolean success = true;</span>
+<span class="nc" id="L491">        boolean success = true;</span>
         try {
-<span class="nc" id="L468">            ProjectBuildingRequest projectBuildingRequest = mavenSession.getProjectBuildingRequest();</span>
-<span class="nc" id="L469">            projectBuildingRequest.setResolveDependencies(true);</span>
-<span class="nc" id="L470">            ProjectBuildingResult build = projectBuilder.build(runnableProject.getArtifact(), projectBuildingRequest);</span>
-<span class="nc" id="L471">            MavenProject project = build.getProject();</span>
-<span class="nc" id="L472">            runnableProject = project;</span>
-<span class="nc" id="L473">            mavenSession.setCurrentProject(project);</span>
-<span class="nc" id="L474">        } catch (ProjectBuildingException e) {</span>
-<span class="nc" id="L475">            success = false;</span>
-<span class="nc bnc" id="L476" title="All 2 branches missed.">            if (getLog().isWarnEnabled()) {</span>
-<span class="nc" id="L477">                getLog().warn(&quot;Error while trying to build the Maven project model&quot;, e);</span>
+<span class="nc" id="L493">            ProjectBuildingRequest projectBuildingRequest = mavenSession.getProjectBuildingRequest();</span>
+<span class="nc" id="L494">            projectBuildingRequest.setResolveDependencies(true);</span>
+<span class="nc" id="L495">            ProjectBuildingResult build = projectBuilder.build(runnableProject.getArtifact(), projectBuildingRequest);</span>
+<span class="nc" id="L496">            MavenProject project = build.getProject();</span>
+<span class="nc" id="L497">            runnableProject = project;</span>
+<span class="nc" id="L498">            mavenSession.setCurrentProject(project);</span>
+<span class="nc" id="L499">        } catch (ProjectBuildingException e) {</span>
+<span class="nc" id="L500">            success = false;</span>
+<span class="nc bnc" id="L501" title="All 2 branches missed.">            if (getLog().isWarnEnabled()) {</span>
+<span class="nc" id="L502">                getLog().warn(&quot;Error while trying to build the Maven project model&quot;, e);</span>
             }
-<span class="nc" id="L479">        }</span>
-<span class="nc" id="L480">        return success;</span>
+<span class="nc" id="L504">        }</span>
+<span class="nc" id="L505">        return success;</span>
     }
 
     private boolean resolveDependencies() {
         try {
-<span class="fc" id="L485">            List&lt;Dependency&gt; dependencies = compilerService.resolveDependencies(runnableProject, true, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME);</span>
-<span class="pc bpc" id="L486" title="1 of 2 branches missed.">            if (dependencies.isEmpty()) {</span>
-<span class="fc" id="L487">                return false;</span>
+<span class="fc" id="L510">            List&lt;Dependency&gt; dependencies = compilerService.resolveDependencies(runnableProject, true, JavaScopes.PROVIDED, JavaScopes.COMPILE, JavaScopes.RUNTIME);</span>
+<span class="pc bpc" id="L511" title="1 of 2 branches missed.">            if (dependencies.isEmpty()) {</span>
+<span class="fc" id="L512">                return false;</span>
             } else {
-<span class="nc" id="L489">                this.classpath = compilerService.buildClasspath(dependencies);</span>
-<span class="nc" id="L490">                return true;</span>
+<span class="nc" id="L514">                this.classpath = compilerService.buildClasspath(dependencies);</span>
+<span class="nc" id="L515">                return true;</span>
             }
         } finally {
-<span class="pc bpc" id="L493" title="1 of 2 branches missed.">            if (classpath != null) {</span>
-<span class="nc" id="L494">                this.classpathHash = this.classpath.hashCode();</span>
+<span class="pc bpc" id="L518" title="1 of 2 branches missed.">            if (classpath != null) {</span>
+<span class="nc" id="L519">                this.classpathHash = this.classpath.hashCode();</span>
             }
         }
     }
 
     private boolean classpathHasChanged() {
-<span class="nc" id="L500">        int oldClasspathHash = this.classpathHash;</span>
-<span class="nc" id="L501">        this.classpathHash = this.classpath.hashCode();</span>
-<span class="nc bnc" id="L502" title="All 2 branches missed.">        return oldClasspathHash != classpathHash;</span>
+<span class="nc" id="L525">        int oldClasspathHash = this.classpathHash;</span>
+<span class="nc" id="L526">        this.classpathHash = this.classpath.hashCode();</span>
+<span class="nc bnc" id="L527" title="All 2 branches missed.">        return oldClasspathHash != classpathHash;</span>
 
     }
 
@@ -510,195 +535,219 @@ public class RunMojo extends AbstractTestResourcesMojo {
      * @throws Exception if something goes wrong while starting the application
      */
     protected void runApplication() throws Exception {
-<span class="nc bnc" id="L513" title="All 2 branches missed.">        if (restartLock.getQueueLength() &gt;= 1) {</span>
+<span class="nc bnc" id="L538" title="All 2 branches missed.">        if (restartLock.getQueueLength() &gt;= 1) {</span>
             // if there's more than one restart request, we'll handle them all at once
-<span class="nc" id="L515">            return;</span>
+<span class="nc" id="L540">            return;</span>
         }
-<span class="nc" id="L517">        restartLock.lock();</span>
+<span class="nc" id="L542">        restartLock.lock();</span>
         try {
             // Validate Micronaut configuration for the dev environment before starting.
-<span class="nc" id="L520">            executorService.executeGoal(runnableProject, THIS_PLUGIN, ValidateDevConfigurationMojo.MOJO_NAME, configurationValidationConfiguration());</span>
-<span class="nc" id="L521">            runAotIfNeeded();</span>
-<span class="nc" id="L522">            List&lt;String&gt; args = buildRunArguments();</span>
+<span class="nc" id="L545">            executorService.executeGoal(runnableProject, THIS_PLUGIN, ValidateDevConfigurationMojo.MOJO_NAME, configurationValidationConfiguration());</span>
+<span class="nc" id="L546">            runAotIfNeeded();</span>
+<span class="nc" id="L547">            List&lt;String&gt; args = buildRunArguments();</span>
 
-<span class="nc bnc" id="L524" title="All 2 branches missed.">            if (getLog().isDebugEnabled()) {</span>
-<span class="nc" id="L525">                getLog().debug(&quot;Running &quot; + String.join(&quot; &quot;, args));</span>
+<span class="nc bnc" id="L549" title="All 2 branches missed.">            if (getLog().isDebugEnabled()) {</span>
+<span class="nc" id="L550">                getLog().debug(&quot;Running &quot; + String.join(&quot; &quot;, args));</span>
             }
 
-<span class="nc" id="L528">            killProcess();</span>
-<span class="nc" id="L529">            process = new ProcessBuilder(args)</span>
-<span class="nc" id="L530">                .inheritIO()</span>
-<span class="nc" id="L531">                .directory(targetDirectory)</span>
-<span class="nc" id="L532">                .start();</span>
+<span class="nc" id="L553">            killProcess();</span>
+<span class="nc" id="L554">            process = new ProcessBuilder(args)</span>
+<span class="nc" id="L555">                .inheritIO()</span>
+<span class="nc" id="L556">                .directory(targetDirectory)</span>
+<span class="nc" id="L557">                .start();</span>
+<span class="nc bnc" id="L558" title="All 2 branches missed.">            if (classDataSharingSupport != null) {</span>
+<span class="nc" id="L559">                classDataSharingSupport.launched(process);</span>
+            }
         } finally {
-<span class="nc" id="L534">            restartLock.unlock();</span>
+<span class="nc" id="L562">            restartLock.unlock();</span>
         }
-<span class="nc" id="L536">    }</span>
+<span class="nc" id="L564">    }</span>
 
     private List&lt;String&gt; buildRunArguments() throws Exception {
-<span class="nc" id="L539">        final String reactorClasses = mavenSession.getAllProjects().stream()</span>
-<span class="nc" id="L540">            .filter(this::isDependencyOfRunnableProject)</span>
-<span class="nc" id="L541">            .map(MavenProject::getBuild)</span>
-<span class="nc" id="L542">            .map(Build::getOutputDirectory)</span>
-<span class="nc" id="L543">            .collect(Collectors.joining(File.pathSeparator));</span>
-<span class="nc" id="L544">        String classpathArgument = String.join(File.pathSeparator, reactorClasses, this.classpath);</span>
-<span class="nc" id="L545">        List&lt;String&gt; translatedJvmArguments = translateArguments(jvmArguments);</span>
+<span class="fc" id="L567">        final List&lt;String&gt; reactorOutputs = mavenSession.getAllProjects().stream()</span>
+<span class="fc" id="L568">            .filter(this::isDependencyOfRunnableProject)</span>
+<span class="fc" id="L569">            .map(MavenProject::getBuild)</span>
+<span class="fc" id="L570">            .map(Build::getOutputDirectory)</span>
+<span class="fc" id="L571">            .toList();</span>
+<span class="fc" id="L572">        final String reactorClasses = String.join(File.pathSeparator, reactorOutputs);</span>
+<span class="fc" id="L573">        String classpathArgument = String.join(File.pathSeparator, reactorClasses, this.classpath);</span>
+<span class="fc" id="L574">        List&lt;String&gt; translatedJvmArguments = translateArguments(jvmArguments);</span>
 
-<span class="nc" id="L547">        var args = new ArrayList&lt;String&gt;();</span>
-<span class="nc" id="L548">        args.add(javaExecutable);</span>
-<span class="nc" id="L549">        addDebugArguments(args);</span>
-<span class="nc" id="L550">        addTestResourcesArguments(args);</span>
-<span class="nc" id="L551">        args.addAll(translatedJvmArguments);</span>
-<span class="nc" id="L552">        addUserProperties(args);</span>
-<span class="nc" id="L553">        addNativeImageAgentArguments(args, translatedJvmArguments);</span>
-<span class="nc" id="L554">        args.add(&quot;-classpath&quot;);</span>
-<span class="nc" id="L555">        args.add(classpathArgument);</span>
-<span class="nc" id="L556">        args.add(&quot;-XX:TieredStopAtLevel=1&quot;);</span>
-<span class="nc" id="L557">        args.add(&quot;-Dcom.sun.management.jmxremote&quot;);</span>
-<span class="nc" id="L558">        args.add(resolveMainClass());</span>
-<span class="nc" id="L559">        args.addAll(translateArguments(appArguments));</span>
-<span class="nc" id="L560">        return args;</span>
+<span class="fc" id="L576">        var args = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L577">        args.add(javaExecutable);</span>
+<span class="fc" id="L578">        addDebugArguments(args);</span>
+<span class="fc" id="L579">        addTestResourcesArguments(args);</span>
+<span class="fc" id="L580">        args.addAll(translatedJvmArguments);</span>
+<span class="fc" id="L581">        addUserProperties(args);</span>
+<span class="fc" id="L582">        addNativeImageAgentArguments(args, translatedJvmArguments);</span>
+<span class="fc" id="L583">        args.add(&quot;-classpath&quot;);</span>
+<span class="fc" id="L584">        int classpathIndex = args.size();</span>
+<span class="fc" id="L585">        args.add(classpathArgument);</span>
+<span class="fc" id="L586">        args.add(&quot;-XX:TieredStopAtLevel=1&quot;);</span>
+<span class="fc" id="L587">        int mainClassIndex = args.size();</span>
+<span class="fc" id="L588">        args.add(resolveMainClass());</span>
+<span class="fc" id="L589">        args.addAll(translateArguments(appArguments));</span>
+<span class="fc bfc" id="L590" title="All 2 branches covered.">        if (classDataSharingSupport != null) {</span>
+<span class="fc" id="L591">            return classDataSharingSupport.prepareLaunch(args, classpathIndex, mainClassIndex, reactorOutputs, this.classpath);</span>
+        }
+<span class="fc" id="L593">        return args;</span>
     }
 
     private void addDebugArguments(List&lt;String&gt; args) {
-<span class="nc bnc" id="L564" title="All 2 branches missed.">        if (debug) {</span>
-<span class="nc bnc" id="L565" title="All 2 branches missed.">            String suspend = debugSuspend ? &quot;y&quot; : &quot;n&quot;;</span>
-<span class="nc" id="L566">            args.add(&quot;-agentlib:jdwp=transport=dt_socket,server=y,suspend=&quot; + suspend + &quot;,address=&quot; + debugHost + &quot;:&quot; + debugPort);</span>
+<span class="pc bpc" id="L597" title="1 of 2 branches missed.">        if (debug) {</span>
+<span class="nc bnc" id="L598" title="All 2 branches missed.">            String suspend = debugSuspend ? &quot;y&quot; : &quot;n&quot;;</span>
+<span class="nc" id="L599">            args.add(&quot;-agentlib:jdwp=transport=dt_socket,server=y,suspend=&quot; + suspend + &quot;,address=&quot; + debugHost + &quot;:&quot; + debugPort);</span>
         }
-<span class="nc" id="L568">    }</span>
+<span class="fc" id="L601">    }</span>
 
     private void addTestResourcesArguments(List&lt;String&gt; args) {
-<span class="nc bnc" id="L571" title="All 2 branches missed.">        if (testResourcesEnabled) {</span>
-<span class="nc bnc" id="L572" title="All 2 branches missed.">            Path testResourcesSettingsDirectory = shared ? ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace) :</span>
-<span class="nc" id="L573">                AbstractTestResourcesMojo.serverSettingsDirectoryOf(targetDirectory.toPath());</span>
-<span class="nc" id="L574">            Optional&lt;ServerSettings&gt; serverSettings = ServerUtils.readServerSettings(testResourcesSettingsDirectory);</span>
-<span class="nc" id="L575">            serverSettings.ifPresent(settings -&gt; testResourcesHelper.computeSystemProperties(settings)</span>
-<span class="nc" id="L576">                .forEach((k, v) -&gt; args.add(&quot;-D&quot; + k + &quot;=&quot; + v)));</span>
+<span class="pc bpc" id="L604" title="1 of 2 branches missed.">        if (testResourcesEnabled) {</span>
+<span class="nc bnc" id="L605" title="All 2 branches missed.">            Path testResourcesSettingsDirectory = shared ? ServerUtils.getDefaultSharedSettingsPath(sharedServerNamespace) :</span>
+<span class="nc" id="L606">                AbstractTestResourcesMojo.serverSettingsDirectoryOf(targetDirectory.toPath());</span>
+<span class="nc" id="L607">            Optional&lt;ServerSettings&gt; serverSettings = ServerUtils.readServerSettings(testResourcesSettingsDirectory);</span>
+<span class="nc" id="L608">            serverSettings.ifPresent(settings -&gt; testResourcesHelper.computeSystemProperties(settings)</span>
+<span class="nc" id="L609">                .forEach((k, v) -&gt; args.add(&quot;-D&quot; + k + &quot;=&quot; + v)));</span>
         }
-<span class="nc" id="L578">    }</span>
+<span class="fc" id="L611">    }</span>
 
     private void addNativeImageAgentArguments(List&lt;String&gt; args, List&lt;String&gt; translatedJvmArguments) throws MojoExecutionException {
-<span class="nc" id="L581">        List&lt;String&gt; nativeImageAgentArguments = NativeImageAgentSupport.computeJvmArguments(mavenSession, runnableProject, targetDirectory, translatedJvmArguments);</span>
-<span class="nc bnc" id="L582" title="All 2 branches missed.">        if (!nativeImageAgentArguments.isEmpty()) {</span>
-<span class="nc bnc" id="L583" title="All 2 branches missed.">            if (watchForChanges) {</span>
-<span class="nc" id="L584">                getLog().warn(&quot;Native image agent metadata collection is intended for one-shot runs. Prefer mn:run -Dagent=true -Dmn.watch=false&quot;);</span>
+<span class="fc" id="L614">        List&lt;String&gt; nativeImageAgentArguments = NativeImageAgentSupport.computeJvmArguments(mavenSession, runnableProject, targetDirectory, translatedJvmArguments);</span>
+<span class="pc bpc" id="L615" title="1 of 2 branches missed.">        if (!nativeImageAgentArguments.isEmpty()) {</span>
+<span class="nc bnc" id="L616" title="All 2 branches missed.">            if (watchForChanges) {</span>
+<span class="nc" id="L617">                getLog().warn(&quot;Native image agent metadata collection is intended for one-shot runs. Prefer mn:run -Dagent=true -Dmn.watch=false&quot;);</span>
             }
-<span class="nc" id="L586">            args.addAll(nativeImageAgentArguments);</span>
+<span class="nc" id="L619">            args.addAll(nativeImageAgentArguments);</span>
         }
-<span class="nc" id="L588">    }</span>
+<span class="fc" id="L621">    }</span>
 
     private void addUserProperties(List&lt;String&gt; args) {
-<span class="nc bnc" id="L591" title="All 2 branches missed.">        if (!mavenSession.getUserProperties().isEmpty()) {</span>
-<span class="nc" id="L592">            mavenSession.getUserProperties().forEach((k, v) -&gt; args.add(&quot;-D&quot; + k + &quot;=&quot; + v));</span>
+<span class="fc bfc" id="L624" title="All 2 branches covered.">        if (!mavenSession.getUserProperties().isEmpty()) {</span>
+<span class="fc" id="L625">            mavenSession.getUserProperties().forEach((k, v) -&gt; args.add(&quot;-D&quot; + k + &quot;=&quot; + v));</span>
         }
-<span class="nc" id="L594">    }</span>
+<span class="fc" id="L627">    }</span>
 
     private String resolveMainClass() {
-<span class="nc bnc" id="L597" title="All 2 branches missed.">        if (mainClass == null) {</span>
-<span class="nc" id="L598">            mainClass = runnableProject.getProperties().getProperty(&quot;exec.mainClass&quot;);</span>
+<span class="pc bpc" id="L630" title="1 of 2 branches missed.">        if (mainClass == null) {</span>
+<span class="nc" id="L631">            mainClass = runnableProject.getProperties().getProperty(&quot;exec.mainClass&quot;);</span>
         }
-<span class="nc" id="L600">        return mainClass;</span>
+<span class="fc" id="L633">        return mainClass;</span>
     }
 
     private List&lt;String&gt; translateArguments(String arguments) throws Exception {
-<span class="nc bnc" id="L604" title="All 4 branches missed.">        if (arguments == null || arguments.isEmpty()) {</span>
-<span class="nc" id="L605">            return List.of();</span>
+<span class="pc bpc" id="L637" title="1 of 4 branches missed.">        if (arguments == null || arguments.isEmpty()) {</span>
+<span class="fc" id="L638">            return List.of();</span>
         }
-<span class="nc" id="L607">        return Arrays.asList(CommandLineUtils.translateCommandline(arguments));</span>
+<span class="fc" id="L640">        return Arrays.asList(CommandLineUtils.translateCommandline(arguments));</span>
     }
 
     private void runAotIfNeeded() {
-<span class="pc bpc" id="L611" title="1 of 2 branches missed.">        if (aotEnabled) {</span>
+<span class="pc bpc" id="L644" title="1 of 2 branches missed.">        if (aotEnabled) {</span>
             try {
-<span class="fc" id="L613">                executorService.executeGoal(runnableProject, THIS_PLUGIN, AbstractAotAnalysisMojo.NAME, aotAnalysisConfiguration());</span>
-<span class="nc" id="L614">            } catch (MojoExecutionException e) {</span>
-<span class="nc" id="L615">                getLog().error(e.getMessage());</span>
-<span class="fc" id="L616">            }</span>
+<span class="fc" id="L646">                executorService.executeGoal(runnableProject, THIS_PLUGIN, AbstractAotAnalysisMojo.NAME, aotAnalysisConfiguration());</span>
+<span class="nc" id="L647">            } catch (MojoExecutionException e) {</span>
+<span class="nc" id="L648">                getLog().error(e.getMessage());</span>
+<span class="fc" id="L649">            }</span>
         }
-<span class="fc" id="L618">    }</span>
+<span class="fc" id="L651">    }</span>
 
     private Xpp3Dom aotAnalysisConfiguration() {
-<span class="fc" id="L621">        Xpp3Dom configuration = new Xpp3Dom(&quot;configuration&quot;);</span>
-<span class="fc" id="L622">        Xpp3Dom enabled = new Xpp3Dom(&quot;enabled&quot;);</span>
-<span class="fc" id="L623">        enabled.setValue(Boolean.TRUE.toString());</span>
-<span class="fc" id="L624">        configuration.addChild(enabled);</span>
-<span class="fc" id="L625">        return configuration;</span>
+<span class="fc" id="L654">        Xpp3Dom configuration = new Xpp3Dom(&quot;configuration&quot;);</span>
+<span class="fc" id="L655">        Xpp3Dom enabled = new Xpp3Dom(&quot;enabled&quot;);</span>
+<span class="fc" id="L656">        enabled.setValue(Boolean.TRUE.toString());</span>
+<span class="fc" id="L657">        configuration.addChild(enabled);</span>
+<span class="fc" id="L658">        return configuration;</span>
     }
 
     private Xpp3Dom configurationValidationConfiguration() {
-<span class="nc" id="L629">        Xpp3Dom configuration = new Xpp3Dom(&quot;configuration&quot;);</span>
-<span class="nc" id="L630">        var plugin = runnableProject.getPlugin(THIS_PLUGIN);</span>
-<span class="nc bnc" id="L631" title="All 2 branches missed.">        if (plugin == null) {</span>
-<span class="nc" id="L632">            return configuration;</span>
+<span class="nc" id="L662">        Xpp3Dom configuration = new Xpp3Dom(&quot;configuration&quot;);</span>
+<span class="nc" id="L663">        var plugin = runnableProject.getPlugin(THIS_PLUGIN);</span>
+<span class="nc bnc" id="L664" title="All 2 branches missed.">        if (plugin == null) {</span>
+<span class="nc" id="L665">            return configuration;</span>
         }
-<span class="nc" id="L634">        Object pluginConfiguration = plugin.getConfiguration();</span>
-<span class="nc bnc" id="L635" title="All 2 branches missed.">        if (!(pluginConfiguration instanceof Xpp3Dom pluginDom)) {</span>
-<span class="nc" id="L636">            return configuration;</span>
+<span class="nc" id="L667">        Object pluginConfiguration = plugin.getConfiguration();</span>
+<span class="nc bnc" id="L668" title="All 2 branches missed.">        if (!(pluginConfiguration instanceof Xpp3Dom pluginDom)) {</span>
+<span class="nc" id="L669">            return configuration;</span>
         }
-<span class="nc" id="L638">        Xpp3Dom validationConfiguration = pluginDom.getChild(&quot;configurationValidation&quot;);</span>
-<span class="nc bnc" id="L639" title="All 2 branches missed.">        if (validationConfiguration != null) {</span>
-<span class="nc" id="L640">            configuration.addChild(new Xpp3Dom(validationConfiguration));</span>
+<span class="nc" id="L671">        Xpp3Dom validationConfiguration = pluginDom.getChild(&quot;configurationValidation&quot;);</span>
+<span class="nc bnc" id="L672" title="All 2 branches missed.">        if (validationConfiguration != null) {</span>
+<span class="nc" id="L673">            configuration.addChild(new Xpp3Dom(validationConfiguration));</span>
         }
-<span class="nc" id="L642">        return configuration;</span>
+<span class="nc" id="L675">        return configuration;</span>
     }
 
     private void maybeStartTestResourcesServer() throws MojoExecutionException {
-<span class="nc" id="L646">        testResourcesHelper.start();</span>
-<span class="nc" id="L647">    }</span>
+<span class="nc" id="L679">        testResourcesHelper.start();</span>
+<span class="nc" id="L680">    }</span>
 
     private void maybeStopTestResourcesServer() throws MojoExecutionException {
-<span class="nc" id="L650">        testResourcesHelper.stop(true);</span>
-<span class="nc" id="L651">    }</span>
+<span class="nc" id="L683">        testResourcesHelper.stop(true);</span>
+<span class="nc" id="L684">    }</span>
 
     private boolean compileProject() {
         // There can be multiple changes detected at the same time, so we want
         // to keep only one compilation request
-<span class="pc bpc" id="L656" title="1 of 2 branches missed.">        if (recompileRequested.get()) {</span>
-<span class="nc" id="L657">            return false;</span>
+<span class="pc bpc" id="L689" title="1 of 2 branches missed.">        if (recompileRequested.get()) {</span>
+<span class="nc" id="L690">            return false;</span>
         }
-<span class="fc" id="L659">        recompileRequested.set(true);</span>
+<span class="fc" id="L692">        recompileRequested.set(true);</span>
         try {
-<span class="fc" id="L661">            return doCompile();</span>
+<span class="fc" id="L694">            return doCompile();</span>
         } finally {
-<span class="fc" id="L663">            recompileRequested.set(false);</span>
+<span class="fc" id="L696">            recompileRequested.set(false);</span>
         }
     }
 
     private boolean doCompile() {
-<span class="fc" id="L668">        Optional&lt;Long&gt; lastCompilationMillis = compilerService.compileProject();</span>
-<span class="fc" id="L669">        lastCompilationMillis.ifPresent(lc -&gt; this.lastCompilation = lc);</span>
-<span class="fc" id="L670">        return lastCompilationMillis.isPresent();</span>
+<span class="fc" id="L701">        Optional&lt;Long&gt; lastCompilationMillis = compilerService.compileProject();</span>
+<span class="fc" id="L702">        lastCompilationMillis.ifPresent(lc -&gt; this.lastCompilation = lc);</span>
+<span class="fc" id="L703">        return lastCompilationMillis.isPresent();</span>
     }
 
     private void killProcess() {
-<span class="nc bnc" id="L674" title="All 4 branches missed.">        if (process != null &amp;&amp; process.isAlive()) {</span>
-<span class="nc bnc" id="L675" title="All 2 branches missed.">            if (getLog().isDebugEnabled()) {</span>
-<span class="nc" id="L676">                getLog().debug(&quot;Stopping the background process&quot;);</span>
-            }
-<span class="nc" id="L678">            process.destroy();</span>
-            try {
-<span class="nc" id="L680">                process.waitFor();</span>
-<span class="nc" id="L681">            } catch (InterruptedException e) {</span>
-<span class="nc" id="L682">                process.destroyForcibly();</span>
-<span class="nc" id="L683">                Thread.currentThread().interrupt();</span>
-<span class="nc" id="L684">            }</span>
+<span class="fc" id="L707">        Process current = process;</span>
+<span class="pc bpc" id="L708" title="1 of 2 branches missed.">        if (current == null) {</span>
+<span class="nc" id="L709">            return;</span>
         }
-<span class="nc" id="L686">    }</span>
+<span class="fc" id="L711">        boolean stopped = false;</span>
+<span class="pc bpc" id="L712" title="1 of 2 branches missed.">        if (current.isAlive()) {</span>
+<span class="pc bpc" id="L713" title="1 of 2 branches missed.">            if (getLog().isDebugEnabled()) {</span>
+<span class="nc" id="L714">                getLog().debug(&quot;Stopping the background process&quot;);</span>
+            }
+<span class="fc" id="L716">            current.destroy();</span>
+<span class="fc" id="L717">            stopped = true;</span>
+            try {
+<span class="fc" id="L719">                current.waitFor();</span>
+<span class="nc" id="L720">            } catch (InterruptedException e) {</span>
+<span class="nc" id="L721">                current.destroyForcibly();</span>
+<span class="nc" id="L722">                Thread.currentThread().interrupt();</span>
+<span class="fc" id="L723">            }</span>
+        }
+<span class="pc bpc" id="L725" title="1 of 2 branches missed.">        if (classDataSharingSupport != null) {</span>
+<span class="fc" id="L726">            classDataSharingSupport.launchEnded(current, stopped);</span>
+        }
+<span class="fc" id="L728">    }</span>
+
+    private void stopOnShutdown() {
+<span class="pc bpc" id="L731" title="1 of 2 branches missed.">        if (classDataSharingSupport != null) {</span>
+<span class="fc" id="L732">            classDataSharingSupport.shutdown();</span>
+        }
+<span class="fc" id="L734">        killProcess();</span>
+<span class="fc" id="L735">    }</span>
 
     private static String normalize(Path path) {
-<span class="fc" id="L689">        return path.toString().replace('\\', '/');</span>
+<span class="fc" id="L738">        return path.toString().replace('\\', '/');</span>
     }
 
     private static boolean pathMatches(String pattern, Path path) {
-<span class="fc" id="L693">        return AbstractScanner.match(pattern, normalize(path));</span>
+<span class="fc" id="L742">        return AbstractScanner.match(pattern, normalize(path));</span>
     }
 
     private static boolean patternEquals(Path path, String includePattern, File directory) {
         try {
-<span class="fc" id="L698">            var testPath = normalize(directory.toPath().resolve(includePattern).toAbsolutePath());</span>
-<span class="fc" id="L699">            return testPath.equals(normalize(path.toAbsolutePath()));</span>
-<span class="nc" id="L700">        } catch (InvalidPathException ex) {</span>
-<span class="nc" id="L701">            return false;</span>
+<span class="fc" id="L747">            var testPath = normalize(directory.toPath().resolve(includePattern).toAbsolutePath());</span>
+<span class="fc" id="L748">            return testPath.equals(normalize(path.toAbsolutePath()));</span>
+<span class="nc" id="L749">        } catch (InvalidPathException ex) {</span>
+<span class="nc" id="L750">            return false;</span>
         }
     }
 
