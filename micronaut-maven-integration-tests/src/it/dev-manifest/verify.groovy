@@ -40,3 +40,4 @@ assert manifest.'micronaut.dev.compile.java.options' == '@java-options.argfile'
 List<String> options = new File(basedir, 'target/micronaut-dev/java-options.argfile').readLines()
 assert options.containsAll(['-parameters', '-Amicronaut.processing.group=devmanifest', '-Amicronaut.processing.module=dev-manifest', '-Xlint:unchecked,deprecation'])
 assert options.contains('--release') || options.contains('-source')
+assert manifest.'micronaut.dev.generations' == new File(basedir, 'target/micronaut-dev/generations').absolutePath
