@@ -45,7 +45,9 @@
                             </prepare-package>
                             <package>
                                 org.apache.maven.plugins:maven-jar-plugin:jar,
-                                org.apache.maven.plugins:maven-shade-plugin:shade
+                                ${project.groupId}:${project.artifactId}:${project.version}:transform-class-path,
+                                org.apache.maven.plugins:maven-shade-plugin:shade,
+                                ${project.groupId}:${project.artifactId}:${project.version}:restore-class-path
                             </package>
                             <install>
                                 org.apache.maven.plugins:maven-install-plugin:install

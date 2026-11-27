@@ -406,6 +406,50 @@ image is built for the platform of that daemon only.
 * If you keep a generated `Dockerfile` in your project, generate it again with `mn:dockerfile` after you upgrade the
 plugin.
 
+== Rewriting the packaged class path
+
+WARNING: These properties are incubating, and Micronaut AOT's class path transform is experimental: their names, rules
+and output may change in a future version.
+
+Two properties rewrite the class files of the class path that the plugin packages, with Micronaut AOT's
+`micronaut-aot-bytecode`. Both are off by default, and both make a start without a JDK AOT cache faster. With a JDK AOT
+cache (see <<Training a JDK AOT cache>>) they make about no difference.
+
+[source,xml]
+----
+<properties>
+  <!-- generates the lambda classes at build time -->
+  <micronaut.classPathTransform.desugarLambdas>true</micronaut.classPathTransform.desugarLambdas>
+  <!-- drops the local-variable tables of the third-party JARs -->
+  <micronaut.classPathTransform.stripLocalVariables>true</micronaut.classPathTransform.stripLocalVariables>
+</properties>
+----
+
+They apply to the Shade fat JAR of `jar` packaging, to the Jib image of `docker` packaging, and to the `Dockerfile` that
+`mn:dockerfile` generates for `docker` packaging. They never apply to `mn:run`, to tests, to native images, to the
+`lambda` and `oracle_function` runtimes, to CRaC images or to a `Dockerfile` of your own. The application's classes go
+first, with the classes that Micronaut AOT generated, then the compile and runtime dependencies. Rewritten JARs keep
+their file names, and the dependency artifacts point to their original files again once the image or the fat JAR is
+built, so Failsafe and the other goals that run later use the original JARs. The application JAR is the exception: Shade,
+and Jib with a JDK AOT cache, package the JAR that `jar:jar` built, so it is replaced with its rewritten copy.
+
+* `micronaut.classPathTransform.desugarLambdas` generates the classes that the JVM would otherwise spin at run time
+for the lambdas and method references of the application and of its dependencies. They are ordinary synthetic classes
+named `<Host>$$Lambda$R<n>`, and each call through a lambda adds a frame to stack traces.
+* `micronaut.classPathTransform.stripLocalVariables` drops the local-variable tables of the dependencies from outside
+the reactor. Debuggers then show no local-variable names for them, and helpful `NullPointerException` messages name
+their locals by position. When a JAR of the class path reads local-variable tables at run time, such as Paranamer or
+AspectJ's weaver, nothing is stripped and the build logs a warning.
+
+The transform runs in a JVM of the `jdk` toolchain, or of Maven's JVM without one, which must be Java 25 or later. Its
+output depends on that JDK build, so run it on the feature release that the application runs on. A rewritten JAR no
+longer has the hashes of the published artifact, which software composition analysis tools may report. What each step
+did is written to `target/class-path-transform/<shade|docker|dockerfile>/report.txt`, and
+`micronaut.classPathTransform.version` selects the version of `io.micronaut.aot:micronaut-aot-bytecode`.
+
+See the https://micronaut-projects.github.io/micronaut-aot/latest/guide/#classPathTransform[Micronaut AOT documentation]
+for what each step changes.
+
 == Delegating packaging to Eclipse JKube
 
 ----

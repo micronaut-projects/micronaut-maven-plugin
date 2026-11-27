@@ -19,6 +19,8 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.common.io.FileWriteMode;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.maven.classpath.ClassPathTransformOptions;
+import io.micronaut.maven.classpath.ClassPathTransformService;
 import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.core.MojoUtils;
@@ -107,6 +109,33 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     protected final DockerService dockerService;
     protected final PluginParameterExpressionEvaluator expressionEvaluator;
 
+
+    /**
+     * Whether the lambdas of the application and of its dependencies are desugared into classes generated at build
+     * time, for the JVM images of {@code docker} packaging and {@code mn:dockerfile}. It makes starts without a JDK
+     * AOT cache faster.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = "micronaut.classPathTransform.desugarLambdas", defaultValue = "false")
+    protected boolean classPathTransformDesugarLambdas;
+
+    /**
+     * Whether the local-variable tables of the third-party JARs are stripped, for the JVM images of {@code docker}
+     * packaging and {@code mn:dockerfile}. It makes starts without a JDK AOT cache slightly faster.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = "micronaut.classPathTransform.stripLocalVariables", defaultValue = "false")
+    protected boolean classPathTransformStripLocalVariables;
+
+    /**
+     * The version of {@code io.micronaut.aot:micronaut-aot-bytecode} that rewrites the class path.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = "micronaut.classPathTransform.version", defaultValue = ClassPathTransformService.DEFAULT_VERSION)
+    protected String classPathTransformVersion;
 
     /**
      * Additional arguments that will be passed to the <code>native-image</code> executable. Note that this will only
@@ -440,6 +469,14 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
     }
 
     /**
+     * @return what {@code micronaut.classPathTransform} enables
+     */
+    protected ClassPathTransformOptions classPathTransformOptions() {
+        return new ClassPathTransformOptions(classPathTransformDesugarLambdas, classPathTransformStripLocalVariables,
+            classPathTransformVersion);
+    }
+
+    /**
      * Copy project dependencies to a <code>target/dependency</code> directory. For {@code docker} packaging with
      * {@code micronaut.docker.jdkAotCache}, also writes the application JAR, the class path argument file and the
      * training script to <code>target/jdk-aot-cache</code>.
@@ -447,6 +484,17 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
      * @param jdkAotCache whether {@code micronaut.docker.jdkAotCache} is set
      */
     void copyDependencies(boolean jdkAotCache) throws IOException {
+        copyDependencies(jdkAotCache, null);
+    }
+
+    /**
+     * Copy project dependencies to a <code>target/dependency</code> directory, with the application JAR of the JDK AOT
+     * cache made from the given classes directory.
+     *
+     * @param jdkAotCache whether {@code micronaut.docker.jdkAotCache} is set
+     * @param classesDirectory the classes directory that the image packages, or {@code null} for the project's
+     */
+    void copyDependencies(boolean jdkAotCache, Path classesDirectory) throws IOException {
         var imageClasspathScopes = Arrays.asList(Artifact.SCOPE_COMPILE, Artifact.SCOPE_RUNTIME);
         var target = new File(mavenProject.getBuild().getDirectory(), DEPENDENCY_DIRECTORY).toPath();
         Files.createDirectories(target);
@@ -466,7 +514,8 @@ public abstract class AbstractDockerMojo extends AbstractMicronautMojo {
         }
         if (jdkAotCache && Packaging.of(mavenProject.getPackaging()) == Packaging.DOCKER) {
             JdkAotCacheDockerContext.write(Path.of(mavenProject.getBuild().getDirectory()),
-                Path.of(mavenProject.getBuild().getOutputDirectory()), imageClasspath);
+                classesDirectory != null ? classesDirectory : Path.of(mavenProject.getBuild().getOutputDirectory()),
+                imageClasspath);
         }
     }
 

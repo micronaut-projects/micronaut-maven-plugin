@@ -15,6 +15,8 @@
  */
 package io.micronaut.maven;
 
+import io.micronaut.maven.classpath.ClassPathTransformService;
+import io.micronaut.maven.classpath.RewrittenClassPath;
 import io.micronaut.maven.core.DockerBuildStrategy;
 import io.micronaut.maven.core.MicronautRuntime;
 import io.micronaut.maven.core.MojoUtils;
@@ -79,6 +81,7 @@ public class DockerfileMojo extends AbstractDockerMojo {
     static final String DOCKERFILE_JDK_AOT_CACHE = "DockerfileJdkAotCache";
     private static final String CLASS_NAME_PLACEHOLDER = "CLASS_NAME";
     private static final String JDK_AOT_CACHE_TRAINING_PLACEHOLDER = "JDK_AOT_CACHE_TRAINING";
+    private static final String COPY_CLASSES = "COPY classes ";
     private static final String EXEC_MAIN_CLASS_SOURCE = "exec.mainClass";
     /**
      * Where the training script writes the JDK AOT cache. The {@code ENTRYPOINT} of the {@code DockerfileJdkAotCache}
@@ -87,6 +90,9 @@ public class DockerfileMojo extends AbstractDockerMojo {
     private static final String JDK_AOT_CACHE_IMAGE_FILE = "/home/app/app.aot";
 
     private final ExecutorService executorService;
+    private final ClassPathTransformService classPathTransformService;
+    /** The classes directory that the generated Dockerfile copies, relative to the build directory, when rewritten. */
+    private String rewrittenClassesDirectory;
     private String jdkAotCacheTrainingArguments = "";
 
     /**
@@ -133,9 +139,11 @@ public class DockerfileMojo extends AbstractDockerMojo {
     @Inject
     public DockerfileMojo(MavenProject mavenProject, DockerService dockerService, JibConfigurationService jibConfigurationService,
                           ApplicationConfigurationService applicationConfigurationService, ExecutorService executorService,
-                          MavenSession mavenSession, MojoExecution mojoExecution) {
+                          MavenSession mavenSession, MojoExecution mojoExecution,
+                          ClassPathTransformService classPathTransformService) {
         super(mavenProject, jibConfigurationService, applicationConfigurationService, dockerService, mavenSession, mojoExecution);
         this.executorService = executorService;
+        this.classPathTransformService = classPathTransformService;
     }
 
     @Override
@@ -146,15 +154,28 @@ public class DockerfileMojo extends AbstractDockerMojo {
             if (jdkAotCache && packaging != Packaging.DOCKER) {
                 getLog().warn("micronaut.docker.jdkAotCache only applies to " + Packaging.DOCKER.id() + " packaging, ignoring it");
             }
-            copyDependencies(jdkAotCache);
-            var dockerfile = switch (packaging) {
-                case DOCKER_NATIVE -> buildDockerfileNative(runtime);
-                case DOCKER -> buildDockerfile(runtime);
-                case DOCKER_CRAC -> buildCracDockerfile(runtime);
-                default -> throw new MojoExecutionException("Packaging is set to [" + packaging + "]. To generate a Dockerfile, set the packaging to either [" + Packaging.DOCKER.id() + "] or [" + Packaging.DOCKER_NATIVE.id() + "]");
-            };
+            Path classes = Path.of(mavenProject.getBuild().getOutputDirectory());
+            // Only the JVM image of the default runtime packages the rewritten class path
+            boolean rewrite = packaging == Packaging.DOCKER && runtime.getBuildStrategy() == DockerBuildStrategy.DEFAULT;
+            try (RewrittenClassPath rewritten = rewrite
+                ? classPathTransformService.rewrite(mavenProject, classPathTransformOptions(), classes, "dockerfile", getLog())
+                : RewrittenClassPath.none()) {
+                rewritten.swapDependencies(mavenProject);
+                Path packagedClasses = rewritten.packaged(classes);
+                if (!packagedClasses.equals(classes.toAbsolutePath()) && !packagedClasses.equals(classes)) {
+                    rewrittenClassesDirectory = Path.of(mavenProject.getBuild().getDirectory()).toAbsolutePath()
+                        .relativize(packagedClasses).toString().replace(File.separatorChar, '/');
+                }
+                copyDependencies(jdkAotCache, packagedClasses);
+                var dockerfile = switch (packaging) {
+                    case DOCKER_NATIVE -> buildDockerfileNative(runtime);
+                    case DOCKER -> buildDockerfile(runtime);
+                    case DOCKER_CRAC -> buildCracDockerfile(runtime);
+                    default -> throw new MojoExecutionException("Packaging is set to [" + packaging + "]. To generate a Dockerfile, set the packaging to either [" + Packaging.DOCKER.id() + "] or [" + Packaging.DOCKER_NATIVE.id() + "]");
+                };
 
-            dockerfile.ifPresent(file -> getLog().info("Dockerfile written to: " + file.getAbsolutePath()));
+                dockerfile.ifPresent(file -> getLog().info("Dockerfile written to: " + file.getAbsolutePath()));
+            }
 
         } catch (IOException | MavenInvocationException e) {
             throw new MojoExecutionException(e.getMessage(), e);
@@ -307,6 +328,9 @@ public class DockerfileMojo extends AbstractDockerMojo {
     }
 
     private String processDockerfileLine(String line) throws MojoExecutionException {
+        if (rewrittenClassesDirectory != null && line.startsWith(COPY_CLASSES)) {
+            line = "COPY " + rewrittenClassesDirectory + line.substring(COPY_CLASSES.length() - 1);
+        }
         if (containsPlaceholder(line, JDK_AOT_CACHE_TRAINING_PLACEHOLDER)) {
             line = line.replace("${" + JDK_AOT_CACHE_TRAINING_PLACEHOLDER + "}", jdkAotCacheTrainingArguments);
         }

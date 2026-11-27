@@ -1,0 +1,6 @@
+File log = new File(basedir, 'build.log')
+assert log.exists()
+assert log.text.contains("Desugared ")
+assert log.text.contains("Stripped local-variable tables")
+assert log.text.contains("Built image to Docker daemon as alvarosanchez/package-docker-class-path-transform:0.1")
+assert log.text.contains("Startup completed")
