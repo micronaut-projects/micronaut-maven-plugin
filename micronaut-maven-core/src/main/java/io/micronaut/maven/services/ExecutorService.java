@@ -33,7 +33,9 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
@@ -196,14 +198,44 @@ public class ExecutorService {
      * @throws MavenInvocationException If the goal execution fails
      */
     public InvocationResult invokeGoals(MavenProject project, String... goals) throws MavenInvocationException {
+        DefaultInvocationRequest request = newInvocationRequest(project, goals);
+        request.setProperties(testResourcesDisabled(new Properties()));
+        return invoker.execute(request);
+    }
+
+    /**
+     * Executes goals using the Maven shared invoker on one project of a reactor and the reactor projects it
+     * depends on, against the model of the current build: the session's user properties and its active and
+     * inactive profiles, with Test Resources disabled whatever the session sets.
+     *
+     * @param root The Maven project whose POM the invocation reads
+     * @param selected The project of the reactor of {@code root} to build, with what it depends on
+     * @param goals The goals to execute
+     * @return The result of the invocation
+     * @throws MavenInvocationException If the goal execution fails
+     */
+    public InvocationResult invokeGoals(MavenProject root, MavenProject selected, String... goals) throws MavenInvocationException {
+        DefaultInvocationRequest request = newInvocationRequest(root, goals);
+        MavenExecutionRequest session = mavenSession.getRequest();
+        Properties properties = new Properties();
+        properties.putAll(session.getUserProperties());
+        request.setProperties(testResourcesDisabled(properties));
+        List<String> profiles = new ArrayList<>(session.getActiveProfiles());
+        session.getInactiveProfiles().forEach(profile -> profiles.add("!" + profile));
+        if (!profiles.isEmpty()) {
+            request.setProfiles(profiles);
+        }
+        request.setProjects(List.of(selected.getGroupId() + ":" + selected.getArtifactId()));
+        return invoker.execute(request);
+    }
+
+    private DefaultInvocationRequest newInvocationRequest(MavenProject project, String... goals) {
         DefaultInvocationRequest request = new DefaultInvocationRequest();
         request.setPomFile(resolveOriginalPom(project));
         File settingsFile = mavenSession.getRequest().getUserSettingsFile();
         if (settingsFile != null && settingsFile.exists()) {
             request.setUserSettingsFile(settingsFile);
         }
-        Properties properties = new Properties();
-        properties.put(TEST_RESOURCES_ENABLED_PROPERTY, "false");
 
         int loggingLevel = mavenSession.getRequest().getLoggingLevel();
         boolean quiet = loggingLevel >= MavenExecutionRequest.LOGGING_LEVEL_ERROR;
@@ -217,8 +249,12 @@ public class ExecutorService {
             request.setErrorHandler(LOG::error);
             request.setOutputHandler(LOG::info);
         }
-        request.setProperties(properties);
-        return invoker.execute(request);
+        return request;
+    }
+
+    private static Properties testResourcesDisabled(Properties properties) {
+        properties.put(TEST_RESOURCES_ENABLED_PROPERTY, "false");
+        return properties;
     }
 
     /**
