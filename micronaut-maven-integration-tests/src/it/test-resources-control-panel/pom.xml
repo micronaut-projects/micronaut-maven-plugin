@@ -8,7 +8,7 @@
 
     <properties>
         <maven.compiler.release>25</maven.compiler.release>
-        <micronaut.core.version>5.2.25</micronaut.core.version>
+        <micronaut.core.version>@it.micronaut.core.version@</micronaut.core.version>
         <micronaut.aot.version>@micronaut.aot.version@</micronaut.aot.version>
         <micronaut.test.resources.version>@micronaut.test.resources.version@</micronaut.test.resources.version>
         <micronaut.test.resources.enabled>true</micronaut.test.resources.enabled>
