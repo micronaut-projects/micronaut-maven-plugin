@@ -66,12 +66,12 @@
         <maven.compiler.target>${jdk.version}</maven.compiler.target>
 
         <maven.version>3.9.15</maven.version>
-        <micronaut.version>5.0.2</micronaut.version>
+        <micronaut.version>5.2.26</micronaut.version>
         <native-maven-plugin.version>1.1.0</native-maven-plugin.version>
         <micronaut.aot.version>3.0.0</micronaut.aot.version>
         <micronaut.test.resources.version>4.3.1</micronaut.test.resources.version>
         <micronaut.openapi.version>7.0.0</micronaut.openapi.version>
-        <micronaut.jsonschema.version>2.0.0</micronaut.jsonschema.version>
+        <micronaut.jsonschema.version>2.3.1</micronaut.jsonschema.version>
 
         <maven.resources-plugin.version>3.4.0</maven.resources-plugin.version>
         <maven.archiver-plugin.version>3.6.0</maven.archiver-plugin.version>
@@ -81,7 +81,7 @@
         <commons.io.version>2.21.0</commons.io.version>
         <commons.compress.version>1.28.0</commons.compress.version>
         <commons.lang3.version>3.20.0</commons.lang3.version>
-        <bouncycastle.version>1.84</bouncycastle.version>
+        <bouncycastle.version>1.85</bouncycastle.version>
         <jansi.version>2.4.2</jansi.version>
         <maven.plugin.testing.harness.version>3.5.1</maven.plugin.testing.harness.version>
 
@@ -111,7 +111,7 @@
         <checkstyle.config.dir.path>${maven.multiModuleProjectDirectory}/config/checkstyle</checkstyle.config.dir.path>
         <spotless.licenseHeader.path>${maven.multiModuleProjectDirectory}/config/spotless.license.java</spotless.licenseHeader.path>
         <maven-plugin-tools.version>3.15.2</maven-plugin-tools.version>
-        <jackson.version>2.21.5</jackson.version>
+        <jackson.version>2.21.7</jackson.version>
     </properties>
 
     <dependencyManagement>
@@ -277,6 +277,15 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <dependencies>
+        <!-- Use a patched Guava across the plugin modules and their Maven and Jib dependency paths. -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.8.0-jre</version>
+        </dependency>
+    </dependencies>
 
     <build>
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
