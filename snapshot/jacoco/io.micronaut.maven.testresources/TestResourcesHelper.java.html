@@ -636,7 +636,7 @@ public class TestResourcesHelper {
 
     private static void releaseSharedServerLock(Path key, ReentrantLock lock) {
 <span class="fc" id="L638">        lock.unlock();</span>
-<span class="fc bfc" id="L639" title="All 4 branches covered.">        if (!lock.isLocked() &amp;&amp; !lock.hasQueuedThreads()) {</span>
+<span class="pc bpc" id="L639" title="1 of 4 branches missed.">        if (!lock.isLocked() &amp;&amp; !lock.hasQueuedThreads()) {</span>
 <span class="fc" id="L640">            SHARED_SERVER_LOCKS.remove(key, lock);</span>
         }
 <span class="fc" id="L642">    }</span>
