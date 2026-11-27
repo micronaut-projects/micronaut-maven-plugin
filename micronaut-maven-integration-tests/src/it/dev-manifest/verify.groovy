@@ -17,6 +17,8 @@ assert manifest.'micronaut.dev.build-tool.trigger'.endsWith('micronaut-dev' + Fi
 assert manifest.'micronaut.dev.retain' == 'javax.sql.DataSource'
 assert manifest.'micronaut.dev.livereload.port' == '35730'
 assert manifest.'micronaut.dev.livereload.inject-script' == 'true'
+// the launcher binds the application to localhost by default, below the application's own configuration
+assert manifest.'micronaut.dev.bind-loopback' == 'true'
 assert manifest.'micronaut.dev.project-dir' == basedir.absolutePath
 assert manifest.'micronaut.dev.sources.java'.endsWith('src' + File.separator + 'main' + File.separator + 'java')
 assert manifest.'micronaut.dev.resources.config'.endsWith('src' + File.separator + 'main' + File.separator + 'resources')
@@ -29,6 +31,19 @@ assert manifest.'micronaut.dev.runtime-classpath' == '@runtime.argfile'
 List<String> runtime = new File(basedir, 'target/micronaut-dev/runtime.argfile').readLines()
 assert runtime.any { it.contains('micronaut-runtime-') }
 assert runtime.every { !it.contains('target' + File.separator + 'classes') }
+// Micronaut Control Panel, versioned by the platform BOM, 5.2.4 here, with the panel of the modules the application uses
+assert runtime.any { it.endsWith('micronaut-control-panel-ui-2.2.1.jar') }
+assert runtime.any { it.endsWith('micronaut-control-panel-management-2.2.1.jar') }
+assert runtime.any { it.endsWith('micronaut-control-panel-datasource-2.2.1.jar') }
+assert !log.text.contains('Micronaut Control Panel requires Micronaut Platform')
+assert runtime.every { !it.contains('micronaut-control-panel-kafka-') && !it.contains('micronaut-control-panel-hibernate-') }
+assert log.text.contains("Adding Micronaut Control Panel to the development runtime")
+// its settings, a resource on the runtime classpath that Control Panel reads at the lowest precedence
+File controlPanelResources = new File(basedir, 'target/micronaut-dev/control-panel')
+assert runtime.contains(controlPanelResources.absolutePath)
+Properties controlPanel = new Properties()
+new File(controlPanelResources, 'micronaut-control-panel/micronaut-control-panel.properties').withInputStream { controlPanel.load(it) }
+assert controlPanel == ['micronaut.control-panel.enabled': 'true', 'micronaut.control-panel.path': '/control-panel', 'micronaut.control-panel.security.access': 'ANONYMOUS']
 assert manifest.'micronaut.dev.compile-classpath' == '@compile.argfile'
 assert manifest.'micronaut.dev.processor-path' == '@processors.argfile'
 List<String> processors = new File(basedir, 'target/micronaut-dev/processors.argfile').readLines()
