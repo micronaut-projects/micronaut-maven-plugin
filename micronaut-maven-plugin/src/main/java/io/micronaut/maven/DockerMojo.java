@@ -36,6 +36,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.jspecify.annotations.Nullable;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -85,6 +86,12 @@ public class DockerMojo extends AbstractDockerMojo {
      */
     static final String JDK_AOT_CACHE_PIN_BASE_IMAGE_PROPERTY = "micronaut.docker.jdkAotCache.internal.pinBaseImage";
 
+    /**
+     * Whether the cache is trained by default, for the Jib extension, which then leaves the garbage collector check to
+     * the training.
+     */
+    static final String JDK_AOT_CACHE_BY_DEFAULT_PROPERTY = "micronaut.docker.jdkAotCache.internal.byDefault";
+
     private static final String JIB_PLUGIN = "com.google.cloud.tools:jib-maven-plugin";
     private static final String JAR_PLUGIN = "org.apache.maven.plugins:maven-jar-plugin";
     private static final String JDK_AOT_CACHE_DIRECTORY = "jdk-aot-cache";
@@ -93,7 +100,6 @@ public class DockerMojo extends AbstractDockerMojo {
     private static final String TAR_URI_PREFIX = "tar://";
     private static final String PACKAGED = "packaged";
     private static final String AMD64 = "amd64";
-    private static final String ARM64 = "arm64";
 
     private final ExecutorService executorService;
 
@@ -101,12 +107,14 @@ public class DockerMojo extends AbstractDockerMojo {
      * Whether to train a JDK AOT cache (Java 25 or later) while the image is built, and start the application with it
      * so that it starts faster. Only for {@code docker} packaging, and not for the {@code lambda} or
      * {@code oracle_function} runtimes. The training needs a Docker daemon, and with Jib the {@code container.jvmFlags}
-     * must select a garbage collector, for example {@code -XX:+UseSerialGC}.
+     * must select a garbage collector, for example {@code -XX:+UseSerialGC}. When not set, the image trains a cache in
+     * {@code LOAD} mode if the build allows it, and is built without one if the training fails; {@code false} turns it
+     * off, and {@code true} makes every problem fail the build.
      *
      * @since 5.1.0
      */
-    @Parameter(property = "micronaut.docker.jdkAotCache", defaultValue = "false")
-    private boolean jdkAotCache;
+    @Parameter(property = "micronaut.docker.jdkAotCache")
+    private Boolean jdkAotCache;
 
     /**
      * How the JDK AOT cache is trained. {@code LOAD} loads the application's bean definitions and exits without
@@ -152,7 +160,7 @@ public class DockerMojo extends AbstractDockerMojo {
     @Override
     public void execute() throws MojoExecutionException {
         var providedDockerfile = new File(mavenProject.getBasedir(), DockerfileMojo.DOCKERFILE);
-        if (jdkAotCache && MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy() != DockerBuildStrategy.DEFAULT) {
+        if (Boolean.TRUE.equals(jdkAotCache) && MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy() != DockerBuildStrategy.DEFAULT) {
             throw new MojoExecutionException("micronaut.docker.jdkAotCache only supports the default runtime, not "
                 + micronautRuntime);
         }
@@ -167,8 +175,10 @@ public class DockerMojo extends AbstractDockerMojo {
             if (jibConfigurationService.getFromImage().isEmpty()) {
                 mavenProject.getProperties().setProperty(PropertyNames.FROM_IMAGE, getBaseImage());
             }
-            if (jdkAotCache) {
-                buildWithJdkAotCache();
+            if (Boolean.TRUE.equals(jdkAotCache)) {
+                buildWithJdkAotCache(null, false);
+            } else if (jdkAotCache == null) {
+                buildWithDefaultJdkAotCache();
             } else {
                 executorService.executeGoal(mavenProject, JIB_PLUGIN, jibBuildGoal);
             }
@@ -176,56 +186,124 @@ public class DockerMojo extends AbstractDockerMojo {
     }
 
     /**
+     * Trains a cache when {@code micronaut.docker.jdkAotCache} is not set, unless a guard keeps today's image.
+     */
+    private void buildWithDefaultJdkAotCache() throws MojoExecutionException {
+        String reason = defaultJdkAotCacheGuard();
+        String platform = null;
+        if (reason == null) {
+            try {
+                platform = dockerService.getDaemonPlatform();
+                reason = platform == null || platform.isBlank()
+                    ? "the Docker daemon did not report its platform"
+                    : JdkAotCacheDefault.platformGuard(platform, jibConfigurationService.getFromPlatforms(),
+                    jibBuildGoal, System.getProperty("os.arch"));
+            } catch (IllegalStateException e) {
+                reason = "no Docker daemon answers to run the training (" + e.getMessage() + ")";
+            }
+        }
+        if (reason != null) {
+            JdkAotCacheDefault.logSkipped(getLog(), reason);
+            executorService.executeGoal(mavenProject, JIB_PLUGIN, jibBuildGoal);
+            return;
+        }
+        JdkAotCacheDefault.logTrained(getLog());
+        buildWithJdkAotCache(platform, true);
+    }
+
+    private @Nullable String defaultJdkAotCacheGuard() {
+        if (MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy() != DockerBuildStrategy.DEFAULT) {
+            return "the runtime is " + micronautRuntime + ", and the cache only supports the default one";
+        }
+        String reason = TrainingRun.defaultGuard(jdkAotCacheTrainingMode, jdkAotCacheTrainingPaths, mavenProject.getArtifacts());
+        if (reason == null) {
+            reason = JdkAotCacheDefault.jibGuard(jibConfigurationService.getEntrypoint(), mavenProject,
+                mavenSession.getUserProperties(), mavenSession.getSystemProperties());
+        }
+        return reason;
+    }
+
+    /**
      * Builds a training image with Jib in packaged mode, trains a JDK AOT cache with it and builds the image again with
      * the configured goal. Jib layers are reproducible, so the JARs of the final image match the trained ones in size
-     * and modification time, which the cache checks, and the extension adds the cache as the last layer.
+     * and modification time, which the cache checks, and the extension adds the cache as the last layer. When the cache
+     * is trained by default, a failure before the final build, or of the layer check after it, builds the image without
+     * the cache instead.
+     *
+     * @param defaultPlatform the platform of the Docker daemon when the cache is trained by default, which the guards
+     * already read, or {@code null}
+     * @param byDefault whether {@code micronaut.docker.jdkAotCache} is not set
      */
-    private void buildWithJdkAotCache() throws MojoExecutionException {
-        List<String> trainingPaths = validateJdkAotCacheConfiguration();
-        TrainingRun trainingRun = TrainingRun.resolve(jdkAotCacheTrainingMode, trainingPaths, mavenProject.getArtifacts());
-        String platform = daemonPlatform();
-        requireDaemonPlatform(platform);
-        trainingRun.log(getLog());
-        // Jib's packaged mode puts the JAR of the maven-jar-plugin in the image, so only a build with the cache needs it
-        getLog().info("JDK AOT cache: building the application JAR for Jib's packaged mode");
-        executorService.executeGoal(mavenProject, JAR_PLUGIN, "jar");
-
-        Path workDirectory = Path.of(mavenProject.getBuild().getDirectory(), JDK_AOT_CACHE_DIRECTORY);
-        Path cacheFile = workDirectory.resolve(JDK_AOT_CACHE_FILE);
+    private void buildWithJdkAotCache(@Nullable String defaultPlatform, boolean byDefault) throws MojoExecutionException {
+        MojoExecutionException fallback = null;
+        boolean finalBuild = false;
         Properties properties = mavenProject.getProperties();
         Map<String, String> savedProperties = saveProperties(properties, PropertyNames.CONTAINERIZING_MODE,
             PropertyNames.TO_IMAGE, JDK_AOT_CACHE_PLATFORM_PROPERTY, JDK_AOT_CACHE_FILE_PROPERTY,
-            JDK_AOT_CACHE_PIN_BASE_IMAGE_PROPERTY);
+            JDK_AOT_CACHE_PIN_BASE_IMAGE_PROPERTY, JDK_AOT_CACHE_BY_DEFAULT_PROPERTY);
         String trainingImage = null;
         String trainingImageId = null;
         try {
+            List<String> trainingPaths = validateJdkAotCacheConfiguration();
+            TrainingRun trainingRun = TrainingRun.resolve(jdkAotCacheTrainingMode, trainingPaths, mavenProject.getArtifacts());
+            String platform = defaultPlatform;
+            if (platform == null) {
+                platform = daemonPlatform();
+                requireDaemonPlatform(platform);
+            }
+            trainingRun.log(getLog());
+            // Jib's packaged mode puts the JAR of the maven-jar-plugin in the image, so only a build with the cache needs it
+            getLog().info("JDK AOT cache: building the application JAR for Jib's packaged mode");
+            executorService.executeGoal(mavenProject, JAR_PLUGIN, "jar");
+
+            Path workDirectory = Path.of(mavenProject.getBuild().getDirectory(), JDK_AOT_CACHE_DIRECTORY);
+            Path cacheFile = workDirectory.resolve(JDK_AOT_CACHE_FILE);
             Files.createDirectories(workDirectory);
             Files.deleteIfExists(cacheFile);
             properties.setProperty(PropertyNames.CONTAINERIZING_MODE, PACKAGED);
             properties.setProperty(JDK_AOT_CACHE_PLATFORM_PROPERTY, platform);
+            if (byDefault) {
+                properties.setProperty(JDK_AOT_CACHE_BY_DEFAULT_PROPERTY, "true");
+            }
 
             properties.setProperty(PropertyNames.TO_IMAGE, mavenProject.getArtifactId().toLowerCase(Locale.ROOT) + "-jdk-aot-training");
             trainingImage = targetImage();
             trainingImageId = buildTrainingImage(trainingImage, platform);
             restoreProperty(properties, PropertyNames.TO_IMAGE, savedProperties.get(PropertyNames.TO_IMAGE));
 
-            new JdkAotCacheTraining(dockerService, getLog(), trainingPaths, jdkAotCacheTrainingTimeout, networkMode)
+            new JdkAotCacheTraining(dockerService, getLog(), trainingPaths, jdkAotCacheTrainingTimeout, networkMode, byDefault)
                 .train(trainingImageId, trainingRun, cacheFile);
 
             properties.setProperty(JDK_AOT_CACHE_FILE_PROPERTY, cacheFile.toAbsolutePath().toString());
             properties.setProperty(JDK_AOT_CACHE_PIN_BASE_IMAGE_PROPERTY, String.valueOf(isRegistryBaseImage()));
             getLog().info("JDK AOT cache: building the image with the cache (jib:" + jibBuildGoal + ")");
+            finalBuild = true;
             executorService.executeGoal(mavenProject, JIB_PLUGIN, jibBuildGoal);
+            finalBuild = false;
             if (JIB_BUILD_GOAL_DOCKER_BUILD.equals(jibBuildGoal)) {
                 verifyFinalImageLayers(trainingImageId, targetImage());
             }
+        } catch (MojoExecutionException e) {
+            if (!byDefault || finalBuild) {
+                throw e;
+            }
+            fallback = e;
         } catch (IOException e) {
-            throw new MojoExecutionException("JDK AOT cache: " + e.getMessage(), e);
+            var failure = new MojoExecutionException("JDK AOT cache: " + e.getMessage(), e);
+            if (!byDefault) {
+                throw failure;
+            }
+            fallback = failure;
         } finally {
             restoreProperties(properties, savedProperties);
             if (trainingImageId != null) {
                 removeTrainingImage(trainingImage, trainingImageId);
             }
+        }
+        if (fallback != null) {
+            JdkAotCacheDefault.logFallback(getLog(), fallback.getMessage(),
+                !(fallback instanceof JdkAotCacheTraining.UnsupportedJavaException));
+            executorService.executeGoal(mavenProject, JIB_PLUGIN, jibBuildGoal);
         }
     }
 
@@ -273,7 +351,7 @@ public class DockerMojo extends AbstractDockerMojo {
             return;
         }
         List<String> configured = platforms.stream()
-            .map(p -> p.os().orElse("linux") + "/" + goArchitecture(p.architecture().orElse(AMD64)))
+            .map(p -> p.os().orElse("linux") + "/" + JdkAotCacheDefault.goArchitecture(p.architecture().orElse(AMD64)))
             .distinct()
             .toList();
         if (!configured.equals(List.of(platform))) {
@@ -281,18 +359,6 @@ public class DockerMojo extends AbstractDockerMojo {
                 + "platform is " + platform + ", and a cache only works on the platform that trained it. The Jib "
                 + "from.platforms configuration lists " + configured + ": remove it, or set it to " + platform + " only.");
         }
-    }
-
-    /**
-     * The Go architecture name of an architecture of the Jib {@code from.platforms} configuration, as the platform of
-     * the Docker daemon gives it.
-     */
-    private static String goArchitecture(String architecture) {
-        return switch (architecture) {
-            case "x86_64", AMD64 -> AMD64;
-            case "aarch64", ARM64 -> ARM64;
-            default -> architecture;
-        };
     }
 
     private boolean isRegistryBaseImage() {
@@ -415,7 +481,8 @@ public class DockerMojo extends AbstractDockerMojo {
             getLog().info("Using Dockerfile: " + dockerfile.getAbsolutePath());
             mavenProject.getProperties().put(PropertyNames.SKIP, "true");
 
-            copyDependencies(jdkAotCache);
+            // A kept Dockerfile that was generated with the default cache copies files from target/jdk-aot-cache
+            copyDependencies(!Boolean.FALSE.equals(jdkAotCache) && providedDockerfileExists);
 
             String targetDir = mavenProject.getBuild().getDirectory();
             var targetDockerfile = new File(targetDir, dockerfile.getName());

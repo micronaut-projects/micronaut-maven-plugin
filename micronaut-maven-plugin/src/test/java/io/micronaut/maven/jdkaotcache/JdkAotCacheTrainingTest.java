@@ -329,6 +329,7 @@ class JdkAotCacheTrainingTest {
         var e = assertThrows(MojoExecutionException.class, () -> training(List.of()).train("sha256:training", SCRIPT, tempDir.resolve("app.aot")));
 
         assertTrue(e.getMessage().contains("needs Java 25 or later in the image, but the base image runs Java 21"));
+        assertTrue(e instanceof JdkAotCacheTraining.UnsupportedJavaException);
         verify(dockerService, never()).createContainer(any(), any(), anyMap());
     }
 
@@ -340,6 +341,33 @@ class JdkAotCacheTrainingTest {
         var e = assertThrows(MojoExecutionException.class, () -> training(List.of()).train("sha256:training", SCRIPT, tempDir.resolve("app.aot")));
 
         assertTrue(e.getMessage().contains("Expose the port with the Jib container.ports configuration"));
+        verify(dockerService, never()).createContainer(any(), any(), anyMap());
+    }
+
+    @Test
+    void byDefaultKeepsTheCollectorThatTheImageSelects(@TempDir Path tempDir) throws Exception {
+        mockImage(new String[] {"JAVA_TOOL_OPTIONS=-XX:+UseSerialGC"});
+        mockJava(JAVA_25_OUTPUT);
+        when(dockerService.createContainer(eq("sha256:training"), isNull(), anyMap())).thenReturn("container");
+        mockCopy("cache");
+
+        new JdkAotCacheTraining(dockerService, log, List.of(), 180, null, true).train("sha256:training", LOAD, tempDir.resolve("app.aot"));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, String>> environment = ArgumentCaptor.forClass(Map.class);
+        verify(dockerService).createContainer(eq("sha256:training"), isNull(), environment.capture());
+        assertFalse(environment.getValue().get("JDK_JAVA_OPTIONS").contains("G1GC"));
+    }
+
+    @Test
+    void byDefaultNeedsACollectorAfterJava25(@TempDir Path tempDir) {
+        mockImage(null);
+        mockJava(JAVA_27_OUTPUT);
+
+        var e = assertThrows(MojoExecutionException.class, () -> new JdkAotCacheTraining(dockerService, log, List.of(), 180,
+            null, true).train("sha256:training", LOAD, tempDir.resolve("app.aot")));
+
+        assertTrue(e.getMessage().startsWith("the image selects no garbage collector and runs Java 27"), e.getMessage());
         verify(dockerService, never()).createContainer(any(), any(), anyMap());
     }
 

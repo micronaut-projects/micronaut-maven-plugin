@@ -186,6 +186,31 @@ class TrainingScriptTest {
         assertFalse(Files.exists(tempDir.resolve("options")));
     }
 
+    @Test
+    void fallbackWritesTheArgumentFileOfTheCache() throws Exception {
+        Path arguments = tempDir.resolve("aot.args");
+
+        Result result = runTheScript(List.of(), List.of("--fallback", arguments.toString()), UNUSED_PORT, "load");
+
+        assertEquals(0, result.status(), result.output());
+        assertEquals("-XX:AOTCache=" + cache + "\n", Files.readString(arguments));
+        assertEquals("cache", Files.readString(cache));
+    }
+
+    @Test
+    void fallbackBuildsTheImageWithoutTheCacheWhenTheTrainingFails() throws Exception {
+        Path arguments = tempDir.resolve("aot.args");
+        Files.writeString(tempDir.resolve("status"), "1");
+
+        Result result = runTheScript(List.of(), List.of("--fallback", arguments.toString()), UNUSED_PORT, "load");
+
+        assertEquals(0, result.status(), result.output());
+        assertEquals("", Files.readString(arguments));
+        assertFalse(Files.exists(cache));
+        assertTrue(result.output().contains("[jdk-aot-cache] WARNING: The training run exited with status 1. The image is "
+            + "built without a JDK AOT cache, which is trained by default"), result.output());
+    }
+
     private Result train(String run, String... paths) throws IOException, InterruptedException {
         return train(List.of(), run, paths);
     }
@@ -200,7 +225,14 @@ class TrainingScriptTest {
 
     private Result runTheScript(List<String> environment, String port, String run, String... paths)
         throws IOException, InterruptedException {
-        var command = new ArrayList<>(List.of("bash", script.toString(), "train", cache.toString(), port, "30", run));
+        return runTheScript(environment, List.of(), port, run, paths);
+    }
+
+    private Result runTheScript(List<String> environment, List<String> options, String port, String run, String... paths)
+        throws IOException, InterruptedException {
+        var command = new ArrayList<>(List.of("bash", script.toString(), "train"));
+        command.addAll(options);
+        command.addAll(List.of(cache.toString(), port, "30", run));
         command.addAll(List.of(paths));
         command.addAll(List.of("--", java.toString(), "-cp", "@/home/app/classpath", "example.Application"));
         var builder = new ProcessBuilder(command).redirectErrorStream(true);

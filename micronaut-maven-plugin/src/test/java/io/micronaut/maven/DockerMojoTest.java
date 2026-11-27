@@ -14,6 +14,7 @@ import io.micronaut.maven.services.DockerService;
 import io.micronaut.maven.services.ExecutorService;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
+import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
@@ -496,6 +497,178 @@ class DockerMojoTest {
         assertTrue(ex.getMessage().startsWith("micronaut.docker.jdkAotCache.trainingMode=LOAD needs a Micronaut version "
             + "with the LOAD training mode"), ex.getMessage());
         verifyNoInteractions(executorService, dockerService);
+    }
+
+    @Test
+    void jdkAotCacheIsTrainedByDefaultWithG1AndLeavesTheCollectorOfTheImageAlone(@TempDir Path tempDir) throws Exception {
+        var project = defaultJdkAotCacheProject(tempDir);
+        var dockerService = trainingDockerService();
+        var executorService = mock(ExecutorService.class);
+        var byDefault = recordProperty(project, executorService, DockerMojo.JDK_AOT_CACHE_BY_DEFAULT_PROPERTY);
+        var mojo = defaultJdkAotCacheMojo(project, dockerService, executorService);
+        var log = mock(Log.class);
+        mojo.setLog(log);
+
+        mojo.execute();
+
+        assertEquals("-XX:+UseG1GC -XX:AOTCacheOutput=/tmp/app.aot -XX:-UsePerfData "
+            + "-Dmicronaut.application.training.enabled=true -Dmicronaut.application.training.mode=load",
+            trainingEnvironment(dockerService).get("JDK_JAVA_OPTIONS"));
+        assertEquals(List.of("true", "true"), byDefault);
+        assertTrue(infoMessages(log).contains("JDK AOT cache: the image trains one by default, which makes the "
+            + "application start faster. Set -Dmicronaut.docker.jdkAotCache=false to build the image without it, or "
+            + "-Dmicronaut.docker.jdkAotCache=true to make a training failure fail the build"));
+        assertEquals(List.of(), warnMessages(log));
+        assertFalse(project.getProperties().containsKey(DockerMojo.JDK_AOT_CACHE_BY_DEFAULT_PROPERTY));
+    }
+
+    @Test
+    void jdkAotCacheIsNotTrainedByDefaultWithoutTheLoadMode(@TempDir Path tempDir) throws Exception {
+        var project = defaultJdkAotCacheProject(tempDir);
+        var artifacts = new LinkedHashSet<>(MicronautJars.withSwitch(tempDir));
+        when(project.getArtifacts()).thenReturn(artifacts);
+        var dockerService = trainingDockerService();
+        var executorService = mock(ExecutorService.class);
+        var mojo = defaultJdkAotCacheMojo(project, dockerService, executorService);
+        var log = mock(Log.class);
+        mojo.setLog(log);
+
+        mojo.execute();
+
+        verify(executorService, times(1)).executeGoal(project, "com.google.cloud.tools:jib-maven-plugin", "dockerBuild");
+        verify(executorService, never()).executeGoal(project, "org.apache.maven.plugins:maven-jar-plugin", "jar");
+        verify(dockerService, never()).createContainer(any(), any(), anyMap());
+        assertTrue(infoMessages(log).contains("JDK AOT cache: not trained by default, because the application's "
+            + "Micronaut version has no LOAD training mode, which needs Micronaut Core 5.3.0 or later. Set "
+            + "-Dmicronaut.docker.jdkAotCache=true to train one"));
+    }
+
+    @Test
+    void jdkAotCacheIsNotTrainedByDefaultWhenAGuardApplies(@TempDir Path tempDir) throws Exception {
+        var project = defaultJdkAotCacheProject(tempDir);
+        var dockerService = trainingDockerService();
+        when(dockerService.getDaemonPlatform()).thenThrow(new IllegalStateException("Cannot connect"));
+        var executorService = mock(ExecutorService.class);
+        var mojo = defaultJdkAotCacheMojo(project, dockerService, executorService);
+        mojo.jibBuildGoal = "buildTar";
+        var log = mock(Log.class);
+        mojo.setLog(log);
+
+        mojo.execute();
+
+        verify(executorService, times(1)).executeGoal(project, "com.google.cloud.tools:jib-maven-plugin", "buildTar");
+        assertTrue(infoMessages(log).contains("JDK AOT cache: not trained by default, because no Docker daemon answers "
+            + "to run the training (Cannot connect). Set -Dmicronaut.docker.jdkAotCache=true to train one"));
+    }
+
+    @Test
+    void jdkAotCacheTrainedByDefaultFallsBackToTheImageWithoutItWhenTheTrainingFails(@TempDir Path tempDir) throws Exception {
+        var project = defaultJdkAotCacheProject(tempDir);
+        var dockerService = trainingDockerService();
+        doAnswer(invocation -> {
+            throw new IOException("No such file");
+        }).when(dockerService).copyFileFromContainer(eq("container"), eq("/tmp/app.aot"), any());
+        var executorService = mock(ExecutorService.class);
+        var modes = recordProperty(project, executorService, "jib.containerizingMode");
+        var mojo = defaultJdkAotCacheMojo(project, dockerService, executorService);
+        var log = mock(Log.class);
+        mojo.setLog(log);
+
+        mojo.execute();
+
+        // The training image in packaged mode, then the image of the build without the cache
+        assertEquals(Arrays.asList("packaged", null), modes);
+        verify(dockerService).removeImage("demo-jdk-aot-training");
+        assertEquals(List.of("JDK AOT cache: the image is built without the cache that it trains by default, because "
+            + "JDK AOT cache training failed: the training run did not write the cache (No such file). Set "
+            + "-Dmicronaut.docker.jdkAotCache=true to make this an error, or -Dmicronaut.docker.jdkAotCache=false to "
+            + "skip the training"), warnMessages(log));
+    }
+
+    @Test
+    void jdkAotCacheTrainedByDefaultFailsWhenTheFinalBuildFails(@TempDir Path tempDir) throws Exception {
+        var project = defaultJdkAotCacheProject(tempDir);
+        var executorService = mock(ExecutorService.class);
+        var builds = new ArrayList<String>();
+        doAnswer(invocation -> {
+            builds.add(invocation.getArgument(2));
+            if (builds.size() == 2) {
+                throw new MojoExecutionException("registry error");
+            }
+            return null;
+        }).when(executorService).executeGoal(eq(project), eq("com.google.cloud.tools:jib-maven-plugin"), any());
+        var mojo = defaultJdkAotCacheMojo(project, trainingDockerService(), executorService);
+
+        var ex = assertThrows(MojoExecutionException.class, mojo::execute);
+
+        assertEquals("registry error", ex.getMessage());
+        assertEquals(2, builds.size());
+    }
+
+    @Test
+    void jdkAotCacheTrainedByDefaultSaysAtInfoThatAnOlderJavaHasNoCache(@TempDir Path tempDir) throws Exception {
+        var project = defaultJdkAotCacheProject(tempDir);
+        var dockerService = trainingDockerService();
+        when(dockerService.runAndCaptureOutput(eq("sha256:training"), anyInt(), any()))
+            .thenReturn(new DockerService.ContainerOutput(0, "openjdk version \"21.0.8\" 2025-07-15 LTS"));
+        var executorService = mock(ExecutorService.class);
+        var mojo = defaultJdkAotCacheMojo(project, dockerService, executorService);
+        var log = mock(Log.class);
+        mojo.setLog(log);
+
+        mojo.execute();
+
+        verify(executorService, times(2)).executeGoal(project, "com.google.cloud.tools:jib-maven-plugin", "dockerBuild");
+        assertEquals(List.of(), warnMessages(log));
+        assertTrue(infoMessages(log).stream().anyMatch(message -> message.startsWith("JDK AOT cache: the image is built "
+            + "without the cache that it trains by default, because micronaut.docker.jdkAotCache needs Java 25")));
+    }
+
+    @Test
+    void jdkAotCacheFalseBuildsTheImageWithoutTheCache(@TempDir Path tempDir) throws Exception {
+        var project = defaultJdkAotCacheProject(tempDir);
+        var dockerService = trainingDockerService();
+        var executorService = mock(ExecutorService.class);
+        var mojo = defaultJdkAotCacheMojo(project, dockerService, executorService);
+        setParameter(mojo, "jdkAotCache", false);
+        var log = mock(Log.class);
+        mojo.setLog(log);
+
+        mojo.execute();
+
+        verify(executorService, times(1)).executeGoal(eq(project), any(), any());
+        verify(executorService).executeGoal(project, "com.google.cloud.tools:jib-maven-plugin", "dockerBuild");
+        verify(dockerService, never()).getDaemonPlatform();
+        verify(log, never()).info(any(CharSequence.class));
+    }
+
+    private static MavenProject defaultJdkAotCacheProject(Path tempDir) throws IOException {
+        var project = mockProject(tempDir);
+        var artifacts = new LinkedHashSet<>(MicronautJars.withLoadMode(tempDir));
+        when(project.getArtifacts()).thenReturn(artifacts);
+        when(project.getPlugin("org.apache.maven.plugins:maven-jar-plugin")).thenReturn(new Plugin());
+        return project;
+    }
+
+    private static DockerMojo defaultJdkAotCacheMojo(MavenProject project, DockerService dockerService,
+                                                     ExecutorService executorService) {
+        var mojo = jdkAotCacheMojo(project, jdkAotCacheJibConfiguration(), dockerService, executorService);
+        setParameter(mojo, "jdkAotCache", null);
+        setParameter(mojo, "jdkAotCacheTrainingPaths", null);
+        return mojo;
+    }
+
+    /**
+     * @return the value of a project property at each Jib build
+     */
+    private static List<String> recordProperty(MavenProject project, ExecutorService executorService, String name)
+        throws MojoExecutionException {
+        var values = new ArrayList<String>();
+        doAnswer(invocation -> {
+            values.add(project.getProperties().getProperty(name));
+            return null;
+        }).when(executorService).executeGoal(eq(project), eq("com.google.cloud.tools:jib-maven-plugin"), any());
+        return values;
     }
 
     /**
