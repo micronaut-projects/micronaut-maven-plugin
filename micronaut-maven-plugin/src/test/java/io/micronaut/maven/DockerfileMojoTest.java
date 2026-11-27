@@ -31,6 +31,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -656,6 +659,35 @@ class DockerfileMojoTest {
             .filter(line -> line.startsWith("RUN "))
             .findFirst()
             .orElseThrow();
+    }
+
+    @Test
+    void storedDependenciesWriteTheDependencyJarsWithStoredEntries(@TempDir Path tempDir) throws Exception {
+        var project = mockProject(tempDir);
+        when(project.getPackaging()).thenReturn("docker");
+        Path jar = tempDir.resolve("lib-1.0.jar");
+        try (var out = new ZipOutputStream(Files.newOutputStream(jar))) {
+            out.putNextEntry(new ZipEntry("a/A.class"));
+            out.write("class".repeat(100).getBytes());
+            out.closeEntry();
+        }
+        var artifact = mock(Artifact.class);
+        when(artifact.getFile()).thenReturn(jar.toFile());
+        when(artifact.getScope()).thenReturn(Artifact.SCOPE_COMPILE);
+        var artifacts = new LinkedHashSet<Artifact>(List.of(artifact));
+        when(project.getArtifacts()).thenReturn(artifacts);
+        var mojo = newDockerfileMojo(project, Optional.empty());
+        mojo.micronautRuntime = "netty";
+        setParameter(mojo, "storedDependencies", true);
+
+        mojo.execute();
+
+        for (Path copy : List.of(tempDir.resolve("target/dependency/release/lib-1.0.jar"),
+            tempDir.resolve("target/dependency/lib-1.0.jar"))) {
+            try (var zip = new ZipFile(copy.toFile())) {
+                assertTrue(zip.stream().allMatch(entry -> entry.getMethod() == ZipEntry.STORED), copy.toString());
+            }
+        }
     }
 
     private static Artifact dependency(Path tempDir, String fileName, String scope, boolean snapshot) throws IOException {

@@ -85,6 +85,13 @@ public class DockerMojo extends AbstractDockerMojo {
      */
     static final String JDK_AOT_CACHE_PIN_BASE_IMAGE_PROPERTY = "micronaut.docker.jdkAotCache.internal.pinBaseImage";
 
+    /**
+     * The directory where the Jib extension writes the STORED copies of the dependency JARs.
+     */
+    static final String STORED_DEPENDENCIES_PROPERTY = "micronaut.docker.storedDependencies.internal.directory";
+
+    private static final String STORED_DEPENDENCIES_DIRECTORY = "stored-dependencies";
+
     private static final String JIB_PLUGIN = "com.google.cloud.tools:jib-maven-plugin";
     private static final String JAR_PLUGIN = "org.apache.maven.plugins:maven-jar-plugin";
     private static final String JDK_AOT_CACHE_DIRECTORY = "jdk-aot-cache";
@@ -139,6 +146,17 @@ public class DockerMojo extends AbstractDockerMojo {
     @Parameter(property = "micronaut.docker.jdkAotCache.trainingTimeout", defaultValue = "180")
     private int jdkAotCacheTrainingTimeout;
 
+    /**
+     * Whether the dependency JARs of the JVM image are written with every entry STORED, so that the JVM does not
+     * inflate the classes it reads from them. It makes starts without a JDK AOT cache faster, and the unpacked image
+     * bigger. A repacked JAR no longer has the checksum of the published artifact, which some vulnerability scanners
+     * rely on. Signed JARs are copied unchanged. Only for {@code docker} packaging and the default runtime.
+     *
+     * @since 5.1.0
+     */
+    @Parameter(property = "micronaut.docker.storedDependencies", defaultValue = "false")
+    private boolean storedDependencies;
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     public DockerMojo(MavenProject mavenProject, JibConfigurationService jibConfigurationService,
@@ -167,10 +185,20 @@ public class DockerMojo extends AbstractDockerMojo {
             if (jibConfigurationService.getFromImage().isEmpty()) {
                 mavenProject.getProperties().setProperty(PropertyNames.FROM_IMAGE, getBaseImage());
             }
-            if (jdkAotCache) {
-                buildWithJdkAotCache();
-            } else {
-                executorService.executeGoal(mavenProject, JIB_PLUGIN, jibBuildGoal);
+            Properties properties = mavenProject.getProperties();
+            String savedStoredDependencies = properties.getProperty(STORED_DEPENDENCIES_PROPERTY);
+            try {
+                if (storedDependencies && MicronautRuntime.valueOf(micronautRuntime.toUpperCase()).getBuildStrategy() == DockerBuildStrategy.DEFAULT) {
+                    properties.setProperty(STORED_DEPENDENCIES_PROPERTY,
+                        Path.of(mavenProject.getBuild().getDirectory(), STORED_DEPENDENCIES_DIRECTORY).toAbsolutePath().toString());
+                }
+                if (jdkAotCache) {
+                    buildWithJdkAotCache();
+                } else {
+                    executorService.executeGoal(mavenProject, JIB_PLUGIN, jibBuildGoal);
+                }
+            } finally {
+                restoreProperty(properties, STORED_DEPENDENCIES_PROPERTY, savedStoredDependencies);
             }
         }
     }
@@ -415,7 +443,7 @@ public class DockerMojo extends AbstractDockerMojo {
             getLog().info("Using Dockerfile: " + dockerfile.getAbsolutePath());
             mavenProject.getProperties().put(PropertyNames.SKIP, "true");
 
-            copyDependencies(jdkAotCache);
+            copyDependencies(jdkAotCache, storedDependencies && runtime.getBuildStrategy() == DockerBuildStrategy.DEFAULT);
 
             String targetDir = mavenProject.getBuild().getDirectory();
             var targetDockerfile = new File(targetDir, dockerfile.getName());

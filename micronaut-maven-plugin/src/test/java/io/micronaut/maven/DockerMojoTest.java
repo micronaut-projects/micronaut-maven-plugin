@@ -498,6 +498,47 @@ class DockerMojoTest {
         verifyNoInteractions(executorService, dockerService);
     }
 
+    @Test
+    void storedDependenciesTellTheJibExtensionWhereToWriteTheCopies(@TempDir Path tempDir) throws Exception {
+        var project = mockProject(tempDir);
+        var executorService = mock(ExecutorService.class);
+        var directories = new ArrayList<String>();
+        doAnswer(invocation -> {
+            directories.add(project.getProperties().getProperty(DockerMojo.STORED_DEPENDENCIES_PROPERTY));
+            return null;
+        }).when(executorService).executeGoal(eq(project), eq("com.google.cloud.tools:jib-maven-plugin"), any());
+        var mojo = new DockerMojo(project, jdkAotCacheJibConfiguration(), null, mock(DockerService.class),
+            mockSession(project), mock(MojoExecution.class), executorService);
+        mojo.micronautRuntime = "NONE";
+        mojo.jibBuildGoal = "dockerBuild";
+        setParameter(mojo, "storedDependencies", true);
+
+        mojo.execute();
+
+        assertEquals(List.of(tempDir.resolve("target/stored-dependencies").toAbsolutePath().toString()), directories);
+        assertFalse(project.getProperties().containsKey(DockerMojo.STORED_DEPENDENCIES_PROPERTY));
+    }
+
+    @Test
+    void storedDependenciesOnlyApplyToTheDefaultRuntime(@TempDir Path tempDir) throws Exception {
+        var project = mockProject(tempDir);
+        var executorService = mock(ExecutorService.class);
+        var directories = new ArrayList<String>();
+        doAnswer(invocation -> {
+            directories.add(project.getProperties().getProperty(DockerMojo.STORED_DEPENDENCIES_PROPERTY));
+            return null;
+        }).when(executorService).executeGoal(eq(project), eq("com.google.cloud.tools:jib-maven-plugin"), any());
+        var mojo = new DockerMojo(project, jdkAotCacheJibConfiguration(), null, mock(DockerService.class),
+            mockSession(project), mock(MojoExecution.class), executorService);
+        mojo.micronautRuntime = "LAMBDA";
+        mojo.jibBuildGoal = "dockerBuild";
+        setParameter(mojo, "storedDependencies", true);
+
+        mojo.execute();
+
+        assertEquals(Arrays.asList((String) null), directories);
+    }
+
     /**
      * @return the INFO messages of the mojo, without the colour that its log adds
      */
